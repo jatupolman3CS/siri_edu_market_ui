@@ -1,0 +1,72 @@
+<div class="max-w-5xl">
+      <header class="mb-8">
+        <h1 class="text-3xl font-extrabold text-ink mb-1">รีวิวลูกค้า</h1>
+        <p class="text-sm text-ink-soft">
+          ความคิดเห็นและคะแนนจากผู้ที่ซื้อเอกสารของคุณ
+        </p>
+      </header>
+
+      <!-- Summary -->
+      <section class="card-soft p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-8 items-start">
+          <div class="text-center md:text-left">
+            <div class="text-5xl font-extrabold text-ink leading-none mb-2">
+              {{ seller.stats().averageRating }}
+            </div>
+            <app-rating-stars
+              [value]="seller.stats().averageRating"
+              [size]="18"
+              [showValue]="false"
+            />
+            <div class="text-sm text-ink-muted mt-2">
+              จาก {{ seller.stats().totalReviews }} รีวิว
+            </div>
+          </div>
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+            <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
+              <div class="text-2xl font-extrabold text-emerald-600">96%</div>
+              <div class="text-xs text-ink-muted mt-1">รีวิวบวก (4★+)</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
+              <div class="text-2xl font-extrabold text-pink-600">2.4 ชม.</div>
+              <div class="text-xs text-ink-muted mt-1">เวลาตอบกลับเฉลี่ย</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
+              <div class="text-2xl font-extrabold text-ink">82%</div>
+              <div class="text-xs text-ink-muted mt-1">ตอบรีวิวแล้ว</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reviews -->
+      <ul class="flex flex-col gap-4">
+        @for (rv of reviews(); track rv.id) {
+          <li class="card-soft p-5">
+            <div class="flex items-start gap-4">
+              <img
+                [src]="rv.buyerAvatar"
+                [alt]="rv.buyerName"
+                class="w-12 h-12 rounded-full object-cover flex-shrink-0"
+              />
+              <div class="flex-1">
+                <div class="flex items-start justify-between mb-2 gap-3">
+                  <div>
+                    <div class="text-sm font-bold text-ink">{{ rv.buyerName }}</div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                      <app-rating-stars [value]="rv.rating" [size]="13" [showValue]="false" />
+                      <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
+                    </div>
+                  </div>
+                  <span class="pill-soft text-[10px]">📚 {{ rv.docTitle }}</span>
+                </div>
+                <p class="text-sm text-ink-soft leading-relaxed mb-3">{{ rv.comment }}</p>
+                <button class="text-xs text-pink-600 font-bold hover:underline">
+                  ตอบกลับรีวิว →
+                </button>
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+    </div>

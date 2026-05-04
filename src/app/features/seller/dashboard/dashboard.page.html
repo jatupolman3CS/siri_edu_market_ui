@@ -1,0 +1,265 @@
+<div class="max-w-6xl">
+      <!-- Greeting -->
+      <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <span class="pill-pink mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+            สวัสดี ผู้ขาย — Siri Studio
+          </span>
+          <h1 class="text-3xl font-extrabold text-ink mb-1">ภาพรวมร้านของคุณ 🌸</h1>
+          <p class="text-sm text-ink-soft">สรุปยอดขาย รายได้ และสถิติเอกสารของคุณภายในเดือนนี้</p>
+        </div>
+        <div class="flex gap-3">
+          <a routerLink="/seller/upload" class="btn-pink">
+            <app-icon name="upload" [size]="16" />
+            อัปโหลดเอกสาร
+          </a>
+          <a routerLink="/seller/ai" class="btn-ghost">
+            <app-icon name="sparkle" [size]="16" />
+            AI ช่วยเขียน
+          </a>
+        </div>
+      </header>
+
+      <!-- Stats -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <app-stat-card
+          label="รายได้เดือนนี้"
+          [value]="seller.stats().monthlyRevenue | thb"
+          icon="💰"
+          trend="+18%"
+        />
+        <app-stat-card
+          label="ดาวน์โหลด"
+          [value]="(seller.stats().monthlyDownloads | compact) + ''"
+          icon="⬇️"
+          trend="+12%"
+        />
+        <app-stat-card
+          label="ฟอลโลเวอร์"
+          [value]="(seller.stats().followerCount | compact) + ''"
+          icon="💗"
+          [trend]="'+' + seller.stats().newFollowersThisMonth"
+          trendLabel="ในเดือนนี้"
+        />
+        <app-stat-card
+          label="คะแนนเฉลี่ย"
+          [value]="seller.stats().averageRating + ' ★'"
+          icon="⭐"
+          trend="+0.04"
+          trendLabel="vs เดือนก่อน"
+        />
+      </section>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Revenue chart -->
+        <section class="lg:col-span-2 card-soft p-6">
+          <header class="flex items-end justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-bold text-ink">รายได้ 6 เดือนล่าสุด</h2>
+              <p class="text-xs text-ink-muted mt-1">สรุปรายได้รายเดือน (THB)</p>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-extrabold text-ink">{{ seller.stats().totalRevenue | thb }}</div>
+              <div class="text-xs text-ink-muted">รายได้รวมตั้งแต่เริ่มต้น</div>
+            </div>
+          </header>
+
+          <div class="grid grid-cols-6 gap-3 items-end h-48">
+            @for (m of seller.stats().revenueByMonth; track m.month) {
+              <div class="flex flex-col items-center gap-2 h-full justify-end">
+                <span class="text-xs font-bold text-ink">฿{{ (m.amount / 1000).toFixed(1) }}k</span>
+                <div
+                  class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
+                  [style.height.%]="(m.amount / maxMonth()) * 100"
+                >
+                  <div class="absolute inset-x-0 top-0 h-1 bg-pink-500 rounded-t-2xl"></div>
+                </div>
+                <span class="text-xs text-ink-muted">{{ m.month }}</span>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- Top categories -->
+        <section class="card-soft p-6">
+          <h2 class="text-lg font-bold text-ink mb-1">หมวดที่ขายดี</h2>
+          <p class="text-xs text-ink-muted mb-5">จัดอันดับตามจำนวนยอดขายในเดือนนี้</p>
+          <ul class="space-y-3">
+            @for (c of seller.stats().topCategories; track c.category; let i = $index) {
+              <li>
+                <div class="flex items-center justify-between text-sm mb-1.5">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center"
+                      [class]="
+                        i === 0 ? 'bg-pink-500 text-white' :
+                        i === 1 ? 'bg-pink-300 text-pink-700' :
+                        'bg-pink-100 text-pink-600'
+                      "
+                    >
+                      {{ i + 1 }}
+                    </span>
+                    <span class="font-medium text-ink">{{ c.category }}</span>
+                  </div>
+                  <span class="font-bold text-ink">{{ c.sales | compact }}</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                  <div
+                    class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                    [style.width.%]="(c.sales / topCategoryMax()) * 100"
+                  ></div>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <!-- Earnings Calculator + Recent docs + Payout -->
+      <div class="grid lg:grid-cols-3 gap-6 mt-6">
+        <!-- Recent docs -->
+        <section class="lg:col-span-2 card-soft p-6">
+          <header class="flex items-end justify-between mb-5">
+            <h2 class="text-lg font-bold text-ink">เอกสารล่าสุดของคุณ</h2>
+            <a routerLink="/seller/documents" class="text-sm text-pink-600 hover:underline font-semibold">ดูทั้งหมด →</a>
+          </header>
+          <ul class="divide-y divide-line">
+            @for (d of seller.myDocuments().slice(0, 5); track d.id) {
+              <li class="py-3 flex items-center gap-4">
+                <img [src]="d.cover" [alt]="d.title" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
+                  <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">
+                    <span class="uppercase">{{ d.format }}</span>
+                    <span>·</span>
+                    <span>{{ d.downloads }} ดาวน์โหลด</span>
+                    <span>·</span>
+                    <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-ink">{{ d.price | thb }}</div>
+                  <span class="pill-pink !py-0 !text-[10px]">{{ d.status === 'approved' ? 'เผยแพร่' : 'รออนุมัติ' }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- Payout -->
+        <section class="card-soft p-6 bg-gradient-pink !border-pink-200">
+          <h2 class="text-lg font-bold text-ink mb-1">รอจ่ายคุณ</h2>
+          <p class="text-xs text-ink-muted mb-4">เงินที่พร้อมโอนเข้าบัญชีของคุณ</p>
+          <div class="text-4xl font-extrabold text-pink-700 leading-none">
+            {{ seller.stats().pendingPayout | thb }}
+          </div>
+          <div class="text-xs text-ink-muted mt-2">โอนรอบถัดไป: 15 พ.ค. 2026</div>
+          <button class="btn-pink w-full mt-5 !py-2.5">
+            <app-icon name="wallet" [size]="16" />
+            ขอถอนเงินทันที
+          </button>
+
+          <div class="mt-5 pt-5 border-t border-pink-200/60 space-y-3">
+            <div class="flex items-center gap-2 text-xs">
+              <app-icon name="check" [size]="12" className="text-emerald-500" />
+              <span class="text-ink-soft">ส่วนแบ่งผู้ขาย <b class="text-ink">90%</b> + ภาษีจัดการให้</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <app-icon name="check" [size]="12" className="text-emerald-500" />
+              <span class="text-ink-soft">โอนเข้าบัญชีไทยทุกธนาคาร</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <app-icon name="check" [size]="12" className="text-emerald-500" />
+              <span class="text-ink-soft">รับยอดขายภายใน 2-3 วันทำการ</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Earnings Calculator -->
+      <section class="card-soft p-6 md:p-8 mt-6 bg-gradient-to-br from-emerald-50 to-pink-50">
+        <header class="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <span class="pill bg-emerald-100 text-emerald-700 mb-2">
+              <app-icon name="chart" [size]="11" />
+              Earnings Calculator
+            </span>
+            <h2 class="text-xl font-extrabold text-ink">ลองคำนวณรายได้ของคุณ 💰</h2>
+            <p class="text-sm text-ink-muted mt-1">ป้อนสมมติฐาน — เห็นภาพรายได้ที่จะได้รับในแต่ละเดือน</p>
+          </div>
+        </header>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+          <!-- Inputs -->
+          <div class="space-y-5">
+            <div>
+              <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
+                <span>ราคาต่อชิ้น (THB)</span>
+                <span class="font-bold text-ink">฿{{ pricePerItem() }}</span>
+              </label>
+              <input
+                type="range" min="50" max="990" step="10"
+                [ngModel]="pricePerItem()"
+                (ngModelChange)="pricePerItem.set($event)"
+                class="w-full accent-pink-500"
+              />
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
+                <span>ยอดขายต่อเดือน</span>
+                <span class="font-bold text-ink">{{ salesPerMonth() }} ชิ้น</span>
+              </label>
+              <input
+                type="range" min="5" max="500" step="5"
+                [ngModel]="salesPerMonth()"
+                (ngModelChange)="salesPerMonth.set($event)"
+                class="w-full accent-pink-500"
+              />
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
+                <span>จำนวนเอกสารในร้าน</span>
+                <span class="font-bold text-ink">{{ activeDocs() }} ชิ้น</span>
+              </label>
+              <input
+                type="range" min="1" max="100" step="1"
+                [ngModel]="activeDocs()"
+                (ngModelChange)="activeDocs.set($event)"
+                class="w-full accent-pink-500"
+              />
+            </div>
+          </div>
+
+          <!-- Output -->
+          <div class="card-soft p-6 bg-white">
+            <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">รายได้ที่คุณจะได้รับ (90%)</div>
+            <div class="text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
+            <div class="text-sm text-ink-muted mb-5">ต่อเดือน (หลังหักค่าธรรมเนียม)</div>
+
+            <ul class="space-y-3 text-sm border-t border-line pt-4">
+              <li class="flex justify-between">
+                <span class="text-ink-soft">รายได้รวม (gross)</span>
+                <span class="font-bold text-ink">{{ grossRevenue() | thb }}</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-ink-soft">ค่าธรรมเนียมแพลตฟอร์ม (10%)</span>
+                <span class="text-rose-500">- {{ platformFee() | thb }}</span>
+              </li>
+              <li class="flex justify-between border-t border-line pt-3 font-bold">
+                <span class="text-ink">รายได้สุทธิต่อเดือน</span>
+                <span class="text-pink-600">{{ monthlyEarnings() | thb }}</span>
+              </li>
+              <li class="flex justify-between text-emerald-600 font-bold">
+                <span>รายได้ปี (ประมาณการ)</span>
+                <span>{{ yearlyEarnings() | thb }}</span>
+              </li>
+            </ul>
+
+            <div class="mt-5 pt-4 border-t border-line text-[11px] text-ink-muted">
+              💡 หากคุณมีเอกสารคุณภาพและใส่ใจกับการรีวิว ยอดขายของคุณจะเติบโตขึ้นเรื่อยๆ
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>

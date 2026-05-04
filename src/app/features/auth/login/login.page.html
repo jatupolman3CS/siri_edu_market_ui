@@ -1,0 +1,121 @@
+<app-auth-layout
+      artTitle="กลับมาแล้วเหรอ?<br>คิดถึงนะ 💗"
+      artDescription="เข้าสู่ระบบเพื่อจัดการคลังเอกสาร รายการโปรด และทำการสั่งซื้อต่อ"
+    >
+      <div class="max-w-md w-full mx-auto">
+        <span class="pill-pink mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+          ยินดีต้อนรับกลับ
+        </span>
+        <h1 class="text-3xl font-extrabold text-ink mb-2 leading-tight">
+          เข้าสู่บัญชีของคุณ
+        </h1>
+        <p class="text-sm text-ink-soft mb-8">
+          ยังไม่มีบัญชี?
+          <a
+            [routerLink]="['/auth/register']"
+            [queryParams]="{ returnUrl: returnUrl() }"
+            class="text-pink-600 font-bold hover:underline"
+          >
+            สมัครฟรีเลย →
+          </a>
+        </p>
+
+        <!-- Social -->
+        <app-social-buttons (select)="onSocial($event)" />
+
+        <div class="my-6 flex items-center gap-3 text-xs text-ink-muted">
+          <span class="flex-1 h-px bg-line"></span>
+          หรือเข้าสู่ระบบด้วยอีเมล
+          <span class="flex-1 h-px bg-line"></span>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" class="space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">อีเมล</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted">
+                <app-icon name="mail" [size]="18" />
+              </span>
+              <input
+                type="email"
+                [(ngModel)]="email"
+                name="email"
+                class="input-soft !pl-12"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
+              <span>รหัสผ่าน</span>
+              <a [routerLink]="['/auth/forgot-password']" class="text-pink-600 hover:underline">
+                ลืมรหัสผ่าน?
+              </a>
+            </label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted">
+                <app-icon name="lock" [size]="18" />
+              </span>
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                [(ngModel)]="password"
+                name="password"
+                class="input-soft !pl-12 !pr-12"
+                placeholder="•••••••••"
+                autocomplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-pink-600"
+                (click)="showPassword.set(!showPassword())"
+              >
+                <app-icon [name]="showPassword() ? 'eye' : 'lock'" [size]="16" />
+              </button>
+            </div>
+          </div>
+
+          <label class="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="remember"
+              name="remember"
+              class="w-4 h-4 accent-pink-500"
+            />
+            จำการเข้าสู่ระบบไว้
+          </label>
+
+          @if (error()) {
+            <div class="px-4 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-sm flex items-center gap-2">
+              <app-icon name="flag" [size]="14" />
+              {{ error() }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="btn-pink w-full !py-3.5 mt-2 text-base"
+            [disabled]="loading()"
+          >
+            @if (loading()) {
+              <span class="inline-block animate-spin">✦</span>
+              กำลังเข้าสู่ระบบ…
+            } @else {
+              เข้าสู่ระบบ
+              <app-icon name="arrow-right" [size]="16" />
+            }
+          </button>
+        </form>
+
+        @if (returnUrl() !== '/') {
+          <p class="text-[11px] text-ink-muted text-center mt-4">
+            หลังเข้าสู่ระบบ คุณจะถูกพากลับไปที่
+            <code class="text-pink-600">{{ returnUrl() }}</code>
+          </p>
+        }
+      </div>
+    </app-auth-layout>

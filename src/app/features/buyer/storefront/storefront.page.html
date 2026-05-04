@@ -1,0 +1,187 @@
+@if (seller(); as s) {
+      <!-- Banner -->
+      <section class="relative bg-gradient-pink h-56 md:h-72 overflow-hidden">
+        @if (s.banner) {
+          <img [src]="s.banner" [alt]="s.studioName" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/40 to-transparent"></div>
+        } @else {
+          <div class="absolute -top-20 -right-20 w-80 h-80 rounded-full glass-blob"></div>
+          <div class="absolute -bottom-20 -left-20 w-80 h-80 rounded-full glass-blob opacity-50"></div>
+        }
+      </section>
+
+      <div class="max-w-7xl mx-auto px-4 lg:px-6 -mt-20 relative">
+        <!-- Profile card -->
+        <header class="card-soft p-6 md:p-8 mb-8">
+          <div class="flex flex-col md:flex-row gap-6 md:items-end">
+            <img
+              [src]="s.avatar"
+              [alt]="s.studioName"
+              class="w-28 h-28 rounded-3xl object-cover ring-4 ring-white shadow-pop -mt-16 md:-mt-24"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <h1 class="text-3xl font-extrabold text-ink">{{ s.studioName }}</h1>
+                @if (s.badges.includes('Verified')) {
+                  <svg viewBox="0 0 16 16" class="w-6 h-6 text-pink-500" fill="currentColor">
+                    <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
+                    <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                }
+                @for (b of s.badges; track b) {
+                  <span class="pill-pink !text-[10px]">{{ b }}</span>
+                }
+              </div>
+              <p class="text-sm text-ink-muted mb-3">โดย {{ s.ownerName }} · เข้าร่วม {{ joinedYear() }}</p>
+              <p class="text-sm text-ink-soft max-w-2xl mb-4 leading-relaxed">{{ s.bio }}</p>
+
+              <div class="flex flex-wrap gap-2">
+                @for (sp of s.specialties ?? []; track sp) {
+                  <span class="pill-soft">#{{ sp }}</span>
+                }
+              </div>
+            </div>
+
+            <!-- Action -->
+            <div class="flex flex-col gap-2 min-w-[200px]">
+              <button
+                class="!py-3 transition-all"
+                [class.btn-pink]="!isFollowing()"
+                [class.btn-ghost]="isFollowing()"
+                (click)="toggleFollow()"
+              >
+                @if (isFollowing()) {
+                  <app-icon name="check" [size]="16" />
+                  กำลังติดตาม
+                } @else {
+                  <app-icon name="plus" [size]="16" />
+                  ติดตามร้าน
+                }
+              </button>
+              <a href="#" class="btn-ghost !py-2.5 text-sm">
+                <app-icon name="mail" [size]="14" />
+                ส่งข้อความ
+              </a>
+            </div>
+          </div>
+
+          <!-- Stats strip -->
+          <dl class="mt-6 pt-5 border-t border-line grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">เอกสาร</dt>
+              <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.totalDocuments }}</dd>
+            </div>
+            <div>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">ขายแล้ว</dt>
+              <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.totalSales | compact }}</dd>
+            </div>
+            <div>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">คะแนน</dt>
+              <dd class="text-2xl font-extrabold text-pink-600 mt-1">{{ s.rating }} ★</dd>
+            </div>
+            <div>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">ฟอลโลเวอร์</dt>
+              <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.followerCount | compact }}</dd>
+            </div>
+            <div>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">ตอบกลับเฉลี่ย</dt>
+              <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.responseHours }} ชม.</dd>
+            </div>
+          </dl>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="flex items-center gap-2 mb-6 overflow-x-auto">
+          @for (t of tabs(); track t.value) {
+            <button
+              class="px-5 py-2.5 rounded-full text-sm font-medium border whitespace-nowrap transition-colors"
+              [class.bg-pink-500]="tab() === t.value"
+              [class.text-white]="tab() === t.value"
+              [class.border-pink-500]="tab() === t.value"
+              [class.bg-white]="tab() !== t.value"
+              [class.text-ink-soft]="tab() !== t.value"
+              [class.border-line]="tab() !== t.value"
+              (click)="tab.set(t.value)"
+            >
+              {{ t.label }}
+              @if (t.count != null) {
+                <span class="ml-1 opacity-70">{{ t.count }}</span>
+              }
+            </button>
+          }
+        </nav>
+
+        <!-- Tab content -->
+        @switch (tab()) {
+          @case ('all') {
+            @if (sellerDocs().length === 0) {
+              <app-empty-state emoji="📚" title="ยังไม่มีเอกสารในร้านนี้" />
+            } @else {
+              <!-- Custom store sections (TpT-style) -->
+              @if (s.storeSections?.length) {
+                @for (section of s.storeSections!; track section.id) {
+                  <section class="mb-12">
+                    <h2 class="section-title mb-4">{{ section.name }}</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                      @for (id of section.documentIds; track id) {
+                        @if (catalog.getById(id); as d) {
+                          <app-document-card [doc]="d" />
+                        }
+                      }
+                    </div>
+                  </section>
+                }
+              }
+
+              <section>
+                <h2 class="section-title mb-4">เอกสารทั้งหมดของร้าน</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  @for (doc of sellerDocs(); track doc.id) {
+                    <app-document-card [doc]="doc" />
+                  }
+                </div>
+              </section>
+            }
+          }
+          @case ('bundles') {
+            @if (sellerBundles().length === 0) {
+              <app-empty-state emoji="📦" title="ยังไม่มีแพ็กเกจในร้านนี้" />
+            } @else {
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                @for (b of sellerBundles(); track b.id) {
+                  <app-bundle-card [bundle]="b" />
+                }
+              </div>
+            }
+          }
+          @case ('free') {
+            @if (sellerFree().length === 0) {
+              <app-empty-state emoji="🎁" title="ผู้ขายนี้ยังไม่มีเอกสารฟรี" />
+            } @else {
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                @for (doc of sellerFree(); track doc.id) {
+                  <app-document-card [doc]="doc" />
+                }
+              </div>
+            }
+          }
+          @case ('top') {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              @for (doc of sellerTop(); track doc.id) {
+                <app-document-card [doc]="doc" />
+              }
+            </div>
+          }
+        }
+      </div>
+    } @else {
+      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+        <app-empty-state
+          emoji="🏪"
+          title="ไม่พบร้านนี้"
+          description="ร้านที่คุณค้นหาอาจถูกปิดหรือถูกลบ"
+        >
+          <a routerLink="/marketplace" class="btn-pink mt-4">กลับหน้าตลาด</a>
+        </app-empty-state>
+      </div>
+    }

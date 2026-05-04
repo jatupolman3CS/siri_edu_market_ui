@@ -1,0 +1,402 @@
+<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+      <app-page-hero
+        eyebrow="ตลาดเอกสาร"
+        title="คัดสรรเอกสารคุณภาพ ในราคาที่จับต้องได้"
+        description="กว่า 12,000 เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ — ใช้ตัวกรองด้านซ้ายเพื่อค้นหาที่ใช่"
+      />
+
+      <!-- Tabs -->
+      <nav class="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
+        @for (t of tabs(); track t.value) {
+          <button
+            class="px-5 py-2.5 rounded-full text-sm font-medium border whitespace-nowrap transition-colors"
+            [class.bg-pink-500]="catalog.tab() === t.value"
+            [class.text-white]="catalog.tab() === t.value"
+            [class.border-pink-500]="catalog.tab() === t.value"
+            [class.bg-white]="catalog.tab() !== t.value"
+            [class.text-ink-soft]="catalog.tab() !== t.value"
+            [class.border-line]="catalog.tab() !== t.value"
+            (click)="catalog.setTab(t.value)"
+          >
+            <span>{{ t.icon }} {{ t.label }}</span>
+            <span class="ml-1 opacity-70 text-xs">{{ t.count }}</span>
+          </button>
+        }
+      </nav>
+
+      <!-- Recently viewed strip -->
+      @if (recent.count() > 0 && catalog.tab() !== 'bundles') {
+        <section class="card-soft p-5 mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-ink flex items-center gap-2">
+              <app-icon name="eye" [size]="14" className="text-pink-500" />
+              ที่คุณเพิ่งดู
+            </h3>
+            <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">
+              ล้าง
+            </button>
+          </div>
+          <div class="flex gap-3 overflow-x-auto pb-1">
+            @for (d of recent.items(); track d.id) {
+              <a
+                [routerLink]="['/document', d.id]"
+                class="flex-shrink-0 w-28 group"
+              >
+                <img
+                  [src]="d.cover"
+                  class="w-28 h-32 rounded-2xl object-cover ring-2 ring-transparent group-hover:ring-pink-300 transition-all"
+                  [alt]="d.title"
+                />
+                <div class="text-[11px] text-ink line-clamp-2 mt-1.5 leading-tight group-hover:text-pink-600">
+                  {{ d.title }}
+                </div>
+              </a>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Bundles tab -->
+      @if (catalog.tab() === 'bundles') {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (b of bundles.bundles(); track b.id) {
+            <app-bundle-card [bundle]="b" />
+          }
+        </div>
+      } @else {
+        <div class="grid lg:grid-cols-12 gap-6">
+          <!-- Sidebar Filters -->
+          <aside class="lg:col-span-3">
+            <div class="card-soft p-5 sticky top-[88px] max-h-[calc(100vh-100px)] overflow-y-auto">
+              <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold text-ink flex items-center gap-2">
+                  <app-icon name="filter" [size]="16" />
+                  ตัวกรอง
+                </h3>
+                <button
+                  class="text-xs text-pink-600 hover:underline font-semibold"
+                  (click)="reset()"
+                >
+                  ล้างทั้งหมด
+                </button>
+              </div>
+
+              <!-- Search -->
+              <div class="mb-5">
+                <label class="text-xs font-semibold text-ink-soft mb-2 block">
+                  คำค้นหา
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
+                    <app-icon name="search" [size]="16" />
+                  </span>
+                  <input
+                    type="search"
+                    [ngModel]="catalog.filters().search"
+                    (ngModelChange)="catalog.setFilters({ search: $event })"
+                    placeholder="ค้นหาเอกสาร…"
+                    class="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Categories with sub-categories -->
+              <div class="mb-6">
+                <label class="text-xs font-semibold text-ink-soft mb-3 flex items-center justify-between">
+                  <span>หมวดหมู่</span>
+                  @if (catalog.filters().categoryIds.length) {
+                    <button class="text-pink-600 text-[10px] hover:underline" (click)="catalog.setFilters({ categoryIds: [], subcategoryIds: [] })">
+                      ล้าง
+                    </button>
+                  }
+                </label>
+                <div class="flex flex-col gap-1">
+                  @for (cat of catalog.categories(); track cat.id) {
+                    <div>
+                      <button
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-pink-50 transition-colors text-left"
+                        [class.bg-pink-50]="catalog.filters().categoryIds.includes(cat.id)"
+                        (click)="toggleCategory(cat.id)"
+                      >
+                        <span class="text-base">{{ cat.icon }}</span>
+                        <span class="text-sm text-ink flex-1">{{ cat.name }}</span>
+                        <span class="text-xs text-ink-muted">{{ cat.documentCount }}</span>
+                        <app-icon
+                          name="chevron-down"
+                          [size]="14"
+                          [className]="
+                            catalog.filters().categoryIds.includes(cat.id)
+                              ? 'text-pink-500 rotate-180 transition-transform'
+                              : 'text-ink-muted transition-transform'
+                          "
+                        />
+                      </button>
+                      @if (catalog.filters().categoryIds.includes(cat.id) && cat.subcategories?.length) {
+                        <div class="pl-6 py-1 flex flex-col gap-0.5">
+                          @for (sub of cat.subcategories!; track sub.id) {
+                            <label
+                              class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                class="w-3.5 h-3.5 accent-pink-500"
+                                [checked]="catalog.filters().subcategoryIds.includes(sub.id)"
+                                (change)="toggleSubcategory(sub.id)"
+                              />
+                              <span class="text-xs">{{ sub.icon }}</span>
+                              <span class="text-xs text-ink-soft flex-1">{{ sub.name }}</span>
+                              <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
+                            </label>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Grade Level -->
+              <div class="mb-6">
+                <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                  ระดับชั้น
+                </label>
+                <div class="flex flex-wrap gap-1.5">
+                  @for (g of grades; track g) {
+                    <button
+                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                      [class.border-pink-500]="catalog.filters().gradeLevels.includes(g)"
+                      [class.bg-pink-50]="catalog.filters().gradeLevels.includes(g)"
+                      [class.text-pink-600]="catalog.filters().gradeLevels.includes(g)"
+                      [class.border-line]="!catalog.filters().gradeLevels.includes(g)"
+                      [class.text-ink-soft]="!catalog.filters().gradeLevels.includes(g)"
+                      (click)="toggleGrade(g)"
+                    >
+                      {{ gradeLabel(g) }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Resource Type -->
+              <div class="mb-6">
+                <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                  ประเภทเอกสาร
+                </label>
+                <div class="flex flex-wrap gap-1.5">
+                  @for (rt of resourceTypes; track rt) {
+                    <button
+                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                      [class.border-pink-500]="catalog.filters().resourceTypes.includes(rt)"
+                      [class.bg-pink-50]="catalog.filters().resourceTypes.includes(rt)"
+                      [class.text-pink-600]="catalog.filters().resourceTypes.includes(rt)"
+                      [class.border-line]="!catalog.filters().resourceTypes.includes(rt)"
+                      [class.text-ink-soft]="!catalog.filters().resourceTypes.includes(rt)"
+                      (click)="toggleResourceType(rt)"
+                    >
+                      {{ resourceIcon(rt) }} {{ resourceLabel(rt) }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Standards -->
+              <div class="mb-6">
+                <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                  หลักสูตร / สอบ
+                </label>
+                <div class="flex flex-wrap gap-1.5">
+                  @for (s of standards; track s) {
+                    <button
+                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                      [class.border-pink-500]="catalog.filters().standards.includes(s)"
+                      [class.bg-pink-50]="catalog.filters().standards.includes(s)"
+                      [class.text-pink-600]="catalog.filters().standards.includes(s)"
+                      [class.border-line]="!catalog.filters().standards.includes(s)"
+                      [class.text-ink-soft]="!catalog.filters().standards.includes(s)"
+                      (click)="toggleStandard(s)"
+                    >
+                      {{ s }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Format -->
+              <div class="mb-6">
+                <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                  รูปแบบไฟล์
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                  @for (fmt of formats; track fmt) {
+                    <button
+                      type="button"
+                      class="px-3 py-2 rounded-xl border text-xs font-semibold uppercase transition-colors"
+                      [class.border-pink-300]="catalog.filters().formats.includes(fmt)"
+                      [class.bg-pink-50]="catalog.filters().formats.includes(fmt)"
+                      [class.text-pink-600]="catalog.filters().formats.includes(fmt)"
+                      [class.border-line]="!catalog.filters().formats.includes(fmt)"
+                      [class.text-ink-muted]="!catalog.filters().formats.includes(fmt)"
+                      (click)="toggleFormat(fmt)"
+                    >
+                      {{ fmt }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Free toggle -->
+              <div class="mb-6">
+                <label class="flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
+                  <input
+                    type="checkbox"
+                    [checked]="catalog.filters().freeOnly"
+                    (change)="catalog.setFilters({ freeOnly: !catalog.filters().freeOnly })"
+                    class="w-5 h-5 accent-pink-500"
+                  />
+                  <span class="text-sm font-semibold text-ink flex-1">ฟรีเท่านั้น</span>
+                  <span class="text-base">🎁</span>
+                </label>
+              </div>
+
+              <!-- Price -->
+              <div class="mb-6">
+                <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                  ช่วงราคา (THB)
+                </label>
+                <nz-slider
+                  [nzRange]="true"
+                  [nzMin]="0"
+                  [nzMax]="1000"
+                  [nzStep]="50"
+                  [ngModel]="priceRange()"
+                  (ngModelChange)="setPriceRange($event)"
+                />
+                <div class="flex justify-between text-xs text-ink-soft mt-2">
+                  <span>฿{{ catalog.filters().minPrice }}</span>
+                  <span>฿{{ catalog.filters().maxPrice }}</span>
+                </div>
+              </div>
+
+              <!-- Min rating -->
+              <div>
+                <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                  คะแนนรีวิวขั้นต่ำ
+                </label>
+                <div class="flex flex-col gap-1">
+                  @for (r of [4.5, 4.0, 3.5, 0]; track r) {
+                    <label
+                      class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-pink-50 cursor-pointer text-sm transition-colors"
+                    >
+                      <input
+                        type="radio"
+                        name="minRating"
+                        class="w-4 h-4 accent-pink-500"
+                        [checked]="catalog.filters().minRating === r"
+                        (change)="catalog.setFilters({ minRating: r })"
+                      />
+                      @if (r > 0) {
+                        <span class="text-pink-500">★</span>
+                        <span class="text-ink">{{ r }} ขึ้นไป</span>
+                      } @else {
+                        <span class="text-ink">ทั้งหมด</span>
+                      }
+                    </label>
+                  }
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Result -->
+          <div class="lg:col-span-9">
+            <!-- Toolbar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+              <div class="flex items-center gap-2 text-sm flex-wrap">
+                <span class="font-bold text-ink">{{ catalog.filtered().length }}</span>
+                <span class="text-ink-muted">เอกสารที่ตรงกับการค้นหา</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-ink-muted">เรียงตาม</span>
+                <nz-select
+                  [ngModel]="catalog.filters().sort"
+                  (ngModelChange)="catalog.setFilters({ sort: $event })"
+                  style="min-width: 180px"
+                >
+                  <nz-option nzValue="popular" nzLabel="ความนิยม" />
+                  <nz-option nzValue="newest" nzLabel="ล่าสุด" />
+                  <nz-option nzValue="rating" nzLabel="คะแนนรีวิวสูงสุด" />
+                  <nz-option nzValue="price-asc" nzLabel="ราคา ต่ำ → สูง" />
+                  <nz-option nzValue="price-desc" nzLabel="ราคา สูง → ต่ำ" />
+                </nz-select>
+              </div>
+            </div>
+
+            <!-- Active chips -->
+            @if (anyActive()) {
+              <div class="flex flex-wrap gap-2 mb-5">
+                @for (id of catalog.filters().categoryIds; track id) {
+                  @if (catalog.getCategoryById(id); as c) {
+                    <button class="pill-pink" (click)="toggleCategory(id)">
+                      {{ c.icon }} {{ c.name }} <app-icon name="x" [size]="11" />
+                    </button>
+                  }
+                }
+                @for (id of catalog.filters().subcategoryIds; track id) {
+                  @if (catalog.getSubcategoryById(id); as sub) {
+                    <button class="pill bg-pink-200 text-pink-800" (click)="toggleSubcategory(id)">
+                      {{ sub.icon }} {{ sub.name }} <app-icon name="x" [size]="11" />
+                    </button>
+                  }
+                }
+                @for (g of catalog.filters().gradeLevels; track g) {
+                  <button class="pill-pink" (click)="toggleGrade(g)">
+                    {{ gradeLabel(g) }} <app-icon name="x" [size]="11" />
+                  </button>
+                }
+                @for (rt of catalog.filters().resourceTypes; track rt) {
+                  <button class="pill-pink" (click)="toggleResourceType(rt)">
+                    {{ resourceLabel(rt) }} <app-icon name="x" [size]="11" />
+                  </button>
+                }
+                @for (s of catalog.filters().standards; track s) {
+                  <button class="pill-pink" (click)="toggleStandard(s)">
+                    {{ s }} <app-icon name="x" [size]="11" />
+                  </button>
+                }
+                @for (f of catalog.filters().formats; track f) {
+                  <button class="pill-pink uppercase" (click)="toggleFormat(f)">
+                    {{ f }} <app-icon name="x" [size]="11" />
+                  </button>
+                }
+                @if (catalog.filters().freeOnly) {
+                  <button class="pill-pink" (click)="catalog.setFilters({ freeOnly: false })">
+                    🎁 ฟรี <app-icon name="x" [size]="11" />
+                  </button>
+                }
+                <button class="pill bg-rose-100 text-rose-600 hover:bg-rose-200" (click)="reset()">
+                  ล้างทั้งหมด
+                </button>
+              </div>
+            }
+
+            <!-- Grid -->
+            @if (catalog.filtered().length === 0) {
+              <app-empty-state
+                emoji="🔎"
+                title="ไม่พบเอกสารที่ตรงกัน"
+                description="ลองปรับตัวกรองหรือล้างคำค้นหาดูครับ"
+              >
+                <button class="btn-pink mt-4" (click)="reset()">ล้างตัวกรอง</button>
+              </app-empty-state>
+            } @else {
+              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                @for (doc of catalog.filtered(); track doc.id) {
+                  <app-document-card [doc]="doc" />
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>

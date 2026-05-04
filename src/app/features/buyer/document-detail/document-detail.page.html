@@ -1,0 +1,508 @@
+@if (doc(); as d) {
+      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
+          <a routerLink="/" class="hover:text-pink-600">หน้าแรก</a>
+          <app-icon name="chevron-right" [size]="14" />
+          <a routerLink="/marketplace" class="hover:text-pink-600">ตลาด</a>
+          <app-icon name="chevron-right" [size]="14" />
+          @if (catalog.getCategoryById(d.categoryId); as c) {
+            <a [routerLink]="['/category', c.slug]" class="hover:text-pink-600">{{ c.name }}</a>
+            <app-icon name="chevron-right" [size]="14" />
+            @if (d.subcategoryId && catalog.getSubcategoryById(d.subcategoryId); as sub) {
+              <a
+                [routerLink]="['/category', c.slug]"
+                [queryParams]="{ sub: sub.slug }"
+                class="hover:text-pink-600"
+              >
+                {{ sub.name }}
+              </a>
+              <app-icon name="chevron-right" [size]="14" />
+            }
+          }
+          <span class="text-ink line-clamp-1 max-w-xs">{{ d.title }}</span>
+        </nav>
+
+        <div class="grid lg:grid-cols-12 gap-8">
+          <!-- Left: gallery + tabs -->
+          <div class="lg:col-span-7">
+            <!-- Cover -->
+            <div class="relative card-soft overflow-hidden">
+              <div class="aspect-[4/5] relative">
+                <img
+                  [src]="d.gallery[selectedImage()]"
+                  [alt]="d.title"
+                  class="absolute inset-0 w-full h-full object-cover"
+                />
+                @if (d.watermarkEnabled) {
+                  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="text-white/30 text-6xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
+                      preview
+                    </div>
+                  </div>
+                }
+                <span class="absolute top-4 left-4 pill bg-white/90 backdrop-blur uppercase text-[11px] font-bold text-ink">
+                  <app-icon name="doc" [size]="12" /> {{ d.format }}
+                </span>
+                @if (d.isFree) {
+                  <span class="absolute top-4 right-4 pill bg-emerald-500 text-white shadow-soft">
+                    🆓 ฟรี
+                  </span>
+                } @else if (d.discountPercent) {
+                  <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
+                    -{{ d.discountPercent }}% ส่วนลด
+                  </span>
+                }
+              </div>
+              <div class="flex gap-2 p-3 bg-white">
+                @for (img of d.gallery; track img; let i = $index) {
+                  <button
+                    type="button"
+                    class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all"
+                    [class.border-pink-500]="selectedImage() === i"
+                    [class.border-transparent]="selectedImage() !== i"
+                    (click)="selectedImage.set(i)"
+                  >
+                    <img [src]="img" class="w-full h-full object-cover" alt="" />
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="mt-8">
+              <nz-tabs>
+                <nz-tab nzTitle="รายละเอียด">
+                  <div class="prose prose-sm max-w-none mt-4">
+                    <p class="text-ink-soft leading-relaxed">{{ d.description }}</p>
+
+                    <!-- Resource info grid (TpT-style) -->
+                    <ul class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
+                        <span class="text-2xl">{{ resourceIcon(d.resourceType) }}</span>
+                        <div class="text-sm">
+                          <div class="text-xs text-ink-muted">ประเภท</div>
+                          <div class="font-bold text-ink">{{ resourceLabel(d.resourceType) }}</div>
+                        </div>
+                      </li>
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
+                        <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                          <app-icon name="user" [size]="16" />
+                        </span>
+                        <div class="text-sm">
+                          <div class="text-xs text-ink-muted">ระดับชั้น</div>
+                          <div class="font-bold text-ink">
+                            {{ gradeLabels(d.gradeLevels) }}
+                          </div>
+                        </div>
+                      </li>
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
+                        <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                          <app-icon name="doc" [size]="16" />
+                        </span>
+                        <div class="text-sm">
+                          <div class="text-xs text-ink-muted">รูปแบบ / หน้า</div>
+                          <div class="font-bold text-ink uppercase">{{ d.format }} · {{ d.pages }} หน้า</div>
+                        </div>
+                      </li>
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
+                        <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                          <app-icon name="globe" [size]="16" />
+                        </span>
+                        <div class="text-sm">
+                          <div class="text-xs text-ink-muted">ภาษา</div>
+                          <div class="font-bold text-ink">{{ d.language === 'th' ? 'ไทย' : 'อังกฤษ' }}</div>
+                        </div>
+                      </li>
+                      @if (d.standards?.length) {
+                        <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50 sm:col-span-2">
+                          <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                            <app-icon name="flag" [size]="16" />
+                          </span>
+                          <div class="text-sm flex-1">
+                            <div class="text-xs text-ink-muted">หลักสูตร / สอบ</div>
+                            <div class="flex gap-1.5 mt-1 flex-wrap">
+                              @for (s of d.standards!; track s) {
+                                <span class="pill bg-white text-pink-600 !text-[11px]">{{ s }}</span>
+                              }
+                            </div>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </nz-tab>
+
+                <nz-tab nzTitle="✨ AI Summary">
+                  <div class="mt-4 card-cream p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                      <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500 text-white flex items-center justify-center">
+                        <app-icon name="sparkle" [size]="18" />
+                      </span>
+                      <div>
+                        <div class="text-sm font-bold text-ink">สรุป 3 ข้อโดย AI</div>
+                        <div class="text-xs text-ink-muted">วิเคราะห์เนื้อหาเอกสารโดยอัตโนมัติ — ใช้เพื่อตัดสินใจซื้อได้ง่ายขึ้น</div>
+                      </div>
+                    </div>
+                    <ul class="space-y-3">
+                      @for (s of d.aiSummary ?? []; track s; let i = $index) {
+                        <li class="flex gap-3">
+                          <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-white text-pink-600 flex items-center justify-center text-xs font-bold mt-0.5">
+                            {{ i + 1 }}
+                          </span>
+                          <span class="text-sm text-ink leading-relaxed">{{ s }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </nz-tab>
+
+                <nz-tab [nzTitle]="'รีวิว (' + d.reviews.length + ')'">
+                  <div class="mt-4">
+                    <!-- Rating summary -->
+                    <div class="flex flex-col sm:flex-row gap-6 p-6 card-cream mb-6">
+                      <div class="flex flex-col items-center sm:items-start">
+                        <div class="text-5xl font-extrabold text-ink leading-none">
+                          {{ d.rating.toFixed(1) }}
+                        </div>
+                        <app-rating-stars [value]="d.rating" [size]="18" [showValue]="false" />
+                        <div class="text-xs text-ink-muted mt-2">
+                          {{ d.reviewCount | compact }} รีวิว
+                        </div>
+                      </div>
+                      <div class="flex-1 flex flex-col gap-1.5">
+                        @for (b of ratingBreakdown(); track b.score) {
+                          <div class="flex items-center gap-3 text-sm">
+                            <span class="text-ink-muted w-6">{{ b.score }}★</span>
+                            <div class="flex-1 h-2 rounded-full bg-pink-100 overflow-hidden">
+                              <div class="h-full bg-pink-500 rounded-full" [style.width.%]="b.percent"></div>
+                            </div>
+                            <span class="text-xs text-ink-muted w-10 text-right">{{ b.percent }}%</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Review list -->
+                    @if (d.reviews.length === 0) {
+                      <app-empty-state emoji="💬" title="ยังไม่มีรีวิว" description="ซื้อแล้วเขียนรีวิวเป็นคนแรกสิ" />
+                    } @else {
+                      <ul class="flex flex-col gap-4">
+                        @for (rv of d.reviews; track rv.id) {
+                          <li class="card-soft p-5">
+                            <div class="flex items-start gap-4">
+                              <img
+                                [src]="rv.buyerAvatar"
+                                [alt]="rv.buyerName"
+                                class="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                              />
+                              <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                  <span class="text-sm font-bold text-ink">{{ rv.buyerName }}</span>
+                                  @if (rv.verified) {
+                                    <span class="pill-pink !py-0">
+                                      <app-icon name="check" [size]="11" />
+                                      ซื้อจริง
+                                    </span>
+                                  }
+                                </div>
+                                <div class="flex items-center gap-2 mb-2">
+                                  <app-rating-stars [value]="rv.rating" [size]="13" [showValue]="false" />
+                                  <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
+                                </div>
+                                <p class="text-sm text-ink-soft leading-relaxed">{{ rv.comment }}</p>
+                                <div class="flex items-center gap-4 mt-3">
+                                  <button class="text-xs text-ink-muted hover:text-pink-600 inline-flex items-center gap-1">
+                                    👍 {{ rv.helpful ?? 0 }} คนว่ามีประโยชน์
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            @if (rv.sellerReply; as reply) {
+                              <div class="mt-4 ml-15 pl-4 border-l-2 border-pink-300 flex gap-3">
+                                <img [src]="d.seller.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+                                <div class="flex-1">
+                                  <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
+                                    <span class="pill-pink !py-0 !text-[10px]">ผู้ขาย</span>
+                                    <span class="text-[11px] text-ink-muted">{{ reply.createdAt | timeAgo }}</span>
+                                  </div>
+                                  <p class="text-sm text-ink-soft leading-relaxed">{{ reply.text }}</p>
+                                </div>
+                              </div>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                </nz-tab>
+
+                <nz-tab [nzTitle]="'ถาม-ตอบ (' + (d.qna?.length ?? 0) + ')'">
+                  <div class="mt-4">
+                    <!-- Ask form -->
+                    <div class="card-cream p-5 mb-6">
+                      <h3 class="text-sm font-bold text-ink mb-2 flex items-center gap-2">
+                        <app-icon name="bell" [size]="16" className="text-pink-500" />
+                        มีคำถามถึงผู้ขาย?
+                      </h3>
+                      <p class="text-xs text-ink-muted mb-3">
+                        ผู้ขายจะตอบกลับเฉลี่ยภายใน {{ d.seller.responseHours }} ชม.
+                      </p>
+                      <div class="flex gap-2">
+                        <input class="input-soft flex-1" placeholder="เช่น: ไฟล์เป็น PDF เปิดดูบนมือถือได้ไหมครับ?" />
+                        <button class="btn-pink !px-5">
+                          <app-icon name="arrow-right" [size]="14" />
+                          ส่ง
+                        </button>
+                      </div>
+                    </div>
+
+                    @if (!d.qna?.length) {
+                      <app-empty-state emoji="💭" title="ยังไม่มีคำถาม" description="เป็นคนแรกที่ถามผู้ขายเลย!" />
+                    } @else {
+                      <ul class="flex flex-col gap-3">
+                        @for (q of d.qna!; track q.id) {
+                          <li class="card-soft p-5">
+                            <div class="flex items-start gap-3">
+                              <img [src]="q.buyerAvatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                              <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                  <span class="text-sm font-bold text-ink">{{ q.buyerName }}</span>
+                                  <span class="text-[11px] text-ink-muted">{{ q.askedAt | timeAgo }}</span>
+                                </div>
+                                <p class="text-sm text-ink leading-relaxed">{{ q.question }}</p>
+
+                                @if (q.answer; as a) {
+                                  <div class="mt-3 pl-4 border-l-2 border-pink-300 flex gap-3 items-start">
+                                    <img [src]="d.seller.avatar" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                                    <div class="flex-1">
+                                      <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
+                                        <span class="pill-pink !py-0 !text-[10px]">ผู้ขาย</span>
+                                        <span class="text-[11px] text-ink-muted">{{ a.answeredAt | timeAgo }}</span>
+                                      </div>
+                                      <p class="text-sm text-ink-soft leading-relaxed">{{ a.text }}</p>
+                                    </div>
+                                  </div>
+                                } @else {
+                                  <div class="mt-2 pill bg-amber-100 text-amber-700">
+                                    ⏳ รอผู้ขายตอบกลับ
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                </nz-tab>
+              </nz-tabs>
+            </div>
+          </div>
+
+          <!-- Right: purchase panel -->
+          <div class="lg:col-span-5">
+            <div class="sticky top-[88px] space-y-4">
+              <!-- Title + tags -->
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                  <span class="pill-pink">
+                    {{ resourceIcon(d.resourceType) }} {{ resourceLabel(d.resourceType) }}
+                  </span>
+                  @if (d.isBestseller) {
+                    <span class="pill bg-amber-400 text-amber-900">⭐ ขายดี</span>
+                  }
+                  @if (d.isEditorsPick) {
+                    <span class="pill bg-violet-500 text-white">✨ Editor's Pick</span>
+                  }
+                </div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-ink leading-tight mb-3">
+                  {{ d.title }}
+                </h1>
+                <p class="text-sm text-ink-soft leading-relaxed mb-4">
+                  {{ d.shortDescription }}
+                </p>
+                <div class="flex items-center gap-4 text-sm">
+                  <app-rating-stars [value]="d.rating" [count]="d.reviewCount" />
+                  <span class="text-ink-muted">·</span>
+                  <span class="inline-flex items-center gap-1 text-ink-soft">
+                    <app-icon name="download" [size]="14" />
+                    {{ d.downloads | compact }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Price card -->
+              <div class="card-soft p-6">
+                <div class="flex items-end gap-3 mb-5">
+                  @if (d.isFree) {
+                    <span class="text-4xl font-extrabold text-emerald-600 leading-none">ฟรี</span>
+                    <span class="text-xs text-emerald-600">ดาวน์โหลดได้ทันที</span>
+                  } @else {
+                    <span class="text-4xl font-extrabold text-ink leading-none">{{ d.price | thb }}</span>
+                    @if (d.originalPrice) {
+                      <div class="flex flex-col">
+                        <span class="text-base text-ink-muted line-through leading-none">{{ d.originalPrice | thb }}</span>
+                        <span class="text-xs text-emerald-600 font-bold mt-1">ประหยัด {{ d.discountPercent }}%</span>
+                      </div>
+                    }
+                  }
+                </div>
+
+                <div class="flex flex-col gap-3">
+                  @if (cart.has(d.id)) {
+                    <button class="btn-pink !py-3.5" disabled>
+                      <app-icon name="check" [size]="18" />
+                      อยู่ในตะกร้าแล้ว
+                    </button>
+                    <button class="btn-ghost !py-3.5" (click)="cart.openDrawer()">
+                      ดูตะกร้าสินค้า
+                    </button>
+                  } @else if (d.isFree) {
+                    <button class="btn-pink !py-3.5 text-base" (click)="downloadFree()">
+                      <app-icon name="download" [size]="18" />
+                      ดาวน์โหลดฟรีเลย
+                    </button>
+                  } @else {
+                    <button type="button" class="btn-pink !py-3.5 text-base" (click)="cart.add(d)">
+                      <app-icon name="cart" [size]="18" />
+                      เพิ่มลงตะกร้า
+                    </button>
+                    <button class="btn-ghost !py-3.5" (click)="buyNow(d.id)">
+                      ซื้อทันที
+                    </button>
+                  }
+
+                  <!-- Wishlist -->
+                  <button
+                    class="flex items-center justify-center gap-2 py-2 text-sm font-medium transition-colors"
+                    [class.text-pink-600]="wishlist.has(d.id)"
+                    [class.text-ink-muted]="!wishlist.has(d.id)"
+                    (click)="wishlist.toggle(d)"
+                  >
+                    @if (wishlist.has(d.id)) {
+                      <app-icon name="heart-fill" [size]="16" />
+                      อยู่ในรายการโปรด
+                    } @else {
+                      <app-icon name="heart" [size]="16" />
+                      บันทึกในรายการโปรด
+                    }
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-2 mt-2 pt-4 border-t border-line text-xs text-ink-muted justify-center">
+                  <app-icon name="lock" [size]="12" />
+                  <span>ชำระเงินปลอดภัยผ่าน PromptPay / บัตรเครดิต</span>
+                </div>
+              </div>
+
+              <!-- Seller card with FOLLOW -->
+              <div class="card-soft p-5">
+                <h3 class="text-sm font-bold text-ink mb-3">ผู้ขาย</h3>
+                <div class="flex items-start gap-3">
+                  <a [routerLink]="['/store', d.seller.id]">
+                    <img [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100" />
+                  </a>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <a [routerLink]="['/store', d.seller.id]" class="text-sm font-bold text-ink hover:text-pink-600">
+                        {{ d.seller.studioName }}
+                      </a>
+                      @if (d.seller.badges.includes('Verified')) {
+                        <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 text-pink-500" fill="currentColor">
+                          <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
+                          <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      }
+                    </div>
+                    <div class="text-xs text-ink-muted mb-2">โดย {{ d.seller.ownerName }}</div>
+                    <div class="flex items-center gap-3 text-xs flex-wrap mb-3">
+                      <span class="font-bold text-pink-600">★ {{ d.seller.rating }}</span>
+                      <span>·</span>
+                      <span>{{ d.seller.totalDocuments }} เอกสาร</span>
+                      <span>·</span>
+                      <span>{{ d.seller.followerCount | compact }} ฟอลโลเวอร์</span>
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        class="!py-1.5 !px-4 text-xs flex-1"
+                        [class.btn-pink]="!isFollowing()"
+                        [class.btn-ghost]="isFollowing()"
+                        (click)="follow.toggle(d.seller.id)"
+                      >
+                        @if (isFollowing()) {
+                          ✓ ติดตามอยู่
+                        } @else {
+                          + ติดตาม
+                        }
+                      </button>
+                      <a [routerLink]="['/store', d.seller.id]" class="btn-ghost !py-1.5 !px-4 text-xs">
+                        ดูร้าน
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related bundles -->
+        @if (relatedBundles().length) {
+          <section class="mt-16">
+            <h2 class="section-title mb-2">📦 ในแพ็กเกจที่คุ้มกว่า</h2>
+            <p class="text-sm text-ink-muted mb-6">เอกสารชิ้นนี้รวมอยู่ในแพ็กเกจ — ซื้อเป็นเซ็ตประหยัดกว่า</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (b of relatedBundles(); track b.id) {
+                <app-bundle-card [bundle]="b" />
+              }
+            </div>
+          </section>
+        }
+
+        <!-- More from this seller -->
+        @if (moreFromSeller().length) {
+          <section class="mt-12">
+            <header class="flex items-end justify-between mb-6">
+              <div>
+                <h2 class="section-title">เพิ่มเติมจาก {{ d.seller.studioName }}</h2>
+                <p class="section-subtitle">ผู้ซื้อเอกสารนี้มักดูชิ้นอื่นของผู้ขายคนเดียวกัน</p>
+              </div>
+              <a [routerLink]="['/store', d.seller.id]" class="text-sm text-pink-600 hover:underline font-bold">
+                ดูร้านทั้งหมด →
+              </a>
+            </header>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              @for (r of moreFromSeller(); track r.id) {
+                <app-document-card [doc]="r" />
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Related -->
+        @if (related().length) {
+          <section class="mt-12">
+            <h2 class="section-title mb-6">เอกสารที่เกี่ยวข้อง</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              @for (r of related(); track r.id) {
+                <app-document-card [doc]="r" />
+              }
+            </div>
+          </section>
+        }
+      </div>
+    } @else {
+      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+        <app-empty-state
+          emoji="📭"
+          title="ไม่พบเอกสารที่ต้องการ"
+          description="เอกสารที่คุณค้นหาอาจถูกย้ายหรือถูกลบ"
+        >
+          <a routerLink="/marketplace" class="btn-pink mt-4">กลับหน้าตลาด</a>
+        </app-empty-state>
+      </div>
+    }

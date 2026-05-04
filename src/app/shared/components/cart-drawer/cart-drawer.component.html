@@ -1,0 +1,122 @@
+<nz-drawer
+      [nzVisible]="cart.drawerOpen()"
+      nzPlacement="right"
+      [nzWidth]="420"
+      [nzClosable]="false"
+      [nzBodyStyle]="{ padding: '0' }"
+      (nzOnClose)="cart.closeDrawer()"
+    >
+      <ng-container *nzDrawerContent>
+        <div class="flex flex-col h-full bg-canvas">
+          <!-- Header -->
+          <header
+            class="flex items-center justify-between px-6 py-5 border-b border-line bg-white"
+          >
+            <div class="flex items-center gap-2.5">
+              <span
+                class="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center"
+              >
+                <app-icon name="cart" [size]="18" />
+              </span>
+              <div>
+                <h3 class="text-base font-bold text-ink">ตะกร้าสินค้า</h3>
+                <span class="text-xs text-ink-muted">
+                  {{ cart.count() }} รายการ
+                </span>
+              </div>
+            </div>
+            <button class="btn-icon" (click)="cart.closeDrawer()">
+              <app-icon name="close" [size]="18" />
+            </button>
+          </header>
+
+          <!-- Items -->
+          <div class="flex-1 overflow-y-auto px-6 py-4">
+            @if (cart.count() === 0) {
+              <app-empty-state
+                emoji="🛒"
+                title="ยังไม่มีสินค้าในตะกร้า"
+                description="ลองเลือกเอกสารจากหน้าตลาดและเพิ่มลงตะกร้าได้เลย"
+              >
+                <a routerLink="/marketplace" class="btn-pink mt-4" (click)="cart.closeDrawer()">
+                  เริ่มเลือกซื้อ
+                </a>
+              </app-empty-state>
+            } @else {
+              <ul class="flex flex-col gap-3">
+                @for (item of cart.items(); track item.document.id) {
+                  <li class="flex gap-3 p-3 bg-white rounded-2xl border border-line">
+                    <img
+                      [src]="item.document.cover"
+                      [alt]="item.document.title"
+                      class="w-16 h-20 object-cover rounded-xl flex-shrink-0"
+                    />
+                    <div class="flex-1 min-w-0 flex flex-col">
+                      <span class="text-[11px] text-ink-muted">
+                        {{ item.document.seller.studioName }}
+                      </span>
+                      <h4 class="text-sm font-semibold text-ink line-clamp-2 leading-snug">
+                        {{ item.document.title }}
+                      </h4>
+                      <div class="flex items-center justify-between mt-auto">
+                        <span class="text-sm font-bold text-pink-600">
+                          {{ item.document.price | thb }}
+                        </span>
+                        <button
+                          class="text-xs text-ink-muted hover:text-rose-500 inline-flex items-center gap-1"
+                          (click)="cart.remove(item.document.id)"
+                        >
+                          <app-icon name="trash" [size]="14" />
+                          ลบ
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <!-- Summary -->
+          @if (cart.count() > 0) {
+            <footer class="bg-white border-t border-line px-6 py-5">
+              <dl class="space-y-2 text-sm mb-4">
+                <div class="flex justify-between text-ink-soft">
+                  <dt>ยอดสินค้า</dt>
+                  <dd>{{ cart.subtotal() | thb }}</dd>
+                </div>
+                @if (cart.savings() > 0) {
+                  <div class="flex justify-between text-emerald-600">
+                    <dt>ส่วนลดรวม</dt>
+                    <dd>- {{ cart.savings() | thb }}</dd>
+                  </div>
+                }
+                <div class="flex justify-between text-ink-soft">
+                  <dt>VAT 7%</dt>
+                  <dd>{{ cart.tax() | thb }}</dd>
+                </div>
+                <div
+                  class="flex justify-between pt-3 border-t border-line text-base font-bold text-ink"
+                >
+                  <dt>ยอดที่ต้องชำระ</dt>
+                  <dd>{{ cart.total() | thb }}</dd>
+                </div>
+              </dl>
+              <div class="flex gap-3">
+                <button class="btn-ghost flex-1" (click)="cart.closeDrawer()">
+                  เลือกซื้อต่อ
+                </button>
+                <button class="btn-pink flex-1" (click)="checkout()">
+                  ชำระเงิน
+                  <app-icon name="arrow-right" [size]="16" />
+                </button>
+              </div>
+              <p class="text-[11px] text-ink-muted text-center mt-3">
+                <app-icon name="lock" [size]="11" /> ชำระเงินผ่านระบบที่ปลอดภัย —
+                PromptPay / บัตรเครดิต
+              </p>
+            </footer>
+          }
+        </div>
+      </ng-container>
+    </nz-drawer>

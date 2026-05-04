@@ -1,0 +1,56 @@
+<svg
+      [attr.viewBox]="'0 0 24 24'"
+      [attr.width]="size()"
+      [attr.height]="size()"
+      [class]="className()"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      @switch (name()) {
+        @case ('search') { <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/> }
+        @case ('cart') { <path d="M3 4h2l2.4 11.5a2 2 0 0 0 2 1.5H18a2 2 0 0 0 2-1.6L21.5 8H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/> }
+        @case ('heart') { <path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 10c0 5.6-7 10-7 10Z"/> }
+        @case ('heart-fill') { <path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 10c0 5.6-7 10-7 10Z" fill="currentColor"/> }
+        @case ('star') { <path d="m12 3 2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.4l6-.9L12 3Z" fill="currentColor"/> }
+        @case ('user') { <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/> }
+        @case ('menu') { <path d="M3 6h18M3 12h18M3 18h18"/> }
+        @case ('close') { <path d="M6 6l12 12M18 6l-12 12"/> }
+        @case ('x') { <path d="M6 6l12 12M18 6l-12 12"/> }
+        @case ('arrow-right') { <path d="M5 12h14m-6-6 6 6-6 6"/> }
+        @case ('arrow-left') { <path d="M19 12H5m6 6-6-6 6-6"/> }
+        @case ('chevron-down') { <path d="m6 9 6 6 6-6"/> }
+        @case ('chevron-right') { <path d="m9 6 6 6-6 6"/> }
+        @case ('download') { <path d="M12 4v12m0 0-4-4m4 4 4-4M5 20h14"/> }
+        @case ('upload') { <path d="M12 20V8m0 0-4 4m4-4 4 4M5 4h14"/> }
+        @case ('plus') { <path d="M12 5v14M5 12h14"/> }
+        @case ('minus') { <path d="M5 12h14"/> }
+        @case ('check') { <path d="m5 12 5 5L20 7"/> }
+        @case ('eye') { <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/> }
+        @case ('edit') { <path d="M3 21h4l11-11-4-4L3 17v4Z"/><path d="m14 6 4 4"/> }
+        @case ('trash') { <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/> }
+        @case ('filter') { <path d="M3 5h18l-7 9v6l-4-2v-4L3 5Z"/> }
+        @case ('sort') { <path d="M3 6h18M6 12h12M9 18h6"/> }
+        @case ('sparkle') { <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/> }
+        @case ('shield') { <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/> }
+        @case ('flag') { <path d="M5 3v18M5 4h12l-2 4 2 4H5"/> }
+        @case ('tag') { <path d="m20.6 13.4-7.2 7.2a2 2 0 0 1-2.8 0l-7.2-7.2a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4Z"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/> }
+        @case ('doc') { <path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v4h4M8 13h8M8 17h6"/> }
+        @case ('play') { <path d="M6 4v16l14-8L6 4Z" fill="currentColor"/> }
+        @case ('lock') { <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/> }
+        @case ('globe') { <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/> }
+        @case ('bell') { <path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9Z"/><path d="M10 21a2 2 0 0 0 4 0"/> }
+        @case ('home') { <path d="m3 11 9-8 9 8v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2v-9Z"/> }
+        @case ('dashboard') { <rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/> }
+        @case ('package') { <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/> }
+        @case ('wallet') { <rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 14h2"/> }
+        @case ('chart') { <path d="M4 19h16M7 16V9m4 7V5m4 11V11"/> }
+        @case ('gear') { <circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4.8a7 7 0 0 0-1.7-1L14 3h-4l-.7 2.5a7 7 0 0 0-1.7 1l-2.4-.8-2 3.4 2 1.5a7 7 0 0 0 0 2L3 14l2 3.4 2.4-.8a7 7 0 0 0 1.7 1L10 21h4l.7-2.5a7 7 0 0 0 1.7-1l2.4.8 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"/> }
+        @case ('logout') { <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/> }
+        @case ('mail') { <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/> }
+        @case ('phone') { <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.4 2.1L7.9 9.8a16 16 0 0 0 6.3 6.3l1.4-1.4a2 2 0 0 1 2.1-.5c.8.3 1.7.6 2.6.7a2 2 0 0 1 1.7 2Z"/> }
+        @case ('qr') { <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v7M14 20h7"/> }
+      }
+    </svg>

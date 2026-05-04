@@ -1,0 +1,26 @@
+<header class="flex items-end justify-between gap-4 mb-6">
+      <div class="flex flex-col">
+        @if (eyebrow()) {
+          <span class="text-xs font-semibold text-pink-500 tracking-[0.18em] uppercase mb-2">
+            {{ eyebrow() }}
+          </span>
+        }
+        <h2 class="section-title">{{ title() }}</h2>
+        @if (subtitle()) {
+          <p class="section-subtitle">{{ subtitle() }}</p>
+        }
+      </div>
+      @if (link()) {
+        <a
+          [routerLink]="link()"
+          class="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-pink-600 hover:text-pink-700 group"
+        >
+          {{ linkLabel() }}
+          <app-icon
+            name="arrow-right"
+            [size]="16"
+            className="transition-transform group-hover:translate-x-0.5"
+          />
+        </a>
+      }
+    </header>

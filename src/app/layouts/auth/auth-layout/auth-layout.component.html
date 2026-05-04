@@ -1,0 +1,65 @@
+<div class="min-h-screen flex items-stretch bg-canvas">
+      <!-- Left: form area (content slot) -->
+      <div class="flex-1 flex flex-col px-6 lg:px-12 py-8 max-w-xl mx-auto w-full">
+        <header class="flex items-center justify-between">
+          <app-logo />
+          <a routerLink="/" class="text-xs text-ink-muted hover:text-pink-600">
+            ← กลับสู่หน้าตลาด
+          </a>
+        </header>
+
+        <main class="flex-1 flex flex-col justify-center mt-10">
+          <ng-content />
+        </main>
+
+        <footer class="text-[11px] text-ink-muted text-center mt-6">
+          © 2026 SIRIEDUMARKET — Document Studio
+        </footer>
+      </div>
+
+      <!-- Right: marketing art -->
+      <aside
+        class="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-pink-strong items-center justify-center p-12"
+      >
+        <div class="absolute -top-32 -right-24 w-96 h-96 rounded-full bg-white/15"></div>
+        <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-white/10"></div>
+
+        <div class="relative max-w-md text-white">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] uppercase tracking-[0.2em] mb-5"
+          >
+            🌸 Welcome
+          </span>
+          <h2 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4">
+            {{ artTitle() }}
+          </h2>
+          <p class="text-pink-50 mb-10 leading-relaxed">{{ artDescription() }}</p>
+
+          <ul class="space-y-3 mb-10">
+            @for (b of artBullets(); track b.label) {
+              <li class="flex items-center gap-3">
+                <span class="w-7 h-7 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-sm">
+                  {{ b.icon }}
+                </span>
+                <span class="text-sm">{{ b.label }}</span>
+              </li>
+            }
+          </ul>
+
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <div class="text-3xl font-extrabold">12k+</div>
+              <div class="text-xs text-pink-100">เอกสาร</div>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold">3.2k</div>
+              <div class="text-xs text-pink-100">ครีเอเตอร์</div>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold">98%</div>
+              <div class="text-xs text-pink-100">รีวิวบวก</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>

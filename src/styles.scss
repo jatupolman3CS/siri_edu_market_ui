@@ -1,0 +1,248 @@
+/* ==========================================================
+   SIRIEDUMARKET — Global Stylesheet
+   Minimal Light Pink Theme
+   ========================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------- NG-ZORRO (full bundle) ---------------- */
+@import 'ng-zorro-antd/ng-zorro-antd.min.css';
+
+/* ---------------- Fonts ---------------- */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
+
+/* ---------------- CSS Variables ---------------- */
+:root {
+  --pink-50: #FFF7FA;
+  --pink-100: #FFEAF1;
+  --pink-200: #FFD6E4;
+  --pink-300: #FFB8CE;
+  --pink-400: #FF8AAF;
+  --pink-500: #F2638E;
+  --pink-600: #D94B78;
+  --pink-700: #B83864;
+
+  --ink: #2A1B22;
+  --ink-soft: #5A4751;
+  --ink-muted: #8A7A82;
+  --line: #F3E6EC;
+  --surface: #FFFFFF;
+  --canvas: #FFF7FA;
+
+  --radius-card: 2.5rem;
+  --shadow-soft: 0 4px 16px -4px rgba(242, 99, 142, 0.10);
+  --shadow-pop:  0 10px 30px -8px rgba(242, 99, 142, 0.18);
+}
+
+/* ---------------- Base ---------------- */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', system-ui, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--pink-200);
+  color: var(--ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pink-200);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pink-300);
+}
+
+/* ---------------- NG-ZORRO theme overrides ---------------- */
+.ant-btn-primary {
+  background: var(--pink-500) !important;
+  border-color: var(--pink-500) !important;
+  border-radius: 999px !important;
+  font-weight: 600;
+  box-shadow: 0 4px 16px -4px rgba(242, 99, 142, 0.4) !important;
+}
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: var(--pink-600) !important;
+  border-color: var(--pink-600) !important;
+}
+.ant-btn-default {
+  border-radius: 999px !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+  background: #fff !important;
+}
+.ant-btn-default:hover {
+  border-color: var(--pink-300) !important;
+  color: var(--pink-600) !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-input-number {
+  border-radius: 1rem !important;
+  border-color: var(--line) !important;
+  background: var(--surface) !important;
+}
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select:hover .ant-select-selector,
+.ant-input-number:hover {
+  border-color: var(--pink-300) !important;
+}
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-input-number-focused {
+  border-color: var(--pink-400) !important;
+  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.25) !important;
+}
+
+.ant-tag {
+  border-radius: 999px !important;
+  padding: 0.15rem 0.75rem !important;
+  font-weight: 500;
+  border: none !important;
+}
+
+.ant-rate-star-full .anticon,
+.ant-rate-star-half .anticon {
+  color: var(--pink-500) !important;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--pink-600) !important;
+}
+.ant-tabs-ink-bar {
+  background: var(--pink-500) !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner,
+.ant-radio-checked .ant-radio-inner {
+  background: var(--pink-500) !important;
+  border-color: var(--pink-500) !important;
+}
+
+.ant-switch-checked {
+  background: var(--pink-500) !important;
+}
+
+.ant-progress-bg {
+  background: var(--pink-500) !important;
+}
+
+.ant-pagination-item-active {
+  border-color: var(--pink-500) !important;
+}
+.ant-pagination-item-active a {
+  color: var(--pink-600) !important;
+}
+
+.ant-drawer-content {
+  border-radius: 2rem 0 0 2rem !important;
+}
+
+.ant-modal-content {
+  border-radius: 2rem !important;
+  padding: 1.5rem !important;
+}
+
+.ant-table {
+  background: transparent !important;
+}
+.ant-table-thead > tr > th {
+  background: var(--pink-50) !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--ink-soft) !important;
+  font-weight: 600 !important;
+}
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--line) !important;
+}
+.ant-table-tbody > tr:hover > td {
+  background: var(--pink-50) !important;
+}
+
+/* ---------------- Custom utility classes ---------------- */
+@layer components {
+  .card-soft {
+    @apply bg-white rounded-3xl border border-line shadow-soft;
+  }
+
+  .card-cream {
+    @apply bg-cream rounded-3xl border border-line;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .pill-pink {
+    @apply pill bg-pink-100 text-pink-700;
+  }
+
+  .pill-soft {
+    @apply pill bg-pink-50 text-ink-soft border border-line;
+  }
+
+  .btn-pink {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-semibold shadow-soft transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-line hover:border-pink-300 text-ink hover:text-pink-600 font-medium transition-all duration-200;
+  }
+
+  .btn-icon {
+    @apply inline-flex items-center justify-center w-10 h-10 rounded-full border border-line hover:border-pink-300 hover:bg-pink-50 text-ink-soft hover:text-pink-600 transition-all duration-200;
+  }
+
+  .input-soft {
+    @apply w-full px-4 py-3 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 transition-all;
+  }
+
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold text-ink tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-ink-muted mt-1;
+  }
+
+  .glass-blob {
+    background: radial-gradient(60% 60% at 50% 40%, rgba(255, 184, 206, 0.45) 0%, rgba(255, 247, 250, 0) 70%);
+  }
+}
+
+/* ---------------- Page transitions ---------------- */
+.page-enter {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,101 @@
+<div class="max-w-5xl mx-auto px-4 lg:px-6 py-8">
+      @if (showSuccess()) {
+        <div
+          class="card-soft p-6 mb-6 flex items-start gap-4 bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200"
+        >
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+            <app-icon name="check" [size]="22" />
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-ink">ชำระเงินเรียบร้อย!</h3>
+            <p class="text-sm text-ink-soft mt-1">
+              เราได้บันทึกคำสั่งซื้อของคุณแล้ว ดาวน์โหลดได้จากคลังของฉันได้เลย
+            </p>
+            <a routerLink="/library" class="btn-pink mt-3 !py-2 text-sm">
+              ไปยังคลังเอกสาร
+              <app-icon name="arrow-right" [size]="14" />
+            </a>
+          </div>
+          <button class="btn-icon" (click)="dismissSuccess()">
+            <app-icon name="close" [size]="16" />
+          </button>
+        </div>
+      }
+
+      <app-page-hero
+        eyebrow="ประวัติคำสั่งซื้อ"
+        title="คำสั่งซื้อทั้งหมดของคุณ"
+        description="ดูสถานะการชำระเงินและรายละเอียดเอกสารที่ซื้อทุกรายการ"
+      />
+
+      @if (library.orders().length === 0) {
+        <app-empty-state
+          emoji="📜"
+          title="ยังไม่มีคำสั่งซื้อ"
+          description="คำสั่งซื้อแรกของคุณจะปรากฏที่นี่"
+        >
+          <a routerLink="/marketplace" class="btn-pink mt-4">เริ่มเลือกซื้อ</a>
+        </app-empty-state>
+      } @else {
+        <div class="flex flex-col gap-4">
+          @for (o of library.orders(); track o.id) {
+            <article class="card-soft p-5">
+              <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-line">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                    <app-icon name="doc" [size]="18" />
+                  </span>
+                  <div>
+                    <div class="text-sm font-bold text-ink">{{ o.orderNumber }}</div>
+                    <div class="text-xs text-ink-muted">{{ o.createdAt | timeAgo }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span [class]="statusClass(o.status)" class="pill">
+                    {{ statusLabel(o.status) }}
+                  </span>
+                  <span class="text-sm text-ink-muted">·</span>
+                  <span class="text-base font-bold text-ink">{{ o.total | thb }}</span>
+                </div>
+              </header>
+
+              @for (item of o.items; track item.document.id) {
+                <div class="flex items-center gap-4 py-2">
+                  <img
+                    [src]="item.document.cover"
+                    [alt]="item.document.title"
+                    class="w-14 h-16 object-cover rounded-xl flex-shrink-0"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs text-ink-muted">{{ item.document.seller.studioName }}</div>
+                    <div class="text-sm font-bold text-ink line-clamp-1">{{ item.document.title }}</div>
+                    <div class="text-xs text-ink-muted uppercase">{{ item.document.format }} · {{ item.document.pages }} หน้า</div>
+                  </div>
+                  <a
+                    [routerLink]="['/document', item.document.id]"
+                    class="btn-ghost !py-2 !px-3 text-xs"
+                  >
+                    ดูสินค้า
+                  </a>
+                </div>
+              }
+
+              <footer class="flex flex-wrap items-center gap-3 pt-3 mt-2 border-t border-line text-xs text-ink-muted">
+                <span class="inline-flex items-center gap-1">
+                  <app-icon name="qr" [size]="12" />
+                  ชำระผ่าน {{ paymentLabel(o.paymentMethod) }}
+                </span>
+                <span>·</span>
+                <a routerLink="/library" class="text-pink-600 hover:underline font-semibold">
+                  ดาวน์โหลด
+                </a>
+                <span>·</span>
+                <a href="#" class="text-pink-600 hover:underline font-semibold">
+                  ใบเสร็จ
+                </a>
+              </footer>
+            </article>
+          }
+        </div>
+      }
+    </div>

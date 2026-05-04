@@ -1,0 +1,128 @@
+<app-auth-layout
+      artTitle="เกือบเสร็จแล้ว!<br>เช็คอีเมลของคุณ 📨"
+      artDescription="เราส่งรหัส 6 หลักไปยังอีเมลของคุณ — กรอกที่นี่เพื่อยืนยันบัญชี"
+      [artBullets]="[
+        { icon: '⏱️', label: 'รหัสมีอายุ 15 นาที' },
+        { icon: '🔁', label: 'ขอรหัสใหม่ได้ตลอดเวลา' },
+        { icon: '✅', label: 'หลังยืนยันใช้งานได้ทันที' }
+      ]"
+    >
+      <div class="max-w-md w-full mx-auto">
+        @if (auth.isPendingVerification() && auth.pending(); as p) {
+          <span class="pill-pink mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
+            ขั้นตอนสุดท้าย
+          </span>
+          <h1 class="text-3xl font-extrabold text-ink mb-2 leading-tight">
+            ยืนยันอีเมลของคุณ
+          </h1>
+          <p class="text-sm text-ink-soft mb-2">
+            เราส่งรหัสยืนยัน 6 หลักไปยัง
+          </p>
+          <p class="text-base font-bold text-ink mb-6">
+            <app-icon name="mail" [size]="14" className="inline-block text-pink-500 align-middle mr-1" />
+            {{ p.email }}
+          </p>
+
+          <!-- Demo only: show the mock code -->
+          <div class="card-cream p-4 mb-6 flex items-start gap-3">
+            <span class="text-xl">💡</span>
+            <div class="text-xs text-ink-soft leading-relaxed">
+              <b class="text-ink">โหมดเดโม่:</b>
+              เนื่องจากยังไม่มีระบบส่งอีเมลจริง คุณสามารถใช้รหัสนี้ได้เลย —
+              <button
+                type="button"
+                class="font-mono font-bold text-pink-600 ml-1 hover:underline"
+                (click)="autofill()"
+              >
+                {{ auth.peekCode() }}
+              </button>
+              <span class="text-ink-muted">(คลิกเพื่อกรอกอัตโนมัติ)</span>
+            </div>
+          </div>
+
+          <!-- 6-digit code -->
+          <form (ngSubmit)="onSubmit()" class="space-y-5">
+            <div>
+              <label class="text-xs font-semibold text-ink-soft mb-3 block">
+                รหัสยืนยัน 6 หลัก
+              </label>
+              <div class="flex gap-2 justify-between">
+                @for (d of digits(); track $index; let i = $index) {
+                  <input
+                    #digit
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="1"
+                    [value]="d"
+                    (input)="onDigitInput(i, $event)"
+                    (keydown)="onKeydown(i, $event)"
+                    (paste)="onPaste($event)"
+                    class="w-12 h-14 text-center text-2xl font-bold rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                  />
+                }
+              </div>
+            </div>
+
+            @if (error()) {
+              <div class="px-4 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-sm flex items-center gap-2">
+                <app-icon name="flag" [size]="14" />
+                {{ error() }}
+              </div>
+            }
+
+            <button
+              type="submit"
+              class="btn-pink w-full !py-3.5 text-base"
+              [disabled]="!fullCode() || loading()"
+            >
+              @if (loading()) {
+                <span class="inline-block animate-spin">✦</span>
+                กำลังตรวจสอบ…
+              } @else {
+                ยืนยันรหัส
+                <app-icon name="check" [size]="16" />
+              }
+            </button>
+          </form>
+
+          <!-- Resend -->
+          <div class="text-center mt-6 text-sm">
+            <span class="text-ink-muted">ยังไม่ได้รับรหัส? </span>
+            @if (cooldown() > 0) {
+              <span class="text-ink-muted">ขอใหม่ใน {{ cooldown() }}s</span>
+            } @else {
+              <button
+                type="button"
+                class="text-pink-600 font-bold hover:underline"
+                (click)="resend()"
+              >
+                ส่งรหัสใหม่
+              </button>
+            }
+          </div>
+
+          <p class="text-[11px] text-ink-muted text-center mt-6">
+            กรอกอีเมลผิด?
+            <a [routerLink]="['/auth/register']" class="text-pink-600 hover:underline font-bold">
+              กลับไปแก้ไข
+            </a>
+          </p>
+        } @else {
+          <!-- No pending session -->
+          <div class="text-center">
+            <div class="w-20 h-20 mx-auto rounded-3xl bg-pink-100 flex items-center justify-center text-4xl mb-5">
+              🤔
+            </div>
+            <h1 class="text-2xl font-extrabold text-ink mb-2">ไม่พบข้อมูลการสมัคร</h1>
+            <p class="text-sm text-ink-soft mb-6">
+              คุณอาจยังไม่ได้สมัครสมาชิก หรือลิงก์นี้หมดอายุแล้ว
+            </p>
+            <a routerLink="/auth/register" class="btn-pink">
+              สมัครสมาชิก
+              <app-icon name="arrow-right" [size]="16" />
+            </a>
+          </div>
+        }
+      </div>
+    </app-auth-layout>

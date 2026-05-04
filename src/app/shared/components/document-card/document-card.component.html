@@ -1,0 +1,155 @@
+<article
+      class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1"
+    >
+      <!-- Cover -->
+      <a
+        [routerLink]="['/document', doc().id]"
+        class="block relative aspect-[4/5] bg-pink-50 overflow-hidden rounded-3xl"
+      >
+        <img
+          [src]="doc().cover"
+          [alt]="doc().title"
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          loading="lazy"
+        />
+        <!-- Gradient overlay -->
+        <div
+          class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"
+        ></div>
+
+        <!-- Top badges -->
+        <div class="absolute top-3 left-3 flex flex-col gap-2">
+          @if (doc().isFree) {
+            <span class="pill bg-emerald-500 text-white shadow-soft">
+              🆓 ฟรี
+            </span>
+          } @else if (doc().discountPercent) {
+            <span class="pill bg-pink-500 text-white shadow-soft">
+              -{{ doc().discountPercent }}%
+            </span>
+          }
+          @if (doc().isBestseller) {
+            <span class="pill bg-amber-400 text-amber-900 shadow-soft">
+              ⭐ ขายดี
+            </span>
+          }
+          @if (doc().isEditorsPick) {
+            <span class="pill bg-violet-500 text-white shadow-soft">
+              ✨ Editor's Pick
+            </span>
+          }
+        </div>
+
+        <!-- Format badge (top-right above wishlist) -->
+        <span
+          class="absolute top-3 right-12 pill bg-white/90 backdrop-blur uppercase text-[10px] font-bold tracking-wider"
+        >
+          {{ doc().format }}
+        </span>
+
+        <!-- Wishlist -->
+        <button
+          type="button"
+          class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur hover:bg-white shadow-soft flex items-center justify-center transition-colors"
+          [class.!text-pink-500]="wishlist.has(doc().id)"
+          [class.text-ink-soft]="!wishlist.has(doc().id)"
+          (click)="toggleWishlist($event)"
+          [attr.aria-label]="wishlist.has(doc().id) ? 'นำออกจากรายการโปรด' : 'เพิ่มลงรายการโปรด'"
+        >
+          @if (wishlist.has(doc().id)) {
+            <app-icon name="heart-fill" [size]="18" />
+          } @else {
+            <app-icon name="heart" [size]="18" />
+          }
+        </button>
+
+        <!-- Quick View (appears on hover) -->
+        <button
+          type="button"
+          class="absolute bottom-3 right-3 hidden group-hover:inline-flex items-center gap-1.5 pill bg-ink/85 backdrop-blur text-white hover:bg-ink"
+          (click)="openQuickView($event)"
+        >
+          <app-icon name="eye" [size]="12" />
+          ดูเร็วๆ
+        </button>
+
+        <!-- Watermark indicator (only on left bottom for paid) -->
+        @if (doc().watermarkEnabled) {
+          <div
+            class="absolute bottom-3 left-3 pill bg-white/90 backdrop-blur text-ink-soft text-[10px]"
+          >
+            <app-icon name="shield" [size]="11" /> Watermark
+          </div>
+        }
+      </a>
+
+      <!-- Body -->
+      <div class="p-4 pt-3 flex flex-col gap-2">
+        <!-- Resource type + Seller -->
+        <div class="flex items-center gap-1.5 text-[11px] text-ink-muted">
+          <span class="pill-soft !py-0.5 !text-[10px] !bg-pink-50 !text-pink-700">
+            {{ resourceIcon() }} {{ resourceLabel() }}
+          </span>
+          <span class="truncate ml-auto flex items-center gap-1">
+            <img
+              [src]="doc().seller.avatar"
+              class="w-4 h-4 rounded-full object-cover"
+              [alt]="doc().seller.studioName"
+            />
+            <span class="truncate">{{ doc().seller.studioName }}</span>
+          </span>
+        </div>
+
+        <a [routerLink]="['/document', doc().id]" class="block">
+          <h3
+            class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 group-hover:text-pink-600 transition-colors"
+          >
+            {{ doc().title }}
+          </h3>
+        </a>
+
+        <div class="flex items-center gap-3 text-xs text-ink-muted">
+          <app-rating-stars
+            [value]="doc().rating"
+            [count]="doc().reviewCount"
+            [size]="12"
+          />
+          <span class="inline-flex items-center gap-1">
+            <app-icon name="download" [size]="12" />
+            {{ doc().downloads | compact }}
+          </span>
+        </div>
+
+        <div class="flex items-end justify-between mt-2">
+          <div class="flex items-baseline gap-2">
+            @if (doc().isFree) {
+              <span class="text-lg font-extrabold text-emerald-600">ฟรี</span>
+            } @else {
+              <span class="text-lg font-extrabold text-ink">
+                {{ doc().price | thb }}
+              </span>
+              @if (doc().originalPrice) {
+                <span class="text-xs text-ink-muted line-through">
+                  {{ doc().originalPrice! | thb }}
+                </span>
+              }
+            }
+          </div>
+          <button
+            type="button"
+            class="btn-icon"
+            [class.!bg-pink-500]="inCart()"
+            [class.!text-white]="inCart()"
+            [class.!border-pink-500]="inCart()"
+            [attr.aria-label]="inCart() ? 'In cart' : 'Add to cart'"
+            (click)="addToCart($event)"
+          >
+            @if (inCart()) {
+              <app-icon name="check" [size]="18" />
+            } @else {
+              <app-icon name="cart" [size]="18" />
+            }
+          </button>
+        </div>
+      </div>
+    </article>

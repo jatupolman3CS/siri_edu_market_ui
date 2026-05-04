@@ -1,0 +1,32 @@
+<span class="inline-flex items-center gap-1.5">
+      <span class="inline-flex">
+        @for (i of fives; track i) {
+          <svg
+            viewBox="0 0 24 24"
+            [attr.width]="size()"
+            [attr.height]="size()"
+            fill="none"
+            class="text-pink-500"
+          >
+            <defs>
+              <linearGradient [attr.id]="'g' + i + uid">
+                <stop offset="0%" stop-color="currentColor" />
+                <stop [attr.offset]="fill(i) + '%'" stop-color="currentColor" />
+                <stop [attr.offset]="fill(i) + '%'" stop-color="rgba(242,99,142,0.18)" />
+                <stop offset="100%" stop-color="rgba(242,99,142,0.18)" />
+              </linearGradient>
+            </defs>
+            <path
+              d="m12 3 2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.4l6-.9L12 3Z"
+              [attr.fill]="'url(#g' + i + uid + ')'"
+            />
+          </svg>
+        }
+      </span>
+      @if (showValue()) {
+        <span class="text-sm font-semibold text-ink">{{ value().toFixed(1) }}</span>
+      }
+      @if (count() != null) {
+        <span class="text-xs text-ink-muted">({{ count() }})</span>
+      }
+    </span>

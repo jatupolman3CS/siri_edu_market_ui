@@ -1,0 +1,130 @@
+<div class="max-w-6xl">
+      <header class="mb-8">
+        <h1 class="text-3xl font-extrabold text-ink mb-1">ภาพรวมแพลตฟอร์ม 🛡️</h1>
+        <p class="text-sm text-ink-soft">
+          ตรวจสอบสถานะระบบ ยอดขายรวม และเอกสารที่รออนุมัติ
+        </p>
+      </header>
+
+      <!-- Stats -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <app-stat-card
+          label="GMV เดือนนี้"
+          [value]="admin.totalRevenue() | thb"
+          icon="💎"
+          trend="+24%"
+        />
+        <app-stat-card
+          label="ค่าธรรมเนียม"
+          [value]="admin.totalFees() | thb"
+          icon="💰"
+          trend="+24%"
+        />
+        <app-stat-card
+          label="ธุรกรรมสำเร็จ"
+          [value]="admin.successCount() + ' รายการ'"
+          icon="✅"
+        />
+        <app-stat-card
+          label="คืนเงิน"
+          [value]="admin.refundCount() + ' รายการ'"
+          icon="↩️"
+          trend="-12%"
+        />
+      </section>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Pending approvals -->
+        <section class="lg:col-span-2 card-soft p-6">
+          <header class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-ink">เอกสารที่รออนุมัติ</h2>
+              <p class="text-xs text-ink-muted mt-1">
+                {{ catalog.pending().length }} รายการ — เฉลี่ยอนุมัติภายใน 18 ชม.
+              </p>
+            </div>
+            <a routerLink="/admin/approval" class="text-sm text-pink-600 hover:underline font-semibold">
+              ดูทั้งหมด →
+            </a>
+          </header>
+
+          <ul class="divide-y divide-line">
+            @for (d of catalog.pending().slice(0, 5); track d.id) {
+              <li class="py-3 flex items-center gap-4">
+                <img [src]="d.cover" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" alt="" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
+                  <div class="text-xs text-ink-muted mt-0.5 flex items-center gap-2">
+                    <span>{{ d.seller.studioName }}</span>
+                    <span>·</span>
+                    <span>{{ d.createdAt | timeAgo }}</span>
+                    <span>·</span>
+                    <span class="uppercase">{{ d.format }}</span>
+                  </div>
+                </div>
+                <a [routerLink]="['/admin/approval']" class="btn-pink !py-2 !px-4 text-xs">
+                  ตรวจสอบ
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- System health -->
+        <section class="card-soft p-6">
+          <h2 class="text-lg font-bold text-ink mb-1">สถานะระบบ</h2>
+          <p class="text-xs text-ink-muted mb-5">ทุกบริการทำงานปกติ</p>
+          <ul class="space-y-3">
+            @for (s of services; track s.name) {
+              <li class="flex items-center gap-3">
+                <span
+                  class="w-2.5 h-2.5 rounded-full"
+                  [class.bg-emerald-500]="s.status === 'ok'"
+                  [class.bg-amber-500]="s.status === 'warn'"
+                  [class.bg-rose-500]="s.status === 'down'"
+                ></span>
+                <div class="flex-1">
+                  <div class="text-sm font-medium text-ink">{{ s.name }}</div>
+                  <div class="text-xs text-ink-muted">{{ s.note }}</div>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <!-- Recent transactions -->
+      <section class="card-soft p-6 mt-6">
+        <header class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-bold text-ink">ธุรกรรมล่าสุด</h2>
+          <a routerLink="/admin/transactions" class="text-sm text-pink-600 hover:underline font-semibold">
+            ดูทั้งหมด →
+          </a>
+        </header>
+
+        <table class="w-full">
+          <thead class="bg-pink-50">
+            <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+              <th class="px-5 py-3 font-semibold">เลขคำสั่งซื้อ</th>
+              <th class="px-5 py-3 font-semibold">ผู้ซื้อ</th>
+              <th class="px-5 py-3 font-semibold">เอกสาร</th>
+              <th class="px-5 py-3 font-semibold">ยอด</th>
+              <th class="px-5 py-3 font-semibold">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of admin.transactions().slice(0, 5); track t.id) {
+              <tr class="border-t border-line">
+                <td class="px-5 py-3 text-sm text-ink font-mono">{{ t.orderNumber }}</td>
+                <td class="px-5 py-3 text-sm text-ink">{{ t.buyerName }}</td>
+                <td class="px-5 py-3 text-sm text-ink line-clamp-1 max-w-xs">{{ t.documentTitle }}</td>
+                <td class="px-5 py-3 text-sm font-bold text-ink whitespace-nowrap">{{ t.amount | thb }}</td>
+                <td class="px-5 py-3">
+                  <span class="pill" [class]="badgeClass(t.status)">{{ statusLabel(t.status) }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    </div>

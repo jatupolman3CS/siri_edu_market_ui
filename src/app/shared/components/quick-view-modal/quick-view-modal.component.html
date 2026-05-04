@@ -1,0 +1,157 @@
+<nz-modal
+      [nzVisible]="!!quickView.doc()"
+      [nzFooter]="null"
+      [nzClosable]="false"
+      [nzWidth]="900"
+      [nzCentered]="true"
+      [nzBodyStyle]="{ padding: '0' }"
+      (nzOnCancel)="quickView.close()"
+    >
+      <ng-container *nzModalContent>
+        @if (quickView.doc(); as d) {
+          <div class="grid md:grid-cols-2 overflow-hidden rounded-3xl">
+            <!-- Left: cover -->
+            <div class="relative aspect-[4/5] md:aspect-auto bg-pink-50 overflow-hidden">
+              <img
+                [src]="d.cover"
+                [alt]="d.title"
+                class="absolute inset-0 w-full h-full object-cover"
+              />
+              @if (d.watermarkEnabled) {
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div class="text-white/30 text-5xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
+                    preview
+                  </div>
+                </div>
+              }
+              <div class="absolute top-4 left-4 flex flex-col gap-2">
+                @if (d.isFree) {
+                  <span class="pill bg-emerald-500 text-white">🆓 ฟรี</span>
+                } @else if (d.discountPercent) {
+                  <span class="pill bg-pink-500 text-white">-{{ d.discountPercent }}%</span>
+                }
+                @if (d.isBestseller) {
+                  <span class="pill bg-amber-400 text-amber-900">⭐ ขายดี</span>
+                }
+              </div>
+            </div>
+
+            <!-- Right: info -->
+            <div class="p-6 md:p-8 flex flex-col bg-white">
+              <header class="flex items-start justify-between mb-4">
+                <span class="pill-pink">
+                  {{ resourceLabel(d.resourceType) }}
+                </span>
+                <button class="btn-icon" (click)="quickView.close()">
+                  <app-icon name="close" [size]="18" />
+                </button>
+              </header>
+
+              <h2 class="text-xl md:text-2xl font-extrabold text-ink leading-tight mb-2">
+                {{ d.title }}
+              </h2>
+              <p class="text-sm text-ink-soft leading-relaxed mb-4 line-clamp-3">
+                {{ d.shortDescription }}
+              </p>
+
+              <div class="flex items-center gap-4 mb-4 text-sm">
+                <app-rating-stars [value]="d.rating" [count]="d.reviewCount" />
+                <span class="text-ink-muted">·</span>
+                <span class="inline-flex items-center gap-1 text-ink-soft">
+                  <app-icon name="download" [size]="14" />
+                  {{ d.downloads | compact }}
+                </span>
+              </div>
+
+              <!-- AI Summary preview -->
+              @if (d.aiSummary?.length) {
+                <div class="card-cream p-4 mb-4">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-pink-600 mb-2">
+                    <app-icon name="sparkle" [size]="12" />
+                    AI สรุป
+                  </div>
+                  <ul class="space-y-1.5">
+                    @for (s of d.aiSummary!.slice(0, 2); track s) {
+                      <li class="text-xs text-ink-soft leading-relaxed line-clamp-2">
+                        • {{ s }}
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- Specs -->
+              <dl class="grid grid-cols-2 gap-3 text-xs mb-5">
+                <div class="flex items-center gap-2">
+                  <app-icon name="doc" [size]="14" className="text-pink-500" />
+                  <span class="text-ink-soft uppercase">{{ d.format }} · {{ d.pages }}p</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <app-icon name="globe" [size]="14" className="text-pink-500" />
+                  <span class="text-ink-soft">
+                    {{ d.language === 'th' ? 'ไทย' : 'English' }}
+                  </span>
+                </div>
+                @for (g of d.gradeLevels.slice(0, 2); track g) {
+                  <div class="flex items-center gap-2">
+                    <app-icon name="user" [size]="14" className="text-pink-500" />
+                    <span class="text-ink-soft">{{ gradeLabel(g) }}</span>
+                  </div>
+                }
+                <div class="flex items-center gap-2">
+                  <app-icon name="eye" [size]="14" className="text-pink-500" />
+                  <span class="text-ink-soft">พรีวิว {{ d.previewPages }} หน้า</span>
+                </div>
+              </dl>
+
+              <!-- Price -->
+              <div class="flex items-baseline gap-2 mb-5">
+                @if (d.isFree) {
+                  <span class="text-3xl font-extrabold text-emerald-600">ฟรี</span>
+                } @else {
+                  <span class="text-3xl font-extrabold text-ink">{{ d.price | thb }}</span>
+                  @if (d.originalPrice) {
+                    <span class="text-base text-ink-muted line-through">{{ d.originalPrice | thb }}</span>
+                  }
+                }
+              </div>
+
+              <!-- Actions -->
+              <div class="flex gap-3 mt-auto">
+                <button
+                  class="btn-icon"
+                  [class.!text-pink-500]="wishlist.has(d.id)"
+                  (click)="wishlist.toggle(d)"
+                  title="รายการโปรด"
+                >
+                  @if (wishlist.has(d.id)) {
+                    <app-icon name="heart-fill" [size]="18" />
+                  } @else {
+                    <app-icon name="heart" [size]="18" />
+                  }
+                </button>
+                @if (cart.has(d.id)) {
+                  <button class="btn-pink flex-1" disabled>
+                    <app-icon name="check" [size]="16" />
+                    อยู่ในตะกร้าแล้ว
+                  </button>
+                } @else {
+                  <button class="btn-pink flex-1" (click)="addToCart()">
+                    <app-icon name="cart" [size]="16" />
+                    เพิ่มลงตะกร้า
+                  </button>
+                }
+                <a
+                  [routerLink]="['/document', d.id]"
+                  class="btn-ghost"
+                  (click)="quickView.close()"
+                >
+                  ดูเต็ม
+                  <app-icon name="arrow-right" [size]="14" />
+                </a>
+              </div>
+            </div>
+          </div>
+        }
+      </ng-container>
+    </nz-modal>

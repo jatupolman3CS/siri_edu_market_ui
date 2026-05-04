@@ -1,0 +1,393 @@
+<!-- ===================== HERO ===================== -->
+    <section class="relative max-w-7xl mx-auto px-4 lg:px-6 pt-8 pb-12">
+      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink border border-line p-8 md:p-14">
+        <div class="absolute -top-32 -right-24 w-96 h-96 rounded-full glass-blob"></div>
+        <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full glass-blob opacity-60"></div>
+
+        <div class="relative grid lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-7">
+            <span class="pill-pink mb-5 animate-fade-in">
+              <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
+              เอกสารใหม่ + 248 รายการในเดือนนี้
+            </span>
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-ink leading-[1.05] mb-5">
+              เอกสารคุณภาพ <br />
+              จากครีเอเตอร์ตัวจริง
+              <span class="block text-pink-500">ในที่เดียว.</span>
+            </h1>
+            <p class="text-base md:text-lg text-ink-soft max-w-xl mb-8 leading-relaxed">
+              ตลาดกลางสำหรับสรุปบทเรียน เทมเพลต และเอกสารวิชาการ
+              พร้อมระบบลายน้ำป้องกันลิขสิทธิ์
+              และดาวน์โหลดได้ทันทีหลังชำระเงิน
+            </p>
+
+            <!-- Hero search -->
+            <form class="relative max-w-xl mb-6" (ngSubmit)="goSearch($event)">
+              <span class="absolute left-5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                <app-icon name="search" [size]="20" />
+              </span>
+              <input
+                name="q"
+                placeholder="ลองค้นหา: 'สรุปคณิต ม.ปลาย', 'Pitch Deck', 'TOEIC'…"
+                class="w-full pl-14 pr-32 py-4 rounded-full bg-white shadow-soft border border-line focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-base"
+              />
+              <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 btn-pink !px-5 !py-2.5">
+                ค้นหา
+              </button>
+            </form>
+
+            <!-- Quick chips -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-ink-muted mr-1">ฮิตตอนนี้:</span>
+              @for (q of quickSearches; track q) {
+                <a
+                  [routerLink]="['/marketplace']"
+                  [queryParams]="{ q }"
+                  class="pill-soft hover:!bg-white hover:!border-pink-300 hover:!text-pink-600"
+                >
+                  {{ q }}
+                </a>
+              }
+            </div>
+
+            <!-- Trust stats -->
+            <div class="flex flex-wrap gap-x-8 gap-y-3 mt-8 pt-6 border-t border-pink-200/60">
+              <div>
+                <div class="text-2xl font-extrabold text-ink">12k+</div>
+                <div class="text-xs text-ink-muted">เอกสารคัดสรร</div>
+              </div>
+              <div>
+                <div class="text-2xl font-extrabold text-ink">3.2k</div>
+                <div class="text-xs text-ink-muted">ครีเอเตอร์</div>
+              </div>
+              <div>
+                <div class="text-2xl font-extrabold text-ink">98k+</div>
+                <div class="text-xs text-ink-muted">ดาวน์โหลด/เดือน</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex">
+                  @for (i of [1,2,3,4]; track i) {
+                    <img
+                      [src]="'https://images.unsplash.com/photo-' + avatars[i] + '?w=80&h=80&fit=crop&crop=face'"
+                      class="w-7 h-7 rounded-full -ml-2 first:ml-0 ring-2 ring-pink-50 object-cover"
+                      alt="user"
+                    />
+                  }
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-ink">4.9 ★</div>
+                  <div class="text-[11px] text-ink-muted">จาก 8.4k รีวิว</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: floating doc cards -->
+          <div class="lg:col-span-5 hidden lg:block">
+            <div class="relative h-[480px]">
+              <div class="absolute top-0 right-12 w-56 rotate-[-6deg] card-soft p-3 animate-slide-up">
+                <img [src]="catalog.featured()[0]?.cover" class="w-full h-64 object-cover rounded-2xl" alt="" />
+                <div class="px-1 pt-3 pb-1">
+                  <div class="text-xs text-ink-muted">{{ catalog.featured()[0]?.seller?.studioName }}</div>
+                  <div class="text-sm font-bold text-ink line-clamp-1">{{ catalog.featured()[0]?.title }}</div>
+                </div>
+              </div>
+              <div class="absolute top-32 right-0 w-48 rotate-[8deg] card-soft p-3 animate-slide-up" style="animation-delay: 100ms">
+                <img [src]="catalog.featured()[1]?.cover" class="w-full h-56 object-cover rounded-2xl" alt="" />
+                <div class="px-1 pt-2 pb-1 flex items-center gap-1">
+                  <span class="pill-pink !py-0">★ {{ catalog.featured()[1]?.rating }}</span>
+                </div>
+              </div>
+              <div class="absolute bottom-8 left-12 w-52 rotate-[3deg] card-soft p-3 animate-slide-up" style="animation-delay: 200ms">
+                <img [src]="catalog.featured()[2]?.cover" class="w-full h-60 object-cover rounded-2xl" alt="" />
+                <div class="px-1 pt-2 pb-1 text-sm font-bold text-pink-600">
+                  ฿{{ catalog.featured()[2]?.price }}
+                </div>
+              </div>
+              <div class="absolute top-4 left-2 card-soft px-4 py-2.5 flex items-center gap-2 animate-slide-up" style="animation-delay: 350ms">
+                <span class="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <app-icon name="sparkle" [size]="16" />
+                </span>
+                <div class="text-xs">
+                  <div class="font-bold text-ink">AI Summary</div>
+                  <div class="text-ink-muted">สรุปสินค้าให้อัตโนมัติ</div>
+                </div>
+              </div>
+              <div class="absolute bottom-32 right-2 card-soft px-4 py-2.5 flex items-center gap-2 animate-slide-up" style="animation-delay: 450ms">
+                <span class="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <app-icon name="package" [size]="16" />
+                </span>
+                <div class="text-xs">
+                  <div class="font-bold text-ink">📦 Bundles</div>
+                  <div class="text-ink-muted">ประหยัดถึง 40%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== RECENTLY VIEWED ===================== -->
+    @if (recent.count() > 0) {
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+        <header class="flex items-center justify-between mb-5">
+          <div>
+            <span class="text-xs font-semibold text-pink-500 tracking-[0.18em] uppercase">ล่าสุด</span>
+            <h2 class="section-title">ที่คุณเพิ่งดู</h2>
+          </div>
+          <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">ล้าง</button>
+        </header>
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          @for (d of recent.items().slice(0, 6); track d.id) {
+            <a [routerLink]="['/document', d.id]" class="group">
+              <div class="aspect-[4/5] rounded-2xl overflow-hidden ring-2 ring-transparent group-hover:ring-pink-300 transition-all">
+                <img [src]="d.cover" class="w-full h-full object-cover" [alt]="d.title" />
+              </div>
+              <div class="text-xs text-ink line-clamp-2 mt-2 leading-tight group-hover:text-pink-600">
+                {{ d.title }}
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ===================== CATEGORIES (with sub-cat preview) ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <app-section-header
+        eyebrow="หมวดหมู่"
+        title="เลือกหมวดที่ใช่สำหรับคุณ"
+        subtitle="กว่า 12,000 เอกสารใน 8 หมวดหมู่หลัก แตกย่อยเป็น 40+ หมวดย่อย"
+        link="/categories"
+      />
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (cat of catalog.categories(); track cat.id) {
+          <a
+            [routerLink]="['/category', cat.slug]"
+            class="group relative overflow-hidden card-soft p-5 hover:-translate-y-1 transition-transform"
+          >
+            <div class="absolute inset-0 bg-gradient-to-br from-pink-200 to-pink-50 opacity-50 transition-opacity group-hover:opacity-80"></div>
+            <div class="relative">
+              <div class="w-12 h-12 rounded-2xl bg-white shadow-soft flex items-center justify-center text-2xl mb-4">
+                {{ cat.icon }}
+              </div>
+              <h3 class="text-base font-bold text-ink mb-1 group-hover:text-pink-700 transition-colors">
+                {{ cat.name }}
+              </h3>
+              <p class="text-xs text-ink-soft line-clamp-2 mb-3">{{ cat.description }}</p>
+              <div class="text-[10px] text-ink-muted line-clamp-1 mb-3">
+                @for (sub of (cat.subcategories ?? []).slice(0, 3); track sub.id) {
+                  <span class="mr-1.5">{{ sub.name }} ·</span>
+                }
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-ink-muted">{{ cat.documentCount | compact }} เอกสาร</span>
+                <span class="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-pink-500 group-hover:text-white transition-all">
+                  <app-icon name="arrow-right" [size]="14" />
+                </span>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- ===================== BUNDLES STRIP ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <app-section-header
+        eyebrow="แพ็กเกจ"
+        title="แพ็กเกจคุ้มค่า ประหยัดกว่าซื้อแยก"
+        subtitle="ครีเอเตอร์รวมเอกสารที่เข้ากันให้แล้ว ประหยัดได้สูงสุด 40%"
+        link="/bundles"
+      />
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @for (b of bundles.featured(); track b.id) {
+          <app-bundle-card [bundle]="b" />
+        }
+      </div>
+    </section>
+
+    <!-- ===================== TRENDING ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <app-section-header
+        eyebrow="กำลังฮิต"
+        title="ดาวน์โหลดเยอะที่สุดในสัปดาห์นี้"
+        subtitle="เอกสารที่ผู้ใช้เลือกซื้อมากที่สุดในช่วง 7 วันที่ผ่านมา"
+        link="/marketplace"
+      />
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        @for (doc of catalog.trending().slice(0, 4); track doc.id) {
+          <app-document-card [doc]="doc" />
+        }
+      </div>
+    </section>
+
+    <!-- ===================== FREE STRIP ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-pink-50 border-emerald-200">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <span class="text-xs font-semibold text-emerald-600 tracking-[0.18em] uppercase mb-2 block">🎁 ฟรี · 100%</span>
+            <h2 class="section-title">เอกสารดีๆ แจกฟรี</h2>
+            <p class="section-subtitle">ดาวน์โหลดได้ทันที ไม่ต้องสมัครสมาชิก</p>
+          </div>
+          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 group">
+            ดูทั้งหมด
+            <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
+          </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (doc of catalog.freeResources().slice(0, 3); track doc.id) {
+            <app-document-card [doc]="doc" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== HOW IT WORKS ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <div class="card-cream p-8 md:p-12">
+        <div class="grid md:grid-cols-3 gap-8">
+          @for (step of howItWorks; track step.no; let i = $index) {
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="w-12 h-12 rounded-2xl bg-pink-500 text-white font-extrabold text-xl flex items-center justify-center shadow-soft">
+                  {{ step.no }}
+                </span>
+                <span class="text-3xl">{{ step.emoji }}</span>
+              </div>
+              <h3 class="text-lg font-bold text-ink mb-2">{{ step.title }}</h3>
+              <p class="text-sm text-ink-soft leading-relaxed">{{ step.desc }}</p>
+              @if (i < 2) {
+                <span class="hidden md:block absolute top-6 -right-4 text-pink-300">
+                  <app-icon name="arrow-right" [size]="20" />
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== EDITOR'S PICKS ===================== -->
+    @if (catalog.editorsPicks().length) {
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+        <app-section-header
+          eyebrow="✨ Editor's Picks"
+          title="คัดเลือกโดยทีมงาน"
+          subtitle="เอกสารที่เราคัดมาแล้วว่าคุณภาพเยี่ยม"
+          link="/marketplace"
+        />
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (doc of catalog.editorsPicks().slice(0, 3); track doc.id) {
+            <app-document-card [doc]="doc" />
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ===================== FEATURED SELLERS ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <app-section-header
+        eyebrow="ผู้ขายแนะนำ"
+        title="ครีเอเตอร์ตัวจริง ที่ได้รับความไว้วางใจ"
+      />
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @for (s of featuredSellers; track s.id) {
+          <a [routerLink]="['/store', s.id]" class="card-soft p-5 flex items-center gap-4 hover:-translate-y-1 transition-transform">
+            <img
+              [src]="s.avatar"
+              [alt]="s.studioName"
+              class="w-16 h-16 rounded-2xl object-cover ring-2 ring-pink-100"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <h4 class="text-base font-bold text-ink truncate">{{ s.studioName }}</h4>
+                @if (s.badges.includes('Verified')) {
+                  <svg viewBox="0 0 16 16" class="w-4 h-4 text-pink-500 flex-shrink-0" fill="currentColor">
+                    <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
+                    <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                }
+              </div>
+              <p class="text-xs text-ink-muted line-clamp-2 mb-2">{{ s.bio }}</p>
+              <div class="flex items-center gap-3 text-xs text-ink-soft">
+                <span class="font-semibold text-pink-600">★ {{ s.rating }}</span>
+                <span>•</span>
+                <span>{{ s.totalDocuments }} เอกสาร</span>
+                <span>•</span>
+                <span>{{ s.followerCount | compact }} ฟอลโลเวอร์</span>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- ===================== NEW ARRIVALS ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <app-section-header
+        eyebrow="มาใหม่"
+        title="เอกสารเพิ่งเข้าตลาดเมื่อเร็วๆ นี้"
+        link="/marketplace"
+      />
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        @for (doc of catalog.newArrivals().slice(0, 4); track doc.id) {
+          <app-document-card [doc]="doc" />
+        }
+      </div>
+    </section>
+
+    <!-- ===================== SELLER CTA ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-20">
+      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink-strong p-8 md:p-14 text-white">
+        <div class="absolute -top-20 -right-12 w-72 h-72 bg-white/10 rounded-full"></div>
+        <div class="absolute -bottom-20 -left-12 w-72 h-72 bg-white/10 rounded-full"></div>
+        <div class="relative grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <span class="pill bg-white/20 text-white backdrop-blur mb-4">💼 สำหรับผู้ขาย</span>
+            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-4 leading-tight">
+              เปิดร้านของคุณบน <br />
+              <span class="text-pink-100">Siri Studio</span> วันนี้
+            </h2>
+            <p class="text-pink-50 mb-6 text-base leading-relaxed max-w-md">
+              อัปโหลดเอกสาร ตั้งราคา ให้ AI ช่วยเขียนคำอธิบาย
+              และเก็บเงินผ่าน PromptPay/บัตรเครดิต — ส่วนแบ่งเริ่มต้น 90%
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-pink-600 font-bold hover:scale-105 transition-transform">
+                เริ่มขายเลย
+                <app-icon name="arrow-right" [size]="16" />
+              </a>
+              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/40 text-white hover:bg-white/10 transition-colors">
+                <app-icon name="play" [size]="14" />
+                ดูวิธีใช้งาน (2 นาที)
+              </a>
+            </div>
+          </div>
+          <div class="hidden md:flex justify-center">
+            <div class="relative">
+              <div class="w-48 h-48 rounded-3xl bg-white/15 backdrop-blur rotate-6 absolute"></div>
+              <div class="relative bg-white rounded-3xl p-6 w-72 shadow-pop">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-pink-500">
+                    <app-icon name="chart" [size]="20" />
+                  </span>
+                  <span class="text-sm font-semibold text-ink">รายได้เดือนนี้</span>
+                </div>
+                <div class="text-3xl font-extrabold text-ink mb-1">฿38,240</div>
+                <div class="flex items-center gap-1 text-xs">
+                  <span class="text-emerald-500 font-bold">+18%</span>
+                  <span class="text-ink-muted">เทียบเดือนก่อน</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-line flex items-center justify-between text-xs text-ink-muted">
+                  <span>เอกสารขายดี</span>
+                  <span class="text-ink font-bold">12 เล่ม</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>

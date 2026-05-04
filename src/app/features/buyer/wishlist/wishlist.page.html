@@ -1,0 +1,41 @@
+<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+      <app-page-hero
+        eyebrow="รายการโปรด"
+        title="เก็บไว้ดูทีหลังได้เลย 💗"
+        description="เอกสารที่คุณกดหัวใจไว้ — รอลดราคา หรือซื้อตอนพร้อม"
+      />
+
+      @if (wishlist.count() === 0) {
+        <app-empty-state
+          emoji="💗"
+          title="ยังไม่มีรายการโปรด"
+          description="กดหัวใจที่การ์ดเอกสารเพื่อบันทึกไว้ดูภายหลัง"
+        >
+          <a routerLink="/marketplace" class="btn-pink mt-4">เลือกชมเอกสาร</a>
+        </app-empty-state>
+      } @else {
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="text-sm text-ink-soft">
+            <b class="text-ink">{{ wishlist.count() }}</b> รายการ —
+            มูลค่ารวม <b class="text-pink-600">{{ totalValue() | thb }}</b>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn-pink !py-2 text-sm" (click)="addAllToCart()">
+              <app-icon name="cart" [size]="14" />
+              เพิ่มทั้งหมดลงตะกร้า
+            </button>
+            <button class="btn-ghost !py-2 text-sm" (click)="confirmClear()">
+              <app-icon name="trash" [size]="14" />
+              ล้างทั้งหมด
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          @for (doc of wishlist.items(); track doc.id) {
+            <app-document-card [doc]="doc" />
+          }
+        </div>
+      }
+    </div>

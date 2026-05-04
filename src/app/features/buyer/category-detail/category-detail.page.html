@@ -1,0 +1,133 @@
+<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
+        <a routerLink="/" class="hover:text-pink-600">หน้าแรก</a>
+        <app-icon name="chevron-right" [size]="14" />
+        <a routerLink="/categories" class="hover:text-pink-600">หมวดหมู่</a>
+        <app-icon name="chevron-right" [size]="14" />
+        <span class="text-ink font-medium">{{ category()?.name ?? '' }}</span>
+        @if (selectedSub(); as sub) {
+          <app-icon name="chevron-right" [size]="14" />
+          <span class="text-pink-600 font-medium">{{ sub.name }}</span>
+        }
+      </nav>
+
+      @if (category(); as cat) {
+        <!-- Hero -->
+        <section
+          class="relative overflow-hidden rounded-3xl bg-gradient-pink border border-line p-8 md:p-12 mb-8"
+        >
+          <div class="absolute -top-20 -right-12 w-72 h-72 rounded-full glass-blob"></div>
+          <div class="relative flex items-start gap-6 flex-wrap">
+            <div class="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-white shadow-soft flex items-center justify-center text-5xl flex-shrink-0">
+              {{ cat.icon }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h1 class="text-3xl md:text-4xl font-extrabold text-ink mb-2">
+                {{ cat.name }}
+              </h1>
+              <p class="text-base text-ink-soft mb-4 max-w-2xl">{{ cat.description }}</p>
+              <div class="flex flex-wrap gap-3">
+                <span class="pill-pink">📄 {{ cat.documentCount | compact }} เอกสาร</span>
+                <span class="pill-pink">🗂️ {{ cat.subcategories?.length ?? 0 }} หมวดย่อย</span>
+                <span class="pill-pink">⭐ คะแนนเฉลี่ย 4.8</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sub-categories drill-down -->
+        @if (cat.subcategories?.length) {
+          <section class="mb-10">
+            <header class="flex items-center justify-between mb-5">
+              <h2 class="section-title">เลือกหมวดย่อย</h2>
+              <button class="text-xs text-pink-600 font-bold hover:underline" (click)="selectedSubId.set('')">
+                ดูทั้งหมด
+              </button>
+            </header>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              <button
+                class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
+                [class.!border-pink-500]="!selectedSubId()"
+                [class.shadow-pop]="!selectedSubId()"
+                (click)="selectedSubId.set('')"
+              >
+                <div class="text-2xl mb-2">{{ cat.icon }}</div>
+                <div class="text-sm font-bold text-ink">ทั้งหมด</div>
+                <div class="text-xs text-ink-muted">{{ cat.documentCount }} ชิ้น</div>
+              </button>
+
+              @for (sub of cat.subcategories!; track sub.id) {
+                <button
+                  class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
+                  [class.!border-pink-500]="selectedSubId() === sub.id"
+                  [class.shadow-pop]="selectedSubId() === sub.id"
+                  (click)="selectedSubId.set(sub.id)"
+                >
+                  <div class="text-2xl mb-2">{{ sub.icon }}</div>
+                  <div class="text-sm font-bold text-ink leading-tight line-clamp-1">{{ sub.name }}</div>
+                  <div class="text-xs text-ink-muted mt-0.5">{{ sub.documentCount }} ชิ้น</div>
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="section-title">
+            @if (selectedSub(); as sub) {
+              เอกสารใน {{ sub.name }}
+            } @else {
+              เอกสารทั้งหมดในหมวด
+            }
+          </h2>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-ink-muted">{{ docs().length }} รายการ</span>
+          </div>
+        </div>
+
+        <!-- Sort tabs -->
+        <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+          @for (s of sorts; track s.value) {
+            <button
+              class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
+              [class.bg-pink-500]="sort() === s.value"
+              [class.text-white]="sort() === s.value"
+              [class.bg-white]="sort() !== s.value"
+              [class.text-ink-soft]="sort() !== s.value"
+              [class.border]="sort() !== s.value"
+              [class.border-line]="sort() !== s.value"
+              (click)="sort.set(s.value)"
+            >
+              {{ s.label }}
+            </button>
+          }
+        </div>
+
+        @if (docs().length === 0) {
+          <app-empty-state
+            emoji="🌸"
+            title="ยังไม่มีเอกสารในกลุ่มนี้"
+            description="ลองเลือกหมวดย่อยอื่นหรือดูเอกสารทั้งหมด"
+          >
+            <button class="btn-pink mt-4" (click)="selectedSubId.set('')">ดูทั้งหมด</button>
+          </app-empty-state>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            @for (doc of docs(); track doc.id) {
+              <app-document-card [doc]="doc" />
+            }
+          </div>
+        }
+      } @else {
+        <app-empty-state
+          emoji="🤔"
+          title="ไม่พบหมวดหมู่นี้"
+          description="หมวดที่คุณค้นหาอาจถูกย้ายหรือถูกลบ"
+        >
+          <a routerLink="/categories" class="btn-pink mt-4">กลับหน้าหมวดหมู่</a>
+        </app-empty-state>
+      }
+    </div>

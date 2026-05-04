@@ -1,0 +1,102 @@
+<div class="max-w-7xl">
+      <header class="mb-8">
+        <h1 class="text-3xl font-extrabold text-ink mb-1">ธุรกรรมและการชำระเงิน</h1>
+        <p class="text-sm text-ink-soft">
+          ตรวจสอบประวัติการชำระเงินและสถานะคำสั่งซื้อ
+        </p>
+      </header>
+
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <app-stat-card
+          label="รายได้รวม (เดือน)"
+          [value]="admin.totalRevenue() | thb"
+          icon="💎"
+        />
+        <app-stat-card
+          label="ค่าธรรมเนียม"
+          [value]="admin.totalFees() | thb"
+          icon="💰"
+        />
+        <app-stat-card
+          label="สำเร็จ"
+          [value]="admin.successCount() + ''"
+          icon="✅"
+        />
+        <app-stat-card
+          label="คืนเงิน"
+          [value]="admin.refundCount() + ''"
+          icon="↩️"
+        />
+      </section>
+
+      <!-- Toolbar -->
+      <div class="card-soft p-4 mb-5 flex flex-col md:flex-row gap-3">
+        <div class="relative flex-1">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted">
+            <app-icon name="search" [size]="18" />
+          </span>
+          <input
+            type="search"
+            [(ngModel)]="search"
+            placeholder="ค้นหาเลขคำสั่งซื้อ ผู้ซื้อ หรือเอกสาร…"
+            class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
+          />
+        </div>
+        <div class="flex gap-2">
+          @for (s of statuses; track s.value) {
+            <button
+              class="px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors"
+              [class.bg-pink-500]="status() === s.value"
+              [class.text-white]="status() === s.value"
+              [class.border-pink-500]="status() === s.value"
+              [class.bg-white]="status() !== s.value"
+              [class.text-ink-soft]="status() !== s.value"
+              [class.border-line]="status() !== s.value"
+              (click)="status.set(s.value)"
+            >
+              {{ s.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card-soft overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-pink-50">
+            <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+              <th class="px-5 py-3 font-semibold">เลขที่</th>
+              <th class="px-5 py-3 font-semibold">ผู้ซื้อ</th>
+              <th class="px-5 py-3 font-semibold">ผู้ขาย</th>
+              <th class="px-5 py-3 font-semibold">เอกสาร</th>
+              <th class="px-5 py-3 font-semibold text-right">ยอด</th>
+              <th class="px-5 py-3 font-semibold text-right">ค่าธรรมเนียม</th>
+              <th class="px-5 py-3 font-semibold">วิธีชำระ</th>
+              <th class="px-5 py-3 font-semibold">สถานะ</th>
+              <th class="px-5 py-3 font-semibold whitespace-nowrap">เวลา</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of filtered(); track t.id) {
+              <tr class="border-t border-line hover:bg-pink-50/40">
+                <td class="px-5 py-3 text-xs text-ink font-mono whitespace-nowrap">{{ t.orderNumber }}</td>
+                <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ t.buyerName }}</td>
+                <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ t.sellerName }}</td>
+                <td class="px-5 py-3 text-sm text-ink line-clamp-1 max-w-xs">{{ t.documentTitle }}</td>
+                <td class="px-5 py-3 text-sm font-bold text-ink text-right whitespace-nowrap">{{ t.amount | thb }}</td>
+                <td class="px-5 py-3 text-sm text-ink-muted text-right whitespace-nowrap">{{ t.fee | thb }}</td>
+                <td class="px-5 py-3 text-xs text-ink-soft whitespace-nowrap">
+                  {{ payLabel(t.paymentMethod) }}
+                </td>
+                <td class="px-5 py-3 whitespace-nowrap">
+                  <span class="pill" [class]="badgeClass(t.status)">{{ statusLabel(t.status) }}</span>
+                </td>
+                <td class="px-5 py-3 text-xs text-ink-muted whitespace-nowrap">
+                  {{ t.createdAt | timeAgo }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

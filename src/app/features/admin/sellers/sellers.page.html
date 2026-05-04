@@ -1,0 +1,66 @@
+<div class="max-w-6xl">
+      <header class="mb-8">
+        <h1 class="text-3xl font-extrabold text-ink mb-1">ผู้ขายในระบบ</h1>
+        <p class="text-sm text-ink-soft">
+          ครีเอเตอร์ทั้งหมดที่เปิดร้านบน SIRIEDUMARKET
+        </p>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @for (s of sellers(); track s.id) {
+          <article class="card-soft p-6">
+            <div class="flex items-start gap-4 mb-4">
+              <img
+                [src]="s.avatar"
+                class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100"
+                [alt]="s.studioName"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <h3 class="text-base font-bold text-ink truncate">{{ s.studioName }}</h3>
+                  @if (s.badges.includes('Verified')) {
+                    <svg viewBox="0 0 16 16" class="w-4 h-4 text-pink-500 flex-shrink-0" fill="currentColor">
+                      <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
+                      <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  }
+                </div>
+                <div class="text-xs text-ink-muted">{{ s.ownerName }}</div>
+                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  @for (b of s.badges; track b) {
+                    <span class="pill-soft !text-[10px]">{{ b }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs text-ink-soft line-clamp-2 leading-relaxed mb-4 min-h-[32px]">
+              {{ s.bio }}
+            </p>
+
+            <dl class="grid grid-cols-3 gap-2 mb-4 pb-4 border-b border-line">
+              <div>
+                <dt class="text-[10px] text-ink-muted uppercase">เอกสาร</dt>
+                <dd class="text-sm font-bold text-ink mt-0.5">{{ s.totalDocuments }}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] text-ink-muted uppercase">ขาย</dt>
+                <dd class="text-sm font-bold text-ink mt-0.5">{{ s.totalSales | compact }}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] text-ink-muted uppercase">คะแนน</dt>
+                <dd class="text-sm font-bold text-pink-600 mt-0.5">★ {{ s.rating }}</dd>
+              </div>
+            </dl>
+
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-ink-muted">เข้าร่วม {{ s.joinedAt }}</span>
+              <button class="btn-ghost !py-1.5 !px-3 text-xs">
+                <app-icon name="eye" [size]="12" />
+                ดูร้าน
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </div>
