@@ -13,7 +13,6 @@ import {
   CatalogService,
   FollowService,
 } from '../../../core/services';
-import { Seller } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -45,10 +44,8 @@ export class BuyerStorefrontPage {
   readonly sellerId = signal<string>('');
   readonly tab = signal<'all' | 'bundles' | 'free' | 'top'>('all');
 
-  readonly seller = computed<Seller | undefined>(() => {
-    const id = this.sellerId();
-    return this.catalog.documents().find((d) => d.seller.id === id)?.seller;
-  });
+  readonly seller = this.catalog.sellerProfile;
+  readonly sellerLoading = computed(() => this.catalog.sellerProfileState().status === 'loading');
 
   readonly sellerDocs = computed(() => {
     const id = this.sellerId();
@@ -83,12 +80,15 @@ export class BuyerStorefrontPage {
 
   joinedYear(): string {
     const s = this.seller();
-    return s ? new Date(s.joinedAt).getFullYear() + '' : '';
+    return s?.joinedAt ? new Date(s.joinedAt).getFullYear() + '' : '';
   }
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((p) => {
-      this.sellerId.set(p.get('id') ?? '');
+      const id = p.get('id') ?? '';
+      this.sellerId.set(id);
+      void this.catalog.loadSellerProfile(id);
+      void this.follow.hydrateFromApi(id);
     });
   }
 

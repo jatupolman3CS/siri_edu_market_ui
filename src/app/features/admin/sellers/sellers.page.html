@@ -55,12 +55,25 @@
 
             <div class="flex items-center justify-between text-xs">
               <span class="text-ink-muted">เข้าร่วม {{ s.joinedAt }}</span>
-              <button class="btn-ghost !py-1.5 !px-3 text-xs">
+              <a [routerLink]="['/store', s.id]" class="btn-ghost !py-1.5 !px-3 text-xs">
                 <app-icon name="eye" [size]="12" />
                 ดูร้าน
-              </button>
+              </a>
             </div>
           </article>
         }
       </div>
+
+      @if (admin.sellersHasMore()) {
+        <div class="flex justify-center mt-6">
+          <button
+            type="button"
+            class="btn-pink"
+            (click)="admin.loadMoreSellers()"
+            [disabled]="admin.sellersState().status === 'loading'"
+          >
+            โหลดเพิ่ม
+          </button>
+        </div>
+      }
     </div>

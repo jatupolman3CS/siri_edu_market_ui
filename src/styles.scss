@@ -208,6 +208,18 @@ body {
     @apply pill bg-pink-50 text-ink-soft border border-line;
   }
 
+  .pill-green {
+    @apply pill bg-emerald-100 text-emerald-700;
+  }
+
+  .pill-amber {
+    @apply pill bg-amber-100 text-amber-700;
+  }
+
+  .pill-rose {
+    @apply pill bg-rose-100 text-rose-700;
+  }
+
   .btn-pink {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-semibold shadow-soft transition-all duration-200;
   }

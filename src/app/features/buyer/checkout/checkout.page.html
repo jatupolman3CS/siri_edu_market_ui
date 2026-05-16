@@ -55,7 +55,7 @@
                 <span class="w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-xs font-bold flex items-center justify-center">2</span>
                 วิธีการชำระเงิน
               </h2>
-              <div class="grid sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 @for (m of methods; track m.value) {
                   <label
                     class="relative cursor-pointer"
@@ -144,20 +144,60 @@
                     <div class="grid sm:grid-cols-2 gap-4">
                       <div class="sm:col-span-2">
                         <label class="text-xs font-semibold text-ink-soft mb-2 block">เลขบัตร</label>
-                        <input class="input-soft" placeholder="1234 5678 9012 3456" />
+                        <input
+                          class="input-soft"
+                          placeholder="4242424242424242"
+                          [ngModel]="cardNumber()"
+                          (ngModelChange)="cardNumber.set($event)"
+                          autocomplete="cc-number"
+                        />
                       </div>
                       <div>
-                        <label class="text-xs font-semibold text-ink-soft mb-2 block">วันหมดอายุ</label>
-                        <input class="input-soft" placeholder="MM/YY" />
+                        <label class="text-xs font-semibold text-ink-soft mb-2 block">เดือนหมดอายุ</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="12"
+                          class="input-soft"
+                          [ngModel]="cardExpMonth()"
+                          (ngModelChange)="patchExpMonth($event)"
+                        />
+                      </div>
+                      <div>
+                        <label class="text-xs font-semibold text-ink-soft mb-2 block">ปีหมดอายุ (ค.ศ.)</label>
+                        <input
+                          type="number"
+                          min="2024"
+                          max="2099"
+                          class="input-soft"
+                          [ngModel]="cardExpYear()"
+                          (ngModelChange)="patchExpYear($event)"
+                        />
                       </div>
                       <div>
                         <label class="text-xs font-semibold text-ink-soft mb-2 block">CVV</label>
-                        <input class="input-soft" placeholder="123" type="password" />
+                        <input
+                          class="input-soft"
+                          placeholder="123"
+                          type="password"
+                          [ngModel]="cardCvv()"
+                          (ngModelChange)="cardCvv.set($event)"
+                          autocomplete="cc-csc"
+                        />
                       </div>
                       <div class="sm:col-span-2">
                         <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อบนบัตร</label>
-                        <input class="input-soft" placeholder="PICHAYA P." />
+                        <input
+                          class="input-soft"
+                          placeholder="ชื่อตามบัตร"
+                          [ngModel]="cardName()"
+                          (ngModelChange)="cardName.set($event)"
+                          autocomplete="cc-name"
+                        />
                       </div>
+                      <p class="sm:col-span-2 text-[11px] text-ink-muted">
+                        ข้อมูลบัตรถูกส่งไปยัง Omise โดยตรงผ่าน Omise.js — เซิร์ฟเวอร์ของเราไม่เก็บเลขบัตร
+                      </p>
                     </div>
                   }
 
@@ -170,7 +210,14 @@
                       <p class="text-sm text-ink-soft mb-4">
                         ระบุเบอร์โทรศัพท์ที่ผูกกับ TrueMoney Wallet
                       </p>
-                      <input class="input-soft" placeholder="08X-XXX-XXXX" />
+                      <input
+                        class="input-soft"
+                        placeholder="0812345678"
+                        [ngModel]="trueMoneyPhone()"
+                        (ngModelChange)="trueMoneyPhone.set($event)"
+                        inputmode="tel"
+                        autocomplete="tel"
+                      />
                     </div>
                   }
                 }

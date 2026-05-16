@@ -5,6 +5,15 @@
         description="ดาวน์โหลดได้ตลอดเวลา ทุกไฟล์มีลายน้ำเฉพาะคุณเพื่อความปลอดภัย"
       />
 
+      @if (library.state().status === 'loading') {
+        <app-empty-state emoji="⏳" title="กำลังโหลดคลังของคุณ…" description="รอสักครู่นะคะ" />
+      } @else if (library.state().status === 'error') {
+        <app-empty-state emoji="⚠️" title="โหลดคลังไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <button class="btn-pink mt-4" type="button" (click)="library.refreshLibrary()">
+            ลองใหม่
+          </button>
+        </app-empty-state>
+      } @else {
       <!-- Stats -->
       <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <app-stat-card
@@ -112,9 +121,110 @@
                     ดาวน์โหลด
                   </button>
                 </div>
+                <button
+                  class="btn-ghost w-full !py-2 text-sm mt-2"
+                  (click)="openReviewModal(item.document.id, item.document.title)"
+                >
+                  <app-icon name="star" [size]="14" />
+                  เขียนรีวิว
+                </button>
               </div>
             </article>
           }
         </div>
+
+        @if (library.libraryHasMore()) {
+          <div class="flex justify-center mt-6">
+            <button
+              type="button"
+              class="btn-pink"
+              (click)="library.loadMoreLibrary()"
+              [disabled]="library.state().status === 'loading'"
+            >
+              โหลดเพิ่ม
+            </button>
+          </div>
+        }
+      }
       }
     </div>
+
+<!-- Review Modal -->
+@if (reviewModal(); as modal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" (click)="closeReviewModal()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-ink">เขียนรีวิว</h3>
+        <button class="text-ink-muted hover:text-ink" (click)="closeReviewModal()">
+          <app-icon name="x" [size]="20" />
+        </button>
+      </div>
+
+      <p class="text-sm text-ink-soft mb-4 line-clamp-2">{{ modal.title }}</p>
+
+      @if (library.reviewState(); as rs) {
+        @if (rs.status === 'success') {
+          <div class="text-center py-8">
+            <span class="text-4xl">🎉</span>
+            <p class="text-lg font-semibold text-emerald-600 mt-2">{{ rs.message ?? 'รีวิวสำเร็จ!' }}</p>
+          </div>
+        } @else {
+        <form (ngSubmit)="submitReview()">
+          <!-- Rating -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-ink mb-2">ให้คะแนน</label>
+            <div class="flex gap-1">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <button
+                  type="button"
+                  class="text-2xl transition-transform hover:scale-110"
+                  [class.text-yellow-400]="star <= reviewForm().rating"
+                  [class.text-gray-300]="star > reviewForm().rating"
+                  (click)="setRating(star)"
+                >
+                  ★
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Comment -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-ink mb-2">ความคิดเห็น</label>
+            <textarea
+              class="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+              rows="4"
+              placeholder="แชร์ประสบการณ์การใช้เอกสารนี้..."
+              [ngModel]="reviewForm().comment"
+              (ngModelChange)="reviewForm.update(f => ({ ...f, comment: $event }))"
+              name="comment"
+              required
+            ></textarea>
+          </div>
+
+          @if (rs.status === 'error') {
+            <p class="text-sm text-red-500 mb-4">{{ rs.message }}</p>
+          }
+
+          <div class="flex gap-3">
+            <button type="button" class="btn-ghost flex-1" (click)="closeReviewModal()">
+              ยกเลิก
+            </button>
+            <button
+              type="submit"
+              class="btn-pink flex-1"
+              [disabled]="rs.status === 'loading' || !reviewForm().comment.trim()"
+            >
+              @if (rs.status === 'loading') {
+                <span class="animate-spin">⏳</span>
+              } @else {
+                ส่งรีวิว
+              }
+            </button>
+          </div>
+        </form>
+        }
+      }
+    </div>
+  </div>
+}

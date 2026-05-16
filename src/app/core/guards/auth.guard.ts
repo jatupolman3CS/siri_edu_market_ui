@@ -12,7 +12,7 @@ export const authGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
   const router = inject(Router);
   const message = inject(NzMessageService);
 
-  if (auth.isAuthenticated()) return true;
+  if (auth.isAuthenticated() && !!auth.accessToken()) return true;
 
   message.warning('กรุณาเข้าสู่ระบบเพื่อทำรายการต่อ');
   return router.createUrlTree(['/auth/login'], {

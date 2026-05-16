@@ -12,6 +12,7 @@ import { DocumentCardComponent } from '../../../shared/components/document-card/
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-buyer-category-detail',
@@ -22,6 +23,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
     IconComponent,
     EmptyStateComponent,
     CompactPipe,
+    FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './category-detail.page.html',
@@ -33,7 +35,20 @@ export class BuyerCategoryDetailPage {
 
   readonly slug = signal<string>('');
   readonly selectedSubId = signal<string>('');
+  readonly subSearch = signal<string>('');
   readonly sort = signal<'popular' | 'newest' | 'rating' | 'price-asc'>('popular');
+
+  readonly filteredSubcategories = computed(() => {
+    const cat = this.category();
+    const subs = cat?.subcategories ?? [];
+    const term = this.subSearch().trim().toLowerCase();
+    if (!term) return subs;
+    return subs.filter((s) => {
+      const name = (s.name ?? '').toLowerCase();
+      const slug = (s.slug ?? '').toLowerCase();
+      return name.includes(term) || slug.includes(term);
+    });
+  });
 
   readonly sorts = [
     { value: 'popular' as const, label: 'ความนิยม' },
@@ -57,7 +72,7 @@ export class BuyerCategoryDetailPage {
     if (!cat) return [];
     let list = this.catalog
       .documents()
-      .filter((d) => d.categoryId === cat.id);
+      .filter((d) => d.categoryIds.includes(cat.id));
     if (subId) {
       list = list.filter((d) => d.subcategoryId === subId);
     }
@@ -82,6 +97,8 @@ export class BuyerCategoryDetailPage {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.slug.set(params.get('slug') ?? '');
       this.selectedSubId.set('');
+      const slug = params.get('slug') ?? '';
+      if (slug) this.catalog.loadCategoryDetailBySlug(slug);
     });
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
       const sub = qp.get('sub');

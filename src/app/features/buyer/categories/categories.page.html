@@ -5,6 +5,15 @@
         description="กว่า 8 หมวดหมู่หลัก แตกย่อยเป็น 40+ หมวดย่อย ครอบคลุมการศึกษา ธุรกิจ ไอที ดีไซน์ และอีกมากมาย"
       />
 
+      @if (catalog.categoriesState().status === 'loading') {
+        <app-empty-state emoji="⏳" title="กำลังโหลดหมวดหมู่…" description="รอสักครู่นะคะ" />
+      } @else if (catalog.categoriesState().status === 'error') {
+        <app-empty-state emoji="⚠️" title="โหลดหมวดหมู่ไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <button class="btn-pink mt-5" type="button" (click)="catalog.loadCategories()">
+            ลองใหม่
+          </button>
+        </app-empty-state>
+      } @else {
       <div class="space-y-8">
         @for (cat of catalog.categories(); track cat.id) {
           <section class="card-soft p-6 md:p-8">
@@ -59,4 +68,5 @@
           </section>
         }
       </div>
+      }
     </div>

@@ -72,4 +72,8 @@ export class AdminTransactionsPage {
       truemoney: 'TrueMoney',
     }[p] ?? p;
   }
+
+  constructor() {
+    void this.admin.refreshTransactions();
+  }
 }

@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   effect,
+  HostListener,
   inject,
   signal,
 } from '@angular/core';
@@ -16,14 +17,19 @@ import {
   CartService,
   CatalogService,
   FollowService,
+  LibraryService,
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
+import { unwrapSdkResult } from '../../../core/services/api-result';
 import {
   GRADE_LEVEL_LABELS,
   RESOURCE_TYPE_ICONS,
   RESOURCE_TYPE_LABELS,
 } from '../../../core/models';
+import { resolvePublicUrl } from '../../../core/api-runtime';
+import { getApiMarketplaceDocumentsByIdPreview } from '../../../core/api';
+import type { MarketplaceDocumentPreviewResponse } from '../../../core/api/types.gen';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
@@ -57,6 +63,7 @@ export class BuyerDocumentDetailPage {
   readonly cart = inject(CartService);
   readonly wishlist = inject(WishlistService);
   readonly follow = inject(FollowService);
+  readonly library = inject(LibraryService);
   private readonly auth = inject(AuthService);
   private readonly bundles = inject(BundleService);
   private readonly recent = inject(RecentlyViewedService);
@@ -66,9 +73,23 @@ export class BuyerDocumentDetailPage {
 
   readonly id = signal<string>('');
   readonly selectedImage = signal<number>(0);
+  readonly preview = signal<MarketplaceDocumentPreviewResponse | null>(null);
+  readonly previewLoading = signal<boolean>(false);
+  readonly showPreviewGallery = signal<boolean>(false);
 
   readonly doc = computed(() => this.catalog.getById(this.id()));
+
+  readonly previewRasterUrls = computed(() => {
+    const urls = this.preview()?.previewImageUrls ?? [];
+    return urls.filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
+  });
   readonly related = computed(() => this.catalog.getRelated(this.id(), 4));
+  readonly owned = computed(() => {
+    if (!this.auth.isAuthenticated()) return false;
+    const id = this.id();
+    if (!id) return false;
+    return this.library.library().some((x) => x.document.id === id);
+  });
 
   readonly relatedBundles = computed(() =>
     this.bundles.getRelatedBundles(this.id()),
@@ -111,19 +132,56 @@ export class BuyerDocumentDetailPage {
       .join(', ');
   }
 
+  previewImgSrc(pathOrUrl: string): string {
+    return resolvePublicUrl(pathOrUrl);
+  }
+
+  closePreviewGallery(): void {
+    this.showPreviewGallery.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeCloseGallery(): void {
+    if (this.showPreviewGallery()) this.closePreviewGallery();
+  }
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.id.set(params.get('id') ?? '');
+      const id = params.get('id') ?? '';
+      this.id.set(id);
       this.selectedImage.set(0);
+      this.showPreviewGallery.set(false);
+      this.preview.set(null);
+      if (id) this.catalog.loadDocumentDetail(id);
     });
     // Track recently viewed
     effect(() => {
       const d = this.doc();
       if (d) this.recent.push(d);
     });
+    // Best-effort: load library once for owned-check
+    effect(() => {
+      if (!this.auth.isAuthenticated()) return;
+      const id = this.id();
+      if (!id) return;
+      void this.library.refreshLibraryOnce();
+    });
+    effect((onCleanup) => {
+      if (typeof document === 'undefined') return;
+      if (!this.showPreviewGallery()) return;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => {
+        document.body.style.overflow = '';
+      });
+    });
   }
 
   buyNow(id: string): void {
+    if (this.owned()) {
+      this.message.info('คุณมีเอกสารนี้อยู่ในคลังแล้ว');
+      this.router.navigate(['/library']);
+      return;
+    }
     if (!this.cart.has(id)) {
       const d = this.catalog.getById(id);
       if (d) this.cart.add(d);
@@ -148,7 +206,39 @@ export class BuyerDocumentDetailPage {
     }
     const d = this.doc();
     if (d) {
-      this.message.success('ดาวน์โหลดเรียบร้อย — บันทึกในคลังของคุณแล้ว 🎁');
+      this.library.download(d.id);
     }
+  }
+
+  openPreview(): void {
+    const id = this.id();
+    const d = this.doc();
+    if (!id || !d) return;
+    if ((d.previewPages ?? 0) <= 0) {
+      this.message.info('เอกสารนี้ยังไม่เปิดพรีวิว');
+      return;
+    }
+    if (this.previewLoading()) return;
+
+    void (async () => {
+      this.previewLoading.set(true);
+      try {
+        const result = await getApiMarketplaceDocumentsByIdPreview({ path: { id } });
+        const data = unwrapSdkResult(result);
+        this.preview.set(data);
+        const raster = data.previewImageUrls?.filter((u) => u?.trim()) ?? [];
+        if (raster.length > 0) {
+          this.showPreviewGallery.set(true);
+        } else {
+          this.message.warning(
+            'ยังไม่มีพรีวิวภาพพร้อมลายน้ำสำหรับเอกสารนี้ — ตรวจสอบว่าเป็น PDF และมีไฟล์ในระบบจัดเก็บ',
+          );
+        }
+      } catch {
+        this.message.error('โหลดพรีวิวไม่สำเร็จ');
+      } finally {
+        this.previewLoading.set(false);
+      }
+    })();
   }
 }

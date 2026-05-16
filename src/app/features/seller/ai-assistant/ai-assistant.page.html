@@ -39,10 +39,10 @@
             <div>
               <label class="text-xs font-semibold text-ink-soft mb-2 block">เลือกเอกสารของคุณ</label>
               <select [(ngModel)]="selectedDoc" class="input-soft cursor-pointer">
-                <option value="">— เอกสารทั้งหมด —</option>
-                <option value="doc-001">สรุปคณิตม.ปลาย ครบ 6 บท</option>
-                <option value="doc-002">แผนธุรกิจ Startup Template</option>
-                <option value="doc-003">Clean Architecture .NET</option>
+                <option value="">— เลือกเอกสาร —</option>
+                @for (d of seller.myDocuments(); track d.id) {
+                  <option [value]="d.id">{{ d.title }}</option>
+                }
               </select>
             </div>
 

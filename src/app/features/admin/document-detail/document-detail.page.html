@@ -1,0 +1,309 @@
+<div class="max-w-4xl">
+  <div class="flex items-center gap-3 mb-6">
+    <a routerLink="/admin/documents" class="btn-icon !w-9 !h-9" title="กลับ">
+      <app-icon name="arrow-left" [size]="18" />
+    </a>
+    <div>
+      <h1 class="text-2xl font-extrabold text-ink">รายละเอียดเอกสาร</h1>
+      @if (doc()) {
+        <p class="text-xs text-ink-muted font-mono">{{ doc()!.id }}</p>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="text-ink-muted text-sm">กำลังโหลด…</p>
+  } @else if (!doc()) {
+    <p class="text-rose-600 text-sm">ไม่พบเอกสาร</p>
+  } @else {
+    <div class="space-y-6">
+      <div class="card-soft p-5 space-y-4">
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">ข้อมูลหลัก</h2>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-1">ชื่อ</label>
+            <input class="input-soft w-full !py-2" [ngModel]="doc()!.title" (ngModelChange)="patchDoc({ title: $event })" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-1">คำอธิบายสั้น</label>
+            <input class="input-soft w-full !py-2" [ngModel]="doc()!.shortDescription" (ngModelChange)="patchDoc({ shortDescription: $event })" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-1">รายละเอียด</label>
+            <textarea class="input-soft w-full min-h-[120px] !py-2" [ngModel]="doc()!.description" (ngModelChange)="patchDoc({ description: $event })"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">ราคา</label>
+            <input class="input-soft w-full !py-2" type="number" inputmode="decimal" min="0" step="0.01" [ngModel]="doc()!.price" (ngModelChange)="patchDoc({ price: +$event })" />
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">รูปแบบไฟล์</label>
+            <select class="input-soft w-full !py-2" [ngModel]="doc()!.format" (ngModelChange)="patchDoc({ format: $event })">
+              @for (o of formatOptions; track o.value) {
+                <option [value]="o.value">{{ o.label }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">หมวดหมู่ (เลือกได้หลายหมวด)</label>
+            <div class="space-y-1 max-h-40 overflow-auto p-2 rounded-2xl border border-line bg-white/70">
+              @for (c of admin.adminCategories(); track c.id) {
+                <label class="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-pink-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="w-4 h-4 accent-pink-500"
+                    [checked]="(doc()!.categoryIds ?? []).includes(c.id)"
+                    (change)="patchDoc({ categoryIds: ((doc()!.categoryIds ?? []).includes(c.id)
+                      ? (doc()!.categoryIds ?? []).filter((id) => id !== c.id)
+                      : [ ...(doc()!.categoryIds ?? []), c.id ]) })"
+                  />
+                  <span class="text-sm">{{ c.icon }} {{ c.name }}</span>
+                </label>
+              } @empty {
+                <p class="text-xs text-ink-muted px-2 py-1">ยังไม่มีหมวดหมู่</p>
+              }
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">หมวดย่อย (ถ้ามี)</label>
+            <input class="input-soft w-full !py-2" [ngModel]="doc()!.subcategoryId ?? ''" (ngModelChange)="patchDoc({ subcategoryId: $event || null })" placeholder="SubcategoryId" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-1">ประเภททรัพยากร</label>
+            <select class="input-soft w-full !py-2" [ngModel]="doc()!.resourceType" (ngModelChange)="patchDoc({ resourceType: $event })">
+              @for (o of resourceTypeOptions; track o.value) {
+                <option [value]="o.value">{{ o.label }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">ผู้ขาย</label>
+            <input class="input-soft w-full !py-2 opacity-70" [value]="doc()!.sellerName" disabled />
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">สถานะ</label>
+            <select class="input-soft w-full !py-2" [ngModel]="doc()!.status" (ngModelChange)="patchDoc({ status: $event })">
+              @for (o of docStatuses; track o.value) {
+                <option [value]="o.value">{{ o.label }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">ภาษา</label>
+            <select class="input-soft w-full !py-2" [ngModel]="doc()!.language" (ngModelChange)="patchDoc({ language: $event })">
+              <option value="th">ไทย (th)</option>
+              <option value="en">English (en)</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2 flex flex-wrap gap-4">
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" [ngModel]="doc()!.isFeatured" (ngModelChange)="patchDoc({ isFeatured: $event })" />
+              Featured
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" [ngModel]="doc()!.isFree" (ngModelChange)="patchDoc({ isFree: $event })" />
+              ฟรี
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" [ngModel]="doc()!.watermarkEnabled" (ngModelChange)="patchDoc({ watermarkEnabled: $event })" />
+              ลายน้ำ
+            </label>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-1">แท็ก</label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              @for (t of tags(); track t) {
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-100 text-pink-900 text-xs">
+                  {{ t }}
+                  <button type="button" class="text-rose-600 font-bold leading-none" (click)="removeTag(t)" aria-label="ลบแท็ก">×</button>
+                </span>
+              }
+            </div>
+            <div class="flex gap-2">
+              <input class="input-soft flex-1 !py-2" placeholder="พิมพ์แท็กแล้วกดเพิ่ม" [ngModel]="newTag()" (ngModelChange)="newTag.set($event)" (keydown.enter)="addTag(); $event.preventDefault()" />
+              <button type="button" class="btn-ghost text-xs whitespace-nowrap" (click)="addTag()">เพิ่มแท็ก</button>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-2">ระดับชั้น</label>
+            <div class="flex flex-wrap gap-2">
+              @for (g of gradePresets; track g.value) {
+                <label class="inline-flex items-center gap-1.5 text-xs bg-pink-50/80 px-2 py-1 rounded-lg cursor-pointer">
+                  <input type="checkbox" [checked]="gradeChecked(g.value)" (change)="toggleGrade(g.value, ($any($event.target)).checked)" />
+                  {{ g.label }}
+                </label>
+              }
+            </div>
+            <label class="block text-xs text-ink-muted mt-2 mb-1">ระดับชั้นอื่น (คั่นด้วยจุลภาค)</label>
+            <input class="input-soft w-full !py-2 text-sm" [ngModel]="extraGradeLevels()" (ngModelChange)="extraGradeLevels.set($event)" placeholder="เช่น ป.4, ม.ปลาย" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-ink-muted mb-2">มาตรฐาน / สอบ</label>
+            <div class="flex flex-wrap gap-2">
+              @for (s of standardPresets; track s) {
+                <label class="inline-flex items-center gap-1.5 text-xs bg-slate-50 px-2 py-1 rounded-lg cursor-pointer border border-line">
+                  <input type="checkbox" [checked]="standardChecked(s)" (change)="toggleStandard(s, ($any($event.target)).checked)" />
+                  {{ s }}
+                </label>
+              }
+            </div>
+            <label class="block text-xs text-ink-muted mt-2 mb-1">มาตรฐานอื่น (คั่นด้วยจุลภาค)</label>
+            <input class="input-soft w-full !py-2 text-sm" [ngModel]="extraStandards()" (ngModelChange)="extraStandards.set($event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card-soft p-5 space-y-4">
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">ไฟล์และที่เก็บ</h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2 space-y-2">
+            <label class="block text-xs text-ink-muted mb-1">รูปปกและแกลเลอรี</label>
+            <p class="text-[11px] text-ink-muted">
+              อัปโหลดได้หลายรูป (สูงสุด {{ maxGalleryImages }}) — รูปแรกคือปก — ลากเพื่อเรียงลำดับ
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
+                <app-icon name="upload" [size]="14" />
+                {{ galleryUploading() ? 'กำลังอัปโหลด…' : 'เพิ่มรูป' }}
+                <input type="file" class="hidden" accept="image/*" multiple [disabled]="galleryUploading()" (change)="onGalleryFiles($event)" />
+              </label>
+              @if (galleryItems().length) {
+                <button type="button" class="btn-ghost text-xs !text-red-600" (click)="resetGallery()">ล้างทั้งหมด</button>
+              }
+            </div>
+
+            @if (galleryItems().length) {
+              <div class="rounded-2xl border border-line overflow-hidden bg-white">
+                <ul
+                  cdkDropList
+                  [cdkDropListData]="galleryItems()"
+                  (cdkDropListDropped)="onGalleryDrop($event)"
+                  class="divide-y divide-line"
+                >
+                  @for (item of galleryItems(); track $index; let i = $index) {
+                    <li cdkDrag class="p-3 flex items-center gap-3">
+                      <img [src]="item.publicUrl" alt="" class="w-16 h-20 object-cover rounded-xl border border-line" />
+                      <div class="flex-1 min-w-0">
+                        @if (i === 0) {
+                          <div class="text-xs font-bold text-pink-600">ปกหลัก</div>
+                        } @else {
+                          <div class="text-xs text-ink-muted">ลำดับ {{ i + 1 }}</div>
+                        }
+                        <div class="text-[10px] text-ink-muted">ลากเพื่อเรียงลำดับ</div>
+                      </div>
+                      <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" title="ลบ">
+                        <app-icon name="trash" [size]="16" />
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else {
+              <input class="input-soft w-full !py-2 text-xs font-mono" placeholder="ยังไม่มีรูป — อัปโหลดอย่างน้อย 1 รูป" disabled />
+            }
+          </div>
+          <div class="sm:col-span-2 space-y-2">
+            <label class="block text-xs text-ink-muted mb-1">ไฟล์เอกสารหลัก</label>
+            <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
+              <app-icon name="upload" [size]="14" />
+              {{ mainFileUploading() ? 'กำลังอัปโหลด…' : 'อัปโหลดไฟล์หลัก' }}
+              <input type="file" class="hidden" [disabled]="mainFileUploading()" (change)="onMainFile($event)" />
+            </label>
+            <input
+              class="input-soft w-full !py-2 font-mono text-xs"
+              [ngModel]="doc()!.fileStorageKey ?? ''"
+              (ngModelChange)="patchDoc({ fileStorageKey: $event || null })"
+              placeholder="storage key หลังอัปโหลด หรือวาง key เอง"
+            />
+          </div>
+          <div class="sm:col-span-2 space-y-2">
+            <label class="block text-xs text-ink-muted mb-1">ไฟล์ตัวอย่าง (preview)</label>
+            <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
+              <app-icon name="upload" [size]="14" />
+              {{ previewUploading() ? 'กำลังอัปโหลด…' : 'อัปโหลดตัวอย่าง' }}
+              <input type="file" class="hidden" [disabled]="previewUploading()" (change)="onPreviewFile($event)" />
+            </label>
+            <input class="input-soft w-full !py-2 font-mono text-xs" [ngModel]="doc()!.previewStorageKey ?? ''" (ngModelChange)="patchDoc({ previewStorageKey: $event || null })" placeholder="หรือวาง key เอง" />
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">จำนวนหน้า</label>
+            <input
+              class="input-soft w-full !py-2"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              step="1"
+              [ngModel]="doc()!.pages"
+              (ngModelChange)="patchDoc({ pages: parseIntSafe($event, doc()!.pages ?? 0) })"
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-ink-muted mb-1">หน้าตัวอย่าง</label>
+            <input
+              class="input-soft w-full !py-2"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              step="1"
+              [ngModel]="doc()!.previewPages"
+              (ngModelChange)="patchDoc({ previewPages: parseIntSafe($event, doc()!.previewPages ?? 0) })"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" class="btn-pink" [disabled]="saving()" (click)="save()">
+          @if (saving()) { กำลังบันทึก… } @else { บันทึก }
+        </button>
+      </div>
+
+      <div class="card-soft p-5 space-y-3">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <h2 class="text-sm font-bold text-ink uppercase tracking-wider">รายงาน / Moderation</h2>
+          @if (reports().some((r) => !r.resolvedAt)) {
+            <button type="button" class="btn-ghost text-xs" (click)="resolveAllReports()">ปิดทั้งหมดที่ค้าง</button>
+          }
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <input class="input-soft flex-1 min-w-[200px] !py-2" placeholder="เหตุผลรายงานใหม่" [ngModel]="newReportReason()" (ngModelChange)="newReportReason.set($event)" />
+          <button type="button" class="btn-ghost text-xs" (click)="addReport()">เพิ่มรายงาน</button>
+        </div>
+        <ul class="divide-y divide-line text-sm">
+          @for (r of reports(); track r.id) {
+            <li class="py-2 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div class="text-ink">{{ r.reason }}</div>
+                <div class="text-xs text-ink-muted">{{ r.createdAt }}</div>
+              </div>
+              @if (!r.resolvedAt) {
+                <button type="button" class="btn-ghost text-xs" (click)="resolveReport(r.id ?? '')">ปิดรายงาน</button>
+              } @else {
+                <span class="text-xs text-emerald-700">ปิดแล้ว {{ r.resolvedAt }}</span>
+              }
+            </li>
+          } @empty {
+            <li class="text-ink-muted text-sm py-2">ไม่มีรายงาน</li>
+          }
+        </ul>
+      </div>
+
+      <div class="card-soft p-5 space-y-2">
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">Audit ล่าสุด</h2>
+        <ul class="text-xs font-mono space-y-1 max-h-48 overflow-y-auto">
+          @for (a of doc()!.recentAudit; track a.id) {
+            <li class="border-b border-line/50 pb-1">
+              <span class="text-ink-muted">{{ a.createdAt }}</span>
+              <span class="text-pink-700 ml-2">{{ a.action }}</span>
+              @if (a.detailsJson) {
+                <pre class="mt-1 text-[10px] whitespace-pre-wrap text-ink-soft">{{ a.detailsJson }}</pre>
+              }
+            </li>
+          } @empty {
+            <li class="text-ink-muted">ยังไม่มีบันทึก</li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+</div>

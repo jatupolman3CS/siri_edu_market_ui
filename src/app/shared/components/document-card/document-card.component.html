@@ -1,10 +1,12 @@
 <article
       class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1"
+      [class.!rounded-2xl]="isCompact()"
     >
       <!-- Cover -->
       <a
         [routerLink]="['/document', doc().id]"
         class="block relative aspect-[4/5] bg-pink-50 overflow-hidden rounded-3xl"
+        [class.!rounded-2xl]="isCompact()"
       >
         <img
           [src]="doc().cover"
@@ -12,13 +14,34 @@
           class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           loading="lazy"
         />
+        @if (doc().gallery.length > 1) {
+          <div class="absolute bottom-3 left-3 right-3 flex gap-1.5 z-10">
+            @for (img of doc().gallery.slice(0, 3); track img; let i = $index) {
+              @if (i > 0) {
+                <div class="relative w-10 h-10 rounded-xl overflow-hidden border border-white/70 shadow-soft">
+                  <img [src]="img" alt="" class="w-full h-full object-cover" loading="lazy" />
+                </div>
+              }
+            }
+            @if ((doc().galleryCount ?? doc().gallery.length) > 3) {
+              <div class="ml-auto pill bg-white/90 backdrop-blur text-[10px] font-bold text-ink">
+                +{{ (doc().galleryCount ?? doc().gallery.length) - 3 }}
+              </div>
+            }
+          </div>
+        }
         <!-- Gradient overlay -->
         <div
           class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"
         ></div>
 
         <!-- Top badges -->
-        <div class="absolute top-3 left-3 flex flex-col gap-2">
+        <div
+          class="absolute top-3 left-3 flex flex-col gap-2"
+          [class.!top-2]="isCompact()"
+          [class.!left-2]="isCompact()"
+          [class.!gap-1.5]="isCompact()"
+        >
           @if (doc().isFree) {
             <span class="pill bg-emerald-500 text-white shadow-soft">
               🆓 ฟรี
@@ -43,6 +66,8 @@
         <!-- Format badge (top-right above wishlist) -->
         <span
           class="absolute top-3 right-12 pill bg-white/90 backdrop-blur uppercase text-[10px] font-bold tracking-wider"
+          [class.!top-2]="isCompact()"
+          [class.!right-10]="isCompact()"
         >
           {{ doc().format }}
         </span>
@@ -51,15 +76,19 @@
         <button
           type="button"
           class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur hover:bg-white shadow-soft flex items-center justify-center transition-colors"
+          [class.!top-2]="isCompact()"
+          [class.!right-2]="isCompact()"
+          [class.!w-8]="isCompact()"
+          [class.!h-8]="isCompact()"
           [class.!text-pink-500]="wishlist.has(doc().id)"
           [class.text-ink-soft]="!wishlist.has(doc().id)"
           (click)="toggleWishlist($event)"
           [attr.aria-label]="wishlist.has(doc().id) ? 'นำออกจากรายการโปรด' : 'เพิ่มลงรายการโปรด'"
         >
           @if (wishlist.has(doc().id)) {
-            <app-icon name="heart-fill" [size]="18" />
+            <app-icon name="heart-fill" [size]="isCompact() ? 16 : 18" />
           } @else {
-            <app-icon name="heart" [size]="18" />
+            <app-icon name="heart" [size]="isCompact() ? 16 : 18" />
           }
         </button>
 
@@ -68,9 +97,17 @@
           type="button"
           class="absolute bottom-3 right-3 hidden group-hover:inline-flex items-center gap-1.5 pill bg-ink/85 backdrop-blur text-white hover:bg-ink"
           (click)="openQuickView($event)"
+          [class.!bottom-2]="isCompact()"
+          [class.!right-2]="isCompact()"
+          [class.!gap-1]="isCompact()"
+          [class.!text-[10px]]="isCompact()"
+          [class.!py-1]="isCompact()"
+          [class.!px-2]="isCompact()"
         >
-          <app-icon name="eye" [size]="12" />
-          ดูเร็วๆ
+          <app-icon name="eye" [size]="isCompact() ? 11 : 12" />
+          @if (!isCompact()) {
+            ดูเร็วๆ
+          }
         </button>
 
         <!-- Watermark indicator (only on left bottom for paid) -->
@@ -84,7 +121,12 @@
       </a>
 
       <!-- Body -->
-      <div class="p-4 pt-3 flex flex-col gap-2">
+      <div
+        class="p-4 pt-3 flex flex-col gap-2"
+        [class.!p-3]="isCompact()"
+        [class.!pt-2]="isCompact()"
+        [class.!gap-1.5]="isCompact()"
+      >
         <!-- Resource type + Seller -->
         <div class="flex items-center gap-1.5 text-[11px] text-ink-muted">
           <span class="pill-soft !py-0.5 !text-[10px] !bg-pink-50 !text-pink-700">
@@ -103,6 +145,7 @@
         <a [routerLink]="['/document', doc().id]" class="block">
           <h3
             class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 group-hover:text-pink-600 transition-colors"
+            [class.!text-[12px]]="isCompact()"
           >
             {{ doc().title }}
           </h3>
@@ -112,10 +155,10 @@
           <app-rating-stars
             [value]="doc().rating"
             [count]="doc().reviewCount"
-            [size]="12"
+            [size]="isCompact() ? 10 : 12"
           />
           <span class="inline-flex items-center gap-1">
-            <app-icon name="download" [size]="12" />
+            <app-icon name="download" [size]="isCompact() ? 11 : 12" />
             {{ doc().downloads | compact }}
           </span>
         </div>
@@ -123,9 +166,9 @@
         <div class="flex items-end justify-between mt-2">
           <div class="flex items-baseline gap-2">
             @if (doc().isFree) {
-              <span class="text-lg font-extrabold text-emerald-600">ฟรี</span>
+              <span class="text-lg font-extrabold text-emerald-600" [class.!text-sm]="isCompact()">ฟรี</span>
             } @else {
-              <span class="text-lg font-extrabold text-ink">
+              <span class="text-lg font-extrabold text-ink" [class.!text-sm]="isCompact()">
                 {{ doc().price | thb }}
               </span>
               @if (doc().originalPrice) {
@@ -138,6 +181,8 @@
           <button
             type="button"
             class="btn-icon"
+            [class.!w-9]="isCompact()"
+            [class.!h-9]="isCompact()"
             [class.!bg-pink-500]="inCart()"
             [class.!text-white]="inCart()"
             [class.!border-pink-500]="inCart()"
@@ -145,9 +190,9 @@
             (click)="addToCart($event)"
           >
             @if (inCart()) {
-              <app-icon name="check" [size]="18" />
+              <app-icon name="check" [size]="isCompact() ? 16 : 18" />
             } @else {
-              <app-icon name="cart" [size]="18" />
+              <app-icon name="cart" [size]="isCompact() ? 16 : 18" />
             }
           </button>
         </div>

@@ -1,4 +1,16 @@
-@if (doc(); as d) {
+@if (catalog.documentDetailState().status === 'loading') {
+      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+        <app-empty-state emoji="⏳" title="กำลังโหลดรายละเอียดเอกสาร…" description="รอสักครู่นะคะ" />
+      </div>
+    } @else if (catalog.documentDetailState().status === 'error') {
+      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+        <app-empty-state emoji="⚠️" title="โหลดรายละเอียดไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <button class="btn-pink mt-4" type="button" (click)="catalog.loadDocumentDetail(id())">
+            ลองใหม่
+          </button>
+        </app-empty-state>
+      </div>
+    } @else if (doc(); as d) {
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
         <!-- Breadcrumb -->
         <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
@@ -6,18 +18,20 @@
           <app-icon name="chevron-right" [size]="14" />
           <a routerLink="/marketplace" class="hover:text-pink-600">ตลาด</a>
           <app-icon name="chevron-right" [size]="14" />
-          @if (catalog.getCategoryById(d.categoryId); as c) {
-            <a [routerLink]="['/category', c.slug]" class="hover:text-pink-600">{{ c.name }}</a>
-            <app-icon name="chevron-right" [size]="14" />
-            @if (d.subcategoryId && catalog.getSubcategoryById(d.subcategoryId); as sub) {
-              <a
-                [routerLink]="['/category', c.slug]"
-                [queryParams]="{ sub: sub.slug }"
-                class="hover:text-pink-600"
-              >
-                {{ sub.name }}
-              </a>
+          @for (cid of d.categoryIds; track cid; let last = $last) {
+            @if (catalog.getCategoryById(cid); as c) {
+              <a [routerLink]="['/category', c.slug]" class="hover:text-pink-600">{{ c.name }}</a>
               <app-icon name="chevron-right" [size]="14" />
+              @if (last && d.subcategoryId && catalog.getSubcategoryById(d.subcategoryId); as sub) {
+                <a
+                  [routerLink]="['/category', c.slug]"
+                  [queryParams]="{ sub: sub.slug }"
+                  class="hover:text-pink-600"
+                >
+                  {{ sub.name }}
+                </a>
+                <app-icon name="chevron-right" [size]="14" />
+              }
             }
           }
           <span class="text-ink line-clamp-1 max-w-xs">{{ d.title }}</span>
@@ -30,11 +44,11 @@
             <div class="relative card-soft overflow-hidden">
               <div class="aspect-[4/5] relative">
                 <img
-                  [src]="d.gallery[selectedImage()]"
+                  [src]="d.gallery[selectedImage()] || d.cover"
                   [alt]="d.title"
                   class="absolute inset-0 w-full h-full object-cover"
                 />
-                @if (d.watermarkEnabled) {
+                @if (d.watermarkEnabled && d.format !== 'pdf') {
                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div class="text-white/30 text-6xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
                       preview
@@ -65,6 +79,12 @@
                   >
                     <img [src]="img" class="w-full h-full object-cover" alt="" />
                   </button>
+                } @empty {
+                  @if (d.cover) {
+                    <button type="button" class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-pink-500" aria-current="true">
+                      <img [src]="d.cover" class="w-full h-full object-cover" alt="" />
+                    </button>
+                  }
                 }
               </div>
             </div>
@@ -72,6 +92,54 @@
             <!-- Tabs -->
             <div class="mt-8">
               <nz-tabs>
+                @if (d.previewPages > 0) {
+                  <nz-tab nzTitle="พรีวิว">
+                    <div class="mt-4 card-cream p-6">
+                      <div class="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                          <div class="text-sm font-bold text-ink">พรีวิวฟรี</div>
+                          <div class="text-xs text-ink-muted mt-1">
+                            ดูตัวอย่างได้ประมาณ {{ d.previewPages }} หน้าแรก (ลายน้ำอยู่ที่ภาพจากเซิร์ฟเวอร์เท่านั้น)
+                          </div>
+                        </div>
+                        <button class="btn-pink !py-2.5 !px-5 text-sm" type="button" (click)="openPreview()" [disabled]="previewLoading()">
+                          @if (previewLoading()) {
+                            กำลังโหลด…
+                          } @else {
+                            เปิดพรีวิว
+                          }
+                        </button>
+                      </div>
+
+                      @if (preview(); as p) {
+                        @if (p.excerptTitle) {
+                          <div class="text-sm font-bold text-ink mb-2">{{ p.excerptTitle }}</div>
+                        }
+
+                        @if (p.excerptLines?.length) {
+                          <div class="rounded-2xl border border-line bg-white p-4">
+                            <div class="space-y-2 text-sm text-ink-soft leading-relaxed">
+                              @for (line of p.excerptLines!; track line) {
+                                <p class="m-0">{{ line }}</p>
+                              }
+                            </div>
+                          </div>
+                        } @else {
+                          <app-empty-state
+                            emoji="📄"
+                            title="ยังไม่มีตัวอย่างพรีวิว"
+                            description="ระบบอาจกำลังสร้างพรีวิว ลองใหม่อีกครั้ง"
+                          />
+                        }
+                      } @else {
+                        <div class="text-xs text-ink-muted">
+                          กด “เปิดพรีวิว” เพื่อโหลดตัวอย่างเอกสาร
+                        </div>
+                      }
+                    </div>
+                  </nz-tab>
+                }
+
                 <nz-tab nzTitle="รายละเอียด">
                   <div class="prose prose-sm max-w-none mt-4">
                     <p class="text-ink-soft leading-relaxed">{{ d.description }}</p>
@@ -239,28 +307,22 @@
                   </div>
                 </nz-tab>
 
-                <nz-tab [nzTitle]="'ถาม-ตอบ (' + (d.qna?.length ?? 0) + ')'">
+                <nz-tab [nzTitle]="'คำถามที่พบบ่อย (' + (d.qna?.length ?? 0) + ')'">
                   <div class="mt-4">
-                    <!-- Ask form -->
+                    <!-- Policy notice -->
                     <div class="card-cream p-5 mb-6">
                       <h3 class="text-sm font-bold text-ink mb-2 flex items-center gap-2">
                         <app-icon name="bell" [size]="16" className="text-pink-500" />
-                        มีคำถามถึงผู้ขาย?
+                        คำถาม-คำตอบสาธารณะ
                       </h3>
-                      <p class="text-xs text-ink-muted mb-3">
-                        ผู้ขายจะตอบกลับเฉลี่ยภายใน {{ d.seller.responseHours }} ชม.
+                      <p class="text-xs text-ink-muted leading-relaxed">
+                        คำถามและคำตอบบนหน้านี้แสดงต่อสาธารณะเพื่อช่วยให้ผู้ซื้อท่านอื่นได้ข้อมูลประกอบการตัดสินใจ
+                        — การซื้อขายและการสนทนาทำผ่านระบบในเว็บเท่านั้น
                       </p>
-                      <div class="flex gap-2">
-                        <input class="input-soft flex-1" placeholder="เช่น: ไฟล์เป็น PDF เปิดดูบนมือถือได้ไหมครับ?" />
-                        <button class="btn-pink !px-5">
-                          <app-icon name="arrow-right" [size]="14" />
-                          ส่ง
-                        </button>
-                      </div>
                     </div>
 
                     @if (!d.qna?.length) {
-                      <app-empty-state emoji="💭" title="ยังไม่มีคำถาม" description="เป็นคนแรกที่ถามผู้ขายเลย!" />
+                      <app-empty-state emoji="💭" title="ยังไม่มีคำถาม" description="ลองดูแท็บรายละเอียดและพรีวิวเพื่อข้อมูลเพิ่มเติม" />
                     } @else {
                       <ul class="flex flex-col gap-3">
                         @for (q of d.qna!; track q.id) {
@@ -325,14 +387,31 @@
                 <p class="text-sm text-ink-soft leading-relaxed mb-4">
                   {{ d.shortDescription }}
                 </p>
-                <div class="flex items-center gap-4 text-sm">
-                  <app-rating-stars [value]="d.rating" [count]="d.reviewCount" />
-                  <span class="text-ink-muted">·</span>
-                  <span class="inline-flex items-center gap-1 text-ink-soft">
-                    <app-icon name="download" [size]="14" />
-                    {{ d.downloads | compact }}
-                  </span>
-                </div>
+
+                <!-- Prominent stats: downloads + reviews to support purchase decision -->
+                <dl class="grid grid-cols-2 gap-3">
+                  <div class="card-cream p-4 text-center">
+                    <dt class="text-[11px] uppercase tracking-wider text-ink-muted flex items-center justify-center gap-1">
+                      <app-icon name="download" [size]="12" className="text-pink-500" />
+                      ยอดดาวน์โหลด
+                    </dt>
+                    <dd class="text-2xl font-extrabold text-ink mt-1 leading-none">
+                      {{ d.downloads | compact }}
+                    </dd>
+                    <dd class="text-[11px] text-ink-muted mt-1">ครั้ง</dd>
+                  </div>
+                  <div class="card-cream p-4 text-center">
+                    <dt class="text-[11px] uppercase tracking-wider text-ink-muted flex items-center justify-center gap-1">
+                      <app-icon name="star" [size]="12" className="text-amber-500" />
+                      รีวิว
+                    </dt>
+                    <dd class="text-2xl font-extrabold text-ink mt-1 leading-none flex items-baseline justify-center gap-1">
+                      {{ d.rating }}
+                      <span class="text-sm text-amber-500">★</span>
+                    </dd>
+                    <dd class="text-[11px] text-ink-muted mt-1">{{ d.reviewCount | compact }} รีวิว</dd>
+                  </div>
+                </dl>
               </div>
 
               <!-- Price card -->
@@ -366,6 +445,14 @@
                       <app-icon name="download" [size]="18" />
                       ดาวน์โหลดฟรีเลย
                     </button>
+                  } @else if (owned()) {
+                    <button class="btn-pink !py-3.5 text-base" type="button" disabled>
+                      <app-icon name="check" [size]="18" />
+                      อยู่ในคลังแล้ว
+                    </button>
+                    <a routerLink="/library" class="btn-ghost !py-3.5">
+                      ไปที่คลังของฉัน
+                    </a>
                   } @else {
                     <button type="button" class="btn-pink !py-3.5 text-base" (click)="cart.add(d)">
                       <app-icon name="cart" [size]="18" />
@@ -443,6 +530,10 @@
                         ดูร้าน
                       </a>
                     </div>
+                    <p class="text-[11px] text-ink-muted leading-relaxed mt-3 flex items-center gap-1">
+                      <app-icon name="lock" [size]="11" className="text-pink-500" />
+                      ซื้อขายและสอบถามผ่านระบบในเว็บเท่านั้น เพื่อความปลอดภัยของทุกฝ่าย
+                    </p>
                   </div>
                 </div>
               </div>
@@ -493,6 +584,38 @@
               }
             </div>
           </section>
+        }
+
+        @if (showPreviewGallery()) {
+          <div
+            class="preview-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="พรีวิวเอกสาร"
+            (click)="closePreviewGallery()"
+          >
+            <div class="preview-modal-content" (click)="$event.stopPropagation()">
+              <header class="preview-modal-header">
+                <span class="text-sm font-bold text-ink">พรีวิวเอกสาร</span>
+                <button type="button" class="btn-ghost !py-2 !px-4 text-sm" (click)="closePreviewGallery()">
+                  ปิด
+                </button>
+              </header>
+              <div class="gallery-container">
+                @for (path of previewRasterUrls(); track $index) {
+                  <figure class="preview-image-card">
+                    <img
+                      [src]="previewImgSrc(path)"
+                      alt="พรีวิวหน้าเอกสาร"
+                      class="preview-image-item block h-auto max-h-none w-full max-w-full object-contain select-none"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </figure>
+                }
+              </div>
+            </div>
+          </div>
         }
       </div>
     } @else {

@@ -10,24 +10,24 @@
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <app-stat-card
           label="GMV เดือนนี้"
-          [value]="admin.totalRevenue() | thb"
+          [value]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb"
           icon="💎"
           trend="+24%"
         />
         <app-stat-card
           label="ค่าธรรมเนียม"
-          [value]="admin.totalFees() | thb"
+          [value]="(admin.dashboard()?.totalFees ?? admin.totalFees()) | thb"
           icon="💰"
           trend="+24%"
         />
         <app-stat-card
           label="ธุรกรรมสำเร็จ"
-          [value]="admin.successCount() + ' รายการ'"
+          [value]="(admin.dashboard()?.successCount ?? admin.successCount()) + ' รายการ'"
           icon="✅"
         />
         <app-stat-card
           label="คืนเงิน"
-          [value]="admin.refundCount() + ' รายการ'"
+          [value]="(admin.dashboard()?.refundCount ?? admin.refundCount()) + ' รายการ'"
           icon="↩️"
           trend="-12%"
         />
@@ -40,7 +40,7 @@
             <div>
               <h2 class="text-lg font-bold text-ink">เอกสารที่รออนุมัติ</h2>
               <p class="text-xs text-ink-muted mt-1">
-                {{ catalog.pending().length }} รายการ — เฉลี่ยอนุมัติภายใน 18 ชม.
+                {{ admin.pendingDocuments().length }} รายการ — เฉลี่ยอนุมัติภายใน 18 ชม.
               </p>
             </div>
             <a routerLink="/admin/approval" class="text-sm text-pink-600 hover:underline font-semibold">
@@ -49,7 +49,7 @@
           </header>
 
           <ul class="divide-y divide-line">
-            @for (d of catalog.pending().slice(0, 5); track d.id) {
+            @for (d of admin.pendingDocuments().slice(0, 5); track d.id) {
               <li class="py-3 flex items-center gap-4">
                 <img [src]="d.cover" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" alt="" />
                 <div class="flex-1 min-w-0">
@@ -75,17 +75,19 @@
           <h2 class="text-lg font-bold text-ink mb-1">สถานะระบบ</h2>
           <p class="text-xs text-ink-muted mb-5">ทุกบริการทำงานปกติ</p>
           <ul class="space-y-3">
-            @for (s of services; track s.name) {
+            @for (s of services(); track s.name) {
               <li class="flex items-center gap-3">
                 <span
                   class="w-2.5 h-2.5 rounded-full"
                   [class.bg-emerald-500]="s.status === 'ok'"
-                  [class.bg-amber-500]="s.status === 'warn'"
+                  [class.bg-amber-500]="s.status === 'degraded' || s.status === 'warn'"
                   [class.bg-rose-500]="s.status === 'down'"
                 ></span>
                 <div class="flex-1">
                   <div class="text-sm font-medium text-ink">{{ s.name }}</div>
-                  <div class="text-xs text-ink-muted">{{ s.note }}</div>
+                  <div class="text-xs text-ink-muted">
+                    {{ s.message || (s.status === 'ok' ? 'ทำงานปกติ' : s.status) }}
+                  </div>
                 </div>
               </li>
             }
@@ -102,7 +104,8 @@
           </a>
         </header>
 
-        <table class="w-full">
+        <div class="overflow-x-auto -mx-6 px-6">
+        <table class="w-full min-w-[560px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-5 py-3 font-semibold">เลขคำสั่งซื้อ</th>
@@ -126,5 +129,6 @@
             }
           </tbody>
         </table>
+        </div>
       </section>
     </div>

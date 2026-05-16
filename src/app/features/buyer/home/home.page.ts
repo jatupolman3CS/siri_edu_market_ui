@@ -10,6 +10,7 @@ import { BundleCardComponent } from '../../../shared/components/bundle-card/bund
 import { SectionHeaderComponent } from '../../../shared/components/section-header/section-header.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-buyer-home',
@@ -21,6 +22,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
     SectionHeaderComponent,
     IconComponent,
     CompactPipe,
+    EmptyStateComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',
@@ -38,14 +40,6 @@ export class BuyerHomePage {
     'TOEIC',
     'Resume',
     'งานวิจัย',
-  ];
-
-  readonly avatars = [
-    '1494790108377-be9c29b29330',
-    '1438761681033-6461ffad8d80',
-    '1531746020798-e6953c6e8e04',
-    '1517841905240-472988babdf9',
-    '1502685104226-ee32379fefbe',
   ];
 
   readonly howItWorks = [
@@ -68,6 +62,13 @@ export class BuyerHomePage {
       desc: 'ดาวน์โหลดได้ตลอดเวลาในคลังเอกสารส่วนตัว และให้คะแนน + รีวิวเพื่อช่วยผู้ซื้อท่านอื่น',
     },
   ];
+
+  constructor() {
+    // Explicit init to avoid root service auto-fetching on unrelated pages.
+    this.catalog.initForHome();
+    // Ensure free section has fresh data (and visible loading/error state).
+    this.catalog.loadFreeResources();
+  }
 
   get featuredSellers() {
     return this.catalog

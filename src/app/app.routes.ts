@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminGuard, sellerGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // ========= Buyer (public + protected) =========
@@ -114,13 +115,22 @@ export const routes: Routes = [
           ),
         title: 'ประวัติคำสั่งซื้อ — SIRIEDUMARKET',
       },
+      {
+        path: 'orders/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/order-detail/order-detail.page').then(
+            (m) => m.BuyerOrderDetailPage,
+          ),
+        title: 'รายละเอียดคำสั่งซื้อ — SIRIEDUMARKET',
+      },
     ],
   },
 
   // ========= Seller (auth required) =========
   {
     path: 'seller',
-    canActivate: [authGuard],
+    canActivate: [authGuard, sellerGuard],
     loadComponent: () =>
       import('./layouts/seller/seller-layout/seller-layout.component').then(
         (m) => m.SellerLayoutComponent,
@@ -147,6 +157,14 @@ export const routes: Routes = [
           import('./features/seller/upload/upload.page').then(
             (m) => m.SellerUploadPage,
           ),
+      },
+      {
+        path: 'pdf-preview',
+        loadComponent: () =>
+          import('./features/seller/pdf-preview-upload/pdf-preview-upload.page').then(
+            (m) => m.PdfPreviewUploadPage,
+          ),
+        title: 'พรีวิว PDF — Siri Studio',
       },
       {
         path: 'ai',
@@ -182,7 +200,7 @@ export const routes: Routes = [
   // ========= Admin (auth required) =========
   {
     path: 'admin',
-    canActivate: [authGuard],
+    canActivate: [authGuard, adminGuard],
     loadComponent: () =>
       import('./layouts/admin/admin-layout/admin-layout.component').then(
         (m) => m.AdminLayoutComponent,
@@ -195,6 +213,22 @@ export const routes: Routes = [
             (m) => m.AdminDashboardPage,
           ),
         title: 'Admin — SIRIEDUMARKET',
+      },
+      {
+        path: 'documents',
+        loadComponent: () =>
+          import('./features/admin/documents/documents.page').then(
+            (m) => m.AdminDocumentsPage,
+          ),
+        title: 'จัดการเอกสาร — Admin',
+      },
+      {
+        path: 'documents/:id',
+        loadComponent: () =>
+          import('./features/admin/document-detail/document-detail.page').then(
+            (m) => m.AdminDocumentDetailPage,
+          ),
+        title: 'รายละเอียดเอกสาร — Admin',
       },
       {
         path: 'approval',

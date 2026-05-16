@@ -1,6 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
+import { AdminService, AuthService, MeService } from '../../../core/services';
+import { resolvePublicUrl } from '../../../core/api-runtime';
 
 @Component({
   selector: 'app-admin-layout',
@@ -10,15 +13,45 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
     RouterLink,
     RouterLinkActive,
     IconComponent,
+    GlobalLoaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss',
 })
 export class AdminLayoutComponent {
-  readonly navItems = [
+  readonly auth = inject(AuthService);
+  private readonly me = inject(MeService);
+  private readonly admin = inject(AdminService);
+
+  /** Live count of documents awaiting approval — drives the sidebar badge. */
+  readonly pendingCount = computed(() => this.admin.pendingDocuments().length);
+
+  readonly avatarSrc = computed(() => {
+    const r2Url = resolvePublicUrl(this.me.profile()?.avatarUrl);
+    if (r2Url) return r2Url;
+    const sessionAvatar = this.auth.user()?.avatar;
+    if (sessionAvatar) return sessionAvatar;
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.auth.user()?.name ?? 'A') + '&background=1e1b4b&color=f9a8d4&size=64';
+  });
+
+  constructor() {
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        this.me.loadProfile().subscribe({ error: () => { /* silent */ } });
+      }
+    });
+  }
+  readonly navItems: {
+    label: string;
+    href: string;
+    icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear';
+    exact?: boolean;
+    badge?: string;
+  }[] = [
     { label: 'ภาพรวม', href: '/admin', icon: 'dashboard' as const, exact: true },
-    { label: 'อนุมัติเอกสาร', href: '/admin/approval', icon: 'shield' as const, badge: '4' },
+    { label: 'จัดการเอกสาร', href: '/admin/documents', icon: 'doc' as const },
+    { label: 'อนุมัติเอกสาร', href: '/admin/approval', icon: 'shield' as const },
     { label: 'ธุรกรรม', href: '/admin/transactions', icon: 'wallet' as const },
     { label: 'ผู้ขาย', href: '/admin/sellers', icon: 'user' as const },
     { label: 'หมวดหมู่', href: '/admin/categories', icon: 'tag' as const },

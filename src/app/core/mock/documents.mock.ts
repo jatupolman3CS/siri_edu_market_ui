@@ -399,7 +399,7 @@ export const MOCK_DOCUMENTS: DocumentItem[] = SEEDS.map((s, i) => {
     pages: s.pages,
     fileSize: s.fileSize,
     language: s.language,
-    categoryId: s.categoryId,
+    categoryIds: [s.categoryId],
     subcategoryId: s.subcategoryId,
     gradeLevels: s.gradeLevels,
     resourceType: s.resourceType,

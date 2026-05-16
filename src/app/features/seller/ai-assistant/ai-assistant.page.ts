@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { SellerService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
@@ -11,6 +13,9 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
   styleUrl: './ai-assistant.page.scss',
 })
 export class SellerAiAssistantPage {
+  readonly seller = inject(SellerService);
+  private readonly message = inject(NzMessageService);
+
   readonly tools = [
     { id: 'summary', icon: '📝', title: 'สรุปเนื้อหา 3 ข้อ', desc: 'AI สกัดสาระสำคัญ 3 ข้อจากเอกสาร แสดงในหน้ารายละเอียด' },
     { id: 'description', icon: '✍️', title: 'เขียนคำอธิบาย', desc: 'สร้างคำอธิบายสินค้าให้น่าสนใจ ดึงดูดผู้ซื้อ' },
@@ -26,42 +31,49 @@ export class SellerAiAssistantPage {
   readonly loading = signal<boolean>(false);
   readonly result = signal<string>('');
 
-  generate(): void {
-    this.loading.set(true);
-    this.result.set('');
-    setTimeout(() => {
-      this.loading.set(false);
-      this.result.set(this.fakeResponse());
-    }, 1400);
+  constructor() {
+    effect(() => {
+      const hasSelection = !!this.selectedDoc();
+      const first = this.seller.myDocuments()[0]?.id ?? '';
+      if (!hasSelection && first) this.selectedDoc.set(first);
+    });
   }
 
-  private fakeResponse(): string {
-    switch (this.active()) {
-      case 'summary':
-        return `1. ครอบคลุมเนื้อหาคณิตศาสตร์ม.ปลาย 6 บทใหญ่ พร้อมตัวอย่างโจทย์ที่ออกสอบบ่อย
+  generate(): void {
+    void (async () => {
+      const id = this.selectedDoc();
+      if (!id) {
+        // Load documents only when needed (avoid initial-load API call).
+        if (this.seller.myDocuments().length === 0) {
+          await this.seller.refreshDocuments();
+        }
+        const after = this.seller.myDocuments()[0]?.id ?? '';
+        if (after) this.selectedDoc.set(after);
 
-2. มีโจทย์ฝึก 120 ข้อ จัดเรียงตามระดับความยาก พร้อมเฉลยละเอียดทุกข้อ
+        this.message.error('กรุณาเลือกเอกสารก่อน');
+        return;
+      }
+      this.loading.set(true);
+      this.result.set('');
+      try {
+        const tool = this.active();
+        const res = await this.seller.aiGenerate(id, tool);
 
-3. รูปแบบเล่มออกแบบให้อ่านง่าย ตัวอักษรชัดเจน เหมาะสำหรับใช้ทบทวนก่อนสอบ A-Level / TGAT`;
-      case 'description':
-        return `📚 อยากเตรียมสอบให้พร้อมโดยไม่เสียเวลา? เอกสารชุดนี้รวมเนื้อหาที่ครูติวเตอร์มืออาชีพคัดมาให้แล้วทั้งหมด ครอบคลุมทุกบทที่ออกสอบบ่อย พร้อมแบบฝึกหัด 120 ข้อพร้อมเฉลย
-
-✨ จุดเด่น:
-- ใช้สีสันและภาพช่วยจำ — เห็นปั๊บเข้าใจปุ๊บ
-- โจทย์ครอบคลุมตั้งแต่ระดับพื้นฐานจนถึงสนามสอบจริง
-- ฟอนต์อ่านสบาย พิมพ์ลงกระดาษ A4 ก็สวย
-
-ใช้สำหรับ: เตรียมสอบ A-Level, TGAT, มหิดล, จุฬา ฯลฯ`;
-      case 'tags':
-      default:
-        return `🏷️ แท็กแนะนำ:
-#คณิตม.ปลาย #ติวเข้ม #A-Level #TGAT #สรุปเนื้อหา #เตรียมสอบ #คณิตศาสตร์
-
-💰 ช่วงราคาที่แนะนำ: ฿179–฿259
-- ราคาเฉลี่ยในหมวดเดียวกัน: ฿199
-- คู่แข่งช่วง 4.5★ ขึ้นไป: ฿229
-- เริ่มต้นที่ ฿179 เพื่อเก็บรีวิว 5★ ก่อน แล้วค่อยปรับขึ้นเป็น ฿229`;
-    }
+        if (tool === 'tags') {
+          const tags = (res.tags ?? []).filter(Boolean);
+          const lines: string[] = [];
+          if (tags.length) lines.push(`🏷️ แท็กแนะนำ:\n${tags.map((t) => `#${t}`).join(' ')}`);
+          if (res.suggestedPrice != null) lines.push(`\n💰 ราคาที่แนะนำ: ฿${res.suggestedPrice}`);
+          this.result.set(lines.join('\n').trim() || res.result || 'AI สร้างผลลัพธ์แล้ว');
+        } else {
+          this.result.set(res.result || 'AI สร้างผลลัพธ์แล้ว');
+        }
+      } catch {
+        // SellerService already reported
+      } finally {
+        this.loading.set(false);
+      }
+    })();
   }
 
   copy(): void {

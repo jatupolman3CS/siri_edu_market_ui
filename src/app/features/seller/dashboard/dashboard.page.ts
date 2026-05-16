@@ -48,4 +48,8 @@ export class SellerDashboardPage {
   readonly platformFee = computed(() => Math.round(this.grossRevenue() * 0.1));
   readonly monthlyEarnings = computed(() => this.grossRevenue() - this.platformFee());
   readonly yearlyEarnings = computed(() => this.monthlyEarnings() * 12);
+
+  constructor() {
+    void this.seller.refreshDashboard();
+  }
 }

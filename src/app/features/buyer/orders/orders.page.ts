@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LibraryService } from '../../../core/services';
+import { AuthService, LibraryService } from '../../../core/services';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -25,11 +25,18 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 })
 export class BuyerOrdersPage {
   readonly library = inject(LibraryService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly showSuccess = signal<boolean>(false);
 
   constructor() {
+    if (!this.auth.isAuthenticated()) {
+      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: '/orders' } });
+      return;
+    }
+    void this.library.refreshOrders();
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())
       .subscribe((params) => {

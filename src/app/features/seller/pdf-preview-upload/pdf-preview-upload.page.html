@@ -1,0 +1,35 @@
+<div class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-extrabold text-ink mb-2">อัปโหลด PDF — พรีวิวฝั่งเซิร์ฟเวอร์</h1>
+  <p class="text-sm text-ink-soft mb-6">
+    ไฟล์ต้นฉบับถูกเก็บเป็นความลับที่ backend เท่านั้น ภาพด้านล่างเป็น JPEG ที่ลายน้ำแล้ว (3 หน้าแรก)
+  </p>
+
+  <label class="block">
+    <span class="sr-only">เลือกไฟล์ PDF</span>
+    <input
+      type="file"
+      accept=".pdf,application/pdf"
+      [disabled]="uploading()"
+      (change)="onFileSelected($event)"
+      class="block w-full text-sm text-ink-soft file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-pink-500 file:text-white file:font-semibold"
+    />
+  </label>
+
+  @if (uploading()) {
+    <p class="mt-4 text-sm text-ink-muted">กำลังอัปโหลดและสร้างพรีวิว…</p>
+  }
+
+  @if (documentId()) {
+    <p class="mt-4 text-sm font-mono text-ink-soft">DocumentId: {{ documentId() }}</p>
+  }
+
+  @if (previewUrls().length) {
+    <div class="mt-6 grid gap-4 sm:grid-cols-1">
+      @for (u of previewUrls(); track u) {
+        <figure class="rounded-xl border border-line overflow-hidden bg-white shadow-sm">
+          <img [src]="resolveUrl(u)" alt="พรีวิวหน้า PDF" class="w-full h-auto object-contain max-h-[80vh]" />
+        </figure>
+      }
+    </div>
+  }
+</div>

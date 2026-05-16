@@ -7,7 +7,11 @@ import {
 } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
+import { unauthorizedInterceptor } from './core/interceptors/unauthorized.interceptor';
+import { provideSdkAuthBridge } from './core/api/sdk-auth-bridge';
 import { registerLocaleData } from '@angular/common';
 import en from '@angular/common/locales/en';
 import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
@@ -17,6 +21,8 @@ import { FormsModule } from '@angular/forms';
 import { routes } from './app.routes';
 
 registerLocaleData(en);
+
+
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -30,9 +36,14 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     provideAnimations(),
-    provideHttpClient(withFetch()),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor, loadingInterceptor, unauthorizedInterceptor]),
+    ),
+    provideSdkAuthBridge(),
     provideNzI18n(en_US),
     { provide: LOCALE_ID, useValue: 'en-US' },
     importProvidersFrom(FormsModule, NzIconModule),
   ],
 };
+

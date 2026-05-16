@@ -24,15 +24,21 @@
           </div>
           <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
-              <div class="text-2xl font-extrabold text-emerald-600">96%</div>
+              <div class="text-2xl font-extrabold text-emerald-600">{{ reviewStats().positivePct }}%</div>
               <div class="text-xs text-ink-muted mt-1">รีวิวบวก (4★+)</div>
             </div>
             <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
-              <div class="text-2xl font-extrabold text-pink-600">2.4 ชม.</div>
+              <div class="text-2xl font-extrabold text-pink-600">
+                @if (reviewStats().avgHours != null) {
+                  {{ reviewStats().avgHours!.toFixed(1) }} ชม.
+                } @else {
+                  —
+                }
+              </div>
               <div class="text-xs text-ink-muted mt-1">เวลาตอบกลับเฉลี่ย</div>
             </div>
             <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
-              <div class="text-2xl font-extrabold text-ink">82%</div>
+              <div class="text-2xl font-extrabold text-ink">{{ reviewStats().replyPct }}%</div>
               <div class="text-xs text-ink-muted mt-1">ตอบรีวิวแล้ว</div>
             </div>
           </div>
@@ -41,7 +47,12 @@
 
       <!-- Reviews -->
       <ul class="flex flex-col gap-4">
-        @for (rv of reviews(); track rv.id) {
+        @if (!items().length) {
+          <li class="card-soft p-8 text-center text-sm text-ink-muted">
+            ยังไม่มีรีวิวในรายการนี้
+          </li>
+        }
+        @for (rv of items(); track rv.id) {
           <li class="card-soft p-5">
             <div class="flex items-start gap-4">
               <img
@@ -61,7 +72,7 @@
                   <span class="pill-soft text-[10px]">📚 {{ rv.docTitle }}</span>
                 </div>
                 <p class="text-sm text-ink-soft leading-relaxed mb-3">{{ rv.comment }}</p>
-                <button class="text-xs text-pink-600 font-bold hover:underline">
+                <button type="button" class="text-xs text-pink-600 font-bold hover:underline">
                   ตอบกลับรีวิว →
                 </button>
               </div>

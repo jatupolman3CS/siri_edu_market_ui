@@ -1,22 +1,24 @@
 <div class="max-w-5xl">
-      <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">อัปโหลดเอกสารใหม่</h1>
+      <header class="mb-6">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">
+          {{ isEditMode() ? 'แก้ไขเอกสาร' : 'อัปโหลดเอกสารใหม่' }}
+        </h1>
         <p class="text-sm text-ink-soft">
-          ทำตาม 4 ขั้นตอนเพื่อเผยแพร่เอกสารของคุณบน SIRIEDUMARKET
+          {{ isEditMode() ? 'อัปเดตรายละเอียดเอกสารของคุณ' : 'ทำตาม 4 ขั้นตอนเพื่อเผยแพร่เอกสารของคุณบน SIRIEDUMARKET' }}
         </p>
       </header>
 
       <!-- Steps -->
-      <ol class="flex items-center justify-between mb-10 max-w-3xl">
+      <ol class="flex items-start justify-between mb-8 gap-1">
         @for (s of steps; track s.no; let i = $index) {
           <li class="flex items-center" [class.flex-1]="i < 3">
             <button
               type="button"
-              class="flex flex-col items-center gap-2 group"
+              class="flex flex-col items-center gap-1.5 group flex-shrink-0"
               (click)="step.set(s.no)"
             >
               <span
-                class="w-10 h-10 rounded-full text-sm font-bold flex items-center justify-center transition-all"
+                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center transition-all"
                 [class]="
                   step() === s.no
                     ? 'bg-pink-500 text-white shadow-soft scale-110'
@@ -26,23 +28,30 @@
                 "
               >
                 @if (step() > s.no) {
-                  <app-icon name="check" [size]="16" />
+                  <app-icon name="check" [size]="14" />
                 } @else {
                   {{ s.no }}
                 }
               </span>
               <span
-                class="text-xs font-semibold transition-colors"
+                class="hidden sm:block text-xs font-semibold transition-colors"
                 [class.text-pink-600]="step() === s.no"
                 [class.text-ink]="step() > s.no"
                 [class.text-ink-muted]="step() < s.no"
               >
                 {{ s.label }}
               </span>
+              <span
+                class="sm:hidden text-[10px] font-semibold transition-colors"
+                [class.text-pink-600]="step() === s.no"
+                [class.text-ink-muted]="step() !== s.no"
+              >
+                {{ s.label }}
+              </span>
             </button>
             @if (i < 3) {
               <span
-                class="flex-1 h-1 mx-2 rounded-full transition-colors"
+                class="flex-1 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors mt-0 -translate-y-3"
                 [class.bg-pink-300]="step() > s.no"
                 [class.bg-line]="step() <= s.no"
               ></span>
@@ -56,14 +65,14 @@
           <!-- Step 1: File -->
           @if (step() === 1) {
             <section class="card-soft p-6">
-              <h2 class="text-lg font-bold text-ink mb-1">อัปโหลดไฟล์</h2>
+              <h2 class="text-lg font-bold text-ink mb-1">อัปโหลดไฟล์เอกสาร</h2>
               <p class="text-sm text-ink-muted mb-6">
                 รองรับ PDF, DOCX, PPTX, XLSX, ZIP — ขนาดสูงสุด 200MB
               </p>
 
               @if (!file()) {
                 <label
-                  class="block border-2 border-dashed border-pink-200 rounded-3xl p-10 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
+                  class="block border-2 border-dashed border-pink-200 rounded-3xl p-6 sm:p-10 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
                 >
                   <input type="file" class="hidden" (change)="onFile($event)" />
                   <div
@@ -99,17 +108,149 @@
                         อัปโหลดเรียบร้อย
                       </div>
                     </div>
-                    <button class="btn-icon" (click)="file.set(null)">
+                    <button type="button" class="btn-icon" (click)="resetFile()">
                       <app-icon name="trash" [size]="16" />
                     </button>
                   </div>
                 </div>
               }
 
+              @if (isEditMode()) {
+                <div class="mt-6 p-4 rounded-2xl border border-line bg-white/80">
+                  <h3 class="text-sm font-bold text-ink mb-1">ไฟล์หลักของรายการ</h3>
+                  <p class="text-xs text-ink-muted mb-3">
+                    เลือกไฟล์ที่ใช้ขาย (ไฟล์สาธารณะต่อผู้ซื้อ) — หลังอนุมัติแล้ว หากเปลี่ยนไฟล์ที่ขาย ระบบจะส่งกลับไปรอตรวจสอบอีกครั้ง
+                  </p>
+                  @if (mainFilesLoading()) {
+                    <p class="text-sm text-ink-muted">กำลังโหลดรายการไฟล์…</p>
+                  } @else if (!mainFiles().length) {
+                    <p class="text-sm text-amber-800">
+                      ยังไม่มีไฟล์หลักในระบบ — อัปโหลดไฟล์ด้านบนเพื่อเพิ่ม
+                    </p>
+                  } @else {
+                    <ul class="space-y-1">
+                      @for (m of mainFiles(); track m.id) {
+                        <li
+                          class="flex flex-wrap items-center gap-3 py-2 border-b border-line last:border-0"
+                        >
+                          <label class="flex items-center gap-2 cursor-pointer shrink-0">
+                            <input
+                              type="radio"
+                              name="listedMain"
+                              [value]="m.id"
+                              [checked]="m.isListedForSale"
+                              (change)="selectListedMainFile(m.id)"
+                              [disabled]="listedSaving()"
+                              class="accent-pink-500"
+                            />
+                            <span class="text-xs font-semibold text-pink-600">ขาย</span>
+                          </label>
+                          <span class="flex-1 min-w-0 text-sm text-ink truncate">{{
+                            m.originalFileName || m.storageKey
+                          }}</span>
+                          <span class="text-xs text-ink-muted shrink-0">{{
+                            m.uploadedAt ? (m.uploadedAt | slice: 0 : 10) : '—'
+                          }}</span>
+                          <button
+                            type="button"
+                            class="btn-secondary text-xs py-1.5 px-3 shrink-0"
+                            (click)="downloadMainFile(m.id)"
+                            [disabled]="listedSaving()"
+                          >
+                            ดาวน์โหลด
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                  @if (listedSaving()) {
+                    <p class="text-xs text-pink-600 mt-2">กำลังบันทึก…</p>
+                  }
+                </div>
+              }
+
+              <!-- Cover / gallery images (first = card cover) -->
+              <div class="mt-6 pt-6 border-t border-line">
+                <h3 class="text-sm font-bold text-ink mb-1">รูปปกและแกลเลอรี</h3>
+                <p class="text-xs text-ink-muted mb-4">
+                  เลือกได้หลายรูป (สูงสุด {{ maxGalleryImages }} รูป) — รูปแรกคือปกการ์ด ลากลำดับด้วยปุ่มเลื่อนขึ้น/ลง — JPG/PNG แนะนำ 4:5
+                </p>
+
+                @if (galleryUploading()) {
+                  <p class="text-sm text-pink-600 font-semibold mb-3">กำลังอัปโหลดรูป…</p>
+                }
+
+                @if (galleryItems().length > 0) {
+                  <ul
+                    cdkDropList
+                    [cdkDropListData]="galleryItems()"
+                    (cdkDropListDropped)="onGalleryDrop($event)"
+                    class="space-y-3 mb-4"
+                  >
+                    @for (item of galleryItems(); track $index; let i = $index) {
+                      <li
+                        cdkDrag
+                        class="flex items-center gap-3 p-3 rounded-2xl border border-pink-200 bg-pink-50/50"
+                      >
+                        <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-white flex-shrink-0 border border-line">
+                          <img [src]="item.publicUrl" alt="" class="w-full h-full object-cover" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          @if (i === 0) {
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">ปกหลัก</span>
+                          } @else {
+                            <span class="text-[10px] text-ink-muted">ลำดับ {{ i + 1 }}</span>
+                          }
+                          <div class="text-[10px] text-ink-muted mt-1">ลากเพื่อเรียงลำดับ</div>
+                        </div>
+                        <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" title="ลบ">
+                          <app-icon name="trash" [size]="16" />
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                @if (galleryItems().length < maxGalleryImages) {
+                  <label
+                    class="block border-2 border-dashed border-pink-200 rounded-3xl p-5 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
+                    [class.pointer-events-none]="galleryUploading()"
+                    [class.opacity-60]="galleryUploading()"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      class="hidden"
+                      [disabled]="galleryUploading()"
+                      (change)="onGalleryFiles($event)"
+                    />
+                    <div class="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-3">
+                      <app-icon name="upload" [size]="22" />
+                    </div>
+                    <div class="text-sm font-bold text-ink">
+                      {{ galleryItems().length ? 'เพิ่มรูป' : 'คลิกเพื่อเลือกรูป' }}
+                    </div>
+                    <div class="text-xs text-ink-muted mt-1">เลือกได้หลายไฟล์พร้อมกัน</div>
+                  </label>
+                }
+
+                @if (galleryItems().length > 0) {
+                  <button type="button" class="btn-ghost text-xs mt-3 !text-red-600" (click)="resetGallery()">
+                    ล้างรูปทั้งหมด
+                  </button>
+                }
+              </div>
+
               <!-- Watermark + preview options -->
               <div class="grid sm:grid-cols-2 gap-3 mt-6">
                 <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
-                  <input type="checkbox" [(ngModel)]="watermark" class="w-5 h-5 accent-pink-500 mt-0.5" />
+                  <input
+                    type="checkbox"
+                    [ngModel]="watermark()"
+                    (ngModelChange)="watermark.set($event)"
+                    class="w-5 h-5 accent-pink-500 mt-0.5"
+                  />
                   <div>
                     <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
                       <app-icon name="shield" [size]="14" className="text-pink-500" />
@@ -121,7 +262,13 @@
                   </div>
                 </label>
                 <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
-                  <input type="number" [(ngModel)]="previewPages" min="0" class="w-14 input-soft !py-1.5 !px-2 text-center font-bold" />
+                  <input
+                    type="number"
+                    [ngModel]="previewPages()"
+                    (ngModelChange)="previewPages.set(+$event || 0)"
+                    min="0"
+                    class="w-14 input-soft !py-1.5 !px-2 text-center font-bold"
+                  />
                   <div>
                     <div class="text-sm font-semibold text-ink">หน้าพรีวิวฟรี</div>
                     <div class="text-xs text-ink-muted mt-1">
@@ -131,8 +278,58 @@
                 </label>
               </div>
 
+              <div class="mt-3 space-y-3 p-4 rounded-2xl border border-line bg-white/60">
+                <p class="text-xs text-ink-muted leading-relaxed">
+                  ลายน้ำบนภาพพรีวิว JPEG:
+                  <span class="font-semibold text-ink">บรรทัดแรกคือ SIRI Edu Market เสมอ</span>
+                  — บรรทัดที่สองเป็นข้อความของคุณ (ถ้ากรอก)
+                </p>
+                <div>
+                  <label class="text-xs font-semibold text-ink-soft mb-2 block">
+                    ข้อความลายน้ำบรรทัดที่สอง
+                  </label>
+                  <input
+                    type="text"
+                    class="input-soft"
+                    maxlength="256"
+                    [ngModel]="previewWatermarkSubtitle()"
+                    (ngModelChange)="previewWatermarkSubtitle.set($event)"
+                    placeholder="เช่น ชื่อสตูดิโอ / ห้ามคัดลอก"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-ink-soft mb-2 block">ฟอนต์ลายน้ำ</label>
+                  <select
+                    class="input-soft max-w-xs"
+                    [ngModel]="previewWatermarkFontFamily()"
+                    (ngModelChange)="previewWatermarkFontFamily.set($event)"
+                  >
+                    @for (ff of previewWatermarkFontOptions; track ff) {
+                      <option [value]="ff">{{ ff }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <label class="text-xs font-semibold text-ink-soft mb-2 block">
+                  จำนวนหน้าในเอกสาร <span class="text-ink-muted font-normal">(ประมาณการ — กรอกเองได้)</span>
+                </label>
+                <input
+                  type="number"
+                  [ngModel]="pages()"
+                  (ngModelChange)="pages.set(+$event || 0)"
+                  min="0"
+                  class="input-soft max-w-[200px]"
+                  placeholder="เช่น 80"
+                />
+                @if (fileSizeLabel()) {
+                  <p class="text-xs text-ink-muted mt-2">ขนาดไฟล์หลัก (อ่านจากไฟล์): {{ fileSizeLabel() }}</p>
+                }
+              </div>
+
               <div class="flex justify-end mt-8">
-                <button class="btn-pink" (click)="next()" [disabled]="!file()">
+                <button type="button" class="btn-pink" (click)="next()" [disabled]="step1NextDisabled()">
                   ถัดไป
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
@@ -155,7 +352,8 @@
                     <span class="text-ink-muted">{{ title().length }}/80</span>
                   </label>
                   <input
-                    [(ngModel)]="title"
+                    [ngModel]="title()"
+                    (ngModelChange)="title.set($event)"
                     class="input-soft"
                     placeholder="เช่น: สรุปคณิตม.ปลาย ครบ 6 บท ฉบับติวเข้ม"
                     maxlength="80"
@@ -166,6 +364,7 @@
                   <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
                     <span>คำอธิบายสั้น</span>
                     <button
+                      type="button"
                       class="pill-pink !text-[10px] hover:!bg-pink-200"
                       (click)="aiSuggest('short')"
                     >
@@ -174,7 +373,8 @@
                     </button>
                   </label>
                   <input
-                    [(ngModel)]="shortDescription"
+                    [ngModel]="shortDescription()"
+                    (ngModelChange)="shortDescription.set($event)"
                     class="input-soft"
                     placeholder="ประโยคที่จะแสดงในการ์ดเอกสาร"
                   />
@@ -184,6 +384,7 @@
                   <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
                     <span>คำอธิบายเต็ม</span>
                     <button
+                      type="button"
                       class="pill-pink !text-[10px] hover:!bg-pink-200"
                       (click)="aiSuggest('long')"
                     >
@@ -192,7 +393,8 @@
                     </button>
                   </label>
                   <textarea
-                    [(ngModel)]="longDescription"
+                    [ngModel]="longDescription()"
+                    (ngModelChange)="longDescription.set($event)"
                     rows="6"
                     class="input-soft"
                     placeholder="อธิบายเนื้อหา ผู้เรียนจะได้อะไรจากเอกสารนี้ บอกจุดเด่นที่ทำให้คนซื้อ"
@@ -201,21 +403,69 @@
 
                 <div class="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                      หมวดหมู่ <span class="text-pink-500">*</span>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
+                      <span>หมวดหมู่ <span class="text-pink-500">*</span></span>
+                      <span class="text-ink-muted">เลือกได้หลายหมวด</span>
                     </label>
-                    <select [(ngModel)]="categoryId" class="input-soft cursor-pointer">
-                      <option [ngValue]="''">เลือกหมวดหมู่...</option>
-                      @for (c of catalog.categories(); track c.id) {
-                        <option [ngValue]="c.id">{{ c.icon }} {{ c.name }}</option>
+
+                    <!-- Selected chips + dropdown trigger -->
+                    <div class="relative">
+                      <button
+                        type="button"
+                        class="input-soft cursor-pointer text-left flex flex-wrap gap-2 min-h-[42px]"
+                        (click)="toggleCategoryDropdown()"
+                      >
+                        @if (selectedCategories().length === 0) {
+                          <span class="text-ink-muted">เลือกหมวดหมู่...</span>
+                        } @else {
+                          @for (c of selectedCategories(); track c.id) {
+                            <span class="pill-pink gap-1.5" (click)="removeCategory(c.id); $event.stopPropagation()">
+                              {{ c.icon }} {{ c.name }}
+                              <app-icon name="x" [size]="11" />
+                            </span>
+                          }
+                        }
+                      </button>
+
+                      @if (categoryDropdownOpen()) {
+                        <!-- Click-away backdrop -->
+                        <button
+                          type="button"
+                          class="fixed inset-0 z-10 cursor-default"
+                          aria-label="close"
+                          (click)="closeCategoryDropdown()"
+                        ></button>
+                        <div
+                          class="absolute z-20 left-0 right-0 mt-2 card-soft p-2 max-h-72 overflow-auto shadow-soft"
+                        >
+                          @for (c of catalog.categories(); track c.id) {
+                            <label
+                              class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-pink-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                class="w-4 h-4 accent-pink-500"
+                                [checked]="categoryIds().includes(c.id)"
+                                (change)="toggleCategory(c.id)"
+                              />
+                              <span class="text-sm text-ink">{{ c.icon }} {{ c.name }}</span>
+                            </label>
+                          } @empty {
+                            <p class="text-sm text-ink-muted px-3 py-2">ยังไม่มีหมวดหมู่</p>
+                          }
+                        </div>
                       }
-                    </select>
+                    </div>
                   </div>
                   <div>
                     <label class="text-xs font-semibold text-ink-soft mb-2 block">
                       ภาษา
                     </label>
-                    <select [(ngModel)]="language" class="input-soft cursor-pointer">
+                    <select
+                      [ngModel]="language()"
+                      (ngModelChange)="language.set($event)"
+                      class="input-soft cursor-pointer"
+                    >
                       <option value="th">ภาษาไทย</option>
                       <option value="en">ภาษาอังกฤษ</option>
                     </select>
@@ -235,7 +485,8 @@
                     }
                     <input
                       type="text"
-                      [(ngModel)]="newTag"
+                      [ngModel]="newTag()"
+                      (ngModelChange)="newTag.set($event)"
                       (keydown.enter)="addTag(); $event.preventDefault()"
                       class="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
                       placeholder="พิมพ์แท็กแล้วกด Enter"
@@ -245,11 +496,11 @@
               </div>
 
               <div class="flex justify-between mt-8">
-                <button class="btn-ghost" (click)="prev()">
+                <button type="button" class="btn-ghost" (click)="prev()">
                   <app-icon name="arrow-left" [size]="16" />
                   ย้อนกลับ
                 </button>
-                <button class="btn-pink" (click)="next()">
+                <button type="button" class="btn-pink" (click)="next()">
                   ถัดไป
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
@@ -265,52 +516,98 @@
                 เลือกราคาที่เหมาะกับเนื้อหา — เราเก็บค่าธรรมเนียม 10% ที่เหลือเป็นของคุณ
               </p>
 
-              <div class="grid sm:grid-cols-2 gap-4 mb-6">
+              <!-- Free toggle -->
+              <label
+                class="flex items-start gap-3 p-4 rounded-2xl border border-line bg-white/70 cursor-pointer hover:border-pink-300 mb-6"
+              >
+                <input
+                  type="checkbox"
+                  class="w-5 h-5 accent-pink-500 mt-0.5"
+                  [checked]="isFree()"
+                  (change)="setIsFree(!isFree())"
+                />
                 <div>
-                  <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคา (THB)</label>
-                  <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">฿</span>
-                    <input [(ngModel)]="price" type="number" min="0" step="10" class="input-soft !pl-9" />
+                  <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
+                    <app-icon name="sparkle" [size]="14" className="text-pink-500" />
+                    ตั้งเป็นเอกสารฟรี
+                  </div>
+                  <p class="text-xs text-ink-muted mt-1 leading-relaxed">
+                    เมื่อเปิด: ระบบจะไม่หักค่าธรรมเนียม 10% และผู้ซื้อดาวน์โหลดได้ฟรีทันที
+                  </p>
+                </div>
+              </label>
+
+              @if (isFree()) {
+                <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
+                  <div class="text-xs text-ink-muted mb-1">เอกสารฟรี</div>
+                  <div class="text-3xl font-extrabold text-pink-700">฿0</div>
+                  <div class="text-xs text-ink-muted mt-2">
+                    รายได้ต่อชิ้น ฿0 / ค่าธรรมเนียมแพลตฟอร์ม ฿0
                   </div>
                 </div>
-                <div>
-                  <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคาเดิม (option)</label>
-                  <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">฿</span>
-                    <input [(ngModel)]="originalPrice" type="number" min="0" step="10" class="input-soft !pl-9" placeholder="0" />
+              } @else {
+                <div class="grid sm:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคา (THB)</label>
+                    <div class="relative">
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">฿</span>
+                      <input
+                        [ngModel]="price()"
+                        (ngModelChange)="price.set(+$event || 0)"
+                        type="number"
+                        min="0"
+                        step="10"
+                        class="input-soft !pl-9"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคาเดิม (option)</label>
+                    <div class="relative">
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">฿</span>
+                      <input
+                        [ngModel]="originalPrice()"
+                        (ngModelChange)="originalPrice.set(+$event || 0)"
+                        type="number"
+                        min="0"
+                        step="10"
+                        class="input-soft !pl-9"
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Suggestion chips -->
-              <div class="mb-6">
-                <div class="text-xs text-ink-muted mb-2">ราคายอดนิยมในหมวดเดียวกัน</div>
-                <div class="flex flex-wrap gap-2">
-                  @for (p of [99, 199, 299, 399, 499, 690]; track p) {
-                    <button class="pill-soft hover:!border-pink-300 hover:!text-pink-600" (click)="price.set(p)">
-                      ฿{{ p }}
-                    </button>
-                  }
+                <!-- Suggestion chips -->
+                <div class="mb-6">
+                  <div class="text-xs text-ink-muted mb-2">ราคายอดนิยมในหมวดเดียวกัน</div>
+                  <div class="flex flex-wrap gap-2">
+                    @for (p of [99, 199, 299, 399, 499, 690]; track p) {
+                      <button type="button" class="pill-soft hover:!border-pink-300 hover:!text-pink-600" (click)="price.set(p)">
+                        ฿{{ p }}
+                      </button>
+                    }
+                  </div>
                 </div>
-              </div>
 
-              <!-- Earnings card -->
-              <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
-                <div class="text-xs text-ink-muted mb-1">คุณจะได้รับต่อยอดขาย 1 ครั้ง</div>
-                <div class="text-3xl font-extrabold text-pink-700">
-                  {{ earnings() | thb }}
+                <!-- Earnings card -->
+                <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
+                  <div class="text-xs text-ink-muted mb-1">คุณจะได้รับต่อยอดขาย 1 ครั้ง</div>
+                  <div class="text-3xl font-extrabold text-pink-700">
+                    {{ earnings() | thb }}
+                  </div>
+                  <div class="text-xs text-ink-muted mt-2">
+                    หักค่าธรรมเนียมแพลตฟอร์ม {{ fee() | thb }} (10%)
+                  </div>
                 </div>
-                <div class="text-xs text-ink-muted mt-2">
-                  หักค่าธรรมเนียมแพลตฟอร์ม {{ fee() | thb }} (10%)
-                </div>
-              </div>
+              }
 
               <div class="flex justify-between mt-8">
-                <button class="btn-ghost" (click)="prev()">
+                <button type="button" class="btn-ghost" (click)="prev()">
                   <app-icon name="arrow-left" [size]="16" />
                   ย้อนกลับ
                 </button>
-                <button class="btn-pink" (click)="next()">
+                <button type="button" class="btn-pink" (click)="next()">
                   ถัดไป
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
@@ -341,12 +638,24 @@
                 </li>
                 <li class="py-3 flex justify-between text-sm">
                   <span class="text-ink-muted">ราคา</span>
-                  <span class="text-ink font-semibold">{{ price() | thb }}</span>
+                  <span class="text-ink font-semibold">
+                    @if (isFree()) {
+                      <span class="text-emerald-600">ฟรี</span>
+                    } @else {
+                      {{ price() | thb }}
+                    }
+                  </span>
                 </li>
                 <li class="py-3 flex justify-between text-sm">
                   <span class="text-ink-muted">รายได้ต่อชิ้น</span>
                   <span class="text-pink-600 font-bold">{{ earnings() | thb }}</span>
                 </li>
+                @if (isFree()) {
+                  <li class="py-3 flex justify-between text-sm">
+                    <span class="text-ink-muted">ค่าธรรมเนียมระบบ</span>
+                    <span class="text-emerald-600 font-semibold">฿0 (เอกสารฟรี)</span>
+                  </li>
+                }
                 <li class="py-3 flex justify-between text-sm">
                   <span class="text-ink-muted">ลายน้ำ</span>
                   <span class="text-ink font-semibold">
@@ -357,14 +666,36 @@
                   <span class="text-ink-muted">หน้าพรีวิว</span>
                   <span class="text-ink font-semibold">{{ previewPages() }} หน้า</span>
                 </li>
+                <li class="py-3 flex justify-between text-sm items-start gap-3">
+                  <span class="text-ink-muted flex-shrink-0">ลายน้ำพรีวิว (JPEG)</span>
+                  <span class="text-ink font-semibold text-right text-xs leading-snug">
+                    SIRI Edu Market
+                    @if (previewWatermarkSubtitle().trim()) {
+                      <span class="block text-ink-muted font-normal mt-0.5">{{
+                        previewWatermarkSubtitle().trim()
+                      }}</span>
+                    }
+                    <span class="block text-ink-muted font-normal mt-1">{{ previewWatermarkFontFamily() }}</span>
+                  </span>
+                </li>
+                <li class="py-3 flex justify-between text-sm">
+                  <span class="text-ink-muted">จำนวนหน้าเอกสาร</span>
+                  <span class="text-ink font-semibold">{{ pages() || '—' }}</span>
+                </li>
+                @if (fileSizeLabel()) {
+                  <li class="py-3 flex justify-between text-sm">
+                    <span class="text-ink-muted">ขนาดไฟล์</span>
+                    <span class="text-ink font-semibold">{{ fileSizeLabel() }}</span>
+                  </li>
+                }
               </ul>
 
               <div class="flex justify-between mt-8">
-                <button class="btn-ghost" (click)="prev()">
+                <button type="button" class="btn-ghost" (click)="prev()">
                   <app-icon name="arrow-left" [size]="16" />
                   ย้อนกลับ
                 </button>
-                <button class="btn-pink !px-7" (click)="submit()">
+                <button type="button" class="btn-pink !px-7" (click)="submit()">
                   <app-icon name="check" [size]="16" />
                   ส่งเข้าพิจารณา
                 </button>

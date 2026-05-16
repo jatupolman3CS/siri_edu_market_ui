@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { CatalogService } from '../../../core/services';
+import type { AdminDocumentDetail } from '../../../core/api/admin-documents.api';
+import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
+import { AdminService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -15,35 +17,201 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
   styleUrl: './approval.page.scss',
 })
 export class AdminApprovalPage {
-  readonly catalog = inject(CatalogService);
+  readonly admin = inject(AdminService);
   private readonly message = inject(NzMessageService);
 
+  private suppressAutoSearch = false;
+  private readonly autoSearchDebounceMs = 400;
+
   readonly selectedId = signal<string>('');
+  readonly isPreviewLocked = signal<boolean>(false);
+  readonly lockedId = signal<string>('');
+  readonly titleQuery = signal<string>('');
+  readonly sellerNameQuery = signal<string>('');
+  readonly postedFrom = signal<string>(''); // yyyy-mm-dd
+  readonly postedTo = signal<string>(''); // yyyy-mm-dd
+
+  readonly previewDetail = signal<AdminDocumentDetail | null>(null);
+  readonly previewDetailLoading = signal(false);
+
+  readonly pending = computed(() => this.admin.pendingDocuments());
 
   readonly selected = computed(() => {
-    const list = this.catalog.pending();
+    const list = this.pending();
     if (!list.length) return null;
-    const id = this.selectedId() || list[0].id;
+    const preferredId = this.isPreviewLocked() ? this.lockedId() : this.selectedId();
+    const id = preferredId || list[0].id;
     return list.find((d) => d.id === id) ?? list[0];
   });
 
-  readonly checks = [
-    { label: 'เอกสารตรงกับคำอธิบาย', note: 'AI ตรวจสอบความสอดคล้องของเนื้อหา', ok: true },
-    { label: 'ไม่ละเมิดลิขสิทธิ์', note: 'ผ่านการตรวจ Plagiarism: 96% เป็นเนื้อหาต้นฉบับ', ok: true },
-    { label: 'มีลายน้ำในไฟล์ตัวอย่าง', note: 'พบ Watermark Pattern ครบทุกหน้า', ok: true },
-    { label: 'ภาพหน้าปกเหมาะสม', note: 'ภาพไม่มี nudity / violence', ok: true },
-    { label: 'ราคาตรงกับเนื้อหา', note: 'อาจตรวจสอบเพิ่มเติม — เนื้อหาคุณภาพดี ราคาเฉลี่ยในหมวดสูงกว่านี้', ok: false },
-  ];
+  readonly heroCoverUrl = computed(() => {
+    const pd = this.previewDetail();
+    const c = pd?.coverUrl?.trim();
+    if (c) return resolvePublicUrl(c.replaceAll('%2F', '/'));
+    return this.selected()?.cover ?? '';
+  });
 
-  approve(id: string, title: string): void {
-    this.catalog.approve(id);
-    this.message.success(`อนุมัติ "${title}" เรียบร้อย`);
-    this.selectedId.set('');
+  /** Returns a fresh unchecked list — used for initialization and reset. */
+  private freshChecks(): { label: string; checked: boolean }[] {
+    return [
+      { label: 'เอกสารตรงกับคำอธิบาย', checked: false },
+      { label: 'ไม่ละเมิดลิขสิทธิ์', checked: false },
+      { label: 'มีลายน้ำในไฟล์ตัวอย่าง', checked: false },
+      { label: 'ภาพหน้าปกเหมาะสม', checked: false },
+      { label: 'ราคาเหมาะสมกับเนื้อหา', checked: false },
+    ];
   }
 
-  reject(id: string, title: string): void {
-    this.catalog.reject(id);
-    this.message.warning(`ปฏิเสธ "${title}" และแจ้งผู้ขายแล้ว`);
-    this.selectedId.set('');
+  /** Admin manually ticks each item before approving. */
+  readonly manualChecks = signal<{ label: string; checked: boolean }[]>(this.freshChecks());
+
+  /** True only when every checklist item is ticked. */
+  readonly allChecked = computed(() => this.manualChecks().every((c) => c.checked));
+
+  toggleCheck(index: number): void {
+    this.manualChecks.update((items) =>
+      items.map((item, i) => (i === index ? { ...item, checked: !item.checked } : item)),
+    );
+  }
+
+  constructor() {
+    effect((onCleanup) => {
+      const id = this.selected()?.id;
+      if (!id) {
+        this.previewDetail.set(null);
+        this.previewDetailLoading.set(false);
+        return;
+      }
+      let cancelled = false;
+      this.previewDetailLoading.set(true);
+      void (async () => {
+        try {
+          const row = await this.admin.fetchAdminDocumentDetail(id);
+          if (cancelled) return;
+          this.previewDetail.set(row);
+        } finally {
+          if (!cancelled) this.previewDetailLoading.set(false);
+        }
+      })();
+      onCleanup(() => {
+        cancelled = true;
+      });
+    });
+
+    let initialized = false;
+    effect((onCleanup) => {
+      const title = this.titleQuery().trim() || undefined;
+      const sellerName = this.sellerNameQuery().trim() || undefined;
+      const postedFrom = this.postedFrom() || undefined;
+      const postedTo = this.postedTo() || undefined;
+
+      if (this.suppressAutoSearch) return;
+
+      // First run: load immediately so entering page shows data.
+      if (!initialized) {
+        initialized = true;
+        void this.admin.refreshPendingDocuments({ title, sellerName, postedFrom, postedTo });
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        void this.admin.refreshPendingDocuments({ title, sellerName, postedFrom, postedTo });
+      }, this.autoSearchDebounceMs);
+
+      onCleanup(() => clearTimeout(timer));
+    });
+
+    // Reset the manual checklist whenever the admin selects a different document.
+    effect(() => {
+      const id = this.selected()?.id;
+      if (id) {
+        untracked(() => {
+          this.manualChecks.set(this.freshChecks());
+        });
+      }
+    });
+  }
+
+  select(id: string): void {
+    if (this.isPreviewLocked()) return;
+    this.selectedId.set(id);
+  }
+
+  toggleLock(): void {
+    const next = !this.isPreviewLocked();
+    this.isPreviewLocked.set(next);
+    if (next) {
+      const cur = this.selected();
+      this.lockedId.set(cur?.id ?? '');
+    } else {
+      this.lockedId.set('');
+    }
+  }
+
+  async runSearch(): Promise<void> {
+    await this.admin.refreshPendingDocuments({
+      title: this.titleQuery().trim() || undefined,
+      sellerName: this.sellerNameQuery().trim() || undefined,
+      postedFrom: this.postedFrom() || undefined,
+      postedTo: this.postedTo() || undefined,
+    });
+  }
+
+  async resetSearch(): Promise<void> {
+    this.suppressAutoSearch = true;
+    try {
+      this.titleQuery.set('');
+      this.sellerNameQuery.set('');
+      this.postedFrom.set('');
+      this.postedTo.set('');
+      await this.admin.refreshPendingDocuments();
+    } finally {
+      this.suppressAutoSearch = false;
+    }
+  }
+
+  readonly resolvePublicUrl = resolvePublicUrl;
+
+  galleryImageSrc(imageUrl: string | null | undefined): string {
+    const raw = (imageUrl ?? '').trim();
+    if (!raw) return '';
+    return resolvePublicUrl(raw.replaceAll('%2F', '/'));
+  }
+
+  saleFileDownloadUrl(): string {
+    const key = this.previewDetail()?.fileStorageKey?.trim();
+    return key ? downloadUrlForStorageKey(key) : '';
+  }
+
+  mainFileDownloadUrl(storageKey: string | null | undefined): string {
+    const k = storageKey?.trim();
+    return k ? downloadUrlForStorageKey(k) : '';
+  }
+
+  async approve(id: string, title: string): Promise<void> {
+    try {
+      await this.admin.approveDocument(id);
+      this.message.success(`อนุมัติ "${title}" เรียบร้อย`);
+      this.previewDetail.set(null);
+      this.selectedId.set('');
+      if (this.lockedId() === id) this.lockedId.set('');
+    } catch {
+      /* ApiFailureReporter ใน AdminService แจ้งแล้ว */
+    }
+  }
+
+  async reject(id: string, title: string): Promise<void> {
+    const reason =
+      prompt('เหตุผลในการปฏิเสธ', 'ไม่ผ่านเกณฑ์คุณภาพ')?.trim() ||
+      'ไม่ผ่านเกณฑ์คุณภาพ';
+    try {
+      await this.admin.rejectDocument(id, reason);
+      this.message.warning(`ปฏิเสธ "${title}" แล้ว`);
+      this.previewDetail.set(null);
+      this.selectedId.set('');
+      if (this.lockedId() === id) this.lockedId.set('');
+    } catch {
+      /* ApiFailureReporter ใน AdminService แจ้งแล้ว */
+    }
   }
 }

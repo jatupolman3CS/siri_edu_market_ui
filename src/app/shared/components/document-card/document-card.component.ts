@@ -25,6 +25,7 @@ export class DocumentCardComponent {
   private readonly quickView = inject(QuickViewService);
 
   readonly doc = input.required<DocumentItem>();
+  readonly density = input<'default' | 'compact'>('default');
 
   inCart(): boolean {
     return this.cart.has(this.doc().id);
@@ -35,6 +36,10 @@ export class DocumentCardComponent {
   }
   resourceIcon(): string {
     return RESOURCE_TYPE_ICONS[this.doc().resourceType] ?? '📄';
+  }
+
+  isCompact(): boolean {
+    return this.density() === 'compact';
   }
 
   addToCart(event: Event): void {

@@ -86,16 +86,29 @@
                   ชำระผ่าน {{ paymentLabel(o.paymentMethod) }}
                 </span>
                 <span>·</span>
-                <a routerLink="/library" class="text-pink-600 hover:underline font-semibold">
-                  ดาวน์โหลด
+                <a [routerLink]="['/orders', o.id]" class="text-pink-600 hover:underline font-semibold">
+                  รายละเอียด
                 </a>
                 <span>·</span>
-                <a href="#" class="text-pink-600 hover:underline font-semibold">
-                  ใบเสร็จ
+                <a routerLink="/library" class="text-pink-600 hover:underline font-semibold">
+                  ดาวน์โหลด
                 </a>
               </footer>
             </article>
           }
         </div>
+
+        @if (library.ordersHasMore()) {
+          <div class="flex justify-center mt-6">
+            <button
+              type="button"
+              class="btn-pink"
+              (click)="library.loadMoreOrders()"
+              [disabled]="library.state().status === 'loading'"
+            >
+              โหลดเพิ่ม
+            </button>
+          </div>
+        }
       }
     </div>

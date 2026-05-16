@@ -1,6 +1,6 @@
 <!-- ===================== HERO ===================== -->
     <section class="relative max-w-7xl mx-auto px-4 lg:px-6 pt-8 pb-12">
-      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink border border-line p-8 md:p-14">
+      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink border border-line p-6 sm:p-8 md:p-14">
         <div class="absolute -top-32 -right-24 w-96 h-96 rounded-full glass-blob"></div>
         <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full glass-blob opacity-60"></div>
 
@@ -8,9 +8,9 @@
           <div class="lg:col-span-7">
             <span class="pill-pink mb-5 animate-fade-in">
               <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
-              เอกสารใหม่ + 248 รายการในเดือนนี้
+              เอกสารใหม่ + {{ catalog.newArrivals().length || '' }} รายการ
             </span>
-            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-ink leading-[1.05] mb-5">
+            <h1 class="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-ink leading-[1.05] mb-5">
               เอกสารคุณภาพ <br />
               จากครีเอเตอร์ตัวจริง
               <span class="block text-pink-500">ในที่เดียว.</span>
@@ -66,11 +66,11 @@
               </div>
               <div class="flex items-center gap-2">
                 <div class="flex">
-                  @for (i of [1,2,3,4]; track i) {
+                  @for (s of featuredSellers.slice(0, 4); track s.id) {
                     <img
-                      [src]="'https://images.unsplash.com/photo-' + avatars[i] + '?w=80&h=80&fit=crop&crop=face'"
+                      [src]="s.avatar || ('https://ui-avatars.com/api/?name=' + s.studioName + '&background=f9a8d4&color=9d174d&size=64')"
                       class="w-7 h-7 rounded-full -ml-2 first:ml-0 ring-2 ring-pink-50 object-cover"
-                      alt="user"
+                      [alt]="s.studioName"
                     />
                   }
                 </div>
@@ -237,11 +237,21 @@
             <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (doc of catalog.freeResources().slice(0, 3); track doc.id) {
-            <app-document-card [doc]="doc" />
-          }
-        </div>
+        @if (catalog.catalogState().status === 'loading') {
+          <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
+        } @else if (catalog.catalogState().status === 'error') {
+          <app-empty-state emoji="⚠️" title="โหลดเอกสารฟรีไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+            <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
+              ลองใหม่
+            </button>
+          </app-empty-state>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @for (doc of catalog.freeResources().slice(0, 3); track doc.id) {
+              <app-document-card [doc]="doc" />
+            }
+          </div>
+        }
       </div>
     </section>
 

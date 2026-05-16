@@ -28,7 +28,15 @@
         </div>
       </app-page-hero>
 
-      @if (catalog.freeResources().length === 0) {
+      @if (catalog.freeState().status === 'loading') {
+        <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
+      } @else if (catalog.freeState().status === 'error') {
+        <app-empty-state emoji="⚠️" title="โหลดเอกสารฟรีไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
+            ลองใหม่
+          </button>
+        </app-empty-state>
+      } @else if (catalog.freeResources().length === 0) {
         <app-empty-state emoji="🎁" title="ตอนนี้ยังไม่มีเอกสารฟรี" />
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -36,5 +44,18 @@
             <app-document-card [doc]="doc" />
           }
         </div>
+
+        @if (catalog.freeHasMore()) {
+          <div class="flex justify-center mt-6">
+            <button
+              type="button"
+              class="btn-pink"
+              (click)="catalog.loadMoreFreeResources()"
+              [disabled]="catalog.freeState().status === 'loading'"
+            >
+              โหลดเพิ่ม
+            </button>
+          </div>
+        }
       }
     </div>

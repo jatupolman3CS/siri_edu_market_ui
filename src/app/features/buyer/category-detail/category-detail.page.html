@@ -15,7 +15,7 @@
       @if (category(); as cat) {
         <!-- Hero -->
         <section
-          class="relative overflow-hidden rounded-3xl bg-gradient-pink border border-line p-8 md:p-12 mb-8"
+          class="relative overflow-hidden rounded-3xl bg-gradient-pink border border-line p-6 sm:p-8 md:p-12 mb-8"
         >
           <div class="absolute -top-20 -right-12 w-72 h-72 rounded-full glass-blob"></div>
           <div class="relative flex items-start gap-6 flex-wrap">
@@ -23,7 +23,7 @@
               {{ cat.icon }}
             </div>
             <div class="flex-1 min-w-0">
-              <h1 class="text-3xl md:text-4xl font-extrabold text-ink mb-2">
+              <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-ink mb-2">
                 {{ cat.name }}
               </h1>
               <p class="text-base text-ink-soft mb-4 max-w-2xl">{{ cat.description }}</p>
@@ -39,11 +39,25 @@
         <!-- Sub-categories drill-down -->
         @if (cat.subcategories?.length) {
           <section class="mb-10">
-            <header class="flex items-center justify-between mb-5">
+            <header class="flex items-center justify-between mb-5 gap-3 flex-wrap">
               <h2 class="section-title">เลือกหมวดย่อย</h2>
-              <button class="text-xs text-pink-600 font-bold hover:underline" (click)="selectedSubId.set('')">
-                ดูทั้งหมด
-              </button>
+              <div class="flex items-center gap-3 flex-wrap">
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
+                    <app-icon name="search" [size]="14" />
+                  </span>
+                  <input
+                    type="search"
+                    [ngModel]="subSearch()"
+                    (ngModelChange)="subSearch.set($event)"
+                    placeholder="ค้นหาหมวดย่อย…"
+                    class="pl-9 pr-3 py-2 rounded-2xl border border-line bg-white text-sm focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 w-56"
+                  />
+                </div>
+                <button class="text-xs text-pink-600 font-bold hover:underline" (click)="selectedSubId.set('')">
+                  ดูทั้งหมด
+                </button>
+              </div>
             </header>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -58,7 +72,7 @@
                 <div class="text-xs text-ink-muted">{{ cat.documentCount }} ชิ้น</div>
               </button>
 
-              @for (sub of cat.subcategories!; track sub.id) {
+              @for (sub of filteredSubcategories(); track sub.id) {
                 <button
                   class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
                   [class.!border-pink-500]="selectedSubId() === sub.id"
@@ -69,6 +83,10 @@
                   <div class="text-sm font-bold text-ink leading-tight line-clamp-1">{{ sub.name }}</div>
                   <div class="text-xs text-ink-muted mt-0.5">{{ sub.documentCount }} ชิ้น</div>
                 </button>
+              } @empty {
+                <div class="col-span-full text-center text-sm text-ink-muted py-6">
+                  ไม่พบหมวดย่อยที่ตรงกับ "{{ subSearch() }}"
+                </div>
               }
             </div>
           </section>

@@ -63,6 +63,19 @@
             <app-bundle-card [bundle]="b" />
           }
         </div>
+
+        @if (bundles.hasMore()) {
+          <div class="flex justify-center mt-6">
+            <button
+              type="button"
+              class="btn-pink"
+              (click)="bundles.loadMore()"
+              [disabled]="bundles.bundlesState().status === 'loading'"
+            >
+              โหลดเพิ่ม
+            </button>
+          </div>
+        }
       } @else {
         <div class="grid lg:grid-cols-12 gap-6">
           <!-- Sidebar Filters -->
@@ -133,7 +146,19 @@
                       </button>
                       @if (catalog.filters().categoryIds.includes(cat.id) && cat.subcategories?.length) {
                         <div class="pl-6 py-1 flex flex-col gap-0.5">
-                          @for (sub of cat.subcategories!; track sub.id) {
+                          <div class="relative px-3 mb-1">
+                            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-ink-muted">
+                              <app-icon name="search" [size]="12" />
+                            </span>
+                            <input
+                              type="search"
+                              [ngModel]="getSubSearch(cat.id)"
+                              (ngModelChange)="setSubSearch(cat.id, $event)"
+                              placeholder="ค้นหาหมวดย่อย…"
+                              class="w-full pl-7 pr-2 py-1.5 rounded-lg border border-line bg-white text-xs focus:border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-100"
+                            />
+                          </div>
+                          @for (sub of filteredSubcategories(cat); track sub.id) {
                             <label
                               class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white cursor-pointer"
                             >
@@ -147,6 +172,8 @@
                               <span class="text-xs text-ink-soft flex-1">{{ sub.name }}</span>
                               <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
                             </label>
+                          } @empty {
+                            <div class="px-3 py-2 text-[11px] text-ink-muted">ไม่พบหมวดย่อยที่ค้นหา</div>
                           }
                         </div>
                       }
@@ -226,7 +253,7 @@
                 <label class="text-xs font-semibold text-ink-soft mb-3 block">
                   รูปแบบไฟล์
                 </label>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   @for (fmt of formats; track fmt) {
                     <button
                       type="button"
@@ -381,7 +408,15 @@
             }
 
             <!-- Grid -->
-            @if (catalog.filtered().length === 0) {
+            @if (catalog.catalogState().status === 'loading') {
+              <app-empty-state emoji="⏳" title="กำลังโหลดรายการเอกสาร…" description="รอสักครู่นะคะ" />
+            } @else if (catalog.catalogState().status === 'error') {
+              <app-empty-state emoji="⚠️" title="โหลดรายการเอกสารไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+                <button class="btn-pink mt-4" type="button" (click)="catalog.loadCatalog()">
+                  ลองใหม่
+                </button>
+              </app-empty-state>
+            } @else if (catalog.filtered().length === 0) {
               <app-empty-state
                 emoji="🔎"
                 title="ไม่พบเอกสารที่ตรงกัน"
@@ -390,11 +425,24 @@
                 <button class="btn-pink mt-4" (click)="reset()">ล้างตัวกรอง</button>
               </app-empty-state>
             } @else {
-              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 gap-3 md:gap-4">
                 @for (doc of catalog.filtered(); track doc.id) {
-                  <app-document-card [doc]="doc" />
+                  <app-document-card [doc]="doc" density="compact" />
                 }
               </div>
+
+              @if (catalog.catalogHasMore()) {
+                <div class="flex justify-center mt-6">
+                  <button
+                    type="button"
+                    class="btn-pink"
+                    (click)="catalog.loadMoreCatalog()"
+                    [disabled]="catalog.catalogState().status === 'loading'"
+                  >
+                    โหลดเพิ่ม
+                  </button>
+                </div>
+              }
             }
           </div>
         </div>

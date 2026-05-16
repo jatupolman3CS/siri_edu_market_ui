@@ -1,8 +1,12 @@
-@if (seller(); as s) {
+@if (sellerLoading()) {
+  <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+    <app-empty-state emoji="⏳" title="กำลังโหลด…" description="รอสักครู่นะคะ" />
+  </div>
+} @else if (seller(); as s) {
       <!-- Banner -->
       <section class="relative bg-gradient-pink h-56 md:h-72 overflow-hidden">
-        @if (s.banner) {
-          <img [src]="s.banner" [alt]="s.studioName" class="w-full h-full object-cover" />
+        @if (s.bannerUrl) {
+          <img [src]="s.bannerUrl" [alt]="s.studioName" class="w-full h-full object-cover" />
           <div class="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/40 to-transparent"></div>
         } @else {
           <div class="absolute -top-20 -right-20 w-80 h-80 rounded-full glass-blob"></div>
@@ -15,20 +19,20 @@
         <header class="card-soft p-6 md:p-8 mb-8">
           <div class="flex flex-col md:flex-row gap-6 md:items-end">
             <img
-              [src]="s.avatar"
+              [src]="s.avatarUrl ?? 'assets/default-avatar.png'"
               [alt]="s.studioName"
               class="w-28 h-28 rounded-3xl object-cover ring-4 ring-white shadow-pop -mt-16 md:-mt-24"
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-1">
                 <h1 class="text-3xl font-extrabold text-ink">{{ s.studioName }}</h1>
-                @if (s.badges.includes('Verified')) {
+                @if (s.isVerified) {
                   <svg viewBox="0 0 16 16" class="w-6 h-6 text-pink-500" fill="currentColor">
                     <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
                     <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 }
-                @for (b of s.badges; track b) {
+                @for (b of s.badges ?? []; track b) {
                   <span class="pill-pink !text-[10px]">{{ b }}</span>
                 }
               </div>
@@ -58,10 +62,10 @@
                   ติดตามร้าน
                 }
               </button>
-              <a href="#" class="btn-ghost !py-2.5 text-sm">
-                <app-icon name="mail" [size]="14" />
-                ส่งข้อความ
-              </a>
+              <p class="text-[11px] text-ink-muted leading-relaxed text-center px-1">
+                <app-icon name="lock" [size]="11" className="text-pink-500" />
+                การซื้อขายและสอบถามทำผ่านระบบในเว็บเท่านั้น
+              </p>
             </div>
           </div>
 
@@ -117,22 +121,6 @@
             @if (sellerDocs().length === 0) {
               <app-empty-state emoji="📚" title="ยังไม่มีเอกสารในร้านนี้" />
             } @else {
-              <!-- Custom store sections (TpT-style) -->
-              @if (s.storeSections?.length) {
-                @for (section of s.storeSections!; track section.id) {
-                  <section class="mb-12">
-                    <h2 class="section-title mb-4">{{ section.name }}</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                      @for (id of section.documentIds; track id) {
-                        @if (catalog.getById(id); as d) {
-                          <app-document-card [doc]="d" />
-                        }
-                      }
-                    </div>
-                  </section>
-                }
-              }
-
               <section>
                 <h2 class="section-title mb-4">เอกสารทั้งหมดของร้าน</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

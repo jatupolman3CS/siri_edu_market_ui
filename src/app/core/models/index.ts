@@ -115,6 +115,10 @@ export interface DocumentItem {
   description: string;
   cover: string;
   gallery: string[];
+  /** Stable gallery row ids + URLs from seller API (edit/sync). Same order as `gallery` when set. */
+  gallerySlots?: { id: string; imageUrl: string }[];
+  /** Total gallery images available (may exceed `gallery.length` on list views). */
+  galleryCount?: number;
   price: number;            // 0 = Free
   originalPrice?: number;
   discountPercent?: number;
@@ -123,8 +127,8 @@ export interface DocumentItem {
   fileSize: string;
   language: 'th' | 'en';
 
-  // Hierarchical taxonomy (TpT-inspired)
-  categoryId: string;
+  // Hierarchical taxonomy (TpT-inspired) — many-to-many categories.
+  categoryIds: string[];
   subcategoryId?: string;
   gradeLevels: GradeLevel[];        // multi
   resourceType: ResourceType;
@@ -134,9 +138,26 @@ export interface DocumentItem {
   rating: number;
   reviewCount: number;
   downloads: number;
+  /** Paid/fulfilled order line items (not the same as download count). */
+  salesCount?: number;
   status: DocumentStatus;
   watermarkEnabled: boolean;
   previewPages: number;
+  /** Second line on raster preview watermark (optional). */
+  previewWatermarkSubtitle?: string | null;
+  /** Font family name for JPEG preview watermark. */
+  previewWatermarkFontFamily?: string | null;
+  /** R2/local key for watermarked preview PDF — use with /api/files/download. */
+  previewStorageKey?: string | null;
+  /** Main binaries for this listing (seller GET by id / listed-main-file PUT). */
+  mainFiles?: {
+    id: string;
+    storageKey: string;
+    originalFileName: string;
+    uploadedAt: string;
+    isListedForSale: boolean;
+  }[];
+  listedMainFileId?: string | null;
   seller: Seller;
   createdAt: string;
   updatedAt: string;
@@ -180,6 +201,13 @@ export interface CartItem {
   fromBundleId?: string;
 }
 
+export interface OrderPaymentHints {
+  omiseChargeId?: string;
+  promptPayQrImageUrl?: string;
+  trueMoneyAuthorizeUri?: string;
+  awaitingWebhook?: boolean;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -190,6 +218,7 @@ export interface Order {
   paymentMethod: PaymentMethod;
   createdAt: string;
   paidAt?: string;
+  paymentHints?: OrderPaymentHints;
 }
 
 export interface LibraryItem {

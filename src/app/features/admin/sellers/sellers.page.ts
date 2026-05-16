@@ -1,23 +1,23 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { CatalogService } from '../../../core/services';
+import { RouterLink } from '@angular/router';
+import { AdminService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 
 @Component({
   selector: 'app-admin-sellers',
   standalone: true,
-  imports: [IconComponent, CompactPipe],
+  imports: [IconComponent, CompactPipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sellers.page.html',
   styleUrl: './sellers.page.scss',
 })
 export class AdminSellersPage {
-  readonly catalog = inject(CatalogService);
+  readonly admin = inject(AdminService);
 
-  readonly sellers = computed(() =>
-    this.catalog
-      .documents()
-      .map((d) => d.seller)
-      .filter((s, idx, arr) => arr.findIndex((x) => x.id === s.id) === idx),
-  );
+  readonly sellers = computed(() => this.admin.adminSellers());
+
+  constructor() {
+    void this.admin.refreshSellers();
+  }
 }

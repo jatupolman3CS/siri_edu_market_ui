@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,11 +16,13 @@ import {
   RecentlyViewedService,
 } from '../../../core/services';
 import {
+  Category,
   GRADE_LEVEL_LABELS,
   GradeLevel,
   RESOURCE_TYPE_ICONS,
   RESOURCE_TYPE_LABELS,
   ResourceType,
+  Subcategory,
 } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
@@ -106,6 +109,9 @@ export class BuyerMarketplacePage {
   }
 
   constructor() {
+    // Explicit init to avoid root service auto-fetching on unrelated pages.
+    this.catalog.initForMarketplace();
+
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())
       .subscribe((params) => {
@@ -118,6 +124,8 @@ export class BuyerMarketplacePage {
         }
         if (cat) {
           const c = this.catalog.getCategoryBySlug(cat);
+          // Lazy-load subcategories for selected category only.
+          this.catalog.loadCategoryDetailBySlug(cat);
           if (c && !this.catalog.filters().categoryIds.includes(c.id)) {
             this.catalog.setFilters({ categoryIds: [c.id] });
           }
@@ -161,6 +169,27 @@ export class BuyerMarketplacePage {
         ? ids.filter((x) => x !== id)
         : [...ids, id],
     });
+  }
+
+  /** Per-category subcategory search term. */
+  readonly subSearchByCat = signal<Record<string, string>>({});
+
+  getSubSearch(catId: string): string {
+    return this.subSearchByCat()[catId] ?? '';
+  }
+
+  setSubSearch(catId: string, value: string): void {
+    this.subSearchByCat.update((cur) => ({ ...cur, [catId]: value }));
+  }
+
+  filteredSubcategories(cat: Category): Subcategory[] {
+    const term = this.getSubSearch(cat.id).trim().toLowerCase();
+    const subs = cat.subcategories ?? [];
+    if (!term) return subs;
+    return subs.filter((s) =>
+      (s.name ?? '').toLowerCase().includes(term) ||
+      (s.slug ?? '').toLowerCase().includes(term),
+    );
   }
 
   toggleGrade(g: GradeLevel): void {

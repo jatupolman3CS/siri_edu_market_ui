@@ -30,8 +30,9 @@
               </span>
               <input
                 type="search"
-                [(ngModel)]="query"
                 name="q"
+                [ngModel]="query()"
+                (ngModelChange)="query.set($event)"
                 placeholder="ค้นหาเอกสาร เทมเพลต หรือผู้ขาย…"
                 class="w-full pl-11 pr-4 py-2.5 rounded-full border border-line bg-pink-50/40 focus:bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm transition-all"
               />
@@ -95,7 +96,7 @@
                 class="flex items-center gap-2 ml-1 px-1.5 py-1.5 rounded-full hover:bg-pink-50 transition-colors"
               >
                 <img
-                  [src]="u.avatar"
+                  [src]="avatarSrc()"
                   [alt]="u.name"
                   class="w-8 h-8 rounded-full object-cover ring-2 ring-pink-100"
                 />

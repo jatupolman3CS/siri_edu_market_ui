@@ -43,28 +43,31 @@ export class AuthLoginPage {
     });
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     this.error.set('');
     this.loading.set(true);
-    setTimeout(() => {
-      const result = this.auth.signIn(this.email(), this.password());
-      this.loading.set(false);
-      if (!result.ok) {
-        this.error.set(result.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
-        return;
-      }
-      this.message.success('ยินดีต้อนรับกลับมา 🌸');
-      this.router.navigateByUrl(this.returnUrl());
-    }, 600);
+    const result = await this.auth.signIn(this.email(), this.password());
+    this.loading.set(false);
+    if (!result.ok) {
+      this.error.set(result.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
+      return;
+    }
+    this.message.success('ยินดีต้อนรับกลับมา 🌸');
+    this.router.navigateByUrl(this.returnUrl());
   }
 
   onSocial(provider: AuthProvider): void {
+    if (provider === 'email') return;
     this.loading.set(true);
-    setTimeout(() => {
-      this.auth.signInWithProvider(provider);
+    void (async () => {
+      const r = await this.auth.signInWithProvider(provider);
       this.loading.set(false);
-      this.message.success(`เข้าสู่ระบบด้วย ${provider.toUpperCase()} สำเร็จ 🎉`);
+      if (!r.ok) {
+        this.error.set(r.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
+        return;
+      }
+      this.message.success(`เข้าสู่ระบบด้วย ${provider.toUpperCase()} สำเร็จ`);
       this.router.navigateByUrl(this.returnUrl());
-    }, 500);
+    })();
   }
 }

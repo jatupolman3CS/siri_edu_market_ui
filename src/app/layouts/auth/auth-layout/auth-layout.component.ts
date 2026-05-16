@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LogoComponent } from '../../../shared/components/logo/logo.component';
+import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: true,
-  imports: [RouterLink, LogoComponent],
+  imports: [RouterLink, LogoComponent, GlobalLoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './auth-layout.component.html',
   styleUrl: './auth-layout.component.scss',

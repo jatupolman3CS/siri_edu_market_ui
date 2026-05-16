@@ -5,7 +5,23 @@
         description="รวมเอกสารและเทมเพลตที่เข้าคู่กัน ราคาประหยัดกว่าซื้อแยกถึง 40%"
       />
 
-      @if (bundleService.bundles().length === 0) {
+      @if (bundleService.bundlesState().status === 'loading') {
+        <app-empty-state
+          emoji="⏳"
+          title="กำลังโหลดแพ็กเกจ…"
+          description="รอสักครู่นะคะ"
+        />
+      } @else if (bundleService.bundlesState().status === 'error') {
+        <app-empty-state
+          emoji="⚠️"
+          title="โหลดแพ็กเกจไม่สำเร็จ"
+          description="ลองใหม่อีกครั้ง"
+        >
+          <button class="btn-pink mt-5" type="button" (click)="bundleService.refreshBundles()">
+            ลองใหม่
+          </button>
+        </app-empty-state>
+      } @else if (bundleService.bundles().length === 0) {
         <app-empty-state
           emoji="📦"
           title="ยังไม่มีแพ็กเกจ"

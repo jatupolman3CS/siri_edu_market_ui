@@ -69,34 +69,37 @@ export class AuthRegisterPage {
     ][s] ?? '';
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     this.error.set('');
     this.loading.set(true);
-    setTimeout(() => {
-      const r = this.auth.register({
-        name: this.name(),
-        email: this.email(),
-        password: this.password(),
-        confirmPassword: this.confirmPassword(),
-        acceptTerms: this.acceptTerms(),
-      });
-      this.loading.set(false);
-      if (!r.ok) {
-        this.error.set(r.error ?? 'สมัครไม่สำเร็จ');
-        return;
-      }
-      this.router.navigate(['/auth/verify-email'], {
-        queryParams: { returnUrl: this.returnUrl() },
-      });
-    }, 600);
+    const r = await this.auth.register({
+      name: this.name(),
+      email: this.email(),
+      password: this.password(),
+      confirmPassword: this.confirmPassword(),
+      acceptTerms: this.acceptTerms(),
+    });
+    this.loading.set(false);
+    if (!r.ok) {
+      this.error.set(r.error ?? 'สมัครไม่สำเร็จ');
+      return;
+    }
+    this.router.navigate(['/auth/verify-email'], {
+      queryParams: { returnUrl: this.returnUrl() },
+    });
   }
 
   onSocial(provider: AuthProvider): void {
+    if (provider === 'email') return;
     this.loading.set(true);
-    setTimeout(() => {
-      this.auth.signInWithProvider(provider);
+    void (async () => {
+      const r = await this.auth.signInWithProvider(provider);
       this.loading.set(false);
+      if (!r.ok) {
+        this.error.set(r.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
+        return;
+      }
       this.router.navigateByUrl(this.returnUrl());
-    }, 500);
+    })();
   }
 }

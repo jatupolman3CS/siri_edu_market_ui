@@ -5,7 +5,15 @@
         description="เอกสารที่คุณกดหัวใจไว้ — รอลดราคา หรือซื้อตอนพร้อม"
       />
 
-      @if (wishlist.count() === 0) {
+      @if (wishlist.state().status === 'loading') {
+        <app-empty-state emoji="⏳" title="กำลังโหลดรายการโปรด…" description="รอสักครู่นะคะ" />
+      } @else if (wishlist.state().status === 'error') {
+        <app-empty-state emoji="⚠️" title="โหลดรายการโปรดไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <button class="btn-pink mt-4" type="button" (click)="wishlist.refresh()">
+            ลองใหม่
+          </button>
+        </app-empty-state>
+      } @else if (wishlist.count() === 0) {
         <app-empty-state
           emoji="💗"
           title="ยังไม่มีรายการโปรด"
@@ -37,5 +45,18 @@
             <app-document-card [doc]="doc" />
           }
         </div>
+
+        @if (wishlist.hasMore()) {
+          <div class="flex justify-center mt-6">
+            <button
+              type="button"
+              class="btn-pink"
+              (click)="wishlist.loadMore()"
+              [disabled]="wishlist.state().status === 'loading'"
+            >
+              โหลดเพิ่ม
+            </button>
+          </div>
+        }
       }
     </div>

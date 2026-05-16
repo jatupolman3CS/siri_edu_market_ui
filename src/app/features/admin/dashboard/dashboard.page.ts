@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AdminService, CatalogService } from '../../../core/services';
+import { AdminService } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -20,15 +20,19 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 })
 export class AdminDashboardPage {
   readonly admin = inject(AdminService);
-  readonly catalog = inject(CatalogService);
 
-  readonly services: { name: string; note: string; status: 'ok' | 'warn' | 'down' }[] = [
-    { name: 'API Gateway', note: 'ทุก endpoint ตอบกลับ < 200ms', status: 'ok' },
-    { name: 'Cloudflare R2', note: 'ใช้พื้นที่ 4.2GB / 100GB', status: 'ok' },
-    { name: 'Payment Gateway', note: 'Omise — เชื่อมต่อปกติ', status: 'ok' },
-    { name: 'Watermark Service', note: 'คิวงานเฉลี่ย 12 วินาที', status: 'warn' },
-    { name: 'Email (SES)', note: 'ส่งสำเร็จ 99.7%', status: 'ok' },
-  ];
+  /** Service status from the API (Database / Storage / API). Falls back to a single "API: ok" line. */
+  readonly services = computed(() => {
+    const items = this.admin.dashboard()?.serviceStatus ?? [];
+    if (items.length > 0) return items;
+    return [{ name: 'API', status: 'ok', message: undefined as string | undefined }];
+  });
+
+  constructor() {
+    void this.admin.refreshDashboard();
+    void this.admin.refreshTransactions();
+    void this.admin.refreshPendingDocuments();
+  }
 
   badgeClass(s: string): string {
     return {

@@ -20,7 +20,8 @@
           </span>
           <input
             type="search"
-            [(ngModel)]="search"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
             placeholder="ค้นหาเอกสารในร้านของคุณ…"
             class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
           />
@@ -28,6 +29,7 @@
         <div class="flex gap-2">
           @for (s of statuses; track s.value) {
             <button
+              type="button"
               class="px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors"
               [class.bg-pink-500]="status() === s.value"
               [class.text-white]="status() === s.value"
@@ -44,8 +46,8 @@
       </div>
 
       <!-- Doc table -->
-      <div class="card-soft overflow-hidden">
-        <table class="w-full">
+      <div class="card-soft overflow-x-auto">
+        <table class="w-full min-w-[600px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-5 py-3 font-semibold">เอกสาร</th>
@@ -62,7 +64,12 @@
               <tr class="border-t border-line hover:bg-pink-50/40 transition-colors">
                 <td class="px-5 py-4">
                   <div class="flex items-center gap-3">
-                    <img [src]="d.cover" class="w-10 h-12 rounded-lg object-cover" alt="" />
+                    <img
+                      [src]="d.cover || coverFallback"
+                      (error)="onCoverError($event)"
+                      class="w-10 h-12 rounded-lg object-cover"
+                      alt=""
+                    />
                     <div class="min-w-0">
                       <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
                       <div class="text-xs text-ink-muted uppercase">{{ d.format }} · {{ d.pages }} หน้า</div>
@@ -72,28 +79,34 @@
                 <td class="px-5 py-4 text-sm font-bold text-ink whitespace-nowrap">
                   {{ d.price | thb }}
                 </td>
-                <td class="px-5 py-4 text-sm text-ink whitespace-nowrap">
-                  {{ d.downloads | compact }}
+                <td class="px-5 py-4 text-sm text-ink">
+                  <div class="whitespace-nowrap font-semibold">
+                    ขาย {{ (d.salesCount ?? 0) | compact }}
+                  </div>
+                  <div class="text-xs text-ink-muted whitespace-nowrap">
+                    ดาวน์โหลด {{ d.downloads | compact }}
+                  </div>
                 </td>
                 <td class="px-5 py-4 text-sm whitespace-nowrap">
                   <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
                   <span class="text-xs text-ink-muted ml-1">({{ d.reviewCount }})</span>
                 </td>
                 <td class="px-5 py-4">
-                  <span class="pill-pink">เผยแพร่</span>
+                  <span [class]="statusPillClass(d.status)">{{ statusLabel(d.status) }}</span>
                 </td>
                 <td class="px-5 py-4 text-xs text-ink-muted whitespace-nowrap">
                   {{ d.updatedAt | timeAgo }}
                 </td>
                 <td class="px-5 py-4">
                   <div class="flex items-center gap-1 justify-end">
-                    <button class="btn-icon !w-8 !h-8" title="ดู">
+                    <button type="button" class="btn-icon !w-8 !h-8" title="ดู" (click)="view(d)">
                       <app-icon name="eye" [size]="14" />
                     </button>
-                    <button class="btn-icon !w-8 !h-8" title="แก้ไข">
+                    <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="edit(d.id)">
                       <app-icon name="edit" [size]="14" />
                     </button>
                     <button
+                      type="button"
                       class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500 hover:!border-rose-200"
                       title="ลบ"
                       (click)="confirmRemove(d.id, d.title)"
@@ -107,4 +120,17 @@
           </tbody>
         </table>
       </div>
+
+      @if (seller.docsHasMore()) {
+        <div class="flex justify-center mt-6">
+          <button
+            type="button"
+            class="btn-pink"
+            (click)="seller.loadMoreDocuments()"
+            [disabled]="seller.docsState().status === 'loading'"
+          >
+            โหลดเพิ่ม
+          </button>
+        </div>
+      }
     </div>

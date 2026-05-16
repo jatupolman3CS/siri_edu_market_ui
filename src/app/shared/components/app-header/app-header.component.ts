@@ -1,20 +1,26 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import {
   CartService,
   AuthService,
   WishlistService,
+  MeService,
 } from '../../../core/services';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../logo/logo.component';
 import { IconComponent } from '../icon/icon.component';
+import { resolvePublicUrl } from '../../../core/api-runtime';
 
 @Component({
   selector: 'app-header',
@@ -35,10 +41,39 @@ export class AppHeaderComponent {
   readonly cart = inject(CartService);
   readonly auth = inject(AuthService);
   readonly wishlist = inject(WishlistService);
+  private readonly me = inject(MeService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
 
   readonly query = signal<string>('');
+
+  /** Avatar URL resolved from R2 via MeService — falls back to session avatar or placeholder. */
+  readonly avatarSrc = computed(() => {
+    const r2Url = resolvePublicUrl(this.me.profile()?.avatarUrl);
+    if (r2Url) return r2Url;
+    const sessionAvatar = this.auth.user()?.avatar;
+    if (sessionAvatar) return sessionAvatar;
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.auth.user()?.name ?? 'U') + '&background=f9a8d4&color=9d174d&size=64';
+  });
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        const q = this.router.parseUrl(this.router.url).queryParams['q'];
+        this.query.set(typeof q === 'string' ? q : '');
+      });
+
+    // Load real profile (with R2 avatarUrl) whenever the user is authenticated
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        this.me.loadProfile().subscribe({ error: () => { /* silent */ } });
+      }
+    });
+  }
 
   readonly navItems = [
     { label: 'หน้าแรก', href: '/', exact: true },
@@ -54,11 +89,11 @@ export class AppHeaderComponent {
   }
 
   search(): void {
-    if (this.query().trim()) {
-      this.router.navigate(['/marketplace'], {
-        queryParams: { q: this.query() },
-      });
-    }
+    const q = this.query().trim();
+    this.router.navigate(['/marketplace'], {
+      queryParams: { q: q || null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   go(path: string): void {

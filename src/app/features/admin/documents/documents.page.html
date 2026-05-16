@@ -1,0 +1,168 @@
+<div class="max-w-6xl">
+  <header class="mb-6">
+    <h1 class="text-3xl font-extrabold text-ink mb-1">จัดการเอกสาร</h1>
+    <p class="text-sm text-ink-soft">ค้นหา กรอง และดำเนินการกลุ่มกับเอกสารทุกสถานะ</p>
+  </header>
+
+  <div class="card-soft p-4 mb-4 space-y-3">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider">ค้นหา</label>
+      <input
+        class="input-soft sm:col-span-3 !py-2"
+        type="search"
+        placeholder="ชื่อ / คำอธิบายสั้น"
+        [ngModel]="q()"
+        (ngModelChange)="q.set($event)"
+      />
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">สถานะ</label>
+        <select class="input-soft w-full !py-2" [ngModel]="status()" (ngModelChange)="status.set($event)">
+          @for (o of statuses; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">รูปแบบ</label>
+        <select class="input-soft w-full !py-2" [ngModel]="format()" (ngModelChange)="format.set($event)">
+          @for (o of formats; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">หมวด (CategoryId)</label>
+        <input class="input-soft w-full !py-2" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">ชื่อผู้ขาย</label>
+        <input class="input-soft w-full !py-2" [ngModel]="sellerName()" (ngModelChange)="sellerName.set($event)" />
+      </div>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">วันที่ (จาก)</label>
+        <input class="input-soft w-full !py-2" type="date" [ngModel]="postedFrom()" (ngModelChange)="postedFrom.set($event)" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">วันที่ (ถึง)</label>
+        <input class="input-soft w-full !py-2" type="date" [ngModel]="postedTo()" (ngModelChange)="postedTo.set($event)" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">เรียงลำดับ</label>
+        <select class="input-soft w-full !py-2" [ngModel]="sort()" (ngModelChange)="sort.set($event)">
+          @for (o of sorts; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="flex flex-col gap-2 justify-end">
+        <label class="flex items-center gap-2 text-sm text-ink cursor-pointer">
+          <input type="checkbox" [ngModel]="featuredOnly()" (ngModelChange)="featuredOnly.set($event)" />
+          เฉพาะแนะนำ (Featured)
+        </label>
+        <label class="flex items-center gap-2 text-sm text-ink cursor-pointer">
+          <input type="checkbox" [ngModel]="hasOpenReportsOnly()" (ngModelChange)="hasOpenReportsOnly.set($event)" />
+          มีรายงานค้าง
+        </label>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn-ghost" (click)="applyFilters()">
+        <app-icon name="filter" [size]="16" />
+        ค้นหา
+      </button>
+      @if (loading()) {
+        <span class="text-xs text-ink-muted self-center">กำลังโหลด…</span>
+      }
+    </div>
+  </div>
+
+  @if (selectedIds().size > 0) {
+    <div class="card-soft p-4 mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
+      <span class="text-sm font-bold text-ink">เลือก {{ selectedIds().size }} รายการ</span>
+      <input
+        class="input-soft flex-1 min-w-[200px] !py-2"
+        placeholder="เหตุผล (เมื่อปฏิเสธกลุ่ม)"
+        [ngModel]="bulkReason()"
+        (ngModelChange)="bulkReason.set($event)"
+      />
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="btn-pink text-xs" (click)="runBulk('approve')">อนุมัติ</button>
+        <button type="button" class="btn-ghost text-xs" (click)="runBulk('reject')">ปฏิเสธ</button>
+        <button type="button" class="btn-ghost text-xs" (click)="runBulk('feature_on')">ตั้ง Featured</button>
+        <button type="button" class="btn-ghost text-xs" (click)="runBulk('feature_off')">ยก Featured</button>
+      </div>
+    </div>
+  }
+
+  <div class="card-soft overflow-x-auto">
+    <table class="w-full min-w-[800px]">
+      <thead class="bg-pink-50">
+        <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+          <th class="px-3 py-3 w-10">
+            <input
+              type="checkbox"
+              [checked]="items().length > 0 && selectedIds().size === items().length"
+              (change)="toggleSelectAll(($any($event.target)).checked)"
+            />
+          </th>
+          <th class="px-3 py-3 font-semibold">เอกสาร</th>
+          <th class="px-3 py-3 font-semibold">ผู้ขาย</th>
+          <th class="px-3 py-3 font-semibold">สถานะ</th>
+          <th class="px-3 py-3 font-semibold text-right">ราคา</th>
+          <th class="px-3 py-3 font-semibold">อัปเดต</th>
+          <th class="px-3 py-3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (d of items(); track d.id) {
+          <tr class="border-t border-line hover:bg-pink-50/40">
+            <td class="px-3 py-3">
+              <input
+                type="checkbox"
+                [checked]="selectedIds().has(d.id)"
+                (change)="toggleSelect(d.id, ($any($event.target)).checked)"
+              />
+            </td>
+            <td class="px-3 py-3">
+              <div class="font-bold text-ink text-sm line-clamp-1">{{ d.title }}</div>
+              <div class="text-xs text-ink-muted line-clamp-1">{{ d.shortDescription }}</div>
+              @if (d.isFeatured) {
+                <span class="pill bg-pink-100 text-pink-800 text-[10px] mt-1 inline-block">Featured</span>
+              }
+              @if (d.openReportCount > 0) {
+                <span class="pill bg-amber-100 text-amber-800 text-[10px] mt-1 ml-1 inline-block">รายงาน {{ d.openReportCount }}</span>
+              }
+            </td>
+            <td class="px-3 py-3 text-sm text-ink-soft">{{ d.sellerName }}</td>
+            <td class="px-3 py-3">
+              <span class="pill text-[10px] font-bold" [class]="statusClass(d.status)">{{ statusLabel(d.status) }}</span>
+            </td>
+            <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ d.price | thb }}</td>
+            <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ d.updatedAt | timeAgo }}</td>
+            <td class="px-3 py-3 text-right">
+              <a [routerLink]="['/admin/documents', d.id]" class="btn-icon !w-8 !h-8 inline-flex" title="รายละเอียด">
+                <app-icon name="edit" [size]="14" />
+              </a>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="px-5 py-10 text-center text-ink-muted text-sm">ไม่พบเอกสาร</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-between mt-4 text-sm text-ink-soft">
+    <span>ทั้งหมด {{ totalCount() }} รายการ · หน้า {{ page() }} / {{ totalPagesSafe() }}</span>
+    <div class="flex gap-2">
+      <button type="button" class="btn-ghost text-xs" [disabled]="page() <= 1" (click)="prevPage()">ก่อนหน้า</button>
+      <button type="button" class="btn-ghost text-xs" [disabled]="page() >= totalPagesSafe()" (click)="nextPage()">ถัดไป</button>
+    </div>
+  </div>
+</div>

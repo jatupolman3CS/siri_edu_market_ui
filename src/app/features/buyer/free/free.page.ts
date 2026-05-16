@@ -23,6 +23,10 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 export class BuyerFreePage {
   readonly catalog = inject(CatalogService);
 
+  constructor() {
+    this.catalog.loadFreeResources();
+  }
+
   totalDownloads(): number {
     return this.catalog
       .freeResources()
