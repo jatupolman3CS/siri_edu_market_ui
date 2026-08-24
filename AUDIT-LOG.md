@@ -57,13 +57,13 @@
 | AUD-011 | — | — | `no-trace` | ไม่พบใน repo ทั้งสอง |
 | AUD-012 | — | — | `no-trace` | ไม่พบใน repo ทั้งสอง |
 | AUD-013 | UI อ่าน ProblemDetails ได้ไม่ครบ shape + SDK คืน `{data: undefined, error: undefined}` แล้ว throw ไม่สื่อ | `ui/src/app/core/services/api-failure-reporter.service.ts`<br>`ui/src/app/core/services/api-result.ts` | `closed` | `api-failure-reporter.service.ts:9` รองรับ camelCase ProblemDetails · `api-result.ts:16` จัดการเคส empty result · test ฝั่ง backend: `GlobalExceptionMiddlewareTests.cs:17` |
-| AUD-014 | API 4 เส้นทางยัง hand-maintained นอก generated SDK → `verify:api-drift` จับ drift ไม่ได้ | `ui/src/app/core/api/admin-documents.api.ts`<br>`ui/src/app/core/api/seller-document-update.ts`<br>`ui/src/app/core/api/seller-document-main-files.ts`<br>`ui/src/app/core/services/admin.service.ts` | **`open`** | 3 ไฟล์ hand-maintained ข้างต้นมีอยู่จริง (`ls ui/src/app/core/api/*.ts \| grep -v gen`) · `admin.service.ts:21` `import { client as heyApiClient } from '../api/client.gen'` เรียก `client.gen` ตรง · แผนแก้ = T-22 |
+| AUD-014 | API เส้นทางที่อยู่นอก generated SDK → `verify:api-drift` จับ drift ไม่ได้ | `ui/src/app/core/services/admin.service.ts`<br>`ui/INTEGRATION-CHECKLIST.md` | `closed` | `admin.service.ts` เลิก import `client.gen` แล้ว — `/api/admin/settings` และ `/api/admin/storage/usage` ไปผ่าน `getApiAdminSettings` / `putApiAdminSettings` / `getApiAdminStorageUsage` · ไฟล์ที่เหลือใน `core/api/` (`admin-documents.api.ts`, `seller-document-update.ts`, `seller-document-main-files.ts`) เป็น alias re-export จาก `sdk.gen` ไม่ใช่โค้ด HTTP เขียนเอง · `verify:api-drift` → "OpenAPI matches snapshot" · ปิดใน T-22 |
 | AUD-015 | — | — | `no-trace` | ไม่พบใน repo ทั้งสอง |
 | AUD-016 | หน้า page เคย import `sdk.gen` ตรง ทำให้ `audit:guard` แดง | `ui/src/app/core/services/seller.service.ts`<br>`ui/scripts/audit-guard.mjs` | `closed` | `seller.service.ts:308` ย้าย reviews list มาไว้ใน service · บังคับด้วย rule `no-sdk-gen-in-features` ใน `audit-guard.mjs` · `npm run audit:guard` ผ่าน |
 | AUD-017 | — | — | `no-trace` | ไม่พบใน repo ทั้งสอง |
 | AUD-018 | ยังไม่ profile N+1 ของ marketplace catalog | `be/src/SIRIEDUMARKET.Infrastructure/Marketplace/Repositories/EfMarketplaceCatalogRepository.cs`<br>`be/src/SIRIEDUMARKET.Application/Marketplace/Services/MarketplaceCatalogService.cs` | **`open`** | ยังไม่มีผลวัดใดๆ ในทั้งสอง repo · เดิมบันทึกไว้ที่ `ui/INTEGRATION-CHECKLIST.md` หัวข้อ "Open contract gaps" · แผนแก้ = T-32 |
 
-**สรุป:** GAP — closed 9 / open 1 (GAP-04) · AUD — closed 8 / open 2 (AUD-014, AUD-018) / no-trace 8
+**สรุป:** GAP — closed 9 / open 1 (GAP-04) · AUD — closed 9 / open 1 (AUD-018) / no-trace 8
 
 ---
 

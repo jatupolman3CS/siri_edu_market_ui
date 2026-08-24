@@ -12,13 +12,25 @@
   (รองรับ ProblemDetails: `detail`/`title`/`message`/`errors[].description`)
 - **CI gates**: `npm run audit:guard`, `npm run audit:coverage`, `npm run verify:api-drift`
 
-## Hand-maintained APIs (ไม่ผ่าน OpenAPI generation — TRACKED)
-> เปลี่ยน DTO เหล่านี้ต้องอัปเดต **ทั้งสองฝั่ง** ด้วยมือ จนกว่าจะ migrate กลับเข้า `sdk.gen.ts`
+## Hand-maintained APIs — ไม่เหลือแล้ว (AUD-014 ปิด 2026-08-25)
 
-- `src/app/core/api/admin-documents.api.ts` ↔ `AdminController` document/report endpoints
-- `src/app/core/api/seller-document-update.ts` ↔ `SellerDocumentsController.PUT api/seller/documents/{id}`
-- `src/app/core/api/admin-documents-pending-search.ts` ↔ `POST api/admin/documents/pending/search`
-- เส้นทาง `client.gen` โดยตรงใน `admin.service.ts`: `/api/admin/settings`, `/api/admin/storage/usage`
+ทุกเส้นทางไปผ่าน generated SDK หมดแล้ว `verify:api-drift` จึงจับ drift ได้ครบทุก endpoint
+
+- `admin.service.ts` เคยเรียก `client.gen` ตรงที่ `/api/admin/settings` และ `/api/admin/storage/usage`
+  → ย้ายไปใช้ `getApiAdminSettings`, `putApiAdminSettings`, `getApiAdminStorageUsage` แล้ว
+  (interface `PlatformSettings` / `StorageUsage` ยังอยู่เป็น contract ของ service เพราะ field ที่ generate มาเป็น optional หมด
+  แต่ฟอร์มหน้า admin ต้องการ object ที่ครบ — normalize ใน service)
+- `admin-documents-pending-search.ts` ที่เคยระบุไว้ในรายการนี้ **ไม่เคยมีไฟล์อยู่จริง** (ดู F-02-3)
+
+ไฟล์ 3 ตัวที่เหลือใน `core/api/` **ไม่ใช่ hand-maintained API** — เป็นแค่ alias re-export จาก `sdk.gen`/`types.gen`
+เพื่อให้ import path ฝั่ง feature นิ่ง ไม่มีโค้ด HTTP เขียนเอง จึงไม่หลุด drift check:
+
+- `admin-documents.api.ts` · `seller-document-update.ts` · `seller-document-main-files.ts`
+
+> ⚠️ **`npm run generate:api` ลบไฟล์ที่ไม่ใช่ generated ใน `src/app/core/api/` ทิ้ง**
+> รวมถึง 3 ไฟล์ข้างบนและ **`sdk-auth-bridge.ts`** ซึ่ง `app.config.ts` ใช้ผูก token เข้ากับ SDK
+> ถ้าลบไปแล้ว build จะพังและ auth จะหยุดทำงาน — หลัง regenerate ทุกครั้งให้ `git status` แล้วกู้คืนด้วย
+> `git checkout -- src/app/core/api/` ก่อนทำอย่างอื่น
 
 ## Buyer (public)
 - **/** Home
@@ -84,11 +96,8 @@
 ## Open contract gaps
 
 > ทะเบียนเต็มของ GAP/AUD ทุก id พร้อมไฟล์อ้างอิงอยู่ที่ [AUDIT-LOG.md](AUDIT-LOG.md)
-> ตรวจครั้งล่าสุด 2026-08-24 — ที่ยัง **open** เหลือ 2 รายการ:
+> ตรวจครั้งล่าสุด 2026-08-25 — ที่ยัง **open** เหลือ 1 รายการ:
 
-- **AUD-014** — hand-maintained APIs ตาม section ด้านบน ยังไม่กลับเข้า generated SDK
-  (`core/api/admin-documents.api.ts`, `seller-document-update.ts`, `seller-document-main-files.ts`
-  และ `admin.service.ts:21` ที่เรียก `client.gen` ตรง) → แผนแก้ T-22
 - **AUD-018** — ยังไม่ profile N+1 ของ marketplace catalog
   (`EfMarketplaceCatalogRepository.cs`) → แผนแก้ T-32
 

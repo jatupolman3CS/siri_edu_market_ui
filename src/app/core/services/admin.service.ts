@@ -6,20 +6,31 @@ import {
   getApiAdminCategories,
   getApiAdminDashboard,
   getApiAdminSellers,
+  getApiAdminSettings,
+  getApiAdminStorageUsage,
   getApiAdminTransactions,
   postApiAdminCategories,
   postApiAdminDocumentsPendingSearch,
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
   putApiAdminCategoriesById,
+  putApiAdminSettings,
 } from '../api';
 import type {
   AdminDashboardResponse,
   CreateCategoryRequest,
+  PlatformSettingsResponse,
+  StorageUsageResponse,
   UpdateCategoryRequest,
 } from '../api/types.gen';
-import { client as heyApiClient } from '../api/client.gen';
 
+/**
+ * AUD-014: the settings and storage endpoints used to be called through `client.gen`
+ * directly, which kept them outside the generated SDK and invisible to `verify:api-drift`.
+ * They go through the SDK now; these interfaces stay as the service's own contract because
+ * every field on the generated response is optional, and the admin settings form needs a
+ * complete object to bind to.
+ */
 export interface PlatformSettings {
   feeRatePercent: number;
   vatPercent: number;
@@ -32,6 +43,24 @@ export interface StorageUsage {
   objectCount: number;
   totalBytes: number;
   isConfigured: boolean;
+}
+
+function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
+  return {
+    feeRatePercent: res.feeRatePercent ?? 0,
+    vatPercent: res.vatPercent ?? 0,
+    payoutMinTHB: res.payoutMinTHB ?? 0,
+    payoutSchedule: res.payoutSchedule ?? '',
+  };
+}
+
+function toStorageUsage(res: StorageUsageResponse): StorageUsage {
+  return {
+    bucketName: res.bucketName ?? '',
+    objectCount: res.objectCount ?? 0,
+    totalBytes: res.totalBytes ?? 0,
+    isConfigured: res.isConfigured ?? false,
+  };
 }
 import {
   mapAdminPendingToDocumentItem,
@@ -296,12 +325,9 @@ export class AdminService {
 
   async loadSettings(): Promise<PlatformSettings | null> {
     try {
-      const result = await heyApiClient.get<PlatformSettings>({
-        url: '/api/admin/settings',
-      });
-      if (result.error) throw result.error;
-      this._settings.set(result.data ?? null);
-      return result.data ?? null;
+      const settings = toPlatformSettings(unwrapSdkResult(await getApiAdminSettings()));
+      this._settings.set(settings);
+      return settings;
     } catch (e) {
       this.apiFail.report('โหลดการตั้งค่าระบบ', e);
       this._settings.set(null);
@@ -311,14 +337,11 @@ export class AdminService {
 
   async saveSettings(req: PlatformSettings): Promise<PlatformSettings | null> {
     try {
-      const result = await heyApiClient.put<PlatformSettings>({
-        url: '/api/admin/settings',
-        body: req,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (result.error) throw result.error;
-      this._settings.set(result.data ?? null);
-      return result.data ?? null;
+      const settings = toPlatformSettings(
+        unwrapSdkResult(await putApiAdminSettings({ body: req })),
+      );
+      this._settings.set(settings);
+      return settings;
     } catch (e) {
       this.apiFail.report('บันทึกการตั้งค่าระบบ', e);
       throw e;
@@ -327,12 +350,9 @@ export class AdminService {
 
   async loadStorageUsage(): Promise<StorageUsage | null> {
     try {
-      const result = await heyApiClient.get<StorageUsage>({
-        url: '/api/admin/storage/usage',
-      });
-      if (result.error) throw result.error;
-      this._storageUsage.set(result.data ?? null);
-      return result.data ?? null;
+      const usage = toStorageUsage(unwrapSdkResult(await getApiAdminStorageUsage()));
+      this._storageUsage.set(usage);
+      return usage;
     } catch (e) {
       this.apiFail.report('โหลดสถิติพื้นที่จัดเก็บ', e);
       this._storageUsage.set(null);

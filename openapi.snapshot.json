@@ -177,7 +177,7 @@
             "name": "Sort",
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/AdminDocumentsSort"
+              "type": "integer"
             }
           }
         ],
@@ -760,7 +760,7 @@
             "name": "Sort",
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/AdminPendingDocumentsSort"
+              "type": "integer"
             }
           }
         ],
@@ -7103,9 +7103,6 @@
           }
         }
       },
-      "AdminDocumentsSort": {
-        "type": "integer"
-      },
       "AdminPayoutResponse": {
         "type": "object",
         "properties": {
@@ -7225,9 +7222,6 @@
             "format": "int32"
           }
         }
-      },
-      "AdminPendingDocumentsSort": {
-        "type": "integer"
       },
       "AdminSellerApplicationResponse": {
         "type": "object",
