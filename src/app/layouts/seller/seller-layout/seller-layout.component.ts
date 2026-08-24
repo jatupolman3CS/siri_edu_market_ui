@@ -46,7 +46,7 @@ export class SellerLayoutComponent {
     { label: 'เอกสารของฉัน', href: '/seller/documents', icon: 'doc' as const },
     { label: 'อัปโหลดเอกสาร', href: '/seller/upload', icon: 'upload' as const },
     { label: 'พรีวิว PDF', href: '/seller/pdf-preview', icon: 'eye' as const },
-    { label: 'AI Assistant', href: '/seller/ai', icon: 'sparkle' as const },
+    // G-05: the AI Assistant entry is removed until the endpoint behind it does something.
     { label: 'รายได้ & Payout', href: '/seller/earnings', icon: 'wallet' as const },
     // GAP-06 / GAP-07: answering buyer questions and arranging the storefront.
     { label: 'คำถามจากผู้ซื้อ', href: '/seller/qna', icon: 'bell' as const },

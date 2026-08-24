@@ -175,13 +175,10 @@ export const routes: Routes = [
           ),
         title: 'พรีวิว PDF — Siri Studio',
       },
-      {
-        path: 'ai',
-        loadComponent: () =>
-          import('./features/seller/ai-assistant/ai-assistant.page').then(
-            (m) => m.SellerAiAssistantPage,
-          ),
-      },
+      // G-05: /seller/ai is unrouted on purpose. The endpoint behind it never called a
+      // language model — it concatenated existing fields and wrote constant tags — while the
+      // page advertised AI. The component is kept so the route can come back the day a real
+      // generator is wired up; the API answers 501 in the meantime.
       {
         path: 'qna',
         loadComponent: () =>
