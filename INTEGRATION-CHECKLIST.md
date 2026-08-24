@@ -81,9 +81,20 @@
 - **PathBase**: backend `app.UsePathBase("/SIRIEDUMARKET.Api")` →
   UI ต้องใช้ `API_BASE_URL` จาก `core/api-runtime.ts` เท่านั้น
 
-## Open contract gaps (ดู `AUDIT-LOG.md`)
+## Open contract gaps
 
-- AUD-006: ยังไม่ wire `postApiAuthRefresh`
-- AUD-014: hand-maintained APIs ตาม section ด้านบน
-- AUD-018: ยังไม่ profile N+1 ของ marketplace catalog
+> ทะเบียนเต็มของ GAP/AUD ทุก id พร้อมไฟล์อ้างอิงอยู่ที่ [AUDIT-LOG.md](AUDIT-LOG.md)
+> ตรวจครั้งล่าสุด 2026-08-24 — ที่ยัง **open** เหลือ 2 รายการ:
+
+- **AUD-014** — hand-maintained APIs ตาม section ด้านบน ยังไม่กลับเข้า generated SDK
+  (`core/api/admin-documents.api.ts`, `seller-document-update.ts`, `seller-document-main-files.ts`
+  และ `admin.service.ts:21` ที่เรียก `client.gen` ตรง) → แผนแก้ T-22
+- **AUD-018** — ยังไม่ profile N+1 ของ marketplace catalog
+  (`EfMarketplaceCatalogRepository.cs`) → แผนแก้ T-32
+
+ปิดไปแล้ว (เคยอยู่ในรายการนี้):
+
+- ~~AUD-006: ยังไม่ wire `postApiAuthRefresh`~~ — **closed** แล้ว
+  `core/services/auth.service.ts:119` `refreshSession()` เรียก `postApiAuthRefresh` ที่บรรทัด 125
+  และ `core/interceptors/unauthorized.interceptor.ts:40` เป็นผู้เรียก
 
