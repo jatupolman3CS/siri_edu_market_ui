@@ -1,7 +1,0 @@
-Request failed with status 200: 
-Error: Request failed with status 200: 
-    at Ds (D:\ProjectSIRI\ProjectEduMarket\siri_edu_market_ui\node_modules\@hey-api\openapi-ts\dist\index.cjs:15:110575)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async Promise.all (index 0)
-    at async Kq (D:\ProjectSIRI\ProjectEduMarket\siri_edu_market_ui\node_modules\@hey-api\openapi-ts\dist\index.cjs:1312:4503)
-    at async start (D:\ProjectSIRI\ProjectEduMarket\siri_edu_market_ui\node_modules\@hey-api\openapi-ts\bin\index.cjs:131:21)

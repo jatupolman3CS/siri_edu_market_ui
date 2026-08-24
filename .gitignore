@@ -29,8 +29,14 @@ yarn-error.log
 !.vscode/mcp.json
 .history/*
 
+# Build artifacts — never commit these (they were tracked once; see T-03)
+# `.angular*` covers the whole Angular build cache and the `.angular.zip` dump.
+# It does NOT match `angular.json`, which has no leading dot and stays tracked.
+.angular*
+openapi-ts-error-*.log
+*.zip
+
 # Miscellaneous
-/.angular/cache
 .sass-cache/
 /connect.lock
 /coverage
