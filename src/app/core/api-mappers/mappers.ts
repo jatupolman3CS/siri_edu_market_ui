@@ -416,6 +416,8 @@ export function mapOrder(o: OrderResponse): Order {
       fromBundleId: item.bundleId ?? undefined,
     })),
     total: o.total ?? 0,
+    subtotal: o.subTotal ?? o.total ?? 0,
+    vatAmount: o.vatAmount ?? 0,
     status: (o.status ?? 'awaiting_payment') as OrderStatus,
     paymentMethod: (o.paymentMethod ?? 'promptpay') as PaymentMethod,
     createdAt: o.createdAt ?? '',

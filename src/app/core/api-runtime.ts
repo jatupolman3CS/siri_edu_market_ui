@@ -4,8 +4,14 @@ import { finishLoading, startLoading } from './services/loading';
 /** Set by `provideSdkAuthBridge` at app init — returns current access token per-request. */
 let _tokenGetter: (() => string | null) | null = null;
 
-/** Set by `provideSdkAuthBridge` — called when the SDK fetch receives a 401 response. */
+/** Set by `provideSdkAuthBridge` — called when a 401 could not be recovered by refreshing. */
 let _unauthorizedHandler: (() => void) | null = null;
+
+/**
+ * Set by `provideSdkAuthBridge` — exchanges the refresh token for a new access token.
+ * Resolves to the new token, or null when the session is genuinely over.
+ */
+let _tokenRefresher: (() => Promise<string | null>) | null = null;
 
 /** Called once by `sdk-auth-bridge` so the custom fetch can attach Bearer headers. */
 export function setAuthTokenGetter(getter: () => string | null): void {
@@ -15,6 +21,11 @@ export function setAuthTokenGetter(getter: () => string | null): void {
 /** Called once by `sdk-auth-bridge` to register the 401 → redirect callback. */
 export function setUnauthorizedHandler(handler: () => void): void {
   _unauthorizedHandler = handler;
+}
+
+/** Called once by `sdk-auth-bridge` to register the silent-refresh callback. */
+export function setTokenRefresher(refresher: () => Promise<string | null>): void {
+  _tokenRefresher = refresher;
 }
 
 const PATH_BASE = '/SIRIEDUMARKET.Api';
@@ -156,27 +167,66 @@ export function resolvePublicUrl(url: string | null | undefined): string {
   return `${API_BASE_URL}/${raw}`;
 }
 
+/**
+ * Requests that must never trigger a refresh-and-retry: a 401 from them is the answer,
+ * not a stale token, and retrying `/auth/refresh` on its own failure would loop.
+ */
+function isAuthEndpoint(input: RequestInfo | URL): boolean {
+  const url =
+    typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url;
+
+  return (
+    url.includes('/api/auth/login') ||
+    url.includes('/api/auth/refresh') ||
+    url.includes('/api/auth/register') ||
+    url.includes('/api/auth/verify-email') ||
+    url.includes('/api/auth/external/')
+  );
+}
+
 export const createClientConfig: CreateClientConfig = (config) => ({
   ...config,
   baseUrl: API_BASE_URL,
-  fetch: async (request: Request) => {
+  fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
     startLoading();
     try {
-      const token = _tokenGetter?.();
-      if (token) {
+      const send = (token: string | null) => {
+        // Rebuild from the original input/init each time so the body is still readable
+        // on the retry — a consumed Request cannot be sent twice.
+        const request = new Request(input, init);
+        if (!token) return fetch(request);
+
         const headers = new Headers(request.headers);
         headers.set('Authorization', `Bearer ${token}`);
-        const response = await fetch(new Request(request, { headers }));
-        if (response.status === 401) {
-          _unauthorizedHandler?.();
-        }
+        return fetch(new Request(request, { headers }));
+      };
+
+      const response = await send(_tokenGetter?.() ?? null);
+      if (response.status !== 401) return response;
+
+      // BUG-04: a 401 used to sign the user straight out, so every session died when the
+      // 15-minute access token expired — mid-upload, mid-checkout, mid-anything. Refresh
+      // once and replay the request; only a failed refresh ends the session.
+      if (isAuthEndpoint(input) || !_tokenRefresher) {
+        _unauthorizedHandler?.();
         return response;
       }
-      const response = await fetch(request);
-      if (response.status === 401) {
+
+      const refreshedToken = await _tokenRefresher();
+      if (!refreshedToken) {
+        _unauthorizedHandler?.();
+        return response;
+      }
+
+      const retried = await send(refreshedToken);
+      if (retried.status === 401) {
         _unauthorizedHandler?.();
       }
-      return response;
+      return retried;
     } finally {
       finishLoading();
     }

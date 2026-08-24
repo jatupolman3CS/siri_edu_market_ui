@@ -10,6 +10,10 @@
  *   node scripts/verify-api-drift.mjs                # diff against snapshot
  *   node scripts/verify-api-drift.mjs --update       # update snapshot
  *   OPENAPI_URL=... node scripts/verify-api-drift.mjs
+ *   OPENAPI_FILE=... node scripts/verify-api-drift.mjs   # read a saved document instead
+ *
+ * OPENAPI_FILE exists for CI, where the document arrives as a build artifact from the
+ * backend pipeline rather than from a running server.
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
@@ -19,7 +23,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SNAPSHOT_PATH = resolve(__dirname, '..', 'openapi.snapshot.json');
 const DEFAULT_URL = 'http://localhost:5290/SIRIEDUMARKET.Api/openapi/v1.json';
 const url = process.env.OPENAPI_URL ?? DEFAULT_URL;
+const localFile = process.env.OPENAPI_FILE;
 const updateMode = process.argv.includes('--update');
+
+/**
+ * `servers[0].url` carries whatever host and port the document happened to be served from,
+ * so it differs between a developer's machine and CI. It is not part of the contract the SDK
+ * is generated against, and comparing it turns every pipeline run into a false positive.
+ */
+function normalise(document) {
+  const { servers: _ignored, ...rest } = document ?? {};
+  return rest;
+}
 
 function stableStringify(value) {
   if (Array.isArray(value)) {
@@ -46,6 +61,10 @@ async function readSnapshot() {
 }
 
 async function fetchLive() {
+  if (localFile) {
+    return JSON.parse(await readFile(resolve(process.cwd(), localFile), 'utf8'));
+  }
+
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
@@ -58,8 +77,9 @@ async function main() {
   try {
     live = await fetchLive();
   } catch (err) {
-    console.error(`[verify-api-drift] cannot reach backend: ${err.message}`);
-    console.error('   set OPENAPI_URL or start the API on http://localhost:5290');
+    const source = localFile ? `read ${localFile}` : 'reach backend';
+    console.error(`[verify-api-drift] cannot ${source}: ${err.message}`);
+    console.error('   set OPENAPI_URL or OPENAPI_FILE, or start the API on http://localhost:5290');
     process.exit(2);
   }
 
@@ -76,8 +96,8 @@ async function main() {
     process.exit(3);
   }
 
-  const liveStr = stableStringify(live);
-  const snapStr = stableStringify(snapshot);
+  const liveStr = stableStringify(normalise(live));
+  const snapStr = stableStringify(normalise(snapshot));
   if (liveStr === snapStr) {
     console.log('[verify-api-drift] OpenAPI matches snapshot.');
     process.exit(0);

@@ -95,14 +95,24 @@ import type { Order } from '../../../core/models';
               </div>
             }
 
-            <dl class="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <dt class="text-ink-muted">ยอดรวม</dt>
-                <dd class="text-2xl font-bold text-ink mt-1">{{ o.total | thb }}</dd>
+            <!-- BUG-01: prices include VAT, so the receipt breaks the tax out of the total
+                 instead of adding it on top. -->
+            <dl class="text-sm space-y-2 border-t border-line pt-5">
+              <div class="flex justify-between">
+                <dt class="text-ink-muted">มูลค่าก่อนภาษี</dt>
+                <dd class="text-ink tabular-nums">{{ o.subtotal | thb }}</dd>
               </div>
-              <div>
-                <dt class="text-ink-muted">จำนวนรายการ</dt>
-                <dd class="text-2xl font-bold text-ink mt-1">{{ o.items.length }} ไอเทม</dd>
+              <div class="flex justify-between">
+                <dt class="text-ink-muted">ภาษีมูลค่าเพิ่ม (รวมในราคาแล้ว)</dt>
+                <dd class="text-ink tabular-nums">{{ o.vatAmount | thb }}</dd>
+              </div>
+              <div class="flex justify-between items-baseline border-t border-line pt-3">
+                <dt class="font-bold text-ink">ยอดรวมทั้งสิ้น</dt>
+                <dd class="text-2xl font-bold text-ink tabular-nums">{{ o.total | thb }}</dd>
+              </div>
+              <div class="flex justify-between text-xs text-ink-muted">
+                <dt>จำนวนรายการ</dt>
+                <dd>{{ o.items.length }} ไอเทม</dd>
               </div>
             </dl>
           </div>
@@ -151,6 +161,13 @@ import type { Order } from '../../../core/models';
               <app-icon name="doc" [size]="14" />
               ดูใบเสร็จ
             </button>
+            <!-- BUG-09: an unpaid order blocks a fresh checkout for the same documents,
+                 so the buyer needs a way to release it. -->
+            @if (o.status === 'awaiting_payment') {
+              <button class="btn-ghost" [disabled]="cancelling()" (click)="cancelOrder(o.id)">
+                {{ cancelling() ? 'กำลังยกเลิก…' : 'ยกเลิกคำสั่งซื้อ' }}
+              </button>
+            }
           </div>
         }
       }
@@ -219,6 +236,18 @@ export class BuyerOrderDetailPage {
       credit_card: 'บัตรเครดิต',
       truemoney: 'TrueMoney',
     }[p] ?? p;
+  }
+
+  readonly cancelling = signal(false);
+
+  async cancelOrder(id: string): Promise<void> {
+    if (this.cancelling()) return;
+    this.cancelling.set(true);
+    try {
+      await this.orderService.cancel(id);
+    } finally {
+      this.cancelling.set(false);
+    }
   }
 
   printReceipt(): void {

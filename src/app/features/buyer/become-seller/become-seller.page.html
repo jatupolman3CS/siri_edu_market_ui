@@ -1,0 +1,102 @@
+<app-page-hero
+  title="เปิดร้านขายเอกสารของคุณ"
+  description="แบ่งปันสื่อการสอนที่คุณสร้างเอง และสร้างรายได้จากงานของคุณ"
+/>
+
+<div class="container-page py-10">
+  <div class="max-w-2xl mx-auto">
+    @if (isSeller()) {
+      <div class="card-soft p-8 text-center">
+        <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4">
+          ✓
+        </div>
+        <h2 class="text-xl font-extrabold text-ink mb-2">คุณเป็นผู้ขายอยู่แล้ว</h2>
+        <p class="text-sm text-ink-soft mb-6">ไปที่แดชบอร์ดผู้ขายเพื่อจัดการเอกสารและดูยอดขาย</p>
+        <a routerLink="/seller/dashboard" class="btn-pink">ไปที่แดชบอร์ดผู้ขาย</a>
+      </div>
+    } @else if (loading()) {
+      <div class="card-soft p-8 text-center text-ink-soft text-sm">กำลังโหลด…</div>
+    } @else {
+      @if (status() === 'pending') {
+        <div class="card-soft p-6 mb-6 border-l-4 border-amber-400">
+          <div class="flex items-start gap-3">
+            <app-icon name="bell" [size]="20" className="inline-block text-amber-500 mt-0.5" />
+            <div>
+              <h2 class="font-bold text-ink mb-1">ใบสมัครอยู่ระหว่างตรวจสอบ</h2>
+              <p class="text-sm text-ink-soft">
+                ทีมงานกำลังตรวจสอบใบสมัครของคุณ เมื่ออนุมัติแล้วคุณจะเข้าถึงเมนูผู้ขายได้ทันที
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (status() === 'rejected') {
+        <div class="card-soft p-6 mb-6 border-l-4 border-rose-400">
+          <div class="flex items-start gap-3">
+            <app-icon name="flag" [size]="20" className="inline-block text-rose-500 mt-0.5" />
+            <div>
+              <h2 class="font-bold text-ink mb-1">ใบสมัครยังไม่ผ่าน</h2>
+              @if (application()?.rejectionReason) {
+                <p class="text-sm text-ink-soft mb-1">
+                  เหตุผล: {{ application()?.rejectionReason }}
+                </p>
+              }
+              <p class="text-sm text-ink-soft">แก้ไขข้อมูลด้านล่างแล้วส่งใหม่ได้เลย</p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <form class="card-soft p-6 space-y-5" (ngSubmit)="onSubmit()">
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อร้าน *</label>
+          <input
+            type="text"
+            [(ngModel)]="studioName"
+            name="studioName"
+            class="input-soft"
+            placeholder="เช่น ห้องเรียนครูพิม"
+            maxlength="200"
+            [disabled]="!canSubmit()"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">แนะนำตัว</label>
+          <textarea
+            [(ngModel)]="bio"
+            name="bio"
+            rows="4"
+            class="input-soft"
+            placeholder="เล่าเกี่ยวกับประสบการณ์สอนและสื่อที่คุณตั้งใจจะขาย"
+            maxlength="2000"
+            [disabled]="!canSubmit()"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">
+            วิชาที่ถนัด
+            <span class="font-normal text-ink-muted">(คั่นด้วยเครื่องหมายจุลภาค)</span>
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="specialtiesText"
+            name="specialties"
+            class="input-soft"
+            placeholder="คณิต ม.ปลาย, A-Level, TGAT"
+            [disabled]="!canSubmit()"
+          />
+        </div>
+
+        @if (canSubmit()) {
+          <button type="submit" class="btn-pink w-full !py-3.5" [disabled]="submitting()">
+            {{ submitting() ? 'กำลังส่ง…' : 'ส่งใบสมัคร' }}
+          </button>
+        }
+      </form>
+    }
+  </div>
+</div>

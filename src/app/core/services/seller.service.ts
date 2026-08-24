@@ -11,6 +11,7 @@ import {
   postApiFilesUpload,
   postApiSellerDocuments,
   postApiSellerDocumentsByIdAiGenerate,
+  postApiSellerPayouts,
 } from '../api';
 import type {
   AiGenerateResponse,
@@ -125,6 +126,21 @@ export class SellerService {
       if (data) this._earnings.set(data);
     } catch (e) {
       this.apiFail.report('โหลดรายได้ของฉัน', e);
+    }
+  }
+
+  /**
+   * GAP-02: asks the platform to pay out the available balance. Payouts had no API at
+   * all, so the seller earnings page showed money that could never be withdrawn.
+   */
+  async requestPayout(bankAccount: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await postApiSellerPayouts({ body: { bankAccount }, throwOnError: true });
+      await this.loadEarnings();
+      return { ok: true };
+    } catch (e) {
+      this.apiFail.report('ขอถอนเงิน', e);
+      return { ok: false, error: 'ขอถอนเงินไม่สำเร็จ' };
     }
   }
 

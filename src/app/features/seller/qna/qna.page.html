@@ -1,0 +1,88 @@
+<div class="max-w-4xl space-y-6">
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">คำถามจากผู้ซื้อ</h1>
+      <p class="text-sm text-ink-soft">ตอบคำถามเพื่อช่วยให้ผู้ซื้อตัดสินใจได้เร็วขึ้น</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn-ghost !py-2 !px-4 text-sm" (click)="toggleFilter()">
+        {{ unansweredOnly() ? 'แสดงทั้งหมด' : 'เฉพาะที่ยังไม่ตอบ' }}
+      </button>
+      <button class="btn-ghost !py-2 !px-4 text-sm" [disabled]="loading()" (click)="reload()">
+        {{ loading() ? 'กำลังโหลด…' : 'รีเฟรช' }}
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+  } @else if (items().length === 0) {
+    <app-empty-state
+      emoji="💬"
+      title="ยังไม่มีคำถาม"
+      description="เมื่อผู้ซื้อถามเกี่ยวกับเอกสารของคุณ คำถามจะแสดงที่นี่"
+    />
+  } @else {
+    <ul class="flex flex-col gap-4">
+      @for (q of items(); track q.id) {
+        <li class="card-soft p-5">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div class="min-w-0">
+              <div class="text-sm font-bold text-ink">{{ q.documentTitle }}</div>
+              <div class="text-xs text-ink-muted">
+                {{ q.buyerName }} · {{ q.askedAt | date: 'dd MMM yyyy' }}
+              </div>
+            </div>
+            @if (!q.answerText) {
+              <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+                ยังไม่ตอบ
+              </span>
+            } @else {
+              <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                ตอบแล้ว
+              </span>
+            }
+          </div>
+
+          <p class="text-sm text-ink leading-relaxed whitespace-pre-line">{{ q.question }}</p>
+
+          @if (q.answerText && answeringId() !== q.id) {
+            <div class="mt-4 pl-4 border-l-2 border-pink-300">
+              <div class="text-xs font-bold text-pink-700 mb-1">คำตอบของคุณ</div>
+              <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-line">{{ q.answerText }}</p>
+            </div>
+          }
+
+          @if (answeringId() === q.id) {
+            <div class="mt-4 space-y-3">
+              <textarea
+                [(ngModel)]="answerText"
+                name="answerText"
+                rows="4"
+                class="input-soft"
+                placeholder="พิมพ์คำตอบของคุณ"
+                maxlength="4000"
+              ></textarea>
+              <div class="flex gap-2">
+                <button
+                  class="btn-pink !py-2 !px-5 text-sm"
+                  [disabled]="submitting()"
+                  (click)="submitAnswer(q.id!)"
+                >
+                  {{ submitting() ? 'กำลังบันทึก…' : 'ส่งคำตอบ' }}
+                </button>
+                <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancelAnswer()">ยกเลิก</button>
+              </div>
+            </div>
+          } @else {
+            <div class="mt-4">
+              <button class="btn-ghost !py-2 !px-4 text-sm" (click)="startAnswer(q)">
+                {{ q.answerText ? 'แก้ไขคำตอบ' : 'ตอบคำถาม' }}
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

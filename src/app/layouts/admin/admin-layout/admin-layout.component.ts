@@ -54,6 +54,10 @@ export class AdminLayoutComponent {
     { label: 'อนุมัติเอกสาร', href: '/admin/approval', icon: 'shield' as const },
     { label: 'ธุรกรรม', href: '/admin/transactions', icon: 'wallet' as const },
     { label: 'ผู้ขาย', href: '/admin/sellers', icon: 'user' as const },
+    // GAP-02: seller payout queue.
+    { label: 'ถอนเงินผู้ขาย', href: '/admin/payouts', icon: 'wallet' as const },
+    // GAP-01: review queue for buyers applying to sell.
+    { label: 'ใบสมัครผู้ขาย', href: '/admin/seller-applications', icon: 'shield' as const },
     { label: 'หมวดหมู่', href: '/admin/categories', icon: 'tag' as const },
     { label: 'ตั้งค่าแพลตฟอร์ม', href: '/admin/settings', icon: 'gear' as const },
   ];

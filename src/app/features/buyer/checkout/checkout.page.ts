@@ -126,6 +126,15 @@ export class BuyerCheckoutPage {
         return;
       }
 
+      // BUG-09: an earlier unpaid order still holds these documents. Send the buyer to their
+      // order history to finish paying it or cancel it, instead of a dead-end toast.
+      if (outcome.pendingOrder) {
+        this.message.warning(outcome.message ?? 'คุณมีคำสั่งซื้อที่ยังไม่ได้ชำระเงินอยู่');
+        void this.ngZone.run(() => this.router.navigateByUrl('/orders'));
+        this.cdr.markForCheck();
+        return;
+      }
+
       if (outcome.alreadyOwned) {
         this.message.warning('มีบางรายการที่คุณเป็นเจ้าของอยู่แล้ว — ไปที่คลังของฉัน');
         void this.ngZone.run(() => this.router.navigateByUrl('/library'));

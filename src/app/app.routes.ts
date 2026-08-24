@@ -89,6 +89,15 @@ export const routes: Routes = [
         title: 'รายการโปรด — SIRIEDUMARKET',
       },
       {
+        path: 'become-seller',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/become-seller/become-seller.page').then(
+            (m) => m.BecomeSellerPage,
+          ),
+        title: 'เปิดร้านขายเอกสาร — SIRIEDUMARKET',
+      },
+      {
         path: 'library',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -174,6 +183,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'qna',
+        loadComponent: () =>
+          import('./features/seller/qna/qna.page').then((m) => m.SellerQnaPage),
+      },
+      {
+        path: 'store-sections',
+        loadComponent: () =>
+          import('./features/seller/store-sections/store-sections.page').then(
+            (m) => m.SellerStoreSectionsPage,
+          ),
+      },
+      {
         path: 'earnings',
         loadComponent: () =>
           import('./features/seller/earnings/earnings.page').then(
@@ -252,6 +273,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'payouts',
+        loadComponent: () =>
+          import('./features/admin/payouts/payouts.page').then(
+            (m) => m.AdminPayoutsPage,
+          ),
+      },
+      {
+        path: 'seller-applications',
+        loadComponent: () =>
+          import(
+            './features/admin/seller-applications/seller-applications.page'
+          ).then((m) => m.AdminSellerApplicationsPage),
+      },
+      {
         path: 'categories',
         loadComponent: () =>
           import('./features/admin/categories-admin/categories-admin.page').then(
@@ -299,6 +334,15 @@ export const routes: Routes = [
         (m) => m.AuthForgotPasswordPage,
       ),
     title: 'ลืมรหัสผ่าน — SIRIEDUMARKET',
+  },
+  {
+    // GAP-03: opened from the emailed link, so it must stay reachable while signed out.
+    path: 'auth/reset-password',
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password.page').then(
+        (m) => m.AuthResetPasswordPage,
+      ),
+    title: 'ตั้งรหัสผ่านใหม่ — SIRIEDUMARKET',
   },
 
   // ========= 404 =========

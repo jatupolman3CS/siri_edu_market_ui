@@ -1,8 +1,13 @@
+/**
+ * Shape returned by `@hey-api/client-fetch`. `request`/`response` are optional because the
+ * client omits them when fetch throws before a response exists — the unwrapper already
+ * guards for that with optional chaining.
+ */
 export type SdkResult<T> = {
   data: T | undefined;
   error: unknown;
-  request: Request;
-  response: Response;
+  request?: Request;
+  response?: Response;
 };
 
 /**

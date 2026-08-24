@@ -67,9 +67,13 @@ export class BuyerBundleDetailPage {
     });
   }
 
-  addAllToCart(): void {
-    this.items().forEach((d) => {
-      if (!this.cart.has(d.id)) this.cart.add(d);
-    });
+  /**
+   * BUG-03: adds the bundle as a bundle. Pushing each document in separately charged the
+   * full listed price and silently dropped the advertised bundle discount.
+   */
+  async addAllToCart(): Promise<void> {
+    const bundleId = this.id();
+    if (!bundleId) return;
+    await this.cart.addBundle(bundleId);
   }
 }

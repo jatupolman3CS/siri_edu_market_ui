@@ -321,6 +321,33 @@
                       </p>
                     </div>
 
+                    <!-- GAP-06: buyers can now ask the seller a question. -->
+                    <div class="card-soft p-5 mb-6">
+                      <h3 class="text-sm font-bold text-ink mb-3">ถามผู้ขาย</h3>
+                      @if (questionSent()) {
+                        <p class="text-sm text-emerald-700 bg-emerald-50 rounded-2xl px-4 py-3">
+                          ส่งคำถามเรียบร้อยแล้ว คำตอบจะปรากฏที่หน้านี้เมื่อผู้ขายตอบกลับ
+                        </p>
+                      }
+                      <textarea
+                        [(ngModel)]="newQuestion"
+                        name="newQuestion"
+                        rows="3"
+                        class="input-soft"
+                        placeholder="เช่น เอกสารนี้ครอบคลุมบทไหนบ้าง"
+                        maxlength="2000"
+                      ></textarea>
+                      <div class="flex justify-end mt-3">
+                        <button
+                          class="btn-pink !py-2 !px-5 text-sm"
+                          [disabled]="askingQuestion()"
+                          (click)="askQuestion(d.id)"
+                        >
+                          {{ askingQuestion() ? 'กำลังส่ง…' : 'ส่งคำถาม' }}
+                        </button>
+                      </div>
+                    </div>
+
                     @if (!d.qna?.length) {
                       <app-empty-state emoji="💭" title="ยังไม่มีคำถาม" description="ลองดูแท็บรายละเอียดและพรีวิวเพื่อข้อมูลเพิ่มเติม" />
                     } @else {

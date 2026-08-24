@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
@@ -28,7 +29,10 @@ import {
   RESOURCE_TYPE_LABELS,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
-import { getApiMarketplaceDocumentsByIdPreview } from '../../../core/api';
+import {
+  getApiMarketplaceDocumentsByIdPreview,
+  postApiMarketplaceDocumentsByIdQna,
+} from '../../../core/api';
 import type { MarketplaceDocumentPreviewResponse } from '../../../core/api/types.gen';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
@@ -43,6 +47,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   selector: 'app-buyer-document-detail',
   standalone: true,
   imports: [
+    FormsModule,
     RouterLink,
     NzTabsModule,
     DocumentCardComponent,
@@ -240,5 +245,46 @@ export class BuyerDocumentDetailPage {
         this.previewLoading.set(false);
       }
     })();
+  }
+
+  // ===== GAP-06: asking the seller a question =====
+  // The QNA table was rendered here but nothing could create a question, so buyers had no
+  // way to ask anything before buying.
+
+  readonly newQuestion = signal<string>('');
+  readonly askingQuestion = signal<boolean>(false);
+  readonly questionSent = signal<boolean>(false);
+
+  async askQuestion(documentId: string): Promise<void> {
+    if (this.askingQuestion()) return;
+
+    if (!this.auth.isAuthenticated()) {
+      void this.router.navigate(['/auth/login'], {
+        queryParams: { returnUrl: `/document/${documentId}` },
+      });
+      return;
+    }
+
+    const question = this.newQuestion().trim();
+    if (question.length < 5) {
+      this.message.warning('กรุณาพิมพ์คำถามอย่างน้อย 5 ตัวอักษร');
+      return;
+    }
+
+    this.askingQuestion.set(true);
+    try {
+      await postApiMarketplaceDocumentsByIdQna({
+        path: { id: documentId },
+        body: { question },
+        throwOnError: true,
+      });
+      this.newQuestion.set('');
+      this.questionSent.set(true);
+      this.message.success('ส่งคำถามเรียบร้อย ผู้ขายจะตอบกลับเร็ว ๆ นี้');
+    } catch {
+      this.message.error('ส่งคำถามไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      this.askingQuestion.set(false);
+    }
   }
 }

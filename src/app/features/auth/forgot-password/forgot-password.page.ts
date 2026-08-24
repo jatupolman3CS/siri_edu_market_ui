@@ -20,13 +20,21 @@ export class AuthForgotPasswordPage {
   readonly sent = signal<boolean>(false);
   readonly error = signal<string>('');
 
-  onSubmit(): void {
+  readonly submitting = signal<boolean>(false);
+
+  async onSubmit(): Promise<void> {
+    if (this.submitting()) return;
     this.error.set('');
-    const r = this.auth.requestPasswordReset(this.email());
-    if (!r.ok) {
-      this.error.set(r.error ?? 'ส่งไม่สำเร็จ');
-      return;
+    this.submitting.set(true);
+    try {
+      const r = await this.auth.requestPasswordReset(this.email());
+      if (!r.ok) {
+        this.error.set(r.error ?? 'ส่งไม่สำเร็จ');
+        return;
+      }
+      this.sent.set(true);
+    } finally {
+      this.submitting.set(false);
     }
-    this.sent.set(true);
   }
 }

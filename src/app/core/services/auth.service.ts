@@ -5,10 +5,12 @@ import { User, UserRole } from '../models';
 import {
   postApiAuthLogin,
   postApiAuthExternalByProvider,
+  postApiAuthForgotPassword,
   postApiAuthLogout,
   postApiAuthRefresh,
   postApiAuthRegister,
   postApiAuthResendVerification,
+  postApiAuthResetPassword,
   postApiAuthVerifyEmail,
 } from '../api';
 import { unwrapSdkResult } from './api-result';
@@ -288,7 +290,7 @@ export class AuthService {
 
   /**
    * Google: GIS authorization code + backend token exchange.
-   * Facebook/LINE: mock-style `email:name` code when API uses mock external providers.
+   * Facebook and LINE are not implemented yet and are rejected here (GAP-04).
    */
   async signInWithProvider(provider: Exclude<AuthProvider, 'email'>): Promise<{ ok: boolean; error?: string }> {
     if (provider === 'google') {
@@ -323,45 +325,14 @@ export class AuthService {
       }
     }
 
-    const mockProfiles: Record<'facebook' | 'line', Partial<User>> = {
-      facebook: {
-        name: 'Pichaya P. (FB)',
-        email: 'pichaya.fb@example.com',
-        avatar:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
-      },
-      line: {
-        name: 'Pichaya P. (LINE)',
-        email: 'pichaya.line@example.com',
-        avatar:
-          'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop&crop=face',
-      },
+    // GAP-04: Facebook and LINE are not wired up — the backend providers are stubs that
+    // return 501, and this used to send a fabricated `email:name` code with a hardcoded
+    // profile so the failure looked like a real login attempt. The buttons stay hidden
+    // until the OAuth apps exist.
+    return {
+      ok: false,
+      error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วยช่องทางนี้',
     };
-    const p = mockProfiles[provider];
-    const email = (p.email ?? 'mock@dev.local').trim();
-    const name = (p.name ?? email.split('@')[0] ?? 'Mock User').trim();
-    try {
-      const result = await postApiAuthExternalByProvider({
-        path: { provider },
-        body: { authorizationCode: `${email}:${name}` },
-      });
-      const res = unwrapSdkResult(result);
-      this.setAccessToken(res.accessToken);
-      this.setRefreshToken(res.refreshToken ?? null);
-      const user: User = {
-        id: res.user.id,
-        name: res.user.displayName,
-        email: res.user.email,
-        avatar: p.avatar ?? '',
-        role: this.normalizeRole((res.user as { role?: string }).role),
-        joinedAt: new Date().toISOString(),
-      };
-      this.completeSignIn(user, provider);
-      return { ok: true };
-    } catch (e) {
-      this.apiFail.report('เข้าสู่ระบบด้วยผู้ให้บริการภายนอก', e);
-      return { ok: false, error: 'เข้าสู่ระบบไม่สำเร็จ' };
-    }
   }
 
   /** Sign out — calls API to revoke the refresh token (AUD-007). */
@@ -386,15 +357,54 @@ export class AuthService {
   }
 
   // ========== Forgot password ==========
-  // AUD-011: forgot-password is still mock — no backend endpoint exists.
-  // Pretend-success so the UI flow can be exercised; mark the response so
-  // callers can warn the user that nothing was actually sent.
 
-  requestPasswordReset(email: string): { ok: boolean; mocked?: true; error?: string } {
+  /**
+   * GAP-03: asks the API to email a reset link. This used to return a fake success with
+   * no backend behind it, so nobody who forgot their password could ever recover.
+   * The API replies identically whether or not the account exists, so neither can we.
+   */
+  async requestPasswordReset(email: string): Promise<{ ok: boolean; error?: string }> {
     if (!this.isValidEmail(email)) {
       return { ok: false, error: 'อีเมลไม่ถูกต้อง' };
     }
-    return { ok: true, mocked: true };
+    try {
+      await postApiAuthForgotPassword({ body: { email } });
+      return { ok: true };
+    } catch (e) {
+      this.apiFail.report('ขอลิงก์ตั้งรหัสผ่านใหม่', e);
+      return { ok: false, error: 'ส่งลิงก์ไม่สำเร็จ กรุณาลองใหม่' };
+    }
+  }
+
+  /** GAP-03: redeems the emailed token and sets the new password. */
+  async resetPassword(
+    token: string,
+    password: string,
+    confirmPassword: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (password.length < 8) {
+      return { ok: false, error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
+    }
+    if (password !== confirmPassword) {
+      return { ok: false, error: 'รหัสผ่านยืนยันไม่ตรงกัน' };
+    }
+    try {
+      await postApiAuthResetPassword({ body: { token, password, confirmPassword } });
+      // Every session was revoked server-side; drop any local one too.
+      this.setAccessToken(null);
+      this.setRefreshToken(null);
+      this._session.set(null);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      return { ok: true };
+    } catch (e) {
+      this.apiFail.report('ตั้งรหัสผ่านใหม่', e);
+      return {
+        ok: false,
+        error: 'ลิงก์ไม่ถูกต้องหรือหมดอายุแล้ว กรุณาขอลิงก์ใหม่',
+      };
+    }
   }
 
   // ========== Internals ==========

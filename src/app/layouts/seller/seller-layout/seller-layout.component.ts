@@ -48,6 +48,9 @@ export class SellerLayoutComponent {
     { label: 'พรีวิว PDF', href: '/seller/pdf-preview', icon: 'eye' as const },
     { label: 'AI Assistant', href: '/seller/ai', icon: 'sparkle' as const },
     { label: 'รายได้ & Payout', href: '/seller/earnings', icon: 'wallet' as const },
+    // GAP-06 / GAP-07: answering buyer questions and arranging the storefront.
+    { label: 'คำถามจากผู้ซื้อ', href: '/seller/qna', icon: 'bell' as const },
+    { label: 'หมวดหน้าร้าน', href: '/seller/store-sections', icon: 'package' as const },
     { label: 'รีวิวลูกค้า', href: '/seller/reviews', icon: 'star' as const },
     { label: 'ตั้งค่าร้าน', href: '/seller/settings', icon: 'gear' as const },
   ];

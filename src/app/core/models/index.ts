@@ -214,6 +214,10 @@ export interface Order {
   buyerId: string;
   items: CartItem[];
   total: number;
+  /** BUG-01: total excluding VAT, for the receipt. Prices are VAT-inclusive. */
+  subtotal: number;
+  /** BUG-01: VAT already contained in `total`. */
+  vatAmount: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   createdAt: string;

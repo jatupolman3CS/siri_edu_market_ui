@@ -10,7 +10,7 @@ export default defineConfig({
     '@hey-api/typescript',
     {
       name: '@hey-api/client-fetch',
-      runtimeConfigPath: './src/app/core/api-runtime.ts',
+      runtimeConfigPath: './src/app/core/api-runtime',
     },
     '@hey-api/sdk',
   ],

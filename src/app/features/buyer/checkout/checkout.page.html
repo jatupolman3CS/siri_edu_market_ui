@@ -241,11 +241,11 @@
                   </div>
                 }
                 <div class="flex justify-between text-ink-soft">
-                  <dt>VAT 7%</dt>
-                  <dd>{{ cart.tax() | thb }}</dd>
+                  <dt>VAT (รวมในราคาแล้ว)</dt>
+                  <dd>{{ cart.vatIncluded() | thb }}</dd>
                 </div>
                 <div class="border-t border-line pt-3 flex justify-between text-base font-bold text-ink">
-                  <dt>ยอดรวม</dt>
+                  <dt>ยอดที่ต้องชำระ</dt>
                   <dd class="text-pink-600">{{ cart.total() | thb }}</dd>
                 </div>
               </dl>

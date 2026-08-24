@@ -37,8 +37,9 @@ export class WishlistService {
         cover: w.coverUrl ?? '',
         seller: {
           id: '',
-          studioName: '',
-          ownerName: '',
+          // GAP-10: the API returns the seller name now that the wishlist is actually stored.
+          studioName: w.sellerName ?? '',
+          ownerName: w.sellerName ?? '',
           avatar: '',
           bio: '',
           joinedAt: '',

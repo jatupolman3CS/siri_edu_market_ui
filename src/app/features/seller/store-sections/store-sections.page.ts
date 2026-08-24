@@ -1,0 +1,157 @@
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import {
+  deleteApiSellerStoreSectionsBySectionId,
+  getApiSellerStoreSections,
+  postApiSellerStoreSections,
+  putApiSellerStoreSectionsBySectionId,
+  type StoreSectionResponse,
+} from '../../../core/api';
+import { unwrapSdkResult } from '../../../core/services/api-result';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { SellerService } from '../../../core/services';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+
+/**
+ * GAP-07: arranging the storefront. STORE_SECTION and STORE_SECTION_ITEM were seeded but
+ * had no API, so every seller's storefront looked identical and the section list on the
+ * public profile was always empty.
+ */
+@Component({
+  selector: 'app-seller-store-sections',
+  standalone: true,
+  imports: [CommonModule, FormsModule, EmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './store-sections.page.html',
+})
+export class SellerStoreSectionsPage {
+  private readonly apiFail = inject(ApiFailureReporter);
+  private readonly message = inject(NzMessageService);
+  readonly seller = inject(SellerService);
+
+  readonly sections = signal<StoreSectionResponse[]>([]);
+  readonly loading = signal<boolean>(false);
+  readonly saving = signal<boolean>(false);
+
+  /** Section being edited; null while creating a new one. */
+  readonly editingId = signal<string | null>(null);
+  readonly formOpen = signal<boolean>(false);
+  readonly name = signal<string>('');
+  readonly sortOrder = signal<number>(0);
+  readonly selectedDocumentIds = signal<string[]>([]);
+
+  /** The seller's own documents, used to choose what to pin. */
+  readonly documents = computed(() => this.seller.myDocuments());
+
+  constructor() {
+    void this.reload();
+    void this.seller.refreshDocuments();
+  }
+
+  async reload(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const result = await getApiSellerStoreSections();
+      this.sections.set(unwrapSdkResult(result) ?? []);
+    } catch (e) {
+      this.apiFail.report('โหลดหมวดหน้าร้าน', e);
+      this.sections.set([]);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  startCreate(): void {
+    this.editingId.set(null);
+    this.name.set('');
+    this.sortOrder.set(this.sections().length);
+    this.selectedDocumentIds.set([]);
+    this.formOpen.set(true);
+  }
+
+  startEdit(section: StoreSectionResponse): void {
+    this.editingId.set(section.id ?? null);
+    this.name.set(section.name ?? '');
+    this.sortOrder.set(section.sortOrder ?? 0);
+    this.selectedDocumentIds.set([...(section.documentIds ?? [])]);
+    this.formOpen.set(true);
+  }
+
+  cancel(): void {
+    this.formOpen.set(false);
+    this.editingId.set(null);
+    this.name.set('');
+    this.selectedDocumentIds.set([]);
+  }
+
+  isSelected(documentId: string): boolean {
+    return this.selectedDocumentIds().includes(documentId);
+  }
+
+  toggleDocument(documentId: string): void {
+    this.selectedDocumentIds.update((ids) =>
+      ids.includes(documentId) ? ids.filter((id) => id !== documentId) : [...ids, documentId],
+    );
+  }
+
+  /** Title lookup so a saved section can list what is pinned to it. */
+  documentTitle(documentId: string): string {
+    return this.documents().find((d) => d.id === documentId)?.title ?? documentId;
+  }
+
+  async save(): Promise<void> {
+    const name = this.name().trim();
+    if (!name) {
+      this.message.warning('กรุณาตั้งชื่อหมวด');
+      return;
+    }
+    if (this.saving()) return;
+
+    this.saving.set(true);
+    try {
+      const body = {
+        name,
+        sortOrder: this.sortOrder(),
+        documentIds: this.selectedDocumentIds(),
+      };
+
+      const sectionId = this.editingId();
+      if (sectionId) {
+        await putApiSellerStoreSectionsBySectionId({
+          path: { sectionId },
+          body,
+          throwOnError: true,
+        });
+      } else {
+        await postApiSellerStoreSections({ body, throwOnError: true });
+      }
+
+      this.message.success('บันทึกหมวดเรียบร้อย');
+      this.cancel();
+      await this.reload();
+    } catch (e) {
+      this.apiFail.report('บันทึกหมวดหน้าร้าน', e);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async remove(sectionId: string): Promise<void> {
+    if (this.saving()) return;
+    this.saving.set(true);
+    try {
+      await deleteApiSellerStoreSectionsBySectionId({
+        path: { sectionId },
+        throwOnError: true,
+      });
+      this.message.success('ลบหมวดเรียบร้อย');
+      await this.reload();
+    } catch (e) {
+      this.apiFail.report('ลบหมวดหน้าร้าน', e);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+}

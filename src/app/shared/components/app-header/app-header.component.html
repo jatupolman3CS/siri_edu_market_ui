@@ -126,18 +126,31 @@
                       ประวัติคำสั่งซื้อ
                     </span>
                   </li>
-                  <li nz-menu-item (click)="go('/seller')" class="!rounded-xl">
-                    <span class="flex items-center gap-2 text-ink">
-                      <app-icon name="dashboard" [size]="16" />
-                      Siri Studio (ผู้ขาย)
-                    </span>
-                  </li>
-                  <li nz-menu-item (click)="go('/admin')" class="!rounded-xl">
-                    <span class="flex items-center gap-2 text-ink">
-                      <app-icon name="shield" [size]="16" />
-                      Admin Panel
-                    </span>
-                  </li>
+                  @if (auth.isSeller() || auth.isAdmin()) {
+                    <li nz-menu-item (click)="go('/seller')" class="!rounded-xl">
+                      <span class="flex items-center gap-2 text-ink">
+                        <app-icon name="dashboard" [size]="16" />
+                        Siri Studio (ผู้ขาย)
+                      </span>
+                    </li>
+                  } @else {
+                    <!-- GAP-01: buyers can now apply to sell instead of only seeing a menu
+                         entry that led to a page they had no access to. -->
+                    <li nz-menu-item (click)="go('/become-seller')" class="!rounded-xl">
+                      <span class="flex items-center gap-2 text-ink">
+                        <app-icon name="dashboard" [size]="16" />
+                        เปิดร้านขายเอกสาร
+                      </span>
+                    </li>
+                  }
+                  @if (auth.isAdmin()) {
+                    <li nz-menu-item (click)="go('/admin')" class="!rounded-xl">
+                      <span class="flex items-center gap-2 text-ink">
+                        <app-icon name="shield" [size]="16" />
+                        Admin Panel
+                      </span>
+                    </li>
+                  }
                   <li nz-menu-divider></li>
                   <li nz-menu-item (click)="signOut()" class="!rounded-xl">
                     <span class="flex items-center gap-2 text-rose-500">

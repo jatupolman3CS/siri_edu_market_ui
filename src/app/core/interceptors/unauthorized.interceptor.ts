@@ -1,10 +1,7 @@
-import {
-  HttpErrorResponse,
-  HttpInterceptorFn,
-} from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, from, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 function isAuthUrl(url: string): boolean {
@@ -12,10 +9,16 @@ function isAuthUrl(url: string): boolean {
     url.includes('/api/auth/login') ||
     url.includes('/api/auth/refresh') ||
     url.includes('/api/auth/register') ||
-    url.includes('/api/auth/verify-email')
+    url.includes('/api/auth/verify-email') ||
+    url.includes('/api/auth/external/')
   );
 }
 
+/**
+ * BUG-04: a 401 used to sign the user out on the spot, which ended every session the
+ * moment the 15-minute access token expired. Refresh once and replay the request; only a
+ * failed refresh sends the user to login.
+ */
 export const unauthorizedInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -28,14 +31,24 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (req, next) => {
 
       const url = err.url ?? req.url;
 
-      // Don't redirect for auth endpoints — let the caller handle login errors
+      // Let the caller surface login/registration failures itself.
       if (isAuthUrl(url)) {
         return throwError(() => err);
       }
 
-      // Redirect to login immediately on 401
-      auth.redirectToLoginAfterUnauthorized(router.url);
-      return throwError(() => err);
+      // Concurrent 401s share one in-flight refresh inside AuthService.
+      return from(auth.refreshSession()).pipe(
+        switchMap((token) => {
+          if (!token) {
+            auth.redirectToLoginAfterUnauthorized(router.url);
+            return throwError(() => err);
+          }
+
+          return next(
+            req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }),
+          );
+        }),
+      );
     }),
   );
 };

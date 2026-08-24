@@ -9,12 +9,12 @@
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <app-stat-card
           label="รายได้รวม"
-          [value]="seller.stats().totalRevenue | thb"
+          [value]="totalEarnings() | thb"
           icon="💰"
         />
         <app-stat-card
-          label="รอจ่าย"
-          [value]="seller.stats().pendingPayout | thb"
+          label="ยอดถอนได้"
+          [value]="pendingBalance() | thb"
           icon="⏳"
         />
         <app-stat-card
@@ -33,19 +33,50 @@
       <div class="card-soft p-6 mb-6 bg-gradient-pink">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div>
-            <div class="text-xs text-ink-muted mb-1">เงินรอจ่ายในรอบถัดไป</div>
+            <div class="text-xs text-ink-muted mb-1">ยอดที่ถอนได้ตอนนี้</div>
             <div class="text-4xl md:text-5xl font-extrabold text-pink-700">
-              {{ seller.stats().pendingPayout | thb }}
+              {{ pendingBalance() | thb }}
             </div>
             <div class="text-sm text-ink-soft mt-2">
-              โอนรอบถัดไป: <b>15 พ.ค. 2026</b> — เข้าบัญชี กสิกรไทย ****-1234
+              หักค่าธรรมเนียมแพลตฟอร์มจากทุกคำสั่งซื้อที่ชำระแล้วเรียบร้อย
             </div>
           </div>
-          <button class="btn-pink !px-7 !py-3.5">
-            <app-icon name="wallet" [size]="18" />
-            ขอถอนเงินทันที
-          </button>
+
+          @if (hasOpenRequest()) {
+            <div class="text-sm text-ink-soft md:text-right">
+              มีคำขอถอนเงินที่กำลังดำเนินการอยู่<br />
+              รอให้รายการปัจจุบันเสร็จก่อนจึงขอถอนใหม่ได้
+            </div>
+          } @else if (!requestOpen()) {
+            <button class="btn-pink !px-7 !py-3.5" (click)="openRequest()">
+              <app-icon name="wallet" [size]="18" />
+              ขอถอนเงิน
+            </button>
+          }
         </div>
+
+        @if (requestOpen() && !hasOpenRequest()) {
+          <div class="mt-5 pt-5 border-t border-white/50 space-y-3">
+            <label class="text-xs font-semibold text-ink-soft block">
+              บัญชีปลายทาง
+              <span class="font-normal text-ink-muted">(เช่น กสิกรไทย ****1234)</span>
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="bankAccount"
+              name="bankAccount"
+              class="input-soft"
+              placeholder="ธนาคาร และเลขบัญชี 4 ตัวท้าย"
+              maxlength="200"
+            />
+            <div class="flex gap-2">
+              <button class="btn-pink !py-2 !px-5 text-sm" [disabled]="submitting()" (click)="submitRequest()">
+                {{ submitting() ? 'กำลังส่ง…' : 'ยืนยันคำขอ' }}
+              </button>
+              <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancelRequest()">ยกเลิก</button>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Recent payout history -->
