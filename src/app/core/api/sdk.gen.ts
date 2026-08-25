@@ -106,8 +106,8 @@ import type {
   GetApiOrdersByIdResponses,
   GetApiOrdersData,
   GetApiOrdersResponses,
-  GetApiPaymentsOmisePublicConfigData,
-  GetApiPaymentsOmisePublicConfigResponses,
+  GetApiPaymentsStripeConfigData,
+  GetApiPaymentsStripeConfigResponses,
   GetApiSellerDashboardData,
   GetApiSellerDashboardResponses,
   GetApiSellerDocumentsByIdData,
@@ -234,9 +234,6 @@ import type {
   PostApiOrdersData,
   PostApiOrdersErrors,
   PostApiOrdersResponses,
-  PostApiSellerDocumentsByIdAiGenerateData,
-  PostApiSellerDocumentsByIdAiGenerateErrors,
-  PostApiSellerDocumentsByIdAiGenerateResponses,
   PostApiSellerDocumentsByIdGeneratePreviewData,
   PostApiSellerDocumentsByIdGeneratePreviewErrors,
   PostApiSellerDocumentsByIdGeneratePreviewResponses,
@@ -264,8 +261,8 @@ import type {
   PostApiSystemTestEmailData,
   PostApiSystemTestEmailErrors,
   PostApiSystemTestEmailResponses,
-  PostApiWebhooksOmiseData,
-  PostApiWebhooksOmiseResponses,
+  PostApiWebhooksStripeData,
+  PostApiWebhooksStripeResponses,
   PostApiWishlistData,
   PostApiWishlistErrors,
   PostApiWishlistResponses,
@@ -1170,14 +1167,6 @@ export const putApiNotificationsSettings = <ThrowOnError extends boolean = false
     },
   });
 
-export const postApiWebhooksOmise = <ThrowOnError extends boolean = false>(
-  options?: Options<PostApiWebhooksOmiseData, ThrowOnError>,
-): RequestResult<PostApiWebhooksOmiseResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).post<PostApiWebhooksOmiseResponses, unknown, ThrowOnError>({
-    url: '/api/webhooks/omise',
-    ...options,
-  });
-
 export const getApiOrders = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiOrdersData, ThrowOnError>,
 ): RequestResult<GetApiOrdersResponses, unknown, ThrowOnError> =>
@@ -1215,11 +1204,11 @@ export const getApiOrdersById = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
-export const getApiPaymentsOmisePublicConfig = <ThrowOnError extends boolean = false>(
-  options?: Options<GetApiPaymentsOmisePublicConfigData, ThrowOnError>,
-): RequestResult<GetApiPaymentsOmisePublicConfigResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<GetApiPaymentsOmisePublicConfigResponses, unknown, ThrowOnError>({
-    url: '/api/payments/omise-public-config',
+export const getApiPaymentsStripeConfig = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiPaymentsStripeConfigData, ThrowOnError>,
+): RequestResult<GetApiPaymentsStripeConfigResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiPaymentsStripeConfigResponses, unknown, ThrowOnError>({
+    url: '/api/payments/stripe-config',
     ...options,
   });
 
@@ -1229,26 +1218,6 @@ export const getApiSellerDashboard = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).get<GetApiSellerDashboardResponses, unknown, ThrowOnError>({
     url: '/api/seller/dashboard',
     ...options,
-  });
-
-export const postApiSellerDocumentsByIdAiGenerate = <ThrowOnError extends boolean = false>(
-  options: Options<PostApiSellerDocumentsByIdAiGenerateData, ThrowOnError>,
-): RequestResult<
-  PostApiSellerDocumentsByIdAiGenerateResponses,
-  PostApiSellerDocumentsByIdAiGenerateErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).post<
-    PostApiSellerDocumentsByIdAiGenerateResponses,
-    PostApiSellerDocumentsByIdAiGenerateErrors,
-    ThrowOnError
-  >({
-    url: '/api/seller/documents/{id}/ai-generate',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });
 
 export const getApiSellerQna = <ThrowOnError extends boolean = false>(
@@ -1596,6 +1565,14 @@ export const postApiSellersBySellerIdFollow = <ThrowOnError extends boolean = fa
     PostApiSellersBySellerIdFollowErrors,
     ThrowOnError
   >({ url: '/api/sellers/{sellerId}/follow', ...options });
+
+export const postApiWebhooksStripe = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiWebhooksStripeData, ThrowOnError>,
+): RequestResult<PostApiWebhooksStripeResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).post<PostApiWebhooksStripeResponses, unknown, ThrowOnError>({
+    url: '/api/webhooks/stripe',
+    ...options,
+  });
 
 export const getApiSystemStatus = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiSystemStatusData, ThrowOnError>,

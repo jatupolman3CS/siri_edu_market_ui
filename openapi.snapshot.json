@@ -4362,18 +4362,6 @@
         }
       }
     },
-    "/api/webhooks/omise": {
-      "post": {
-        "tags": [
-          "OmiseWebhook"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/orders": {
       "get": {
         "tags": [
@@ -4628,7 +4616,7 @@
         }
       }
     },
-    "/api/payments/omise-public-config": {
+    "/api/payments/stripe-config": {
       "get": {
         "tags": [
           "Payments"
@@ -4639,17 +4627,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/OmisePublicConfigResponse"
+                  "$ref": "#/components/schemas/StripePublicConfigResponse"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OmisePublicConfigResponse"
+                  "$ref": "#/components/schemas/StripePublicConfigResponse"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OmisePublicConfigResponse"
+                  "$ref": "#/components/schemas/StripePublicConfigResponse"
                 }
               }
             }
@@ -4679,86 +4667,6 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SellerDashboardResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/seller/documents/{id}/ai-generate": {
-      "post": {
-        "tags": [
-          "SellerDashboard"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AiGenerateRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AiGenerateRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/AiGenerateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AiGenerateResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AiGenerateResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AiGenerateResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -6444,6 +6352,18 @@
         }
       }
     },
+    "/api/webhooks/stripe": {
+      "post": {
+        "tags": [
+          "StripeWebhook"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/system/status": {
       "get": {
         "tags": [
@@ -7348,40 +7268,6 @@
           }
         }
       },
-      "AiGenerateRequest": {
-        "required": [
-          "tool"
-        ],
-        "type": "object",
-        "properties": {
-          "tool": {
-            "type": "string"
-          }
-        }
-      },
-      "AiGenerateResponse": {
-        "type": "object",
-        "properties": {
-          "tool": {
-            "type": "string"
-          },
-          "result": {
-            "type": "string"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "suggestedPrice": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          }
-        }
-      },
       "AnswerDocumentQuestionRequest": {
         "required": [
           "answer"
@@ -7829,23 +7715,7 @@
         }
       },
       "CreateOrderRequest": {
-        "required": [
-          "paymentMethod"
-        ],
-        "type": "object",
-        "properties": {
-          "paymentMethod": {
-            "type": "string"
-          },
-          "omiseCardToken": {
-            "type": "string",
-            "nullable": true
-          },
-          "trueMoneyPhoneNumber": {
-            "type": "string",
-            "nullable": true
-          }
-        }
+        "type": "object"
       },
       "DocumentGalleryItemRequest": {
         "type": "object",
@@ -8420,14 +8290,6 @@
           }
         }
       },
-      "OmisePublicConfigResponse": {
-        "type": "object",
-        "properties": {
-          "publicKey": {
-            "type": "string"
-          }
-        }
-      },
       "OrderItemResponse": {
         "type": "object",
         "properties": {
@@ -8461,15 +8323,15 @@
       "OrderPaymentHintsResponse": {
         "type": "object",
         "properties": {
-          "omiseChargeId": {
+          "stripePaymentIntentId": {
             "type": "string",
             "nullable": true
           },
-          "promptPayQrImageUrl": {
+          "clientSecret": {
             "type": "string",
             "nullable": true
           },
-          "trueMoneyAuthorizeUri": {
+          "status": {
             "type": "string",
             "nullable": true
           },
@@ -9916,6 +9778,14 @@
           }
         }
       },
+      "StripePublicConfigResponse": {
+        "type": "object",
+        "properties": {
+          "publishableKey": {
+            "type": "string"
+          }
+        }
+      },
       "SubcategoryResponse": {
         "type": "object",
         "properties": {
@@ -10430,9 +10300,6 @@
       "name": "Notification"
     },
     {
-      "name": "OmiseWebhook"
-    },
-    {
       "name": "Order"
     },
     {
@@ -10446,6 +10313,9 @@
     },
     {
       "name": "SellerPublic"
+    },
+    {
+      "name": "StripeWebhook"
     },
     {
       "name": "System"

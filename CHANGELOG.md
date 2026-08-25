@@ -12,6 +12,32 @@
 
 ## [Unreleased]
 
+### Changed — Payment gateway: Omise → Stripe (2026-08-25, WAVE S)
+
+> นี่คือที่เดียวที่ยังพูดถึง Omise โดยตั้งใจ — ส่วนที่เหลือของโค้ดและเอกสารถูกกวาดออกหมดแล้วใน S-05
+> (ยกเว้น migration เก่าที่แก้ไม่ได้ และแถว rotate credential ใน `CONFIGURATION.md` ที่ต้องคงไว้จนกว่าจะ revoke จริง)
+
+- **flow เปลี่ยนทั้งเส้น** — เดิม UI tokenize บัตรเอง → backend สร้าง charge → บาง method จ่ายสำเร็จทันทีตอนสร้าง order
+  ใหม่: backend สร้าง **PaymentIntent** → คืน `clientSecret` → UI ยืนยันผ่าน **Payment Element** → **webhook เป็นตัวเดียวที่ fulfil**
+  · branch "จ่ายทันทีตอนสร้าง order" หายไปทั้งก้อน ซึ่งเป็นรูที่ T-13 ต้องเข้าไปอุดไว้ตอนที่ยังใช้ Omise
+- **schema** — `ORDER.OmiseChargeId` → `StripePaymentIntentId` (**rename ไม่ใช่ drop** ออเดอร์เก่าจึงยังชี้ไปที่เงินที่จ่ายจริง
+  ค่าเก่าเป็น `chrg_...` ค่าใหม่เป็น `pi_...`) · index → `IX_ORDER_STRIPE_PAYMENT_INTENT` ·
+  ลบ `OmisePromptPayQrImageUrl` / `OmiseTrueMoneyAuthorizeUri` ทิ้ง เพราะ Payment Element วาด QR และพา redirect เอง
+- **`TrueMoney` ถูกตัดออกจากตัวเลือกการจ่ายเงิน** — Stripe ไม่มี TrueMoney Jump App ให้ต่อ
+  ทางที่มาแทนคือ wallet และ method อื่นที่เปิด/ปิดได้จาก Stripe Dashboard โดยไม่ต้องแก้โค้ด (automatic payment methods)
+  · ค่า enum `PaymentMethod.TrueMoney` ยังอยู่ เพราะออเดอร์ที่จ่ายด้วยวิธีนี้ไปแล้วต้องอ่านกลับมาได้ถูก
+- **ผู้ซื้อไม่ต้องเลือกวิธีจ่ายเงินล่วงหน้าอีกแล้ว** — `CreateOrderRequest` ไม่รับอะไรเลย
+  ออเดอร์ใหม่เริ่มที่ `PaymentMethod.Unknown` แล้วบันทึกวิธีจริงที่ Stripe รายงานตอน webhook
+  (method ที่ enum ไม่รู้จัก → `Other` ไม่เดา)
+- **หน้าเว็บไม่แตะเลขบัตรอีกต่อไป** — ลบฟอร์มบัตรและ `load-omise-script.ts` ออก เหลือ Payment Element ที่ Stripe เป็นคนวาด
+- **webhook** — `POST /api/webhooks/stripe` แทน `POST /api/webhooks/omise` · verify signature ด้วย `Stripe.net`
+  (tolerance ยังมาจากคอนฟิกเหมือน BUG-08 เดิม) · log token เดิมทั้งสองตัวคงคำเดิมเป๊ะ
+  (`payment_reconciliation_failed`, `payment_webhook_signature_rejected`) เพราะ alert query กับ runbook match ตรงตัวอักษร
+  · เพิ่ม `payment_webhook_unparsable` สำหรับ body ที่ signature ผ่านแต่อ่านไม่ได้ → ตอบ 200 ไม่ใช่ 500 (T-14 ข้อ 2)
+- **dependency ใหม่** — `Stripe.net` 52.3.0 (เจ้าของเลือกเอง) — signature verification และ idempotency key
+  เป็นสองจุดที่เขียนเองพลาดแล้วเสียเงินจริง
+
+
 ### Added — Operations & documentation (2026-08-24 → 2026-08-25)
 - **`AUDIT-LOG.md`** — ทะเบียนรวม GAP-01…GAP-10 และ AUD-001…AUD-018 ทุก id มีไฟล์+บรรทัดอ้างอิงที่เปิดดูได้ (`ui/1186430`)
 - **`ops/backup.ps1` + `ops/restore-check.ps1`** — full/diff/log backup ผ่าน `sqlcmd`, `RESTORE VERIFYONLY` ทุกครั้ง,

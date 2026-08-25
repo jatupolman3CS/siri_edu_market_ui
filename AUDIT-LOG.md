@@ -61,6 +61,7 @@
 | AUD-015 | — | — | `no-trace` | ไม่พบใน repo ทั้งสอง |
 | AUD-016 | หน้า page เคย import `sdk.gen` ตรง ทำให้ `audit:guard` แดง | `ui/src/app/core/services/seller.service.ts`<br>`ui/scripts/audit-guard.mjs` | `closed` | `seller.service.ts:308` ย้าย reviews list มาไว้ใน service · บังคับด้วย rule `no-sdk-gen-in-features` ใน `audit-guard.mjs` · `npm run audit:guard` ผ่าน |
 | AUD-017 | — | — | `no-trace` | ไม่พบใน repo ทั้งสอง |
+| S-01…S-06 | ย้าย payment gateway จาก Omise ไป **Stripe PaymentIntent + Payment Element** ทั้งเส้น | `be/src/SIRIEDUMARKET.Infrastructure/Payments/StripePaymentGateway.cs`<br>`be/src/SIRIEDUMARKET.Api/Controllers/StripeWebhookController.cs`<br>`be/src/SIRIEDUMARKET.Infrastructure/Migrations/*_StripePaymentIntentReplacesOmiseCharge.cs`<br>`ui/src/app/features/buyer/checkout/checkout.page.ts` | `closed` | S-01 คอนฟิก + secret-scan · S-02 gateway + schema (`ORDER.OmiseChargeId` → `StripePaymentIntentId`, rename ไม่ใช่ drop) · S-03 webhook (log token เดิมทั้งสองตัว + `payment_webhook_unparsable` ใหม่) · S-04 UI (ลบฟอร์มบัตรออกจากเว็บทั้งหมด) · S-05 กวาดโค้ด/เอกสาร · S-06 integration test · **TrueMoney ถูกตัดออก** — Stripe ไม่มี Jump App ให้ใช้ ทางที่มาแทนคือ wallet ที่เปิดจาก Stripe Dashboard |
 | AUD-018 | ยังไม่ profile N+1 ของ marketplace catalog | `be/src/SIRIEDUMARKET.Infrastructure/Marketplace/Repositories/EfMarketplaceCatalogRepository.cs`<br>`be/src/SIRIEDUMARKET.Application/Marketplace/Services/MarketplaceCatalogService.cs` | **`open`** | ยังไม่มีผลวัดใดๆ ในทั้งสอง repo · เดิมบันทึกไว้ที่ `ui/INTEGRATION-CHECKLIST.md` หัวข้อ "Open contract gaps" · แผนแก้ = T-32 |
 
 **สรุป:** GAP — closed 9 / open 1 (GAP-04) · AUD — closed 9 / open 1 (AUD-018) / no-trace 8
@@ -89,7 +90,7 @@ grep -rn -oE "AUD-[0-9]+" -I . | grep -v node_modules | grep -v "/.git/" | sort 
 | ชุด | id ที่พบ | ตัวอย่างจุดเริ่มอ่าน |
 |---|---|---|
 | `SEC-` (security hardening) | SEC-01 … SEC-04, SEC-06 … SEC-11 (ไม่มี SEC-05) | `be/src/SIRIEDUMARKET.Api/Configuration/StartupConfigurationValidator.cs` (SEC-01, SEC-03) · `be/src/SIRIEDUMARKET.Api/Controllers/FilesController.cs` (SEC-02) · `be/src/SIRIEDUMARKET.Api/Configuration/RateLimitPolicies.cs` (SEC-09) · `be/src/SIRIEDUMARKET.Api/Extensions/ClaimsPrincipalExtensions.cs` (SEC-08) |
-| `BUG-` (bug fix ที่ทำไปแล้ว) | BUG-01 … BUG-06, BUG-08, BUG-09 (ไม่มี BUG-07) | `be/src/SIRIEDUMARKET.Application/Commerce/Services/OrderPricingService.cs` (BUG-01 VAT) · `be/src/SIRIEDUMARKET.Application/Commerce/Services/CartPricingCalculator.cs` (BUG-03) · `ui/src/app/core/api-runtime.ts` (BUG-04 refresh-and-replay) · `be/src/SIRIEDUMARKET.Infrastructure/Payments/OmiseWebhookSignatureVerifier.cs` (BUG-08) |
+| `BUG-` (bug fix ที่ทำไปแล้ว) | BUG-01 … BUG-06, BUG-08, BUG-09 (ไม่มี BUG-07) | `be/src/SIRIEDUMARKET.Application/Commerce/Services/OrderPricingService.cs` (BUG-01 VAT) · `be/src/SIRIEDUMARKET.Application/Commerce/Services/CartPricingCalculator.cs` (BUG-03) · `ui/src/app/core/api-runtime.ts` (BUG-04 refresh-and-replay) · `be/src/SIRIEDUMARKET.Api/Controllers/StripeWebhookController.cs` (BUG-08 — the hand-written verifier it replaced is gone; Stripe.net enforces the same tolerance) |
 
 ค้นทั้งหมดได้ด้วย:
 

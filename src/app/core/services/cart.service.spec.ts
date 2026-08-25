@@ -62,7 +62,6 @@ function buildService(): CartService {
 }
 
 /** Lets the SDK promise chain and the service's fire-and-forget blocks settle. */
-/** Lets the SDK promise chain and the service's fire-and-forget blocks settle. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));

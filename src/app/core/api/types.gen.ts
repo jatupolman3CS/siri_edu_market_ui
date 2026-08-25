@@ -199,17 +199,6 @@ export type AdminTransactionResponse = {
   createdAt?: string;
 };
 
-export type AiGenerateRequest = {
-  tool: string;
-};
-
-export type AiGenerateResponse = {
-  tool?: string;
-  result?: string;
-  tags?: Array<string> | null;
-  suggestedPrice?: number | null;
-};
-
 export type AnswerDocumentQuestionRequest = {
   answer: string;
 };
@@ -344,9 +333,7 @@ export type CreateDocumentRequest = {
 };
 
 export type CreateOrderRequest = {
-  paymentMethod: string;
-  omiseCardToken?: string | null;
-  trueMoneyPhoneNumber?: string | null;
+  [key: string]: unknown;
 };
 
 export type DocumentGalleryItemRequest = {
@@ -524,10 +511,6 @@ export type NotificationSettingResponse = {
   isEnabled?: boolean;
 };
 
-export type OmisePublicConfigResponse = {
-  publicKey?: string;
-};
-
 export type OrderItemResponse = {
   id?: string;
   documentId?: string | null;
@@ -538,9 +521,9 @@ export type OrderItemResponse = {
 };
 
 export type OrderPaymentHintsResponse = {
-  omiseChargeId?: string | null;
-  promptPayQrImageUrl?: string | null;
-  trueMoneyAuthorizeUri?: string | null;
+  stripePaymentIntentId?: string | null;
+  clientSecret?: string | null;
+  status?: string | null;
   awaitingWebhook?: boolean;
 };
 
@@ -964,6 +947,10 @@ export type StoreSectionResponse = {
   name?: string;
   sortOrder?: number;
   documentIds?: Array<string>;
+};
+
+export type StripePublicConfigResponse = {
+  publishableKey?: string;
 };
 
 export type SubcategoryResponse = {
@@ -2833,20 +2820,6 @@ export type PutApiNotificationsSettingsResponses = {
 export type PutApiNotificationsSettingsResponse =
   PutApiNotificationsSettingsResponses[keyof PutApiNotificationsSettingsResponses];
 
-export type PostApiWebhooksOmiseData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/webhooks/omise';
-};
-
-export type PostApiWebhooksOmiseResponses = {
-  /**
-   * OK
-   */
-  200: unknown;
-};
-
 export type GetApiOrdersData = {
   body?: never;
   path?: never;
@@ -2951,22 +2924,22 @@ export type GetApiOrdersByIdResponses = {
 
 export type GetApiOrdersByIdResponse = GetApiOrdersByIdResponses[keyof GetApiOrdersByIdResponses];
 
-export type GetApiPaymentsOmisePublicConfigData = {
+export type GetApiPaymentsStripeConfigData = {
   body?: never;
   path?: never;
   query?: never;
-  url: '/api/payments/omise-public-config';
+  url: '/api/payments/stripe-config';
 };
 
-export type GetApiPaymentsOmisePublicConfigResponses = {
+export type GetApiPaymentsStripeConfigResponses = {
   /**
    * OK
    */
-  200: OmisePublicConfigResponse;
+  200: StripePublicConfigResponse;
 };
 
-export type GetApiPaymentsOmisePublicConfigResponse =
-  GetApiPaymentsOmisePublicConfigResponses[keyof GetApiPaymentsOmisePublicConfigResponses];
+export type GetApiPaymentsStripeConfigResponse =
+  GetApiPaymentsStripeConfigResponses[keyof GetApiPaymentsStripeConfigResponses];
 
 export type GetApiSellerDashboardData = {
   body?: never;
@@ -2984,35 +2957,6 @@ export type GetApiSellerDashboardResponses = {
 
 export type GetApiSellerDashboardResponse =
   GetApiSellerDashboardResponses[keyof GetApiSellerDashboardResponses];
-
-export type PostApiSellerDocumentsByIdAiGenerateData = {
-  body: AiGenerateRequest;
-  path: {
-    id: string;
-  };
-  query?: never;
-  url: '/api/seller/documents/{id}/ai-generate';
-};
-
-export type PostApiSellerDocumentsByIdAiGenerateErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails;
-};
-
-export type PostApiSellerDocumentsByIdAiGenerateError =
-  PostApiSellerDocumentsByIdAiGenerateErrors[keyof PostApiSellerDocumentsByIdAiGenerateErrors];
-
-export type PostApiSellerDocumentsByIdAiGenerateResponses = {
-  /**
-   * OK
-   */
-  200: AiGenerateResponse;
-};
-
-export type PostApiSellerDocumentsByIdAiGenerateResponse =
-  PostApiSellerDocumentsByIdAiGenerateResponses[keyof PostApiSellerDocumentsByIdAiGenerateResponses];
 
 export type GetApiSellerQnaData = {
   body?: never;
@@ -3715,6 +3659,20 @@ export type PostApiSellersBySellerIdFollowError =
   PostApiSellersBySellerIdFollowErrors[keyof PostApiSellersBySellerIdFollowErrors];
 
 export type PostApiSellersBySellerIdFollowResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type PostApiWebhooksStripeData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/webhooks/stripe';
+};
+
+export type PostApiWebhooksStripeResponses = {
   /**
    * OK
    */

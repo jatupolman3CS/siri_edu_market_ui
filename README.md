@@ -2,7 +2,7 @@
 
 > แพลตฟอร์มตลาดกลางออนไลน์ (Marketplace) สำหรับการซื้อขายเอกสารวิชาการ สรุปบทเรียน และเทมเพลตคุณภาพสูง
 
-แรงบันดาลใจจาก [Teachers Pay Teachers](https://www.teacherspayteachers.com/) ปรับให้เหมาะกับตลาดไทย — โทน **Minimal Light Pink**, รองรับการซื้อขายในประเทศ (PromptPay / Omise / GB Prime Pay)
+แรงบันดาลใจจาก [Teachers Pay Teachers](https://www.teacherspayteachers.com/) ปรับให้เหมาะกับตลาดไทย — โทน **Minimal Light Pink**, รองรับการซื้อขายในประเทศ (Stripe — บัตรเครดิต / PromptPay / wallet)
 
 ---
 
@@ -118,7 +118,7 @@ src/app/
 | 2. Sub-categories + TpT features | ✅ Done | Sub-categories, Bundles, Wishlist, Storefront, Q&A, Quick View |
 | 3. Authentication | ✅ Done | Login (email + social), Register, Verify, Guards |
 | 4. Backend (.NET 10) | ⏳ Pending | Clean Architecture + EF Core + MSSQL + Cloudflare R2 |
-| 5. Payment integration | ⏳ Pending | Omise / GB Prime Pay (PromptPay + Credit Card) |
+| 5. Payment integration | ✅ Done | Stripe PaymentIntent + Payment Element (บัตรเครดิต / PromptPay / wallet) |
 | 6. Real AI integration | ⏳ Pending | Gemini API for summaries |
 
 ---

@@ -7,22 +7,29 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AuthService, CartService, OrderService } from '../../../core/services';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { getApiPaymentsOmisePublicConfig } from '../../../core/api';
+import { getApiPaymentsStripeConfig } from '../../../core/api';
 import { unwrapSdkResult } from '../../../core/services/api-result';
-import { loadOmiseScript } from '../../../core/util/load-omise-script';
+import { loadStripeScript } from '../../../core/util/load-stripe-script';
 
-type PayMethod = 'promptpay' | 'credit_card' | 'truemoney';
-
+/**
+ * S-04: checkout in two moves. First it creates the order, which opens a Stripe PaymentIntent
+ * and returns a client secret; then Stripe's Payment Element collects the payment and confirms
+ * it. This page never sees a card number — that is the point of the migration, and why the card
+ * form that used to live here is gone rather than restyled.
+ *
+ * Nothing here concludes that an order is paid. `payment_intent.succeeded` at the webhook does,
+ * which is why the buyer lands on the order page in a "confirming" state rather than a
+ * "success" one.
+ */
 @Component({
   selector: 'app-buyer-checkout',
   standalone: true,
-  imports: [RouterLink, FormsModule, ThbPipe, IconComponent, EmptyStateComponent],
+  imports: [RouterLink, ThbPipe, IconComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './checkout.page.html',
   styleUrl: './checkout.page.scss',
@@ -36,160 +43,183 @@ export class BuyerCheckoutPage {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
 
-  readonly payMethod = signal<PayMethod>('promptpay');
   readonly checkoutState = this.orders.checkoutState;
 
-  readonly cardName = signal('');
-  readonly cardNumber = signal('');
-  readonly cardExpMonth = signal(12);
-  readonly cardExpYear = signal(2030);
-  readonly cardCvv = signal('');
-  readonly trueMoneyPhone = signal('');
+  /** The payment box is only on screen once an order exists to pay for. */
+  readonly paymentReady = signal(false);
 
-  patchExpMonth(raw: string | number): void {
-    const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10);
-    if (!Number.isFinite(n)) return;
-    this.cardExpMonth.set(Math.min(12, Math.max(1, n)));
-  }
+  /** True while a network call is in flight, so neither button can be double-clicked. */
+  readonly busy = signal(false);
 
-  patchExpYear(raw: string | number): void {
-    const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10);
-    if (!Number.isFinite(n)) return;
-    this.cardExpYear.set(Math.min(2099, Math.max(2024, n)));
-  }
+  /**
+   * T-13: the payment may already carry the buyer's money and the order did not complete. The
+   * buttons stay down from here — a second attempt is a second payment, and only an operator can
+   * settle the first one.
+   */
+  readonly paymentUnderReview = signal(false);
 
-  readonly methods: { value: PayMethod; label: string; icon: string; note: string }[] = [
-    { value: 'promptpay', label: 'PromptPay QR', icon: '📲', note: 'สแกนจ่ายทันที' },
-    { value: 'credit_card', label: 'บัตรเครดิต', icon: '💳', note: 'Visa / Master / JCB' },
-    { value: 'truemoney', label: 'TrueMoney', icon: '👛', note: 'หักจาก e-Wallet' },
-  ];
+  private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
+  private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
+  private orderId: string | null = null;
 
-  async confirmPayment(): Promise<void> {
+  /**
+   * Step one: turn the cart into an order and open a payment for it. Everything the buyer needs
+   * to choose — card, PromptPay, a wallet — is decided inside the Payment Element afterwards,
+   * from whatever is enabled in the Stripe Dashboard.
+   */
+  async startPayment(): Promise<void> {
+    if (this.busy() || this.paymentUnderReview()) return;
+
     if (!this.auth.isAuthenticated()) {
       this.router.navigate(['/auth/login'], { queryParams: { returnUrl: '/checkout' } });
       return;
     }
 
-    let omiseCardToken: string | undefined;
-    let trueMoneyPhoneNumber: string | undefined;
-
+    this.busy.set(true);
     try {
-      if (this.payMethod() === 'credit_card') {
-        omiseCardToken = await this.createOmiseCardToken();
-      } else if (this.payMethod() === 'truemoney') {
-        const raw = this.trueMoneyPhone().trim();
-        const digits = raw.replace(/\D/g, '');
-        if (digits.length < 9) {
-          this.message.warning('กรุณากรอกเบอร์มือถือที่ผูก TrueMoney');
-          return;
-        }
-        let n = digits;
-        if (n.length === 9 && n[0] === '8') n = '0' + n;
-        if (n.length !== 10 || n[0] !== '0') {
-          this.message.warning('รูปแบบเบอร์มือถือไม่ถูกต้อง');
-          return;
-        }
-        trueMoneyPhoneNumber = n;
-      }
-
-      const outcome = await this.orders.create({
-        paymentMethod: this.payMethod(),
-        omiseCardToken,
-        trueMoneyPhoneNumber,
-      });
-
+      const outcome = await this.orders.create({});
       this.cdr.markForCheck();
 
-      if (outcome.ok) {
-        if (!outcome.order.id?.trim()) {
-          this.message.error('สร้างคำสั่งซื้อแล้วแต่ไม่ได้รับรหัสออเดอร์ — โปรดตรวจที่ประวัติคำสั่งซื้อ');
-          this.orders.resetCheckout();
-          this.cdr.markForCheck();
-          return;
-        }
+      if (!outcome.ok) {
+        this.handleFailedCheckout(outcome);
+        return;
+      }
 
+      const order = outcome.order;
+      if (!order.id?.trim()) {
+        this.message.error('สร้างคำสั่งซื้อแล้วแต่ไม่ได้รับรหัสออเดอร์ — โปรดตรวจที่ประวัติคำสั่งซื้อ');
+        this.orders.resetCheckout();
+        return;
+      }
+
+      // BUG-02: a zero-total order is fulfilled server-side without a gateway, so there is
+      // nothing for Stripe to collect.
+      if (order.status === 'paid') {
         this.cart.clear();
-        this.cdr.markForCheck();
-
-        const urlTree =
-          outcome.order.status === 'paid'
-            ? this.router.createUrlTree(['/orders'], { queryParams: { success: 1 } })
-            : this.router.createUrlTree(['/orders', outcome.order.id], { queryParams: { pay: '1' } });
-
-        const navigated = await this.ngZone.run(() => this.router.navigateByUrl(urlTree));
-        if (!navigated) {
-          this.message.warning(
-            'ไม่สามารถเปลี่ยนหน้าอัตโนมัติได้ — เปิดเมนู «ประวัติคำสั่งซื้อ» เพื่อดำเนินการต่อ',
-          );
-        }
-        this.cdr.markForCheck();
+        await this.ngZone.run(() =>
+          this.router.navigateByUrl(this.router.createUrlTree(['/orders'], { queryParams: { success: 1 } })),
+        );
         return;
       }
 
-      // BUG-09: an earlier unpaid order still holds these documents. Send the buyer to their
-      // order history to finish paying it or cancel it, instead of a dead-end toast.
-      if (outcome.pendingOrder) {
-        this.message.warning(outcome.message ?? 'คุณมีคำสั่งซื้อที่ยังไม่ได้ชำระเงินอยู่');
-        void this.ngZone.run(() => this.router.navigateByUrl('/orders'));
-        this.cdr.markForCheck();
+      const clientSecret = order.paymentHints?.clientSecret;
+      if (!clientSecret) {
+        this.message.error('เปิดการชำระเงินไม่สำเร็จ — โปรดดูคำสั่งซื้อในประวัติแล้วลองอีกครั้ง');
+        this.orders.resetCheckout();
         return;
       }
 
-      if (outcome.alreadyOwned) {
-        this.message.warning('มีบางรายการที่คุณเป็นเจ้าของอยู่แล้ว — ไปที่คลังของฉัน');
-        void this.ngZone.run(() => this.router.navigateByUrl('/library'));
-        this.cdr.markForCheck();
-        return;
-      }
-
-      // Toast มาจาก OrderService → ApiFailureReporter แล้ว — เคลียร์ state ปุ่มให้ลองใหม่
-      this.orders.resetCheckout();
-      this.cdr.markForCheck();
+      this.orderId = order.id;
+      await this.mountPaymentElement(clientSecret);
+      this.paymentReady.set(true);
     } catch (e) {
+      const msg = e instanceof Error ? e.message : 'เปิดการชำระเงินไม่สำเร็จ';
       this.orders.resetCheckout();
-      const msg = e instanceof Error ? e.message : 'ชำระเงินไม่สำเร็จ';
       this.message.error(msg);
+    } finally {
+      this.busy.set(false);
       this.cdr.markForCheck();
     }
   }
 
-  private async createOmiseCardToken(): Promise<string> {
-    if (!this.cardName().trim() || !this.cardNumber().trim() || !this.cardCvv().trim()) {
-      throw new Error('กรุณากรอกข้อมูลบัตรให้ครบ');
+  /**
+   * Step two: hand the payment to Stripe. A successful confirmation usually redirects the
+   * browser to `return_url`; when it does not (a card that needs no extra step), we navigate
+   * there ourselves so both routes end on the same page.
+   */
+  async confirmPayment(): Promise<void> {
+    if (this.busy() || this.paymentUnderReview()) return;
+    if (!this.stripe || !this.elements || !this.orderId) {
+      this.message.warning('กรุณากด «ดำเนินการชำระเงิน» ก่อน');
+      return;
     }
 
-    await loadOmiseScript();
-    const cfg = unwrapSdkResult(await getApiPaymentsOmisePublicConfig({}));
-    const pk = cfg.publicKey?.trim();
-    if (!pk) {
-      throw new Error('ยังไม่ตั้งค่า Omise public key ที่เซิร์ฟเวอร์');
-    }
+    this.busy.set(true);
+    try {
+      const result = await this.stripe.confirmPayment({
+        elements: this.elements,
+        confirmParams: { return_url: this.returnUrlFor(this.orderId) },
+      });
 
-    const Omise = window.Omise;
-    if (!Omise) {
-      throw new Error('โหลด Omise.js ไม่สำเร็จ');
-    }
+      // Stripe only returns here when the payment could not be confirmed; anything else has
+      // already sent the browser to return_url.
+      if (result.error) {
+        this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ');
+        return;
+      }
 
-    Omise.setPublicKey(pk);
-
-    return await new Promise<string>((resolve, reject) => {
-      Omise.createToken(
-        'card',
-        {
-          name: this.cardName().trim(),
-          number: this.cardNumber().replace(/\D/g, ''),
-          expiration_month: this.cardExpMonth(),
-          expiration_year: this.cardExpYear(),
-          security_code: this.cardCvv().replace(/\D/g, ''),
-        },
-        (status, response) => {
-          if (status === 200 && response.id) {
-            resolve(response.id);
-            return;
-          }
-          reject(new Error(response.message ?? 'ไม่สามารถสร้างบัตร token ได้'));
-        },
+      await this.ngZone.run(() =>
+        this.router.navigateByUrl(
+          this.router.createUrlTree(['/orders', this.orderId!], { queryParams: { pay: '1' } }),
+        ),
       );
-    });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'ยืนยันการชำระเงินไม่สำเร็จ';
+      this.message.error(msg);
+    } finally {
+      this.busy.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
+  private async mountPaymentElement(clientSecret: string): Promise<void> {
+    await loadStripeScript();
+
+    const stripeFactory = window.Stripe;
+    if (!stripeFactory) {
+      throw new Error('โหลด Stripe.js ไม่สำเร็จ');
+    }
+
+    const config = unwrapSdkResult(await getApiPaymentsStripeConfig({}));
+    const publishableKey = config.publishableKey?.trim();
+    if (!publishableKey) {
+      throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
+    }
+
+    this.stripe = stripeFactory(publishableKey);
+    this.elements = this.stripe.elements({ clientSecret });
+    this.elements.create('payment').mount('#stripe-payment-element');
+  }
+
+  /** Absolute, because Stripe redirects the browser to it from its own domain. */
+  private returnUrlFor(orderId: string): string {
+    const path = this.router.serializeUrl(
+      this.router.createUrlTree(['/orders', orderId], { queryParams: { pay: '1' } }),
+    );
+    return new URL(path, window.location.origin).toString();
+  }
+
+  private handleFailedCheckout(
+    outcome: Extract<Awaited<ReturnType<OrderService['create']>>, { ok: false }>,
+  ): void {
+    // BUG-09: an earlier unpaid order still holds these documents. Send the buyer to their order
+    // history to finish paying it or cancel it, instead of a dead-end toast.
+    if (outcome.pendingOrder) {
+      this.message.warning(outcome.message ?? 'คุณมีคำสั่งซื้อที่ยังไม่ได้ชำระเงินอยู่');
+      void this.ngZone.run(() => this.router.navigateByUrl('/orders'));
+      return;
+    }
+
+    // T-13: the payment may already have gone through and the order did not complete. Stay on
+    // this page with the explanation — do not clear the cart, do not offer to pay again. The
+    // order row is kept server-side and an operator has already been alerted.
+    if (outcome.paymentNeedsReview) {
+      this.paymentUnderReview.set(true);
+      this.message.error(
+        outcome.message ??
+          'ชำระเงินสำเร็จแล้ว แต่ระบบยังจับคู่การชำระเงินกับคำสั่งซื้อไม่สำเร็จ ทีมงานกำลังตรวจสอบ กรุณาอย่าชำระเงินซ้ำ',
+        { nzDuration: 12000 },
+      );
+      return;
+    }
+
+    if (outcome.alreadyOwned) {
+      this.message.warning('มีบางรายการที่คุณเป็นเจ้าของอยู่แล้ว — ไปที่คลังของฉัน');
+      void this.ngZone.run(() => this.router.navigateByUrl('/library'));
+      return;
+    }
+
+    // Toast มาจาก OrderService → ApiFailureReporter แล้ว — เคลียร์ state ปุ่มให้ลองใหม่
+    this.orders.resetCheckout();
   }
 }

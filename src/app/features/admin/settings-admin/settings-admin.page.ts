@@ -33,7 +33,7 @@ export class AdminSettingsPage {
   });
 
   readonly gateways = [
-    { name: 'Omise', icon: '💳', note: 'รับบัตรเครดิต Visa / Master / JCB' },
+    { name: 'Stripe', icon: '💳', note: 'บัตรเครดิต / PromptPay / wallet — เปิดปิดที่ Stripe Dashboard' },
     { name: 'GB Prime Pay', icon: '🏦', note: 'PromptPay QR และ Internet Banking' },
     { name: 'TrueMoney Wallet', icon: '👛', note: 'หักจาก e-Wallet' },
   ];

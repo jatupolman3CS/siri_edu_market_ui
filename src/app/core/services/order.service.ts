@@ -12,11 +12,12 @@ import { unwrapSdkResult } from './api-result';
 import { mapOrder } from '../api-mappers/mappers';
 import type { Order } from '../models';
 
-export type CreateOrderInput = {
-  paymentMethod: 'promptpay' | 'credit_card' | 'truemoney';
-  omiseCardToken?: string;
-  trueMoneyPhoneNumber?: string;
-};
+/**
+ * S-04: checkout sends nothing. The buyer picks a payment method inside Stripe's Payment
+ * Element after the order exists, so there is no card token and no phone number to carry — and
+ * no way for this layer to touch either.
+ */
+export type CreateOrderInput = Record<string, never>;
 
 export type CreateOrderOutcome =
   | { ok: true; order: Order }
@@ -25,6 +26,11 @@ export type CreateOrderOutcome =
       alreadyOwned?: boolean;
       /** BUG-09: an earlier unpaid order still covers these documents. */
       pendingOrder?: boolean;
+      /**
+       * T-13: the card was charged and the order could not be completed. The money is gone,
+       * an operator has been alerted, and paying again would charge the buyer twice.
+       */
+      paymentNeedsReview?: boolean;
       status?: number;
       message?: string;
     };
@@ -48,16 +54,10 @@ export class OrderService {
   private readonly _detail = signal<Order | null>(null);
   readonly detail = this._detail.asReadonly();
 
-  async create(input: CreateOrderInput): Promise<CreateOrderOutcome> {
+  async create(_input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
     this._checkoutState.set(loadingActionState());
     try {
-      const result = await postApiOrders({
-        body: {
-          paymentMethod: input.paymentMethod,
-          omiseCardToken: input.omiseCardToken ?? null,
-          trueMoneyPhoneNumber: input.trueMoneyPhoneNumber ?? null,
-        },
-      });
+      const result = await postApiOrders({ body: {} });
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);
       this._checkoutState.set(successActionState('สร้างคำสั่งซื้อสำเร็จ'));
@@ -72,6 +72,17 @@ export class OrderService {
           const message = extractMessage(e) ?? 'คุณมีคำสั่งซื้อที่ยังไม่ได้ชำระเงินสำหรับเอกสารเหล่านี้อยู่แล้ว';
           this._checkoutState.set(errorActionState(message));
           return { ok: false, pendingOrder: true, status, message };
+        }
+
+        // T-13: the charge went through and the order could not be completed. This must never
+        // fall through to the already-owned branch below, which would tell the buyer they own
+        // something they do not and send them to an empty library.
+        if (code === 'payment_needs_review') {
+          const message =
+            extractMessage(e) ??
+            'ชำระเงินสำเร็จแล้ว แต่ระบบยังจับคู่การชำระเงินกับคำสั่งซื้อไม่สำเร็จ ทีมงานกำลังตรวจสอบ กรุณาอย่าชำระเงินซ้ำ';
+          this._checkoutState.set(errorActionState(message));
+          return { ok: false, paymentNeedsReview: true, status, message };
         }
 
         this._checkoutState.set(
@@ -100,7 +111,7 @@ export class OrderService {
   }
 
   /**
-   * BUG-09: releases an unpaid order that is blocking a new checkout. The Omise charge stays
+   * BUG-09: releases an unpaid order that is blocking a new checkout. The payment intent stays
    * payable, and the webhook still fulfils it if it lands, so nothing is lost by cancelling.
    */
   async cancel(id: string): Promise<Order | null> {

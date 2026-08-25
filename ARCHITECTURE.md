@@ -141,7 +141,6 @@ features/
 │   ├── dashboard.page.ts          # + Earnings calculator
 │   ├── documents.page.ts
 │   ├── upload.page.ts             # 4-step wizard
-│   ├── ai-assistant.page.ts
 │   ├── earnings.page.ts
 │   ├── reviews.page.ts
 │   └── settings.page.ts

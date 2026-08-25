@@ -10,7 +10,12 @@ export type OrderStatus =
   | 'fulfilled'
   | 'refunded'
   | 'cancelled';
-export type PaymentMethod = 'promptpay' | 'credit_card' | 'truemoney';
+/**
+ * S-04: the buyer no longer picks this — Stripe's Payment Element does, and the webhook records
+ * what Stripe reports. `unknown` is what an order carries until then; `truemoney` only appears on
+ * orders paid before the Stripe migration.
+ */
+export type PaymentMethod = 'unknown' | 'promptpay' | 'credit_card' | 'other' | 'truemoney';
 export type UserRole = 'buyer' | 'seller' | 'admin';
 
 // ====== Sub-categorization (TpT-inspired) ======
@@ -202,9 +207,15 @@ export interface CartItem {
 }
 
 export interface OrderPaymentHints {
-  omiseChargeId?: string;
-  promptPayQrImageUrl?: string;
-  trueMoneyAuthorizeUri?: string;
+  stripePaymentIntentId?: string;
+  /**
+   * S-04: passed straight to Stripe.js to mount the Payment Element. Present only in the reply
+   * to checkout — never stored, never logged, and absent when an unpaid order is read back.
+   */
+  clientSecret?: string;
+  /** Stripe's PaymentIntent status at the moment the order was read. */
+  status?: string;
+  /** Always true while unpaid: the webhook is what fulfils, so the page waits rather than assumes. */
   awaitingWebhook?: boolean;
 }
 

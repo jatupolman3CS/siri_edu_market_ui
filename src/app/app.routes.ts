@@ -175,10 +175,10 @@ export const routes: Routes = [
           ),
         title: 'พรีวิว PDF — Siri Studio',
       },
-      // G-05: /seller/ai is unrouted on purpose. The endpoint behind it never called a
-      // language model — it concatenated existing fields and wrote constant tags — while the
-      // page advertised AI. The component is kept so the route can come back the day a real
-      // generator is wired up; the API answers 501 in the meantime.
+      // G-05: /seller/ai is gone — route, page, service method, endpoint and SDK helper all
+      // removed in the dead-code sweep. It never called a language model: it concatenated
+      // existing fields and wrote constant tags while the page advertised AI. Bringing it
+      // back means writing a real generator first, not restoring this.
       {
         path: 'qna',
         loadComponent: () =>

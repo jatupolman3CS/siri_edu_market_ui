@@ -9,8 +9,9 @@
 **SIRIEDUMARKET** คือ Angular 21 marketplace สำหรับซื้อขายเอกสารวิชาการ + เทมเพลต (TpT-inspired Thai version)
 
 **ระบบต่อ backend จริงแล้ว ไม่ใช่ mock** — repo นี้คือส่วน frontend ที่คุยกับ ASP.NET Core API
-(`../siri_edu_market_backend`, net9.0 + EF Core 9 + SQL Server) ครบ **108 endpoints**
-ตรวจได้ด้วย `npm run audit:coverage` (backend 108 / sdk 108 / used 108 / orphan 0)
+(`../siri_edu_market_backend`, **net10.0** + EF Core 10 + SQL Server) ครบ **107 endpoints**
+ตรวจได้ด้วย `npm run audit:coverage` (backend 107 / sdk 107 / used 107 / orphan 0)
+> เดิม 108 — endpoint `POST /api/seller/documents/{id}/ai-generate` ถูกลบทั้งเส้นตอนเก็บกวาด dead code (G-05)
 
 **User คนสร้าง**: dev ไทย ใช้ภาษาไทยสนทนา ตอบเป็นไทย (โค้ด + identifier เป็น English)
 
@@ -82,7 +83,7 @@ page/component  →  core/services/*.service.ts  →  core/api/sdk.gen.ts (gener
 `npm run audit:coverage` (`scripts/coverage-endpoints.mjs`) จับคู่ controller (.cs) ฝั่ง backend กับ
 SDK helper ที่ UI เรียกจริง แล้วรายงาน `orphanBackend` (API มีแต่ UI ไม่เรียก) และ `orphanFrontend`
 (UI เรียกแต่ API ไม่มี) — เขียนรายงานละเอียดลง `coverage.md`
-**สถานะปัจจุบันต้องเป็น 108/108/108 และ orphan = 0** ถ้าตัวเลขเปลี่ยน แปลว่าคุณทำอะไรพัง
+**สถานะปัจจุบันต้องเป็น 107/107/107 และ orphan = 0** ถ้าตัวเลขเปลี่ยน แปลว่าคุณทำอะไรพัง
 
 > หมายเหตุความแม่นยำ: comment หัวไฟล์ `audit-guard.mjs` พูดถึงกฎที่ 3 (ห้าม `any` ใน `core/**`)
 > แต่ยัง **ไม่ได้ implement** ใน `RULES` — "ห้าม `any` ใน core" จึงยังเป็น convention ที่ต้องรีวิวเอง
@@ -125,9 +126,8 @@ SDK helper ที่ UI เรียกจริง แล้วรายงา�
 | เปลี่ยน theme | `tailwind.config.js` + `src/styles.scss` |
 | เปลี่ยน DI providers | `src/app/app.config.ts` |
 
-> `src/app/core/mock/*.mock.ts` ยังค้างอยู่ในโปรเจกต์แต่ **ไม่มีไฟล์ไหนนอก `core/mock/` import แล้ว**
-> (ยืนยันด้วย `git grep -rn "core/mock" src/app`) ถือเป็น dead code รอลบ
-> — **อย่าเอามาใช้ใหม่ อย่าเพิ่มของใหม่ในนั้น** ข้อมูลตัวอย่างให้ดึงจาก API จริง
+> `src/app/core/mock/` **ถูกลบไปแล้ว** (T-21, 937 บรรทัด) — อย่าสร้างขึ้นมาใหม่
+> ข้อมูลตัวอย่างให้ดึงจาก API จริงเท่านั้น
 
 ---
 
@@ -209,7 +209,7 @@ Component อ่านโดย call signal as function: `service.items()`
 ```bash
 npm run build              # type check + production build
 npm run audit:guard        # architectural boundaries (features ห้ามแตะ sdk.gen / client.gen)
-npm run audit:coverage     # endpoint coverage — ต้องได้ 108/108/108, orphan 0
+npm run audit:coverage     # endpoint coverage — ต้องได้ 107/107/107, orphan 0
 npx ng test --watch=false  # unit tests (single run)
 ```
 
@@ -243,4 +243,4 @@ npm run verify:api-drift   # เช็คว่า SDK ยังตรงกั�
 - จะลบหรือเปลี่ยน public API ของ services ที่ใช้กันแพร่หลาย
 - จะเปลี่ยน API contract (ต้องแก้ backend ก่อนแล้ว regenerate SDK)
 - จะเปลี่ยนวิธีเก็บ token หรือ auth flow
-- จะลบ / ย้าย `core/mock/` (เป็น dead code แต่เป็นคนละ task)
+- จะเพิ่ม mock data กลับเข้ามาในโปรเจกต์

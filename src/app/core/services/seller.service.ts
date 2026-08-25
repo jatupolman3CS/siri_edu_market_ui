@@ -10,11 +10,9 @@ import {
   getApiSellerReviews,
   postApiFilesUpload,
   postApiSellerDocuments,
-  postApiSellerDocumentsByIdAiGenerate,
   postApiSellerPayouts,
 } from '../api';
 import type {
-  AiGenerateResponse,
   CreateDocumentRequest,
   GetApiSellerReviewsResponse,
   SellerDocumentResponse,
@@ -326,28 +324,6 @@ export class SellerService {
     } catch (e) {
       this.apiFail.report('โหลดรีวิวของฉัน', e);
       return [];
-    }
-  }
-
-  /**
-   * AI generate helper via `/api/seller/documents/{id}/ai-generate`.
-   *
-   * G-05: nothing calls this right now — `/seller/ai` is unrouted because the endpoint never
-   * ran a language model. Kept deliberately: it is the only reference to the generated SDK
-   * helper, so removing it would leave the endpoint counted as unused by `audit:coverage`,
-   * and it is what the page will call again once a real generator is wired up. The API
-   * answers 501 until then.
-   */
-  async aiGenerate(documentId: string, tool: string): Promise<AiGenerateResponse> {
-    try {
-      const result = await postApiSellerDocumentsByIdAiGenerate({
-        path: { id: documentId },
-        body: { tool },
-      });
-      return unwrapSdkResult(result);
-    } catch (e) {
-      this.apiFail.report('AI ช่วยเขียน', e);
-      throw e;
     }
   }
 }

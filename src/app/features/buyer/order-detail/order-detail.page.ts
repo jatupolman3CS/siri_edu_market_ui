@@ -62,36 +62,38 @@ import type { Order } from '../../../core/models';
               </span>
             </div>
 
-            @if (o.status === 'awaiting_payment' && o.paymentHints) {
+            @if (o.status === 'awaiting_payment') {
               <div class="mb-6 p-5 rounded-2xl border border-amber-200 bg-amber-50/80">
-                <h3 class="text-base font-bold text-ink mb-2">รอชำระเงิน</h3>
-                <p class="text-xs text-ink-muted mb-4">
-                  กรุณาชำระตามวิธีที่เลือก ระบบจะอัปเดตสถานะอัตโนมัติเมื่อ Omise ยืนยันการชำระเงิน
+                <h3 class="text-base font-bold text-ink mb-2 flex items-center gap-2">
+                  <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  กำลังยืนยันการชำระเงิน
+                </h3>
+                <!-- S-04: after Stripe redirects the buyer back here the order is still
+                     awaiting_payment for a moment, because payment_intent.succeeded has not
+                     arrived yet. Saying "รอชำระเงิน" here would read as "your payment failed". -->
+                <p class="text-xs text-ink-muted leading-relaxed">
+                  ถ้าคุณชำระเงินเรียบร้อยแล้ว ระบบกำลังรอการยืนยันจากผู้ให้บริการชำระเงิน
+                  ปกติใช้เวลาไม่กี่วินาที หน้านี้จะอัปเดตสถานะให้เองอัตโนมัติ
+                  <strong>กรุณาอย่าชำระเงินซ้ำ</strong>
                 </p>
-                @if (o.paymentHints.promptPayQrImageUrl) {
-                  <div class="flex flex-col items-center gap-3">
-                    <img
-                      [src]="o.paymentHints.promptPayQrImageUrl"
-                      alt="PromptPay QR"
-                      class="max-w-[220px] rounded-xl border border-line bg-white p-2"
-                    />
-                    <span class="text-xs text-ink-muted">สแกนด้วยแอปธนาคารของคุณ</span>
-                  </div>
+                @if (o.paymentHints?.stripePaymentIntentId) {
+                  <p class="text-[11px] text-ink-muted mt-2">
+                    รหัสการชำระเงิน: <span class="font-mono">{{ o.paymentHints?.stripePaymentIntentId }}</span>
+                  </p>
                 }
-                @if (o.paymentHints.trueMoneyAuthorizeUri) {
-                  <a
-                    [href]="o.paymentHints.trueMoneyAuthorizeUri"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn-pink inline-flex items-center gap-2 !py-2.5"
+                <div class="flex flex-wrap items-center gap-3 mt-4">
+                  <button
+                    class="btn-ghost !py-2 text-sm disabled:opacity-50"
+                    [disabled]="refreshing()"
+                    (click)="refreshStatus(o.id)"
                   >
-                    เปิด TrueMoney เพื่อชำระเงิน
                     <app-icon name="arrow-right" [size]="14" />
-                  </a>
-                }
-                @if (o.paymentHints.awaitingWebhook) {
-                  <p class="text-[11px] text-ink-muted mt-3">กำลังตรวจสอบสถานะการชำระเงิน…</p>
-                }
+                    {{ refreshing() ? 'กำลังตรวจสอบ…' : 'ตรวจสอบสถานะอีกครั้ง' }}
+                  </button>
+                  <span class="text-[11px] text-ink-muted">
+                    ยังไม่อัปเดตหลังผ่านไปสักพัก? ติดต่อฝ่ายสนับสนุนพร้อมแจ้งเลข {{ o.orderNumber }}
+                  </span>
+                </div>
               </div>
             }
 
@@ -232,10 +234,31 @@ export class BuyerOrderDetailPage {
 
   paymentLabel(p: string): string {
     return {
+      // S-04: an order carries no method until Stripe reports one at the webhook, so this is
+      // what an unpaid order shows rather than a method the buyer never chose.
+      unknown: 'ยังไม่ระบุ',
       promptpay: 'PromptPay',
       credit_card: 'บัตรเครดิต',
+      other: 'ช่องทางอื่น',
+      // Historical: orders paid before the Stripe migration.
       truemoney: 'TrueMoney',
     }[p] ?? p;
+  }
+
+  readonly refreshing = signal(false);
+
+  /**
+   * S-04: the page already polls while an order is unpaid, but a buyer staring at a screen
+   * needs something to press. This is that button — the same read, on demand.
+   */
+  async refreshStatus(id: string): Promise<void> {
+    if (this.refreshing()) return;
+    this.refreshing.set(true);
+    try {
+      await this.orderService.loadDetail(id);
+    } finally {
+      this.refreshing.set(false);
+    }
   }
 
   readonly cancelling = signal(false);

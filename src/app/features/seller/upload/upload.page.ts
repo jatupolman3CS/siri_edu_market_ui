@@ -1,6 +1,6 @@
 import { SlicePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
@@ -37,7 +37,7 @@ type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
 @Component({
   selector: 'app-seller-upload',
   standalone: true,
-  imports: [RouterLink, FormsModule, IconComponent, ThbPipe, CdkDropList, CdkDrag, SlicePipe],
+  imports: [FormsModule, IconComponent, ThbPipe, CdkDropList, CdkDrag, SlicePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './upload.page.html',
   styleUrl: './upload.page.scss',

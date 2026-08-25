@@ -419,14 +419,14 @@ export function mapOrder(o: OrderResponse): Order {
     subtotal: o.subTotal ?? o.total ?? 0,
     vatAmount: o.vatAmount ?? 0,
     status: (o.status ?? 'awaiting_payment') as OrderStatus,
-    paymentMethod: (o.paymentMethod ?? 'promptpay') as PaymentMethod,
+    paymentMethod: (o.paymentMethod ?? 'unknown') as PaymentMethod,
     createdAt: o.createdAt ?? '',
     paidAt: o.paidAt ?? undefined,
     paymentHints: o.paymentHints
       ? {
-          omiseChargeId: o.paymentHints.omiseChargeId ?? undefined,
-          promptPayQrImageUrl: o.paymentHints.promptPayQrImageUrl ?? undefined,
-          trueMoneyAuthorizeUri: o.paymentHints.trueMoneyAuthorizeUri ?? undefined,
+          stripePaymentIntentId: o.paymentHints.stripePaymentIntentId ?? undefined,
+          clientSecret: o.paymentHints.clientSecret ?? undefined,
+          status: o.paymentHints.status ?? undefined,
           awaitingWebhook: o.paymentHints.awaitingWebhook ?? undefined,
         }
       : undefined,
@@ -467,7 +467,7 @@ export function mapAdminTransaction(t: AdminTransactionResponse): AdminTransacti
     amount: t.amount ?? 0,
     fee: t.fee ?? 0,
     netAmount: t.netAmount ?? 0,
-    paymentMethod: (t.paymentMethod ?? 'promptpay') as PaymentMethod,
+    paymentMethod: (t.paymentMethod ?? 'unknown') as PaymentMethod,
     status: (t.status ?? 'awaiting_payment') as OrderStatus,
     createdAt: t.createdAt ?? '',
   };

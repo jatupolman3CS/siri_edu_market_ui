@@ -61,12 +61,14 @@ describe('mapOrder', () => {
 
     const withHints = mapOrder({
       ...paidOrder,
-      paymentHints: { omiseChargeId: 'chrg_1', awaitingWebhook: true },
+      paymentHints: { stripePaymentIntentId: 'pi_1', clientSecret: 'cs_1', awaitingWebhook: true },
     });
 
-    expect(withHints.paymentHints?.omiseChargeId).toBe('chrg_1');
+    expect(withHints.paymentHints?.stripePaymentIntentId).toBe('pi_1');
+    expect(withHints.paymentHints?.clientSecret).toBe('cs_1');
     expect(withHints.paymentHints?.awaitingWebhook).toBe(true);
-    expect(withHints.paymentHints?.promptPayQrImageUrl).toBeUndefined();
+    // S-04: absent fields stay absent rather than becoming null, so `@if` in the template works.
+    expect(withHints.paymentHints?.status).toBeUndefined();
   });
 
   it('tags an item bought as part of a bundle so the receipt can say so', () => {
