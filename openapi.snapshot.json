@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.4",
   "info": {
     "title": "SIRIEDUMARKET.Api | v1",
     "version": "1.0.0"
@@ -177,7 +177,7 @@
             "name": "Sort",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "$ref": "#/components/schemas/AdminDocumentsSort"
             }
           }
         ],
@@ -760,7 +760,7 @@
             "name": "Sort",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "$ref": "#/components/schemas/AdminPendingDocumentsSort"
             }
           }
         ],
@@ -1317,8 +1317,7 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "type": "string",
-              "default": null
+              "type": "string"
             }
           }
         ],
@@ -7103,6 +7102,9 @@
           }
         }
       },
+      "AdminDocumentsSort": {
+        "type": "integer"
+      },
       "AdminPayoutResponse": {
         "type": "object",
         "properties": {
@@ -7222,6 +7224,9 @@
             "format": "int32"
           }
         }
+      },
+      "AdminPendingDocumentsSort": {
+        "type": "integer"
       },
       "AdminSellerApplicationResponse": {
         "type": "object",
@@ -8471,8 +8476,7 @@
           "awaitingWebhook": {
             "type": "boolean"
           }
-        },
-        "nullable": true
+        }
       },
       "OrderResponse": {
         "type": "object",
@@ -8516,7 +8520,13 @@
             }
           },
           "paymentHints": {
-            "$ref": "#/components/schemas/OrderPaymentHintsResponse"
+            "type": "object",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrderPaymentHintsResponse"
+              }
+            ],
+            "nullable": true
           }
         }
       },
@@ -9754,8 +9764,7 @@
           "isVerified": {
             "type": "boolean"
           }
-        },
-        "nullable": true
+        }
       },
       "SellerQnaResponse": {
         "type": "object",
@@ -10320,7 +10329,13 @@
             "type": "boolean"
           },
           "sellerProfile": {
-            "$ref": "#/components/schemas/SellerProfileSummary"
+            "type": "object",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SellerProfileSummary"
+              }
+            ],
+            "nullable": true
           }
         }
       },

@@ -542,7 +542,7 @@ export type OrderPaymentHintsResponse = {
   promptPayQrImageUrl?: string | null;
   trueMoneyAuthorizeUri?: string | null;
   awaitingWebhook?: boolean;
-} | null;
+};
 
 export type OrderResponse = {
   id?: string;
@@ -555,7 +555,7 @@ export type OrderResponse = {
   createdAt?: string;
   paidAt?: string | null;
   items?: Array<OrderItemResponse>;
-  paymentHints?: OrderPaymentHintsResponse;
+  paymentHints?: OrderPaymentHintsResponse | null;
 };
 
 export type PagedResponseOfAdminDocumentListItemResponse = {
@@ -914,7 +914,7 @@ export type SellerProfileResponse = {
 export type SellerProfileSummary = {
   studioName?: string;
   isVerified?: boolean;
-} | null;
+};
 
 export type SellerQnaResponse = {
   id?: string;
@@ -1082,7 +1082,7 @@ export type UserProfileResponse = {
   role?: string;
   joinedAt?: string;
   isEmailVerified?: boolean;
-  sellerProfile?: SellerProfileSummary;
+  sellerProfile?: SellerProfileSummary | null;
 };
 
 export type VerifyEmailRequest = {
