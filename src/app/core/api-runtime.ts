@@ -191,6 +191,18 @@ function isAuthEndpoint(input: RequestInfo | URL): boolean {
 export const createClientConfig: CreateClientConfig = (config) => ({
   ...config,
   baseUrl: API_BASE_URL,
+  /**
+   * F-30-1: the generated client only throws on a non-2xx when this is set; otherwise it
+   * returns `{ data: undefined, error }` and carries on. Sixteen call sites across seven
+   * services awaited a call and relied on a `catch` that could therefore never run — a failed
+   * register, password reset, wishlist write, follow, or document delete all reported success
+   * to the user. Calls that go through `unwrapSdkResult` were already fine, because that
+   * throws on missing data; this makes the rest behave the same way.
+   *
+   * Several call sites still pass `throwOnError: true` explicitly. That is now redundant but
+   * harmless, and it documents intent at the call.
+   */
+  throwOnError: true,
   fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
     startLoading();
     try {

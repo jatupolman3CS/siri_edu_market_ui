@@ -62,8 +62,11 @@ function buildService(): CartService {
 }
 
 /** Lets the SDK promise chain and the service's fire-and-forget blocks settle. */
+/** Lets the SDK promise chain and the service's fire-and-forget blocks settle. */
 async function settle(): Promise<void> {
-  for (let i = 0; i < 8; i++) await Promise.resolve();
+  for (let i = 0; i < 4; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
 }
 
 beforeEach(() => {
@@ -253,23 +256,30 @@ describe('CartService membership and mutation', () => {
     expect(res).toEqual({ ok: false });
   });
 
-  it.skip('BUG: rolls the optimistic add back and redirects when the buyer already owns it', async () => {
-    // FAILS TODAY - kept skipped per T-30's rule against changing production code to make a
-    // test pass. See F-30-1.
-    //
-    // CartService.add() calls postApiCartItems() without `throwOnError`, and the generated
-    // client only throws when that flag is set — otherwise a non-2xx comes back as
-    // `{ data: undefined, error }`. So the catch block, and with it the whole 409
-    // "already owned" recovery, is unreachable: the item stays in the cart, no warning is
-    // shown, and the buyer is never sent to their library.
-    //
-    // addBundle() gets this right by passing `throwOnError: true`.
-    stubRoute('POST', '/api/cart/items', { title: 'already owned' }, 409);
+  it('rolls the optimistic add back and redirects when the buyer already owns it', async () => {
+    // F-30-1: this could not pass until the client was told to throw on a non-2xx. Without
+    // `throwOnError` the generated client returned `{ data: undefined, error }` and carried
+    // on, so add()'s catch — and with it the whole already-owned recovery — never ran.
+    // `throwOnError: true` is now set once in api-runtime's client config.
+    stubRoute(
+      'POST',
+      '/api/cart/items',
+      {
+        title: 'Conflict',
+        status: 409,
+        statusCode: 409,
+        message: 'คุณเป็นเจ้าของเอกสารนี้แล้ว',
+        traceId: 'trace-1',
+      },
+      409,
+    );
 
     cart.add(doc('doc-owned', 100));
     expect(cart.count()).toBe(1); // optimistic
+
     await settle();
 
+    // Leaving it in the cart would let the buyer pay for something they already own.
     expect(cart.count()).toBe(0);
   });
 });

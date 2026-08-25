@@ -31,14 +31,8 @@ export function createInfinitePager<T>(opts: {
     return items().length < total;
   });
 
-  async function loadFirst(): Promise<void> {
-    items.set([]);
-    page.set(0);
-    totalCount.set(null);
-    await loadMore();
-  }
-
-  async function loadMore(): Promise<void> {
+  /** Records the failure in `state` and rethrows, so callers can decide what to do. */
+  async function fetchPage(): Promise<void> {
     if (state().status === 'loading') return;
     if (!hasMore()) return;
 
@@ -52,8 +46,35 @@ export function createInfinitePager<T>(opts: {
       page.set(res.page ?? nextPage);
       totalCount.set(res.totalCount ?? totalCount());
       state.set(idleActionState());
-    } catch {
+    } catch (e) {
       state.set(errorActionState(opts.errorMessage));
+      throw e;
+    }
+  }
+
+  /**
+   * F-30-2: this propagates the failure. It used to swallow it, so a service that awaited
+   * `loadFirst()` inside a try/catch took the success path and reported idle — a wishlist or
+   * library that failed to load looked exactly like an empty one, with no message and no way
+   * to retry. Every caller awaits this inside a try/catch already.
+   */
+  async function loadFirst(): Promise<void> {
+    items.set([]);
+    page.set(0);
+    totalCount.set(null);
+    await fetchPage();
+  }
+
+  /**
+   * Deliberately does not propagate: this one is wired straight to scroll handlers that have
+   * nowhere to put an error, and an unhandled rejection there would be worse than a quiet
+   * failure. The failure is still in `state` for anyone rendering it.
+   */
+  async function loadMore(): Promise<void> {
+    try {
+      await fetchPage();
+    } catch {
+      /* recorded in state above */
     }
   }
 

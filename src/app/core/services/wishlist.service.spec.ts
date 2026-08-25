@@ -159,15 +159,10 @@ describe('WishlistService', () => {
     expect(wishlist.count()).toBe(0);
   });
 
-  it.skip('BUG: reports an error state when the list cannot be loaded', async () => {
-    // FAILS TODAY - kept skipped per T-30's rule against changing production code to make a
-    // test pass. See F-30-2.
-    //
-    // `createInfinitePager.loadMore()` catches the failure and writes it to the pager's own
-    // `state` signal, so `loadFirst()` resolves normally. `WishlistService.refresh()` then
-    // takes its success path and sets idle, and it surfaces `_state`, not `pager.state`.
-    // The result is that a failed load is indistinguishable from an empty wishlist: no
-    // message, no retry affordance, just nothing there.
+  it('reports an error state when the list cannot be loaded', async () => {
+    // F-30-2: the pager used to swallow the failure into its own state signal, so
+    // loadFirst() resolved normally, refresh() took its success path, and a failed load was
+    // indistinguishable from an empty wishlist. loadFirst() now rethrows.
     stubRoute(
       'GET',
       '/api/wishlist',
