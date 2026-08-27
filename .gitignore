@@ -48,3 +48,14 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# G-02: local secrets — never commit.
+# The backend repo has had this block since SEC-01; this one did not, so a `.env` dropped in
+# here would have been staged by `git add .` like any other new file. The credentials this
+# project actually uses live in `../.env` at the workspace root, outside both repositories —
+# these rules cover the copy someone makes locally anyway.
+*.env
+.env
+.env.*
+!.env.example
+appsettings.Local.json
