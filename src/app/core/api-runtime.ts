@@ -218,8 +218,20 @@ export const createClientConfig: CreateClientConfig = (config) => ({
         return fetch(new Request(request, { headers }));
       };
 
-      const response = await send(_tokenGetter?.() ?? null);
+      const tokenSent = _tokenGetter?.() ?? null;
+      const response = await send(tokenSent);
       if (response.status !== 401) return response;
+
+      // D-11: a visitor who never signed in has no session to lose. The app asks for /api/cart
+      // and /api/wishlist while bootstrapping every page, both answer 401 for an anonymous
+      // visitor, and this handler read that as "your session ended" and sent them to the login
+      // page. The whole public marketplace — home, catalogue, categories, a document, a bundle,
+      // the free list, a seller's shop — was unreachable without an account, even though all of
+      // its own data had already loaded with 200s.
+      //
+      // With no token attached there is nothing to refresh and nothing to sign out of, so the 401
+      // is simply the answer to the question: return it and let the caller decide.
+      if (!tokenSent) return response;
 
       // BUG-04: a 401 used to sign the user straight out, so every session died when the
       // 15-minute access token expired — mid-upload, mid-checkout, mid-anything. Refresh
