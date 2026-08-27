@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminService } from '../../../core/services';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -16,6 +18,14 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 })
 export class AdminTransactionsPage {
   readonly admin = inject(AdminService);
+  private readonly apiFail = inject(ApiFailureReporter);
+  private readonly message = inject(NzMessageService);
+
+  /** F-11: the order currently being refunded, so only one button spins. */
+  readonly refundingId = signal<string | null>(null);
+
+  /** F-11: awaiting confirmation. A refund revokes library access and cannot be undone. */
+  readonly confirmingId = signal<string | null>(null);
 
   readonly search = signal<string>('');
   readonly status = signal<'all' | 'fulfilled' | 'paid' | 'refunded' | 'awaiting_payment'>('all');
@@ -75,5 +85,36 @@ export class AdminTransactionsPage {
 
   constructor() {
     void this.admin.refreshTransactions();
+  }
+
+  /** Only settled money can be given back — the server enforces this too. */
+  canRefund(status: string | undefined): boolean {
+    return status === 'paid' || status === 'fulfilled';
+  }
+
+  askToRefund(id: string | undefined): void {
+    if (!id) return;
+    this.confirmingId.set(id);
+  }
+
+  cancelRefund(): void {
+    this.confirmingId.set(null);
+  }
+
+  async refund(id: string | undefined): Promise<void> {
+    if (!id || this.refundingId()) return;
+
+    this.refundingId.set(id);
+    try {
+      await this.admin.refundOrder(id);
+      this.confirmingId.set(null);
+      this.message.success('คืนเงินเรียบร้อย และเพิกถอนสิทธิ์ในคลังของผู้ซื้อแล้ว');
+    } catch (e) {
+      // The server's message names the actual reason — already refunded, never paid, or the
+      // seller has already drawn this money — and that is what the admin needs to read.
+      this.apiFail.report('คืนเงิน', e);
+    } finally {
+      this.refundingId.set(null);
+    }
   }
 }

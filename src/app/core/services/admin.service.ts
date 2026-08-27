@@ -17,6 +17,7 @@ import {
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
   postApiAdminDocumentsByIdReportsByReportIdResolve,
+  postApiAdminOrdersByOrderIdRefund,
   postApiAdminPayoutsByPayoutIdStatus,
   putApiAdminCategoriesById,
   putApiAdminSettings,
@@ -433,6 +434,20 @@ export class AdminService {
    * The date inputs are plain `yyyy-MM-dd`; `to` is pushed to the end of that day so "ถึง 27
    * ส.ค." includes the 27th rather than stopping at midnight.
    */
+  /**
+   * F-11 (N-06): refunds an order.
+   *
+   * OrderStatus.Refunded existed and the dashboard counted it, but nothing set it — so that
+   * figure was always zero and refunding meant editing the database by hand.
+   *
+   * throwOnError because the server's rejections carry the reason the admin needs to read:
+   * already refunded, never paid, or a seller has already drawn the money.
+   */
+  async refundOrder(orderId: string): Promise<void> {
+    await postApiAdminOrdersByOrderIdRefund({ path: { orderId }, throwOnError: true });
+    await this.refreshTransactions();
+  }
+
   async listAuditLog(query: {
     action?: string;
     from?: string;

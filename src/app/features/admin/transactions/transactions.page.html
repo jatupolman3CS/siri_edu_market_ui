@@ -74,6 +74,7 @@
               <th class="px-5 py-3 font-semibold">วิธีชำระ</th>
               <th class="px-5 py-3 font-semibold">สถานะ</th>
               <th class="px-5 py-3 font-semibold whitespace-nowrap">เวลา</th>
+              <th class="px-5 py-3 font-semibold whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -93,6 +94,31 @@
                 </td>
                 <td class="px-5 py-3 text-xs text-ink-muted whitespace-nowrap">
                   {{ t.createdAt | timeAgo }}
+                </td>
+                <!-- F-11: refunding revokes the buyer's library access and cannot be undone,
+                     so it asks first rather than acting on one click. -->
+                <td class="px-5 py-3 whitespace-nowrap">
+                  @if (canRefund(t.status)) {
+                    @if (confirmingId() === t.id) {
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-rose-600">เพิกถอนคลังด้วย?</span>
+                        <button
+                          class="btn-pink !py-1 !px-3 text-[11px]"
+                          [disabled]="refundingId() === t.id"
+                          (click)="refund(t.id)"
+                        >
+                          {{ refundingId() === t.id ? 'กำลังคืน…' : 'ยืนยัน' }}
+                        </button>
+                        <button class="btn-ghost !py-1 !px-3 text-[11px]" (click)="cancelRefund()">
+                          ยกเลิก
+                        </button>
+                      </div>
+                    } @else {
+                      <button class="btn-ghost !py-1 !px-3 text-[11px]" (click)="askToRefund(t.id)">
+                        คืนเงิน
+                      </button>
+                    }
+                  }
                 </td>
               </tr>
             }

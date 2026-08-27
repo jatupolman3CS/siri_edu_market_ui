@@ -184,6 +184,9 @@ import type {
   PostApiAdminDocumentsPendingSearchData,
   PostApiAdminDocumentsPendingSearchErrors,
   PostApiAdminDocumentsPendingSearchResponses,
+  PostApiAdminOrdersByOrderIdRefundData,
+  PostApiAdminOrdersByOrderIdRefundErrors,
+  PostApiAdminOrdersByOrderIdRefundResponses,
   PostApiAdminPayoutsByPayoutIdStatusData,
   PostApiAdminPayoutsByPayoutIdStatusErrors,
   PostApiAdminPayoutsByPayoutIdStatusResponses,
@@ -332,6 +335,19 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const postApiAdminOrdersByOrderIdRefund = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminOrdersByOrderIdRefundData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminOrdersByOrderIdRefundResponses,
+  PostApiAdminOrdersByOrderIdRefundErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminOrdersByOrderIdRefundResponses,
+    PostApiAdminOrdersByOrderIdRefundErrors,
+    ThrowOnError
+  >({ url: '/api/admin/orders/{orderId}/refund', ...options });
 
 export const getApiAdminAudit = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAuditData, ThrowOnError>,

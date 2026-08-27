@@ -764,6 +764,14 @@ export type RefreshTokenRequest = {
   refreshToken: string;
 };
 
+export type RefundOrderResponse = {
+  orderId?: string;
+  orderNumber?: string;
+  amountRefunded?: number;
+  refundId?: string;
+  status?: string;
+};
+
 export type RegisterRequest = {
   email: string;
   password: string;
@@ -1168,6 +1176,43 @@ export type WishlistItemResponse = {
   format?: string | null;
   averageRating?: number | null;
 };
+
+export type PostApiAdminOrdersByOrderIdRefundData = {
+  body?: never;
+  path: {
+    orderId: string;
+  };
+  query?: never;
+  url: '/api/admin/orders/{orderId}/refund';
+};
+
+export type PostApiAdminOrdersByOrderIdRefundErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminOrdersByOrderIdRefundError =
+  PostApiAdminOrdersByOrderIdRefundErrors[keyof PostApiAdminOrdersByOrderIdRefundErrors];
+
+export type PostApiAdminOrdersByOrderIdRefundResponses = {
+  /**
+   * OK
+   */
+  200: RefundOrderResponse;
+};
+
+export type PostApiAdminOrdersByOrderIdRefundResponse =
+  PostApiAdminOrdersByOrderIdRefundResponses[keyof PostApiAdminOrdersByOrderIdRefundResponses];
 
 export type GetApiAdminAuditData = {
   body?: never;
