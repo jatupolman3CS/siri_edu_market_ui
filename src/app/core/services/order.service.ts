@@ -7,7 +7,12 @@ import {
   type ActionState,
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
-import { getApiOrdersById, postApiOrders, postApiOrdersByIdCancel } from '../api';
+import {
+  getApiOrdersById,
+  getApiPaymentsStripeConfig,
+  postApiOrders,
+  postApiOrdersByIdCancel,
+} from '../api';
 import { unwrapSdkResult } from './api-result';
 import { mapOrder } from '../api-mappers/mappers';
 import type { Order } from '../models';
@@ -128,6 +133,18 @@ export class OrderService {
 
   resetCheckout(): void {
     this._checkoutState.set(idleActionState());
+  }
+
+  /**
+   * F-01: the checkout page read the publishable key straight off the SDK barrel. It belongs
+   * with the rest of the S-04 payment flow, which this service already owns.
+   *
+   * Returns null rather than an empty string when the server has no key configured, so the
+   * caller cannot accidentally hand `''` to Stripe and get a less obvious failure.
+   */
+  async getStripePublishableKey(): Promise<string | null> {
+    const config = unwrapSdkResult(await getApiPaymentsStripeConfig({}));
+    return config.publishableKey?.trim() || null;
   }
 }
 

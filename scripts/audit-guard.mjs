@@ -6,10 +6,10 @@
  * a full ESLint setup. Run as part of CI; exits non-zero on violations.
  *
  * Rules enforced (this list is the real one — every entry below exists in RULES):
- *   1. `features/**` must NOT import from `core/api/sdk.gen` directly — it has
- *      to go through a service in `core/services/`.
- *   2. `features/**` must NOT import from `core/api/client.gen` directly.
- *   3. Templates must NOT interpolate a raw date field (B-04 / S-09).
+ *   1. `features/**` must NOT reach the generated SDK at runtime, by any of its three
+ *      entry points: `core/api/sdk.gen`, `core/api/client.gen`, or the `core/api`
+ *      barrel that re-exports both. Calls go through a service in `core/services/`.
+ *   2. Templates must NOT interpolate a raw date field (B-04 / S-09).
  */
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname, relative } from 'node:path';
@@ -43,20 +43,56 @@ function findRawDateInterpolations(text) {
   return hits;
 }
 
+/**
+ * F-01 (N-08): this rule used to match the literal path `core/api/sdk.gen`. But
+ * `core/api/index.ts` re-exports every function in the SDK, so
+ * `import { postApiMarketplaceDocumentsByIdQna } from '../../../core/api'` walked straight
+ * past it — five pages under `features/` were calling the SDK directly while the guard
+ * reported green. A rule that does not actually bind is worse than no rule at all, because
+ * it manufactures confidence in a boundary nobody is holding.
+ *
+ * Type imports stay legal, both `import type { X }` and inline `{ type X }`: they carry no
+ * runtime dependency, and the contract types are the shared vocabulary between a page and
+ * the service it calls. `core/api-runtime`, `core/api-mappers/*` and the hand-written
+ * wrappers such as `core/api/admin-documents.api` are not the generated SDK and are not
+ * matched here.
+ */
+const SDK_ENTRY_RE = /(?:^|\/)core\/api(?:\/(?:sdk|client)\.gen)?$/;
+
+function runtimeSpecifiers(clause) {
+  const braced = clause.match(/\{([\s\S]*)\}/);
+  // A default or namespace import binds a value no matter what it is used for.
+  if (!braced) return [clause.trim()];
+  return braced[1]
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((s) => !/^type\s/.test(s));
+}
+
+function findSdkImportsInFeatures(text) {
+  const hits = [];
+  for (const match of text.matchAll(/import\s+(type\s+)?([\s\S]*?)\s*from\s*['"]([^'"]+)['"]/g)) {
+    const [, typeOnly, clause, specifier] = match;
+    if (!SDK_ENTRY_RE.test(specifier)) continue;
+    if (typeOnly) continue;
+
+    const runtime = runtimeSpecifiers(clause);
+    if (runtime.length === 0) continue;
+
+    const line = text.slice(0, match.index).split(/\r?\n/).length;
+    hits.push(`${line}: ${runtime.join(', ')} from '${specifier}'`);
+  }
+  return hits;
+}
+
 const RULES = [
   {
-    id: 'no-sdk-gen-in-features',
+    id: 'no-sdk-in-features',
     pattern: 'src/app/features/**/*.ts',
-    re: /from\s+['"][^'"]*core\/api\/sdk\.gen['"]/,
+    matches: findSdkImportsInFeatures,
     message:
-      'features/** must NOT import sdk.gen.ts directly. Wrap the SDK call in a service inside core/services/.',
-  },
-  {
-    id: 'no-client-gen-in-features',
-    pattern: 'src/app/features/**/*.ts',
-    re: /from\s+['"][^'"]*core\/api\/client\.gen['"]/,
-    message:
-      'features/** must NOT import client.gen.ts directly. Use a generated SDK helper inside a service.',
+      'features/** must NOT call the generated SDK directly — not via sdk.gen, not via client.gen, and not via the core/api barrel that re-exports both. Wrap the call in a service inside core/services/. Type-only imports are fine.',
   },
   {
     id: 'no-raw-date-interpolation',

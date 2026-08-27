@@ -22,17 +22,14 @@ import {
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
-import { unwrapSdkResult } from '../../../core/services/api-result';
+
 import {
   GRADE_LEVEL_LABELS,
   RESOURCE_TYPE_ICONS,
   RESOURCE_TYPE_LABELS,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
-import {
-  getApiMarketplaceDocumentsByIdPreview,
-  postApiMarketplaceDocumentsByIdQna,
-} from '../../../core/api';
+
 import type { MarketplaceDocumentPreviewResponse } from '../../../core/api/types.gen';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
@@ -228,8 +225,7 @@ export class BuyerDocumentDetailPage {
     void (async () => {
       this.previewLoading.set(true);
       try {
-        const result = await getApiMarketplaceDocumentsByIdPreview({ path: { id } });
-        const data = unwrapSdkResult(result);
+        const data = await this.catalog.loadDocumentPreview(id);
         this.preview.set(data);
         const raster = data.previewImageUrls?.filter((u) => u?.trim()) ?? [];
         if (raster.length > 0) {
@@ -273,11 +269,7 @@ export class BuyerDocumentDetailPage {
 
     this.askingQuestion.set(true);
     try {
-      await postApiMarketplaceDocumentsByIdQna({
-        path: { id: documentId },
-        body: { question },
-        throwOnError: true,
-      });
+      await this.catalog.askDocumentQuestion(documentId, question);
       this.newQuestion.set('');
       this.questionSent.set(true);
       this.message.success('ส่งคำถามเรียบร้อย ผู้ขายจะตอบกลับเร็ว ๆ นี้');

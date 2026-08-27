@@ -2,14 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import {
-  deleteApiSellerStoreSectionsBySectionId,
-  getApiSellerStoreSections,
-  postApiSellerStoreSections,
-  putApiSellerStoreSectionsBySectionId,
-  type StoreSectionResponse,
-} from '../../../core/api';
-import { unwrapSdkResult } from '../../../core/services/api-result';
+import type { StoreSectionResponse } from '../../../core/api';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -53,8 +46,7 @@ export class SellerStoreSectionsPage {
   async reload(): Promise<void> {
     this.loading.set(true);
     try {
-      const result = await getApiSellerStoreSections();
-      this.sections.set(unwrapSdkResult(result) ?? []);
+      this.sections.set(await this.seller.listStoreSections());
     } catch (e) {
       this.apiFail.report('โหลดหมวดหน้าร้าน', e);
       this.sections.set([]);
@@ -117,16 +109,7 @@ export class SellerStoreSectionsPage {
         documentIds: this.selectedDocumentIds(),
       };
 
-      const sectionId = this.editingId();
-      if (sectionId) {
-        await putApiSellerStoreSectionsBySectionId({
-          path: { sectionId },
-          body,
-          throwOnError: true,
-        });
-      } else {
-        await postApiSellerStoreSections({ body, throwOnError: true });
-      }
+      await this.seller.saveStoreSection(this.editingId(), body);
 
       this.message.success('บันทึกหมวดเรียบร้อย');
       this.cancel();
@@ -142,10 +125,7 @@ export class SellerStoreSectionsPage {
     if (this.saving()) return;
     this.saving.set(true);
     try {
-      await deleteApiSellerStoreSectionsBySectionId({
-        path: { sectionId },
-        throwOnError: true,
-      });
+      await this.seller.deleteStoreSection(sectionId);
       this.message.success('ลบหมวดเรียบร้อย');
       await this.reload();
     } catch (e) {

@@ -7,12 +7,17 @@ import {
   getApiMarketplaceCategories,
   getApiMarketplaceCategoriesBySlug,
   getApiMarketplaceDocumentsById,
+  getApiMarketplaceDocumentsByIdPreview,
   getApiMarketplaceDocumentsByIdRelated,
   getApiMarketplaceFree,
   getApiMarketplaceSearch,
   getApiSellersBySellerIdProfile,
+  postApiMarketplaceDocumentsByIdQna,
 } from '../api';
-import type { SellerProfileResponse } from '../api/types.gen';
+import type {
+  MarketplaceDocumentPreviewResponse,
+  SellerProfileResponse,
+} from '../api/types.gen';
 import { unwrapSdkResult, type SdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import {
@@ -838,4 +843,23 @@ export class CatalogService {
       .slice(0, limit);
   }
 
+  /**
+   * F-01: the document detail page called these two through the `core/api` barrel, which the
+   * old guard rule did not match. Both are marketplace reads/writes about one document, so
+   * they belong with the rest of the catalog surface rather than in a new service.
+   *
+   * Neither result is cached: the preview is watermarked per request, and a question has no
+   * client-side state the page keeps beyond "sent".
+   */
+  async loadDocumentPreview(documentId: string): Promise<MarketplaceDocumentPreviewResponse> {
+    return unwrapSdkResult(await getApiMarketplaceDocumentsByIdPreview({ path: { id: documentId } }));
+  }
+
+  async askDocumentQuestion(documentId: string, question: string): Promise<void> {
+    await postApiMarketplaceDocumentsByIdQna({
+      path: { id: documentId },
+      body: { question },
+      throwOnError: true,
+    });
+  }
 }

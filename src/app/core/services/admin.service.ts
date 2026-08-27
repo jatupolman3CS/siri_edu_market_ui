@@ -5,6 +5,7 @@ import {
   deleteApiAdminCategoriesById,
   getApiAdminCategories,
   getApiAdminDashboard,
+  getApiAdminPayouts,
   getApiAdminSellers,
   getApiAdminSettings,
   getApiAdminStorageUsage,
@@ -13,11 +14,13 @@ import {
   postApiAdminDocumentsPendingSearch,
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
+  postApiAdminPayoutsByPayoutIdStatus,
   putApiAdminCategoriesById,
   putApiAdminSettings,
 } from '../api';
 import type {
   AdminDashboardResponse,
+  AdminPayoutResponse,
   CreateCategoryRequest,
   PlatformSettingsResponse,
   StorageUsageResponse,
@@ -358,5 +361,35 @@ export class AdminService {
       this._storageUsage.set(null);
       return null;
     }
+  }
+
+  /**
+   * F-01: /admin/payouts called getApiAdminPayouts through the `core/api` barrel, which the
+   * old guard rule did not match. The call and its unwrapping live here now; the page keeps
+   * its own reporting, because it is the only place that knows which action failed.
+   *
+   * `status` is omitted rather than sent empty for the "all" filter — the endpoint treats a
+   * missing status as no filter, and an empty string as a status that matches nothing.
+   */
+  async listPayouts(
+    status: string | undefined,
+    page = 1,
+    pageSize = 50,
+  ): Promise<AdminPayoutResponse[]> {
+    const result = await getApiAdminPayouts({
+      query: { Page: page, PageSize: pageSize, ...(status ? { status } : {}) },
+    });
+    return unwrapSdkResult(result).items ?? [];
+  }
+
+  async setPayoutStatus(
+    payoutId: string,
+    status: 'processing' | 'paid' | 'failed',
+  ): Promise<void> {
+    await postApiAdminPayoutsByPayoutIdStatus({
+      path: { payoutId },
+      body: { status },
+      throwOnError: true,
+    });
   }
 }

@@ -12,8 +12,6 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { getApiPaymentsStripeConfig } from '../../../core/api';
-import { unwrapSdkResult } from '../../../core/services/api-result';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
 
 /**
@@ -170,8 +168,7 @@ export class BuyerCheckoutPage {
       throw new Error('โหลด Stripe.js ไม่สำเร็จ');
     }
 
-    const config = unwrapSdkResult(await getApiPaymentsStripeConfig({}));
-    const publishableKey = config.publishableKey?.trim();
+    const publishableKey = await this.orders.getStripePublishableKey();
     if (!publishableKey) {
       throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
     }

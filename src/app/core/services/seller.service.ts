@@ -3,19 +3,28 @@ import { DocumentItem, SellerStats } from '../models';
 import { mapSellerDocument, mapSellerDocumentSummary, mapSellerStats } from '../api-mappers/mappers';
 import {
   deleteApiSellerDocumentsById,
+  deleteApiSellerStoreSectionsBySectionId,
   getApiSellerDashboard,
   getApiSellerDocuments,
   getApiSellerDocumentsById,
   getApiSellerEarnings,
+  getApiSellerQna,
   getApiSellerReviews,
+  getApiSellerStoreSections,
   postApiFilesUpload,
   postApiSellerDocuments,
   postApiSellerPayouts,
+  postApiSellerQnaByQuestionIdAnswer,
+  postApiSellerStoreSections,
+  putApiSellerStoreSectionsBySectionId,
 } from '../api';
 import type {
   CreateDocumentRequest,
   GetApiSellerReviewsResponse,
+  SaveStoreSectionRequest,
   SellerDocumentResponse,
+  SellerQnaResponse,
+  StoreSectionResponse,
   UploadResponse,
   SellerEarningsResponse,
 } from '../api/types.gen';
@@ -325,5 +334,55 @@ export class SellerService {
       this.apiFail.report('โหลดรีวิวของฉัน', e);
       return [];
     }
+  }
+
+  // ===== F-01: seller Q&A =====
+  // /seller/qna reached these through the `core/api` barrel, which the old guard rule did
+  // not match. The pages keep their own error reporting — they are the only place that knows
+  // which action the seller was performing — so these methods only call and unwrap.
+
+  async listQuestions(
+    unansweredOnly: boolean,
+    page = 1,
+    pageSize = 50,
+  ): Promise<SellerQnaResponse[]> {
+    const result = await getApiSellerQna({
+      query: { Page: page, PageSize: pageSize, unansweredOnly },
+    });
+    return unwrapSdkResult(result).items ?? [];
+  }
+
+  async answerQuestion(questionId: string, answer: string): Promise<void> {
+    await postApiSellerQnaByQuestionIdAnswer({
+      path: { questionId },
+      body: { answer },
+      throwOnError: true,
+    });
+  }
+
+  // ===== F-01: storefront sections =====
+
+  async listStoreSections(): Promise<StoreSectionResponse[]> {
+    return unwrapSdkResult(await getApiSellerStoreSections()) ?? [];
+  }
+
+  /** Create when `sectionId` is null, update otherwise — the page's form covers both. */
+  async saveStoreSection(sectionId: string | null, body: SaveStoreSectionRequest): Promise<void> {
+    if (sectionId) {
+      await putApiSellerStoreSectionsBySectionId({
+        path: { sectionId },
+        body,
+        throwOnError: true,
+      });
+      return;
+    }
+    await postApiSellerStoreSections({ body, throwOnError: true });
+  }
+
+  async deleteStoreSection(sectionId: string): Promise<void> {
+    await deleteApiSellerStoreSectionsBySectionId({
+      path: { sectionId },
+      throwOnError: true,
+    });
   }
 }

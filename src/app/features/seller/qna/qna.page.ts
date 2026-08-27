@@ -2,12 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import {
-  getApiSellerQna,
-  postApiSellerQnaByQuestionIdAnswer,
-  type SellerQnaResponse,
-} from '../../../core/api';
-import { unwrapSdkResult } from '../../../core/services/api-result';
+import type { SellerQnaResponse } from '../../../core/api';
+import { SellerService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
@@ -23,6 +19,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
   templateUrl: './qna.page.html',
 })
 export class SellerQnaPage {
+  private readonly seller = inject(SellerService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
 
@@ -47,10 +44,7 @@ export class SellerQnaPage {
   async reload(): Promise<void> {
     this.loading.set(true);
     try {
-      const result = await getApiSellerQna({
-        query: { Page: 1, PageSize: 50, unansweredOnly: this.unansweredOnly() },
-      });
-      this.items.set(unwrapSdkResult(result).items ?? []);
+      this.items.set(await this.seller.listQuestions(this.unansweredOnly()));
     } catch (e) {
       this.apiFail.report('โหลดคำถามจากผู้ซื้อ', e);
       this.items.set([]);
@@ -79,11 +73,7 @@ export class SellerQnaPage {
 
     this.submitting.set(true);
     try {
-      await postApiSellerQnaByQuestionIdAnswer({
-        path: { questionId },
-        body: { answer },
-        throwOnError: true,
-      });
+      await this.seller.answerQuestion(questionId, answer);
       this.message.success('ตอบคำถามเรียบร้อย');
       this.cancelAnswer();
       await this.reload();

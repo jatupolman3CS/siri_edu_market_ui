@@ -1,12 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import {
-  getApiAdminPayouts,
-  postApiAdminPayoutsByPayoutIdStatus,
-  type AdminPayoutResponse,
-} from '../../../core/api';
-import { unwrapSdkResult } from '../../../core/services/api-result';
+import type { AdminPayoutResponse } from '../../../core/api';
+import { AdminService } from '../../../core/services/admin.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -25,6 +21,7 @@ type PayoutFilter = 'pending' | 'processing' | 'paid' | 'failed' | 'all';
   templateUrl: './payouts.page.html',
 })
 export class AdminPayoutsPage {
+  private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
 
@@ -54,14 +51,7 @@ export class AdminPayoutsPage {
     this.loading.set(true);
     try {
       const status = this.filter();
-      const result = await getApiAdminPayouts({
-        query: {
-          Page: 1,
-          PageSize: 50,
-          ...(status === 'all' ? {} : { status }),
-        },
-      });
-      this.items.set(unwrapSdkResult(result).items ?? []);
+      this.items.set(await this.admin.listPayouts(status === 'all' ? undefined : status));
     } catch (e) {
       this.apiFail.report('โหลดรายการถอนเงิน', e);
       this.items.set([]);
@@ -74,11 +64,7 @@ export class AdminPayoutsPage {
     if (this.busyId()) return;
     this.busyId.set(payoutId);
     try {
-      await postApiAdminPayoutsByPayoutIdStatus({
-        path: { payoutId },
-        body: { status },
-        throwOnError: true,
-      });
+      await this.admin.setPayoutStatus(payoutId, status);
       this.message.success('อัปเดตสถานะเรียบร้อย');
       await this.reload();
     } catch (e) {
