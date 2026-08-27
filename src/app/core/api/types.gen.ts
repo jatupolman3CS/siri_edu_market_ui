@@ -26,6 +26,17 @@ export type AdminAuditEntryResponse = {
   createdAt?: string;
 };
 
+export type AdminAuditLogResponse = {
+  id?: string;
+  actorUserId?: string | null;
+  actorName?: string;
+  action?: string;
+  entityType?: string;
+  entityId?: string;
+  detailsJson?: string | null;
+  createdAt?: string;
+};
+
 export type AdminBulkDocumentsRequest = {
   documentIds: Array<string>;
   action: string;
@@ -557,6 +568,14 @@ export type OrderResponse = {
   paidAt?: string | null;
   items?: Array<OrderItemResponse>;
   paymentHints?: OrderPaymentHintsResponse | null;
+};
+
+export type PagedResponseOfAdminAuditLogResponse = {
+  items?: Array<AdminAuditLogResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
 };
 
 export type PagedResponseOfAdminDocumentListItemResponse = {
@@ -1149,6 +1168,29 @@ export type WishlistItemResponse = {
   format?: string | null;
   averageRating?: number | null;
 };
+
+export type GetApiAdminAuditData = {
+  body?: never;
+  path?: never;
+  query?: {
+    actorUserId?: string;
+    action?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    pageSize?: number;
+  };
+  url: '/api/admin/audit';
+};
+
+export type GetApiAdminAuditResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminAuditLogResponse;
+};
+
+export type GetApiAdminAuditResponse = GetApiAdminAuditResponses[keyof GetApiAdminAuditResponses];
 
 export type GetApiAdminReportsData = {
   body?: never;

@@ -284,6 +284,12 @@ export const routes: Routes = [
             (m) => m.AdminSellersPage,
           ),
       },
+      // F-10: the whole admin audit log, not just one document's slice of it.
+      {
+        path: 'audit',
+        loadComponent: () =>
+          import('./features/admin/audit/audit.page').then((m) => m.AdminAuditPage),
+      },
       // F-09: one place to read document reports, instead of opening documents to find them.
       {
         path: 'reports',

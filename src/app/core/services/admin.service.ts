@@ -4,6 +4,7 @@ import { AdminTransaction } from '../models';
 import {
   deleteApiAdminCategoriesById,
   getApiAdminCategories,
+  getApiAdminAudit,
   getApiAdminDashboard,
   getApiAdminPayouts,
   getApiAdminReports,
@@ -22,8 +23,10 @@ import {
 } from '../api';
 import type {
   AdminDashboardResponse,
+  AdminAuditLogResponse,
   AdminOpenReportResponse,
   AdminPayoutResponse,
+  PagedResponseOfAdminAuditLogResponse,
   PagedResponseOfAdminOpenReportResponse,
   CreateCategoryRequest,
   PlatformSettingsResponse,
@@ -419,5 +422,33 @@ export class AdminService {
       path: { id: documentId, reportId },
       throwOnError: true,
     });
+  }
+
+  /**
+   * F-10: the admin audit log across every entity.
+   *
+   * ADMIN_AUDIT_LOG was only readable as RecentAudit inside one document's detail. Paged
+   * because it gains a row on every admin action and never loses one.
+   *
+   * The date inputs are plain `yyyy-MM-dd`; `to` is pushed to the end of that day so "ถึง 27
+   * ส.ค." includes the 27th rather than stopping at midnight.
+   */
+  async listAuditLog(query: {
+    action?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<PagedResponseOfAdminAuditLogResponse> {
+    const result = await getApiAdminAudit({
+      query: {
+        action: query.action,
+        from: query.from ? `${query.from}T00:00:00Z` : undefined,
+        to: query.to ? `${query.to}T23:59:59Z` : undefined,
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? 50,
+      },
+    });
+    return unwrapSdkResult(result);
   }
 }

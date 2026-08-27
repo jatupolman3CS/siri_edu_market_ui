@@ -32,6 +32,8 @@ import type {
   DeleteApiWishlistByDocumentIdResponses,
   DeleteApiWishlistData,
   DeleteApiWishlistResponses,
+  GetApiAdminAuditData,
+  GetApiAdminAuditResponses,
   GetApiAdminCategoriesByIdData,
   GetApiAdminCategoriesByIdErrors,
   GetApiAdminCategoriesByIdResponses,
@@ -330,6 +332,14 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const getApiAdminAudit = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminAuditData, ThrowOnError>,
+): RequestResult<GetApiAdminAuditResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminAuditResponses, unknown, ThrowOnError>({
+    url: '/api/admin/audit',
+    ...options,
+  });
 
 export const getApiAdminReports = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminReportsData, ThrowOnError>,

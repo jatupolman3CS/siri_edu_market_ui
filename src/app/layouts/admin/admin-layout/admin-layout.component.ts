@@ -61,5 +61,6 @@ export class AdminLayoutComponent {
     { label: 'ใบสมัครผู้ขาย', href: '/admin/seller-applications', icon: 'shield' as const },
     { label: 'หมวดหมู่', href: '/admin/categories', icon: 'tag' as const },
     { label: 'ตั้งค่าแพลตฟอร์ม', href: '/admin/settings', icon: 'gear' as const },
+    { label: 'ประวัติการทำงาน', href: '/admin/audit', icon: 'doc' as const },
   ];
 }
