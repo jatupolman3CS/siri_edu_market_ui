@@ -21,6 +21,49 @@ npm run build
 
 > ต้องใช้ **Node.js ≥ 20.x** และ **npm ≥ 10.x**
 
+### รันคู่กับ backend จริง (dev)
+
+หน้าเว็บทุกหน้าดึงข้อมูลจาก API จริง เปิดแค่ `npm start` อย่างเดียวจะได้หน้าเปล่า
+ต้องเปิด **สองเทอร์มินัล**:
+
+```bash
+# เทอร์มินัลที่ 1 — API ที่ http://localhost:5282/SIRIEDUMARKET.Api
+cd ../siri_edu_market_backend
+dotnet run --project src/SIRIEDUMARKET.Api/SIRIEDUMARKET.Api.csproj
+```
+
+```bash
+# เทอร์มินัลที่ 2 — UI ที่ http://localhost:4200
+npm start
+```
+
+**`dotnet run` เปล่าๆ บูตไม่ขึ้น** — `StartupConfigurationValidator` ตั้งใจให้ล้มตั้งแต่ตอน start
+ถ้า secret ไม่ครบ (SEC-01 / SEC-03) · **เก็บ credential ไว้ใน `.env` ที่ root ไฟล์เดียว**
+(ไฟล์เดียวกับที่ `docker compose` ใช้ · gitignored · API โหลดเองก่อน start):
+
+```bash
+cd ..            # c:\ProjectEduMarget — ที่เดียวกับ docker-compose.yml
+cp .env.example .env
+# เปิดแก้แล้วใส่ค่าจริง อย่างน้อย 6 ตัวนี้ถึงจะ start ขึ้น
+```
+
+| ตัวแปรใน `.env` | ใช้ทำอะไร |
+|---|---|
+| `ASPNETCORE_ENVIRONMENT=Development` | ถ้าเป็น `Production` จะบังคับขอ Stripe + Email เพิ่มด้วย |
+| `ConnectionStrings__DefaultConnection` | SQL Server — ยังไม่มีเครื่องก็ยัง start ได้ แต่ทุกหน้าจะได้ 500 (ENV-01) |
+| `Jwt__Key` | เซ็น access token — ไม่มีค่า default และสั้นกว่า 32 ตัวอักษรไม่ได้ |
+| `R2__AccessKeyId` · `R2__SecretAccessKey` · `R2__BucketName` · `R2__Endpoint` | Cloudflare R2 — `R2ObjectStorage` โยน exception ตอน start ถ้าไม่ครบ |
+
+ตัวแปรที่ export ไว้ใน shell อยู่แล้ว**ชนะ** ค่าใน `.env` เสมอ · รายการเต็ม + ทางเลือกอื่น
+(`appsettings.Local.json`, user secrets) อยู่ที่
+[`CONFIGURATION.md`](../siri_edu_market_backend/src/SIRIEDUMARKET.Api/CONFIGURATION.md)
+
+**UI ยิงตรงไปที่ API ไม่ผ่าน dev-server proxy** — ปลายทางอยู่ที่ `apiUrl` ใน
+[`src/environments/environment.development.ts`](src/environments/environment.development.ts)
+ที่เดียว (`core/api-runtime.ts` อ่านค่านี้) และ CORS ฝั่ง API เปิดให้ `http://localhost:4200`
+อยู่แล้ว · ถ้าจะชี้ไป backend เครื่องอื่น แก้ที่ไฟล์นั้น หรือเซ็ต `window.__SIRIEDU_API_BASE_URL__`
+ก่อน bundle ทำงาน (ใช้กับ build ที่ compile แล้วได้โดยไม่ต้อง build ใหม่)
+
 ---
 
 ## 🛠️ Tech Stack
@@ -34,7 +77,8 @@ npm run build
 | Routing | **Angular Router** + lazy loading + guards | built-in |
 | Storage (mock) | `localStorage` (auth, wishlist, recently-viewed) | browser |
 
-> Backend ยังไม่ได้สร้าง — ทุก service ใช้ mock data ทั้งหมด พร้อมต่อ API จริงได้ทันที
+> ต่อ backend จริงแล้ว (ASP.NET Core + EF Core + SQL Server ที่ `../siri_edu_market_backend`) —
+> ไม่มี mock data เหลือแล้ว ทุก service เรียก API ผ่าน SDK ที่ generate จาก OpenAPI
 
 ---
 

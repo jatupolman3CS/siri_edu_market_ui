@@ -1,4 +1,5 @@
 import type { CreateClientConfig } from './api/client.gen';
+import { environment } from '../../environments/environment';
 import { finishLoading, startLoading } from './services/loading';
 
 /** Set by `provideSdkAuthBridge` at app init — returns current access token per-request. */
@@ -34,34 +35,34 @@ const R2_BUCKET_PATH = '/siriedumarket/';
 const FILE_DOWNLOAD_PATH = '/api/files/download/';
 const PRESIGNED_FILE_PATH = '/api/files/presigned/';
 
+/**
+ * B-05: every API call resolves through here, so this is the only place that decides the host.
+ *
+ * Priority:
+ * 1) `window.__SIRIEDU_API_BASE_URL__` — retarget a built bundle without rebuilding it
+ * 2) `environment.apiUrl` — the build-time setting (`src/environments/*`); absolute in
+ *    development so `ng serve` reaches `dotnet run` on :5282, empty in production
+ * 3) same origin as the app, under the API's `UsePathBase` — the IIS deployment layout
+ *
+ * A localhost UI used to be pinned to `http://localhost/SIRIEDUMARKET.Api` (port 80 = IIS)
+ * whatever the settings said, which is why `ng serve` + `dotnet run` answered 502: the API was
+ * on :5282. `src/proxy.conf.json` could not help — these URLs are absolute and cross-origin, so
+ * they never entered the dev server's proxy — and it is gone rather than left looking load-bearing.
+ */
 function defaultApiBaseUrl(): string {
-  // Priority:
-  // 1) window override (useful for dev/prod without rebuild)
-  // 2) same-origin hosting under IIS virtual directory
-  // 3) local dev backend default (Program.cs uses UsePathBase)
   const w = globalThis as unknown as { __SIRIEDU_API_BASE_URL__?: unknown } & {
     location?: Location;
   };
   const override = typeof w.__SIRIEDU_API_BASE_URL__ === 'string' ? w.__SIRIEDU_API_BASE_URL__ : '';
   if (override.trim()) return override.trim().replace(/\/+$/, '');
 
-  const origin = w.location?.origin;
-  if (origin) {
-    try {
-      const u = new URL(origin);
-      // When the UI is served from a dev server (e.g. :4200) but the API is hosted
-      // under IIS at `http://localhost/SIRIEDUMARKET.Api`, we must not inherit the UI port.
-      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
-        return `http://localhost${PATH_BASE}`;
-      }
-    } catch {
-      /* ignore */
-    }
-    return `${origin}${PATH_BASE}`;
-  }
+  const configured = environment.apiUrl.trim();
+  if (configured) return configured.replace(/\/+$/, '');
 
-  // Fallback when `window.location` is unavailable (SSR/tests).
-  // Prefer IIS-style default the user requested.
+  const origin = w.location?.origin;
+  if (origin) return `${origin}${PATH_BASE}`;
+
+  // `window.location` is unavailable (SSR / unit tests). Matches the IIS layout.
   return `http://localhost${PATH_BASE}`;
 }
 

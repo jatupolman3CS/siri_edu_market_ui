@@ -1,8 +1,0 @@
-{
-  "/api": {
-    "target": "http://localhost/SIRIEDUMARKET.Api",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "warn"
-  }
-}
