@@ -3391,6 +3391,14 @@
             }
           },
           {
+            "name": "SellerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
             "name": "Sort",
             "in": "query",
             "schema": {

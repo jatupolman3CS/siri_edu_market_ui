@@ -71,7 +71,7 @@ export class BuyerCategoryDetailPage {
     const subId = this.selectedSubId();
     if (!cat) return [];
     let list = this.catalog
-      .documents()
+      .categoryDocuments()
       .filter((d) => d.categoryIds.includes(cat.id));
     if (subId) {
       list = list.filter((d) => d.subcategoryId === subId);
@@ -98,7 +98,14 @@ export class BuyerCategoryDetailPage {
       this.slug.set(params.get('slug') ?? '');
       this.selectedSubId.set('');
       const slug = params.get('slug') ?? '';
-      if (slug) this.catalog.loadCategoryDetailBySlug(slug);
+      if (slug) {
+        // The document list is scoped to this category server-side; filtering the
+        // shared marketplace cache leaves it empty on a deep link / F5.
+        void this.catalog.loadCategoryDetailBySlug(slug).then((cat) => {
+          if (this.slug() !== slug) return;
+          this.catalog.loadCategoryDocuments(cat?.id ?? '');
+        });
+      }
     });
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
       const sub = qp.get('sub');

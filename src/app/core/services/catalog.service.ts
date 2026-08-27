@@ -63,6 +63,12 @@ export interface CatalogFilters {
 
 export type MarketplaceTab = 'all' | 'free' | 'top-rated' | 'new' | 'bundles';
 
+/**
+ * Page size for the scoped document lists (one category / one seller). 100 is the
+ * server-side clamp in MarketplacePublicService, and neither page paginates yet.
+ */
+const SCOPED_PAGE_SIZE = 100;
+
 const DEFAULT_FILTERS: CatalogFilters = {
   search: '',
   categoryIds: [],
@@ -89,6 +95,9 @@ export class CatalogService {
   private readonly _tab = signal<MarketplaceTab>('all');
   /** Cache of fully-loaded document details keyed by id. */
   private readonly _documentDetails = signal<Map<string, DocumentItem>>(new Map());
+
+  /** True once loadCategories() has completed successfully at least once. */
+  private _categoriesLoaded = false;
 
   private readonly _catalogState = signal<ActionState>(idleActionState());
   private readonly _freeState = signal<ActionState>(idleActionState());
@@ -340,12 +349,26 @@ export class CatalogService {
         const data = unwrapSdkResult(result);
         const cats = (data ?? []).map(mapCategory);
         this._categories.set(cats);
+        this._categoriesLoaded = true;
         this._categoriesState.set(idleActionState());
       } catch (e) {
         this.apiFail.report('โหลดหมวดหมู่', e);
         this._categoriesState.set(errorActionState('โหลดหมวดหมู่ไม่สำเร็จ'));
       }
     })();
+  }
+
+  /**
+   * Loads the category list unless a previous load already succeeded.
+   * Pages that need categories on entry (including deep links / F5) call this;
+   * loadCategories() stays the unconditional refresh behind the retry buttons.
+   * The flag — not `_categories().length` — is the success marker, because
+   * loadCategoryDetailBySlug() also seeds a single category into that array.
+   */
+  ensureCategories(): void {
+    if (this._categoriesLoaded) return;
+    if (this._categoriesState().status === 'loading') return;
+    this.loadCategories();
   }
 
   loadFreeResources(): void {
@@ -390,30 +413,93 @@ export class CatalogService {
     })();
   }
 
-  loadCategoryDetailBySlug(slug: string): void {
-    if (!slug) return;
+  private readonly _categoryDetailState = signal<ActionState>(idleActionState());
+  private readonly _categoryDocuments = signal<DocumentItem[]>([]);
+  private readonly _categoryDocumentsState = signal<ActionState>(idleActionState());
+
+  readonly categoryDetailState = this._categoryDetailState.asReadonly();
+  readonly categoryDocuments = this._categoryDocuments.asReadonly();
+  readonly categoryDocumentsState = this._categoryDocumentsState.asReadonly();
+
+  /** Resolves with the loaded category so callers can chain on its id. */
+  async loadCategoryDetailBySlug(slug: string): Promise<Category | null> {
+    if (!slug) return null;
+    this._categoryDetailState.set(loadingActionState());
+    try {
+      const res = await getApiMarketplaceCategoriesBySlug({ path: { slug } });
+      const detail = unwrapSdkResult(res);
+      const mapped = mapCategoryDetail(detail);
+
+      // Upsert. On a deep link the list cache is still empty, so a map()-only
+      // update dropped the category that had just been fetched and
+      // getCategoryBySlug() reported a 404 the server never sent.
+      this._categories.update((prev) => {
+        const byId = new Map(prev.map((c) => [c.id, c]));
+        byId.set(mapped.id, mapped);
+        return [...byId.values()];
+      });
+
+      // Hydrate subcategories for this category only (lazy-load; avoids N+1).
+      const subs = mapped.subcategories ?? [];
+      if (subs.length) {
+        this._subcategories.update((prev) => {
+          const byId = new Map(prev.map((s) => [s.id, s]));
+          for (const s of subs) byId.set(s.id, s);
+          return [...byId.values()];
+        });
+      }
+
+      this._categoryDetailState.set(idleActionState());
+      return mapped;
+    } catch (e) {
+      this.apiFail.report('โหลดรายละเอียดหมวดหมู่', e);
+      this._categoryDetailState.set(
+        errorActionState('โหลดรายละเอียดหมวดหมู่ไม่สำเร็จ'),
+      );
+      return null;
+    }
+  }
+
+  /**
+   * One-shot `/marketplace/search` fetch kept out of the shared marketplace list.
+   * The category and storefront pages show a slice of the catalog that the home
+   * feed never contains, so filtering `documents()` leaves them empty on a deep link.
+   */
+  private async fetchScopedDocuments(
+    query: NonNullable<
+      NonNullable<Parameters<typeof getApiMarketplaceSearch>[0]>['query']
+    >,
+  ): Promise<DocumentItem[]> {
+    const result = await getApiMarketplaceSearch({ query });
+    const data = unwrapSdkResult(result as SdkResult<MarketplaceSearchResponse>);
+    return (data.items ?? []).map(mapDocument);
+  }
+
+  /** Loads the documents of one category — call from the category detail page. */
+  loadCategoryDocuments(categoryId: string): void {
+    if (!categoryId) {
+      this._categoryDocuments.set([]);
+      this._categoryDocumentsState.set(idleActionState());
+      return;
+    }
     void (async () => {
+      this._categoryDocumentsState.set(loadingActionState());
       try {
-        const res = await getApiMarketplaceCategoriesBySlug({ path: { slug } });
-        const detail = unwrapSdkResult(res);
-        const mapped = mapCategoryDetail(detail);
-
-        // Merge detailed category info back into categories by id.
-        this._categories.update((prev) =>
-          prev.map((c) => (c.id === mapped.id ? mapped : c)),
+        this._categoryDocuments.set(
+          await this.fetchScopedDocuments({
+            CategoryId: categoryId,
+            Page: 1,
+            PageSize: SCOPED_PAGE_SIZE,
+            Sort: 'popular',
+          }),
         );
-
-        // Hydrate subcategories for this category only (lazy-load; avoids N+1).
-        const subs = mapped.subcategories ?? [];
-        if (subs.length) {
-          this._subcategories.update((prev) => {
-            const byId = new Map(prev.map((s) => [s.id, s]));
-            for (const s of subs) byId.set(s.id, s);
-            return [...byId.values()];
-          });
-        }
+        this._categoryDocumentsState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดรายละเอียดหมวดหมู่', e);
+        this.apiFail.report('โหลดเอกสารในหมวดหมู่', e);
+        this._categoryDocuments.set([]);
+        this._categoryDocumentsState.set(
+          errorActionState('โหลดเอกสารในหมวดหมู่ไม่สำเร็จ'),
+        );
       }
     })();
   }
@@ -679,9 +765,13 @@ export class CatalogService {
 
   private readonly _sellerProfile = signal<SellerProfileResponse | null>(null);
   private readonly _sellerProfileState = signal<ActionState>(idleActionState());
+  private readonly _sellerDocuments = signal<DocumentItem[]>([]);
+  private readonly _sellerDocumentsState = signal<ActionState>(idleActionState());
 
   readonly sellerProfile = this._sellerProfile.asReadonly();
   readonly sellerProfileState = this._sellerProfileState.asReadonly();
+  readonly sellerDocuments = this._sellerDocuments.asReadonly();
+  readonly sellerDocumentsState = this._sellerDocumentsState.asReadonly();
 
   async loadSellerProfile(sellerId: string): Promise<SellerProfileResponse | null> {
     if (!sellerId) return null;
@@ -699,6 +789,35 @@ export class CatalogService {
       this._sellerProfile.set(null);
       return null;
     }
+  }
+
+  /** Loads the documents of one seller — call from the storefront page. */
+  loadSellerDocuments(sellerId: string): void {
+    if (!sellerId) {
+      this._sellerDocuments.set([]);
+      this._sellerDocumentsState.set(idleActionState());
+      return;
+    }
+    void (async () => {
+      this._sellerDocumentsState.set(loadingActionState());
+      try {
+        this._sellerDocuments.set(
+          await this.fetchScopedDocuments({
+            SellerId: sellerId,
+            Page: 1,
+            PageSize: SCOPED_PAGE_SIZE,
+            Sort: 'popular',
+          }),
+        );
+        this._sellerDocumentsState.set(idleActionState());
+      } catch (e) {
+        this.apiFail.report('โหลดเอกสารของร้าน', e);
+        this._sellerDocuments.set([]);
+        this._sellerDocumentsState.set(
+          errorActionState('โหลดเอกสารของร้านไม่สำเร็จ'),
+        );
+      }
+    })();
   }
 
   countByGrade(grade: GradeLevel): number {

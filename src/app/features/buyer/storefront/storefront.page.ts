@@ -45,12 +45,17 @@ export class BuyerStorefrontPage {
   readonly tab = signal<'all' | 'bundles' | 'free' | 'top'>('all');
 
   readonly seller = this.catalog.sellerProfile;
-  readonly sellerLoading = computed(() => this.catalog.sellerProfileState().status === 'loading');
+  // Both requests are fired together, so gate the page on both and the tab counts
+  // never render against a half-loaded store.
+  readonly sellerLoading = computed(
+    () =>
+      this.catalog.sellerProfileState().status === 'loading' ||
+      this.catalog.sellerDocumentsState().status === 'loading',
+  );
 
-  readonly sellerDocs = computed(() => {
-    const id = this.sellerId();
-    return this.catalog.documents().filter((d) => d.seller.id === id);
-  });
+  // Server-scoped to this seller. The shared catalog cache only ever holds the
+  // home/marketplace slice, so filtering it showed an empty store on a deep link.
+  readonly sellerDocs = this.catalog.sellerDocuments;
 
   readonly sellerBundles = computed(() =>
     this.bundleService.getBySellerId(this.sellerId()),
@@ -88,6 +93,7 @@ export class BuyerStorefrontPage {
       const id = p.get('id') ?? '';
       this.sellerId.set(id);
       void this.catalog.loadSellerProfile(id);
+      this.catalog.loadSellerDocuments(id);
       void this.follow.hydrateFromApi(id);
     });
   }

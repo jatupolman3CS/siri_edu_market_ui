@@ -124,7 +124,9 @@
           }
         </div>
 
-        @if (docs().length === 0) {
+        @if (catalog.categoryDocumentsState().status === 'loading') {
+          <app-empty-state emoji="⏳" title="กำลังโหลดเอกสาร…" description="รอสักครู่นะคะ" />
+        } @else if (docs().length === 0) {
           <app-empty-state
             emoji="🌸"
             title="ยังไม่มีเอกสารในกลุ่มนี้"
@@ -139,6 +141,8 @@
             }
           </div>
         }
+      } @else if (catalog.categoryDetailState().status === 'loading') {
+        <app-empty-state emoji="⏳" title="กำลังโหลดหมวดหมู่…" description="รอสักครู่นะคะ" />
       } @else {
         <app-empty-state
           emoji="🤔"

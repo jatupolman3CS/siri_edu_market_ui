@@ -16,4 +16,11 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 })
 export class BuyerCategoriesPage {
   readonly catalog = inject(CatalogService);
+
+  constructor() {
+    // Explicit init — the root CatalogService never auto-fetches, so without this
+    // the page renders an empty list on a deep link or F5. ensureCategories()
+    // skips the call when a previous load already succeeded.
+    this.catalog.ensureCategories();
+  }
 }

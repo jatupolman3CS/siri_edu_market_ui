@@ -2427,6 +2427,7 @@ export type GetApiMarketplaceSearchData = {
     Q?: string;
     CategoryId?: string;
     SubcategoryId?: string;
+    SellerId?: string;
     Sort?: string;
     Page?: number;
     PageSize?: number;

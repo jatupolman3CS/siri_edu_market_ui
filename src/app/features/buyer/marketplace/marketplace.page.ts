@@ -125,7 +125,7 @@ export class BuyerMarketplacePage {
         if (cat) {
           const c = this.catalog.getCategoryBySlug(cat);
           // Lazy-load subcategories for selected category only.
-          this.catalog.loadCategoryDetailBySlug(cat);
+          void this.catalog.loadCategoryDetailBySlug(cat);
           if (c && !this.catalog.filters().categoryIds.includes(c.id)) {
             this.catalog.setFilters({ categoryIds: [c.id] });
           }
