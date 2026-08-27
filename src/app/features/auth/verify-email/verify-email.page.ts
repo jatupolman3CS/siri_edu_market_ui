@@ -60,7 +60,9 @@ export class AuthVerifyEmailPage {
   async resend(): Promise<void> {
     const r = await this.auth.resendCode();
     if (r.ok) {
-      this.message.success('ส่งอีเมลยืนยันใหม่แล้ว — กรุณาตรวจสอบกล่องจดหมาย');
+      // D-06: the request succeeding does not mean an email left the building. The server says
+      // which of the two happened; repeating it beats a hard-coded "sent!".
+      this.message.success(r.message || 'ส่งอีเมลยืนยันใหม่แล้ว — กรุณาตรวจสอบกล่องจดหมาย');
       this.cooldown.set(60);
       const t = setInterval(() => {
         this.cooldown.update((v) => v - 1);

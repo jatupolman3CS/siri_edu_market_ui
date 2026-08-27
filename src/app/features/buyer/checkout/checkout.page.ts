@@ -56,6 +56,14 @@ export class BuyerCheckoutPage {
    */
   readonly paymentUnderReview = signal(false);
 
+  /**
+   * D-08: WAVE D connects a database and nothing else, so there is no Stripe key on the server.
+   * Without this the buyer got as far as creating a real order before anything told them payment
+   * was impossible — and that unpaid order then blocked their next checkout attempt (BUG-09).
+   * The key is asked for on load so the answer arrives before the button is worth pressing.
+   */
+  readonly paymentsUnavailable = signal(false);
+
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
   private orderId: string | null = null;
@@ -65,8 +73,28 @@ export class BuyerCheckoutPage {
    * to choose — card, PromptPay, a wallet — is decided inside the Payment Element afterwards,
    * from whatever is enabled in the Stripe Dashboard.
    */
+  constructor() {
+    void this.checkPaymentsConfigured();
+  }
+
+  /**
+   * D-08: asks the server whether it can take a payment at all. A missing key is a configuration
+   * fact, not an error, so a failed lookup is treated the same way — the page says payment is
+   * unavailable rather than pretending the button will work.
+   */
+  private async checkPaymentsConfigured(): Promise<void> {
+    let key: string | null = null;
+    try {
+      key = await this.orders.getStripePublishableKey();
+    } catch {
+      key = null;
+    }
+    this.paymentsUnavailable.set(!key);
+    this.cdr.markForCheck();
+  }
+
   async startPayment(): Promise<void> {
-    if (this.busy() || this.paymentUnderReview()) return;
+    if (this.busy() || this.paymentUnderReview() || this.paymentsUnavailable()) return;
 
     if (!this.auth.isAuthenticated()) {
       this.router.navigate(['/auth/login'], { queryParams: { returnUrl: '/checkout' } });

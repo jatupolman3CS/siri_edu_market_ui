@@ -52,6 +52,12 @@ export class AuthService {
 
   private readonly _session = signal<AuthSession | null>(this.loadSession());
   private readonly _pending = signal<PendingAuth | null>(this.loadPending());
+  /**
+   * D-06: whatever the backend said about the verification email — sent, or not sent because the
+   * server has no mail transport. Deliberately not persisted: it describes one request, and a
+   * stale copy read back after a reload would be a guess.
+   */
+  private readonly _verificationNotice = signal<string>('');
   /** In-memory access token (null until a real JWT is issued by the backend). */
   private readonly _accessToken = signal<string | null>(
     typeof localStorage !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null,
@@ -65,6 +71,8 @@ export class AuthService {
 
   readonly session = this._session.asReadonly();
   readonly pending = this._pending.asReadonly();
+  /** D-06: shown on the verify-email page, straight from the server. */
+  readonly verificationNotice = this._verificationNotice.asReadonly();
   /** Exposes the JWT access token for the HTTP interceptor. */
   readonly accessToken = this._accessToken.asReadonly();
   readonly refreshToken = this._refreshToken.asReadonly();
@@ -217,7 +225,7 @@ export class AuthService {
       return { ok: false, error: 'รหัสผ่านยืนยันไม่ตรงกัน' };
     }
     try {
-      await postApiAuthRegister({
+      const result = await postApiAuthRegister({
         body: {
           email: input.email,
           password: input.password,
@@ -225,6 +233,10 @@ export class AuthService {
           displayName: input.name,
         },
       });
+      // D-06: the backend now says whether the verification email actually went out. Registering
+      // succeeds either way, so the page that comes next has to repeat what the server said
+      // instead of promising an inbox nothing was sent to.
+      this._verificationNotice.set(unwrapSdkResult(result).message ?? '');
     } catch (e) {
       this.apiFail.report('สมัครสมาชิก', e);
       return { ok: false, error: 'สมัครสมาชิกไม่สำเร็จ' };
@@ -276,16 +288,20 @@ export class AuthService {
   }
 
   /** Resend verification email — calls API to re-send the real email link */
-  async resendCode(): Promise<{ ok: boolean }> {
+  async resendCode(): Promise<{ ok: boolean; message?: string }> {
     const p = this._pending();
     if (!p) return { ok: false };
+    let message = '';
     try {
-      await postApiAuthResendVerification({ body: { email: p.email } });
+      const result = await postApiAuthResendVerification({ body: { email: p.email } });
+      // D-06: same reason as register() — the request can succeed while the email does not.
+      message = unwrapSdkResult(result).message ?? '';
+      this._verificationNotice.set(message);
     } catch (e) {
       this.apiFail.report('ส่งอีเมลยืนยันอีกครั้ง', e);
       return { ok: false };
     }
-    return { ok: true };
+    return { ok: true, message };
   }
 
   // ========== Social ==========

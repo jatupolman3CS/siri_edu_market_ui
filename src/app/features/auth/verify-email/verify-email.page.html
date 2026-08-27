@@ -1,6 +1,6 @@
 <app-auth-layout
       artTitle="ตรวจสอบอีเมลของคุณ 📨"
-      artDescription="เราส่งลิงก์ยืนยันไปยังอีเมลของคุณแล้ว กดลิงก์ในอีเมลเพื่อเปิดใช้งานบัญชี"
+      artDescription="ยืนยันอีเมลของคุณเพื่อเปิดใช้งานบัญชี — ระบบจะแจ้งสถานะการส่งอีเมลไว้ทางขวา"
       [artBullets]="[
         { icon: '🔗', label: 'กดลิงก์ในอีเมลเพื่อยืนยัน' },
         { icon: '⏱️', label: 'ลิงก์มีอายุ 24 ชั่วโมง' },
@@ -44,7 +44,17 @@
           <h1 class="text-3xl font-extrabold text-ink mb-2 leading-tight">
             ตรวจสอบอีเมลของคุณ
           </h1>
-          <p class="text-sm text-ink-soft mb-2">เราส่งลิงก์ยืนยันไปที่</p>
+          <!--
+            D-06: this used to state flatly that a link had been sent. Registration succeeds even
+            when the server has no mail transport, so the sentence is the server's own — it says
+            what actually happened — and the hard-coded claim is only the fallback for a page
+            reopened later, when nothing was requested in this session to report on.
+          -->
+          @if (auth.verificationNotice(); as notice) {
+            <p class="text-sm text-ink-soft mb-2">{{ notice }}</p>
+          } @else {
+            <p class="text-sm text-ink-soft mb-2">เราส่งลิงก์ยืนยันไปที่</p>
+          }
           <p class="text-base font-bold text-ink mb-8">
             <app-icon name="mail" [size]="14" className="inline-block text-pink-500 align-middle mr-1" />
             {{ p.email }}

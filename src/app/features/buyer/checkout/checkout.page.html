@@ -57,7 +57,17 @@
                 ชำระเงิน
               </h2>
 
-              @if (!paymentReady()) {
+              <!-- D-08: no publishable key on the server means no payment is possible. Say so
+                   here, before the buyer creates an order that cannot be paid. -->
+              @if (paymentsUnavailable()) {
+                <div class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed">
+                  <p class="font-bold mb-1">ตอนนี้ยังชำระเงินไม่ได้</p>
+                  <p>
+                    ระบบชำระเงินยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์ (ยังไม่ได้ตั้งค่า Stripe)
+                    จึงยังสร้างคำสั่งซื้อแบบเสียเงินไม่ได้ — เอกสารที่ราคา 0 บาท ยังหยิบเข้าคลังได้ตามปกติ
+                  </p>
+                </div>
+              } @else if (!paymentReady()) {
                 <p class="text-sm text-ink-soft leading-relaxed">
                   กด «ดำเนินการชำระเงิน» เพื่อสร้างคำสั่งซื้อ จากนั้นเลือกวิธีชำระเงินได้ในกล่องของ Stripe
                   — บัตรเครดิต, PromptPay หรือ wallet ที่เปิดให้บริการอยู่
@@ -104,11 +114,15 @@
               @if (!paymentReady()) {
                 <button
                   class="btn-pink w-full !py-3.5 mt-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                  [disabled]="paymentUnderReview() || busy()"
+                  [disabled]="paymentUnderReview() || busy() || paymentsUnavailable()"
                   (click)="startPayment()"
                 >
                   <app-icon name="lock" [size]="16" />
-                  {{ busy() ? 'กำลังเปิดการชำระเงิน…' : 'ดำเนินการชำระเงิน' }}
+                  @if (paymentsUnavailable()) {
+                    ยังชำระเงินไม่ได้
+                  } @else {
+                    {{ busy() ? 'กำลังเปิดการชำระเงิน…' : 'ดำเนินการชำระเงิน' }}
+                  }
                 </button>
               } @else {
                 <button
