@@ -106,6 +106,15 @@ export const routes: Routes = [
           ),
         title: 'คลังของฉัน — SIRIEDUMARKET',
       },
+      // F-07: a buyer's own account page. Until now the only way to reach
+      // PUT /api/me/profile was /seller/settings, behind the seller guard.
+      {
+        path: 'account',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/account/account.page').then((m) => m.AccountPage),
+        title: 'บัญชีของฉัน — SIRIEDUMARKET',
+      },
       {
         path: 'checkout',
         canActivate: [authGuard],

@@ -1,0 +1,30 @@
+<div class="max-w-3xl mx-auto px-4 py-10 space-y-6">
+  <header>
+    <h1 class="text-3xl font-extrabold text-ink mb-1">บัญชีของฉัน</h1>
+    <p class="text-sm text-ink-soft">แก้ไขโปรไฟล์ และเลือกว่าจะรับอีเมลแจ้งเตือนเรื่องไหนบ้าง</p>
+  </header>
+
+  <app-profile-editor />
+
+  <app-notification-settings />
+
+  <section class="card-soft p-6">
+    <h2 class="text-lg font-bold text-ink mb-1">ทางลัด</h2>
+    <p class="text-xs text-ink-muted mb-5">ของที่คุณซื้อและเก็บไว้</p>
+
+    <ul class="grid sm:grid-cols-3 gap-3">
+      @for (shortcut of shortcuts; track shortcut.href) {
+        <li>
+          <a
+            [routerLink]="shortcut.href"
+            class="block h-full p-4 rounded-2xl border border-line hover:border-pink-300 transition-colors"
+          >
+            <span class="text-2xl">{{ shortcut.emoji }}</span>
+            <div class="text-sm font-semibold text-ink mt-2">{{ shortcut.label }}</div>
+            <div class="text-xs text-ink-muted">{{ shortcut.description }}</div>
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+</div>

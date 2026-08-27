@@ -1,10 +1,14 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { getApiMeProfile, putApiMeProfile } from '../api';
+import { getApiMeProfile, postApiFilesUpload, putApiMeProfile } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
-import type { UpdateProfileRequest, UserProfileResponse } from '../api/types.gen';
+import type {
+  UpdateProfileRequest,
+  UploadResponse,
+  UserProfileResponse,
+} from '../api/types.gen';
 
 @Injectable({ providedIn: 'root' })
 export class MeService {
@@ -34,5 +38,23 @@ export class MeService {
         return throwError(() => e);
       }),
     );
+  }
+
+  /**
+   * F-07: uploading your own avatar.
+   *
+   * The same `POST /api/files/upload` SellerService.uploadFile calls — that endpoint is
+   * `[Authorize]`, not seller-only. It lives here as well because a buyer changing their
+   * profile picture has no business reaching through a seller service to do it, and /account
+   * must not become a second uploader implementation.
+   */
+  async uploadAvatar(file: File): Promise<UploadResponse> {
+    try {
+      const result = await postApiFilesUpload({ body: { file } });
+      return unwrapSdkResult(result);
+    } catch (e) {
+      this.apiFail.report('อัปโหลดรูปโปรไฟล์', e);
+      throw e;
+    }
   }
 }

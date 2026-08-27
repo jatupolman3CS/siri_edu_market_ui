@@ -1,0 +1,26 @@
+<section class="card-soft p-6">
+  <h2 class="text-lg font-bold text-ink mb-1">การแจ้งเตือน</h2>
+  <p class="text-xs text-ink-muted mb-5">เลือกว่าจะให้เราส่งอีเมลแจ้งเตือนเรื่องไหนบ้าง</p>
+
+  @if (notifications.settings().length === 0) {
+    <p class="text-sm text-ink-soft">ยังไม่มีรายการตั้งค่าจากเซิร์ฟเวอร์</p>
+  } @else {
+    <div class="space-y-3">
+      @for (n of notifications.settings(); track n.key) {
+        <label
+          class="flex items-start gap-3 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300"
+        >
+          <input
+            type="checkbox"
+            [checked]="n.isEnabled"
+            (change)="toggle(n.key, $any($event.target).checked)"
+            class="w-5 h-5 accent-pink-500 mt-0.5"
+          />
+          <div>
+            <div class="text-sm font-semibold text-ink">{{ n.label ?? n.key }}</div>
+          </div>
+        </label>
+      }
+    </div>
+  }
+</section>
