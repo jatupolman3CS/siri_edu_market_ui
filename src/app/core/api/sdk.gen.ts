@@ -189,6 +189,9 @@ import type {
   PostApiAdminSellerApplicationsByUserIdRejectData,
   PostApiAdminSellerApplicationsByUserIdRejectErrors,
   PostApiAdminSellerApplicationsByUserIdRejectResponses,
+  PostApiAuthChangePasswordData,
+  PostApiAuthChangePasswordErrors,
+  PostApiAuthChangePasswordResponses,
   PostApiAuthExternalByProviderData,
   PostApiAuthExternalByProviderErrors,
   PostApiAuthExternalByProviderResponses,
@@ -636,6 +639,26 @@ export const postApiAuthRegister = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: '/api/auth/register',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAuthChangePassword = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAuthChangePasswordData, ThrowOnError>,
+): RequestResult<
+  PostApiAuthChangePasswordResponses,
+  PostApiAuthChangePasswordErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAuthChangePasswordResponses,
+    PostApiAuthChangePasswordErrors,
+    ThrowOnError
+  >({
+    url: '/api/auth/change-password',
     ...options,
     headers: {
       'Content-Type': 'application/json',

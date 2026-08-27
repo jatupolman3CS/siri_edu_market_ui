@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services';
+import { ChangePasswordComponent } from '../../../shared/components/change-password/change-password.component';
 import { NotificationSettingsComponent } from '../../../shared/components/notification-settings/notification-settings.component';
 import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
 
@@ -18,7 +19,12 @@ import { ProfileEditorComponent } from '../../../shared/components/profile-edito
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [RouterLink, ProfileEditorComponent, NotificationSettingsComponent],
+  imports: [
+    RouterLink,
+    ProfileEditorComponent,
+    ChangePasswordComponent,
+    NotificationSettingsComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.page.html',
 })

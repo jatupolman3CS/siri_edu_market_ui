@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { User, UserRole } from '../models';
 import {
+  postApiAuthChangePassword,
   postApiAuthLogin,
   postApiAuthExternalByProvider,
   postApiAuthForgotPassword,
@@ -13,6 +14,7 @@ import {
   postApiAuthResetPassword,
   postApiAuthVerifyEmail,
 } from '../api';
+import type { ChangePasswordRequest } from '../api/types.gen';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { GoogleOauthService } from './google-oauth.service';
@@ -469,6 +471,26 @@ export class AuthService {
     const v = (raw ?? '').toLowerCase();
     if (v === 'admin' || v === 'seller' || v === 'buyer') return v;
     return 'buyer';
+  }
+
+  /**
+   * F-08 (N-04): change the password without leaving the session.
+   *
+   * The server revokes every refresh token on success — including this session's — because
+   * somebody changing their password usually believes it leaked. So the local session is
+   * cleared here too: leaving it in place would show a signed-in header backed by a refresh
+   * token the server has already thrown away, and the first silent refresh would fail with no
+   * explanation the user could connect to what they just did.
+   */
+  async changePassword(request: ChangePasswordRequest): Promise<void> {
+    try {
+      await postApiAuthChangePassword({ body: request, throwOnError: true });
+    } catch (e) {
+      this.apiFail.report('เปลี่ยนรหัสผ่าน', e);
+      throw e;
+    }
+
+    this.signOut();
   }
 }
 

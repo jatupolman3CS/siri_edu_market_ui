@@ -298,6 +298,12 @@ export type CategoryResponse = {
   documentCount?: number;
 };
 
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
 export type CreateCategoryRequest = {
   id: string;
   name: string;
@@ -1765,6 +1771,37 @@ export type PostApiAuthRegisterResponses = {
 
 export type PostApiAuthRegisterResponse =
   PostApiAuthRegisterResponses[keyof PostApiAuthRegisterResponses];
+
+export type PostApiAuthChangePasswordData = {
+  body: ChangePasswordRequest;
+  path?: never;
+  query?: never;
+  url: '/api/auth/change-password';
+};
+
+export type PostApiAuthChangePasswordErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PostApiAuthChangePasswordError =
+  PostApiAuthChangePasswordErrors[keyof PostApiAuthChangePasswordErrors];
+
+export type PostApiAuthChangePasswordResponses = {
+  /**
+   * OK
+   */
+  200: AuthActionResponse;
+};
+
+export type PostApiAuthChangePasswordResponse =
+  PostApiAuthChangePasswordResponses[keyof PostApiAuthChangePasswordResponses];
 
 export type PostApiAuthLoginData = {
   body: LoginRequest;
