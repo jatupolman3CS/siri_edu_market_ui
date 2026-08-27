@@ -51,6 +51,7 @@ export class SellerLayoutComponent {
     // GAP-06 / GAP-07: answering buyer questions and arranging the storefront.
     { label: 'คำถามจากผู้ซื้อ', href: '/seller/qna', icon: 'bell' as const },
     { label: 'หมวดหน้าร้าน', href: '/seller/store-sections', icon: 'package' as const },
+    { label: 'แพ็กเกจของฉัน', href: '/seller/bundles', icon: 'package' as const },
     { label: 'รีวิวลูกค้า', href: '/seller/reviews', icon: 'star' as const },
     { label: 'ตั้งค่าร้าน', href: '/seller/settings', icon: 'gear' as const },
   ];

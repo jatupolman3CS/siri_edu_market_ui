@@ -19,6 +19,6 @@ export type CreateClientConfig<T extends ClientOptions = ClientOptions2> = (
 
 export const client: Client = createClient(
   createClientConfig(
-    createConfig<ClientOptions2>({ baseUrl: 'http://localhost:5290/SIRIEDUMARKET.Api' }),
+    createConfig<ClientOptions2>({ baseUrl: 'http://localhost:5282/SIRIEDUMARKET.Api' }),
   ),
 );

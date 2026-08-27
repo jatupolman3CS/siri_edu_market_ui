@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SNAPSHOT_PATH = resolve(__dirname, '..', 'openapi.snapshot.json');
-const DEFAULT_URL = 'http://localhost:5290/SIRIEDUMARKET.Api/openapi/v1.json';
+// F-04: was 5290, which nothing in this repo listens on — launchSettings and
+// environment.development.ts both say 5282, so the default could only ever fail to connect.
+const DEFAULT_URL = 'http://localhost:5282/SIRIEDUMARKET.Api/openapi/v1.json';
 const url = process.env.OPENAPI_URL ?? DEFAULT_URL;
 const localFile = process.env.OPENAPI_FILE;
 const updateMode = process.argv.includes('--update');
@@ -79,7 +81,7 @@ async function main() {
   } catch (err) {
     const source = localFile ? `read ${localFile}` : 'reach backend';
     console.error(`[verify-api-drift] cannot ${source}: ${err.message}`);
-    console.error('   set OPENAPI_URL or OPENAPI_FILE, or start the API on http://localhost:5290');
+    console.error('   set OPENAPI_URL or OPENAPI_FILE, or start the API on http://localhost:5282');
     process.exit(2);
   }
 

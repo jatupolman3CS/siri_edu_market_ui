@@ -17,6 +17,9 @@ import type {
   DeleteApiCartItemsByDocumentIdData,
   DeleteApiCartItemsByDocumentIdResponses,
   DeleteApiCartResponses,
+  DeleteApiSellerBundlesByBundleIdData,
+  DeleteApiSellerBundlesByBundleIdErrors,
+  DeleteApiSellerBundlesByBundleIdResponses,
   DeleteApiSellerDocumentsByIdData,
   DeleteApiSellerDocumentsByIdErrors,
   DeleteApiSellerDocumentsByIdResponses,
@@ -108,6 +111,13 @@ import type {
   GetApiOrdersResponses,
   GetApiPaymentsStripeConfigData,
   GetApiPaymentsStripeConfigResponses,
+  GetApiSellerBundlesByBundleIdData,
+  GetApiSellerBundlesByBundleIdErrors,
+  GetApiSellerBundlesByBundleIdResponses,
+  GetApiSellerBundlesCandidatesData,
+  GetApiSellerBundlesCandidatesResponses,
+  GetApiSellerBundlesData,
+  GetApiSellerBundlesResponses,
   GetApiSellerDashboardData,
   GetApiSellerDashboardResponses,
   GetApiSellerDocumentsByIdData,
@@ -234,6 +244,9 @@ import type {
   PostApiOrdersData,
   PostApiOrdersErrors,
   PostApiOrdersResponses,
+  PostApiSellerBundlesData,
+  PostApiSellerBundlesErrors,
+  PostApiSellerBundlesResponses,
   PostApiSellerDocumentsByIdGeneratePreviewData,
   PostApiSellerDocumentsByIdGeneratePreviewErrors,
   PostApiSellerDocumentsByIdGeneratePreviewResponses,
@@ -278,6 +291,9 @@ import type {
   PutApiNotificationsSettingsData,
   PutApiNotificationsSettingsErrors,
   PutApiNotificationsSettingsResponses,
+  PutApiSellerBundlesByBundleIdData,
+  PutApiSellerBundlesByBundleIdErrors,
+  PutApiSellerBundlesByBundleIdResponses,
   PutApiSellerDocumentsByIdData,
   PutApiSellerDocumentsByIdErrors,
   PutApiSellerDocumentsByIdListedMainFileData,
@@ -1210,6 +1226,84 @@ export const getApiPaymentsStripeConfig = <ThrowOnError extends boolean = false>
   (options?.client ?? client).get<GetApiPaymentsStripeConfigResponses, unknown, ThrowOnError>({
     url: '/api/payments/stripe-config',
     ...options,
+  });
+
+export const getApiSellerBundles = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerBundlesData, ThrowOnError>,
+): RequestResult<GetApiSellerBundlesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerBundlesResponses, unknown, ThrowOnError>({
+    url: '/api/seller/bundles',
+    ...options,
+  });
+
+export const postApiSellerBundles = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerBundlesData, ThrowOnError>,
+): RequestResult<PostApiSellerBundlesResponses, PostApiSellerBundlesErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiSellerBundlesResponses,
+    PostApiSellerBundlesErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/bundles',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiSellerBundlesCandidates = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerBundlesCandidatesData, ThrowOnError>,
+): RequestResult<GetApiSellerBundlesCandidatesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerBundlesCandidatesResponses, unknown, ThrowOnError>({
+    url: '/api/seller/bundles/candidates',
+    ...options,
+  });
+
+export const deleteApiSellerBundlesByBundleId = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteApiSellerBundlesByBundleIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiSellerBundlesByBundleIdResponses,
+  DeleteApiSellerBundlesByBundleIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiSellerBundlesByBundleIdResponses,
+    DeleteApiSellerBundlesByBundleIdErrors,
+    ThrowOnError
+  >({ url: '/api/seller/bundles/{bundleId}', ...options });
+
+export const getApiSellerBundlesByBundleId = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSellerBundlesByBundleIdData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerBundlesByBundleIdResponses,
+  GetApiSellerBundlesByBundleIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiSellerBundlesByBundleIdResponses,
+    GetApiSellerBundlesByBundleIdErrors,
+    ThrowOnError
+  >({ url: '/api/seller/bundles/{bundleId}', ...options });
+
+export const putApiSellerBundlesByBundleId = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiSellerBundlesByBundleIdData, ThrowOnError>,
+): RequestResult<
+  PutApiSellerBundlesByBundleIdResponses,
+  PutApiSellerBundlesByBundleIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiSellerBundlesByBundleIdResponses,
+    PutApiSellerBundlesByBundleIdErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/bundles/{bundleId}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const getApiSellerDashboard = <ThrowOnError extends boolean = false>(

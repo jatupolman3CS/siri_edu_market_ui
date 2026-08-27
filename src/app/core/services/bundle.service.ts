@@ -1,7 +1,20 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Bundle } from '../models';
 import { mapBundle } from '../api-mappers/mappers';
-import { getApiMarketplaceBundles, getApiMarketplaceBundlesById } from '../api';
+import {
+  deleteApiSellerBundlesByBundleId,
+  getApiMarketplaceBundles,
+  getApiMarketplaceBundlesById,
+  getApiSellerBundles,
+  getApiSellerBundlesCandidates,
+  postApiSellerBundles,
+  putApiSellerBundlesByBundleId,
+} from '../api';
+import type {
+  SaveBundleRequest,
+  SellerBundleItemResponse,
+  SellerBundleResponse,
+} from '../api/types.gen';
 import { unwrapSdkResult } from './api-result';
 import {
   errorActionState,
@@ -85,5 +98,40 @@ export class BundleService {
   /** Bundles published by a seller */
   getBySellerId(sellerId: string): Bundle[] {
     return this.bundles().filter((b) => b.seller.id === sellerId);
+  }
+
+  // ===== F-04: the seller's own bundles =====
+  // Buyers could already browse and buy bundles; nothing could create one, so the only bundles
+  // that existed were the seeder's. These call the seller-scoped endpoints. Errors are left to
+  // the page, which is the layer that knows which action the seller was performing.
+
+  async listMyBundles(): Promise<SellerBundleResponse[]> {
+    return unwrapSdkResult(await getApiSellerBundles()) ?? [];
+  }
+
+  /** The seller's approved documents, for the picker in the bundle form. */
+  async listBundleCandidates(): Promise<SellerBundleItemResponse[]> {
+    return unwrapSdkResult(await getApiSellerBundlesCandidates()) ?? [];
+  }
+
+  /**
+   * Create when `bundleId` is null, replace otherwise.
+   *
+   * `throwOnError` rather than unwrapSdkResult because the server's rejections here carry the
+   * reason the seller needs to read — "ราคาต้องถูกกว่าผลรวมราคาปกติ" and the like — and
+   * ApiFailureReporter already surfaces that message from the thrown error.
+   */
+  async saveMyBundle(
+    bundleId: string | null,
+    body: SaveBundleRequest,
+  ): Promise<SellerBundleResponse> {
+    const result = bundleId
+      ? await putApiSellerBundlesByBundleId({ path: { bundleId }, body, throwOnError: true })
+      : await postApiSellerBundles({ body, throwOnError: true });
+    return result.data;
+  }
+
+  async deleteMyBundle(bundleId: string): Promise<void> {
+    await deleteApiSellerBundlesByBundleId({ path: { bundleId }, throwOnError: true });
   }
 }

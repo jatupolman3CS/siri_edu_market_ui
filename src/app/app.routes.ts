@@ -191,6 +191,12 @@ export const routes: Routes = [
             (m) => m.SellerStoreSectionsPage,
           ),
       },
+      // F-04: bundles could be bought but never created — this is the missing half.
+      {
+        path: 'bundles',
+        loadComponent: () =>
+          import('./features/seller/bundles/bundles.page').then((m) => m.SellerBundlesPage),
+      },
       {
         path: 'earnings',
         loadComponent: () =>
