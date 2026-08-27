@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -41,7 +42,7 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string };
 @Component({
   selector: 'app-admin-document-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, CdkDropList, CdkDrag],
+  imports: [FormsModule, RouterLink, IconComponent, DatePipe, CdkDropList, CdkDrag],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-detail.page.html',
   styleUrl: './document-detail.page.scss',

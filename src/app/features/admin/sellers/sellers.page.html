@@ -54,7 +54,7 @@
             </dl>
 
             <div class="flex items-center justify-between text-xs">
-              <span class="text-ink-muted">เข้าร่วม {{ s.joinedAt }}</span>
+              <span class="text-ink-muted">เข้าร่วม {{ s.joinedAt | date: 'dd MMM yyyy' }}</span>
               <a [routerLink]="['/store', s.id]" class="btn-ghost !py-1.5 !px-3 text-xs">
                 <app-icon name="eye" [size]="12" />
                 ดูร้าน
