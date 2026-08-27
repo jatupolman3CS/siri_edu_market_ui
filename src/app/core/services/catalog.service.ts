@@ -13,6 +13,7 @@ import {
   getApiMarketplaceSearch,
   getApiSellersBySellerIdProfile,
   postApiMarketplaceDocumentsByIdQna,
+  postApiMarketplaceDocumentsByIdReport,
 } from '../api';
 import type {
   MarketplaceDocumentPreviewResponse,
@@ -859,6 +860,21 @@ export class CatalogService {
     await postApiMarketplaceDocumentsByIdQna({
       path: { id: documentId },
       body: { question },
+      throwOnError: true,
+    });
+  }
+
+  /**
+   * F-09 (N-05): report a document.
+   *
+   * Until now the only endpoint that could create a DOCUMENT_REPORT was admin-only, so a buyer
+   * who found their own work being resold had no way to say so. The server rejects a second
+   * open report from the same person with 409.
+   */
+  async reportDocument(documentId: string, category: string, details: string): Promise<void> {
+    await postApiMarketplaceDocumentsByIdReport({
+      path: { id: documentId },
+      body: { category, details },
       throwOnError: true,
     });
   }

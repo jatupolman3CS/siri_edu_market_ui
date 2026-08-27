@@ -51,6 +51,8 @@ import type {
   GetApiAdminPayoutsData,
   GetApiAdminPayoutsErrors,
   GetApiAdminPayoutsResponses,
+  GetApiAdminReportsData,
+  GetApiAdminReportsResponses,
   GetApiAdminSellerApplicationsData,
   GetApiAdminSellerApplicationsResponses,
   GetApiAdminSellersData,
@@ -238,6 +240,9 @@ import type {
   PostApiMarketplaceDocumentsByIdQnaData,
   PostApiMarketplaceDocumentsByIdQnaErrors,
   PostApiMarketplaceDocumentsByIdQnaResponses,
+  PostApiMarketplaceDocumentsByIdReportData,
+  PostApiMarketplaceDocumentsByIdReportErrors,
+  PostApiMarketplaceDocumentsByIdReportResponses,
   PostApiMeSellerApplicationData,
   PostApiMeSellerApplicationErrors,
   PostApiMeSellerApplicationResponses,
@@ -325,6 +330,14 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const getApiAdminReports = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminReportsData, ThrowOnError>,
+): RequestResult<GetApiAdminReportsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminReportsResponses, unknown, ThrowOnError>({
+    url: '/api/admin/reports',
+    ...options,
+  });
 
 export const getApiAdminDashboard = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminDashboardData, ThrowOnError>,
@@ -992,6 +1005,26 @@ export const postApiLibraryByDocumentIdReviews = <ThrowOnError extends boolean =
     ThrowOnError
   >({
     url: '/api/library/{documentId}/reviews',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiMarketplaceDocumentsByIdReport = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMarketplaceDocumentsByIdReportData, ThrowOnError>,
+): RequestResult<
+  PostApiMarketplaceDocumentsByIdReportResponses,
+  PostApiMarketplaceDocumentsByIdReportErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiMarketplaceDocumentsByIdReportResponses,
+    PostApiMarketplaceDocumentsByIdReportErrors,
+    ThrowOnError
+  >({
+    url: '/api/marketplace/documents/{id}/report',
     ...options,
     headers: {
       'Content-Type': 'application/json',

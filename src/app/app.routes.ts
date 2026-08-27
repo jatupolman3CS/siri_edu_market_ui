@@ -284,6 +284,12 @@ export const routes: Routes = [
             (m) => m.AdminSellersPage,
           ),
       },
+      // F-09: one place to read document reports, instead of opening documents to find them.
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/admin/reports/reports.page').then((m) => m.AdminReportsPage),
+      },
       {
         path: 'payouts',
         loadComponent: () =>

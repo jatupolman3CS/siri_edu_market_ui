@@ -55,6 +55,7 @@ export class AdminLayoutComponent {
     { label: 'ธุรกรรม', href: '/admin/transactions', icon: 'wallet' as const },
     { label: 'ผู้ขาย', href: '/admin/sellers', icon: 'user' as const },
     // GAP-02: seller payout queue.
+    { label: 'รายงานเอกสาร', href: '/admin/reports', icon: 'shield' as const },
     { label: 'ถอนเงินผู้ขาย', href: '/admin/payouts', icon: 'wallet' as const },
     // GAP-01: review queue for buyers applying to sell.
     { label: 'ใบสมัครผู้ขาย', href: '/admin/seller-applications', icon: 'shield' as const },

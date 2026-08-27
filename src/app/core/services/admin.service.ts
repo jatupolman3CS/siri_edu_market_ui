@@ -6,6 +6,7 @@ import {
   getApiAdminCategories,
   getApiAdminDashboard,
   getApiAdminPayouts,
+  getApiAdminReports,
   getApiAdminSellers,
   getApiAdminSettings,
   getApiAdminStorageUsage,
@@ -14,13 +15,16 @@ import {
   postApiAdminDocumentsPendingSearch,
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
+  postApiAdminDocumentsByIdReportsByReportIdResolve,
   postApiAdminPayoutsByPayoutIdStatus,
   putApiAdminCategoriesById,
   putApiAdminSettings,
 } from '../api';
 import type {
   AdminDashboardResponse,
+  AdminOpenReportResponse,
   AdminPayoutResponse,
+  PagedResponseOfAdminOpenReportResponse,
   CreateCategoryRequest,
   PlatformSettingsResponse,
   StorageUsageResponse,
@@ -389,6 +393,30 @@ export class AdminService {
     await postApiAdminPayoutsByPayoutIdStatus({
       path: { payoutId },
       body: { status },
+      throwOnError: true,
+    });
+  }
+
+  /**
+   * F-09 (N-05): document reports across every document.
+   *
+   * Reports were previously readable only from inside a document an admin had already guessed
+   * carried one. Paged from the first day — this table grows with every report filed.
+   */
+  async listReports(
+    openOnly: boolean,
+    page = 1,
+    pageSize = 50,
+  ): Promise<PagedResponseOfAdminOpenReportResponse> {
+    const result = await getApiAdminReports({
+      query: { status: openOnly ? 'open' : 'all', page, pageSize },
+    });
+    return unwrapSdkResult(result);
+  }
+
+  async resolveDocumentReport(documentId: string, reportId: string): Promise<void> {
+    await postApiAdminDocumentsByIdReportsByReportIdResolve({
+      path: { id: documentId, reportId },
       throwOnError: true,
     });
   }

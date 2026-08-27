@@ -121,6 +121,18 @@ export type AdminDocumentReportResponse = {
 
 export type AdminDocumentsSort = number;
 
+export type AdminOpenReportResponse = {
+  id?: string;
+  documentId?: string;
+  documentTitle?: string;
+  category?: string;
+  reason?: string;
+  reporterUserId?: string | null;
+  reporterName?: string;
+  createdAt?: string;
+  resolvedAt?: string | null;
+};
+
 export type AdminPayoutResponse = {
   sellerId?: string;
   sellerName?: string;
@@ -549,6 +561,14 @@ export type OrderResponse = {
 
 export type PagedResponseOfAdminDocumentListItemResponse = {
   items?: Array<AdminDocumentListItemResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfAdminOpenReportResponse = {
+  items?: Array<AdminOpenReportResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -998,6 +1018,11 @@ export type SubcategoryResponse = {
   documentCount?: number;
 };
 
+export type SubmitDocumentReportRequest = {
+  category: string;
+  details: string;
+};
+
 export type SubmitDocumentReviewRequest = {
   rating?: number;
   comment: string;
@@ -1124,6 +1149,27 @@ export type WishlistItemResponse = {
   format?: string | null;
   averageRating?: number | null;
 };
+
+export type GetApiAdminReportsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  };
+  url: '/api/admin/reports';
+};
+
+export type GetApiAdminReportsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminOpenReportResponse;
+};
+
+export type GetApiAdminReportsResponse =
+  GetApiAdminReportsResponses[keyof GetApiAdminReportsResponses];
 
 export type GetApiAdminDashboardData = {
   body?: never;
@@ -2429,6 +2475,47 @@ export type PostApiLibraryByDocumentIdReviewsResponses = {
 
 export type PostApiLibraryByDocumentIdReviewsResponse =
   PostApiLibraryByDocumentIdReviewsResponses[keyof PostApiLibraryByDocumentIdReviewsResponses];
+
+export type PostApiMarketplaceDocumentsByIdReportData = {
+  body: SubmitDocumentReportRequest;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/marketplace/documents/{id}/report';
+};
+
+export type PostApiMarketplaceDocumentsByIdReportErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiMarketplaceDocumentsByIdReportError =
+  PostApiMarketplaceDocumentsByIdReportErrors[keyof PostApiMarketplaceDocumentsByIdReportErrors];
+
+export type PostApiMarketplaceDocumentsByIdReportResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type PostApiMarketplaceDocumentsByIdReportResponse =
+  PostApiMarketplaceDocumentsByIdReportResponses[keyof PostApiMarketplaceDocumentsByIdReportResponses];
 
 export type PostApiMarketplaceDocumentsByIdQnaData = {
   body: AskDocumentQuestionRequest;

@@ -1,0 +1,63 @@
+@if (sent()) {
+  <p class="text-[11px] text-ink-muted text-center">ส่งรายงานเอกสารนี้แล้ว</p>
+} @else {
+  <button
+    type="button"
+    class="w-full text-[11px] text-ink-muted hover:text-rose-600 transition-colors underline underline-offset-2"
+    (click)="start()"
+  >
+    รายงานเอกสารนี้
+  </button>
+}
+
+@if (open()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+    (click)="cancel()"
+  >
+    <div class="card-soft w-full max-w-md p-6 space-y-4 bg-white" (click)="$event.stopPropagation()">
+      <div>
+        <h2 class="text-lg font-bold text-ink">รายงานเอกสารนี้</h2>
+        <p class="text-xs text-ink-muted mt-1">
+          บอกเราว่าเอกสารนี้มีปัญหาอย่างไร ทีมงานจะตรวจสอบให้
+        </p>
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">เหตุผล</label>
+        <select class="input-soft" [(ngModel)]="category" name="category">
+          @for (option of categories; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">อธิบายเพิ่มเติม</label>
+        <textarea
+          class="input-soft"
+          rows="4"
+          maxlength="500"
+          [(ngModel)]="details"
+          name="details"
+          placeholder="เช่น เอกสารนี้เป็นผลงานของฉันที่ถูกนำมาขายต่อ"
+        ></textarea>
+        <p class="text-[11px] text-ink-muted mt-1">สูงสุด 500 ตัวอักษร</p>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button type="button" class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">
+          ยกเลิก
+        </button>
+        <button
+          type="button"
+          class="btn-pink !py-2 !px-5 text-sm"
+          [disabled]="sending()"
+          (click)="submit()"
+        >
+          {{ sending() ? 'กำลังส่ง…' : 'ส่งรายงาน' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

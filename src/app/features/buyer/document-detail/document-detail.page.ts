@@ -29,6 +29,7 @@ import {
   RESOURCE_TYPE_LABELS,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
+import { ReportDocumentComponent } from '../../../shared/components/report-document/report-document.component';
 
 import type { MarketplaceDocumentPreviewResponse } from '../../../core/api/types.gen';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
@@ -52,6 +53,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     RatingStarsComponent,
     IconComponent,
     EmptyStateComponent,
+    ReportDocumentComponent,
     ThbPipe,
     CompactPipe,
     TimeAgoPipe,
