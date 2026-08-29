@@ -68,6 +68,12 @@ export class AuthService {
   );
   /** Guard: prevent multiple simultaneous 401 redirects from concurrent API calls. */
   private _redirectingToLogin = false;
+  /**
+   * DEV-BYPASS: set by `provideDevAuthBypass` while the development sign-in bypass is on.
+   * There is no login page to come back through in that mode, so `signOut()` hands control here
+   * to re-enter as the seeded account instead of leaving the app with no session at all.
+   */
+  private _devBypassReactivator: (() => void) | null = null;
 
   readonly session = this._session.asReadonly();
   readonly pending = this._pending.asReadonly();
@@ -96,6 +102,21 @@ export class AuthService {
         /* ignore */
       }
     }
+  }
+
+  /**
+   * DEV-BYPASS: installs a session for the seeded account the API is impersonating, so guards,
+   * the header and every role-aware page behave as if a real sign-in had happened. Only
+   * `provideDevAuthBypass` calls this, and only when `environment.devAuth.bypass` is on.
+   */
+  applyDevBypassSession(user: User, accessToken: string): void {
+    this.setAccessToken(accessToken);
+    this.completeSignIn(user, 'email');
+  }
+
+  /** DEV-BYPASS: registers how to re-enter the app after `signOut()` while the bypass is on. */
+  setDevBypassReactivator(reactivate: () => void): void {
+    this._devBypassReactivator = reactivate;
   }
 
   /** Called by the API auth layer after a successful login/refresh to store the JWT. */
@@ -372,6 +393,10 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
     }
+
+    // DEV-BYPASS: signing out of a build with no working login would strand the user on
+    // /auth/login, so come straight back in as the seeded account.
+    this._devBypassReactivator?.();
   }
 
   // ========== Forgot password ==========

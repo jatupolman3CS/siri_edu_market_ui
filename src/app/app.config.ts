@@ -12,6 +12,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { unauthorizedInterceptor } from './core/interceptors/unauthorized.interceptor';
 import { provideSdkAuthBridge } from './core/api/sdk-auth-bridge';
+import { provideDevAuthBypass } from './core/dev/dev-auth-bypass.provider';
 import { registerLocaleData } from '@angular/common';
 import en from '@angular/common/locales/en';
 import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
@@ -41,6 +42,8 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor, loadingInterceptor, unauthorizedInterceptor]),
     ),
     provideSdkAuthBridge(),
+    // DEV-BYPASS: enters the app as a seeded account while sign-in is unfinished. Inert in production.
+    provideDevAuthBypass(),
     provideNzI18n(en_US),
     { provide: LOCALE_ID, useValue: 'en-US' },
     importProvidersFrom(FormsModule, NzIconModule),

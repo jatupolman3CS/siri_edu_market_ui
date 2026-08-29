@@ -1,6 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { DevAuthBypassService } from '../dev/dev-auth-bypass.service';
 
 /**
  * Attaches `Authorization: Bearer <accessToken>` to every outgoing request
@@ -14,13 +15,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // When a real JWT token is available, use it; otherwise fall through (dev mode).
   const token = authService.accessToken();
+  // DEV-BYPASS: the API picks the seeded account from this header; null in any normal build.
+  const devRole = inject(DevAuthBypassService).currentRoleHeader();
 
-  if (token) {
-    const authReq = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    });
-    return next(authReq);
-  }
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (devRole) headers['X-Dev-Role'] = devRole;
 
-  return next(req);
+  return Object.keys(headers).length > 0 ? next(req.clone({ setHeaders: headers })) : next(req);
 };

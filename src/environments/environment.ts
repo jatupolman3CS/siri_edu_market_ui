@@ -7,4 +7,9 @@ export const environment = {
   apiUrl: '',
   /** Optional fallback; prefer `GET /api/auth/oauth-clients` from the API. */
   googleOAuthClientId: '',
+  /** DEV-BYPASS: never on in a production build — real sign-in only. */
+  devAuth: {
+    bypass: false,
+    role: 'buyer' as 'buyer' | 'seller' | 'admin',
+  },
 };

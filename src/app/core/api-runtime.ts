@@ -29,6 +29,17 @@ export function setTokenRefresher(refresher: () => Promise<string | null>): void
   _tokenRefresher = refresher;
 }
 
+/**
+ * DEV-BYPASS: set by `provideDevAuthBypass` so every SDK call carries the role the dev switcher
+ * is currently on. The API's development bypass scheme reads it to decide which seeded account
+ * the request runs as; in a normal build nothing registers a getter and no header is sent.
+ */
+let _devRoleGetter: (() => string | null) | null = null;
+
+export function setDevRoleGetter(getter: () => string | null): void {
+  _devRoleGetter = getter;
+}
+
 const PATH_BASE = '/SIRIEDUMARKET.Api';
 const R2_BUCKET_PATH = '/siriedumarket/';
 /** Stream file bytes through the API (works in <img> without R2 CORS / expiring presigns). */
@@ -211,10 +222,12 @@ export const createClientConfig: CreateClientConfig = (config) => ({
         // Rebuild from the original input/init each time so the body is still readable
         // on the retry — a consumed Request cannot be sent twice.
         const request = new Request(input, init);
-        if (!token) return fetch(request);
+        const devRole = _devRoleGetter?.() ?? null;
+        if (!token && !devRole) return fetch(request);
 
         const headers = new Headers(request.headers);
-        headers.set('Authorization', `Bearer ${token}`);
+        if (token) headers.set('Authorization', `Bearer ${token}`);
+        if (devRole) headers.set('X-Dev-Role', devRole);
         return fetch(new Request(request, { headers }));
       };
 
