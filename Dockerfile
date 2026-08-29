@@ -35,7 +35,7 @@ WORKDIR /usr/share/nginx/html
 
 # default = nginx/nginx.conf (proxy /SIRIEDUMARKET.Api/ ไป service backend ตาม compose)
 # สลับเป็น SPA อย่างเดียวได้ด้วย --build-arg NGINX_CONF=nginx.web.conf
-ARG NGINX_CONF=nginx/nginx.conf
+ARG NGINX_CONF=nginx.web.conf
 
 RUN rm -rf ./*
 COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
