@@ -1,14 +1,29 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { AdminService, CatalogService } from '../../../core/services';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import {
+  errorActionState,
+  idleActionState,
+  loadingActionState,
+  type ActionState,
+} from '../../../core/services/action-state';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
-import type { Category } from '../../../core/models';
+import type { Category, SubcategoryAdmin } from '../../../core/models';
+
+/** Subcategory being deleted while `subcategoryState()` is holding a 409 — see confirmDeleteSubcategory. */
+interface DeleteConflict {
+  categoryId: string;
+  subcategory: SubcategoryAdmin;
+}
 
 @Component({
   selector: 'app-admin-categories',
   standalone: true,
-  imports: [IconComponent, CompactPipe],
+  imports: [FormsModule, NzModalModule, IconComponent, CompactPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories-admin.page.html',
   styleUrl: './categories-admin.page.scss',
@@ -17,6 +32,8 @@ export class AdminCategoriesPage {
   readonly admin = inject(AdminService);
   private readonly catalog = inject(CatalogService);
   private readonly message = inject(NzMessageService);
+  private readonly modal = inject(NzModalService);
+  private readonly apiFail = inject(ApiFailureReporter);
 
   constructor() {
     void this.admin.refreshAdminCategories();
@@ -72,6 +89,191 @@ export class AdminCategoriesPage {
       this.message.success('ลบหมวดหมู่แล้ว');
     } catch {
       /* ApiFailureReporter ใน AdminService */
+    }
+  }
+
+  // ========== Subcategory admin (subcategory-admin-crud v1) ==========
+  // Backend endpoints do not exist yet — AdminService's 5 subcategory methods are stubs
+  // (docs/contracts/subcategory-admin-crud.md §4). This section is UI/state wiring only.
+
+  /** Only one category's subcategories are shown at a time. */
+  readonly expandedCategoryId = signal<string | null>(null);
+  /** Cache per category id — lazy-loaded on first expand, never refetched unless forced. */
+  readonly subcategories = signal<Record<string, SubcategoryAdmin[]>>({});
+  readonly subcategoryState = signal<ActionState>(idleActionState());
+  readonly subcategoryLoading = computed(() => this.subcategoryState().status === 'loading');
+  readonly subcategoryErrorMessage = computed(() => {
+    const state = this.subcategoryState();
+    return state.status === 'error' ? state.message : '';
+  });
+  /** Set when a DELETE came back 409 — drives the "ปิดใช้งานแทน" shortcut. */
+  readonly deleteConflict = signal<DeleteConflict | null>(null);
+
+  // Form (shared for create + edit; opened via openCreateSubcategory / openEditSubcategory).
+  readonly subcategoryFormOpen = signal<boolean>(false);
+  readonly subcategoryFormCategoryId = signal<string | null>(null);
+  readonly subcategoryFormCategoryName = signal<string>('');
+  readonly editingSubcategoryId = signal<string | null>(null);
+  readonly subSaving = signal<boolean>(false);
+  readonly subId = signal<string>('');
+  readonly subName = signal<string>('');
+  readonly subSlug = signal<string>('');
+  readonly subIcon = signal<string>('');
+  readonly subSortOrder = signal<number>(0);
+  readonly subIsActive = signal<boolean>(true);
+
+  toggleExpand(category: Category): void {
+    if (this.expandedCategoryId() === category.id) {
+      this.expandedCategoryId.set(null);
+      return;
+    }
+    this.expandedCategoryId.set(category.id);
+    this.deleteConflict.set(null);
+    this.subcategoryState.set(idleActionState());
+    if (!this.subcategories()[category.id]) {
+      void this.loadSubcategories(category.id);
+    }
+  }
+
+  private async loadSubcategories(categoryId: string): Promise<void> {
+    this.subcategoryState.set(loadingActionState());
+    try {
+      const list = await this.admin.listSubcategories(categoryId);
+      this.subcategories.update((rec) => ({ ...rec, [categoryId]: list }));
+      this.subcategoryState.set(idleActionState());
+    } catch (e) {
+      this.apiFail.report('โหลดหมวดย่อย', e);
+      this.subcategoryState.set(idleActionState());
+    }
+  }
+
+  openCreateSubcategory(category: Category): void {
+    this.subcategoryFormCategoryId.set(category.id);
+    this.subcategoryFormCategoryName.set(category.name);
+    this.editingSubcategoryId.set(null);
+    this.subId.set('');
+    this.subName.set('');
+    this.subSlug.set('');
+    this.subIcon.set('');
+    this.subSortOrder.set(0);
+    this.subIsActive.set(true);
+    this.deleteConflict.set(null);
+    this.subcategoryFormOpen.set(true);
+  }
+
+  openEditSubcategory(category: Category, sub: SubcategoryAdmin): void {
+    this.subcategoryFormCategoryId.set(category.id);
+    this.subcategoryFormCategoryName.set(category.name);
+    this.editingSubcategoryId.set(sub.id);
+    this.subId.set(sub.id);
+    this.subName.set(sub.name);
+    this.subSlug.set(sub.slug);
+    this.subIcon.set(sub.icon);
+    this.subSortOrder.set(sub.sortOrder);
+    this.subIsActive.set(sub.isActive);
+    this.deleteConflict.set(null);
+    this.subcategoryFormOpen.set(true);
+  }
+
+  closeSubcategoryForm(): void {
+    this.subcategoryFormOpen.set(false);
+    this.editingSubcategoryId.set(null);
+  }
+
+  async saveSubcategory(): Promise<void> {
+    const categoryId = this.subcategoryFormCategoryId();
+    if (!categoryId || this.subSaving()) return;
+
+    const name = this.subName().trim();
+    if (!name) {
+      this.message.warning('กรุณาตั้งชื่อหมวดย่อย');
+      return;
+    }
+    const editingId = this.editingSubcategoryId();
+    if (!editingId && !this.subId().trim()) {
+      this.message.warning('กรุณากรอกรหัส (id)');
+      return;
+    }
+
+    this.subSaving.set(true);
+    try {
+      if (editingId) {
+        await this.admin.updateSubcategory(categoryId, editingId, {
+          name,
+          slug: this.subSlug().trim(),
+          icon: this.subIcon().trim(),
+          isActive: this.subIsActive(),
+          sortOrder: this.subSortOrder(),
+        });
+        this.message.success('บันทึกหมวดย่อยเรียบร้อย');
+      } else {
+        await this.admin.createSubcategory(categoryId, {
+          id: this.subId().trim(),
+          name,
+          slug: this.subSlug().trim(),
+          icon: this.subIcon().trim(),
+          isActive: this.subIsActive(),
+          sortOrder: this.subSortOrder(),
+        });
+        this.message.success('เพิ่มหมวดย่อยเรียบร้อย');
+      }
+      this.closeSubcategoryForm();
+      await this.loadSubcategories(categoryId);
+    } catch (e) {
+      this.apiFail.report('ดำเนินการกับหมวดย่อยไม่สำเร็จ', e);
+    } finally {
+      this.subSaving.set(false);
+    }
+  }
+
+  confirmDeleteSubcategory(categoryId: string, sub: SubcategoryAdmin): void {
+    this.modal.confirm({
+      nzTitle: 'ยืนยันลบหมวดย่อย',
+      nzContent: `ยืนยันลบหมวดย่อย "${sub.name}" หรือไม่? การกระทำนี้ย้อนกลับไม่ได้`,
+      nzOkText: 'ลบ',
+      nzOkDanger: true,
+      nzCancelText: 'ยกเลิก',
+      nzOnOk: () => this.deleteSubcategory(categoryId, sub),
+    });
+  }
+
+  private async deleteSubcategory(categoryId: string, sub: SubcategoryAdmin): Promise<void> {
+    this.deleteConflict.set(null);
+    this.subcategoryState.set(loadingActionState());
+    try {
+      await this.admin.deleteSubcategory(categoryId, sub.id);
+      this.message.success('ลบหมวดย่อยเรียบร้อย');
+      this.subcategoryState.set(idleActionState());
+      await this.loadSubcategories(categoryId);
+    } catch (e) {
+      // AC-14 / spec §4: show the server's own Thai message verbatim (409 body is plain text),
+      // never a generic fallback — and offer the "disable instead" shortcut the spec recommends.
+      const detail = this.apiFail.formatDetail(e);
+      this.deleteConflict.set({ categoryId, subcategory: sub });
+      this.subcategoryState.set(errorActionState(detail));
+    }
+  }
+
+  async disableInsteadOfDelete(): Promise<void> {
+    const conflict = this.deleteConflict();
+    if (!conflict) return;
+
+    this.subcategoryState.set(loadingActionState());
+    try {
+      await this.admin.updateSubcategory(conflict.categoryId, conflict.subcategory.id, {
+        name: conflict.subcategory.name,
+        slug: conflict.subcategory.slug,
+        icon: conflict.subcategory.icon,
+        isActive: false,
+        sortOrder: conflict.subcategory.sortOrder,
+      });
+      this.message.success('บันทึกหมวดย่อยเรียบร้อย');
+      this.deleteConflict.set(null);
+      this.subcategoryState.set(idleActionState());
+      await this.loadSubcategories(conflict.categoryId);
+    } catch (e) {
+      this.apiFail.report('ดำเนินการกับหมวดย่อยไม่สำเร็จ', e);
+      this.subcategoryState.set(idleActionState());
     }
   }
 }

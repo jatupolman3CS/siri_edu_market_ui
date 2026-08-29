@@ -21,19 +21,24 @@ import {
   LibraryService,
   RecentlyViewedService,
   WishlistService,
+  calcBundleSaveAmount,
+  calcBundleSavePercent,
+  idleActionState,
+  loadingActionState,
+  type ActionState,
 } from '../../../core/services';
 
 import {
   GRADE_LEVEL_LABELS,
   RESOURCE_TYPE_ICONS,
   RESOURCE_TYPE_LABELS,
+  type Bundle,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { ReportDocumentComponent } from '../../../shared/components/report-document/report-document.component';
 
 import type { MarketplaceDocumentPreviewResponse } from '../../../core/api/types.gen';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
-import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -49,7 +54,6 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     RouterLink,
     NzTabsModule,
     DocumentCardComponent,
-    BundleCardComponent,
     RatingStarsComponent,
     IconComponent,
     EmptyStateComponent,
@@ -95,9 +99,45 @@ export class BuyerDocumentDetailPage {
     return this.library.library().some((x) => x.document.id === id);
   });
 
-  readonly relatedBundles = computed(() =>
-    this.bundles.getRelatedBundles(this.id()),
+  // ===== document-bundle-cross-sell v1 §4: "ในแพ็กเกจที่คุ้มกว่า" =====
+  // Loaded non-blocking per document — a failure here (or the stub round returning `[]`)
+  // must never stop the rest of the page from rendering, so the section just hides itself.
+  readonly crossSellBundles = signal<Bundle[]>([]);
+  readonly crossSellState = signal<ActionState>(idleActionState());
+
+  readonly crossSellLoading = computed(() => this.crossSellState().status === 'loading');
+
+  readonly crossSellCards = computed(() =>
+    this.crossSellBundles().map((bundle) => ({
+      bundle,
+      savePercent: calcBundleSavePercent(bundle.price, bundle.originalPrice),
+      saveAmount: calcBundleSaveAmount(bundle.price, bundle.originalPrice),
+    })),
   );
+
+  readonly showCrossSell = computed(
+    () => this.crossSellLoading() || this.crossSellCards().length > 0,
+  );
+
+  // ===== document-faq-tab v1 §4: "คำถามที่พบบ่อย (FAQ)" tab =====
+  // Badge counts read `faqCount`/`qnaCount` from the mapped document, never `array.length`,
+  // so the numbers stay correct if the backend ever truncates the qna array (per spec).
+  readonly faqCount = computed(() => this.doc()?.faqCount ?? 0);
+  readonly qnaCount = computed(() => this.doc()?.qnaCount ?? 0);
+  readonly showFaqTab = computed(() => this.faqCount() > 0);
+
+  /**
+   * FAQ = qna items the seller pinned (`isFaq`), sorted by `faqSortOrder` ascending, tie-broken
+   * by `answeredAt` oldest-first. Sorting/filtering happens here (not in the template) per spec.
+   */
+  readonly faqItems = computed(() => {
+    const items = (this.doc()?.qna ?? []).filter((q) => q.isFaq);
+    return [...items].sort((a, b) => {
+      const orderDiff = (a.faqSortOrder ?? 0) - (b.faqSortOrder ?? 0);
+      if (orderDiff !== 0) return orderDiff;
+      return (a.answer?.answeredAt ?? '').localeCompare(b.answer?.answeredAt ?? '');
+    });
+  });
 
   readonly moreFromSeller = computed(() => {
     const d = this.doc();
@@ -157,6 +197,7 @@ export class BuyerDocumentDetailPage {
       this.showPreviewGallery.set(false);
       this.preview.set(null);
       if (id) this.catalog.loadDocumentDetail(id);
+      this.loadCrossSellBundles(id);
     });
     // Track recently viewed
     effect(() => {
@@ -280,5 +321,25 @@ export class BuyerDocumentDetailPage {
     } finally {
       this.askingQuestion.set(false);
     }
+  }
+
+  /**
+   * document-bundle-cross-sell v1 §4: loads bundles containing this document non-blocking —
+   * `BundleService.loadBundlesContainingDocument` never throws (errors are reported via
+   * `ApiFailureReporter` inside the service and resolved as `[]`), so the section just stays
+   * hidden on failure instead of showing a page-wide error banner.
+   */
+  private loadCrossSellBundles(documentId: string): void {
+    this.crossSellBundles.set([]);
+    if (!documentId) {
+      this.crossSellState.set(idleActionState());
+      return;
+    }
+    this.crossSellState.set(loadingActionState());
+    void (async () => {
+      const bundles = await this.bundles.loadBundlesContainingDocument(documentId, 3);
+      this.crossSellBundles.set(bundles);
+      this.crossSellState.set(idleActionState());
+    })();
   }
 }

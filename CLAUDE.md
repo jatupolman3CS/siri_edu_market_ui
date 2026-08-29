@@ -6,7 +6,7 @@
 
 **SIRIEDUMARKET** = Angular 21 marketplace frontend (TpT-inspired Thai version)
 **ต่อ backend จริงแล้ว ไม่ใช่ mock** — ASP.NET Core API (**net10.0** + EF Core 10 + SQL Server)
-ที่ `../siri_edu_market_backend` ต่อครบ **107 endpoints**
+ที่ `../siri_edu_market_backend` ต่อครบทุก endpoint (**118 operations / 94 paths** — ตัวเลขปัจจุบันดู [coverage.md](coverage.md))
 
 เส้นทางข้อมูล: `page → core/services/*.service.ts → core/api/sdk.gen.ts (generated) → base path /SIRIEDUMARKET.Api`
 (base URL + auth header + retry 401 อยู่ที่ `src/app/core/api-runtime.ts`)

@@ -66,6 +66,22 @@ export interface Category {
   subcategories?: Subcategory[];
 }
 
+/**
+ * subcategory-admin-crud v1: admin-only shape for `SUBCATEGORY` (docs/contracts/subcategory-admin-crud.md §3.1).
+ * Separate from {@link Subcategory} — that one backs the public catalog and never exposed
+ * `isActive`/`sortOrder`, which would leak disabled subcategories to buyers if added there.
+ */
+export interface SubcategoryAdmin {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  icon: string;
+  isActive: boolean;
+  sortOrder: number;
+  documentCount: number;
+}
+
 // ====== Seller ======
 
 export interface Seller {
@@ -108,6 +124,31 @@ export interface QnAItem {
   question: string;
   askedAt: string;
   answer?: { text: string; answeredAt: string };
+  /** document-faq-tab v1 §3.2: true when the seller pinned this (answered) question as FAQ. */
+  isFaq: boolean;
+  /**
+   * document-faq-tab v1.1 §3.2: sort key for the FAQ tab, ascending, tie-broken by
+   * `answeredAt` oldest-first — added to `DocumentQnaResponse` in v1.1 (v1 only had `isFaq`).
+   */
+  faqSortOrder: number;
+}
+
+/**
+ * document-faq-tab v1 §3.3: `SellerQnaResponse` + 2 new fields — the seller Q&A inbox's own
+ * domain shape (mapped from the SDK response, not read from it directly) so the page never binds
+ * to `unknown | undefined` fields that vary release to release.
+ */
+export interface SellerQnaItem {
+  id: string;
+  documentId: string;
+  documentTitle: string;
+  buyerName: string;
+  question: string;
+  askedAt: string;
+  answerText: string | null;
+  answeredAt: string | null;
+  isFaq: boolean;
+  faqSortOrder: number;
 }
 
 // ====== Document ======
@@ -168,6 +209,15 @@ export interface DocumentItem {
   updatedAt: string;
   reviews: DocumentReview[];
   qna?: QnAItem[];
+  /**
+   * document-faq-tab v1 §3.2/§4: from `MarketplaceDocumentDetailResponse.faqCount` /
+   * `.qnaCount` — the FAQ tab's visibility + badge count must read these, not `qna.length`, so
+   * the numbers stay correct if the backend ever truncates the array. Only `mapDocumentDetail`
+   * populates them; list-view mappers (`mapDocument`, `mapSellerDocument`, …) leave them
+   * `undefined` because they never carry a `qna` array to begin with.
+   */
+  faqCount?: number;
+  qnaCount?: number;
   aiSummary?: string[];
   aiHighlights?: string[];
 
@@ -191,6 +241,10 @@ export interface Bundle {
   price: number;
   originalPrice: number;     // sum of items, used to show savings
   documentIds: string[];
+  // document-bundle-cross-sell v1 §3.1: `BundleResponse.documentCount` — the paged bundle
+  // endpoints only ever send a count, never the member document ids, so `documentIds` above
+  // stays `[]` from `mapBundle`. This is the field the "N เอกสาร" pill should read.
+  documentCount: number;
   seller: Seller;
   createdAt: string;
   rating: number;
@@ -242,6 +296,34 @@ export interface LibraryItem {
   orderNumber: string;
   downloadCount: number;
   lastDownloadAt?: string;
+  isReviewed: boolean;
+  myReviewId?: string;
+  myRating?: number;
+}
+
+// ====== Loyalty points ======
+// loyalty-points v1 §4 (docs/contracts/loyalty-points.md) — mirrors `LoyaltySummaryResponse` /
+// `LoyaltyEntryResponse` exactly. `core/services/loyalty.service.ts` maps the generated SDK
+// responses into these; `summary` stays `null` only until the first successful fetch (or on
+// error), never as a stand-in for "not wired yet".
+
+export interface LoyaltySummary {
+  balance: number;
+  earnedThisMonth: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+  asOf: string;
+}
+
+export type LoyaltyEntryKind = 'earn' | 'redeem' | 'adjust';
+
+export interface LoyaltyEntry {
+  id: string;
+  points: number;
+  kind: LoyaltyEntryKind;
+  reason: string;
+  orderNumber?: string;
+  occurredAt: string;
 }
 
 // ====== User ======

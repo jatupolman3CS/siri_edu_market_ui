@@ -365,6 +365,15 @@ export type CreateOrderRequest = {
   [key: string]: unknown;
 };
 
+export type CreateSubcategoryRequest = {
+  id: string;
+  name: string;
+  slug?: string;
+  icon?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+};
+
 export type DocumentGalleryItemRequest = {
   id?: string | null;
   imageUrl?: string;
@@ -378,6 +387,8 @@ export type DocumentQnaResponse = {
   askedAt?: string;
   answerText?: string | null;
   answeredAt?: string | null;
+  isFaq?: boolean;
+  faqSortOrder?: number;
 };
 
 export type DocumentReviewWriteResponse = {
@@ -424,6 +435,9 @@ export type LibraryItemResponse = {
   purchasedAt?: string;
   downloadCount?: number;
   lastDownloadAt?: string | null;
+  isReviewed?: boolean;
+  myReviewId?: string | null;
+  myRating?: number | null;
 };
 
 export type LoginRequest = {
@@ -433,6 +447,23 @@ export type LoginRequest = {
 
 export type LogoutRequest = {
   refreshToken: string;
+};
+
+export type LoyaltyEntryResponse = {
+  id?: string;
+  points?: number;
+  kind?: string;
+  reason?: string;
+  orderNumber?: string | null;
+  occurredAt?: string;
+};
+
+export type LoyaltySummaryResponse = {
+  balance?: number;
+  earnedThisMonth?: number;
+  lifetimeEarned?: number;
+  lifetimeSpent?: number;
+  asOf?: string;
 };
 
 export type MarketplaceCatalogResponse = {
@@ -486,6 +517,8 @@ export type MarketplaceDocumentDetailResponse = {
   isFeatured?: boolean;
   isEditorsPick?: boolean;
   bundleIds?: Array<string> | null;
+  faqCount?: number;
+  qnaCount?: number;
 };
 
 export type MarketplaceDocumentPreviewResponse = {
@@ -644,6 +677,14 @@ export type PagedResponseOfBundleResponse = {
 
 export type PagedResponseOfLibraryItemResponse = {
   items?: Array<LibraryItemResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfLoyaltyEntryResponse = {
+  items?: Array<LoyaltyEntryResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -991,6 +1032,8 @@ export type SellerQnaResponse = {
   askedAt?: string;
   answerText?: string | null;
   answeredAt?: string | null;
+  isFaq?: boolean;
+  faqSortOrder?: number;
 };
 
 export type SellerReviewResponse = {
@@ -1018,6 +1061,11 @@ export type SetListedSellerDocumentMainFileRequest = {
   fileId: string;
 };
 
+export type SetQnaFaqRequest = {
+  isFaq?: boolean;
+  sortOrder?: number;
+};
+
 export type StorageUsageResponse = {
   bucketName?: string;
   objectCount?: number;
@@ -1034,6 +1082,17 @@ export type StoreSectionResponse = {
 
 export type StripePublicConfigResponse = {
   publishableKey?: string;
+};
+
+export type SubcategoryAdminResponse = {
+  id?: string;
+  categoryId?: string;
+  name?: string;
+  slug?: string;
+  icon?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  documentCount?: number;
 };
 
 export type SubcategoryResponse = {
@@ -1135,6 +1194,14 @@ export type UpdatePlatformSettingsRequest = {
 export type UpdateProfileRequest = {
   name?: string | null;
   avatarUrl?: string | null;
+};
+
+export type UpdateSubcategoryRequest = {
+  name: string;
+  slug?: string;
+  icon?: string;
+  isActive?: boolean;
+  sortOrder?: number;
 };
 
 export type UploadBase64Request = {
@@ -2488,6 +2555,7 @@ export type GetApiLibraryData = {
   query?: {
     Page?: number;
     PageSize?: number;
+    unreviewedOnly?: boolean;
   };
   url: '/api/library';
 };
@@ -2773,6 +2841,38 @@ export type GetApiMarketplaceDocumentsByIdRelatedResponses = {
 export type GetApiMarketplaceDocumentsByIdRelatedResponse =
   GetApiMarketplaceDocumentsByIdRelatedResponses[keyof GetApiMarketplaceDocumentsByIdRelatedResponses];
 
+export type GetApiMarketplaceDocumentsByIdBundlesData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/marketplace/documents/{id}/bundles';
+};
+
+export type GetApiMarketplaceDocumentsByIdBundlesErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiMarketplaceDocumentsByIdBundlesError =
+  GetApiMarketplaceDocumentsByIdBundlesErrors[keyof GetApiMarketplaceDocumentsByIdBundlesErrors];
+
+export type GetApiMarketplaceDocumentsByIdBundlesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfBundleResponse;
+};
+
+export type GetApiMarketplaceDocumentsByIdBundlesResponse =
+  GetApiMarketplaceDocumentsByIdBundlesResponses[keyof GetApiMarketplaceDocumentsByIdBundlesResponses];
+
 export type GetApiMarketplaceCategoriesData = {
   body?: never;
   path?: never;
@@ -3007,6 +3107,61 @@ export type PostApiMeSellerApplicationResponses = {
 
 export type PostApiMeSellerApplicationResponse =
   PostApiMeSellerApplicationResponses[keyof PostApiMeSellerApplicationResponses];
+
+export type GetApiMeLoyaltyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/loyalty';
+};
+
+export type GetApiMeLoyaltyErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeLoyaltyError = GetApiMeLoyaltyErrors[keyof GetApiMeLoyaltyErrors];
+
+export type GetApiMeLoyaltyResponses = {
+  /**
+   * OK
+   */
+  200: LoyaltySummaryResponse;
+};
+
+export type GetApiMeLoyaltyResponse = GetApiMeLoyaltyResponses[keyof GetApiMeLoyaltyResponses];
+
+export type GetApiMeLoyaltyEntriesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/me/loyalty/entries';
+};
+
+export type GetApiMeLoyaltyEntriesErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeLoyaltyEntriesError =
+  GetApiMeLoyaltyEntriesErrors[keyof GetApiMeLoyaltyEntriesErrors];
+
+export type GetApiMeLoyaltyEntriesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfLoyaltyEntryResponse;
+};
+
+export type GetApiMeLoyaltyEntriesResponse =
+  GetApiMeLoyaltyEntriesResponses[keyof GetApiMeLoyaltyEntriesResponses];
 
 export type GetApiNotificationsSettingsData = {
   body?: never;
@@ -3408,6 +3563,39 @@ export type PostApiSellerQnaByQuestionIdAnswerResponses = {
 
 export type PostApiSellerQnaByQuestionIdAnswerResponse =
   PostApiSellerQnaByQuestionIdAnswerResponses[keyof PostApiSellerQnaByQuestionIdAnswerResponses];
+
+export type PutApiSellerQnaByQuestionIdFaqData = {
+  body: SetQnaFaqRequest;
+  path: {
+    questionId: string;
+  };
+  query?: never;
+  url: '/api/seller/qna/{questionId}/faq';
+};
+
+export type PutApiSellerQnaByQuestionIdFaqErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiSellerQnaByQuestionIdFaqError =
+  PutApiSellerQnaByQuestionIdFaqErrors[keyof PutApiSellerQnaByQuestionIdFaqErrors];
+
+export type PutApiSellerQnaByQuestionIdFaqResponses = {
+  /**
+   * OK
+   */
+  200: SellerQnaResponse;
+};
+
+export type PutApiSellerQnaByQuestionIdFaqResponse =
+  PutApiSellerQnaByQuestionIdFaqResponses[keyof PutApiSellerQnaByQuestionIdFaqResponses];
 
 export type GetApiSellerStoreSectionsData = {
   body?: never;
@@ -4077,6 +4265,174 @@ export type PostApiWebhooksStripeResponses = {
   200: unknown;
 };
 
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesData = {
+  body?: never;
+  path: {
+    categoryId: string;
+  };
+  query?: never;
+  url: '/api/admin/categories/{categoryId}/subcategories';
+};
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesError =
+  GetApiAdminCategoriesByCategoryIdSubcategoriesErrors[keyof GetApiAdminCategoriesByCategoryIdSubcategoriesErrors];
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesResponses = {
+  /**
+   * OK
+   */
+  200: Array<SubcategoryAdminResponse>;
+};
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesResponse =
+  GetApiAdminCategoriesByCategoryIdSubcategoriesResponses[keyof GetApiAdminCategoriesByCategoryIdSubcategoriesResponses];
+
+export type PostApiAdminCategoriesByCategoryIdSubcategoriesData = {
+  body: CreateSubcategoryRequest;
+  path: {
+    categoryId: string;
+  };
+  query?: never;
+  url: '/api/admin/categories/{categoryId}/subcategories';
+};
+
+export type PostApiAdminCategoriesByCategoryIdSubcategoriesErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminCategoriesByCategoryIdSubcategoriesError =
+  PostApiAdminCategoriesByCategoryIdSubcategoriesErrors[keyof PostApiAdminCategoriesByCategoryIdSubcategoriesErrors];
+
+export type PostApiAdminCategoriesByCategoryIdSubcategoriesResponses = {
+  /**
+   * Created
+   */
+  201: SubcategoryAdminResponse;
+};
+
+export type PostApiAdminCategoriesByCategoryIdSubcategoriesResponse =
+  PostApiAdminCategoriesByCategoryIdSubcategoriesResponses[keyof PostApiAdminCategoriesByCategoryIdSubcategoriesResponses];
+
+export type DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdData = {
+  body?: never;
+  path: {
+    categoryId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/categories/{categoryId}/subcategories/{id}';
+};
+
+export type DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdError =
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors[keyof DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors];
+
+export type DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponse =
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses[keyof DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses];
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesByIdData = {
+  body?: never;
+  path: {
+    categoryId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/categories/{categoryId}/subcategories/{id}';
+};
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesByIdError =
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors[keyof GetApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors];
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses = {
+  /**
+   * OK
+   */
+  200: SubcategoryAdminResponse;
+};
+
+export type GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponse =
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses[keyof GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses];
+
+export type PutApiAdminCategoriesByCategoryIdSubcategoriesByIdData = {
+  body: UpdateSubcategoryRequest;
+  path: {
+    categoryId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/categories/{categoryId}/subcategories/{id}';
+};
+
+export type PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PutApiAdminCategoriesByCategoryIdSubcategoriesByIdError =
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors[keyof PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors];
+
+export type PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses = {
+  /**
+   * OK
+   */
+  200: SubcategoryAdminResponse;
+};
+
+export type PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponse =
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses[keyof PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses];
+
 export type GetApiSystemStatusData = {
   body?: never;
   path?: never;
@@ -4124,6 +4480,14 @@ export type PostApiSystemTestEmailErrors = {
    * Unauthorized
    */
   401: ProblemDetails;
+  /**
+   * Bad Gateway
+   */
+  502: unknown;
+  /**
+   * Service Unavailable
+   */
+  503: unknown;
 };
 
 export type PostApiSystemTestEmailError =

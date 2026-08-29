@@ -2,6 +2,7 @@ export * from './api-failure-reporter.service';
 export * from './catalog.service';
 export * from './cart.service';
 export * from './library.service';
+export * from './loyalty.service';
 export * from './order.service';
 export * from './seller.service';
 export * from './admin.service';

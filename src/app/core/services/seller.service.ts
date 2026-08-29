@@ -1,6 +1,11 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { DocumentItem, SellerStats } from '../models';
-import { mapSellerDocument, mapSellerDocumentSummary, mapSellerStats } from '../api-mappers/mappers';
+import { DocumentItem, SellerQnaItem, SellerStats } from '../models';
+import {
+  mapSellerDocument,
+  mapSellerDocumentSummary,
+  mapSellerQna,
+  mapSellerStats,
+} from '../api-mappers/mappers';
 import {
   deleteApiSellerDocumentsById,
   deleteApiSellerStoreSectionsBySectionId,
@@ -16,6 +21,7 @@ import {
   postApiSellerPayouts,
   postApiSellerQnaByQuestionIdAnswer,
   postApiSellerStoreSections,
+  putApiSellerQnaByQuestionIdFaq,
   putApiSellerStoreSectionsBySectionId,
 } from '../api';
 import type {
@@ -23,7 +29,6 @@ import type {
   GetApiSellerReviewsResponse,
   SaveStoreSectionRequest,
   SellerDocumentResponse,
-  SellerQnaResponse,
   StoreSectionResponse,
   UploadResponse,
   SellerEarningsResponse,
@@ -345,17 +350,29 @@ export class SellerService {
     unansweredOnly: boolean,
     page = 1,
     pageSize = 50,
-  ): Promise<SellerQnaResponse[]> {
+  ): Promise<SellerQnaItem[]> {
     const result = await getApiSellerQna({
       query: { Page: page, PageSize: pageSize, unansweredOnly },
     });
-    return unwrapSdkResult(result).items ?? [];
+    return (unwrapSdkResult(result).items ?? []).map(mapSellerQna);
   }
 
   async answerQuestion(questionId: string, answer: string): Promise<void> {
     await postApiSellerQnaByQuestionIdAnswer({
       path: { questionId },
       body: { answer },
+      throwOnError: true,
+    });
+  }
+
+  /**
+   * document-faq-tab v1.1 §3.1: `PUT /api/seller/qna/{questionId}/faq` pins/unpins an answered
+   * question as FAQ (`sortOrder` controls its position within the FAQ tab).
+   */
+  async setQnaFaq(questionId: string, isFaq: boolean, sortOrder: number): Promise<void> {
+    await putApiSellerQnaByQuestionIdFaq({
+      path: { questionId },
+      body: { isFaq, sortOrder },
       throwOnError: true,
     });
   }

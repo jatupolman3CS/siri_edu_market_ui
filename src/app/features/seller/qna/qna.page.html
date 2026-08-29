@@ -67,7 +67,7 @@
                 <button
                   class="btn-pink !py-2 !px-5 text-sm"
                   [disabled]="submitting()"
-                  (click)="submitAnswer(q.id!)"
+                  (click)="submitAnswer(q.id)"
                 >
                   {{ submitting() ? 'กำลังบันทึก…' : 'ส่งคำตอบ' }}
                 </button>
@@ -81,6 +81,36 @@
               </button>
             </div>
           }
+
+          <!-- document-faq-tab v1 §3.1/§4: pin/unpin as FAQ — disabled until the question is answered. -->
+          <div class="mt-4 pt-4 border-t border-line flex flex-wrap items-center gap-5">
+            <span
+              nz-tooltip
+              [nzTooltipTitle]="!q.answerText ? 'ต้องตอบคำถามก่อนจึงจะปักหมุดได้' : null"
+              class="inline-flex items-center gap-2"
+            >
+              <nz-switch
+                [attr.name]="'faq-switch-' + q.id"
+                [ngModel]="q.isFaq"
+                [nzDisabled]="!q.answerText || savingFaqId() === q.id"
+                (ngModelChange)="toggleFaq(q, $event)"
+              />
+              <span class="text-sm text-ink">ปักหมุดเป็น FAQ</span>
+            </span>
+
+            <label class="inline-flex items-center gap-2 text-sm text-ink-muted">
+              ลำดับการแสดง
+              <input
+                type="number"
+                [attr.name]="'faq-sort-' + q.id"
+                class="input-soft !w-20 !py-1.5"
+                min="0"
+                max="999"
+                [ngModel]="sortOrderFor(q)"
+                (ngModelChange)="onSortOrderChange(q, $event)"
+              />
+            </label>
+          </div>
         </li>
       }
     </ul>

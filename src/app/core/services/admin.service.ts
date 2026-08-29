@@ -1,9 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { Category, DocumentItem, Seller } from '../models';
+import type { Category, DocumentItem, Seller, SubcategoryAdmin } from '../models';
 import { AdminTransaction } from '../models';
 import {
   deleteApiAdminCategoriesById,
+  deleteApiAdminCategoriesByCategoryIdSubcategoriesById,
   getApiAdminCategories,
+  getApiAdminCategoriesByCategoryIdSubcategories,
+  getApiAdminCategoriesByCategoryIdSubcategoriesById,
   getApiAdminAudit,
   getApiAdminDashboard,
   getApiAdminPayouts,
@@ -13,6 +16,7 @@ import {
   getApiAdminStorageUsage,
   getApiAdminTransactions,
   postApiAdminCategories,
+  postApiAdminCategoriesByCategoryIdSubcategories,
   postApiAdminDocumentsPendingSearch,
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
@@ -20,6 +24,7 @@ import {
   postApiAdminOrdersByOrderIdRefund,
   postApiAdminPayoutsByPayoutIdStatus,
   putApiAdminCategoriesById,
+  putApiAdminCategoriesByCategoryIdSubcategoriesById,
   putApiAdminSettings,
 } from '../api';
 import type {
@@ -30,9 +35,11 @@ import type {
   PagedResponseOfAdminAuditLogResponse,
   PagedResponseOfAdminOpenReportResponse,
   CreateCategoryRequest,
+  CreateSubcategoryRequest,
   PlatformSettingsResponse,
   StorageUsageResponse,
   UpdateCategoryRequest,
+  UpdateSubcategoryRequest,
 } from '../api/types.gen';
 
 /**
@@ -78,6 +85,7 @@ import {
   mapAdminSellerCard,
   mapAdminTransaction,
   mapCategory,
+  mapSubcategoryAdmin,
 } from '../api-mappers/mappers';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
@@ -465,5 +473,61 @@ export class AdminService {
       },
     });
     return unwrapSdkResult(result);
+  }
+
+  // ========== Subcategory admin (subcategory-admin-crud v1) ==========
+  // docs/contracts/subcategory-admin-crud.md §3-4. Errors are intentionally left to propagate
+  // (not reported here via ApiFailureReporter) — categories-admin.page.ts owns the reporting for
+  // this section because the 409-on-delete flow needs the raw message text to drive the
+  // "ปิดใช้งานแทน" shortcut (AC-14), not just a toast. §3.4/3.5/3.6: the 409 body is plain text,
+  // not a `ProblemDetails` object, despite what the generated error type says (a cosmetic mismatch
+  // in the backend's swagger annotations, confirmed against runtime by integrator-qa) — `unwrapSdkResult`
+  // throws `result.error` as-is, and `@hey-api/client-fetch` already falls back to the raw text
+  // when a 409 body fails `JSON.parse`, so this string reaches the caller untouched.
+
+  async listSubcategories(categoryId: string): Promise<SubcategoryAdmin[]> {
+    const result = await getApiAdminCategoriesByCategoryIdSubcategories({ path: { categoryId } });
+    const data = unwrapSdkResult(result);
+    return (data ?? []).map(mapSubcategoryAdmin);
+  }
+
+  async getSubcategory(categoryId: string, id: string): Promise<SubcategoryAdmin | null> {
+    const result = await getApiAdminCategoriesByCategoryIdSubcategoriesById({
+      path: { categoryId, id },
+    });
+    const data = unwrapSdkResult(result);
+    return data ? mapSubcategoryAdmin(data) : null;
+  }
+
+  async createSubcategory(
+    categoryId: string,
+    request: CreateSubcategoryRequest,
+  ): Promise<SubcategoryAdmin | null> {
+    const result = await postApiAdminCategoriesByCategoryIdSubcategories({
+      path: { categoryId },
+      body: request,
+    });
+    const data = unwrapSdkResult(result);
+    return data ? mapSubcategoryAdmin(data) : null;
+  }
+
+  async updateSubcategory(
+    categoryId: string,
+    id: string,
+    request: UpdateSubcategoryRequest,
+  ): Promise<SubcategoryAdmin | null> {
+    const result = await putApiAdminCategoriesByCategoryIdSubcategoriesById({
+      path: { categoryId, id },
+      body: request,
+    });
+    const data = unwrapSdkResult(result);
+    return data ? mapSubcategoryAdmin(data) : null;
+  }
+
+  async deleteSubcategory(categoryId: string, id: string): Promise<void> {
+    const result = await deleteApiAdminCategoriesByCategoryIdSubcategoriesById({
+      path: { categoryId, id },
+    });
+    if (result.error !== undefined) throw result.error;
   }
 }

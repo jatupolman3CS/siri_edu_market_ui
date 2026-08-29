@@ -19,6 +19,8 @@ import {
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager } from './infinite-pager';
 
+export type LibraryFilter = 'all' | 'unreviewed';
+
 export interface SubmitReviewRequest {
   rating: number;
   comment: string;
@@ -43,11 +45,24 @@ export class LibraryService {
 
   readonly state = this._state.asReadonly();
 
+  /**
+   * library-is-reviewed v1: tab "ทั้งหมด" / "ยังไม่ได้รีวิว" must re-query the API instead of
+   * filtering the page already loaded — a client-side filter only sees whatever page happened
+   * to load, so a buyer with hundreds of items would see an empty (or wrong-count) tab.
+   */
+  readonly libraryFilter = signal<LibraryFilter>('all');
+
   private readonly libraryPager = createInfinitePager<LibraryItem>({
     pageSize: 24,
     errorMessage: 'โหลดคลังของฉันไม่สำเร็จ',
     fetch: async (Page, PageSize) => {
-      const result = await getApiLibrary({ query: { Page, PageSize } });
+      const result = await getApiLibrary({
+        query: {
+          Page,
+          PageSize,
+          unreviewedOnly: this.libraryFilter() === 'unreviewed' ? true : undefined,
+        },
+      });
       const data = unwrapSdkResult(result);
       return {
         items: (data.items ?? []).map(mapLibraryItem),
@@ -113,6 +128,16 @@ export class LibraryService {
       this.apiFail.report('โหลดคลังของฉัน', e);
       this._state.set(errorActionState('โหลดคลังของฉันไม่สำเร็จ'));
     }
+  }
+
+  /**
+   * AC-9: switching the "ยังไม่ได้รีวิว" tab must re-fetch page 1, never `Array.filter()` the
+   * items already in memory — see the comment on `libraryFilter` above.
+   */
+  async setLibraryFilter(filter: LibraryFilter): Promise<void> {
+    if (this.libraryFilter() === filter) return;
+    this.libraryFilter.set(filter);
+    await this.refreshLibrary();
   }
 
   /**

@@ -25,7 +25,15 @@
             @for (c of admin.adminCategories(); track c.id) {
               <tr class="border-t border-line hover:bg-pink-50/40">
                 <td class="px-5 py-3">
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="btn-icon !w-7 !h-7 shrink-0"
+                      [attr.aria-label]="expandedCategoryId() === c.id ? 'ยุบหมวดย่อย' : 'ขยายหมวดย่อย'"
+                      (click)="toggleExpand(c)"
+                    >
+                      <app-icon [name]="expandedCategoryId() === c.id ? 'chevron-down' : 'chevron-right'" [size]="14" />
+                    </button>
                     <span class="w-10 h-10 rounded-2xl bg-pink-50 text-2xl flex items-center justify-center">
                       {{ c.icon }}
                     </span>
@@ -48,8 +56,120 @@
                   </div>
                 </td>
               </tr>
+
+              @if (expandedCategoryId() === c.id) {
+                <tr class="bg-pink-50/30 border-t border-line">
+                  <td colspan="5" class="px-5 py-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h3 class="text-sm font-bold text-ink">หมวดย่อย</h3>
+                      <button type="button" class="btn-pink !py-1.5 !px-4 text-xs" (click)="openCreateSubcategory(c)">
+                        <app-icon name="plus" [size]="12" />
+                        เพิ่มหมวดย่อย
+                      </button>
+                    </div>
+
+                    @if (deleteConflict(); as conflict) {
+                      @if (conflict.categoryId === c.id) {
+                        <div class="rounded-2xl bg-rose-50 border border-rose-200 px-4 py-3 mb-3 flex items-center justify-between gap-3">
+                          <p class="text-xs text-rose-700">{{ subcategoryErrorMessage() }}</p>
+                          <button
+                            type="button"
+                            class="btn-ghost !py-1 !px-3 text-xs whitespace-nowrap"
+                            (click)="disableInsteadOfDelete()"
+                          >
+                            ปิดใช้งานแทน
+                          </button>
+                        </div>
+                      }
+                    }
+
+                    @if (subcategoryLoading()) {
+                      <p class="text-xs text-ink-muted">กำลังโหลด...</p>
+                    } @else {
+                      <ul class="divide-y divide-line">
+                        @for (s of subcategories()[c.id]; track s.id) {
+                          <li class="flex items-center justify-between py-2 gap-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                              <span class="shrink-0">{{ s.icon }}</span>
+                              <span class="text-sm font-semibold text-ink truncate">{{ s.name }}</span>
+                              <span class="text-xs text-ink-muted font-mono shrink-0">{{ s.slug }}</span>
+                              @if (!s.isActive) {
+                                <span class="pill-soft text-[10px] shrink-0">ปิดใช้งาน</span>
+                              }
+                              <span class="pill-pink text-[10px] shrink-0">{{ s.documentCount }} เอกสาร</span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                              <button type="button" class="btn-icon !w-7 !h-7" title="แก้ไข" (click)="openEditSubcategory(c, s)">
+                                <app-icon name="edit" [size]="12" />
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-icon !w-7 !h-7 hover:!bg-rose-50 hover:!text-rose-500"
+                                title="ลบ"
+                                (click)="confirmDeleteSubcategory(c.id, s)"
+                              >
+                                <app-icon name="trash" [size]="12" />
+                              </button>
+                            </div>
+                          </li>
+                        } @empty {
+                          <li class="py-3 text-xs text-ink-muted">ยังไม่มีหมวดย่อยในหมวดหมู่นี้</li>
+                        }
+                      </ul>
+                    }
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
       </div>
     </div>
+
+<nz-modal
+  [nzVisible]="subcategoryFormOpen()"
+  [nzTitle]="editingSubcategoryId() ? 'แก้ไขหมวดย่อย' : ('เพิ่มหมวดย่อยใน ' + subcategoryFormCategoryName())"
+  [nzOkText]="editingSubcategoryId() ? 'บันทึก' : 'เพิ่ม'"
+  nzCancelText="ยกเลิก"
+  [nzOkLoading]="subSaving()"
+  (nzOnOk)="saveSubcategory()"
+  (nzOnCancel)="closeSubcategoryForm()"
+>
+  <ng-container *nzModalContent>
+    <div class="space-y-4">
+      @if (!editingSubcategoryId()) {
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">รหัส (id)</label>
+          <input type="text" [(ngModel)]="subId" name="subId" class="input-soft" />
+          <p class="text-[11px] text-ink-muted mt-1">เปลี่ยนภายหลังไม่ได้ ใช้อักษรอังกฤษพิมพ์เล็กและขีดกลาง</p>
+        </div>
+      }
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">ชื่อ</label>
+        <input type="text" [(ngModel)]="subName" name="subName" class="input-soft" />
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">Slug</label>
+        <input type="text" [(ngModel)]="subSlug" name="subSlug" class="input-soft" />
+        <p class="text-[11px] text-ink-muted mt-1">เว้นว่างได้ ระบบจะใช้รหัสแทน</p>
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">ไอคอน</label>
+        <input type="text" [(ngModel)]="subIcon" name="subIcon" class="input-soft" />
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">ลำดับ</label>
+        <input type="number" [(ngModel)]="subSortOrder" name="subSortOrder" class="input-soft" />
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="subIsActive" [(ngModel)]="subIsActive" name="subIsActive" />
+        <label for="subIsActive" class="text-xs font-semibold text-ink-soft">เปิดใช้งาน</label>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>

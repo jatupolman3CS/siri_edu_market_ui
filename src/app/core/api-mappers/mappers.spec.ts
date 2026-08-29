@@ -1,9 +1,11 @@
-import { mapOrder, mapDocument, mapLibraryItem, mapBundle } from './mappers';
+import { mapOrder, mapDocument, mapDocumentDetail, mapLibraryItem, mapBundle, mapSellerQna } from './mappers';
 import type {
   BundleResponse,
   LibraryItemResponse,
+  MarketplaceDocumentDetailResponse,
   MarketplaceDocumentResponse,
   OrderResponse,
+  SellerQnaResponse,
 } from '../api/types.gen';
 
 /**
@@ -125,6 +127,38 @@ describe('mapLibraryItem', () => {
 
     expect(mapLibraryItem(item).document.id).toBe('doc-9');
   });
+
+  it('falls back to not-reviewed when the response omits isReviewed/myReviewId/myRating', () => {
+    const item: LibraryItemResponse = {
+      documentId: 'doc-9',
+      title: 'ชีววิทยา',
+      purchasedAt: '2026-08-01T00:00:00Z',
+    };
+
+    const mapped = mapLibraryItem(item);
+
+    expect(mapped.isReviewed).toBe(false);
+    expect(mapped.myReviewId).toBeUndefined();
+    expect(mapped.myRating).toBeUndefined();
+  });
+
+  /** library-is-reviewed v1, AC-3/AC-10: real values flow through once a document is reviewed. */
+  it('carries isReviewed/myReviewId/myRating through when the buyer has reviewed the document', () => {
+    const item: LibraryItemResponse = {
+      documentId: 'doc-9',
+      title: 'ชีววิทยา',
+      purchasedAt: '2026-08-01T00:00:00Z',
+      isReviewed: true,
+      myReviewId: 'rev-1',
+      myRating: 4,
+    };
+
+    const mapped = mapLibraryItem(item);
+
+    expect(mapped.isReviewed).toBe(true);
+    expect(mapped.myReviewId).toBe('rev-1');
+    expect(mapped.myRating).toBe(4);
+  });
 });
 
 describe('mapBundle', () => {
@@ -132,5 +166,107 @@ describe('mapBundle', () => {
     const bundle: BundleResponse = { id: 'bun-1', title: 'แพ็กรวม', price: 499 };
 
     expect(mapBundle(bundle).price).toBe(499);
+  });
+
+  // document-bundle-cross-sell v1 §3.1: `documentCount` is what the "N เอกสาร" pill reads —
+  // `documentIds` stays `[]` because paged bundle responses never carry member document ids.
+  it('maps documentCount from BundleResponse.documentCount, defaulting to 0', () => {
+    const withCount: BundleResponse = { id: 'bun-1', title: 'แพ็กรวม', documentCount: 4 };
+    const withoutCount: BundleResponse = { id: 'bun-2', title: 'แพ็กรวม 2' };
+
+    expect(mapBundle(withCount).documentCount).toBe(4);
+    expect(mapBundle(withoutCount).documentCount).toBe(0);
+  });
+});
+
+/**
+ * document-faq-tab v1.1 §3.2/§4: `faqCount` / `qnaCount` / `qna[].isFaq` / `qna[].faqSortOrder`
+ * are now real fields the backend always sends. `mapDocumentDetail` reads them directly — the
+ * `?? 0` / `?? false` below are just defensive null-safety (matches every other field in this
+ * mapper), not a stand-in for `qna.length` anymore.
+ */
+describe('mapDocumentDetail — FAQ fields (document-faq-tab v1.1)', () => {
+  const base: MarketplaceDocumentDetailResponse = {
+    id: 'doc-1',
+    title: 'สรุปคณิต ม.6',
+    qna: [
+      { id: 'q-1', question: 'มีบทที่ 5 ไหม', askedAt: '2026-08-01T00:00:00Z', answerText: 'มีค่ะ', answeredAt: '2026-08-02T00:00:00Z' },
+      { id: 'q-2', question: 'ไฟล์เป็น PDF ไหม', askedAt: '2026-08-03T00:00:00Z' },
+    ],
+  };
+
+  it('defaults faqCount/qnaCount to 0 if the backend response omits them (defensive only)', () => {
+    const mapped = mapDocumentDetail(base);
+
+    expect(mapped.faqCount).toBe(0);
+    expect(mapped.qnaCount).toBe(0);
+  });
+
+  it('defaults every qna item to isFaq:false if the backend response omits it (defensive only)', () => {
+    const mapped = mapDocumentDetail(base);
+
+    expect(mapped.qna?.every((q) => q.isFaq === false)).toBe(true);
+  });
+
+  it('uses the real faqCount/qnaCount once the backend sends them', () => {
+    const mapped = mapDocumentDetail({
+      ...base,
+      ...({ faqCount: 1, qnaCount: 2 } as Partial<MarketplaceDocumentDetailResponse>),
+    });
+
+    expect(mapped.faqCount).toBe(1);
+    expect(mapped.qnaCount).toBe(2);
+  });
+
+  it('carries a real isFaq:true through once the backend sends it', () => {
+    const mapped = mapDocumentDetail({
+      ...base,
+      qna: [{ ...base.qna![0], ...({ isFaq: true } as Record<string, unknown>) }],
+    });
+
+    expect(mapped.qna?.[0].isFaq).toBe(true);
+  });
+
+  it('carries the real faqSortOrder through (v1.1 delta on DocumentQnaResponse)', () => {
+    const mapped = mapDocumentDetail({
+      ...base,
+      qna: [{ ...base.qna![0], ...({ isFaq: true, faqSortOrder: 5 } as Record<string, unknown>) }],
+    });
+
+    expect(mapped.qna?.[0].faqSortOrder).toBe(5);
+  });
+});
+
+describe('mapSellerQna (document-faq-tab v1 §3.3)', () => {
+  const raw: SellerQnaResponse = {
+    id: 'q-1',
+    documentId: 'doc-1',
+    documentTitle: 'สรุปคณิต ม.6',
+    buyerName: 'น้องเอ',
+    question: 'มีบทที่ 5 ไหม',
+    askedAt: '2026-08-01T00:00:00Z',
+    answerText: 'มีค่ะ',
+    answeredAt: '2026-08-02T00:00:00Z',
+  };
+
+  it('defaults isFaq:false and faqSortOrder:0 if the backend response omits them (defensive only)', () => {
+    const mapped = mapSellerQna(raw);
+
+    expect(mapped.isFaq).toBe(false);
+    expect(mapped.faqSortOrder).toBe(0);
+  });
+
+  it('carries the real isFaq/faqSortOrder through once the backend sends them', () => {
+    const mapped = mapSellerQna({ ...raw, ...({ isFaq: true, faqSortOrder: 3 } as Record<string, unknown>) });
+
+    expect(mapped.isFaq).toBe(true);
+    expect(mapped.faqSortOrder).toBe(3);
+  });
+
+  it('keeps answerText/answeredAt null (not undefined) so `q.answerText` template checks stay stable', () => {
+    const mapped = mapSellerQna({ id: 'q-2', question: 'ยังไม่ตอบ' });
+
+    expect(mapped.answerText).toBeNull();
+    expect(mapped.answeredAt).toBeNull();
   });
 });

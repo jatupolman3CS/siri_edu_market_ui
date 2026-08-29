@@ -5,6 +5,7 @@ import {
   deleteApiSellerBundlesByBundleId,
   getApiMarketplaceBundles,
   getApiMarketplaceBundlesById,
+  getApiMarketplaceDocumentsByIdBundles,
   getApiSellerBundles,
   getApiSellerBundlesCandidates,
   postApiSellerBundles,
@@ -134,4 +135,40 @@ export class BundleService {
   async deleteMyBundle(bundleId: string): Promise<void> {
     await deleteApiSellerBundlesByBundleId({ path: { bundleId }, throwOnError: true });
   }
+
+  // ===== document-bundle-cross-sell v1: "ในแพ็กเกจที่คุ้มกว่า" on document detail =====
+  // Round 2 (SDK wired): calls the real `GET /api/marketplace/documents/{id}/bundles` endpoint
+  // (spec §3.1). The page loads this non-blocking, so failures (including the document
+  // genuinely not existing — 404 per AC-4) are reported via `ApiFailureReporter` and resolved
+  // as `[]` rather than thrown, keeping the section silently hidden instead of showing a
+  // page-wide error banner.
+
+  /** Bundles that contain `documentId`, for the document-detail cross-sell section. */
+  async loadBundlesContainingDocument(documentId: string, limit = 3): Promise<Bundle[]> {
+    try {
+      const result = await getApiMarketplaceDocumentsByIdBundles({
+        path: { id: documentId },
+        query: { Page: 1, PageSize: limit },
+      });
+      const data = unwrapSdkResult(result);
+      return (data.items ?? []).map(mapBundle);
+    } catch (e) {
+      this.apiFail.report('โหลดแพ็กเกจที่มีเอกสารนี้', e);
+      return [];
+    }
+  }
+}
+
+// ===== document-bundle-cross-sell v1 §4: savePercent/saveAmount — computed here (not in the
+// template) from `BundleResponse.price`/`originalPrice`, per the contract's decision to reuse
+// the existing DTO rather than add a `savePercent` field server-side. =====
+
+/** `round((1 - price / originalPrice) * 100)`, or `0` when there is nothing to save. */
+export function calcBundleSavePercent(price: number, originalPrice: number): number {
+  return originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
+}
+
+/** `max(0, originalPrice - price)` — never negative even if the data is inconsistent. */
+export function calcBundleSaveAmount(price: number, originalPrice: number): number {
+  return Math.max(0, originalPrice - price);
 }

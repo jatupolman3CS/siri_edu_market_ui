@@ -11,6 +11,8 @@ import type {
   CategoryResponse,
   CategoryDetailResponse,
   LibraryItemResponse,
+  LoyaltyEntryResponse,
+  LoyaltySummaryResponse,
   MarketplaceDocumentDetailResponse,
   MarketplaceDocumentResponse,
   OrderResponse,
@@ -18,6 +20,8 @@ import type {
   SellerDocumentResponse,
   SellerDocumentSummaryResponse,
   SellerInfoResponse,
+  SellerQnaResponse,
+  SubcategoryAdminResponse,
   SubcategoryResponse,
 } from '../api';
 import type {
@@ -29,14 +33,18 @@ import type {
   FileFormat,
   GradeLevel,
   LibraryItem,
+  LoyaltyEntry,
+  LoyaltySummary,
   Order,
   OrderStatus,
   PaymentMethod,
   QnAItem,
   ResourceType,
   Seller,
+  SellerQnaItem,
   SellerStats,
   Subcategory,
+  SubcategoryAdmin,
 } from '../models';
 import { resolvePublicUrl } from '../api-runtime';
 
@@ -57,6 +65,30 @@ function readIsFree(d: { isFree?: boolean | null; price?: number | null } | null
   if (!d) return false;
   if (typeof d.isFree === 'boolean') return d.isFree;
   return (d.price ?? 0) === 0;
+}
+
+/**
+ * document-faq-tab v1.1 §3.2: `MarketplaceDocumentDetailResponse.faqCount` / `.qnaCount` are
+ * always emitted by the backend now — read them directly rather than deriving from
+ * `qna.length` (a truncated array must never make the badge count lie).
+ */
+function readFaqCounts(
+  d: { faqCount?: number | null; qnaCount?: number | null } | null | undefined,
+): { faqCount: number; qnaCount: number } {
+  return {
+    faqCount: d?.faqCount ?? 0,
+    qnaCount: d?.qnaCount ?? 0,
+  };
+}
+
+/** document-faq-tab v1.1 §3.2/§3.3: `isFaq` is already the gated (answered-and-pinned) value. */
+function readQnaIsFaq(q: { isFaq?: boolean | null } | null | undefined): boolean {
+  return q?.isFaq ?? false;
+}
+
+/** document-faq-tab v1.1 §3.2/§3.3: `faqSortOrder` is a raw, always-present sort key. */
+function readQnaFaqSortOrder(q: { faqSortOrder?: number | null } | null | undefined): number {
+  return q?.faqSortOrder ?? 0;
 }
 
 const EMPTY_SELLER: Seller = {
@@ -113,6 +145,20 @@ export function mapSubcategory(s: SubcategoryResponse): Subcategory {
     name: s.name ?? '',
     slug: s.slug ?? '',
     icon: s.icon ?? undefined,
+    documentCount: s.documentCount ?? 0,
+  };
+}
+
+/** subcategory-admin-crud v1 (docs/contracts/subcategory-admin-crud.md §3.1). */
+export function mapSubcategoryAdmin(s: SubcategoryAdminResponse): SubcategoryAdmin {
+  return {
+    id: s.id ?? '',
+    categoryId: s.categoryId ?? '',
+    name: s.name ?? '',
+    slug: s.slug ?? '',
+    icon: s.icon ?? '',
+    isActive: s.isActive ?? true,
+    sortOrder: s.sortOrder ?? 0,
     documentCount: s.documentCount ?? 0,
   };
 }
@@ -264,7 +310,10 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
     question: q.question ?? '',
     askedAt: q.askedAt ?? '',
     answer: q.answerText ? { text: q.answerText, answeredAt: q.answeredAt ?? '' } : undefined,
+    isFaq: readQnaIsFaq(q as { isFaq?: boolean | null }),
+    faqSortOrder: readQnaFaqSortOrder(q as { faqSortOrder?: number | null }),
   }));
+  const faqCounts = readFaqCounts(d as { faqCount?: number | null; qnaCount?: number | null });
 
   const fromGallery = (d.galleryUrls ?? []).map((u) =>
     resolvePublicUrl((u ?? '').replaceAll('%2F', '/')),
@@ -305,6 +354,8 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
     updatedAt: d.updatedAt ?? new Date().toISOString(),
     reviews,
     qna,
+    faqCount: faqCounts.faqCount,
+    qnaCount: faqCounts.qnaCount,
     aiSummary: d.aiSummary ?? undefined,
     aiHighlights: d.aiHighlights ?? undefined,
     isFree: readIsFree(d as { isFree?: boolean | null; price?: number | null }),
@@ -325,6 +376,7 @@ export function mapBundle(b: BundleResponse): Bundle {
     price: b.price ?? 0,
     originalPrice: b.originalPrice ?? 0,
     documentIds: [],
+    documentCount: b.documentCount ?? 0,
     seller: {
       ...EMPTY_SELLER,
       id: b.sellerId ?? '',
@@ -375,6 +427,9 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     orderNumber: item.orderNumber ?? '',
     downloadCount: item.downloadCount ?? 0,
     lastDownloadAt: item.lastDownloadAt ?? undefined,
+    isReviewed: item.isReviewed ?? false,
+    myReviewId: item.myReviewId ?? undefined,
+    myRating: item.myRating ?? undefined,
   };
 }
 
@@ -454,6 +509,22 @@ export function mapSellerStats(d: SellerDashboardResponse): SellerStats {
       category: c.category ?? '',
       sales: c.sales ?? 0,
     })),
+  };
+}
+
+/** document-faq-tab v1.1 §3.3: seller Q&A inbox row + `isFaq` / `faqSortOrder`. */
+export function mapSellerQna(q: SellerQnaResponse): SellerQnaItem {
+  return {
+    id: q.id ?? '',
+    documentId: q.documentId ?? '',
+    documentTitle: q.documentTitle ?? '',
+    buyerName: q.buyerName ?? '',
+    question: q.question ?? '',
+    askedAt: q.askedAt ?? '',
+    answerText: q.answerText ?? null,
+    answeredAt: q.answeredAt ?? null,
+    isFaq: readQnaIsFaq(q as { isFaq?: boolean | null }),
+    faqSortOrder: readQnaFaqSortOrder(q as { faqSortOrder?: number | null }),
   };
 }
 
@@ -563,6 +634,33 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     bundleDocumentIds: [],
     mainFiles,
     listedMainFileId: (d.listedMainFileId ?? '').trim() || mainFiles?.find((m) => m.isListedForSale)?.id,
+  };
+}
+
+/** loyalty-points v1 §3.1/§3.2: `LoyaltySummaryResponse` / `LoyaltyEntryResponse` (generated). */
+export function mapLoyaltySummary(d: LoyaltySummaryResponse): LoyaltySummary {
+  return {
+    balance: d.balance ?? 0,
+    earnedThisMonth: d.earnedThisMonth ?? 0,
+    lifetimeEarned: d.lifetimeEarned ?? 0,
+    lifetimeSpent: d.lifetimeSpent ?? 0,
+    asOf: d.asOf ?? new Date().toISOString(),
+  };
+}
+
+/** `LoyaltyEntryResponse.kind` is `"earn" | "redeem" | "adjust"` (§3.2) — anything else falls back to `"earn"`. */
+function readLoyaltyEntryKind(kind: string | null | undefined): LoyaltyEntry['kind'] {
+  return kind === 'redeem' || kind === 'adjust' ? kind : 'earn';
+}
+
+export function mapLoyaltyEntry(d: LoyaltyEntryResponse): LoyaltyEntry {
+  return {
+    id: d.id ?? '',
+    points: d.points ?? 0,
+    kind: readLoyaltyEntryKind(d.kind),
+    reason: d.reason ?? '',
+    orderNumber: d.orderNumber ?? undefined,
+    occurredAt: d.occurredAt ?? '',
   };
 }
 

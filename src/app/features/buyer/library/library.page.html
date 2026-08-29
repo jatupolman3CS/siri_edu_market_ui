@@ -31,13 +31,48 @@
           [value]="library.totalSpent() | thb"
           icon="💸"
         />
-        <app-stat-card
-          label="คะแนนสะสม"
-          value="1,840 pt"
-          icon="🌸"
-          trend="+120"
-          trendLabel="ในเดือนนี้"
-        />
+        <!-- loyalty-points v1 §4: custom card (not app-stat-card) — needs the loading dash,
+             error copy, and "ดูประวัติคะแนน" button that the generic stat card doesn't support. -->
+        <div class="card-soft p-5 flex flex-col gap-2">
+          <div class="flex items-center justify-between text-ink-muted">
+            <span class="text-xs font-semibold uppercase tracking-wider inline-flex items-center gap-1">
+              คะแนนสะสม
+              <span
+                nz-tooltip
+                nzTooltipTitle="ได้ 1 คะแนน ต่อทุก 10 บาท (ก่อน VAT)"
+                class="w-3.5 h-3.5 rounded-full border border-ink-muted text-[9px] leading-[13px] text-center cursor-help"
+              >
+                ?
+              </span>
+            </span>
+            <span class="text-2xl">🌸</span>
+          </div>
+
+          @if (loyalty.state().status === 'error') {
+            <div class="text-sm font-semibold text-rose-500">โหลดคะแนนสะสมไม่สำเร็จ</div>
+          } @else if (loyalty.summary(); as loyaltySummary) {
+            <div class="text-2xl md:text-3xl font-extrabold text-ink">
+              {{ loyaltySummary.balance | compact }} pt
+            </div>
+            @if (loyaltySummary.earnedThisMonth > 0) {
+              <div class="text-xs font-semibold text-emerald-500">
+                +{{ loyaltySummary.earnedThisMonth }} ในเดือนนี้
+              </div>
+            } @else {
+              <div class="text-xs text-ink-muted">ยังไม่ได้คะแนนในเดือนนี้</div>
+            }
+          } @else {
+            <div class="text-2xl md:text-3xl font-extrabold text-ink">—</div>
+          }
+
+          <button
+            type="button"
+            class="text-xs font-semibold text-pink-600 text-left mt-1"
+            (click)="openLedgerDrawer()"
+          >
+            ดูประวัติคะแนน
+          </button>
+        </div>
       </section>
 
       <!-- Tabs -->
@@ -45,13 +80,13 @@
         @for (t of tabs; track t.value) {
           <button
             class="px-4 py-2.5 rounded-full text-sm font-medium transition-colors"
-            [class.bg-pink-500]="tab() === t.value"
-            [class.text-white]="tab() === t.value"
-            [class.bg-white]="tab() !== t.value"
-            [class.text-ink-soft]="tab() !== t.value"
-            [class.border]="tab() !== t.value"
-            [class.border-line]="tab() !== t.value"
-            (click)="tab.set(t.value)"
+            [class.bg-pink-500]="library.libraryFilter() === t.value"
+            [class.text-white]="library.libraryFilter() === t.value"
+            [class.bg-white]="library.libraryFilter() !== t.value"
+            [class.text-ink-soft]="library.libraryFilter() !== t.value"
+            [class.border]="library.libraryFilter() !== t.value"
+            [class.border-line]="library.libraryFilter() !== t.value"
+            (click)="library.setLibraryFilter(t.value)"
           >
             {{ t.label }}
           </button>
@@ -59,13 +94,17 @@
       </div>
 
       @if (library.library().length === 0) {
-        <app-empty-state
-          emoji="📚"
-          title="คลังของคุณยังว่างอยู่"
-          description="เริ่มต้นเลือกซื้อเอกสารแรกได้เลย"
-        >
-          <a routerLink="/marketplace" class="btn-pink mt-4">เริ่มเลือกซื้อ</a>
-        </app-empty-state>
+        @if (library.libraryFilter() === 'unreviewed') {
+          <app-empty-state emoji="✅" title="รีวิวครบทุกเอกสารแล้ว ขอบคุณค่ะ" />
+        } @else {
+          <app-empty-state
+            emoji="📚"
+            title="คลังของคุณยังว่างอยู่"
+            description="เริ่มต้นเลือกซื้อเอกสารแรกได้เลย"
+          >
+            <a routerLink="/marketplace" class="btn-pink mt-4">เริ่มเลือกซื้อ</a>
+          </app-empty-state>
+        }
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           @for (item of library.library(); track item.document.id) {
@@ -87,6 +126,12 @@
                   <app-icon name="check" [size]="11" />
                   เป็นเจ้าของแล้ว
                 </span>
+                @if (item.isReviewed) {
+                  <span class="absolute bottom-3 left-3 pill bg-amber-400 text-white shadow-soft">
+                    <app-icon name="star" [size]="11" />
+                    รีวิวแล้ว
+                  </span>
+                }
               </div>
               <div class="p-5 flex flex-col gap-2 flex-1">
                 <span class="text-[11px] text-ink-muted">
@@ -103,6 +148,14 @@
                   <div class="text-ink">{{ item.purchasedAt | timeAgo }}</div>
                   <div>ดาวน์โหลด</div>
                   <div class="text-ink">{{ item.downloadCount }} ครั้ง</div>
+                  @if (item.isReviewed) {
+                    <div>คะแนนของคุณ</div>
+                    <div class="text-yellow-400">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <span [class.text-gray-300]="star > (item.myRating ?? 0)">★</span>
+                      }
+                    </div>
+                  }
                 </dl>
 
                 <div class="flex gap-2 mt-auto pt-4">
@@ -121,13 +174,23 @@
                     ดาวน์โหลด
                   </button>
                 </div>
-                <button
-                  class="btn-ghost w-full !py-2 text-sm mt-2"
-                  (click)="openReviewModal(item.document.id, item.document.title)"
-                >
-                  <app-icon name="star" [size]="14" />
-                  เขียนรีวิว
-                </button>
+                @if (item.isReviewed) {
+                  <button
+                    class="btn-ghost w-full !py-2 text-sm mt-2"
+                    (click)="openReviewModal(item.document.id, item.document.title, item.myRating)"
+                  >
+                    <app-icon name="star" [size]="14" />
+                    แก้ไขรีวิว
+                  </button>
+                } @else {
+                  <button
+                    class="btn-ghost w-full !py-2 text-sm mt-2"
+                    (click)="openReviewModal(item.document.id, item.document.title)"
+                  >
+                    <app-icon name="star" [size]="14" />
+                    เขียนรีวิว
+                  </button>
+                }
               </div>
             </article>
           }
@@ -228,3 +291,70 @@
     </div>
   </div>
 }
+
+<!-- loyalty-points v1 §4: ledger history drawer, opened by "ดูประวัติคะแนน" -->
+<nz-drawer
+  [nzVisible]="ledgerDrawerOpen()"
+  nzPlacement="right"
+  [nzWidth]="420"
+  [nzClosable]="false"
+  [nzBodyStyle]="{ padding: '0' }"
+  (nzOnClose)="closeLedgerDrawer()"
+>
+  <ng-container *nzDrawerContent>
+    <div class="flex flex-col h-full bg-canvas">
+      <header class="flex items-center justify-between px-6 py-5 border-b border-line bg-white">
+        <h3 class="text-base font-bold text-ink">ประวัติคะแนนสะสม</h3>
+        <button class="btn-icon" type="button" (click)="closeLedgerDrawer()">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </header>
+
+      <div class="flex-1 overflow-y-auto px-6 py-4">
+        @if (loyalty.ledger().length === 0) {
+          <app-empty-state
+            emoji="🌸"
+            title="ยังไม่มีรายการคะแนน — ซื้อเอกสารเพื่อเริ่มสะสม"
+          />
+        } @else {
+          <ul class="flex flex-col gap-3">
+            @for (entry of loyalty.ledger(); track entry.id) {
+              <li class="flex items-center justify-between gap-3 p-3 bg-white rounded-2xl border border-line">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-ink truncate">
+                    @if (entry.reason === 'order_paid' && entry.orderNumber) {
+                      ได้รับจากคำสั่งซื้อ {{ entry.orderNumber }}
+                    } @else {
+                      {{ entry.reason }}
+                    }
+                  </p>
+                  <p class="text-xs text-ink-muted">{{ entry.occurredAt | timeAgo }}</p>
+                </div>
+                <span
+                  class="text-sm font-bold flex-shrink-0"
+                  [class.text-emerald-500]="entry.points >= 0"
+                  [class.text-rose-500]="entry.points < 0"
+                >
+                  {{ entry.points >= 0 ? '+' : '' }}{{ entry.points }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (loyalty.ledgerHasMore()) {
+        <footer class="bg-white border-t border-line px-6 py-5">
+          <button
+            type="button"
+            class="btn-pink w-full"
+            (click)="loyalty.loadMoreLedger()"
+            [disabled]="loyalty.ledgerState().status === 'loading'"
+          >
+            โหลดเพิ่ม
+          </button>
+        </footer>
+      }
+    </div>
+  </ng-container>
+</nz-drawer>

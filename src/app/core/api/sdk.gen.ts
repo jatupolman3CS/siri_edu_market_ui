@@ -10,6 +10,9 @@ import {
 } from './client';
 import { client } from './client.gen';
 import type {
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdData,
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
   DeleteApiAdminCategoriesByIdData,
   DeleteApiAdminCategoriesByIdErrors,
   DeleteApiAdminCategoriesByIdResponses,
@@ -34,6 +37,12 @@ import type {
   DeleteApiWishlistResponses,
   GetApiAdminAuditData,
   GetApiAdminAuditResponses,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdData,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesData,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesErrors,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesResponses,
   GetApiAdminCategoriesByIdData,
   GetApiAdminCategoriesByIdErrors,
   GetApiAdminCategoriesByIdResponses,
@@ -87,6 +96,9 @@ import type {
   GetApiMarketplaceCategoriesBySlugResponses,
   GetApiMarketplaceCategoriesData,
   GetApiMarketplaceCategoriesResponses,
+  GetApiMarketplaceDocumentsByIdBundlesData,
+  GetApiMarketplaceDocumentsByIdBundlesErrors,
+  GetApiMarketplaceDocumentsByIdBundlesResponses,
   GetApiMarketplaceDocumentsByIdData,
   GetApiMarketplaceDocumentsByIdErrors,
   GetApiMarketplaceDocumentsByIdPreviewData,
@@ -99,6 +111,12 @@ import type {
   GetApiMarketplaceFreeResponses,
   GetApiMarketplaceSearchData,
   GetApiMarketplaceSearchResponses,
+  GetApiMeLoyaltyData,
+  GetApiMeLoyaltyEntriesData,
+  GetApiMeLoyaltyEntriesErrors,
+  GetApiMeLoyaltyEntriesResponses,
+  GetApiMeLoyaltyErrors,
+  GetApiMeLoyaltyResponses,
   GetApiMeProfileData,
   GetApiMeProfileErrors,
   GetApiMeProfileResponses,
@@ -161,6 +179,9 @@ import type {
   PatchApiAdminDocumentsByIdData,
   PatchApiAdminDocumentsByIdErrors,
   PatchApiAdminDocumentsByIdResponses,
+  PostApiAdminCategoriesByCategoryIdSubcategoriesData,
+  PostApiAdminCategoriesByCategoryIdSubcategoriesErrors,
+  PostApiAdminCategoriesByCategoryIdSubcategoriesResponses,
   PostApiAdminCategoriesData,
   PostApiAdminCategoriesErrors,
   PostApiAdminCategoriesResponses,
@@ -292,6 +313,9 @@ import type {
   PostApiWishlistData,
   PostApiWishlistErrors,
   PostApiWishlistResponses,
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdData,
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
   PutApiAdminCategoriesByIdData,
   PutApiAdminCategoriesByIdErrors,
   PutApiAdminCategoriesByIdResponses,
@@ -313,6 +337,9 @@ import type {
   PutApiSellerDocumentsByIdListedMainFileErrors,
   PutApiSellerDocumentsByIdListedMainFileResponses,
   PutApiSellerDocumentsByIdResponses,
+  PutApiSellerQnaByQuestionIdFaqData,
+  PutApiSellerQnaByQuestionIdFaqErrors,
+  PutApiSellerQnaByQuestionIdFaqResponses,
   PutApiSellerStoreSectionsBySectionIdData,
   PutApiSellerStoreSectionsBySectionIdErrors,
   PutApiSellerStoreSectionsBySectionIdResponses,
@@ -1129,6 +1156,19 @@ export const getApiMarketplaceDocumentsByIdRelated = <ThrowOnError extends boole
     ThrowOnError
   >({ url: '/api/marketplace/documents/{id}/related', ...options });
 
+export const getApiMarketplaceDocumentsByIdBundles = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiMarketplaceDocumentsByIdBundlesData, ThrowOnError>,
+): RequestResult<
+  GetApiMarketplaceDocumentsByIdBundlesResponses,
+  GetApiMarketplaceDocumentsByIdBundlesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiMarketplaceDocumentsByIdBundlesResponses,
+    GetApiMarketplaceDocumentsByIdBundlesErrors,
+    ThrowOnError
+  >({ url: '/api/marketplace/documents/{id}/bundles', ...options });
+
 export const getApiMarketplaceCategories = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMarketplaceCategoriesData, ThrowOnError>,
 ): RequestResult<GetApiMarketplaceCategoriesResponses, unknown, ThrowOnError> =>
@@ -1231,6 +1271,23 @@ export const postApiMeSellerApplication = <ThrowOnError extends boolean = false>
       ...options.headers,
     },
   });
+
+export const getApiMeLoyalty = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeLoyaltyData, ThrowOnError>,
+): RequestResult<GetApiMeLoyaltyResponses, GetApiMeLoyaltyErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMeLoyaltyResponses, GetApiMeLoyaltyErrors, ThrowOnError>({
+    url: '/api/me/loyalty',
+    ...options,
+  });
+
+export const getApiMeLoyaltyEntries = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeLoyaltyEntriesData, ThrowOnError>,
+): RequestResult<GetApiMeLoyaltyEntriesResponses, GetApiMeLoyaltyEntriesErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeLoyaltyEntriesResponses,
+    GetApiMeLoyaltyEntriesErrors,
+    ThrowOnError
+  >({ url: '/api/me/loyalty/entries', ...options });
 
 export const getApiNotificationsSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiNotificationsSettingsData, ThrowOnError>,
@@ -1417,6 +1474,26 @@ export const postApiSellerQnaByQuestionIdAnswer = <ThrowOnError extends boolean 
     ThrowOnError
   >({
     url: '/api/seller/qna/{questionId}/answer',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const putApiSellerQnaByQuestionIdFaq = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiSellerQnaByQuestionIdFaqData, ThrowOnError>,
+): RequestResult<
+  PutApiSellerQnaByQuestionIdFaqResponses,
+  PutApiSellerQnaByQuestionIdFaqErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiSellerQnaByQuestionIdFaqResponses,
+    PutApiSellerQnaByQuestionIdFaqErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/qna/{questionId}/faq',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1748,6 +1825,95 @@ export const postApiWebhooksStripe = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).post<PostApiWebhooksStripeResponses, unknown, ThrowOnError>({
     url: '/api/webhooks/stripe',
     ...options,
+  });
+
+export const getApiAdminCategoriesByCategoryIdSubcategories = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetApiAdminCategoriesByCategoryIdSubcategoriesData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminCategoriesByCategoryIdSubcategoriesResponses,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminCategoriesByCategoryIdSubcategoriesResponses,
+    GetApiAdminCategoriesByCategoryIdSubcategoriesErrors,
+    ThrowOnError
+  >({ url: '/api/admin/categories/{categoryId}/subcategories', ...options });
+
+export const postApiAdminCategoriesByCategoryIdSubcategories = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PostApiAdminCategoriesByCategoryIdSubcategoriesData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminCategoriesByCategoryIdSubcategoriesResponses,
+  PostApiAdminCategoriesByCategoryIdSubcategoriesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminCategoriesByCategoryIdSubcategoriesResponses,
+    PostApiAdminCategoriesByCategoryIdSubcategoriesErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/categories/{categoryId}/subcategories',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const deleteApiAdminCategoriesByCategoryIdSubcategoriesById = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+  DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+    DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/categories/{categoryId}/subcategories/{id}', ...options });
+
+export const getApiAdminCategoriesByCategoryIdSubcategoriesById = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetApiAdminCategoriesByCategoryIdSubcategoriesByIdData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+  GetApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+    GetApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/categories/{categoryId}/subcategories/{id}', ...options });
+
+export const putApiAdminCategoriesByCategoryIdSubcategoriesById = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PutApiAdminCategoriesByCategoryIdSubcategoriesByIdData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+  PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
+    PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/categories/{categoryId}/subcategories/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const getApiSystemStatus = <ThrowOnError extends boolean = false>(
