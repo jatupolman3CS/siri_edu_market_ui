@@ -4,9 +4,10 @@ export const environment = {
    * Empty means "same origin as the app, under `/SIRIEDUMARKET.Api`" — the IIS layout this
    * deploys to. Set it to an absolute URL when the API lives on another host.
    */
-  apiUrl: '',
+  apiUrl: 'https://api-siriedumarket.siristudiophoto.com/',
   /** Optional fallback; prefer `GET /api/auth/oauth-clients` from the API. */
-  googleOAuthClientId: '',
+ googleOAuthClientId:
+    '5881672938-464ssnfcb78tou755dkf7jvmhvbkf68v.apps.googleusercontent.com',
   /** DEV-BYPASS: never on in a production build — real sign-in only. */
   devAuth: {
     bypass: false,
