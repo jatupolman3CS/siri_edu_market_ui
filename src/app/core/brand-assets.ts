@@ -53,11 +53,24 @@ export function faviconUrl(): string {
  * written into that static file, because the API's base URL is not fixed: it is `localhost:5282`
  * under `ng serve` and a same-origin path base once IIS or nginx is in front. So the markup
  * carries the fallback and this carries the real one.
+ *
+ * The swap waits for the R2 copy to actually decode. Repointing first and hoping second would
+ * throw away a working local icon whenever the API cannot serve the object — which is not
+ * hypothetical: an environment whose R2 credentials are still unset answers every download with
+ * 501, and the tab would lose its icon for that whole deployment.
  */
 export function installFavicon(document: Document): void {
-  const link =
-    document.querySelector<HTMLLinkElement>('link[rel~="icon"]') ??
-    document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
-  link.type = 'image/x-icon';
-  link.href = faviconUrl();
+  const href = faviconUrl();
+  const probe = new Image();
+
+  probe.addEventListener('load', () => {
+    const link =
+      document.querySelector<HTMLLinkElement>('link[rel~="icon"]') ??
+      document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
+    link.type = 'image/x-icon';
+    link.href = href;
+  });
+
+  // No error handler on purpose: failing to load simply leaves the local icon in place.
+  probe.src = href;
 }
