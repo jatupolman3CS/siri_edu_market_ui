@@ -45,11 +45,14 @@ export function faviconUrl(): string {
 }
 
 /**
- * Points the browser's tab icon at R2 as well, so the app ships no image files of its own.
+ * Repoints the browser's tab icon at the R2 copy, so a rebranded icon reaches every tab by
+ * republishing the asset rather than by rebuilding and redeploying the UI.
  *
- * It has to happen in script rather than as a `<link href>` in `index.html`: that file is static,
- * while the API's base URL is not — it is `localhost:5282` under `ng serve` and a same-origin
- * path base once IIS or nginx is in front. A hardcoded href would be right in exactly one of them.
+ * `index.html` still ships a `<link rel="icon">` at a local file, which is what the browser uses
+ * until the bundle has loaded — without it the tab sits blank for that moment. The href cannot be
+ * written into that static file, because the API's base URL is not fixed: it is `localhost:5282`
+ * under `ng serve` and a same-origin path base once IIS or nginx is in front. So the markup
+ * carries the fallback and this carries the real one.
  */
 export function installFavicon(document: Document): void {
   const link =
