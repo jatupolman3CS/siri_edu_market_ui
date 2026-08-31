@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { firstValueFrom } from 'rxjs';
-import { resolvePublicUrl } from '../../../core/api-runtime';
+import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { MeService } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
 
@@ -37,9 +37,7 @@ export class ProfileEditorComponent {
   readonly avatarUploading = signal(false);
   readonly loaded = signal(false);
 
-  readonly avatarSrc = () =>
-    resolvePublicUrl(this.avatarUrl) ||
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face';
+  readonly avatarSrc = () => resolveAvatarUrl(this.avatarUrl);
 
   constructor() {
     this.me.loadProfile().subscribe({

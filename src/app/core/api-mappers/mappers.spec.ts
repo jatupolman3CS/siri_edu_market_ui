@@ -1,4 +1,5 @@
 import { mapOrder, mapDocument, mapDocumentDetail, mapLibraryItem, mapBundle, mapSellerQna } from './mappers';
+import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import type {
   BundleResponse,
   LibraryItemResponse,
@@ -268,5 +269,37 @@ describe('mapSellerQna (document-faq-tab v1 §3.3)', () => {
 
     expect(mapped.answerText).toBeNull();
     expect(mapped.answeredAt).toBeNull();
+  });
+});
+
+/**
+ * Every image the UI renders is streamed out of R2 by the API, the fallbacks included. A mapper
+ * that left `cover` or `avatar` empty put a broken image in the card, which is what the
+ * third-party placehold.co / ui-avatars URLs used to paper over.
+ */
+describe('brand asset fallbacks', () => {
+  it('gives a document with no gallery the R2 placeholder cover', () => {
+    const doc = mapDocument({ id: 'doc-1', title: 'ไม่มีรูป' } as MarketplaceDocumentResponse);
+
+    expect(doc.cover).toBe(placeholderCoverUrl());
+    // The placeholder is a fallback for display only — it must not be mistaken for a real image.
+    expect(doc.gallery).toEqual([]);
+    expect(doc.cover).toContain('/api/files/download/');
+  });
+
+  it('gives a document whose seller has no picture the R2 default avatar', () => {
+    const doc = mapDocument({ id: 'doc-1', sellerName: 'ครูพิม' } as MarketplaceDocumentResponse);
+
+    expect(doc.seller.avatar).toBe(defaultAvatarUrl());
+  });
+
+  it('keeps the real cover when the server sent one', () => {
+    const doc = mapDocument({
+      id: 'doc-1',
+      galleryPreviewUrls: ['/api/files/download/seller/cover.png'],
+    } as MarketplaceDocumentResponse);
+
+    expect(doc.cover).not.toBe(placeholderCoverUrl());
+    expect(doc.cover).toContain('seller/cover.png');
   });
 });

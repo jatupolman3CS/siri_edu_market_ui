@@ -68,7 +68,7 @@
                 <div class="flex">
                   @for (s of featuredSellers.slice(0, 4); track s.id) {
                     <img
-                      [src]="s.avatar || ('https://ui-avatars.com/api/?name=' + s.studioName + '&background=f9a8d4&color=9d174d&size=64')"
+                      [src]="s.avatar"
                       class="w-7 h-7 rounded-full -ml-2 first:ml-0 ring-2 ring-pink-50 object-cover"
                       [alt]="s.studioName"
                     />

@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { DocumentItem } from '../models';
+import { defaultAvatarUrl, resolveCoverUrl } from '../brand-assets';
 import {
   deleteApiWishlist,
   deleteApiWishlistByDocumentId,
@@ -34,13 +35,13 @@ export class WishlistService {
         title: w.title ?? '',
         price: w.price ?? 0,
         originalPrice: w.originalPrice ?? undefined,
-        cover: w.coverUrl ?? '',
+        cover: resolveCoverUrl(w.coverUrl),
         seller: {
           id: '',
           // GAP-10: the API returns the seller name now that the wishlist is actually stored.
           studioName: w.sellerName ?? '',
           ownerName: w.sellerName ?? '',
-          avatar: '',
+          avatar: defaultAvatarUrl(),
           bio: '',
           joinedAt: '',
           rating: 0,

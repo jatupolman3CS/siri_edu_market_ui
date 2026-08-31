@@ -4,6 +4,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 import { AdminService, AuthService, MeService } from '../../../core/services';
 import { resolvePublicUrl } from '../../../core/api-runtime';
+import { defaultAvatarUrl } from '../../../core/brand-assets';
 
 @Component({
   selector: 'app-admin-layout',
@@ -32,7 +33,7 @@ export class AdminLayoutComponent {
     if (r2Url) return r2Url;
     const sessionAvatar = this.auth.user()?.avatar;
     if (sessionAvatar) return sessionAvatar;
-    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.auth.user()?.name ?? 'A') + '&background=1e1b4b&color=f9a8d4&size=64';
+    return defaultAvatarUrl();
   });
 
   constructor() {

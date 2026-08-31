@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartItem, DocumentItem } from '../models';
+import { defaultAvatarUrl, resolveCoverUrl } from '../brand-assets';
 import {
   deleteApiCart,
   deleteApiCartItemsByDocumentId,
@@ -83,12 +84,12 @@ export class CartService {
             id: ci.documentId ?? '',
             title: ci.title ?? '',
             price: ci.price ?? 0,
-            cover: ci.coverUrl ?? '',
+            cover: resolveCoverUrl(ci.coverUrl),
             seller: {
               id: '',
               studioName: '',
               ownerName: '',
-              avatar: '',
+              avatar: defaultAvatarUrl(),
               bio: '',
               joinedAt: '',
               rating: 0,

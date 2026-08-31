@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { placeholderCoverUrl } from '../../../core/brand-assets';
 import { DocumentItem } from '../../../core/models';
 import { SellerService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -38,7 +39,7 @@ export class SellerDocumentsPage {
   readonly status = signal<'all' | 'approved' | 'pending' | 'rejected' | 'draft'>(
     'all',
   );
-  readonly coverFallback = 'https://placehold.co/80x112/png?text=SIRI';
+  readonly coverFallback = placeholderCoverUrl();
 
   readonly statuses = [
     { value: 'all' as const, label: 'ทั้งหมด' },

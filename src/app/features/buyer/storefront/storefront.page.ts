@@ -18,6 +18,8 @@ import { BundleCardComponent } from '../../../shared/components/bundle-card/bund
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { resolvePublicUrl } from '../../../core/api-runtime';
+import { resolveAvatarUrl } from '../../../core/brand-assets';
 
 @Component({
   selector: 'app-buyer-storefront',
@@ -35,6 +37,10 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
   styleUrl: './storefront.page.scss',
 })
 export class BuyerStorefrontPage {
+  /** Template helpers: both banner and avatar are streamed from R2 through the API. */
+  readonly resolvePublicUrl = resolvePublicUrl;
+  readonly resolveAvatarUrl = resolveAvatarUrl;
+
   readonly catalog = inject(CatalogService);
   private readonly bundleService = inject(BundleService);
   readonly follow = inject(FollowService);

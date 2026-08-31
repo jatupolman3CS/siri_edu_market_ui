@@ -21,6 +21,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../logo/logo.component';
 import { IconComponent } from '../icon/icon.component';
 import { resolvePublicUrl } from '../../../core/api-runtime';
+import { defaultAvatarUrl } from '../../../core/brand-assets';
 
 @Component({
   selector: 'app-header',
@@ -53,7 +54,7 @@ export class AppHeaderComponent {
     if (r2Url) return r2Url;
     const sessionAvatar = this.auth.user()?.avatar;
     if (sessionAvatar) return sessionAvatar;
-    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.auth.user()?.name ?? 'U') + '&background=f9a8d4&color=9d174d&size=64';
+    return defaultAvatarUrl();
   });
 
   constructor() {

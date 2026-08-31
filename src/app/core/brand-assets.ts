@@ -1,0 +1,60 @@
+import { downloadUrlForStorageKey, resolvePublicUrl } from './api-runtime';
+
+/**
+ * Every image the UI shows comes out of R2 through the API, fallbacks included.
+ *
+ * The placeholders used to be third-party URLs — placehold.co for a missing cover,
+ * ui-avatars.com for a user with no picture, an Unsplash photo for the profile editor — which
+ * meant a card could only finish rendering if two extra hosts were reachable, and which leaked
+ * the viewer's IP (and, for ui-avatars, their display name) to those hosts on every page.
+ *
+ * The backend's `BrandAssetSeeder` publishes the shipped SVGs to these exact keys on start, so
+ * the names below are a contract between the two repos: renaming one here means renaming it there.
+ */
+export const BRAND_ASSET_KEYS = {
+  placeholderCover: 'system/branding/placeholder-cover.svg',
+  defaultAvatar: 'system/branding/default-avatar.svg',
+  favicon: 'system/branding/favicon.ico',
+} as const;
+
+/** Absolute URL of a shipped brand asset, streamed by `GET /api/files/download/{key}`. */
+export function brandAssetUrl(key: string): string {
+  return downloadUrlForStorageKey(key);
+}
+
+export function placeholderCoverUrl(): string {
+  return brandAssetUrl(BRAND_ASSET_KEYS.placeholderCover);
+}
+
+export function defaultAvatarUrl(): string {
+  return brandAssetUrl(BRAND_ASSET_KEYS.defaultAvatar);
+}
+
+/** Resolve a backend cover URL, falling back to the R2 placeholder when there is none. */
+export function resolveCoverUrl(url: string | null | undefined): string {
+  return resolvePublicUrl(url) || placeholderCoverUrl();
+}
+
+/** Resolve a backend avatar URL, falling back to the R2 default avatar when there is none. */
+export function resolveAvatarUrl(url: string | null | undefined): string {
+  return resolvePublicUrl(url) || defaultAvatarUrl();
+}
+
+export function faviconUrl(): string {
+  return brandAssetUrl(BRAND_ASSET_KEYS.favicon);
+}
+
+/**
+ * Points the browser's tab icon at R2 as well, so the app ships no image files of its own.
+ *
+ * It has to happen in script rather than as a `<link href>` in `index.html`: that file is static,
+ * while the API's base URL is not — it is `localhost:5282` under `ng serve` and a same-origin
+ * path base once IIS or nginx is in front. A hardcoded href would be right in exactly one of them.
+ */
+export function installFavicon(document: Document): void {
+  const link =
+    document.querySelector<HTMLLinkElement>('link[rel~="icon"]') ??
+    document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
+  link.type = 'image/x-icon';
+  link.href = faviconUrl();
+}

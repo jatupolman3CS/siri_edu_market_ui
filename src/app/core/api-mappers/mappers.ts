@@ -47,6 +47,12 @@ import type {
   SubcategoryAdmin,
 } from '../models';
 import { resolvePublicUrl } from '../api-runtime';
+import {
+  defaultAvatarUrl,
+  placeholderCoverUrl,
+  resolveAvatarUrl,
+  resolveCoverUrl,
+} from '../brand-assets';
 
 /**
  * Defensive read: backend now returns `categoryIds: string[]`, but during the
@@ -91,28 +97,35 @@ function readQnaFaqSortOrder(q: { faqSortOrder?: number | null } | null | undefi
   return q?.faqSortOrder ?? 0;
 }
 
-const EMPTY_SELLER: Seller = {
-  id: '',
-  studioName: '',
-  ownerName: '',
-  avatar: '',
-  bio: '',
-  joinedAt: new Date().toISOString(),
-  rating: 0,
-  totalSales: 0,
-  totalDocuments: 0,
-  followerCount: 0,
-  responseHours: 0,
-  badges: [],
-};
+/**
+ * A fresh stub per call: `avatar` resolves to the R2 default at call time (the API base URL is
+ * only known once `api-runtime` has initialised), and every caller spreading it gets its own
+ * object rather than a shared one it could mutate for everyone else.
+ */
+function emptySeller(): Seller {
+  return {
+    id: '',
+    studioName: '',
+    ownerName: '',
+    avatar: defaultAvatarUrl(),
+    bio: '',
+    joinedAt: new Date().toISOString(),
+    rating: 0,
+    totalSales: 0,
+    totalDocuments: 0,
+    followerCount: 0,
+    responseHours: 0,
+    badges: [],
+  };
+}
 
 export function mapSeller(s: SellerInfoResponse | undefined): Seller {
-  if (!s) return EMPTY_SELLER;
+  if (!s) return emptySeller();
   return {
     id: s.id ?? '',
     studioName: s.studioName ?? '',
     ownerName: s.ownerName ?? '',
-    avatar: resolvePublicUrl(s.avatarUrl ?? ''),
+    avatar: resolveAvatarUrl(s.avatarUrl),
     bio: s.bio ?? '',
     banner: s.bannerUrl ? resolvePublicUrl(s.bannerUrl) : undefined,
     joinedAt: s.joinedAt ?? new Date().toISOString(),
@@ -187,7 +200,7 @@ export function mapAdminPendingToDocumentItem(
     title: p.title ?? '',
     shortDescription: p.shortDescription ?? '',
     description: '',
-    cover: resolvePublicUrl(p.coverUrl ?? ''),
+    cover: resolveCoverUrl(p.coverUrl),
     gallery: [],
     price: p.price ?? 0,
     originalPrice: undefined,
@@ -209,7 +222,7 @@ export function mapAdminPendingToDocumentItem(
     watermarkEnabled: false,
     previewPages: 0,
     seller: {
-      ...EMPTY_SELLER,
+      ...emptySeller(),
       studioName: sellerLabel,
       ownerName: sellerLabel,
     },
@@ -230,7 +243,7 @@ export function mapAdminSellerCard(s: AdminSellerResponse): Seller {
     id: s.id ?? '',
     studioName: name,
     ownerName: s.ownerName ?? '',
-    avatar: resolvePublicUrl(s.avatarUrl ?? ''),
+    avatar: resolveAvatarUrl(s.avatarUrl),
     bio: s.email ? `ติดต่อ: ${s.email}` : '',
     joinedAt: s.joinedAt ?? new Date().toISOString(),
     rating: 0,
@@ -246,7 +259,7 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
   const previews = (d.galleryPreviewUrls ?? []).map((u) =>
     resolvePublicUrl((u ?? '').replaceAll('%2F', '/')),
   );
-  const cover = previews[0] ?? '';
+  const cover = previews[0] ?? placeholderCoverUrl();
   const gallery = previews.length > 0 ? previews : [];
   return {
     id: d.id ?? '',
@@ -277,7 +290,7 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
     watermarkEnabled: false,
     previewPages: 0,
     seller: {
-      ...EMPTY_SELLER,
+      ...emptySeller(),
       studioName: d.sellerName ?? '',
       ownerName: d.sellerName ?? '',
     },
@@ -296,7 +309,7 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
   const reviews: DocumentReview[] = (d.reviews ?? []).map((r) => ({
     id: r.id ?? '',
     buyerName: r.authorName ?? '',
-    buyerAvatar: '',
+    buyerAvatar: defaultAvatarUrl(),
     rating: r.rating ?? 0,
     comment: r.comment ?? '',
     createdAt: r.createdAt ?? '',
@@ -306,7 +319,7 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
   const qna: QnAItem[] = (d.qna ?? []).map((q) => ({
     id: q.id ?? '',
     buyerName: q.buyerName ?? '',
-    buyerAvatar: resolvePublicUrl(q.buyerAvatarUrl ?? ''),
+    buyerAvatar: resolveAvatarUrl(q.buyerAvatarUrl),
     question: q.question ?? '',
     askedAt: q.askedAt ?? '',
     answer: q.answerText ? { text: q.answerText, answeredAt: q.answeredAt ?? '' } : undefined,
@@ -318,7 +331,7 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
   const fromGallery = (d.galleryUrls ?? []).map((u) =>
     resolvePublicUrl((u ?? '').replaceAll('%2F', '/')),
   );
-  const coverResolved = fromGallery[0] ?? '';
+  const coverResolved = fromGallery[0] ?? placeholderCoverUrl();
   const gallery = fromGallery;
 
   return {
@@ -372,13 +385,13 @@ export function mapBundle(b: BundleResponse): Bundle {
     slug: b.slug ?? '',
     title: b.title ?? '',
     description: b.description ?? '',
-    cover: resolvePublicUrl(b.coverUrl ?? ''),
+    cover: resolveCoverUrl(b.coverUrl),
     price: b.price ?? 0,
     originalPrice: b.originalPrice ?? 0,
     documentIds: [],
     documentCount: b.documentCount ?? 0,
     seller: {
-      ...EMPTY_SELLER,
+      ...emptySeller(),
       id: b.sellerId ?? '',
       studioName: b.sellerName ?? '',
       ownerName: b.sellerName ?? '',
@@ -399,7 +412,7 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     title: item.title ?? '',
     shortDescription: '',
     description: '',
-    cover: resolvePublicUrl(item.coverUrl ?? ''),
+    cover: resolveCoverUrl(item.coverUrl),
     gallery: [],
     price: 0,
     format: (item.format ?? 'pdf') as FileFormat,
@@ -416,7 +429,7 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     status: 'approved',
     watermarkEnabled: false,
     previewPages: 0,
-    seller: EMPTY_SELLER,
+    seller: emptySeller(),
     createdAt: item.purchasedAt ?? '',
     updatedAt: item.purchasedAt ?? '',
     reviews: [],
@@ -445,7 +458,7 @@ export function mapOrder(o: OrderResponse): Order {
         title: item.title ?? '',
         shortDescription: '',
         description: '',
-        cover: resolvePublicUrl(item.coverUrl ?? ''),
+        cover: resolveCoverUrl(item.coverUrl),
         gallery: [],
         price: item.priceAtPurchase ?? 0,
         format: 'pdf' as FileFormat,
@@ -462,7 +475,7 @@ export function mapOrder(o: OrderResponse): Order {
         status: 'approved' as DocumentItem['status'],
         watermarkEnabled: false,
         previewPages: 0,
-        seller: EMPTY_SELLER,
+        seller: emptySeller(),
         createdAt: o.createdAt ?? '',
         updatedAt: o.createdAt ?? '',
         reviews: [],
@@ -577,7 +590,7 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
         : fromGallery.length > 0
           ? fromGallery
           : [];
-  const coverUrl = gallery[0] ?? '';
+  const coverUrl = gallery[0] ?? placeholderCoverUrl();
   const mainFilesRaw = d.mainFiles ?? [];
   const mainFiles =
     mainFilesRaw.length > 0
@@ -623,7 +636,7 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     previewPages: d.previewPages ?? 0,
     previewWatermarkSubtitle: d.previewWatermarkSubtitle ?? undefined,
     previewWatermarkFontFamily: d.previewWatermarkFontFamily ?? undefined,
-    seller: EMPTY_SELLER,
+    seller: emptySeller(),
     createdAt: d.createdAt ?? new Date().toISOString(),
     updatedAt: d.updatedAt ?? new Date().toISOString(),
     reviews: [],
@@ -667,8 +680,9 @@ export function mapLoyaltyEntry(d: LoyaltyEntryResponse): LoyaltyEntry {
 /** List row only — cover thumbnail; no full gallery metadata (edit loads via GET by id). */
 export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): DocumentItem {
   const coverRaw = (d.coverUrl ?? '').trim();
-  const cover = coverRaw ? resolvePublicUrl(coverRaw.replaceAll('%2F', '/')) : '';
-  const gallery = cover ? [cover] : [];
+  const realCover = coverRaw ? resolvePublicUrl(coverRaw.replaceAll('%2F', '/')) : '';
+  const gallery = realCover ? [realCover] : [];
+  const cover = realCover || placeholderCoverUrl();
   return {
     id: d.id ?? '',
     slug: d.slug ?? '',
@@ -698,7 +712,7 @@ export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): Docu
     status: (d.status ?? 'pending') as DocumentItem['status'],
     watermarkEnabled: false,
     previewPages: 0,
-    seller: EMPTY_SELLER,
+    seller: emptySeller(),
     createdAt: d.updatedAt ?? new Date().toISOString(),
     updatedAt: d.updatedAt ?? '',
     reviews: [],

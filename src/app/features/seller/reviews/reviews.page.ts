@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { resolvePublicUrl } from '../../../core/api-runtime';
+import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { SellerService } from '../../../core/services';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -26,8 +26,6 @@ type ReviewRow = {
 })
 export class SellerReviewsPage {
   readonly seller = inject(SellerService);
-
-  private readonly avatarFallback = 'https://placehold.co/96x96/png?text=?';
 
   readonly items = signal<ReviewRow[]>([]);
 
@@ -71,7 +69,7 @@ export class SellerReviewsPage {
       id: r.id,
       docTitle: r.documentTitle,
       buyerName: r.buyerName,
-      buyerAvatar: resolvePublicUrl(r.buyerAvatarUrl) || this.avatarFallback,
+      buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
       rating: r.rating,
       comment: r.comment,
       createdAt: r.createdAt,
