@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DocumentItem, RESOURCE_TYPE_ICONS, RESOURCE_TYPE_LABELS } from '../../../core/models';
+import { DocumentItem, RESOURCE_TYPE_LABELS } from '../../../core/models';
 import {
   CartService,
   QuickViewService,
@@ -33,9 +33,6 @@ export class DocumentCardComponent {
 
   resourceLabel(): string {
     return RESOURCE_TYPE_LABELS[this.doc().resourceType] ?? this.doc().resourceType;
-  }
-  resourceIcon(): string {
-    return RESOURCE_TYPE_ICONS[this.doc().resourceType] ?? '📄';
   }
 
   isCompact(): boolean {

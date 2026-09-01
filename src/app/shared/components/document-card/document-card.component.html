@@ -1,5 +1,5 @@
 <article
-      class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1"
+      class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
       [class.!rounded-2xl]="isCompact()"
     >
       <!-- Cover -->
@@ -122,7 +122,7 @@
 
       <!-- Body -->
       <div
-        class="p-4 pt-3 flex flex-col gap-2"
+        class="p-4 pt-3 flex flex-col gap-2 flex-1"
         [class.!p-3]="isCompact()"
         [class.!pt-2]="isCompact()"
         [class.!gap-1.5]="isCompact()"
@@ -130,7 +130,7 @@
         <!-- Resource type + Seller -->
         <div class="flex items-center gap-1.5 text-[11px] text-ink-muted">
           <span class="pill-soft !py-0.5 !text-[10px] !bg-pink-50 !text-pink-700">
-            {{ resourceIcon() }} {{ resourceLabel() }}
+            {{ resourceLabel() }}
           </span>
           <span class="truncate ml-auto flex items-center gap-1">
             <img
@@ -144,14 +144,14 @@
 
         <a [routerLink]="['/document', doc().id]" class="block">
           <h3
-            class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 group-hover:text-pink-600 transition-colors"
+            class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 min-h-[2.75em] group-hover:text-pink-600 transition-colors"
             [class.!text-[12px]]="isCompact()"
           >
             {{ doc().title }}
           </h3>
         </a>
 
-        <div class="flex items-center gap-3 text-xs text-ink-muted">
+        <div class="flex items-center gap-3 text-xs text-ink-muted mt-auto">
           <app-rating-stars
             [value]="doc().rating"
             [count]="doc().reviewCount"
