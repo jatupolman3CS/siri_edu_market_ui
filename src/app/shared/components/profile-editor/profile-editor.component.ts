@@ -33,6 +33,11 @@ export class ProfileEditorComponent {
 
   displayName = '';
   avatarUrl = '';
+  /**
+   * storage-key-persistence v1 §4.1: the bare object-storage key, kept separate from `avatarUrl`
+   * (display-only) — this is what must round-trip back into `updateProfile()`, never the URL.
+   */
+  avatarStorageKey = '';
 
   readonly saving = signal(false);
   readonly avatarUploading = signal(false);
@@ -45,6 +50,7 @@ export class ProfileEditorComponent {
       next: (p) => {
         this.displayName = p.name ?? '';
         this.avatarUrl = p.avatarUrl ?? '';
+        this.avatarStorageKey = p.avatarStorageKey ?? '';
         this.loaded.set(true);
       },
       error: () => {
@@ -71,12 +77,16 @@ export class ProfileEditorComponent {
       // image-upload-optimization v1 §4: avatar has no separate "original" column to keep, so
       // the optimized URL (when the backend produced one) replaces publicUrl outright — both
       // for what renders here and for what gets persisted.
-      const avatarUrl = data.optimizedUrl ?? data.publicUrl;
-      this.avatarUrl = avatarUrl;
+      this.avatarUrl = data.optimizedUrl ?? data.publicUrl;
+      // storage-key-persistence v1 §4.1: persist the bare key from UploadResponse, never a URL.
+      this.avatarStorageKey = data.optimizedKey ?? data.key;
       // The name goes up with it: PUT /api/me/profile replaces the profile, so sending the
       // avatar alone would blank a name the user had typed but not yet saved.
       await firstValueFrom(
-        this.me.updateProfile({ name: this.displayName, avatarUrl }),
+        this.me.updateProfile({
+          name: this.displayName,
+          avatarStorageKey: this.avatarStorageKey,
+        }),
       );
       this.message.success('อัปโหลดรูปโปรไฟล์และบันทึกแล้ว');
     } catch {
@@ -88,15 +98,20 @@ export class ProfileEditorComponent {
 
   save(): void {
     this.saving.set(true);
-    this.me.updateProfile({ name: this.displayName, avatarUrl: this.avatarUrl }).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.message.success('บันทึกโปรไฟล์แล้ว');
-      },
-      error: () => {
-        // Left visible rather than swallowed: the user needs to know the name did not save.
-        this.saving.set(false);
-      },
-    });
+    // storage-key-persistence v1 §4.1 (bug fix): resubmit `avatarStorageKey`, never `avatarUrl` —
+    // `avatarUrl` is a resolved display URL and would corrupt the stored key on every edit that
+    // doesn't touch the avatar.
+    this.me
+      .updateProfile({ name: this.displayName, avatarStorageKey: this.avatarStorageKey })
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.message.success('บันทึกโปรไฟล์แล้ว');
+        },
+        error: () => {
+          // Left visible rather than swallowed: the user needs to know the name did not save.
+          this.saving.set(false);
+        },
+      });
   }
 }

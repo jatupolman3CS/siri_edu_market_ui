@@ -1,3 +1,15 @@
+import type {
+  SellerDocumentGalleryItemResponse,
+  UserProfileResponse,
+} from '../api/types.gen';
+
+// TODO(contract): ลบ shim นี้เมื่อ avatarStorageKey/imageStorageKey มีอยู่จริงใน SDK ที่ generate
+// แล้ว (หลัง backend เปลี่ยน DTO + regen:api) — ดู docs/contracts/storage-key-persistence.md
+export type UpdateProfileRequestWithKey = { name?: string | null; avatarStorageKey?: string | null };
+export type UserProfileResponseWithKey = UserProfileResponse & { avatarStorageKey?: string | null };
+export type GalleryItemRequestWithKey = { id?: string | null; imageStorageKey: string };
+export type SellerGalleryItemWithKey = SellerDocumentGalleryItemResponse & { imageStorageKey?: string };
+
 /**
  * Shape returned by `@hey-api/client-fetch`. `request`/`response` are optional because the
  * client omits them when fetch throws before a response exists — the unwrapper already

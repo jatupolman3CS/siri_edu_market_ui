@@ -17,6 +17,7 @@ import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
 } from '../../../core/api/seller-document-update';
+import type { GalleryItemRequestWithKey } from '../../../core/services/api-result';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';

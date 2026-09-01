@@ -6,7 +6,7 @@ export const environment = {
    * `/SIRIEDUMARKET.Api` path base (`UsePathBase` in the API's `Program.cs`), or every request
    * 404s since the host serves nothing at the bare origin.
    */
-  apiUrl: 'https://api-siriedumarket.siristudiophoto.com/SIRIEDUMARKET.Api',
+  apiUrl: 'https://api-siriedumarket.siristudiophoto.com',
   /** Optional fallback; prefer `GET /api/auth/oauth-clients` from the API. */
  googleOAuthClientId:
     '5881672938-464ssnfcb78tou755dkf7jvmhvbkf68v.apps.googleusercontent.com',

@@ -176,8 +176,12 @@ export interface DocumentItem {
   description: string;
   cover: string;
   gallery: string[];
-  /** Stable gallery row ids + URLs from seller API (edit/sync). Same order as `gallery` when set. */
-  gallerySlots?: { id: string; imageUrl: string }[];
+  /**
+   * Stable gallery row ids + URLs from seller API (edit/sync). Same order as `gallery` when set.
+   * `imageStorageKey` (storage-key-persistence v1 §4.2) is the bare key that must round-trip back
+   * into the update payload — `imageUrl` is resolved-URL, display-only.
+   */
+  gallerySlots?: { id: string; imageUrl: string; imageStorageKey: string }[];
   /** Total gallery images available (may exceed `gallery.length` on list views). */
   galleryCount?: number;
   price: number;            // 0 = Free

@@ -56,6 +56,7 @@ import {
   resolveAvatarUrl,
   resolveCoverUrl,
 } from '../brand-assets';
+import type { SellerGalleryItemWithKey } from '../services/api-result';
 
 /**
  * Defensive read: backend now returns `categoryIds: string[]`, but during the
@@ -625,6 +626,9 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     .map((it) => ({
       id: (it.id ?? '').trim(),
       imageUrl: (it.imageUrl ?? '').trim(),
+      // storage-key-persistence v1 §4.2: shim until `imageStorageKey` exists on the generated
+      // `SellerDocumentGalleryItemResponse` (TODO(contract) in api-result.ts).
+      imageStorageKey: ((it as SellerGalleryItemWithKey).imageStorageKey ?? '').trim(),
     }))
     .filter((it) => it.id !== '' && it.imageUrl !== '');
   const fromGallery = (d.galleryImageUrls ?? []).map((u) =>
@@ -635,6 +639,7 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
       ? fromItems.map((it) => ({
           id: it.id,
           imageUrl: it.imageUrl,
+          imageStorageKey: it.imageStorageKey,
         }))
       : undefined;
   const galleryFromSlots =
