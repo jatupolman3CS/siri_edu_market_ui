@@ -5,6 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogService } from '../../../core/services';
@@ -23,6 +24,7 @@ import { FormsModule } from '@angular/forms';
     IconComponent,
     EmptyStateComponent,
     CompactPipe,
+    DecimalPipe,
     FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

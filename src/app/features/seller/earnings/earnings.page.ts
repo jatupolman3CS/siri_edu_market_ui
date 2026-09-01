@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { SellerService } from '../../../core/services';
+import { PlatformStatsService, SellerService } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -17,11 +17,25 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 })
 export class SellerEarningsPage {
   readonly seller = inject(SellerService);
+  readonly platformStats = inject(PlatformStatsService);
   private readonly message = inject(NzMessageService);
 
   /** GAP-02: figures now come from the earnings endpoint rather than dashboard stats. */
   readonly totalEarnings = computed(() => this.seller.earnings()?.totalEarnings ?? 0);
   readonly pendingBalance = computed(() => this.seller.earnings()?.pendingBalance ?? 0);
+
+  // ===== real-data-stats v1 §4.6: fee % (was hardcoded "90%") =====
+  // Fallback 10 only while stats() hasn't loaded yet, same reasoning as the dashboard page.
+  readonly sellerSharePercent = computed(
+    () => 100 - (this.platformStats.stats()?.feeRatePercent ?? 10),
+  );
+
+  /** real-data-stats v1 §3.4/§4.6: same trend badge the dashboard page shows for "รายได้เดือนนี้". */
+  readonly revenueTrendDisplay = computed(() => {
+    const v = this.seller.stats().revenueTrendPercent;
+    if (v == null) return null;
+    return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+  });
 
   /** True while a payout request is already awaiting processing. */
   readonly hasOpenRequest = computed(() =>
@@ -36,6 +50,9 @@ export class SellerEarningsPage {
 
   constructor() {
     void this.seller.loadEarnings();
+    // real-data-stats v1 §4.6: needed for the "รายได้เดือนนี้" trend badge and the fee % below.
+    void this.seller.refreshDashboard();
+    this.platformStats.loadStats();
   }
 
   openRequest(): void {

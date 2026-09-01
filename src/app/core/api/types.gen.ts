@@ -58,6 +58,9 @@ export type AdminDashboardResponse = {
   totalBuyers?: number;
   pendingApproval?: number;
   serviceStatus?: Array<ServiceStatusItem>;
+  revenueTrendPercent?: number | null;
+  feesTrendPercent?: number | null;
+  refundTrendPercent?: number | null;
 };
 
 export type AdminDocumentActionResponse = {
@@ -307,6 +310,8 @@ export type CategoryDetailResponse = {
   description?: string;
   documentCount?: number;
   subcategories?: Array<SubcategoryResponse>;
+  averageRating?: number | null;
+  reviewCount?: number;
 };
 
 export type CategoryResponse = {
@@ -319,6 +324,7 @@ export type CategoryResponse = {
   isActive?: boolean;
   sortOrder?: number;
   documentCount?: number;
+  subcategoryCount?: number;
 };
 
 export type ChangePasswordRequest = {
@@ -784,6 +790,16 @@ export type PlatformSettingsResponse = {
   payoutSchedule?: string;
 };
 
+export type PlatformStatsResponse = {
+  totalApprovedDocuments?: number;
+  totalSellers?: number;
+  totalDownloads?: number;
+  reviewCount?: number;
+  averageRating?: number | null;
+  positiveReviewPercent?: number | null;
+  feeRatePercent?: number;
+};
+
 export type PresignedUrlResponse = {
   url: string;
   expiresSeconds: number;
@@ -908,6 +924,8 @@ export type SellerDashboardResponse = {
   newFollowersThisMonth?: number;
   revenueByMonth?: Array<RevenueByMonthItem>;
   topCategories?: Array<TopCategoryItem>;
+  revenueTrendPercent?: number | null;
+  ratingTrendDelta?: number | null;
 };
 
 export type SellerDocumentGalleryItemResponse = {
@@ -975,6 +993,7 @@ export type SellerEarningsResponse = {
   totalEarnings?: number;
   pendingBalance?: number;
   payouts?: Array<PayoutResponse>;
+  nextPayoutDate?: string | null;
 };
 
 export type SellerFollowStatusResponse = {
@@ -1214,6 +1233,8 @@ export type UploadResponse = {
   key: string;
   publicUrl: string;
   eTag: string;
+  optimizedKey: string | null;
+  optimizedUrl: string | null;
 };
 
 export type UserProfileResponse = {
@@ -2987,6 +3008,23 @@ export type GetApiMarketplaceBundlesByIdResponses = {
 
 export type GetApiMarketplaceBundlesByIdResponse =
   GetApiMarketplaceBundlesByIdResponses[keyof GetApiMarketplaceBundlesByIdResponses];
+
+export type GetApiMarketplaceStatsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/marketplace/stats';
+};
+
+export type GetApiMarketplaceStatsResponses = {
+  /**
+   * OK
+   */
+  200: PlatformStatsResponse;
+};
+
+export type GetApiMarketplaceStatsResponse =
+  GetApiMarketplaceStatsResponses[keyof GetApiMarketplaceStatsResponses];
 
 export type GetApiMeProfileData = {
   body?: never;

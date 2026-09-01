@@ -113,6 +113,21 @@ export class AdminService {
   readonly settings = this._settings.asReadonly();
   readonly storageUsage = this._storageUsage.asReadonly();
 
+  /**
+   * real-data-stats v1 §3.6: `AdminDashboardResponse.revenueTrendPercent` / `.feesTrendPercent`
+   * / `.refundTrendPercent` — `null` means "backend has no baseline to compare against"
+   * (previous month = 0, or no `RefundedAt` data yet — §3.6/§2), which hides the trend badge
+   * per §4.7 (never rendered as "+0%").
+   */
+  readonly dashboardTrends = computed(() => {
+    const d = this._dashboard();
+    return {
+      revenueTrendPercent: d?.revenueTrendPercent ?? null,
+      feesTrendPercent: d?.feesTrendPercent ?? null,
+      refundTrendPercent: d?.refundTrendPercent ?? null,
+    };
+  });
+
   private readonly txnsPager = createInfinitePager<AdminTransaction>({
     pageSize: 50,
     errorMessage: 'โหลดธุรกรรมแอดมินไม่สำเร็จ',

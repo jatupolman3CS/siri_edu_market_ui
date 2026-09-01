@@ -175,6 +175,10 @@ export class CatalogService {
 
   /** Call from Home page. Loads just enough data for the home feed. */
   initForHome(): void {
+    // Q-07 item 1: the home page's "หมวดหมู่" section reads `categories()`, but this never
+    // called `loadCategories()` — only `initForMarketplace()` did — so the section rendered
+    // empty on every visit that started at "/".
+    this.loadCategories();
     void this.syncListWithBackend();
   }
 
@@ -288,8 +292,8 @@ export class CatalogService {
   private async runSearchPage(
     page: number,
     replace: boolean,
+    gen: number = ++this._fetchGeneration,
   ): Promise<void> {
-    const gen = ++this._fetchGeneration;
     const result = await getApiMarketplaceSearch(this.buildSearchOptions(page));
     if (gen !== this._fetchGeneration) return;
     const data = unwrapSdkResult(result as SdkResult<MarketplaceSearchResponse>);
@@ -319,18 +323,26 @@ export class CatalogService {
     const f = this._filters();
     const t = this._tab();
     const useSearch = this.needsServerList(f, t);
+    // Q-07 item 2: stamp *this* refresh with a generation token before either branch's request
+    // goes out, not just inside the search branch — so a slower `/catalog` response can't
+    // clobber a faster, newer `/search` response typed a moment later (or vice versa). Every tab
+    // badge count (marketplace.page.ts `tabs()`) reads `documents()`/`freeResources()`/etc, all
+    // derived from the same `_documents` signal, so a clobbered value used to make counts revert
+    // to stale numbers — most visibly on "ทั้งหมด" since it's the raw, unfiltered length.
+    const gen = ++this._fetchGeneration;
 
     this._catalogState.set(loadingActionState());
     try {
       if (useSearch) {
         this._listSource.set('search');
-        await this.runSearchPage(1, true);
+        await this.runSearchPage(1, true, gen);
       } else {
         this._listSource.set('catalog');
         this._searchTotalCount.set(null);
         this._searchPage.set(1);
         this.catalogPager.reset();
         await this.catalogPager.loadFirst();
+        if (gen !== this._fetchGeneration) return;
         this._documents.set(this.catalogPager.items());
       }
       this._catalogState.set(idleActionState());

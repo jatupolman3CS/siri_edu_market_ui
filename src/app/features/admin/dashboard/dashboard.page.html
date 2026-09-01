@@ -12,13 +12,13 @@
           label="GMV เดือนนี้"
           [value]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb"
           icon="💎"
-          trend="+24%"
+          [trend]="revenueTrendDisplay()"
         />
         <app-stat-card
           label="ค่าธรรมเนียม"
           [value]="(admin.dashboard()?.totalFees ?? admin.totalFees()) | thb"
           icon="💰"
-          trend="+24%"
+          [trend]="feesTrendDisplay()"
         />
         <app-stat-card
           label="ธุรกรรมสำเร็จ"
@@ -29,7 +29,7 @@
           label="คืนเงิน"
           [value]="(admin.dashboard()?.refundCount ?? admin.refundCount()) + ' รายการ'"
           icon="↩️"
-          trend="-12%"
+          [trend]="refundTrendDisplay()"
         />
       </section>
 
@@ -40,7 +40,7 @@
             <div>
               <h2 class="text-lg font-bold text-ink">เอกสารที่รออนุมัติ</h2>
               <p class="text-xs text-ink-muted mt-1">
-                {{ admin.pendingDocuments().length }} รายการ — เฉลี่ยอนุมัติภายใน 18 ชม.
+                {{ admin.pendingDocuments().length }} รายการ
               </p>
             </div>
             <a routerLink="/admin/approval" class="text-sm text-pink-600 hover:underline font-semibold">

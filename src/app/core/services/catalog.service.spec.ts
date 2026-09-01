@@ -13,7 +13,7 @@ import { ApiFailureReporter } from './api-failure-reporter.service';
  *         getCategoryBySlug reported a 404 the server never sent
  *   B-03  a storefront filtered the home-page cache instead of asking the server
  */
-type Route = { status?: number; body: unknown };
+type Route = { status?: number; body: unknown; delayMs?: number };
 
 let routes: Map<string, Route>;
 let realFetch: typeof globalThis.fetch;
@@ -30,6 +30,11 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 function stubRoute(method: string, path: string, body: unknown, status = 200): void {
   routes.set(`${method.toUpperCase()} ${path}`, { body, status });
+}
+
+/** Q-07 item 2: like stubRoute, but resolves after `delayMs` — used to force a real race. */
+function stubRouteDelayed(method: string, path: string, body: unknown, delayMs: number): void {
+  routes.set(`${method.toUpperCase()} ${path}`, { body, status: 200, delayMs });
 }
 
 function categoryDetail(over: Record<string, unknown> = {}) {
@@ -95,6 +100,7 @@ beforeEach(() => {
 
     const route = routes.get(`${request.method} ${path}`);
     if (!route) return jsonResponse({ title: 'no stub', status: 404, statusCode: 404 }, 404);
+    if (route.delayMs) await new Promise((resolve) => setTimeout(resolve, route.delayMs));
     return jsonResponse(route.body, route.status ?? 200);
   }) as typeof globalThis.fetch;
 });
@@ -209,6 +215,49 @@ describe('CatalogService — loading the category list (S-08 / B-01)', () => {
     await settle();
 
     expect(catalog.categories().length).toBe(1);
+  });
+});
+
+describe('CatalogService — initForHome (Q-07 item 1, re-broke B-01)', () => {
+  it('loads categories, not just the document list — home page reads categories() too', async () => {
+    // initForHome() called syncListWithBackend() only; loadCategories() was never wired in
+    // (unlike initForMarketplace(), which calls both), so the home page's "หมวดหมู่" section
+    // stayed empty forever even though S-08 had already fixed the deep-link case via
+    // ensureCategories().
+    stubRoute('GET', '/api/marketplace/categories', [categoryDetail()]);
+    stubRoute('GET', '/api/marketplace/catalog', { documents: searchPage([]) });
+    const catalog = buildService();
+
+    catalog.initForHome();
+    await settle();
+
+    expect(catalog.categories().length).toBe(1);
+  });
+});
+
+describe('CatalogService — catalog vs search response race (Q-07 item 2)', () => {
+  it('a slow initial /catalog response does not clobber a faster, newer /search response', async () => {
+    // Simulates: the page loads (kicks off /catalog), and the user types a search keyword
+    // before that /catalog response arrives. Every marketplace tab badge (marketplace.page.ts
+    // `tabs()`) reads `documents()`/`freeResources()`/etc, all derived from the same
+    // `_documents` signal — so if the slow /catalog response was allowed to win, it silently
+    // clobbered the fresher /search result back to the pre-search document set, most visibly on
+    // the "ทั้งหมด" badge since it reads the raw, unfiltered length.
+    stubRouteDelayed(
+      'GET',
+      '/api/marketplace/catalog',
+      { documents: searchPage([documentRow('doc-1'), documentRow('doc-2')]) },
+      500,
+    );
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-3')]));
+    const catalog = buildService();
+
+    catalog.loadCatalog(); // slow /catalog fetch starts (in flight for 500ms)
+    catalog.setFilters({ search: 'คณิต' }); // debounced 320ms, then a fast /search fetch
+
+    await new Promise((resolve) => setTimeout(resolve, 900)); // both requests have long settled
+
+    expect(catalog.documents().map((d) => d.id)).toEqual(['doc-3']);
   });
 });
 

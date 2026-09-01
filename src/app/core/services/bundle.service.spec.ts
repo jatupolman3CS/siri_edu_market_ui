@@ -146,6 +146,77 @@ describe('BundleService — loadBundlesContainingDocument (SDK wired)', () => {
   });
 });
 
+describe('BundleService — loadBundleDetail / getDocuments (Q-04)', () => {
+  it('fetches GET /api/marketplace/bundles/{id} and caches its member documents', async () => {
+    stubRoute('GET', '/api/marketplace/bundles/bun-1', {
+      id: 'bun-1',
+      slug: 'bun-1',
+      title: 'แพ็กคุ้ม',
+      description: 'รวมเอกสารคุ้ม ๆ',
+      coverUrl: 'https://example.test/cover.jpg',
+      price: 150,
+      originalPrice: 200,
+      averageRating: 4.5,
+      reviewCount: 10,
+      downloads: 99,
+      createdAt: '2026-01-01T00:00:00Z',
+      seller: {
+        id: 'seller-1',
+        studioName: 'ครูเอ',
+        ownerName: 'ครูเอ',
+        totalDocuments: 12,
+      },
+      documents: [
+        { id: 'doc-1', slug: 'doc-1', title: 'เอกสาร 1', price: 80 },
+        { id: 'doc-2', slug: 'doc-2', title: 'เอกสาร 2', price: 90 },
+      ],
+    });
+    const service = buildService();
+
+    expect(service.getById('bun-1')).toBeUndefined();
+    expect(service.getDocuments('bun-1')).toEqual([]);
+
+    service.loadBundleDetail('bun-1');
+    await vi.waitFor(() => expect(service.getDocuments('bun-1')).toHaveLength(2));
+
+    const documents = service.getDocuments('bun-1');
+    expect(documents.map((d) => d.id)).toEqual(['doc-1', 'doc-2']);
+    expect(documents[0].title).toBe('เอกสาร 1');
+
+    const bundle = service.getById('bun-1');
+    expect(bundle?.title).toBe('แพ็กคุ้ม');
+    expect(bundle?.documentIds).toEqual(['doc-1', 'doc-2']);
+    expect(bundle?.documentCount).toBe(2);
+    expect(bundle?.seller.studioName).toBe('ครูเอ');
+    expect(bundle?.seller.totalDocuments).toBe(12);
+  });
+
+  it('reports the failure and leaves the caches empty when the request fails', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/bundles/bun-missing',
+      { title: 'Not Found', status: 404, statusCode: 404 },
+      404,
+    );
+    const apiFail = { report: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [BundleService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    const service = TestBed.inject(BundleService);
+
+    service.loadBundleDetail('bun-missing');
+    await vi.waitFor(() => expect(apiFail.report).toHaveBeenCalled());
+
+    expect(service.getDocuments('bun-missing')).toEqual([]);
+    expect(service.getById('bun-missing')).toBeUndefined();
+  });
+
+  it('is a no-op for an empty id', () => {
+    const service = buildService();
+    expect(() => service.loadBundleDetail('')).not.toThrow();
+  });
+});
+
 describe('calcBundleSavePercent', () => {
   it('rounds (1 - price/originalPrice) * 100', () => {
     expect(calcBundleSavePercent(75, 100)).toBe(25);

@@ -30,7 +30,9 @@
               <div class="flex flex-wrap gap-3">
                 <span class="pill-pink">📄 {{ cat.documentCount | compact }} เอกสาร</span>
                 <span class="pill-pink">🗂️ {{ cat.subcategories?.length ?? 0 }} หมวดย่อย</span>
-                <span class="pill-pink">⭐ คะแนนเฉลี่ย 4.8</span>
+                @if (cat.averageRating; as avgRating) {
+                  <span class="pill-pink">⭐ คะแนนเฉลี่ย {{ avgRating | number:'1.1-1' }}</span>
+                }
               </div>
             </div>
           </div>

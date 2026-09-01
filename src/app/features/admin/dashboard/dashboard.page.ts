@@ -28,6 +28,22 @@ export class AdminDashboardPage {
     return [{ name: 'API', status: 'ok', message: undefined as string | undefined }];
   });
 
+  // ===== real-data-stats v1 §3.6/§4.7: trend badges (GMV/ค่าธรรมเนียม/คืนเงิน) =====
+  // "ธุรกรรมสำเร็จ" intentionally gets no trend badge — no field exists for it (§4.7).
+  private formatTrendPercent(v: number | null): string | null {
+    if (v == null) return null;
+    return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+  }
+  readonly revenueTrendDisplay = computed(() =>
+    this.formatTrendPercent(this.admin.dashboardTrends().revenueTrendPercent),
+  );
+  readonly feesTrendDisplay = computed(() =>
+    this.formatTrendPercent(this.admin.dashboardTrends().feesTrendPercent),
+  );
+  readonly refundTrendDisplay = computed(() =>
+    this.formatTrendPercent(this.admin.dashboardTrends().refundTrendPercent),
+  );
+
   constructor() {
     void this.admin.refreshDashboard();
     void this.admin.refreshTransactions();

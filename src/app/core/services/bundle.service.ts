@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Bundle } from '../models';
-import { mapBundle } from '../api-mappers/mappers';
+import { Bundle, DocumentItem } from '../models';
+import { mapBundle, mapBundleDetail } from '../api-mappers/mappers';
 import {
   deleteApiSellerBundlesByBundleId,
   getApiMarketplaceBundles,
@@ -31,6 +31,10 @@ export class BundleService {
   private readonly apiFail = inject(ApiFailureReporter);
 
   private readonly _bundlesState = signal<ActionState>(idleActionState());
+  /** Q-04: full-detail bundles keyed by id — the only cache with a real `documents` array. */
+  private readonly _bundleDetails = signal<Map<string, Bundle>>(new Map());
+  private readonly _bundleDocuments = signal<Map<string, DocumentItem[]>>(new Map());
+  private readonly _bundleDetailState = signal<ActionState>(idleActionState());
 
   private readonly pager = createInfinitePager<Bundle>({
     pageSize: 12,
@@ -51,6 +55,7 @@ export class BundleService {
   readonly bundles = this.pager.items;
   readonly hasMore = this.pager.hasMore;
   readonly bundlesState = this._bundlesState.asReadonly();
+  readonly bundleDetailState = this._bundleDetailState.asReadonly();
   readonly count = computed(() => this.bundles().length);
 
   readonly featured = computed(() =>
@@ -76,17 +81,34 @@ export class BundleService {
     return this.pager.loadMore();
   }
 
+  /** Prefers the full-detail cache (has real `documentIds`) over the paged-list cache. */
   getById(id: string): Bundle | undefined {
-    return this.bundles().find((b) => b.id === id);
+    return this._bundleDetails().get(id) ?? this.bundles().find((b) => b.id === id);
   }
 
-  /** Loads a single bundle's full detail (fire-and-forget for caching). */
+  /**
+   * Q-04: the member documents of a bundle, only available once `loadBundleDetail(id)` resolves
+   * — the paged bundle list this service otherwise runs on never carries them.
+   */
+  getDocuments(id: string): DocumentItem[] {
+    return this._bundleDocuments().get(id) ?? [];
+  }
+
+  /** Loads (and caches) a single bundle's full detail — call from the bundle-detail page. */
   loadBundleDetail(id: string): void {
+    if (!id) return;
     void (async () => {
+      this._bundleDetailState.set(loadingActionState());
       try {
-        await getApiMarketplaceBundlesById({ path: { id } });
+        const result = await getApiMarketplaceBundlesById({ path: { id } });
+        const data = unwrapSdkResult(result);
+        const { bundle, documents } = mapBundleDetail(data);
+        this._bundleDetails.update((map) => new Map(map).set(id, bundle));
+        this._bundleDocuments.update((map) => new Map(map).set(id, documents));
+        this._bundleDetailState.set(idleActionState());
       } catch (e) {
         this.apiFail.report('โหลดรายละเอียดแพ็กเกจ', e);
+        this._bundleDetailState.set(errorActionState('โหลดรายละเอียดแพ็กเกจไม่สำเร็จ'));
       }
     })();
   }

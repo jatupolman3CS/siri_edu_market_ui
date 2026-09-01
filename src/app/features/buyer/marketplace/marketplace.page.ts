@@ -13,8 +13,10 @@ import { NzSliderModule } from 'ng-zorro-antd/slider';
 import {
   BundleService,
   CatalogService,
+  PlatformStatsService,
   RecentlyViewedService,
 } from '../../../core/services';
+import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
   Category,
   GRADE_LEVEL_LABELS,
@@ -52,7 +54,25 @@ export class BuyerMarketplacePage {
   readonly catalog = inject(CatalogService);
   readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
+  readonly platformStats = inject(PlatformStatsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly compactPipe = new CompactPipe();
+
+  /**
+   * real-data-stats v1 §4 (project-owner instruction — see round 2 dispatch notes): the hero's
+   * "กว่า 12,000 เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ" was a hardcoded number, same figure the
+   * home page already binds to `platformStats.stats()?.totalApprovedDocuments` (§4.2). Drops the
+   * "กว่า N เอกสาร" clause entirely while stats haven't loaded yet, rather than showing a stale
+   * hardcoded count.
+   */
+  readonly heroDescription = computed(() => {
+    const totalDocs = this.platformStats.stats()?.totalApprovedDocuments;
+    const base =
+      totalDocs != null
+        ? `กว่า ${this.compactPipe.transform(totalDocs)} เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ`
+        : 'เอกสารคุณภาพจากครีเอเตอร์ตัวจริงทั่วประเทศ';
+    return `${base} — ใช้ตัวกรองด้านซ้ายเพื่อค้นหาที่ใช่`;
+  });
 
   readonly formats = ['pdf', 'docx', 'pptx', 'xlsx', 'zip'];
   readonly grades: GradeLevel[] = [
@@ -111,6 +131,8 @@ export class BuyerMarketplacePage {
   constructor() {
     // Explicit init to avoid root service auto-fetching on unrelated pages.
     this.catalog.initForMarketplace();
+    // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
+    this.platformStats.loadStats();
 
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())

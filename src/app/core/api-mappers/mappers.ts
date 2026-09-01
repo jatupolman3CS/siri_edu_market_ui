@@ -7,6 +7,7 @@ import type {
   AdminPendingDocumentResponse,
   AdminSellerResponse,
   AdminTransactionResponse,
+  BundleDetailResponse,
   BundleResponse,
   CategoryResponse,
   CategoryDetailResponse,
@@ -16,6 +17,7 @@ import type {
   MarketplaceDocumentDetailResponse,
   MarketplaceDocumentResponse,
   OrderResponse,
+  PlatformStatsResponse,
   SellerDashboardResponse,
   SellerDocumentResponse,
   SellerDocumentSummaryResponse,
@@ -38,6 +40,7 @@ import type {
   Order,
   OrderStatus,
   PaymentMethod,
+  PlatformStats,
   QnAItem,
   ResourceType,
   Seller,
@@ -148,6 +151,8 @@ export function mapCategory(c: CategoryResponse): Category {
     color: c.color ?? '#F9A8D4',
     description: c.description ?? '',
     documentCount: c.documentCount ?? 0,
+    // real-data-stats v1 §3.1: active subcategory count, computed server-side (1 query).
+    subcategoryCount: c.subcategoryCount ?? undefined,
   };
 }
 
@@ -185,6 +190,9 @@ export function mapCategoryDetail(c: CategoryDetailResponse): Category {
     color: c.color ?? '#F9A8D4',
     description: c.description ?? '',
     documentCount: c.documentCount ?? 0,
+    // real-data-stats v1 §3.2: `null` (zero reviews) must stay `undefined`, never `0` (AC-EPIC-3).
+    averageRating: c.averageRating ?? undefined,
+    reviewCount: c.reviewCount ?? 0,
     subcategories: (c.subcategories ?? []).map(mapSubcategory),
   };
 }
@@ -405,6 +413,40 @@ export function mapBundle(b: BundleResponse): Bundle {
   };
 }
 
+/**
+ * Q-04: `GET /api/marketplace/bundles/{id}` (`BundleDetailResponse`) is a different DTO from the
+ * paged `GET /api/marketplace/bundles` (`BundleResponse`) — only the detail response carries the
+ * member `documents` array; `mapBundle` above always leaves `documentIds` empty because the list
+ * endpoint never sends member ids. Returned alongside the mapped `Bundle` (rather than folded
+ * into it) because the bundle-detail page renders document cards straight from this array instead
+ * of round-tripping through `CatalogService.getById`, which can't be trusted to already have
+ * every document a given bundle happens to contain.
+ */
+export function mapBundleDetail(
+  b: BundleDetailResponse,
+): { bundle: Bundle; documents: DocumentItem[] } {
+  const documents = (b.documents ?? []).map(mapDocument);
+  return {
+    bundle: {
+      id: b.id ?? '',
+      slug: b.slug ?? '',
+      title: b.title ?? '',
+      description: b.description ?? '',
+      cover: resolveCoverUrl(b.coverUrl),
+      price: b.price ?? 0,
+      originalPrice: b.originalPrice ?? 0,
+      documentIds: documents.map((d) => d.id),
+      documentCount: documents.length,
+      seller: mapSeller(b.seller),
+      createdAt: b.createdAt ?? new Date().toISOString(),
+      rating: b.averageRating ?? 0,
+      reviewCount: b.reviewCount ?? 0,
+      downloads: b.downloads ?? 0,
+    },
+    documents,
+  };
+}
+
 export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
   const docStub: DocumentItem = {
     id: item.documentId ?? '',
@@ -522,6 +564,23 @@ export function mapSellerStats(d: SellerDashboardResponse): SellerStats {
       category: c.category ?? '',
       sales: c.sales ?? 0,
     })),
+    // real-data-stats v1 §3.4: `null` (no baseline to compare against) must stay `undefined`,
+    // never `0` (AC-EPIC-3) — the trend badge hides on `undefined`.
+    revenueTrendPercent: d.revenueTrendPercent ?? undefined,
+    ratingTrendDelta: d.ratingTrendDelta ?? undefined,
+  };
+}
+
+/** real-data-stats v1 §4.1: maps `GET /api/marketplace/stats` into {@link PlatformStats}. */
+export function mapPlatformStats(s: PlatformStatsResponse): PlatformStats {
+  return {
+    totalApprovedDocuments: s.totalApprovedDocuments ?? 0,
+    totalSellers: s.totalSellers ?? 0,
+    totalDownloads: s.totalDownloads ?? 0,
+    reviewCount: s.reviewCount ?? 0,
+    averageRating: s.averageRating ?? undefined,
+    positiveReviewPercent: s.positiveReviewPercent ?? undefined,
+    feeRatePercent: s.feeRatePercent ?? 0,
   };
 }
 

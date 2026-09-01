@@ -4455,6 +4455,35 @@
         }
       }
     },
+    "/api/marketplace/stats": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformStatsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformStatsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/profile": {
       "get": {
         "tags": [
@@ -8378,6 +8407,21 @@
             "items": {
               "$ref": "#/components/schemas/ServiceStatusItem"
             }
+          },
+          "revenueTrendPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "feesTrendPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "refundTrendPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -9183,6 +9227,15 @@
             "items": {
               "$ref": "#/components/schemas/SubcategoryResponse"
             }
+          },
+          "averageRating": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reviewCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -9215,6 +9268,10 @@
             "format": "int32"
           },
           "documentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subcategoryCount": {
             "type": "integer",
             "format": "int32"
           }
@@ -10813,6 +10870,41 @@
           }
         }
       },
+      "PlatformStatsResponse": {
+        "type": "object",
+        "properties": {
+          "totalApprovedDocuments": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalSellers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalDownloads": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reviewCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageRating": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "positiveReviewPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "feeRatePercent": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "PresignedUrlResponse": {
         "required": [
           "url",
@@ -11216,6 +11308,16 @@
             "items": {
               "$ref": "#/components/schemas/TopCategoryItem"
             }
+          },
+          "revenueTrendPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "ratingTrendDelta": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -11441,6 +11543,10 @@
             "items": {
               "$ref": "#/components/schemas/PayoutResponse"
             }
+          },
+          "nextPayoutDate": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -12224,7 +12330,9 @@
         "required": [
           "key",
           "publicUrl",
-          "eTag"
+          "eTag",
+          "optimizedKey",
+          "optimizedUrl"
         ],
         "type": "object",
         "properties": {
@@ -12236,6 +12344,14 @@
           },
           "eTag": {
             "type": "string"
+          },
+          "optimizedKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "optimizedUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

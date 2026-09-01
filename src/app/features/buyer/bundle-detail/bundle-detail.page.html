@@ -18,14 +18,16 @@
               <span class="absolute top-4 left-4 pill bg-violet-500 text-white shadow-soft">
                 📦 BUNDLE
               </span>
-              <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
-                ประหยัด {{ savingsPercent() }}%
-              </span>
+              @if (savingsPercent() > 0) {
+                <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
+                  ประหยัด {{ savingsPercent() }}%
+                </span>
+              }
             </div>
           </div>
           <div class="lg:col-span-5 flex flex-col">
             <span class="pill-pink mb-3 self-start">
-              {{ b.documentIds.length }} เอกสารในแพ็กเกจ
+              {{ items().length }} เอกสารในแพ็กเกจ
             </span>
             <h1 class="text-3xl md:text-4xl font-extrabold text-ink leading-tight mb-3">
               {{ b.title }}
@@ -48,9 +50,11 @@
                 <span class="text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
                 <span class="text-base text-ink-muted line-through">{{ b.originalPrice | thb }}</span>
               </div>
-              <div class="text-sm text-emerald-600 font-bold mb-4">
-                ประหยัด {{ savings() | thb }} ({{ savingsPercent() }}% off)
-              </div>
+              @if (savings() > 0) {
+                <div class="text-sm text-emerald-600 font-bold mb-4">
+                  ประหยัด {{ savings() | thb }} ({{ savingsPercent() }}% off)
+                </div>
+              }
 
               <div class="flex flex-col gap-2">
                 <button class="btn-pink !py-3.5" (click)="addAllToCart()">

@@ -1,11 +1,27 @@
-import { mapOrder, mapDocument, mapDocumentDetail, mapLibraryItem, mapBundle, mapSellerQna } from './mappers';
+import {
+  mapOrder,
+  mapDocument,
+  mapDocumentDetail,
+  mapLibraryItem,
+  mapBundle,
+  mapBundleDetail,
+  mapSellerQna,
+  mapCategory,
+  mapCategoryDetail,
+  mapSellerStats,
+  mapPlatformStats,
+} from './mappers';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import type {
+  BundleDetailResponse,
   BundleResponse,
+  CategoryDetailResponse,
+  CategoryResponse,
   LibraryItemResponse,
   MarketplaceDocumentDetailResponse,
   MarketplaceDocumentResponse,
   OrderResponse,
+  SellerDashboardResponse,
   SellerQnaResponse,
 } from '../api/types.gen';
 
@@ -181,6 +197,55 @@ describe('mapBundle', () => {
 });
 
 /**
+ * Q-04: `BundleDetailResponse` (from `GET /api/marketplace/bundles/{id}`) is the only response
+ * that carries member `documents` — this is what the bundle-detail page must use instead of
+ * `mapBundle`'s always-empty `documentIds` to stop rendering "0 เอกสารในแพ็กเกจ".
+ */
+describe('mapBundleDetail', () => {
+  const detail: BundleDetailResponse = {
+    id: 'bun-1',
+    title: 'แพ็กคณิตศาสตร์',
+    price: 199,
+    originalPrice: 299,
+    seller: { id: 'seller-1', studioName: 'ครูเอ', totalDocuments: 5 },
+    documents: [
+      { id: 'doc-1', title: 'เอกสาร 1', price: 100 },
+      { id: 'doc-2', title: 'เอกสาร 2', price: 150 },
+    ],
+  };
+
+  it('maps member documents through mapDocument', () => {
+    const { documents } = mapBundleDetail(detail);
+
+    expect(documents).toHaveLength(2);
+    expect(documents[0].id).toBe('doc-1');
+    expect(documents[0].title).toBe('เอกสาร 1');
+  });
+
+  it('derives documentIds/documentCount from the documents array rather than leaving them empty', () => {
+    const { bundle } = mapBundleDetail(detail);
+
+    expect(bundle.documentIds).toEqual(['doc-1', 'doc-2']);
+    expect(bundle.documentCount).toBe(2);
+  });
+
+  it('maps the full seller info via mapSeller instead of the partial id/name pair mapBundle uses', () => {
+    const { bundle } = mapBundleDetail(detail);
+
+    expect(bundle.seller.studioName).toBe('ครูเอ');
+    expect(bundle.seller.totalDocuments).toBe(5);
+  });
+
+  it('defaults to an empty documents array/list when the server sends none', () => {
+    const { bundle, documents } = mapBundleDetail({ id: 'bun-2', title: 'แพ็กว่าง' });
+
+    expect(documents).toEqual([]);
+    expect(bundle.documentIds).toEqual([]);
+    expect(bundle.documentCount).toBe(0);
+  });
+});
+
+/**
  * document-faq-tab v1.1 §3.2/§4: `faqCount` / `qnaCount` / `qna[].isFaq` / `qna[].faqSortOrder`
  * are now real fields the backend always sends. `mapDocumentDetail` reads them directly — the
  * `?? 0` / `?? false` below are just defensive null-safety (matches every other field in this
@@ -301,5 +366,172 @@ describe('brand asset fallbacks', () => {
 
     expect(doc.cover).not.toBe(placeholderCoverUrl());
     expect(doc.cover).toContain('seller/cover.png');
+  });
+});
+
+/**
+ * real-data-stats v1 §3.1 (round 2 — SDK wired) — `CategoryResponse.subcategoryCount` (active
+ * subcategory count, computed server-side, 1 query, no N+1).
+ */
+describe('mapCategory (real-data-stats v1 §3.1 — subcategoryCount)', () => {
+  const base: CategoryResponse = {
+    id: 'cat-1',
+    name: 'การศึกษา',
+    slug: 'education',
+    icon: '📚',
+    color: '#F9A8D4',
+    description: 'หมวดการศึกษา',
+    documentCount: 120,
+  };
+
+  it('reads subcategoryCount from the response', () => {
+    const category = mapCategory({ ...base, subcategoryCount: 7 });
+
+    expect(category.subcategoryCount).toBe(7);
+  });
+
+  it('leaves subcategoryCount undefined when the backend omits it (defensive)', () => {
+    const category = mapCategory(base);
+
+    expect(category.subcategoryCount).toBeUndefined();
+  });
+});
+
+/**
+ * real-data-stats v1 §3.2 (round 2 — SDK wired) — `CategoryDetailResponse.averageRating` /
+ * `.reviewCount`. `averageRating` must stay `undefined` when the backend reports zero reviews
+ * (`null`) — AC-EPIC-3: never show "0 ★".
+ */
+describe('mapCategoryDetail (real-data-stats v1 §3.2 — averageRating/reviewCount)', () => {
+  const base: CategoryDetailResponse = {
+    id: 'cat-1',
+    name: 'การศึกษา',
+    slug: 'education',
+    icon: '📚',
+    color: '#F9A8D4',
+    description: 'หมวดการศึกษา',
+    documentCount: 10,
+    subcategories: [],
+  };
+
+  it('reads averageRating/reviewCount from the response', () => {
+    const category = mapCategoryDetail({ ...base, averageRating: 4.8, reviewCount: 132 });
+
+    expect(category.averageRating).toBe(4.8);
+    expect(category.reviewCount).toBe(132);
+  });
+
+  it('AC-EPIC-3: surfaces a null averageRating (zero reviews) as undefined, never 0', () => {
+    const category = mapCategoryDetail({ ...base, averageRating: null, reviewCount: 0 });
+
+    expect(category.averageRating).toBeUndefined();
+    expect(category.reviewCount).toBe(0);
+  });
+
+  it('defaults reviewCount to 0 and leaves averageRating undefined when the backend sends neither (defensive)', () => {
+    const category = mapCategoryDetail(base);
+
+    expect(category.averageRating).toBeUndefined();
+    expect(category.reviewCount).toBe(0);
+  });
+});
+
+/**
+ * real-data-stats v1 §3.4 (round 2 — SDK wired) — `SellerDashboardResponse.revenueTrendPercent`
+ * / `.ratingTrendDelta`. Both must stay `undefined` (hide the trend badge) rather than `0`
+ * ("+0%" would misleadingly read as "no change" instead of "cannot be computed").
+ */
+describe('mapSellerStats (real-data-stats v1 §3.4 — trend fields)', () => {
+  const base: SellerDashboardResponse = {
+    totalRevenue: 100000,
+    monthlyRevenue: 20000,
+    totalDownloads: 500,
+    monthlyDownloads: 0,
+    averageRating: 4.7,
+    totalReviews: 40,
+    pendingPayout: 5000,
+    activeListings: 12,
+    pendingApproval: 1,
+    followerCount: 80,
+    newFollowersThisMonth: 3,
+    revenueByMonth: [],
+    topCategories: [],
+  };
+
+  it('reads the trend fields from the response', () => {
+    const stats = mapSellerStats({ ...base, revenueTrendPercent: 18.4, ratingTrendDelta: -0.12 });
+
+    expect(stats.revenueTrendPercent).toBe(18.4);
+    expect(stats.ratingTrendDelta).toBe(-0.12);
+  });
+
+  it('AC-EPIC-3: surfaces a null trend (no baseline) as undefined, never 0', () => {
+    const stats = mapSellerStats({ ...base, revenueTrendPercent: null, ratingTrendDelta: null });
+
+    expect(stats.revenueTrendPercent).toBeUndefined();
+    expect(stats.ratingTrendDelta).toBeUndefined();
+  });
+
+  it('leaves both undefined when the backend omits them (defensive)', () => {
+    const stats = mapSellerStats(base);
+
+    expect(stats.revenueTrendPercent).toBeUndefined();
+    expect(stats.ratingTrendDelta).toBeUndefined();
+  });
+});
+
+/**
+ * real-data-stats v1 §3.3/§4.1 — `mapPlatformStats` maps `PlatformStatsResponse` from
+ * `GET /api/marketplace/stats`. `averageRating` / `positiveReviewPercent` must stay `undefined`
+ * when the backend reports zero reviews (`null`), never `0` — AC-EPIC-3.
+ */
+describe('mapPlatformStats (real-data-stats v1 §3.3/§4.1)', () => {
+  it('maps every field when the backend sends full data', () => {
+    const stats = mapPlatformStats({
+      totalApprovedDocuments: 12500,
+      totalSellers: 3200,
+      totalDownloads: 98000,
+      reviewCount: 8400,
+      averageRating: 4.9,
+      positiveReviewPercent: 98,
+      feeRatePercent: 10,
+    });
+
+    expect(stats).toEqual({
+      totalApprovedDocuments: 12500,
+      totalSellers: 3200,
+      totalDownloads: 98000,
+      reviewCount: 8400,
+      averageRating: 4.9,
+      positiveReviewPercent: 98,
+      feeRatePercent: 10,
+    });
+  });
+
+  it('surfaces null averageRating/positiveReviewPercent (no reviews yet) as undefined, never 0', () => {
+    const stats = mapPlatformStats({
+      totalApprovedDocuments: 0,
+      totalSellers: 0,
+      totalDownloads: 0,
+      reviewCount: 0,
+      averageRating: null,
+      positiveReviewPercent: null,
+      feeRatePercent: 10,
+    });
+
+    expect(stats.averageRating).toBeUndefined();
+    expect(stats.positiveReviewPercent).toBeUndefined();
+  });
+
+  it('defaults the required counters to 0 when the server sends nothing (defensive)', () => {
+    const stats = mapPlatformStats({});
+
+    expect(stats.totalApprovedDocuments).toBe(0);
+    expect(stats.totalSellers).toBe(0);
+    expect(stats.totalDownloads).toBe(0);
+    expect(stats.reviewCount).toBe(0);
+    expect(stats.feeRatePercent).toBe(0);
+    expect(stats.averageRating).toBeUndefined();
+    expect(stats.positiveReviewPercent).toBeUndefined();
   });
 });

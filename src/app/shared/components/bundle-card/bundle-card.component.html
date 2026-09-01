@@ -67,9 +67,11 @@
                 {{ bundle().originalPrice | thb }}
               </span>
             </div>
-            <div class="text-emerald-600 font-bold text-xs">
-              − {{ savings() | thb }}
-            </div>
+            @if (savings() > 0) {
+              <div class="text-emerald-600 font-bold text-xs">
+                − {{ savings() | thb }}
+              </div>
+            }
           </div>
         </div>
       </a>

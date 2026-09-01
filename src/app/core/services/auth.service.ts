@@ -299,8 +299,12 @@ export class AuthService {
       this._pending.set(null);
       this.clearPending();
       return { ok: true };
-    } catch (e) {
-      this.apiFail.report('ยืนยันอีเมล', e);
+    } catch {
+      // Q-07 item 4: no `apiFail.report()` here on purpose — that call formats the raw
+      // ProblemDetails `detail`/`title` the backend sends (e.g. the English
+      // "Verification token is invalid or expired."), and verify-email.page.ts already renders
+      // the friendly Thai `error` below inline, so the toast was pure duplicate noise mixing
+      // untranslated English into an otherwise-Thai screen.
       return {
         ok: false,
         error: 'ยืนยันอีเมลไม่สำเร็จ — ใช้ลิงก์ในอีเมลหรือรหัสที่ถูกต้อง',

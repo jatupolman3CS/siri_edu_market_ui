@@ -62,6 +62,21 @@ export interface Category {
   color: string;
   description: string;
   documentCount: number;
+  /**
+   * real-data-stats v1 §3.1: `CategoryResponse.subcategoryCount` — active subcategory count,
+   * computed server-side (1 query, no N+1). `undefined` until `npm run generate:api` ships the
+   * field on the generated type — callers must sum with `?? 0`, never treat `undefined` as `0`
+   * outright (that would silently render "0 หมวดย่อย" as if it were a real, verified count).
+   */
+  subcategoryCount?: number;
+  /**
+   * real-data-stats v1 §3.2: `CategoryDetailResponse.averageRating` / `.reviewCount` — category
+   * detail page only (the list endpoint never sends these). `undefined` means either "not wired
+   * yet" (round 1) or "genuinely no reviews" (backend sends `null` for `averageRating` in that
+   * case) — both cases hide the rating UI, never show "0 ★".
+   */
+  averageRating?: number;
+  reviewCount?: number;
   // Hierarchical sub-categories
   subcategories?: Subcategory[];
 }
@@ -353,6 +368,30 @@ export interface SellerStats {
   newFollowersThisMonth: number;
   revenueByMonth: { month: string; amount: number }[];
   topCategories: { category: string; sales: number }[];
+  /**
+   * real-data-stats v1 §3.4: `SellerDashboardResponse.revenueTrendPercent` /
+   * `.ratingTrendDelta` — `undefined` when the backend hasn't computed a baseline (previous
+   * month revenue was 0 / no reviews before this month) **or** hasn't shipped the field yet
+   * (round 1). Either way the trend badge must be hidden, never shown as "+0%"/"+0.00".
+   */
+  revenueTrendPercent?: number;
+  ratingTrendDelta?: number;
+}
+
+// ====== Platform stats (real-data-stats v1 §3.3/§4.1) ======
+// `GET /api/marketplace/stats` — public, anonymous. Single shared source for every page that
+// used to hardcode "12k+ เอกสาร" / "3.2k ครีเอเตอร์" / "90% ส่วนแบ่งผู้ขาย" style copy.
+
+export interface PlatformStats {
+  totalApprovedDocuments: number;
+  totalSellers: number;
+  totalDownloads: number;
+  reviewCount: number;
+  /** `undefined` when `reviewCount === 0` (no baseline to average) — never `0`. */
+  averageRating?: number;
+  /** `undefined` when `reviewCount === 0` — never `0`. */
+  positiveReviewPercent?: number;
+  feeRatePercent: number;
 }
 
 export interface AdminTransaction {

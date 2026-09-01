@@ -62,9 +62,9 @@
                   <span class="absolute top-4 right-4 pill bg-emerald-500 text-white shadow-soft">
                     🆓 ฟรี
                   </span>
-                } @else if (d.discountPercent) {
+                } @else if (discountPercent()) {
                   <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
-                    -{{ d.discountPercent }}% ส่วนลด
+                    -{{ discountPercent() }}% ส่วนลด
                   </span>
                 }
               </div>
@@ -201,29 +201,31 @@
                   </div>
                 </nz-tab>
 
-                <nz-tab nzTitle="✨ AI Summary">
-                  <div class="mt-4 card-cream p-6">
-                    <div class="flex items-center gap-2 mb-4">
-                      <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500 text-white flex items-center justify-center">
-                        <app-icon name="sparkle" [size]="18" />
-                      </span>
-                      <div>
-                        <div class="text-sm font-bold text-ink">สรุป 3 ข้อโดย AI</div>
-                        <div class="text-xs text-ink-muted">วิเคราะห์เนื้อหาเอกสารโดยอัตโนมัติ — ใช้เพื่อตัดสินใจซื้อได้ง่ายขึ้น</div>
+                @if (showAiSummary()) {
+                  <nz-tab nzTitle="✨ AI Summary">
+                    <div class="mt-4 card-cream p-6">
+                      <div class="flex items-center gap-2 mb-4">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500 text-white flex items-center justify-center">
+                          <app-icon name="sparkle" [size]="18" />
+                        </span>
+                        <div>
+                          <div class="text-sm font-bold text-ink">สรุป {{ aiSummaryCount() }} ข้อโดย AI</div>
+                          <div class="text-xs text-ink-muted">วิเคราะห์เนื้อหาเอกสารโดยอัตโนมัติ — ใช้เพื่อตัดสินใจซื้อได้ง่ายขึ้น</div>
+                        </div>
                       </div>
+                      <ul class="space-y-3">
+                        @for (s of d.aiSummary ?? []; track s; let i = $index) {
+                          <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-white text-pink-600 flex items-center justify-center text-xs font-bold mt-0.5">
+                              {{ i + 1 }}
+                            </span>
+                            <span class="text-sm text-ink leading-relaxed">{{ s }}</span>
+                          </li>
+                        }
+                      </ul>
                     </div>
-                    <ul class="space-y-3">
-                      @for (s of d.aiSummary ?? []; track s; let i = $index) {
-                        <li class="flex gap-3">
-                          <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-white text-pink-600 flex items-center justify-center text-xs font-bold mt-0.5">
-                            {{ i + 1 }}
-                          </span>
-                          <span class="text-sm text-ink leading-relaxed">{{ s }}</span>
-                        </li>
-                      }
-                    </ul>
-                  </div>
-                </nz-tab>
+                  </nz-tab>
+                }
 
                 <nz-tab [nzTitle]="'รีวิว (' + d.reviews.length + ')'">
                   <div class="mt-4">
@@ -480,7 +482,7 @@
                     @if (d.originalPrice) {
                       <div class="flex flex-col">
                         <span class="text-base text-ink-muted line-through leading-none">{{ d.originalPrice | thb }}</span>
-                        <span class="text-xs text-emerald-600 font-bold mt-1">ประหยัด {{ d.discountPercent }}%</span>
+                        <span class="text-xs text-emerald-600 font-bold mt-1">ประหยัด {{ discountPercent() }}%</span>
                       </div>
                     }
                   }

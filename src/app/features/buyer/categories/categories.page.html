@@ -2,7 +2,7 @@
       <app-page-hero
         eyebrow="หมวดหมู่ทั้งหมด"
         title="สำรวจเอกสารตามหมวดหมู่ที่คุณสนใจ"
-        description="กว่า 8 หมวดหมู่หลัก แตกย่อยเป็น 40+ หมวดย่อย ครอบคลุมการศึกษา ธุรกิจ ไอที ดีไซน์ และอีกมากมาย"
+        [description]="heroDescription()"
       />
 
       @if (catalog.categoriesState().status === 'loading') {

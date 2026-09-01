@@ -1,0 +1,114 @@
+import { TestBed } from '@angular/core/testing';
+import { PlatformStatsService, SellerService } from '../../../core/services';
+import { SellerEarningsPage } from './earnings.page';
+import type { PlatformStats, SellerStats } from '../../../core/models';
+
+/**
+ * real-data-stats v1 §4.6 — Seller earnings page:
+ *  - "ส่วนแบ่งของคุณ" reads `PlatformStatsService.stats()?.feeRatePercent`, fallback 90 while loading
+ *  - "เดือนนี้" trend badge hidden entirely when `revenueTrendPercent` is null/undefined
+ *  - "โอนรอบถัดไป" line hidden entirely when `nextPayoutDate()` is null
+ */
+function buildStats(over: Partial<SellerStats> = {}): SellerStats {
+  return {
+    totalRevenue: 100000,
+    monthlyRevenue: 20000,
+    totalDownloads: 500,
+    monthlyDownloads: 40,
+    averageRating: 4.7,
+    totalReviews: 40,
+    pendingPayout: 5000,
+    activeListings: 12,
+    pendingApproval: 1,
+    followerCount: 80,
+    newFollowersThisMonth: 3,
+    revenueByMonth: [],
+    topCategories: [],
+    ...over,
+  };
+}
+
+function render(opts: {
+  stats?: Partial<SellerStats>;
+  nextPayoutDate?: string | null;
+  platformStats?: PlatformStats;
+}) {
+  const fakeSeller = {
+    stats: () => buildStats(opts.stats),
+    earnings: () => ({ totalEarnings: 5000, pendingBalance: 1200, payouts: [] }),
+    nextPayoutDate: () => opts.nextPayoutDate ?? null,
+    loadEarnings: vi.fn(async () => {}),
+    refreshDashboard: vi.fn(async () => {}),
+    requestPayout: vi.fn(async () => ({ ok: true })),
+  };
+  const fakePlatformStats = { stats: () => opts.platformStats, loadStats: vi.fn() };
+
+  TestBed.configureTestingModule({
+    imports: [SellerEarningsPage],
+    providers: [
+      { provide: SellerService, useValue: fakeSeller },
+      { provide: PlatformStatsService, useValue: fakePlatformStats },
+    ],
+  });
+
+  const fixture = TestBed.createComponent(SellerEarningsPage);
+  fixture.detectChanges();
+  return fixture;
+}
+
+afterEach(() => TestBed.resetTestingModule());
+
+describe('SellerEarningsPage — fee % (real-data-stats v1 §4.6)', () => {
+  it('falls back to 90% while platform stats have not loaded', () => {
+    const fixture = render({ platformStats: undefined });
+
+    expect(fixture.componentInstance.sellerSharePercent()).toBe(90);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('90%');
+  });
+
+  it('uses the real feeRatePercent once platform stats load', () => {
+    const fixture = render({
+      platformStats: {
+        totalApprovedDocuments: 1,
+        totalSellers: 1,
+        totalDownloads: 1,
+        reviewCount: 1,
+        feeRatePercent: 20,
+      },
+    });
+
+    expect(fixture.componentInstance.sellerSharePercent()).toBe(80);
+  });
+});
+
+describe('SellerEarningsPage — trend badge (real-data-stats v1 §3.4/§4.6)', () => {
+  it('hides the "เดือนนี้" trend badge when revenueTrendPercent is undefined', () => {
+    const fixture = render({ stats: { revenueTrendPercent: undefined } });
+
+    expect(fixture.componentInstance.revenueTrendDisplay()).toBeNull();
+  });
+
+  it('shows the formatted trend once the backend sends a real value', () => {
+    const fixture = render({ stats: { revenueTrendPercent: 18.4 } });
+
+    expect(fixture.componentInstance.revenueTrendDisplay()).toBe('+18.4%');
+  });
+});
+
+describe('SellerEarningsPage — โอนรอบถัดไป (real-data-stats v1 §3.5/§4.6)', () => {
+  it('hides the line entirely when nextPayoutDate is null', () => {
+    const fixture = render({ nextPayoutDate: null });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('โอนรอบถัดไป');
+  });
+
+  it('shows the formatted date when nextPayoutDate has a value', () => {
+    const fixture = render({ nextPayoutDate: '2026-05-15' });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('โอนรอบถัดไป');
+    expect(text).toContain('2026');
+  });
+});

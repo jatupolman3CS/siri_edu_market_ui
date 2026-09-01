@@ -24,13 +24,12 @@
           label="รายได้เดือนนี้"
           [value]="seller.stats().monthlyRevenue | thb"
           icon="💰"
-          trend="+18%"
+          [trend]="revenueTrendDisplay()"
         />
         <app-stat-card
           label="ดาวน์โหลด"
           [value]="(seller.stats().monthlyDownloads | compact) + ''"
           icon="⬇️"
-          trend="+12%"
         />
         <app-stat-card
           label="ฟอลโลเวอร์"
@@ -43,7 +42,7 @@
           label="คะแนนเฉลี่ย"
           [value]="seller.stats().averageRating + ' ★'"
           icon="⭐"
-          trend="+0.04"
+          [trend]="ratingTrendDisplay()"
           trendLabel="vs เดือนก่อน"
         />
       </section>
@@ -153,7 +152,9 @@
           <div class="text-4xl font-extrabold text-pink-700 leading-none">
             {{ seller.stats().pendingPayout | thb }}
           </div>
-          <div class="text-xs text-ink-muted mt-2">โอนรอบถัดไป: 15 พ.ค. 2026</div>
+          @if (seller.nextPayoutDate(); as payoutDate) {
+            <div class="text-xs text-ink-muted mt-2">โอนรอบถัดไป: {{ payoutDate | date: 'd MMM yyyy' }}</div>
+          }
           <button class="btn-pink w-full mt-5 !py-2.5">
             <app-icon name="wallet" [size]="16" />
             ขอถอนเงินทันที
@@ -162,7 +163,7 @@
           <div class="mt-5 pt-5 border-t border-pink-200/60 space-y-3">
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
-              <span class="text-ink-soft">ส่วนแบ่งผู้ขาย <b class="text-ink">90%</b> + ภาษีจัดการให้</span>
+              <span class="text-ink-soft">ส่วนแบ่งผู้ขาย <b class="text-ink">{{ sellerSharePercent() }}%</b> + ภาษีจัดการให้</span>
             </div>
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
@@ -232,7 +233,7 @@
 
           <!-- Output -->
           <div class="card-soft p-6 bg-white">
-            <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">รายได้ที่คุณจะได้รับ (90%)</div>
+            <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">รายได้ที่คุณจะได้รับ ({{ sellerSharePercent() }}%)</div>
             <div class="text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
             <div class="text-sm text-ink-muted mb-5">ต่อเดือน (หลังหักค่าธรรมเนียม)</div>
 
@@ -242,7 +243,7 @@
                 <span class="font-bold text-ink">{{ grossRevenue() | thb }}</span>
               </li>
               <li class="flex justify-between">
-                <span class="text-ink-soft">ค่าธรรมเนียมแพลตฟอร์ม (10%)</span>
+                <span class="text-ink-soft">ค่าธรรมเนียมแพลตฟอร์ม ({{ feeRatePercent() }}%)</span>
                 <span class="text-rose-500">- {{ platformFee() | thb }}</span>
               </li>
               <li class="flex justify-between border-t border-line pt-3 font-bold">

@@ -31,7 +31,7 @@
           >
             🌸 Welcome
           </span>
-          <h2 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4">
+          <h2 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4 whitespace-pre-line">
             {{ artTitle() }}
           </h2>
           <p class="text-pink-50 mb-10 leading-relaxed">{{ artDescription() }}</p>
@@ -47,19 +47,30 @@
             }
           </ul>
 
+          <!-- real-data-stats v1 §4.3 -->
           <div class="grid grid-cols-3 gap-4">
             <div>
-              <div class="text-3xl font-extrabold">12k+</div>
+              @if (platformStats.stats(); as ps) {
+                <div class="text-3xl font-extrabold">{{ ps.totalApprovedDocuments | compact }}+</div>
+              } @else {
+                <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
+              }
               <div class="text-xs text-pink-100">เอกสาร</div>
             </div>
             <div>
-              <div class="text-3xl font-extrabold">3.2k</div>
+              @if (platformStats.stats(); as ps) {
+                <div class="text-3xl font-extrabold">{{ ps.totalSellers | compact }}</div>
+              } @else {
+                <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
+              }
               <div class="text-xs text-pink-100">ครีเอเตอร์</div>
             </div>
-            <div>
-              <div class="text-3xl font-extrabold">98%</div>
-              <div class="text-xs text-pink-100">รีวิวบวก</div>
-            </div>
+            @if (platformStats.stats()?.positiveReviewPercent; as positivePercent) {
+              <div>
+                <div class="text-3xl font-extrabold">{{ positivePercent | number:'1.0-0' }}%</div>
+                <div class="text-xs text-pink-100">รีวิวบวก</div>
+              </div>
+            }
           </div>
         </div>
       </aside>

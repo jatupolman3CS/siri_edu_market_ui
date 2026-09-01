@@ -208,6 +208,138 @@ describe('BuyerDocumentDetailPage — cross-sell "ในแพ็กเกจท
 });
 
 /**
+ * Q-05: `discountPercent` badge on the price card and cover pill — the response never sends
+ * `discountPercent`, so the page must derive it from `price`/`originalPrice` (same helper the
+ * cross-sell bundle cards above already use) instead of rendering `d.discountPercent` (always
+ * `undefined`) blank.
+ */
+describe('BuyerDocumentDetailPage — discount badge (Q-05)', () => {
+  function renderDoc(doc: DocumentItem) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('shows "ประหยัด N%" in the price card when originalPrice > price', () => {
+    const doc = buildDoc({ price: 150, originalPrice: 200 });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ประหยัด 25%');
+  });
+
+  it('shows the "-N% ส่วนลด" cover pill when originalPrice > price', () => {
+    const doc = buildDoc({ price: 150, originalPrice: 200 });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('-25% ส่วนลด');
+  });
+
+  it('renders no discount badge at all when there is no originalPrice', () => {
+    const doc = buildDoc({ price: 150, originalPrice: undefined });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ส่วนลด');
+    expect(text).not.toContain('ประหยัด');
+  });
+});
+
+/**
+ * real-data-stats v1 §4.5 (Group A — no backend needed): "สรุป N ข้อโดย AI" reads
+ * `d.aiSummary.length` instead of a hardcoded "3", and the whole tab is hidden with nothing to
+ * summarize instead of showing an empty list under the title.
+ */
+describe('BuyerDocumentDetailPage — AI summary count (real-data-stats v1 §4.5)', () => {
+  function renderDoc(doc: DocumentItem) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  /**
+   * ng-zorro's `nz-tabs` only instantiates a pane's body on (or after) first activation — see
+   * the identical note on `clickTabByLabel` in the FAQ describe block below. The tab nav's own
+   * title ("✨ AI Summary") always renders; the "สรุป N ข้อโดย AI" text is pane *content* and
+   * needs the tab clicked first.
+   */
+  function clickAiSummaryTab(fixture: { nativeElement: HTMLElement; detectChanges: () => void }): void {
+    const tabs = Array.from(fixture.nativeElement.querySelectorAll('.ant-tabs-tab')) as HTMLElement[];
+    const target = tabs.find((el) => (el.textContent ?? '').includes('AI Summary'));
+    if (!target) throw new Error('AI Summary tab not found');
+    target.click();
+    fixture.detectChanges();
+  }
+
+  it('shows "สรุป N ข้อโดย AI" using aiSummary.length, not a hardcoded "3"', () => {
+    const doc = buildDoc({ aiSummary: ['ข้อ 1', 'ข้อ 2', 'ข้อ 3', 'ข้อ 4', 'ข้อ 5'] });
+    const fixture = renderDoc(doc);
+    clickAiSummaryTab(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('สรุป 5 ข้อโดย AI');
+  });
+
+  it('hides the AI Summary tab entirely when aiSummary is an empty array', () => {
+    const doc = buildDoc({ aiSummary: [] });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    // "สรุป" alone isn't a safe check here — it's also a substring of the document title
+    // "สรุปคณิต ม.6" (`buildDoc`'s default). "ข้อโดย AI" only ever comes from this feature.
+    expect(text).not.toContain('AI Summary');
+    expect(text).not.toContain('ข้อโดย AI');
+  });
+
+  it('hides the AI Summary tab entirely when aiSummary is undefined', () => {
+    const doc = buildDoc({ aiSummary: undefined });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('AI Summary');
+  });
+});
+
+/**
  * document-faq-tab v1 §1/§4 test list — "คำถามที่พบบ่อย (FAQ)" tab:
  *  - AC-10: tab shown only when `faqCount > 0`, badge count reads `faqCount`/`qnaCount` from
  *    the API (not `qna.length`)

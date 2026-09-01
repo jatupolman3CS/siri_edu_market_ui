@@ -12,7 +12,7 @@ import {
 import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
 import { DocumentItem } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
-import { CatalogService, SellerService } from '../../../core/services';
+import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
@@ -46,6 +46,7 @@ export class SellerUploadPage {
   readonly maxGalleryImages = MAX_GALLERY_IMAGES;
 
   readonly catalog = inject(CatalogService);
+  readonly platformStats = inject(PlatformStatsService);
   private readonly seller = inject(SellerService);
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
@@ -117,11 +118,20 @@ export class SellerUploadPage {
 
   /** Effective price respecting the free flag. */
   readonly effectivePrice = computed(() => (this.isFree() ? 0 : this.price()));
-  readonly fee = computed(() => (this.isFree() ? 0 : Math.round(this.effectivePrice() * 0.1)));
+  /**
+   * real-data-stats v1 §4.6: fallback `10` only while `platformStats.stats()` hasn't loaded yet
+   * (avoids a flash to a 0% fee) — once it resolves, this computed signal picks up the real
+   * value immediately.
+   */
+  readonly feeRatePercent = computed(() => this.platformStats.stats()?.feeRatePercent ?? 10);
+  readonly fee = computed(() =>
+    this.isFree() ? 0 : Math.round(this.effectivePrice() * (this.feeRatePercent() / 100)),
+  );
   readonly earnings = computed(() => this.effectivePrice() - this.fee());
 
   constructor() {
     this.catalog.loadCategories();
+    this.platformStats.loadStats();
 
     this.route.queryParamMap.subscribe((q) => {
       const id = q.get('id') ?? '';

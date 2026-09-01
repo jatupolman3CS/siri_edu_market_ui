@@ -87,6 +87,18 @@ export class BuyerDocumentDetailPage {
 
   readonly doc = computed(() => this.catalog.getById(this.id()));
 
+  /**
+   * Q-05: `DocumentItem.discountPercent` (set by `mapDocument`/`mapDocumentDetail`) is always
+   * `undefined` — the API response never carries it, only `price`/`originalPrice`. Reuses the
+   * same `calcBundleSavePercent` helper `crossSellCards` below already uses for bundles so the
+   * "ประหยัด N%" badges (cover pill + price card) get a real number instead of rendering blank.
+   */
+  readonly discountPercent = computed(() => {
+    const d = this.doc();
+    if (!d || !d.originalPrice) return 0;
+    return calcBundleSavePercent(d.price, d.originalPrice);
+  });
+
   readonly previewRasterUrls = computed(() => {
     const urls = this.preview()?.previewImageUrls ?? [];
     return urls.filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
@@ -118,6 +130,14 @@ export class BuyerDocumentDetailPage {
   readonly showCrossSell = computed(
     () => this.crossSellLoading() || this.crossSellCards().length > 0,
   );
+
+  /**
+   * real-data-stats v1 §4.5 (Group A — no backend needed): "สรุป N ข้อโดย AI" reads
+   * `d.aiSummary.length` instead of a hardcoded "3", and the whole tab is hidden when there is
+   * nothing to summarize (empty/absent array) instead of showing an empty list under the title.
+   */
+  readonly aiSummaryCount = computed(() => this.doc()?.aiSummary?.length ?? 0);
+  readonly showAiSummary = computed(() => this.aiSummaryCount() > 0);
 
   // ===== document-faq-tab v1 §4: "คำถามที่พบบ่อย (FAQ)" tab =====
   // Badge counts read `faqCount`/`qnaCount` from the mapped document, never `array.length`,

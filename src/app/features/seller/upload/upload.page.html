@@ -513,7 +513,7 @@
             <section class="card-soft p-6">
               <h2 class="text-lg font-bold text-ink mb-1">ตั้งราคา</h2>
               <p class="text-sm text-ink-muted mb-6">
-                เลือกราคาที่เหมาะกับเนื้อหา — เราเก็บค่าธรรมเนียม 10% ที่เหลือเป็นของคุณ
+                เลือกราคาที่เหมาะกับเนื้อหา — เราเก็บค่าธรรมเนียม {{ feeRatePercent() }}% ที่เหลือเป็นของคุณ
               </p>
 
               <!-- Free toggle -->
@@ -532,7 +532,7 @@
                     ตั้งเป็นเอกสารฟรี
                   </div>
                   <p class="text-xs text-ink-muted mt-1 leading-relaxed">
-                    เมื่อเปิด: ระบบจะไม่หักค่าธรรมเนียม 10% และผู้ซื้อดาวน์โหลดได้ฟรีทันที
+                    เมื่อเปิด: ระบบจะไม่หักค่าธรรมเนียม {{ feeRatePercent() }}% และผู้ซื้อดาวน์โหลดได้ฟรีทันที
                   </p>
                 </div>
               </label>
@@ -580,7 +580,7 @@
 
                 <!-- Suggestion chips -->
                 <div class="mb-6">
-                  <div class="text-xs text-ink-muted mb-2">ราคายอดนิยมในหมวดเดียวกัน</div>
+                  <div class="text-xs text-ink-muted mb-2">ราคาที่ผู้ขายนิยมตั้ง</div>
                   <div class="flex flex-wrap gap-2">
                     @for (p of [99, 199, 299, 399, 499, 690]; track p) {
                       <button type="button" class="pill-soft hover:!border-pink-300 hover:!text-pink-600" (click)="price.set(p)">
@@ -597,7 +597,7 @@
                     {{ earnings() | thb }}
                   </div>
                   <div class="text-xs text-ink-muted mt-2">
-                    หักค่าธรรมเนียมแพลตฟอร์ม {{ fee() | thb }} (10%)
+                    หักค่าธรรมเนียมแพลตฟอร์ม {{ fee() | thb }} ({{ feeRatePercent() }}%)
                   </div>
                 </div>
               }
@@ -620,7 +620,7 @@
             <section class="card-soft p-6">
               <h2 class="text-lg font-bold text-ink mb-1">ตรวจสอบและส่งเข้าพิจารณา</h2>
               <p class="text-sm text-ink-muted mb-6">
-                ทีมงานจะตรวจสอบและอนุมัติภายใน 24 ชั่วโมง
+                ทีมงานจะตรวจสอบและแจ้งผลโดยเร็วที่สุด
               </p>
 
               <ul class="divide-y divide-line">

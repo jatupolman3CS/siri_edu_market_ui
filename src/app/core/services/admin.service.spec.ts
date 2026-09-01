@@ -169,3 +169,83 @@ describe('AdminService — subcategory admin (subcategory-admin-crud v1)', () =>
     expect(updated?.isActive).toBe(false);
   });
 });
+
+/**
+ * real-data-stats v1 §3.6 — `AdminDashboardResponse.revenueTrendPercent` / `.feesTrendPercent`
+ * / `.refundTrendPercent` aren't on the generated type yet (backend hasn't
+ * shipped/regenerated). `dashboardTrends()` must default every field to `null` (hide the trend
+ * badge) rather than `0` ("+0%" would misleadingly read as "no change") — both when the fields
+ * are simply absent (today) and when the backend genuinely reports no baseline.
+ */
+describe('AdminService — dashboardTrends (real-data-stats v1 §3.6)', () => {
+  it('defaults every trend to null before any dashboard load', () => {
+    const admin = buildService();
+
+    expect(admin.dashboardTrends()).toEqual({
+      revenueTrendPercent: null,
+      feesTrendPercent: null,
+      refundTrendPercent: null,
+    });
+  });
+
+  it('stays null after a real dashboard load — the fields do not exist on the wire yet', async () => {
+    stubRoute('GET', '/api/admin/dashboard', {
+      body: { totalRevenue: 100000, totalFees: 10000, successCount: 5, refundCount: 1 },
+    });
+    const admin = buildService();
+
+    await admin.refreshDashboard();
+
+    expect(admin.dashboardTrends()).toEqual({
+      revenueTrendPercent: null,
+      feesTrendPercent: null,
+      refundTrendPercent: null,
+    });
+  });
+
+  it('reads the trend fields once the backend starts sending them (round 2 pre-check)', async () => {
+    stubRoute('GET', '/api/admin/dashboard', {
+      body: {
+        totalRevenue: 100000,
+        totalFees: 10000,
+        successCount: 5,
+        refundCount: 1,
+        revenueTrendPercent: 24.0,
+        feesTrendPercent: 24.0,
+        refundTrendPercent: -12.0,
+      },
+    });
+    const admin = buildService();
+
+    await admin.refreshDashboard();
+
+    expect(admin.dashboardTrends()).toEqual({
+      revenueTrendPercent: 24.0,
+      feesTrendPercent: 24.0,
+      refundTrendPercent: -12.0,
+    });
+  });
+
+  it('AC-EPIC-3: surfaces an explicit null trend (no baseline) as null, never 0', async () => {
+    stubRoute('GET', '/api/admin/dashboard', {
+      body: {
+        totalRevenue: 0,
+        totalFees: 0,
+        successCount: 0,
+        refundCount: 0,
+        revenueTrendPercent: null,
+        feesTrendPercent: null,
+        refundTrendPercent: null,
+      },
+    });
+    const admin = buildService();
+
+    await admin.refreshDashboard();
+
+    expect(admin.dashboardTrends()).toEqual({
+      revenueTrendPercent: null,
+      feesTrendPercent: null,
+      refundTrendPercent: null,
+    });
+  });
+});

@@ -355,3 +355,42 @@ describe('AuthService session restore', () => {
     expect(auth.user()?.name).toBe('ครูสมชาย');
   });
 });
+
+/**
+ * Q-07 item 4: verify-email.page.ts already renders a friendly Thai `error` inline
+ * ("ยืนยันอีเมลไม่สำเร็จ — ใช้ลิงก์ในอีเมลหรือรหัสที่ถูกต้อง"), so `verifyEmail()` must not *also*
+ * push the raw backend ProblemDetails (English "Verification token is invalid or expired.")
+ * through `ApiFailureReporter` as a duplicate toast.
+ */
+describe('AuthService verifyEmail — no raw-English toast (Q-07 item 4)', () => {
+  function buildServiceWithApiFail(): { auth: AuthService; apiFail: { report: ReturnType<typeof vi.fn> } } {
+    const apiFail = { report: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: ApiFailureReporter, useValue: apiFail },
+        { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } },
+        { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
+        { provide: GoogleOauthService, useValue: {} },
+        { provide: GoogleOauthConfigService, useValue: { load: vi.fn() } },
+      ],
+    });
+    return { auth: TestBed.inject(AuthService), apiFail };
+  }
+
+  it('returns the friendly Thai error without reporting the raw backend detail', async () => {
+    stubRoute(
+      'POST',
+      '/api/auth/verify-email',
+      { title: 'Bad Request', detail: 'Verification token is invalid or expired.', status: 400 },
+      400,
+    );
+    const { auth, apiFail } = buildServiceWithApiFail();
+
+    const result = await auth.verifyEmail('bad-token');
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('ยืนยันอีเมลไม่สำเร็จ — ใช้ลิงก์ในอีเมลหรือรหัสที่ถูกต้อง');
+    expect(apiFail.report).not.toHaveBeenCalled();
+  });
+});

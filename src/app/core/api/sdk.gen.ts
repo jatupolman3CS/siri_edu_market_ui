@@ -111,6 +111,8 @@ import type {
   GetApiMarketplaceFreeResponses,
   GetApiMarketplaceSearchData,
   GetApiMarketplaceSearchResponses,
+  GetApiMarketplaceStatsData,
+  GetApiMarketplaceStatsResponses,
   GetApiMeLoyaltyData,
   GetApiMeLoyaltyEntriesData,
   GetApiMeLoyaltyEntriesErrors,
@@ -1218,6 +1220,14 @@ export const getApiMarketplaceBundlesById = <ThrowOnError extends boolean = fals
     GetApiMarketplaceBundlesByIdErrors,
     ThrowOnError
   >({ url: '/api/marketplace/bundles/{id}', ...options });
+
+export const getApiMarketplaceStats = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMarketplaceStatsData, ThrowOnError>,
+): RequestResult<GetApiMarketplaceStatsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMarketplaceStatsResponses, unknown, ThrowOnError>({
+    url: '/api/marketplace/stats',
+    ...options,
+  });
 
 export const getApiMeProfile = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMeProfileData, ThrowOnError>,

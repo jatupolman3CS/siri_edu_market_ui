@@ -21,14 +21,20 @@
           label="เดือนนี้"
           [value]="seller.stats().monthlyRevenue | thb"
           icon="📅"
-          trend="+18%"
+          [trend]="revenueTrendDisplay()"
         />
         <app-stat-card
           label="ส่วนแบ่งของคุณ"
-          value="90%"
+          [value]="sellerSharePercent() + '%'"
           icon="🌸"
         />
       </section>
+
+      @if (seller.nextPayoutDate(); as payoutDate) {
+        <div class="text-sm text-ink-soft mb-6 -mt-4">
+          โอนรอบถัดไป: <span class="font-bold text-ink">{{ payoutDate | date: 'd MMM yyyy' }}</span>
+        </div>
+      }
 
       <div class="card-soft p-6 mb-6 bg-gradient-pink">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">

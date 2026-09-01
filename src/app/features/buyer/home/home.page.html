@@ -50,19 +50,31 @@
               }
             </div>
 
-            <!-- Trust stats -->
+            <!-- Trust stats (real-data-stats v1 §4.2) -->
             <div class="flex flex-wrap gap-x-8 gap-y-3 mt-8 pt-6 border-t border-pink-200/60">
               <div>
-                <div class="text-2xl font-extrabold text-ink">12k+</div>
+                @if (platformStats.stats(); as ps) {
+                  <div class="text-2xl font-extrabold text-ink">{{ ps.totalApprovedDocuments | compact }}+</div>
+                } @else {
+                  <div class="h-7 w-14 rounded bg-line/70 animate-pulse" aria-hidden="true"></div>
+                }
                 <div class="text-xs text-ink-muted">เอกสารคัดสรร</div>
               </div>
               <div>
-                <div class="text-2xl font-extrabold text-ink">3.2k</div>
+                @if (platformStats.stats(); as ps) {
+                  <div class="text-2xl font-extrabold text-ink">{{ ps.totalSellers | compact }}</div>
+                } @else {
+                  <div class="h-7 w-14 rounded bg-line/70 animate-pulse" aria-hidden="true"></div>
+                }
                 <div class="text-xs text-ink-muted">ครีเอเตอร์</div>
               </div>
               <div>
-                <div class="text-2xl font-extrabold text-ink">98k+</div>
-                <div class="text-xs text-ink-muted">ดาวน์โหลด/เดือน</div>
+                @if (platformStats.stats(); as ps) {
+                  <div class="text-2xl font-extrabold text-ink">{{ ps.totalDownloads | compact }}+</div>
+                } @else {
+                  <div class="h-7 w-14 rounded bg-line/70 animate-pulse" aria-hidden="true"></div>
+                }
+                <div class="text-xs text-ink-muted">ดาวน์โหลดสะสม</div>
               </div>
               <div class="flex items-center gap-2">
                 <div class="flex">
@@ -74,10 +86,12 @@
                     />
                   }
                 </div>
-                <div>
-                  <div class="text-sm font-bold text-ink">4.9 ★</div>
-                  <div class="text-[11px] text-ink-muted">จาก 8.4k รีวิว</div>
-                </div>
+                @if (platformStats.stats()?.averageRating; as avgRating) {
+                  <div>
+                    <div class="text-sm font-bold text-ink">{{ avgRating | number:'1.1-1' }} ★</div>
+                    <div class="text-[11px] text-ink-muted">จาก {{ platformStats.stats()!.reviewCount | compact }} รีวิว</div>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -119,7 +133,9 @@
                 </span>
                 <div class="text-xs">
                   <div class="font-bold text-ink">📦 Bundles</div>
-                  <div class="text-ink-muted">ประหยัดถึง 40%</div>
+                  @if (maxBundleSavePercent() > 0) {
+                    <div class="text-ink-muted">ประหยัดถึง {{ maxBundleSavePercent() }}%</div>
+                  }
                 </div>
               </div>
             </div>
@@ -158,7 +174,7 @@
       <app-section-header
         eyebrow="หมวดหมู่"
         title="เลือกหมวดที่ใช่สำหรับคุณ"
-        subtitle="กว่า 12,000 เอกสารใน 8 หมวดหมู่หลัก แตกย่อยเป็น 40+ หมวดย่อย"
+        [subtitle]="categoriesSubtitle()"
         link="/categories"
       />
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -198,7 +214,7 @@
       <app-section-header
         eyebrow="แพ็กเกจ"
         title="แพ็กเกจคุ้มค่า ประหยัดกว่าซื้อแยก"
-        subtitle="ครีเอเตอร์รวมเอกสารที่เข้ากันให้แล้ว ประหยัดได้สูงสุด 40%"
+        [subtitle]="bundlesSubtitle()"
         link="/bundles"
       />
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -363,7 +379,7 @@
             </h2>
             <p class="text-pink-50 mb-6 text-base leading-relaxed max-w-md">
               อัปโหลดเอกสาร ตั้งราคา ให้ AI ช่วยเขียนคำอธิบาย
-              และเก็บเงินผ่าน PromptPay/บัตรเครดิต — ส่วนแบ่งเริ่มต้น 90%
+              และเก็บเงินผ่าน PromptPay/บัตรเครดิต — ส่วนแบ่งเริ่มต้น {{ sellerSharePercent() }}%
             </p>
             <div class="flex flex-wrap gap-3">
               <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-pink-600 font-bold hover:scale-105 transition-transform">

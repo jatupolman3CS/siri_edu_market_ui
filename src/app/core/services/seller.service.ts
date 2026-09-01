@@ -30,8 +30,8 @@ import type {
   SaveStoreSectionRequest,
   SellerDocumentResponse,
   StoreSectionResponse,
-  UploadResponse,
   SellerEarningsResponse,
+  UploadResponse,
 } from '../api/types.gen';
 import { unwrapSdkResult, type SdkResult } from './api-result';
 import { putApiSellerDocumentsById, type UpdateSellerDocumentRequest } from '../api/seller-document-update';
@@ -83,6 +83,13 @@ export class SellerService {
 
   private readonly _earnings = signal<SellerEarningsResponse | null>(null);
   readonly earnings = this._earnings.asReadonly();
+
+  /**
+   * real-data-stats v1 §3.5: `SellerEarningsResponse.nextPayoutDate` — `null` means the backend
+   * couldn't parse `PLATFORM_SETTING.PayoutSchedule` (§3.5), which hides the "โอนรอบถัดไป" line
+   * per §4.6/§4.5.
+   */
+  readonly nextPayoutDate = computed(() => this._earnings()?.nextPayoutDate ?? null);
 
   private readonly docsPager = createInfinitePager<DocumentItem>({
     pageSize: 24,

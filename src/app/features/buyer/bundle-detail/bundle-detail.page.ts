@@ -10,7 +10,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BundleService,
   CartService,
-  CatalogService,
+  calcBundleSaveAmount,
+  calcBundleSavePercent,
 } from '../../../core/services';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -35,7 +36,6 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 })
 export class BuyerBundleDetailPage {
   private readonly bundleService = inject(BundleService);
-  private readonly catalog = inject(CatalogService);
   private readonly cart = inject(CartService);
   private readonly route = inject(ActivatedRoute);
 
@@ -43,27 +43,34 @@ export class BuyerBundleDetailPage {
 
   readonly bundle = computed(() => this.bundleService.getById(this.id()));
 
-  readonly items = computed(() => {
-    const b = this.bundle();
-    if (!b) return [];
-    return b.documentIds
-      .map((id) => this.catalog.getById(id))
-      .filter((d): d is NonNullable<typeof d> => !!d);
-  });
+  /**
+   * Q-04: reads straight from `BundleService`'s full-detail cache (populated by
+   * `loadBundleDetail()` below) instead of resolving `bundle().documentIds` through
+   * `CatalogService.getById` — the paged bundle/catalog caches this page used to rely on don't
+   * reliably already contain a given bundle's member documents, which is why this section
+   * rendered "0 เอกสารในแพ็กเกจ" for every bundle.
+   */
+  readonly items = computed(() => this.bundleService.getDocuments(this.id()));
 
+  /**
+   * Q-07 item 3 (same bug, different file — found while already in this component for Q-04):
+   * delegates to the shared clamped helpers instead of raw `originalPrice - price`, so an
+   * inconsistent bundle (`price > originalPrice`) can't render a negative "ประหยัด -฿350".
+   */
   savings(): number {
     const b = this.bundle();
-    return b ? b.originalPrice - b.price : 0;
+    return b ? calcBundleSaveAmount(b.price, b.originalPrice) : 0;
   }
   savingsPercent(): number {
     const b = this.bundle();
-    if (!b || b.originalPrice === 0) return 0;
-    return Math.round(((b.originalPrice - b.price) / b.originalPrice) * 100);
+    return b ? calcBundleSavePercent(b.price, b.originalPrice) : 0;
   }
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((p) => {
-      this.id.set(p.get('id') ?? '');
+      const id = p.get('id') ?? '';
+      this.id.set(id);
+      if (id) this.bundleService.loadBundleDetail(id);
     });
   }
 
