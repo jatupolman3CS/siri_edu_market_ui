@@ -33,8 +33,10 @@ const PREVIEW_WATERMARK_FONT_OPTIONS = [
 ] as const;
 
 // image-upload-optimization v1 §4: previewUrl is what <img> renders (optimizedUrl when the
-// backend produced one, publicUrl otherwise) — key/publicUrl stay the untouched original that
-// the submit payload (galleryImageUrls/galleryItems[].imageUrl) must always keep using.
+// backend produced one, publicUrl otherwise) — key/publicUrl stay the untouched original.
+// storage-key-persistence v1 §4.2: `key` is now always populated (fresh upload or reconstructed
+// from `imageStorageKey`) — it is what the submit payload (`galleryItems[].imageStorageKey`)
+// must always send back.
 type GalleryItem = { id?: string | null; key: string; publicUrl: string; previewUrl: string };
 
 type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
@@ -462,11 +464,17 @@ export class SellerUploadPage {
         return;
       }
 
-      const galleryImageUrls = gallery.map((item) => this.galleryUrlForApi(item));
-      const galleryItemsPayload = gallery.map((item) => {
-        const imageUrl = this.galleryUrlForApi(item);
+      // storage-key-persistence v1 §4.2 open question: `galleryImageUrls` is a separate legacy
+      // field on UpdateDocumentRequest that backend has NOT repointed at storage keys this round
+      // (confirmed still URL-based server-side as of this build — see report to main session) —
+      // computed exactly as before (URL, not key) so this field's contract stays unchanged.
+      const galleryImageUrls = gallery.map((item) =>
+        item.key ? downloadUrlForStorageKey(item.key) : item.publicUrl,
+      );
+      const galleryItemsPayload: GalleryItemRequestWithKey[] = gallery.map((item) => {
+        const imageStorageKey = this.galleryKeyForApi(item);
         const sid = item.id?.trim();
-        return sid ? { id: sid, imageUrl } : { imageUrl };
+        return sid ? { id: sid, imageStorageKey } : { imageStorageKey };
       });
 
       const categoryIds = this.categoryIds();
@@ -489,7 +497,11 @@ export class SellerUploadPage {
             categoryIds,
             isFree: this.isFree(),
             language: this.language(),
-            galleryItems: galleryItemsPayload,
+            // TODO(contract): drop this cast once `imageStorageKey` exists on the generated
+            // `DocumentGalleryItemRequest` (after backend regen) — see
+            // docs/contracts/storage-key-persistence.md
+            galleryItems:
+              galleryItemsPayload as unknown as UpdateSellerDocumentRequest['galleryItems'],
             watermarkEnabled: this.watermark(),
             previewPages: this.previewPages(),
             previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),

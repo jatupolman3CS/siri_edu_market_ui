@@ -19,6 +19,7 @@ import {
   type AdminDocumentDetail,
   type AdminDocumentReport,
 } from '../../../core/api/admin-documents.api';
+import type { PatchAdminDocumentRequest } from '../../../core/api/types.gen';
 import {
   GRADE_LEVEL_LABELS,
   RESOURCE_TYPE_LABELS,
@@ -28,6 +29,10 @@ import {
 import { AdminService } from '../../../core/services/admin.service';
 import { SellerService } from '../../../core/services/seller.service';
 import { unwrapSdkResult } from '../../../core/services/api-result';
+import type {
+  GalleryItemRequestWithKey,
+  SellerGalleryItemWithKey,
+} from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
@@ -39,8 +44,10 @@ const STANDARD_PRESETS = ['O-NET', 'TGAT', 'TPAT', 'GAT', 'PAT', 'สสวท.'
 
 const MAX_GALLERY_IMAGES = 10;
 // image-upload-optimization v1 §4: previewUrl is what <img> renders (optimizedUrl when the
-// backend produced one, publicUrl otherwise) — key/publicUrl stay the untouched original that
-// the save payload (galleryItems[].imageUrl) must always keep using.
+// backend produced one, publicUrl otherwise) — key/publicUrl stay the untouched original.
+// storage-key-persistence v1 §4.2: `key` is now always populated (fresh upload or reconstructed
+// from `imageStorageKey`) — it is what the save payload (`galleryItems[].imageStorageKey`) must
+// always send back.
 type GalleryItem = { id?: string | null; key: string; publicUrl: string; previewUrl: string };
 
 @Component({
@@ -183,7 +190,10 @@ export class AdminDocumentDetailPage {
         this.galleryItems.set(
           apiItems.map((it) => {
             const publicUrl = resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/'));
-            return { id: it.id, key: '', publicUrl, previewUrl: publicUrl };
+            // storage-key-persistence v1 §4.2: key must round-trip from imageStorageKey, not
+            // stay '' — resubmitting '' would drop the item's key on an unrelated edit.
+            const key = (it as SellerGalleryItemWithKey).imageStorageKey ?? '';
+            return { id: it.id, key, publicUrl, previewUrl: publicUrl };
           }),
         );
       } else {
@@ -251,13 +261,15 @@ export class AdminDocumentDetailPage {
     if (!cur) return;
     this.saving.set(true);
     try {
-      const galleryItemsBody = this.galleryItems()
+      // storage-key-persistence v1 §4.2: `x.key` is now always populated (fresh upload or
+      // reconstructed from `imageStorageKey` in load()) — send it directly, no more URL fallback.
+      const galleryItemsBody: GalleryItemRequestWithKey[] = this.galleryItems()
         .map((x) => {
-          const imageUrl = (x.key ? downloadUrlForStorageKey(x.key) : x.publicUrl).trim();
+          const imageStorageKey = x.key.trim();
           const id = x.id?.trim();
-          return id ? { id, imageUrl } : { imageUrl };
+          return id ? { id, imageStorageKey } : { imageStorageKey };
         })
-        .filter((x) => x.imageUrl.length > 0)
+        .filter((x) => x.imageStorageKey.length > 0)
         .slice(0, MAX_GALLERY_IMAGES);
       const result = await patchApiAdminDocumentById({
         path: { id: this.documentId },
@@ -281,7 +293,12 @@ export class AdminDocumentDetailPage {
           pages: cur.pages,
           fileSize: cur.fileSize,
           language: cur.language,
-          galleryItems: galleryItemsBody.length ? galleryItemsBody : null,
+          // TODO(contract): drop this cast once `imageStorageKey` exists on the generated
+          // `DocumentGalleryItemRequest` (after backend regen) — see
+          // docs/contracts/storage-key-persistence.md
+          galleryItems: (galleryItemsBody.length
+            ? galleryItemsBody
+            : null) as unknown as PatchAdminDocumentRequest['galleryItems'],
           fileStorageKey: cur.fileStorageKey,
           previewStorageKey: cur.previewStorageKey,
         },
@@ -298,7 +315,9 @@ export class AdminDocumentDetailPage {
         this.galleryItems.set(
           updItems.map((it) => {
             const publicUrl = resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/'));
-            return { id: it.id, key: '', publicUrl, previewUrl: publicUrl };
+            // storage-key-persistence v1 §4.2: key must round-trip from imageStorageKey.
+            const key = (it as SellerGalleryItemWithKey).imageStorageKey ?? '';
+            return { id: it.id, key, publicUrl, previewUrl: publicUrl };
           }),
         );
       } else {

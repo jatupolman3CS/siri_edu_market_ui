@@ -1,13 +1,16 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerUploadPage } from './upload.page';
 import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
+import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import type { PlatformStats } from '../../../core/models';
-import type { UploadResponse } from '../../../core/api/types.gen';
+import type { SellerDocumentResponse, UploadResponse } from '../../../core/api/types.gen';
 import type { UpdateSellerDocumentRequest } from '../../../core/api/seller-document-update';
+import type { GalleryItemRequestWithKey } from '../../../core/services/api-result';
 
 /**
  * real-data-stats v1 §4.6 — Seller upload page:
@@ -214,7 +217,7 @@ describe('SellerUploadPage — gallery preview vs. payload URL (AC-12)', () => {
     expect(item.publicUrl).toBe(expectedPublicUrl);
   });
 
-  it('always sends the original URL in the update payload, never the optimized one', async () => {
+  it('sends the raw storage key (never a URL, optimized or otherwise) in the update payload', async () => {
     const { component, updateDocumentCalls } = renderForGalleryUpload(async () => ({
       key: 'seller-1/2026/09/01/cover.jpg',
       publicUrl: 'https://cdn.example.test/original-cover.jpg',
@@ -231,7 +234,7 @@ describe('SellerUploadPage — gallery preview vs. payload URL (AC-12)', () => {
     await Promise.resolve();
 
     // Force edit mode so submit() goes through SellerService.updateDocument, which is where
-    // galleryItems[].imageUrl is composed from the gallery list.
+    // galleryItems[].imageStorageKey is composed from the gallery list.
     component.editId.set('doc-1');
     component.title.set('เอกสารทดสอบ');
     component.shortDescription.set('คำอธิบายสั้น');
@@ -242,9 +245,100 @@ describe('SellerUploadPage — gallery preview vs. payload URL (AC-12)', () => {
     await Promise.resolve();
 
     expect(updateDocumentCalls).toHaveLength(1);
-    const galleryItems = updateDocumentCalls[0].body.galleryItems ?? [];
+    // storage-key-persistence v1 §4.2: `galleryKeyForApi()` returns `item.key` directly — no
+    // more `downloadUrlForStorageKey`/URL fallback.
+    const galleryItems = (updateDocumentCalls[0].body.galleryItems ??
+      []) as unknown as GalleryItemRequestWithKey[];
     expect(galleryItems).toHaveLength(1);
-    expect(galleryItems[0].imageUrl).toBe(downloadUrlForStorageKey('seller-1/2026/09/01/cover.jpg'));
-    expect(galleryItems[0].imageUrl).not.toBe('https://cdn.example.test/optimized-cover.webp');
+    expect(galleryItems[0].imageStorageKey).toBe('seller-1/2026/09/01/cover.jpg');
+    expect(galleryItems[0].imageStorageKey).not.toBe('https://cdn.example.test/optimized-cover.webp');
+    expect(galleryItems[0].imageStorageKey).not.toContain('http');
+  });
+});
+
+describe('SellerUploadPage — gallery imageStorageKey round-trip (storage-key-persistence v1 §4.2)', () => {
+  function renderForEditReconstruct() {
+    const updateDocumentCalls: { id: string; body: UpdateSellerDocumentRequest }[] = [];
+    const rawDoc: SellerDocumentResponse = {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      galleryItems: [
+        // storage-key-persistence v1 §3.4: GET response carries both `imageUrl` (resolved,
+        // display-only) and the new `imageStorageKey` sibling (bare key) — the shim cast below
+        // stands in for the not-yet-regenerated SDK field.
+        {
+          id: 'g1',
+          imageUrl: 'https://cdn.example.test/resolved/gallery/img1.jpg',
+          ...({ imageStorageKey: 'gallery/img1.jpg' } as Record<string, unknown>),
+        },
+      ],
+    };
+    const doc = mapSellerDocument(rawDoc);
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async (id: string, body: UpdateSellerDocumentRequest) => {
+        updateDocumentCalls.push({ id, body });
+      },
+    };
+    const fakeCatalogForEdit: Partial<CatalogService> = {
+      loadCategories: () => {},
+      getCategoryById: () => undefined,
+    };
+    const fakePlatformStats = { stats: () => undefined, loadStats: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) },
+        },
+        { provide: CatalogService, useValue: fakeCatalogForEdit },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: fakePlatformStats },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, updateDocumentCalls };
+  }
+
+  it('resubmitting an unchanged gallery item sends its imageStorageKey, not a URL', async () => {
+    const { component, updateDocumentCalls } = renderForEditReconstruct();
+    // Let the fire-and-forget async IIFE inside the constructor's queryParamMap subscription
+    // (fetchDocumentForEdit → applyEditDocument) settle before touching component state.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(component.galleryItems()[0].key).toBe('gallery/img1.jpg');
+
+    // Edit an unrelated field only — never touch the gallery.
+    component.categoryIds.set(['cat-1']);
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const galleryItems = (updateDocumentCalls[0].body.galleryItems ??
+      []) as unknown as GalleryItemRequestWithKey[];
+    expect(galleryItems).toHaveLength(1);
+    expect(galleryItems[0].id).toBe('g1');
+    expect(galleryItems[0].imageStorageKey).toBe('gallery/img1.jpg');
+    expect(galleryItems[0].imageStorageKey).not.toContain('http');
   });
 });

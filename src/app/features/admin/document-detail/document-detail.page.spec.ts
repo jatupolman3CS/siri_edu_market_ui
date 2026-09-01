@@ -57,7 +57,10 @@ const baseDoc = {
   tags: [] as string[],
   gradeLevels: [] as string[],
   standards: [] as string[],
-  galleryItems: [{ id: 'g1', imageUrl: 'gallery/img1.jpg' }],
+  // storage-key-persistence v1 §3.4: GET response carries both `imageUrl` (resolved,
+  // display-only) and the new `imageStorageKey` sibling (bare key) — real backend response after
+  // regen; this fixture stands in for it until then.
+  galleryItems: [{ id: 'g1', imageUrl: 'gallery/img1.jpg', imageStorageKey: 'gallery/img1.jpg' }],
   galleryUrls: [] as string[],
 };
 
@@ -154,6 +157,8 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
     const expected = resolvePublicUrl('gallery/img1.jpg');
     expect(item.previewUrl).toBe(expected);
     expect(item.publicUrl).toBe(expected);
+    // storage-key-persistence v1 §4.2: key must round-trip from imageStorageKey, not stay ''.
+    expect(item.key).toBe('gallery/img1.jpg');
   });
 
   it('onCoverFile uses optimizedUrl for the preview when the upload response has one', async () => {
@@ -197,7 +202,7 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
     expect(added!.publicUrl).toBe(expectedPublicUrl);
   });
 
-  it('save() always sends the original URL in galleryItems[].imageUrl, never the optimized one', async () => {
+  it('save() always sends the raw storage key in galleryItems[].imageStorageKey, never a URL', async () => {
     stubLoad();
     stubRoute('PATCH', '/api/admin/documents/doc-1', baseDoc);
     const { component } = render(async () => ({
@@ -215,9 +220,39 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
 
     const patch = requests.find((r) => r.method === 'PATCH' && r.path === '/api/admin/documents/doc-1');
     expect(patch).toBeDefined();
-    const body = JSON.parse(patch!.body) as { galleryItems?: { id?: string; imageUrl: string }[] };
-    const sentUrls = (body.galleryItems ?? []).map((g) => g.imageUrl);
-    expect(sentUrls).toContain(downloadUrlForStorageKey('admin/2026/09/01/cover.jpg'));
-    expect(sentUrls).not.toContain('https://cdn.example.test/optimized-cover.webp');
+    const body = JSON.parse(patch!.body) as {
+      galleryItems?: { id?: string; imageStorageKey: string }[];
+    };
+    const sentKeys = (body.galleryItems ?? []).map((g) => g.imageStorageKey);
+    expect(sentKeys).toContain('admin/2026/09/01/cover.jpg');
+    expect(sentKeys).not.toContain('https://cdn.example.test/optimized-cover.webp');
+    expect(sentKeys).not.toContain(downloadUrlForStorageKey('admin/2026/09/01/cover.jpg'));
+  });
+
+  it('resubmitting an unchanged gallery item sends its imageStorageKey, not a URL', async () => {
+    stubLoad();
+    stubRoute('PATCH', '/api/admin/documents/doc-1', baseDoc);
+    const { component } = render(async () => {
+      throw new Error('uploadFile should not be called — the gallery item is left untouched');
+    });
+    await settle();
+
+    // g1 was reconstructed from imageStorageKey on load(), never touched here — only an
+    // unrelated field changes.
+    expect(component.galleryItems()[0].key).toBe('gallery/img1.jpg');
+    component.patchDoc({ title: 'ชื่อใหม่ (แก้เฉพาะชื่อ)' });
+
+    await component.save();
+    await settle();
+
+    const patch = requests.find((r) => r.method === 'PATCH' && r.path === '/api/admin/documents/doc-1');
+    expect(patch).toBeDefined();
+    const body = JSON.parse(patch!.body) as {
+      galleryItems?: { id?: string; imageStorageKey: string }[];
+    };
+    expect(body.galleryItems).toHaveLength(1);
+    expect(body.galleryItems?.[0].id).toBe('g1');
+    expect(body.galleryItems?.[0].imageStorageKey).toBe('gallery/img1.jpg');
+    expect(body.galleryItems?.[0].imageStorageKey).not.toContain('http');
   });
 });
