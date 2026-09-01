@@ -13,6 +13,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-seller-dashboard',
@@ -25,6 +26,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
     ThbPipe,
     CompactPipe,
     DatePipe,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',

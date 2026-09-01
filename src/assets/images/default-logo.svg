@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="SIRIEDUMARKET">
+  <defs>
+    <linearGradient id="siri-default-logo-gradient" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f9a8d4" />
+      <stop offset="1" stop-color="#ec4899" />
+    </linearGradient>
+  </defs>
+
+  <rect width="200" height="200" rx="40" fill="url(#siri-default-logo-gradient)" />
+
+  <circle cx="176" cy="24" r="15" fill="#fbcfe8" stroke="#ffffff" stroke-width="6" />
+
+  <g transform="translate(40 40) scale(5)" fill="none">
+    <path
+      d="M6 4.5C6 3.67 6.67 3 7.5 3h7.18a2 2 0 0 1 1.42.59l3.31 3.32a2 2 0 0 1 .59 1.41V19.5c0 .83-.67 1.5-1.5 1.5h-11A1.5 1.5 0 0 1 6 19.5v-15Z"
+      stroke="#ffffff"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M14 3v4.5a1.5 1.5 0 0 0 1.5 1.5H20"
+      stroke="#ffffff"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path d="M9.5 13h6m-6 3h4" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+  </g>
+</svg>

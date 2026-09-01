@@ -26,6 +26,7 @@
                 @for (item of cart.items(); track item.document.id) {
                   <li class="flex gap-4 items-center">
                     <img
+                      appImgFallback
                       [src]="item.document.cover"
                       [alt]="item.document.title"
                       class="w-16 h-20 rounded-xl object-cover flex-shrink-0"

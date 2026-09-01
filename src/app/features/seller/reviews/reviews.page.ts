@@ -3,6 +3,7 @@ import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { SellerService } from '../../../core/services';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 type ReviewRow = {
   id: string;
@@ -19,7 +20,7 @@ type ReviewRow = {
 @Component({
   selector: 'app-seller-reviews',
   standalone: true,
-  imports: [RatingStarsComponent, TimeAgoPipe],
+  imports: [RatingStarsComponent, TimeAgoPipe, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reviews.page.html',
   styleUrl: './reviews.page.scss',

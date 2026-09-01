@@ -6,7 +6,7 @@
       <!-- Banner -->
       <section class="relative bg-gradient-pink h-56 md:h-72 overflow-hidden">
         @if (s.bannerUrl) {
-          <img [src]="resolvePublicUrl(s.bannerUrl)" [alt]="s.studioName" class="w-full h-full object-cover" />
+          <img appImgFallback [src]="resolvePublicUrl(s.bannerUrl)" [alt]="s.studioName" class="w-full h-full object-cover" />
           <div class="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/40 to-transparent"></div>
         } @else {
           <div class="absolute -top-20 -right-20 w-80 h-80 rounded-full glass-blob"></div>
@@ -19,6 +19,7 @@
         <header class="card-soft p-6 md:p-8 mb-8">
           <div class="flex flex-col md:flex-row gap-6 md:items-end">
             <img
+              appImgFallback
               [src]="resolveAvatarUrl(s.avatarUrl)"
               [alt]="s.studioName"
               class="w-28 h-28 rounded-3xl object-cover ring-4 ring-white shadow-pop -mt-16 md:-mt-24"

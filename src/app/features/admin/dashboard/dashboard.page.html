@@ -51,7 +51,7 @@
           <ul class="divide-y divide-line">
             @for (d of admin.pendingDocuments().slice(0, 5); track d.id) {
               <li class="py-3 flex items-center gap-4">
-                <img [src]="d.cover" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" alt="" />
+                <img appImgFallback [src]="d.cover" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" alt="" />
                 <div class="flex-1 min-w-0">
                   <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
                   <div class="text-xs text-ink-muted mt-0.5 flex items-center gap-2">

@@ -5,6 +5,7 @@
         <!-- Cover -->
         <div class="relative aspect-[16/10] bg-pink-50 overflow-hidden">
           <img
+            appImgFallback
             [src]="bundle().cover"
             [alt]="bundle().title"
             class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -34,6 +35,7 @@
         <div class="p-5 flex flex-col gap-2">
           <div class="flex items-center gap-2 text-[11px] text-ink-muted">
             <img
+              appImgFallback
               [src]="bundle().seller.avatar"
               class="w-5 h-5 rounded-full object-cover"
               [alt]="bundle().seller.studioName"

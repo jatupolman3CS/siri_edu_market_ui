@@ -27,7 +27,7 @@
     <div class="mt-6 grid gap-4 sm:grid-cols-1">
       @for (u of previewUrls(); track u) {
         <figure class="rounded-xl border border-line overflow-hidden bg-white shadow-sm">
-          <img [src]="resolveUrl(u)" alt="พรีวิวหน้า PDF" class="w-full h-auto object-contain max-h-[80vh]" />
+          <img appImgFallback [src]="resolveUrl(u)" alt="พรีวิวหน้า PDF" class="w-full h-auto object-contain max-h-[80vh]" />
         </figure>
       }
     </div>

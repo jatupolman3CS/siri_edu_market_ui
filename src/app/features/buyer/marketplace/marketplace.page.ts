@@ -31,6 +31,7 @@ import { BundleCardComponent } from '../../../shared/components/bundle-card/bund
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-buyer-marketplace',
@@ -45,6 +46,7 @@ import { PageHeroComponent } from '../../../shared/components/page-hero/page-her
     IconComponent,
     EmptyStateComponent,
     PageHeroComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketplace.page.html',

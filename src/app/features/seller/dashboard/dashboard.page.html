@@ -125,7 +125,7 @@
           <ul class="divide-y divide-line">
             @for (d of seller.myDocuments().slice(0, 5); track d.id) {
               <li class="py-3 flex items-center gap-4">
-                <img [src]="d.cover" [alt]="d.title" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" />
+                <img appImgFallback [src]="d.cover" [alt]="d.title" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" />
                 <div class="flex-1 min-w-0">
                   <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
                   <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">

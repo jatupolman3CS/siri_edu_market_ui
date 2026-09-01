@@ -10,11 +10,19 @@ import { ThbPipe } from '../../pipes/thb.pipe';
 import { CompactPipe } from '../../pipes/compact.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 @Component({
   selector: 'app-document-card',
   standalone: true,
-  imports: [RouterLink, ThbPipe, CompactPipe, IconComponent, RatingStarsComponent],
+  imports: [
+    RouterLink,
+    ThbPipe,
+    CompactPipe,
+    IconComponent,
+    RatingStarsComponent,
+    ImgFallbackDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-card.component.html',
   styleUrl: './document-card.component.scss',

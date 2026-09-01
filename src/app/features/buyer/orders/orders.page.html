@@ -62,6 +62,7 @@
               @for (item of o.items; track item.document.id) {
                 <div class="flex items-center gap-4 py-2">
                   <img
+                    appImgFallback
                     [src]="item.document.cover"
                     [alt]="item.document.title"
                     class="w-14 h-16 object-cover rounded-xl flex-shrink-0"

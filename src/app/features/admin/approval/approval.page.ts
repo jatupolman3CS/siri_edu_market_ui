@@ -7,11 +7,12 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-admin-approval',
   standalone: true,
-  imports: [IconComponent, EmptyStateComponent, TimeAgoPipe, ThbPipe],
+  imports: [IconComponent, EmptyStateComponent, TimeAgoPipe, ThbPipe, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './approval.page.html',
   styleUrl: './approval.page.scss',

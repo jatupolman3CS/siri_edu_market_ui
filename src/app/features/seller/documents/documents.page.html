@@ -65,6 +65,7 @@
                 <td class="px-5 py-4">
                   <div class="flex items-center gap-3">
                     <img
+                      appImgFallback
                       [src]="d.cover || coverFallback"
                       (error)="onCoverError($event)"
                       class="w-10 h-12 rounded-lg object-cover"

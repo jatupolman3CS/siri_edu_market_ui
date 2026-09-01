@@ -20,6 +20,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-buyer-storefront',
@@ -31,6 +32,7 @@ import { resolveAvatarUrl } from '../../../core/brand-assets';
     IconComponent,
     EmptyStateComponent,
     CompactPipe,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './storefront.page.html',

@@ -47,6 +47,7 @@
                 @for (item of cart.items(); track item.document.id) {
                   <li class="flex gap-3 p-3 bg-white rounded-2xl border border-line">
                     <img
+                      appImgFallback
                       [src]="item.document.cover"
                       [alt]="item.document.title"
                       class="w-16 h-20 object-cover rounded-xl flex-shrink-0"

@@ -17,6 +17,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-buyer-library',
@@ -33,6 +34,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
     ThbPipe,
     TimeAgoPipe,
     CompactPipe,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './library.page.html',

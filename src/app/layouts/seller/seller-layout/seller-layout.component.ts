@@ -6,6 +6,7 @@ import { AuthService, MeService } from '../../../core/services';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-seller-layout',
@@ -17,6 +18,7 @@ import { defaultAvatarUrl } from '../../../core/brand-assets';
     LogoComponent,
     IconComponent,
     GlobalLoaderComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-layout.component.html',

@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { DocumentService } from '../../../core/services/document.service';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-pdf-preview-upload',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pdf-preview-upload.page.html',
   styleUrl: './pdf-preview-upload.page.scss',

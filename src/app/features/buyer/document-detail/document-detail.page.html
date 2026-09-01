@@ -44,6 +44,7 @@
             <div class="relative card-soft overflow-hidden">
               <div class="aspect-[4/5] relative">
                 <img
+                  appImgFallback
                   [src]="d.gallery[selectedImage()] || d.cover"
                   [alt]="d.title"
                   class="absolute inset-0 w-full h-full object-cover"
@@ -77,12 +78,12 @@
                     [class.border-transparent]="selectedImage() !== i"
                     (click)="selectedImage.set(i)"
                   >
-                    <img [src]="img" class="w-full h-full object-cover" alt="" />
+                    <img appImgFallback [src]="img" class="w-full h-full object-cover" alt="" />
                   </button>
                 } @empty {
                   @if (d.cover) {
                     <button type="button" class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-pink-500" aria-current="true">
-                      <img [src]="d.cover" class="w-full h-full object-cover" alt="" />
+                      <img appImgFallback [src]="d.cover" class="w-full h-full object-cover" alt="" />
                     </button>
                   }
                 }
@@ -262,6 +263,7 @@
                           <li class="card-soft p-5">
                             <div class="flex items-start gap-4">
                               <img
+                                appImgFallback
                                 [src]="rv.buyerAvatar"
                                 [alt]="rv.buyerName"
                                 class="w-11 h-11 rounded-full object-cover flex-shrink-0"
@@ -291,7 +293,7 @@
 
                             @if (rv.sellerReply; as reply) {
                               <div class="mt-4 ml-15 pl-4 border-l-2 border-pink-300 flex gap-3">
-                                <img [src]="d.seller.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+                                <img appImgFallback [src]="d.seller.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
                                 <div class="flex-1">
                                   <div class="flex items-center gap-2 mb-1">
                                     <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
@@ -385,7 +387,7 @@
                         @for (q of d.qna!; track q.id) {
                           <li class="card-soft p-5">
                             <div class="flex items-start gap-3">
-                              <img [src]="q.buyerAvatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                              <img appImgFallback [src]="q.buyerAvatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
                               <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1.5">
                                   <span class="text-sm font-bold text-ink">{{ q.buyerName }}</span>
@@ -395,7 +397,7 @@
 
                                 @if (q.answer; as a) {
                                   <div class="mt-3 pl-4 border-l-2 border-pink-300 flex gap-3 items-start">
-                                    <img [src]="d.seller.avatar" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                                    <img appImgFallback [src]="d.seller.avatar" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                                     <div class="flex-1">
                                       <div class="flex items-center gap-2 mb-1">
                                         <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
@@ -548,7 +550,7 @@
                 <h3 class="text-sm font-bold text-ink mb-3">ผู้ขาย</h3>
                 <div class="flex items-start gap-3">
                   <a [routerLink]="['/store', d.seller.id]">
-                    <img [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100" />
+                    <img appImgFallback [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100" />
                   </a>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-1.5">
@@ -627,6 +629,7 @@
                       <!-- Cover -->
                       <div class="relative aspect-[16/10] bg-pink-50 overflow-hidden">
                         <img
+                          appImgFallback
                           [src]="card.bundle.cover"
                           [alt]="card.bundle.title"
                           class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -654,6 +657,7 @@
                       <div class="p-5 flex flex-col gap-2">
                         <div class="flex items-center gap-2 text-[11px] text-ink-muted">
                           <img
+                            appImgFallback
                             [src]="card.bundle.seller.avatar"
                             class="w-5 h-5 rounded-full object-cover"
                             [alt]="card.bundle.seller.studioName"
@@ -759,6 +763,7 @@
                 @for (path of previewRasterUrls(); track $index) {
                   <figure class="preview-image-card">
                     <img
+                      appImgFallback
                       [src]="previewImgSrc(path)"
                       alt="พรีวิวหน้าเอกสาร"
                       class="preview-image-item block h-auto max-h-none w-full max-w-full object-contain select-none"

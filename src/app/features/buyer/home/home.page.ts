@@ -14,6 +14,7 @@ import { SectionHeaderComponent } from '../../../shared/components/section-heade
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-buyer-home',
@@ -27,6 +28,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
     CompactPipe,
     DecimalPipe,
     EmptyStateComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',

@@ -5,11 +5,12 @@ import { calcBundleSaveAmount, calcBundleSavePercent } from '../../../core/servi
 import { ThbPipe } from '../../pipes/thb.pipe';
 import { CompactPipe } from '../../pipes/compact.pipe';
 import { IconComponent } from '../icon/icon.component';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 @Component({
   selector: 'app-bundle-card',
   standalone: true,
-  imports: [RouterLink, ThbPipe, CompactPipe, IconComponent],
+  imports: [RouterLink, ThbPipe, CompactPipe, IconComponent, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundle-card.component.html',
   styleUrl: './bundle-card.component.scss',

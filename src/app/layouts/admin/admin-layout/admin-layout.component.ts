@@ -5,6 +5,7 @@ import { GlobalLoaderComponent } from '../../../shared/components/global-loader/
 import { AdminService, AuthService, MeService } from '../../../core/services';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-admin-layout',
@@ -15,6 +16,7 @@ import { defaultAvatarUrl } from '../../../core/brand-assets';
     RouterLinkActive,
     IconComponent,
     GlobalLoaderComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-layout.component.html',

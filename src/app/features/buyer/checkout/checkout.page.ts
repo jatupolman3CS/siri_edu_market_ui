@@ -13,6 +13,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 /**
  * S-04: checkout in two moves. First it creates the order, which opens a Stripe PaymentIntent
@@ -27,7 +28,7 @@ import { loadStripeScript } from '../../../core/util/load-stripe-script';
 @Component({
   selector: 'app-buyer-checkout',
   standalone: true,
-  imports: [RouterLink, ThbPipe, IconComponent, EmptyStateComponent],
+  imports: [RouterLink, ThbPipe, IconComponent, EmptyStateComponent, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './checkout.page.html',
   styleUrl: './checkout.page.scss',

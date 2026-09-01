@@ -182,7 +182,7 @@
                 >
                   @for (item of galleryItems(); track $index; let i = $index) {
                     <li cdkDrag class="p-3 flex items-center gap-3">
-                      <img [src]="item.previewUrl" alt="" class="w-16 h-20 object-cover rounded-xl border border-line" />
+                      <img appImgFallback [src]="item.previewUrl" alt="" class="w-16 h-20 object-cover rounded-xl border border-line" />
                       <div class="flex-1 min-w-0">
                         @if (i === 0) {
                           <div class="text-xs font-bold text-pink-600">ปกหลัก</div>

@@ -19,6 +19,7 @@ import {
 } from '../../../core/api/seller-document-update';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const MAX_GALLERY_IMAGES = 10;
 
@@ -40,7 +41,15 @@ type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
 @Component({
   selector: 'app-seller-upload',
   standalone: true,
-  imports: [FormsModule, IconComponent, ThbPipe, CdkDropList, CdkDrag, SlicePipe],
+  imports: [
+    FormsModule,
+    IconComponent,
+    ThbPipe,
+    CdkDropList,
+    CdkDrag,
+    SlicePipe,
+    ImgFallbackDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './upload.page.html',
   styleUrl: './upload.page.scss',

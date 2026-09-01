@@ -4,6 +4,7 @@ import { AdminService } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -13,6 +14,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     StatCardComponent,
     ThbPipe,
     TimeAgoPipe,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',

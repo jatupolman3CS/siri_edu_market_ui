@@ -6,6 +6,7 @@ import { AuthService, CartService } from '../../../core/services';
 import { ThbPipe } from '../../pipes/thb.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 @Component({
   selector: 'app-cart-drawer',
@@ -16,6 +17,7 @@ import { EmptyStateComponent } from '../empty-state/empty-state.component';
     ThbPipe,
     IconComponent,
     EmptyStateComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cart-drawer.component.html',

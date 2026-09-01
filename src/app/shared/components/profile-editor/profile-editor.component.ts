@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { MeService } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 /**
  * F-07: display name plus avatar, shared by /account and /seller/settings.
@@ -18,7 +19,7 @@ import { IconComponent } from '../icon/icon.component';
 @Component({
   selector: 'app-profile-editor',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-editor.component.html',
 })

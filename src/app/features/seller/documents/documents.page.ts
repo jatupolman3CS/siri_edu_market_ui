@@ -12,6 +12,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-seller-documents',
@@ -24,6 +25,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     ThbPipe,
     CompactPipe,
     TimeAgoPipe,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.page.html',

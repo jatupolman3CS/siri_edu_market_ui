@@ -22,6 +22,7 @@ import { LogoComponent } from '../logo/logo.component';
 import { IconComponent } from '../icon/icon.component';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 @Component({
   selector: 'app-header',
@@ -33,6 +34,7 @@ import { defaultAvatarUrl } from '../../../core/brand-assets';
     NzDropDownModule,
     LogoComponent,
     IconComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-header.component.html',

@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-admin-sellers',
   standalone: true,
-  imports: [IconComponent, CompactPipe, DatePipe, RouterLink],
+  imports: [IconComponent, CompactPipe, DatePipe, RouterLink, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sellers.page.html',
   styleUrl: './sellers.page.scss',

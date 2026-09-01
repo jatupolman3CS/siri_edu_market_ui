@@ -7,6 +7,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-buyer-orders',
@@ -18,6 +19,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     EmptyStateComponent,
     ThbPipe,
     TimeAgoPipe,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders.page.html',

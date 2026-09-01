@@ -31,6 +31,7 @@ import { unwrapSdkResult } from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const GRADE_PRESET_KEYS = Object.keys(GRADE_LEVEL_LABELS) as GradeLevel[];
 
@@ -45,7 +46,15 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
 @Component({
   selector: 'app-admin-document-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, DatePipe, CdkDropList, CdkDrag],
+  imports: [
+    FormsModule,
+    RouterLink,
+    IconComponent,
+    DatePipe,
+    CdkDropList,
+    CdkDrag,
+    ImgFallbackDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-detail.page.html',
   styleUrl: './document-detail.page.scss',

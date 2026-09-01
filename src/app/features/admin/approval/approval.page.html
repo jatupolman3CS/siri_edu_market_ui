@@ -81,7 +81,7 @@
                 [disabled]="isPreviewLocked()"
                 (click)="select(d.id)"
               >
-                <img [src]="d.cover" class="w-14 h-16 rounded-xl object-cover flex-shrink-0" alt="" />
+                <img appImgFallback [src]="d.cover" class="w-14 h-16 rounded-xl object-cover flex-shrink-0" alt="" />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
                     <span class="pill bg-amber-100 text-amber-700 !py-0 !text-[10px]">
@@ -140,7 +140,7 @@
                 @if (previewDetailLoading()) {
                   <p class="text-sm text-ink-muted z-10 px-4 text-center">กำลังโหลดรายละเอียดเต็ม…</p>
                 }
-                <img [src]="heroCoverUrl()" class="w-full h-full object-cover" alt="" />
+                <img appImgFallback [src]="heroCoverUrl()" class="w-full h-full object-cover" alt="" />
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div class="text-white/40 text-7xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
                     review
@@ -187,7 +187,7 @@
                             rel="noopener noreferrer"
                             class="block aspect-[4/5] rounded-xl overflow-hidden border border-line bg-white"
                           >
-                            <img [src]="galleryImageSrc(g.imageUrl)" class="w-full h-full object-cover" alt="" />
+                            <img appImgFallback [src]="galleryImageSrc(g.imageUrl)" class="w-full h-full object-cover" alt="" />
                           </a>
                         }
                       </div>
@@ -204,6 +204,7 @@
                             class="block aspect-[4/5] rounded-xl overflow-hidden border border-line bg-white"
                           >
                             <img
+                              appImgFallback
                               [src]="resolvePublicUrl(url.replaceAll('%2F', '/'))"
                               class="w-full h-full object-cover"
                               alt=""

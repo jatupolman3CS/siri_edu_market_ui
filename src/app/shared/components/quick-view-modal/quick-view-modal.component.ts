@@ -11,6 +11,7 @@ import { ThbPipe } from '../../pipes/thb.pipe';
 import { CompactPipe } from '../../pipes/compact.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 @Component({
   selector: 'app-quick-view-modal',
@@ -22,6 +23,7 @@ import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
     CompactPipe,
     IconComponent,
     RatingStarsComponent,
+    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quick-view-modal.component.html',
