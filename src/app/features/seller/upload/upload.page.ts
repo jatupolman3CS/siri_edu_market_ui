@@ -188,7 +188,9 @@ export class SellerUploadPage {
       this.galleryItems.set(
         doc.gallerySlots.map((g) => {
           const publicUrl = resolvePublicUrl(g.imageUrl.replaceAll('%2F', '/'));
-          return { id: g.id, key: '', publicUrl, previewUrl: publicUrl };
+          // storage-key-persistence v1 §4.2: key must round-trip from imageStorageKey, not stay
+          // '' — resubmitting '' would drop the item's key on an unrelated edit.
+          return { id: g.id, key: g.imageStorageKey, publicUrl, previewUrl: publicUrl };
         }),
       );
     } else if (doc.gallery?.length) {
@@ -352,8 +354,12 @@ export class SellerUploadPage {
     });
   }
 
-  private galleryUrlForApi(item: GalleryItem): string {
-    return item.key ? downloadUrlForStorageKey(item.key) : item.publicUrl;
+  /**
+   * storage-key-persistence v1 §4.2: `item.key` is now always populated (fresh upload or
+   * reconstructed from `imageStorageKey`) — no more URL fallback needed.
+   */
+  private galleryKeyForApi(item: GalleryItem): string {
+    return item.key;
   }
 
   /** Clear current file selection + uploaded reference (for the trash button). */
