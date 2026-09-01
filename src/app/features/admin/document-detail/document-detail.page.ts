@@ -37,7 +37,10 @@ const GRADE_PRESET_KEYS = Object.keys(GRADE_LEVEL_LABELS) as GradeLevel[];
 const STANDARD_PRESETS = ['O-NET', 'TGAT', 'TPAT', 'GAT', 'PAT', 'สสวท.', 'A-Level', 'IELTS', 'TOEFL'];
 
 const MAX_GALLERY_IMAGES = 10;
-type GalleryItem = { id?: string | null; key: string; publicUrl: string };
+// image-upload-optimization v1 §4: previewUrl is what <img> renders (optimizedUrl when the
+// backend produced one, publicUrl otherwise) — key/publicUrl stay the untouched original that
+// the save payload (galleryItems[].imageUrl) must always keep using.
+type GalleryItem = { id?: string | null; key: string; publicUrl: string; previewUrl: string };
 
 @Component({
   selector: 'app-admin-document-detail',
@@ -169,16 +172,20 @@ export class AdminDocumentDetailPage {
       );
       if (apiItems.length) {
         this.galleryItems.set(
-          apiItems.map((it) => ({
-            id: it.id,
-            key: '',
-            publicUrl: resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/')),
-          })),
+          apiItems.map((it) => {
+            const publicUrl = resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/'));
+            return { id: it.id, key: '', publicUrl, previewUrl: publicUrl };
+          }),
         );
       } else {
         const urls = (d.galleryUrls ?? []).filter(Boolean);
         if (urls.length) {
-          this.galleryItems.set(urls.map((u) => ({ key: '', publicUrl: resolvePublicUrl(u) })));
+          this.galleryItems.set(
+            urls.map((u) => {
+              const publicUrl = resolvePublicUrl(u);
+              return { key: '', publicUrl, previewUrl: publicUrl };
+            }),
+          );
         } else {
           this.galleryItems.set([]);
         }
@@ -280,16 +287,20 @@ export class AdminDocumentDetailPage {
       );
       if (updItems.length) {
         this.galleryItems.set(
-          updItems.map((it) => ({
-            id: it.id,
-            key: '',
-            publicUrl: resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/')),
-          })),
+          updItems.map((it) => {
+            const publicUrl = resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/'));
+            return { id: it.id, key: '', publicUrl, previewUrl: publicUrl };
+          }),
         );
       } else {
         const urls = (updated.galleryUrls ?? []).filter(Boolean);
         if (urls.length) {
-          this.galleryItems.set(urls.map((u) => ({ key: '', publicUrl: resolvePublicUrl(u) })));
+          this.galleryItems.set(
+            urls.map((u) => {
+              const publicUrl = resolvePublicUrl(u);
+              return { key: '', publicUrl, previewUrl: publicUrl };
+            }),
+          );
         }
       }
       this.message.success('บันทึกแล้ว');
@@ -380,7 +391,11 @@ export class AdminDocumentDetailPage {
     try {
       const data = await this.seller.uploadFile(file);
       const publicUrl = downloadUrlForStorageKey(data.key);
-      this.galleryItems.update((list) => [{ id: null, key: data.key, publicUrl }, ...list.slice(0, MAX_GALLERY_IMAGES - 1)]);
+      const previewUrl = data.optimizedUrl ?? publicUrl;
+      this.galleryItems.update((list) => [
+        { id: null, key: data.key, publicUrl, previewUrl },
+        ...list.slice(0, MAX_GALLERY_IMAGES - 1),
+      ]);
       this.message.success('อัปโหลดรูปปกแล้ว — กดบันทึกเพื่อยืนยัน');
     } finally {
       this.coverUploading.set(false);
@@ -401,7 +416,11 @@ export class AdminDocumentDetailPage {
         try {
           const data = await this.seller.uploadFile(f);
           const publicUrl = downloadUrlForStorageKey(data.key);
-          this.galleryItems.update((list) => [...list, { id: null, key: data.key, publicUrl }]);
+          const previewUrl = data.optimizedUrl ?? publicUrl;
+          this.galleryItems.update((list) => [
+            ...list,
+            { id: null, key: data.key, publicUrl, previewUrl },
+          ]);
           added++;
         } catch {
           /* SellerService already toasted */

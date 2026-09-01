@@ -30,7 +30,10 @@ const PREVIEW_WATERMARK_FONT_OPTIONS = [
   'Arial',
 ] as const;
 
-type GalleryItem = { id?: string | null; key: string; publicUrl: string };
+// image-upload-optimization v1 §4: previewUrl is what <img> renders (optimizedUrl when the
+// backend produced one, publicUrl otherwise) — key/publicUrl stay the untouched original that
+// the submit payload (galleryImageUrls/galleryItems[].imageUrl) must always keep using.
+type GalleryItem = { id?: string | null; key: string; publicUrl: string; previewUrl: string };
 
 type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
 
@@ -173,16 +176,17 @@ export class SellerUploadPage {
     this.fileSizeLabel.set(doc.fileSize ?? '');
     if (doc.gallerySlots?.length) {
       this.galleryItems.set(
-        doc.gallerySlots.map((g) => ({
-          id: g.id,
-          key: '',
-          publicUrl: resolvePublicUrl(g.imageUrl.replaceAll('%2F', '/')),
-        })),
+        doc.gallerySlots.map((g) => {
+          const publicUrl = resolvePublicUrl(g.imageUrl.replaceAll('%2F', '/'));
+          return { id: g.id, key: '', publicUrl, previewUrl: publicUrl };
+        }),
       );
     } else if (doc.gallery?.length) {
-      this.galleryItems.set(doc.gallery.map((publicUrl) => ({ key: '', publicUrl })));
+      this.galleryItems.set(
+        doc.gallery.map((publicUrl) => ({ key: '', publicUrl, previewUrl: publicUrl })),
+      );
     } else if (doc.cover) {
-      this.galleryItems.set([{ key: '', publicUrl: doc.cover }]);
+      this.galleryItems.set([{ key: '', publicUrl: doc.cover, previewUrl: doc.cover }]);
     }
     this.step.set(1);
     this.mainFiles.set(doc.mainFiles ?? []);
@@ -279,7 +283,11 @@ export class SellerUploadPage {
           try {
             const data = await this.seller.uploadFile(f);
             const publicUrl = downloadUrlForStorageKey(data.key);
-            this.galleryItems.update((list) => [...list, { id: null, key: data.key, publicUrl }]);
+            const previewUrl = data.optimizedUrl ?? publicUrl;
+            this.galleryItems.update((list) => [
+              ...list,
+              { id: null, key: data.key, publicUrl, previewUrl },
+            ]);
             added++;
           } catch (e) {
             failed++;

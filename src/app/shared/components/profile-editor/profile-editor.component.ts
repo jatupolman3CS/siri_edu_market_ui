@@ -67,11 +67,15 @@ export class ProfileEditorComponent {
     this.avatarUploading.set(true);
     try {
       const data = await this.me.uploadAvatar(file);
-      this.avatarUrl = data.publicUrl;
+      // image-upload-optimization v1 §4: avatar has no separate "original" column to keep, so
+      // the optimized URL (when the backend produced one) replaces publicUrl outright — both
+      // for what renders here and for what gets persisted.
+      const avatarUrl = data.optimizedUrl ?? data.publicUrl;
+      this.avatarUrl = avatarUrl;
       // The name goes up with it: PUT /api/me/profile replaces the profile, so sending the
       // avatar alone would blank a name the user had typed but not yet saved.
       await firstValueFrom(
-        this.me.updateProfile({ name: this.displayName, avatarUrl: data.publicUrl }),
+        this.me.updateProfile({ name: this.displayName, avatarUrl }),
       );
       this.message.success('อัปโหลดรูปโปรไฟล์และบันทึกแล้ว');
     } catch {
