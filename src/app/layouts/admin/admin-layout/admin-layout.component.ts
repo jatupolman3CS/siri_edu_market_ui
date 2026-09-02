@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 import { AdminService, AuthService, MeService } from '../../../core/services';
@@ -26,6 +27,8 @@ export class AdminLayoutComponent {
   readonly auth = inject(AuthService);
   private readonly me = inject(MeService);
   private readonly admin = inject(AdminService);
+  private readonly router = inject(Router);
+  private readonly message = inject(NzMessageService);
 
   /** Live count of documents awaiting approval — drives the sidebar badge. */
   readonly pendingCount = computed(() => this.admin.pendingDocuments().length);
@@ -45,6 +48,13 @@ export class AdminLayoutComponent {
       }
     });
   }
+
+  signOut(): void {
+    this.auth.signOut();
+    this.message.info('ออกจากระบบเรียบร้อย — แล้วเจอกันใหม่ 👋');
+    this.router.navigate(['/']);
+  }
+
   readonly navItems: {
     label: string;
     href: string;

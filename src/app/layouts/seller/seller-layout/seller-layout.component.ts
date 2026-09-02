@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../../../shared/components/logo/logo.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { AuthService, MeService } from '../../../core/services';
@@ -27,6 +28,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 export class SellerLayoutComponent {
   readonly auth = inject(AuthService);
   private readonly me = inject(MeService);
+  private readonly router = inject(Router);
+  private readonly message = inject(NzMessageService);
 
   readonly avatarSrc = computed(() => {
     const r2Url = resolvePublicUrl(this.me.profile()?.avatarUrl);
@@ -42,6 +45,12 @@ export class SellerLayoutComponent {
         this.me.loadProfile().subscribe({ error: () => { /* silent */ } });
       }
     });
+  }
+
+  signOut(): void {
+    this.auth.signOut();
+    this.message.info('ออกจากระบบเรียบร้อย — แล้วเจอกันใหม่ 👋');
+    this.router.navigate(['/']);
   }
 
   readonly navItems = [

@@ -68,21 +68,27 @@
                     จึงยังสร้างคำสั่งซื้อแบบเสียเงินไม่ได้ — เอกสารที่ราคา 0 บาท ยังหยิบเข้าคลังได้ตามปกติ
                   </p>
                 </div>
-              } @else if (!paymentReady()) {
-                <p class="text-sm text-ink-soft leading-relaxed">
-                  กด «ดำเนินการชำระเงิน» เพื่อสร้างคำสั่งซื้อ จากนั้นเลือกวิธีชำระเงินได้ในกล่องของ Stripe
-                  — บัตรเครดิต, PromptPay หรือ wallet ที่เปิดให้บริการอยู่
-                </p>
-                <p class="text-xs text-ink-muted mt-3">
-                  ข้อมูลบัตรของคุณถูกกรอกและส่งให้ Stripe โดยตรง ไม่ผ่านเซิร์ฟเวอร์ของเรา
-                </p>
               } @else {
-                <p class="text-xs text-ink-muted mb-4">
-                  เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»
-                </p>
+                @if (!paymentReady()) {
+                  <p class="text-sm text-ink-soft leading-relaxed">
+                    กด «ดำเนินการชำระเงิน» เพื่อสร้างคำสั่งซื้อ จากนั้นเลือกวิธีชำระเงินได้ในกล่องของ Stripe
+                    — บัตรเครดิต, PromptPay หรือ wallet ที่เปิดให้บริการอยู่
+                  </p>
+                  <p class="text-xs text-ink-muted mt-3">
+                    ข้อมูลบัตรของคุณถูกกรอกและส่งให้ Stripe โดยตรง ไม่ผ่านเซิร์ฟเวอร์ของเรา
+                  </p>
+                } @else {
+                  <p class="text-xs text-ink-muted mb-4">
+                    เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»
+                  </p>
+                }
                 <!-- Stripe mounts the Payment Element here; the methods shown come from the
-                     Stripe Dashboard, so adding a wallet needs no change in this repository. -->
-                <div id="stripe-payment-element" class="min-h-[220px]"></div>
+                     Stripe Dashboard, so adding a wallet needs no change in this repository.
+                     Kept in the DOM (only hidden via CSS) whenever payments are configured,
+                     because paymentReady() flips true only after mount() resolves — gating this
+                     element on paymentReady() would remove it from the DOM until after Stripe
+                     already tried to find it, throwing "applies to no DOM elements". -->
+                <div id="stripe-payment-element" class="min-h-[220px]" [class.hidden]="!paymentReady()"></div>
               }
             </section>
           </div>

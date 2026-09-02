@@ -112,3 +112,84 @@ describe('resolveApiUrl / resolvePublicUrl (AC-13)', () => {
     expect(resolvePublicUrl('   ')).toBe('');
   });
 });
+
+/**
+ * BUG-04 regression: `sdk-auth-bridge.ts` must wire `setTokenRefresher` alongside
+ * `setAuthTokenGetter`/`setUnauthorizedHandler`, or every 401 (e.g. from an expired
+ * 15-minute access token) signs the user out instead of silently refreshing and
+ * replaying the request. There is no Angular DI involved here — `setAuthTokenGetter`,
+ * `setUnauthorizedHandler`, `setTokenRefresher` and `createClientConfig` are plain
+ * module-level functions, so they are exercised directly against the custom fetch,
+ * the same way the real SDK-generated `postApiXxx`/`getApiXxx` calls do.
+ */
+describe('createClientConfig 401 retry (BUG-04)', () => {
+  it('refreshes the token once and replays the request instead of signing the user out', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    runtime.setAuthTokenGetter(() => 'stale-token');
+    const unauthorizedHandler = vi.fn();
+    runtime.setUnauthorizedHandler(unauthorizedHandler);
+    const refresher = vi.fn().mockResolvedValue('fresh-token');
+    runtime.setTokenRefresher(refresher);
+
+    const responses = [new Response(null, { status: 401 }), new Response(null, { status: 200 })];
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(responses.shift() as Response),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/library', { method: 'GET' });
+
+    expect(response.status).toBe(200);
+    expect(refresher).toHaveBeenCalledTimes(1);
+    expect(unauthorizedHandler).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    const retriedRequest = fetchMock.mock.calls[1][0] as Request;
+    expect(retriedRequest.headers.get('Authorization')).toBe('Bearer fresh-token');
+  });
+
+  it('signs the user out when the refresher cannot recover the session', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    runtime.setAuthTokenGetter(() => 'stale-token');
+    const unauthorizedHandler = vi.fn();
+    runtime.setUnauthorizedHandler(unauthorizedHandler);
+    const refresher = vi.fn().mockResolvedValue(null);
+    runtime.setTokenRefresher(refresher);
+
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(new Response(null, { status: 401 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/library', { method: 'GET' });
+
+    expect(response.status).toBe(401);
+    expect(refresher).toHaveBeenCalledTimes(1);
+    expect(unauthorizedHandler).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not attempt a refresh when no token was sent (anonymous 401, e.g. D-11)', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    runtime.setAuthTokenGetter(() => null);
+    const unauthorizedHandler = vi.fn();
+    runtime.setUnauthorizedHandler(unauthorizedHandler);
+    const refresher = vi.fn().mockResolvedValue('fresh-token');
+    runtime.setTokenRefresher(refresher);
+
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(new Response(null, { status: 401 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/cart', { method: 'GET' });
+
+    expect(response.status).toBe(401);
+    expect(refresher).not.toHaveBeenCalled();
+    expect(unauthorizedHandler).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
