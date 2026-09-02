@@ -23,7 +23,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SNAPSHOT_PATH = resolve(__dirname, '..', 'openapi.snapshot.json');
 // F-04: was 5290, which nothing in this repo listens on — launchSettings and
 // environment.development.ts both say 5282, so the default could only ever fail to connect.
-const DEFAULT_URL = 'http://localhost:5282/SIRIEDUMARKET.Api/openapi/v1.json';
+// integrator-qa (2026-09-02, gate 1 for docs/contracts/remove-api-path-base.md AC-21): the API no
+// longer hosts under the `/SIRIEDUMARKET.Api` path base, verified live against the running backend
+// on this date — GET /openapi/v1.json is now served at root.
+const DEFAULT_URL = 'http://localhost:5282/openapi/v1.json';
 const url = process.env.OPENAPI_URL ?? DEFAULT_URL;
 const localFile = process.env.OPENAPI_FILE;
 const updateMode = process.argv.includes('--update');
@@ -74,6 +77,10 @@ async function fetchLive() {
   return await res.json();
 }
 
+// Sets `process.exitCode` and returns instead of calling `process.exit()`: on Node 26 for Windows,
+// `process.exit()` while an undici fetch handle is still open aborts the process with
+// "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\\win\\async.c" and reports 127, which
+// masks a passing run as a failure. Letting the event loop drain exits cleanly with the right code.
 async function main() {
   let live;
   try {
@@ -82,34 +89,38 @@ async function main() {
     const source = localFile ? `read ${localFile}` : 'reach backend';
     console.error(`[verify-api-drift] cannot ${source}: ${err.message}`);
     console.error('   set OPENAPI_URL or OPENAPI_FILE, or start the API on http://localhost:5282');
-    process.exit(2);
+    process.exitCode = 2;
+    return;
   }
 
   if (updateMode) {
     await writeFile(SNAPSHOT_PATH, JSON.stringify(live, null, 2) + '\n');
     console.log(`[verify-api-drift] snapshot updated -> ${SNAPSHOT_PATH}`);
-    process.exit(0);
+    process.exitCode = 0;
+    return;
   }
 
   const snapshot = await readSnapshot();
   if (!snapshot) {
     console.error('[verify-api-drift] no snapshot found.');
     console.error('   run with --update once to seed the snapshot.');
-    process.exit(3);
+    process.exitCode = 3;
+    return;
   }
 
   const liveStr = stableStringify(normalise(live));
   const snapStr = stableStringify(normalise(snapshot));
   if (liveStr === snapStr) {
     console.log('[verify-api-drift] OpenAPI matches snapshot.');
-    process.exit(0);
+    process.exitCode = 0;
+    return;
   }
 
   console.error('[verify-api-drift] OpenAPI document drifted from snapshot.');
   console.error('   regenerate the SDK and update the snapshot:');
   console.error('     npm run generate:api');
   console.error('     node scripts/verify-api-drift.mjs --update');
-  process.exit(1);
+  process.exitCode = 1;
 }
 
 await main();

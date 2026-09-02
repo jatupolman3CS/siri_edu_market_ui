@@ -40,7 +40,6 @@ export function setDevRoleGetter(getter: () => string | null): void {
   _devRoleGetter = getter;
 }
 
-const PATH_BASE = '/SIRIEDUMARKET.Api';
 const R2_BUCKET_PATH = '/siriedumarket/';
 /** Stream file bytes through the API (works in <img> without R2 CORS / expiring presigns). */
 const FILE_DOWNLOAD_PATH = '/api/files/download/';
@@ -53,12 +52,15 @@ const PRESIGNED_FILE_PATH = '/api/files/presigned/';
  * 1) `window.__SIRIEDU_API_BASE_URL__` — retarget a built bundle without rebuilding it
  * 2) `environment.apiUrl` — the build-time setting (`src/environments/*`); absolute in
  *    development so `ng serve` reaches `dotnet run` on :5282, empty in production
- * 3) same origin as the app, under the API's `UsePathBase` — the IIS deployment layout
+ * 3) same origin as the app — nginx proxies `/api/` through to the backend container
  *
- * A localhost UI used to be pinned to `http://localhost/SIRIEDUMARKET.Api` (port 80 = IIS)
- * whatever the settings said, which is why `ng serve` + `dotnet run` answered 502: the API was
- * on :5282. `src/proxy.conf.json` could not help — these URLs are absolute and cross-origin, so
- * they never entered the dev server's proxy — and it is gone rather than left looking load-bearing.
+ * The API answers at the origin root (`{origin}/api/...`): there is no path base any more
+ * (`docs/contracts/remove-api-path-base.md`), so nothing is appended to the resolved origin.
+ *
+ * A localhost UI used to be pinned to a port-80 host whatever the settings said, which is why
+ * `ng serve` + `dotnet run` answered 502: the API is on :5282. `src/proxy.conf.json` could not
+ * help — these URLs are absolute and cross-origin, so they never entered the dev server's
+ * proxy — and it is gone rather than left looking load-bearing.
  */
 function defaultApiBaseUrl(): string {
   const w = globalThis as unknown as { __SIRIEDU_API_BASE_URL__?: unknown } & {
@@ -71,17 +73,17 @@ function defaultApiBaseUrl(): string {
   if (configured) return configured.replace(/\/+$/, '');
 
   const origin = w.location?.origin;
-  if (origin) return `${origin}${PATH_BASE}`;
+  if (origin) return origin;
 
-  // `window.location` is unavailable (SSR / unit tests). Matches the IIS layout.
-  return `http://localhost${PATH_BASE}`;
+  // `window.location` is unavailable (SSR / unit tests).
+  return 'http://localhost';
 }
 
 export const API_BASE_URL = defaultApiBaseUrl();
 
 /**
  * Resolve a relative API path to an absolute URL.
- * Example: `/api/library/123/reviews` -> `http://localhost/SIRIEDUMARKET.Api/api/library/123/reviews`
+ * Example: `/api/library/123/reviews` -> `http://localhost:5282/api/library/123/reviews`
  */
 export function resolveApiUrl(path: string): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
@@ -122,12 +124,9 @@ function resolveR2AssetUrl(raw: string): string | null {
   try {
     const parsed = new URL(raw);
     const path = parsed.pathname;
-    if (
-      path.includes(FILE_DOWNLOAD_PATH) ||
-      path.includes(`${PATH_BASE}${FILE_DOWNLOAD_PATH}`) ||
-      path.startsWith(PRESIGNED_FILE_PATH) ||
-      path.includes(`${PATH_BASE}${PRESIGNED_FILE_PATH}`)
-    ) {
+    // `includes` (not `startsWith`) so legacy rows whose stored URL still carries the
+    // path-base prefix that used to sit in front of these paths are recognised as API paths too.
+    if (path.includes(FILE_DOWNLOAD_PATH) || path.includes(PRESIGNED_FILE_PATH)) {
       return null;
     }
 
@@ -151,9 +150,8 @@ function resolveR2AssetUrl(raw: string): string | null {
 }
 
 /**
- * Backend may return relative URLs (e.g. `/api/files/download/...`) while the API
- * itself is hosted under a path base (e.g. `/SIRIEDUMARKET.Api`). This helper
- * turns any returned URL into an absolute URL that the browser can resolve.
+ * Backend may return relative URLs (e.g. `/api/files/download/...`) or absolute ones.
+ * This helper turns any returned URL into an absolute URL that the browser can resolve.
  */
 export function resolvePublicUrl(url: string | null | undefined): string {
   const raw = (url ?? '').trim();
@@ -163,16 +161,6 @@ export function resolvePublicUrl(url: string | null | undefined): string {
   if (r2AssetUrl) return r2AssetUrl;
 
   if (/^https?:\/\//i.test(raw)) return raw;
-
-  // If backend returns an absolute path including the PathBase, only prefix origin.
-  if (raw.startsWith(`${PATH_BASE}/`)) {
-    try {
-      const base = new URL(API_BASE_URL);
-      return `${base.origin}${raw}`;
-    } catch {
-      return raw;
-    }
-  }
 
   // Common case: `/api/...` or `api/...`
   if (raw.startsWith('/')) return `${API_BASE_URL}${raw}`;

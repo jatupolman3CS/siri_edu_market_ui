@@ -8,7 +8,7 @@
 **ต่อ backend จริงแล้ว ไม่ใช่ mock** — ASP.NET Core API (**net10.0** + EF Core 10 + SQL Server)
 ที่ `../siri_edu_market_backend` ต่อครบทุก endpoint (**118 operations / 94 paths** — ตัวเลขปัจจุบันดู [coverage.md](coverage.md))
 
-เส้นทางข้อมูล: `page → core/services/*.service.ts → core/api/sdk.gen.ts (generated) → base path /SIRIEDUMARKET.Api`
+เส้นทางข้อมูล: `page → core/services/*.service.ts → core/api/sdk.gen.ts (generated) → API ที่ /api/...`
 (base URL + auth header + retry 401 อยู่ที่ `src/app/core/api-runtime.ts`)
 
 auth = **JWT + refresh token จริง** (`core/services/auth.service.ts`) — 401 จะ refresh แล้ว replay request

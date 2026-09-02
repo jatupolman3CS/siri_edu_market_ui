@@ -4,18 +4,17 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { getApiMeProfile, postApiFilesUpload, putApiMeProfile } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
-import type { UpdateProfileRequest, UploadResponse } from '../api/types.gen';
-import type { UpdateProfileRequestWithKey, UserProfileResponseWithKey } from './api-result';
+import type { UpdateProfileRequest, UploadResponse, UserProfileResponse } from '../api/types.gen';
 
 @Injectable({ providedIn: 'root' })
 export class MeService {
   private readonly apiFail = inject(ApiFailureReporter);
 
-  private readonly _profile = signal<UserProfileResponseWithKey | null>(null);
+  private readonly _profile = signal<UserProfileResponse | null>(null);
 
   readonly profile = this._profile.asReadonly();
 
-  loadProfile(): Observable<UserProfileResponseWithKey> {
+  loadProfile(): Observable<UserProfileResponse> {
     return from(getApiMeProfile()).pipe(
       map(unwrapSdkResult),
       tap((p) => this._profile.set(p)),
@@ -27,15 +26,10 @@ export class MeService {
   }
 
   /**
-   * storage-key-persistence v1 §4: `avatarStorageKey` (not `avatarUrl`) is what gets persisted —
-   * `UpdateProfileRequestWithKey` shims the field until the generated `UpdateProfileRequest`
-   * carries it (TODO(contract) in `api-result.ts`).
+   * storage-key-persistence v2 §4: `avatarStorageKey` (not `avatarUrl`) is what gets persisted.
    */
-  updateProfile(request: UpdateProfileRequestWithKey): Observable<UserProfileResponseWithKey> {
-    // TODO(contract): drop this cast once `avatarStorageKey` exists on the generated
-    // `UpdateProfileRequest` (after backend regen) — see docs/contracts/storage-key-persistence.md
-    const body = request as unknown as UpdateProfileRequest;
-    return from(putApiMeProfile({ body })).pipe(
+  updateProfile(request: UpdateProfileRequest): Observable<UserProfileResponse> {
+    return from(putApiMeProfile({ body: request })).pipe(
       map(unwrapSdkResult),
       tap((p) => this._profile.set(p)),
       catchError((e) => {

@@ -24,12 +24,12 @@ page/component  →  core/services/*.service.ts  →  core/api/sdk.gen.ts (gener
                                                       ↓
                                          core/api/client.gen.ts + core/api-runtime.ts
                                                       ↓
-                                    base path  /SIRIEDUMARKET.Api   (ASP.NET Core API)
+                                    API ที่ /api/...   (ASP.NET Core, ไม่มี path base)
 ```
 
 - **`core/api/sdk.gen.ts` + `types.gen.ts` เป็นไฟล์ generated** — สร้างจาก OpenAPI ด้วย `npm run generate:api`
   **ห้ามแก้ด้วยมือ** (แก้แล้วหายตอน regenerate) ตรวจ drift ด้วย `npm run verify:api-drift`
-- **base URL อยู่ที่ `src/app/core/api-runtime.ts`** — `PATH_BASE = '/SIRIEDUMARKET.Api'`
+- **base URL อยู่ที่ `src/app/core/api-runtime.ts`**
   override ได้ตอน runtime ผ่าน `window.__SIRIEDU_API_BASE_URL__` (ไม่ต้อง rebuild)
 - `api-runtime.ts` ยังเป็นที่อยู่ของ custom `fetch` ที่แนบ `Authorization: Bearer`,
   ทำ **silent refresh แล้ว replay request เมื่อเจอ 401**, และคุม global loading

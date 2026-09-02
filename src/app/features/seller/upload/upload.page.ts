@@ -17,7 +17,7 @@ import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
 } from '../../../core/api/seller-document-update';
-import type { GalleryItemRequestWithKey } from '../../../core/services/api-result';
+import type { DocumentGalleryItemRequest } from '../../../core/api/types.gen';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -471,7 +471,7 @@ export class SellerUploadPage {
       const galleryImageUrls = gallery.map((item) =>
         item.key ? downloadUrlForStorageKey(item.key) : item.publicUrl,
       );
-      const galleryItemsPayload: GalleryItemRequestWithKey[] = gallery.map((item) => {
+      const galleryItemsPayload: DocumentGalleryItemRequest[] = gallery.map((item) => {
         const imageStorageKey = this.galleryKeyForApi(item);
         const sid = item.id?.trim();
         return sid ? { id: sid, imageStorageKey } : { imageStorageKey };
@@ -497,11 +497,7 @@ export class SellerUploadPage {
             categoryIds,
             isFree: this.isFree(),
             language: this.language(),
-            // TODO(contract): drop this cast once `imageStorageKey` exists on the generated
-            // `DocumentGalleryItemRequest` (after backend regen) — see
-            // docs/contracts/storage-key-persistence.md
-            galleryItems:
-              galleryItemsPayload as unknown as UpdateSellerDocumentRequest['galleryItems'],
+            galleryItems: galleryItemsPayload,
             watermarkEnabled: this.watermark(),
             previewPages: this.previewPages(),
             previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),

@@ -115,7 +115,7 @@ beforeEach(() => {
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(input, init);
     const url = new URL(request.url);
-    const path = url.pathname.replace('/SIRIEDUMARKET.Api', '');
+    const path = url.pathname;
     const route = routes.get(`${request.method} ${path}`);
     if (!route) return jsonResponse([], 200);
     return jsonResponse(route.body, route.status ?? 200);

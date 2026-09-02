@@ -19,7 +19,7 @@ import {
   type AdminDocumentDetail,
   type AdminDocumentReport,
 } from '../../../core/api/admin-documents.api';
-import type { PatchAdminDocumentRequest } from '../../../core/api/types.gen';
+import type { DocumentGalleryItemRequest } from '../../../core/api/types.gen';
 import {
   GRADE_LEVEL_LABELS,
   RESOURCE_TYPE_LABELS,
@@ -29,10 +29,6 @@ import {
 import { AdminService } from '../../../core/services/admin.service';
 import { SellerService } from '../../../core/services/seller.service';
 import { unwrapSdkResult } from '../../../core/services/api-result';
-import type {
-  GalleryItemRequestWithKey,
-  SellerGalleryItemWithKey,
-} from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
@@ -190,9 +186,9 @@ export class AdminDocumentDetailPage {
         this.galleryItems.set(
           apiItems.map((it) => {
             const publicUrl = resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/'));
-            // storage-key-persistence v1 §4.2: key must round-trip from imageStorageKey, not
+            // storage-key-persistence v2 §4.2: key must round-trip from imageStorageKey, not
             // stay '' — resubmitting '' would drop the item's key on an unrelated edit.
-            const key = (it as SellerGalleryItemWithKey).imageStorageKey ?? '';
+            const key = it.imageStorageKey ?? '';
             return { id: it.id, key, publicUrl, previewUrl: publicUrl };
           }),
         );
@@ -261,9 +257,9 @@ export class AdminDocumentDetailPage {
     if (!cur) return;
     this.saving.set(true);
     try {
-      // storage-key-persistence v1 §4.2: `x.key` is now always populated (fresh upload or
+      // storage-key-persistence v2 §4.2: `x.key` is now always populated (fresh upload or
       // reconstructed from `imageStorageKey` in load()) — send it directly, no more URL fallback.
-      const galleryItemsBody: GalleryItemRequestWithKey[] = this.galleryItems()
+      const galleryItemsBody: DocumentGalleryItemRequest[] = this.galleryItems()
         .map((x) => {
           const imageStorageKey = x.key.trim();
           const id = x.id?.trim();
@@ -293,12 +289,7 @@ export class AdminDocumentDetailPage {
           pages: cur.pages,
           fileSize: cur.fileSize,
           language: cur.language,
-          // TODO(contract): drop this cast once `imageStorageKey` exists on the generated
-          // `DocumentGalleryItemRequest` (after backend regen) — see
-          // docs/contracts/storage-key-persistence.md
-          galleryItems: (galleryItemsBody.length
-            ? galleryItemsBody
-            : null) as unknown as PatchAdminDocumentRequest['galleryItems'],
+          galleryItems: galleryItemsBody.length ? galleryItemsBody : null,
           fileStorageKey: cur.fileStorageKey,
           previewStorageKey: cur.previewStorageKey,
         },
@@ -315,8 +306,8 @@ export class AdminDocumentDetailPage {
         this.galleryItems.set(
           updItems.map((it) => {
             const publicUrl = resolvePublicUrl((it.imageUrl ?? '').replaceAll('%2F', '/'));
-            // storage-key-persistence v1 §4.2: key must round-trip from imageStorageKey.
-            const key = (it as SellerGalleryItemWithKey).imageStorageKey ?? '';
+            // storage-key-persistence v2 §4.2: key must round-trip from imageStorageKey.
+            const key = it.imageStorageKey ?? '';
             return { id: it.id, key, publicUrl, previewUrl: publicUrl };
           }),
         );

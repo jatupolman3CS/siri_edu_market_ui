@@ -8,9 +8,12 @@ import { CatalogService, PlatformStatsService, SellerService } from '../../../co
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import type { PlatformStats } from '../../../core/models';
-import type { SellerDocumentResponse, UploadResponse } from '../../../core/api/types.gen';
+import type {
+  DocumentGalleryItemRequest,
+  SellerDocumentResponse,
+  UploadResponse,
+} from '../../../core/api/types.gen';
 import type { UpdateSellerDocumentRequest } from '../../../core/api/seller-document-update';
-import type { GalleryItemRequestWithKey } from '../../../core/services/api-result';
 
 /**
  * real-data-stats v1 §4.6 — Seller upload page:
@@ -245,10 +248,10 @@ describe('SellerUploadPage — gallery preview vs. payload URL (AC-12)', () => {
     await Promise.resolve();
 
     expect(updateDocumentCalls).toHaveLength(1);
-    // storage-key-persistence v1 §4.2: `galleryKeyForApi()` returns `item.key` directly — no
+    // storage-key-persistence v2 §4.2: `galleryKeyForApi()` returns `item.key` directly — no
     // more `downloadUrlForStorageKey`/URL fallback.
     const galleryItems = (updateDocumentCalls[0].body.galleryItems ??
-      []) as unknown as GalleryItemRequestWithKey[];
+      []) as DocumentGalleryItemRequest[];
     expect(galleryItems).toHaveLength(1);
     expect(galleryItems[0].imageStorageKey).toBe('seller-1/2026/09/01/cover.jpg');
     expect(galleryItems[0].imageStorageKey).not.toBe('https://cdn.example.test/optimized-cover.webp');
@@ -256,7 +259,7 @@ describe('SellerUploadPage — gallery preview vs. payload URL (AC-12)', () => {
   });
 });
 
-describe('SellerUploadPage — gallery imageStorageKey round-trip (storage-key-persistence v1 §4.2)', () => {
+describe('SellerUploadPage — gallery imageStorageKey round-trip (storage-key-persistence v2 §4.2)', () => {
   function renderForEditReconstruct() {
     const updateDocumentCalls: { id: string; body: UpdateSellerDocumentRequest }[] = [];
     const rawDoc: SellerDocumentResponse = {
@@ -265,13 +268,12 @@ describe('SellerUploadPage — gallery imageStorageKey round-trip (storage-key-p
       title: 'เอกสารทดสอบ',
       shortDescription: 'คำอธิบายสั้น',
       galleryItems: [
-        // storage-key-persistence v1 §3.4: GET response carries both `imageUrl` (resolved,
-        // display-only) and the new `imageStorageKey` sibling (bare key) — the shim cast below
-        // stands in for the not-yet-regenerated SDK field.
+        // storage-key-persistence v2 §3.4: GET response carries both `imageUrl` (resolved,
+        // display-only) and the `imageStorageKey` sibling (bare key).
         {
           id: 'g1',
           imageUrl: 'https://cdn.example.test/resolved/gallery/img1.jpg',
-          ...({ imageStorageKey: 'gallery/img1.jpg' } as Record<string, unknown>),
+          imageStorageKey: 'gallery/img1.jpg',
         },
       ],
     };
@@ -335,7 +337,7 @@ describe('SellerUploadPage — gallery imageStorageKey round-trip (storage-key-p
 
     expect(updateDocumentCalls).toHaveLength(1);
     const galleryItems = (updateDocumentCalls[0].body.galleryItems ??
-      []) as unknown as GalleryItemRequestWithKey[];
+      []) as DocumentGalleryItemRequest[];
     expect(galleryItems).toHaveLength(1);
     expect(galleryItems[0].id).toBe('g1');
     expect(galleryItems[0].imageStorageKey).toBe('gallery/img1.jpg');

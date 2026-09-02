@@ -3,11 +3,11 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { of } from 'rxjs';
 import { ProfileEditorComponent } from './profile-editor.component';
 import { MeService } from '../../../core/services';
-import type { UploadResponse } from '../../../core/api/types.gen';
 import type {
-  UpdateProfileRequestWithKey,
-  UserProfileResponseWithKey,
-} from '../../../core/services/api-result';
+  UpdateProfileRequest,
+  UploadResponse,
+  UserProfileResponse,
+} from '../../../core/api/types.gen';
 
 /**
  * image-upload-optimization v1 §4 / AC-11: avatar upload must prefer `optimizedUrl` (when the
@@ -15,12 +15,12 @@ import type {
  * to `PUT /api/me/profile`. When `optimizedUrl` is null/undefined (optimize was skipped/failed)
  * it must fall back to `publicUrl` silently — no user-facing message for that case (spec §4).
  *
- * storage-key-persistence v1 §4.1: the payload sent to `PUT /api/me/profile` must carry
+ * storage-key-persistence v2 §4.1: the payload sent to `PUT /api/me/profile` must carry
  * `avatarStorageKey` (a bare key), never `avatarUrl` (a resolved display URL) — see AC-8-style
  * regression case at the bottom of this file.
  */
 
-const profile: UserProfileResponseWithKey = {
+const profile: UserProfileResponse = {
   id: 'user-1',
   name: 'ครูเอ',
   email: 'a@example.test',
@@ -34,11 +34,11 @@ function buildFile(): File {
 }
 
 function render(uploadResult: UploadResponse) {
-  const updateProfileCalls: UpdateProfileRequestWithKey[] = [];
+  const updateProfileCalls: UpdateProfileRequest[] = [];
   const fakeMeService: Partial<MeService> = {
     loadProfile: () => of(profile),
     uploadAvatar: async () => uploadResult,
-    updateProfile: (req: UpdateProfileRequestWithKey) => {
+    updateProfile: (req: UpdateProfileRequest) => {
       updateProfileCalls.push(req);
       return of({
         ...profile,
@@ -125,7 +125,7 @@ describe('ProfileEditorComponent — avatar optimized URL (AC-11)', () => {
 
 });
 
-describe('ProfileEditorComponent — storage-key round-trip (storage-key-persistence v1 §4.1)', () => {
+describe('ProfileEditorComponent — storage-key round-trip (storage-key-persistence v2 §4.1)', () => {
   it('edit only the display name, do not touch the avatar → payload sends the existing avatarStorageKey, not a URL', () => {
     const { component, updateProfileCalls } = render({
       key: 'unused/upload.png',

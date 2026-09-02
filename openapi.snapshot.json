@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5282/SIRIEDUMARKET.Api"
+      "url": "http://localhost:5282/"
     }
   ],
   "paths": {
@@ -7996,6 +7996,84 @@
         }
       }
     },
+    "/api/system/storage-key-backfill": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKeyBackfillResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKeyBackfillResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKeyBackfillResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/test-email": {
       "post": {
         "tags": [
@@ -9476,7 +9554,7 @@
             "format": "uuid",
             "nullable": true
           },
-          "imageUrl": {
+          "imageStorageKey": {
             "type": "string"
           }
         }
@@ -11330,6 +11408,9 @@
           },
           "imageUrl": {
             "type": "string"
+          },
+          "imageStorageKey": {
+            "type": "string"
           }
         }
       },
@@ -11834,6 +11915,56 @@
           }
         }
       },
+      "StorageKeyBackfillResponse": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean"
+          },
+          "usersScanned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usersUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "galleryRowsScanned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "galleryRowsUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sellerProfilesScanned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sellerProfilesUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bundlesScanned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bundlesUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unrecognizedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unrecognizedSamples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "StorageUsageResponse": {
         "type": "object",
         "properties": {
@@ -12273,7 +12404,7 @@
             "type": "string",
             "nullable": true
           },
-          "avatarUrl": {
+          "avatarStorageKey": {
             "type": "string",
             "nullable": true
           }
@@ -12369,6 +12500,10 @@
             "type": "string"
           },
           "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarStorageKey": {
             "type": "string",
             "nullable": true
           },

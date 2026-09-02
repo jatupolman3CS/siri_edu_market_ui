@@ -4,7 +4,7 @@
 
 ## Shared building blocks
 - **SDK**: `src/app/core/api/sdk.gen.ts` (61 endpoints, 78 backend endpoints — ดู `coverage.md`)
-- **Client config**: `src/app/core/api-runtime.ts` (`baseUrl: '/SIRIEDUMARKET.Api'`)
+- **Client config**: `src/app/core/api-runtime.ts` (`baseUrl` = origin ของ API, ไม่มี path base)
 - **Action state**: `src/app/core/services/action-state.ts`
 - **SDK unwrap**: `src/app/core/services/api-result.ts` (`unwrapSdkResult`)
 - **Mappers (non-generated)**: `src/app/core/api-mappers/mappers.ts`
@@ -90,8 +90,8 @@
 - **Enum**: ส่งเป็น `string` มาตรฐาน (เช่น `"awaiting_payment"`, `"paid"`)
 - **DateTime**: ISO-8601 string (UTC), ไม่ใช่ binary
 - **Decimal**: ตัวเลข JSON, format ฝั่ง UI ผ่าน `ThbPipe`
-- **PathBase**: backend `app.UsePathBase("/SIRIEDUMARKET.Api")` →
-  UI ต้องใช้ `API_BASE_URL` จาก `core/api-runtime.ts` เท่านั้น
+- **Base URL**: API ตอบที่ root (`/api/...`) ไม่มี path base — UI ต้องใช้ `API_BASE_URL` จาก
+  `core/api-runtime.ts` เท่านั้น
 
 ## Open contract gaps
 

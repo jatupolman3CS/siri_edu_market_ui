@@ -27,7 +27,7 @@ npm run build
 ต้องเปิด **สองเทอร์มินัล**:
 
 ```bash
-# เทอร์มินัลที่ 1 — API ที่ http://localhost:5282/SIRIEDUMARKET.Api
+# เทอร์มินัลที่ 1 — API ที่ http://localhost:5282
 cd ../siri_edu_market_backend
 dotnet run --project src/SIRIEDUMARKET.Api/SIRIEDUMARKET.Api.csproj
 ```

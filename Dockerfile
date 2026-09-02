@@ -1,8 +1,8 @@
 # SIRIEDUMARKET web (Angular 21, zoneless) — served by nginx and reverse-proxying the API.
 #
 # ต้องคู่กับ docker-compose.yml ที่ root: service `web` map `${WEB_PORT:-8080}:80`
-# และ nginx/nginx.conf proxy `/SIRIEDUMARKET.Api/` ไปที่ service `backend:8080`
-# (ห้าม rename service หรือ base path — nginx.conf อ้างตรง ๆ)
+# และ nginx/nginx.conf proxy `/api/` ไปที่ service `backend:8080`
+# (ห้าม rename service — nginx.conf อ้างชื่อ service ตรง ๆ · API ตอบที่ root ไม่มี path base)
 
 # ---- build ----
 # Angular 21 ต้องใช้ Node ^20.19 || ^22.12 || >=24 — pin 22-alpine ไว้ให้ตรงกับ CI
@@ -33,7 +33,7 @@ RUN if [ -d "dist/siriedumarket-web/browser" ]; then \
 FROM nginx:1.27-alpine AS runtime
 WORKDIR /usr/share/nginx/html
 
-# default = nginx/nginx.conf (proxy /SIRIEDUMARKET.Api/ ไป service backend ตาม compose)
+# default = nginx/nginx.conf (proxy /api/ ไป service backend ตาม compose)
 # สลับเป็น SPA อย่างเดียวได้ด้วย --build-arg NGINX_CONF=nginx.web.conf
 ARG NGINX_CONF=nginx.web.conf
 

@@ -74,7 +74,7 @@ beforeEach(() => {
 
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(input, init);
-    const path = new URL(request.url).pathname.replace('/SIRIEDUMARKET.Api', '');
+    const path = new URL(request.url).pathname;
     const route = routes.get(key(request.method, path));
 
     if (!route) return jsonResponse({ title: 'no stub for this route' }, 404);

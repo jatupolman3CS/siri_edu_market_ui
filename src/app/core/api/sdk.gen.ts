@@ -307,6 +307,9 @@ import type {
   PostApiSellerStoreSectionsData,
   PostApiSellerStoreSectionsErrors,
   PostApiSellerStoreSectionsResponses,
+  PostApiSystemStorageKeyBackfillData,
+  PostApiSystemStorageKeyBackfillErrors,
+  PostApiSystemStorageKeyBackfillResponses,
   PostApiSystemTestEmailData,
   PostApiSystemTestEmailErrors,
   PostApiSystemTestEmailResponses,
@@ -1941,6 +1944,19 @@ export const getApiSystemR2 = <ThrowOnError extends boolean = false>(
     url: '/api/system/r2',
     ...options,
   });
+
+export const postApiSystemStorageKeyBackfill = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiSystemStorageKeyBackfillData, ThrowOnError>,
+): RequestResult<
+  PostApiSystemStorageKeyBackfillResponses,
+  PostApiSystemStorageKeyBackfillErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiSystemStorageKeyBackfillResponses,
+    PostApiSystemStorageKeyBackfillErrors,
+    ThrowOnError
+  >({ url: '/api/system/storage-key-backfill', ...options });
 
 export const postApiSystemTestEmail = <ThrowOnError extends boolean = false>(
   options: Options<PostApiSystemTestEmailData, ThrowOnError>,

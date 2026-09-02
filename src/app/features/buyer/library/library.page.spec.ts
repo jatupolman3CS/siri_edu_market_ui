@@ -281,7 +281,7 @@ describe('BuyerLibraryPage — tab switch (AC-9)', () => {
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = input instanceof Request ? input : new Request(input, init);
       const url = new URL(request.url);
-      const path = url.pathname.replace('/SIRIEDUMARKET.Api', '');
+      const path = url.pathname;
       requests.push({ method: request.method, path });
 
       const route = routes.get(`${request.method} ${path}`);
