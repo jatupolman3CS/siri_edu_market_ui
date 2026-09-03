@@ -109,6 +109,13 @@ export class CatalogService {
   private readonly _freeState = signal<ActionState>(idleActionState());
   private readonly _categoriesState = signal<ActionState>(idleActionState());
   private readonly _documentDetailState = signal<ActionState>(idleActionState());
+  /**
+   * Bug #8: a 404 (the document genuinely doesn't exist / was removed) is not a transient
+   * failure — showing the generic "ลองใหม่อีกครั้ง" retry alongside it promises a retry that can
+   * never succeed. Tracked separately from `documentDetailState` so the page can tell the two
+   * apart without string-matching the error message.
+   */
+  private readonly _documentDetailNotFound = signal<boolean>(false);
   private readonly catalogPager = createInfinitePager<DocumentItem>({
     pageSize: 24,
     errorMessage: 'โหลดรายการเอกสารไม่สำเร็จ',
@@ -158,6 +165,7 @@ export class CatalogService {
   readonly freeState = this._freeState.asReadonly();
   readonly categoriesState = this._categoriesState.asReadonly();
   readonly documentDetailState = this._documentDetailState.asReadonly();
+  readonly documentDetailNotFound = this._documentDetailNotFound.asReadonly();
   readonly catalogHasMore = computed(() => {
     if (this._listSource() === 'search') {
       const total = this._searchTotalCount();
@@ -545,6 +553,7 @@ export class CatalogService {
     if (!id) return;
     void (async () => {
       this._documentDetailState.set(loadingActionState());
+      this._documentDetailNotFound.set(false);
       try {
         const result = await getApiMarketplaceDocumentsById({
           path: { id },
@@ -554,6 +563,13 @@ export class CatalogService {
         this._documentDetails.update((map) => new Map(map).set(id, item));
         this._documentDetailState.set(idleActionState());
       } catch (e) {
+        if (extractHttpStatus(e) === 404) {
+          // Bug #8: a real 404 — don't spam the "โหลด...ไม่สำเร็จ" toast for something that
+          // isn't a network/server failure, and don't offer a retry that can never work.
+          this._documentDetailNotFound.set(true);
+          this._documentDetailState.set(errorActionState('ไม่พบเอกสารนี้'));
+          return;
+        }
         this.apiFail.report('โหลดรายละเอียดเอกสาร', e);
         this._documentDetailState.set(errorActionState('โหลดรายละเอียดเอกสารไม่สำเร็จ'));
       }
@@ -890,4 +906,14 @@ export class CatalogService {
       throwOnError: true,
     });
   }
+}
+
+/** Same shape `unwrapSdkResult` throws (`{ status }`) — mirrors `order.service.ts`'s `extractStatus`. */
+function extractHttpStatus(error: unknown): number | undefined {
+  if (error == null || typeof error !== 'object') return undefined;
+  const o = error as Record<string, unknown>;
+  if (typeof o['status'] === 'number') return o['status'] as number;
+  const r = o['response'] as Record<string, unknown> | undefined;
+  if (r && typeof r['status'] === 'number') return r['status'] as number;
+  return undefined;
 }

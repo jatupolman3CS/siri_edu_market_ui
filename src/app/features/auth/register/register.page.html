@@ -138,13 +138,16 @@
               type="checkbox"
               [(ngModel)]="acceptTerms"
               name="acceptTerms"
+              required
               class="w-4 h-4 accent-pink-500 mt-0.5"
             />
             <span>
               ยอมรับ
-              <a href="#" class="text-pink-600 hover:underline">เงื่อนไขการใช้งาน</a>
+              <!-- Bug #4: no ToS/Privacy page exists in the app yet, so these are plain text
+                   (not dead `href="#"` links) until real destinations exist. -->
+              <span class="text-pink-600 font-semibold">เงื่อนไขการใช้งาน</span>
               และ
-              <a href="#" class="text-pink-600 hover:underline">นโยบายความเป็นส่วนตัว</a>
+              <span class="text-pink-600 font-semibold">นโยบายความเป็นส่วนตัว</span>
             </span>
           </label>
 

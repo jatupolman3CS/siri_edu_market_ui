@@ -17,9 +17,14 @@ import type {
   DeleteApiAdminCategoriesByIdErrors,
   DeleteApiAdminCategoriesByIdResponses,
   DeleteApiCartData,
+  DeleteApiCartErrors,
   DeleteApiCartItemsByDocumentIdData,
+  DeleteApiCartItemsByDocumentIdErrors,
   DeleteApiCartItemsByDocumentIdResponses,
   DeleteApiCartResponses,
+  DeleteApiMePaymentMethodsByIdData,
+  DeleteApiMePaymentMethodsByIdErrors,
+  DeleteApiMePaymentMethodsByIdResponses,
   DeleteApiSellerBundlesByBundleIdData,
   DeleteApiSellerBundlesByBundleIdErrors,
   DeleteApiSellerBundlesByBundleIdResponses,
@@ -32,8 +37,10 @@ import type {
   DeleteApiSellerStoreSectionsBySectionIdData,
   DeleteApiSellerStoreSectionsBySectionIdResponses,
   DeleteApiWishlistByDocumentIdData,
+  DeleteApiWishlistByDocumentIdErrors,
   DeleteApiWishlistByDocumentIdResponses,
   DeleteApiWishlistData,
+  DeleteApiWishlistErrors,
   DeleteApiWishlistResponses,
   GetApiAdminAuditData,
   GetApiAdminAuditResponses,
@@ -77,6 +84,7 @@ import type {
   GetApiAuthOauthClientsData,
   GetApiAuthOauthClientsResponses,
   GetApiCartData,
+  GetApiCartErrors,
   GetApiCartResponses,
   GetApiFilesDownloadByKeyData,
   GetApiFilesDownloadByKeyErrors,
@@ -119,6 +127,9 @@ import type {
   GetApiMeLoyaltyEntriesResponses,
   GetApiMeLoyaltyErrors,
   GetApiMeLoyaltyResponses,
+  GetApiMePaymentMethodsData,
+  GetApiMePaymentMethodsErrors,
+  GetApiMePaymentMethodsResponses,
   GetApiMeProfileData,
   GetApiMeProfileErrors,
   GetApiMeProfileResponses,
@@ -177,6 +188,7 @@ import type {
   GetApiSystemStatusData,
   GetApiSystemStatusResponses,
   GetApiWishlistData,
+  GetApiWishlistErrors,
   GetApiWishlistResponses,
   PatchApiAdminDocumentsByIdData,
   PatchApiAdminDocumentsByIdErrors,
@@ -271,6 +283,15 @@ import type {
   PostApiMarketplaceDocumentsByIdReportData,
   PostApiMarketplaceDocumentsByIdReportErrors,
   PostApiMarketplaceDocumentsByIdReportResponses,
+  PostApiMePaymentMethodsByIdDefaultData,
+  PostApiMePaymentMethodsByIdDefaultErrors,
+  PostApiMePaymentMethodsByIdDefaultResponses,
+  PostApiMePaymentMethodsData,
+  PostApiMePaymentMethodsErrors,
+  PostApiMePaymentMethodsResponses,
+  PostApiMePaymentMethodsSetupIntentData,
+  PostApiMePaymentMethodsSetupIntentErrors,
+  PostApiMePaymentMethodsSetupIntentResponses,
   PostApiMeSellerApplicationData,
   PostApiMeSellerApplicationErrors,
   PostApiMeSellerApplicationResponses,
@@ -855,16 +876,16 @@ export const postApiAuthExternalByProvider = <ThrowOnError extends boolean = fal
 
 export const deleteApiCart = <ThrowOnError extends boolean = false>(
   options?: Options<DeleteApiCartData, ThrowOnError>,
-): RequestResult<DeleteApiCartResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).delete<DeleteApiCartResponses, unknown, ThrowOnError>({
+): RequestResult<DeleteApiCartResponses, DeleteApiCartErrors, ThrowOnError> =>
+  (options?.client ?? client).delete<DeleteApiCartResponses, DeleteApiCartErrors, ThrowOnError>({
     url: '/api/cart',
     ...options,
   });
 
 export const getApiCart = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiCartData, ThrowOnError>,
-): RequestResult<GetApiCartResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<GetApiCartResponses, unknown, ThrowOnError>({
+): RequestResult<GetApiCartResponses, GetApiCartErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiCartResponses, GetApiCartErrors, ThrowOnError>({
     url: '/api/cart',
     ...options,
   });
@@ -896,10 +917,16 @@ export const postApiCartBundlesByBundleId = <ThrowOnError extends boolean = fals
 
 export const deleteApiCartItemsByDocumentId = <ThrowOnError extends boolean = false>(
   options: Options<DeleteApiCartItemsByDocumentIdData, ThrowOnError>,
-): RequestResult<DeleteApiCartItemsByDocumentIdResponses, unknown, ThrowOnError> =>
-  (options.client ?? client).delete<DeleteApiCartItemsByDocumentIdResponses, unknown, ThrowOnError>(
-    { url: '/api/cart/items/{documentId}', ...options },
-  );
+): RequestResult<
+  DeleteApiCartItemsByDocumentIdResponses,
+  DeleteApiCartItemsByDocumentIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiCartItemsByDocumentIdResponses,
+    DeleteApiCartItemsByDocumentIdErrors,
+    ThrowOnError
+  >({ url: '/api/cart/items/{documentId}', ...options });
 
 export const getApiAdminCategories = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminCategoriesData, ThrowOnError>,
@@ -1301,6 +1328,70 @@ export const getApiMeLoyaltyEntries = <ThrowOnError extends boolean = false>(
     GetApiMeLoyaltyEntriesErrors,
     ThrowOnError
   >({ url: '/api/me/loyalty/entries', ...options });
+
+export const getApiMePaymentMethods = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMePaymentMethodsData, ThrowOnError>,
+): RequestResult<GetApiMePaymentMethodsResponses, GetApiMePaymentMethodsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMePaymentMethodsResponses,
+    GetApiMePaymentMethodsErrors,
+    ThrowOnError
+  >({ url: '/api/me/payment-methods', ...options });
+
+export const postApiMePaymentMethods = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMePaymentMethodsData, ThrowOnError>,
+): RequestResult<PostApiMePaymentMethodsResponses, PostApiMePaymentMethodsErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiMePaymentMethodsResponses,
+    PostApiMePaymentMethodsErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/payment-methods',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiMePaymentMethodsByIdDefault = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMePaymentMethodsByIdDefaultData, ThrowOnError>,
+): RequestResult<
+  PostApiMePaymentMethodsByIdDefaultResponses,
+  PostApiMePaymentMethodsByIdDefaultErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiMePaymentMethodsByIdDefaultResponses,
+    PostApiMePaymentMethodsByIdDefaultErrors,
+    ThrowOnError
+  >({ url: '/api/me/payment-methods/{id}/default', ...options });
+
+export const deleteApiMePaymentMethodsById = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteApiMePaymentMethodsByIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiMePaymentMethodsByIdResponses,
+  DeleteApiMePaymentMethodsByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiMePaymentMethodsByIdResponses,
+    DeleteApiMePaymentMethodsByIdErrors,
+    ThrowOnError
+  >({ url: '/api/me/payment-methods/{id}', ...options });
+
+export const postApiMePaymentMethodsSetupIntent = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiMePaymentMethodsSetupIntentData, ThrowOnError>,
+): RequestResult<
+  PostApiMePaymentMethodsSetupIntentResponses,
+  PostApiMePaymentMethodsSetupIntentErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiMePaymentMethodsSetupIntentResponses,
+    PostApiMePaymentMethodsSetupIntentErrors,
+    ThrowOnError
+  >({ url: '/api/me/payment-methods/setup-intent', ...options });
 
 export const getApiNotificationsSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiNotificationsSettingsData, ThrowOnError>,
@@ -1976,16 +2067,17 @@ export const postApiSystemTestEmail = <ThrowOnError extends boolean = false>(
 
 export const deleteApiWishlist = <ThrowOnError extends boolean = false>(
   options?: Options<DeleteApiWishlistData, ThrowOnError>,
-): RequestResult<DeleteApiWishlistResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).delete<DeleteApiWishlistResponses, unknown, ThrowOnError>({
-    url: '/api/wishlist',
-    ...options,
-  });
+): RequestResult<DeleteApiWishlistResponses, DeleteApiWishlistErrors, ThrowOnError> =>
+  (options?.client ?? client).delete<
+    DeleteApiWishlistResponses,
+    DeleteApiWishlistErrors,
+    ThrowOnError
+  >({ url: '/api/wishlist', ...options });
 
 export const getApiWishlist = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiWishlistData, ThrowOnError>,
-): RequestResult<GetApiWishlistResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<GetApiWishlistResponses, unknown, ThrowOnError>({
+): RequestResult<GetApiWishlistResponses, GetApiWishlistErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiWishlistResponses, GetApiWishlistErrors, ThrowOnError>({
     url: '/api/wishlist',
     ...options,
   });
@@ -2004,8 +2096,13 @@ export const postApiWishlist = <ThrowOnError extends boolean = false>(
 
 export const deleteApiWishlistByDocumentId = <ThrowOnError extends boolean = false>(
   options: Options<DeleteApiWishlistByDocumentIdData, ThrowOnError>,
-): RequestResult<DeleteApiWishlistByDocumentIdResponses, unknown, ThrowOnError> =>
-  (options.client ?? client).delete<DeleteApiWishlistByDocumentIdResponses, unknown, ThrowOnError>({
-    url: '/api/wishlist/{documentId}',
-    ...options,
-  });
+): RequestResult<
+  DeleteApiWishlistByDocumentIdResponses,
+  DeleteApiWishlistByDocumentIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiWishlistByDocumentIdResponses,
+    DeleteApiWishlistByDocumentIdErrors,
+    ThrowOnError
+  >({ url: '/api/wishlist/{documentId}', ...options });

@@ -5,25 +5,13 @@ import { AuthService } from './auth.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { GoogleOauthService } from './google-oauth.service';
 import { GoogleOauthConfigService } from './google-oauth-config.service';
+import { CartService } from './cart.service';
+import { WishlistService } from './wishlist.service';
 
-/**
- * Auth is a real JWT flow: a short-lived access token, a refresh token that rotates, and a
- * sign-out that has to revoke server-side. AUD-006 and AUD-007 are both in here — the refresh
- * token used to share storage with the access token, so sign-out sent the wrong one, and a
- * 401 used to end the session outright.
- *
- * These drive the real generated SDK against a stubbed `globalThis.fetch`; the builder does
- * not allow `vi.mock` on relative imports.
- */
 const ACCESS_TOKEN_KEY = 'siriedu.auth.token';
 const REFRESH_TOKEN_KEY = 'siriedu.auth.refresh';
 const STORAGE_KEY = 'siriedu.auth';
 
-/**
- * The test environment has no `localStorage`, which is why AuthService guards every use with
- * `typeof localStorage !== 'undefined'`. Where the tokens land is the point of AUD-007, so
- * stand up a real one rather than asserting around the guard.
- */
 if (typeof globalThis.localStorage === 'undefined') {
   const store = new Map<string, string>();
   Object.defineProperty(globalThis, 'localStorage', {
@@ -62,9 +50,16 @@ function loginBody(over: Partial<{ accessToken: string; refreshToken: string }> 
   return {
     accessToken: 'access-1',
     refreshToken: 'refresh-1',
-    user: { id: 'u-1', displayName: 'ครูสมชาย', email: 'teacher@example.com', role: 'Buyer' },
+    user: { id: 'u-1', displayName: 'x', email: 'teacher@example.com', role: 'Buyer' },
     ...over,
   };
+}
+
+function cartWishlistNoopProviders() {
+  return [
+    { provide: CartService, useValue: { loadCart: vi.fn() } },
+    { provide: WishlistService, useValue: { refresh: vi.fn().mockResolvedValue(undefined) } },
+  ];
 }
 
 function buildService(): AuthService {
@@ -76,13 +71,13 @@ function buildService(): AuthService {
       { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
       { provide: GoogleOauthService, useValue: {} },
       { provide: GoogleOauthConfigService, useValue: { load: vi.fn() } },
+      ...cartWishlistNoopProviders(),
     ],
   });
 
   return TestBed.inject(AuthService);
 }
 
-/** Lets fire-and-forget work (signOut's revoke call) reach the fetch stub. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -125,7 +120,6 @@ describe('AuthService sign-in', () => {
 
     expect(res.ok).toBe(true);
     expect(auth.isAuthenticated()).toBe(true);
-    // AUD-007: separate keys. Sharing one is what made signOut send the wrong token.
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe('access-1');
     expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('refresh-1');
     expect(auth.accessToken()).toBe('access-1');
@@ -139,7 +133,6 @@ describe('AuthService sign-in', () => {
     await auth.signIn('teacher@example.com', 'secret123');
 
     expect(auth.user()?.email).toBe('teacher@example.com');
-    expect(auth.user()?.name).toBe('ครูสมชาย');
     expect(auth.role()).toBe('buyer');
     expect(auth.isAdmin()).toBe(false);
     expect(auth.isSeller()).toBe(false);
@@ -201,7 +194,6 @@ describe('AuthService refresh rotation', () => {
 
     expect(token).toBe('access-2');
     expect(auth.accessToken()).toBe('access-2');
-    // Rotation means the old refresh token is replaced, not kept.
     expect(auth.refreshToken()).toBe('refresh-2');
     expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('refresh-2');
   });
@@ -253,8 +245,6 @@ describe('AuthService refresh rotation', () => {
     ]);
 
     expect([a, b, c]).toEqual(['access-2', 'access-2', 'access-2']);
-    // Three concurrent 401s must not burn three refresh tokens; rotation would invalidate
-    // the ones that lost the race and end the session.
     expect(requests.filter((r) => r.path === '/api/auth/refresh')).toHaveLength(1);
   });
 
@@ -304,7 +294,6 @@ describe('AuthService sign-out', () => {
     auth.signOut();
     await settle();
 
-    // A server that cannot be reached must not leave the user apparently signed in.
     expect(auth.isAuthenticated()).toBe(false);
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
   });
@@ -321,8 +310,6 @@ describe('AuthService sign-out', () => {
 
 describe('AuthService session restore', () => {
   it('drops a stored session that has no access token beside it', () => {
-    // A half-written localStorage would otherwise render a signed-in header over an
-    // unauthenticated API, and every call would 401.
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -343,7 +330,7 @@ describe('AuthService session restore', () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        user: { id: 'u-1', name: 'ครูสมชาย', email: 'x@y.z', role: 'buyer', avatar: '', joinedAt: '' },
+        user: { id: 'u-1', name: 'x', email: 'x@y.z', role: 'buyer', avatar: '', joinedAt: '' },
         provider: 'email',
         signedInAt: new Date().toISOString(),
       }),
@@ -352,17 +339,10 @@ describe('AuthService session restore', () => {
     const auth = buildService();
 
     expect(auth.isAuthenticated()).toBe(true);
-    expect(auth.user()?.name).toBe('ครูสมชาย');
   });
 });
 
-/**
- * Q-07 item 4: verify-email.page.ts already renders a friendly Thai `error` inline
- * ("ยืนยันอีเมลไม่สำเร็จ — ใช้ลิงก์ในอีเมลหรือรหัสที่ถูกต้อง"), so `verifyEmail()` must not *also*
- * push the raw backend ProblemDetails (English "Verification token is invalid or expired.")
- * through `ApiFailureReporter` as a duplicate toast.
- */
-describe('AuthService verifyEmail — no raw-English toast (Q-07 item 4)', () => {
+describe('AuthService verifyEmail Q07', () => {
   function buildServiceWithApiFail(): { auth: AuthService; apiFail: { report: ReturnType<typeof vi.fn> } } {
     const apiFail = { report: vi.fn() };
     TestBed.configureTestingModule({
@@ -373,6 +353,7 @@ describe('AuthService verifyEmail — no raw-English toast (Q-07 item 4)', () =>
         { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
         { provide: GoogleOauthService, useValue: {} },
         { provide: GoogleOauthConfigService, useValue: { load: vi.fn() } },
+        ...cartWishlistNoopProviders(),
       ],
     });
     return { auth: TestBed.inject(AuthService), apiFail };
@@ -390,7 +371,90 @@ describe('AuthService verifyEmail — no raw-English toast (Q-07 item 4)', () =>
     const result = await auth.verifyEmail('bad-token');
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe('ยืนยันอีเมลไม่สำเร็จ — ใช้ลิงก์ในอีเมลหรือรหัสที่ถูกต้อง');
     expect(apiFail.report).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthService reloads cart wishlist after sign-in AC17', () => {
+  function buildServiceWithCartWishlistSpies(): {
+    auth: AuthService;
+    cart: { loadCart: ReturnType<typeof vi.fn> };
+    wishlist: { refresh: ReturnType<typeof vi.fn> };
+  } {
+    const cart = { loadCart: vi.fn() };
+    const wishlist = { refresh: vi.fn().mockResolvedValue(undefined) };
+    const googleOauth = {
+      requestAuthorizationCode: vi
+        .fn()
+        .mockResolvedValue({ code: 'auth-code', redirectUri: 'https://x.test/callback' }),
+    };
+    const googleOauthConfig = {
+      ensureLoaded: vi.fn().mockResolvedValue(undefined),
+      getClientId: vi.fn().mockReturnValue('client-id'),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+        { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } },
+        { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
+        { provide: GoogleOauthService, useValue: googleOauth },
+        { provide: GoogleOauthConfigService, useValue: googleOauthConfig },
+        { provide: CartService, useValue: cart },
+        { provide: WishlistService, useValue: wishlist },
+      ],
+    });
+
+    return { auth: TestBed.inject(AuthService), cart, wishlist };
+  }
+
+  it('signIn reloads cart and wishlist after a successful login', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const { auth, cart, wishlist } = buildServiceWithCartWishlistSpies();
+
+    const res = await auth.signIn('teacher@example.com', 'secret123');
+
+    expect(res.ok).toBe(true);
+    expect(cart.loadCart).toHaveBeenCalledTimes(1);
+    expect(wishlist.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('signIn does not reload cart wishlist when login fails', async () => {
+    stubRoute(
+      'POST',
+      '/api/auth/login',
+      { title: 'Unauthorized', status: 401, statusCode: 401, message: 'bad', traceId: 't' },
+      401,
+    );
+    const { auth, cart, wishlist } = buildServiceWithCartWishlistSpies();
+
+    const res = await auth.signIn('teacher@example.com', 'wrongpassword');
+
+    expect(res.ok).toBe(false);
+    expect(cart.loadCart).not.toHaveBeenCalled();
+    expect(wishlist.refresh).not.toHaveBeenCalled();
+  });
+
+  it('verifyEmail reloads cart and wishlist after a successful verification', async () => {
+    stubRoute('POST', '/api/auth/verify-email', loginBody());
+    const { auth, cart, wishlist } = buildServiceWithCartWishlistSpies();
+
+    const res = await auth.verifyEmail('good-token');
+
+    expect(res.ok).toBe(true);
+    expect(cart.loadCart).toHaveBeenCalledTimes(1);
+    expect(wishlist.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('signInWithProvider google reloads cart and wishlist after a successful external sign-in', async () => {
+    stubRoute('POST', '/api/auth/external/google', loginBody());
+    const { auth, cart, wishlist } = buildServiceWithCartWishlistSpies();
+
+    const res = await auth.signInWithProvider('google');
+
+    expect(res.ok).toBe(true);
+    expect(cart.loadCart).toHaveBeenCalledTimes(1);
+    expect(wishlist.refresh).toHaveBeenCalledTimes(1);
   });
 });

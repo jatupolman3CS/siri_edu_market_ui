@@ -209,14 +209,20 @@ export const createClientConfig: CreateClientConfig = (config) => ({
       const send = (token: string | null) => {
         // Rebuild from the original input/init each time so the body is still readable
         // on the retry — a consumed Request cannot be sent twice.
-        const request = new Request(input, init);
+        //
+        // credentials: 'include' so the browser sends/stores the HttpOnly `siriedu_anon`
+        // cookie the backend uses to scope anonymous cart/wishlist sessions
+        // (docs/contracts/anonymous-cart-wishlist-scoping.md) — without it the cookie never
+        // leaves the browser in dev (`ng serve` :4200 ↔ `dotnet run` :5282 are cross-origin),
+        // even though prod is same-origin via the nginx proxy already.
+        const request = new Request(input, { ...init, credentials: 'include' });
         const devRole = _devRoleGetter?.() ?? null;
         if (!token && !devRole) return fetch(request);
 
         const headers = new Headers(request.headers);
         if (token) headers.set('Authorization', `Bearer ${token}`);
         if (devRole) headers.set('X-Dev-Role', devRole);
-        return fetch(new Request(request, { headers }));
+        return fetch(new Request(request, { headers, credentials: 'include' }));
       };
 
       const tokenSent = _tokenGetter?.() ?? null;

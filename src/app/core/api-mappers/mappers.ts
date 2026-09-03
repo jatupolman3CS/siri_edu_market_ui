@@ -18,6 +18,7 @@ import type {
   MarketplaceDocumentResponse,
   OrderResponse,
   PlatformStatsResponse,
+  SavedPaymentMethodResponse,
   SellerDashboardResponse,
   SellerDocumentResponse,
   SellerDocumentSummaryResponse,
@@ -294,7 +295,7 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
     tags: [],
     rating: d.averageRating ?? 0,
     reviewCount: d.reviewCount ?? 0,
-    downloads: 0,
+    downloads: d.downloads ?? 0,
     status: 'approved',
     watermarkEnabled: false,
     previewPages: 0,
@@ -741,24 +742,9 @@ export function mapLoyaltyEntry(d: LoyaltyEntryResponse): LoyaltyEntry {
 
 /**
  * saved-credit-cards v1 §3.2: `SavedPaymentMethodResponse` (docs/contracts/saved-credit-cards.md
- * §3.2). Hand-typed locally rather than imported from `core/api/types.gen` — the backend for
- * `GET/POST /api/me/payment-methods` etc. hasn't shipped yet, so the generated SDK has no such
- * type this round. Field names/casing already match the contract exactly, so once
- * `npm run generate:api` ships `SavedPaymentMethodResponse` this alias can be swapped for an
- * import from `../api` with no change to the mapper body below.
+ * §3.2), generated from the live backend by `npm run generate:api`.
  */
-export type SavedPaymentMethodResponseShape = {
-  id?: string | null;
-  stripePaymentMethodId?: string | null;
-  brand?: string | null;
-  last4?: string | null;
-  expMonth?: number | null;
-  expYear?: number | null;
-  isDefault?: boolean | null;
-  createdAt?: string | null;
-};
-
-export function mapSavedPaymentMethod(d: SavedPaymentMethodResponseShape): SavedPaymentMethod {
+export function mapSavedPaymentMethod(d: SavedPaymentMethodResponse): SavedPaymentMethod {
   return {
     id: d.id ?? '',
     stripePaymentMethodId: d.stripePaymentMethodId ?? '',

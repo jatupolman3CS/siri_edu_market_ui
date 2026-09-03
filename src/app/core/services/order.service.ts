@@ -67,9 +67,9 @@ export class OrderService {
   async create(input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
     this._checkoutState.set(loadingActionState());
     try {
-      // saved-credit-cards v1 §4: `CreateOrderRequest` (generated as an open `{ [key: string]:
-      // unknown }` index signature until the backend round ships and `npm run generate:api`
-      // narrows it) now carries `savedPaymentMethodId` / `saveNewCard` straight through.
+      // saved-credit-cards v1 §4/§3.1: `CreateOrderRequest` (generated) carries
+      // `savedPaymentMethodId` / `saveNewCard` straight through. Both are optional on the wire —
+      // `JSON.stringify` drops an `undefined` field rather than sending it as `null`.
       const result = await postApiOrders({
         body: { savedPaymentMethodId: input.savedPaymentMethodId, saveNewCard: input.saveNewCard },
       });

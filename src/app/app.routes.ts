@@ -76,18 +76,18 @@ export const routes: Routes = [
             (m) => m.BuyerStorefrontPage,
           ),
       },
-      // Wishlist works without login (uses localStorage), but encouraging login is fine
-
-      // Protected — require auth
+      // Wishlist is guest-accessible — backend now scopes anonymous visitors via a
+      // cookie-backed session (see docs/contracts/anonymous-cart-wishlist-scoping.md)
       {
         path: 'wishlist',
-        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/buyer/wishlist/wishlist.page').then(
             (m) => m.BuyerWishlistPage,
           ),
         title: 'รายการโปรด — SIRIEDUMARKET',
       },
+
+      // Protected — require auth
       {
         path: 'become-seller',
         canActivate: [authGuard],
@@ -370,9 +370,13 @@ export const routes: Routes = [
   },
 
   // ========= 404 =========
+  // Bug #7: this route had no `title`, so Angular's TitleStrategy left `document.title` stuck on
+  // whatever the previous route set (e.g. visiting /cart, which isn't a real route) instead of
+  // reflecting the 404 state.
   {
     path: '**',
     loadComponent: () =>
       import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),
+    title: 'ไม่พบหน้านี้ — SIRIEDUMARKET',
   },
 ];

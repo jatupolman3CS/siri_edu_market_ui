@@ -8,27 +8,9 @@
               สรุปบทเรียน และเทมเพลตคุณภาพสูง
               สร้างโดยผู้สร้างคอนเทนต์ตัวจริงทั่วประเทศ
             </p>
-            <div class="flex items-center gap-2 mt-5">
-              <a class="btn-icon" href="#" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
-                  <path
-                    d="M9.2 22V12.5H6V9h3.2V6.6c0-3.2 1.9-4.9 4.7-4.9 1.4 0 2.6.1 2.9.2v3.4h-2c-1.6 0-1.9.8-1.9 1.9V9h3.7l-.5 3.5h-3.2V22"
-                  />
-                </svg>
-              </a>
-              <a class="btn-icon" href="#" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <rect x="3" y="3" width="18" height="18" rx="5"/>
-                  <circle cx="12" cy="12" r="4"/>
-                  <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/>
-                </svg>
-              </a>
-              <a class="btn-icon" href="#" aria-label="Line">
-                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
-                  <path d="M12 3C6.5 3 2 6.6 2 11c0 3 2.2 5.6 5.4 7L7 21l3.7-2.1c.4 0 .9.1 1.3.1 5.5 0 10-3.6 10-8s-4.5-8-10-8Z"/>
-                </svg>
-              </a>
-            </div>
+            <!-- Bug #4: Facebook/Instagram/Line don't have real destinations yet — these were
+                 dead `href="#"` links, so they're hidden entirely until real social URLs exist
+                 rather than left as broken-looking links on every page. -->
           </div>
 
           <div>
@@ -54,9 +36,12 @@
           <div>
             <h4 class="text-sm font-bold text-ink mb-4">ช่วยเหลือ</h4>
             <ul class="space-y-3 text-sm text-ink-soft">
-              <li><a href="#" class="hover:text-pink-600">ศูนย์ช่วยเหลือ</a></li>
-              <li><a href="#" class="hover:text-pink-600">นโยบายความเป็นส่วนตัว</a></li>
-              <li><a href="#" class="hover:text-pink-600">เงื่อนไขการใช้งาน</a></li>
+              <!-- Bug #4: same dead-link issue as the social icons above — ศูนย์ช่วยเหลือ /
+                   privacy / terms pages don't exist in this app yet, so these are plain text
+                   until real destinations exist instead of `href="#"`. -->
+              <li class="text-ink-muted">ศูนย์ช่วยเหลือ</li>
+              <li class="text-ink-muted">นโยบายความเป็นส่วนตัว</li>
+              <li class="text-ink-muted">เงื่อนไขการใช้งาน</li>
               <li>
                 <a class="inline-flex items-center gap-1 hover:text-pink-600" href="mailto:hello@siriedumarket.co">
                   <app-icon name="mail" [size]="14" />

@@ -132,6 +132,14 @@ describe('mapDocument', () => {
     expect(mapped.price).toBe(0);
     expect(Number.isNaN(mapped.price)).toBe(false);
   });
+
+  it('reads the real downloads count from the DTO instead of hardcoding 0', () => {
+    expect(mapDocument({ ...doc, downloads: 238 }).downloads).toBe(238);
+  });
+
+  it('falls back to 0 when the DTO omits downloads', () => {
+    expect(mapDocument({ ...doc, downloads: undefined }).downloads).toBe(0);
+  });
 });
 
 describe('mapLibraryItem', () => {

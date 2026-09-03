@@ -4,6 +4,10 @@ export type ClientOptions = {
   baseUrl: 'http://localhost:5282/' | (string & {});
 };
 
+export type AddSavedPaymentMethodRequest = {
+  stripePaymentMethodId: string;
+};
+
 export type AddSellerDocumentMainFileRequest = {
   storageKey: string;
   originalFileName?: string | null;
@@ -368,7 +372,8 @@ export type CreateDocumentRequest = {
 };
 
 export type CreateOrderRequest = {
-  [key: string]: unknown;
+  savedPaymentMethodId?: string | null;
+  saveNewCard?: boolean;
 };
 
 export type CreateSubcategoryRequest = {
@@ -555,6 +560,7 @@ export type MarketplaceDocumentResponse = {
   isBestseller?: boolean;
   isFeatured?: boolean;
   topReviews?: Array<MarketplaceDocumentReviewResponse>;
+  downloads?: number;
 };
 
 export type MarketplaceDocumentReviewResponse = {
@@ -871,6 +877,17 @@ export type SaveBundleRequest = {
   documentIds?: Array<string>;
 };
 
+export type SavedPaymentMethodResponse = {
+  id?: string;
+  stripePaymentMethodId?: string;
+  brand?: string;
+  last4?: string;
+  expMonth?: number;
+  expYear?: number;
+  isDefault?: boolean;
+  createdAt?: string;
+};
+
 export type SaveStoreSectionRequest = {
   name: string;
   sortOrder?: number;
@@ -1084,6 +1101,10 @@ export type SetListedSellerDocumentMainFileRequest = {
 export type SetQnaFaqRequest = {
   isFaq?: boolean;
   sortOrder?: number;
+};
+
+export type SetupIntentResponse = {
+  clientSecret?: string;
 };
 
 export type StorageKeyBackfillResponse = {
@@ -2244,6 +2265,15 @@ export type DeleteApiCartData = {
   url: '/api/cart';
 };
 
+export type DeleteApiCartErrors = {
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type DeleteApiCartError = DeleteApiCartErrors[keyof DeleteApiCartErrors];
+
 export type DeleteApiCartResponses = {
   /**
    * OK
@@ -2259,6 +2289,15 @@ export type GetApiCartData = {
   query?: never;
   url: '/api/cart';
 };
+
+export type GetApiCartErrors = {
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type GetApiCartError = GetApiCartErrors[keyof GetApiCartErrors];
 
 export type GetApiCartResponses = {
   /**
@@ -2281,6 +2320,10 @@ export type PostApiCartItemsErrors = {
    * Bad Request
    */
   400: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
 };
 
 export type PostApiCartItemsError = PostApiCartItemsErrors[keyof PostApiCartItemsErrors];
@@ -2309,6 +2352,10 @@ export type PostApiCartBundlesByBundleIdErrors = {
    */
   400: ProblemDetails;
   /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
    * Conflict
    */
   409: ProblemDetails;
@@ -2335,6 +2382,16 @@ export type DeleteApiCartItemsByDocumentIdData = {
   query?: never;
   url: '/api/cart/items/{documentId}';
 };
+
+export type DeleteApiCartItemsByDocumentIdErrors = {
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type DeleteApiCartItemsByDocumentIdError =
+  DeleteApiCartItemsByDocumentIdErrors[keyof DeleteApiCartItemsByDocumentIdErrors];
 
 export type DeleteApiCartItemsByDocumentIdResponses = {
   /**
@@ -3216,6 +3273,165 @@ export type GetApiMeLoyaltyEntriesResponses = {
 
 export type GetApiMeLoyaltyEntriesResponse =
   GetApiMeLoyaltyEntriesResponses[keyof GetApiMeLoyaltyEntriesResponses];
+
+export type GetApiMePaymentMethodsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/payment-methods';
+};
+
+export type GetApiMePaymentMethodsErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMePaymentMethodsError =
+  GetApiMePaymentMethodsErrors[keyof GetApiMePaymentMethodsErrors];
+
+export type GetApiMePaymentMethodsResponses = {
+  /**
+   * OK
+   */
+  200: Array<SavedPaymentMethodResponse>;
+};
+
+export type GetApiMePaymentMethodsResponse =
+  GetApiMePaymentMethodsResponses[keyof GetApiMePaymentMethodsResponses];
+
+export type PostApiMePaymentMethodsData = {
+  body: AddSavedPaymentMethodRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/payment-methods';
+};
+
+export type PostApiMePaymentMethodsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiMePaymentMethodsError =
+  PostApiMePaymentMethodsErrors[keyof PostApiMePaymentMethodsErrors];
+
+export type PostApiMePaymentMethodsResponses = {
+  /**
+   * OK
+   */
+  200: SavedPaymentMethodResponse;
+};
+
+export type PostApiMePaymentMethodsResponse =
+  PostApiMePaymentMethodsResponses[keyof PostApiMePaymentMethodsResponses];
+
+export type PostApiMePaymentMethodsByIdDefaultData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/me/payment-methods/{id}/default';
+};
+
+export type PostApiMePaymentMethodsByIdDefaultErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiMePaymentMethodsByIdDefaultError =
+  PostApiMePaymentMethodsByIdDefaultErrors[keyof PostApiMePaymentMethodsByIdDefaultErrors];
+
+export type PostApiMePaymentMethodsByIdDefaultResponses = {
+  /**
+   * OK
+   */
+  200: SavedPaymentMethodResponse;
+};
+
+export type PostApiMePaymentMethodsByIdDefaultResponse =
+  PostApiMePaymentMethodsByIdDefaultResponses[keyof PostApiMePaymentMethodsByIdDefaultResponses];
+
+export type DeleteApiMePaymentMethodsByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/me/payment-methods/{id}';
+};
+
+export type DeleteApiMePaymentMethodsByIdErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type DeleteApiMePaymentMethodsByIdError =
+  DeleteApiMePaymentMethodsByIdErrors[keyof DeleteApiMePaymentMethodsByIdErrors];
+
+export type DeleteApiMePaymentMethodsByIdResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiMePaymentMethodsByIdResponse =
+  DeleteApiMePaymentMethodsByIdResponses[keyof DeleteApiMePaymentMethodsByIdResponses];
+
+export type PostApiMePaymentMethodsSetupIntentData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/payment-methods/setup-intent';
+};
+
+export type PostApiMePaymentMethodsSetupIntentErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Implemented
+   */
+  501: unknown;
+};
+
+export type PostApiMePaymentMethodsSetupIntentError =
+  PostApiMePaymentMethodsSetupIntentErrors[keyof PostApiMePaymentMethodsSetupIntentErrors];
+
+export type PostApiMePaymentMethodsSetupIntentResponses = {
+  /**
+   * OK
+   */
+  200: SetupIntentResponse;
+};
+
+export type PostApiMePaymentMethodsSetupIntentResponse =
+  PostApiMePaymentMethodsSetupIntentResponses[keyof PostApiMePaymentMethodsSetupIntentResponses];
 
 export type GetApiNotificationsSettingsData = {
   body?: never;
@@ -4594,6 +4810,15 @@ export type DeleteApiWishlistData = {
   url: '/api/wishlist';
 };
 
+export type DeleteApiWishlistErrors = {
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type DeleteApiWishlistError = DeleteApiWishlistErrors[keyof DeleteApiWishlistErrors];
+
 export type DeleteApiWishlistResponses = {
   /**
    * No Content
@@ -4613,6 +4838,15 @@ export type GetApiWishlistData = {
   };
   url: '/api/wishlist';
 };
+
+export type GetApiWishlistErrors = {
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type GetApiWishlistError = GetApiWishlistErrors[keyof GetApiWishlistErrors];
 
 export type GetApiWishlistResponses = {
   /**
@@ -4635,6 +4869,10 @@ export type PostApiWishlistErrors = {
    * Bad Request
    */
   400: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
 };
 
 export type PostApiWishlistError = PostApiWishlistErrors[keyof PostApiWishlistErrors];
@@ -4656,6 +4894,16 @@ export type DeleteApiWishlistByDocumentIdData = {
   query?: never;
   url: '/api/wishlist/{documentId}';
 };
+
+export type DeleteApiWishlistByDocumentIdErrors = {
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type DeleteApiWishlistByDocumentIdError =
+  DeleteApiWishlistByDocumentIdErrors[keyof DeleteApiWishlistByDocumentIdErrors];
 
 export type DeleteApiWishlistByDocumentIdResponses = {
   /**

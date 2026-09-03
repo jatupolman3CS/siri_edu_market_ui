@@ -19,6 +19,8 @@ import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { GoogleOauthService } from './google-oauth.service';
 import { GoogleOauthConfigService } from './google-oauth-config.service';
+import { CartService } from './cart.service';
+import { WishlistService } from './wishlist.service';
 
 const STORAGE_KEY = 'siriedu.auth';
 const PENDING_KEY = 'siriedu.auth.pending';
@@ -49,6 +51,14 @@ export class AuthService {
   private readonly message = inject(NzMessageService);
   private readonly googleOauth = inject(GoogleOauthService);
   private readonly googleOauthConfig = inject(GoogleOauthConfigService);
+  /**
+   * anonymous-cart-wishlist-scoping: the backend merges an anonymous visitor's cart/wishlist
+   * into their account transparently on sign-in, but `CartService`/`WishlistService` are
+   * `providedIn: 'root'` singletons that already loaded their in-memory state while still
+   * anonymous. Neither injects `AuthService`, so this direction is safe (no circular DI).
+   */
+  private readonly cart = inject(CartService);
+  private readonly wishlist = inject(WishlistService);
 
   private readonly _session = signal<AuthSession | null>(this.loadSession());
   private readonly _pending = signal<PendingAuth | null>(this.loadPending());
@@ -215,6 +225,7 @@ export class AuthService {
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
+      this.reloadCartAndWishlistAfterSignIn();
       return { ok: true };
     } catch (e) {
       this.apiFail.report('เข้าสู่ระบบ', e);
@@ -296,6 +307,7 @@ export class AuthService {
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
+      this.reloadCartAndWishlistAfterSignIn();
       this._pending.set(null);
       this.clearPending();
       return { ok: true };
@@ -360,6 +372,7 @@ export class AuthService {
           joinedAt: new Date().toISOString(),
         };
         this.completeSignIn(user, 'google');
+        this.reloadCartAndWishlistAfterSignIn();
         return { ok: true };
       } catch (e) {
         this.apiFail.report('เข้าสู่ระบบด้วย Google', e);
@@ -455,6 +468,17 @@ export class AuthService {
   }
 
   // ========== Internals ==========
+
+  /**
+   * anonymous-cart-wishlist-scoping AC-17: the backend already merged the anonymous
+   * cart/wishlist into this account by the time sign-in responds — reload both so the UI
+   * reflects the merged result instead of the stale pre-merge state the singletons loaded
+   * while still anonymous.
+   */
+  private reloadCartAndWishlistAfterSignIn(): void {
+    this.cart.loadCart();
+    void this.wishlist.refresh();
+  }
 
   private completeSignIn(user: User, provider: AuthProvider): void {
     const session: AuthSession = {

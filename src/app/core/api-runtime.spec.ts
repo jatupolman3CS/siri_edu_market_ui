@@ -171,6 +171,22 @@ describe('createClientConfig 401 retry (BUG-04)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('always sends credentials: "include" so the anonymous cart/wishlist session cookie is sent/stored (anonymous-cart-wishlist-scoping)', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    runtime.setAuthTokenGetter(() => null);
+
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(new Response(null, { status: 200 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const config = runtime.createClientConfig();
+    await config.fetch!('http://localhost:5282/api/cart', { method: 'GET' });
+
+    const sentRequest = fetchMock.mock.calls[0][0] as Request;
+    expect(sentRequest.credentials).toBe('include');
+  });
+
   it('does not attempt a refresh when no token was sent (anonymous 401, e.g. D-11)', async () => {
     const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
     runtime.setAuthTokenGetter(() => null);

@@ -377,3 +377,62 @@ describe('CatalogService — document preview and questions (F-01)', () => {
     ).toBe(true);
   });
 });
+
+describe('CatalogService — document detail 404 vs generic failure (QA bug #8)', () => {
+  it('flags documentDetailNotFound (not a generic error) on a real 404', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/documents/missing-doc',
+      { title: 'Not Found', status: 404 },
+      404,
+    );
+    const catalog = buildService();
+
+    catalog.loadDocumentDetail('missing-doc');
+    await settle();
+
+    expect(catalog.documentDetailNotFound()).toBe(true);
+    expect(catalog.documentDetailState().status).toBe('error');
+  });
+
+  it('does not flag documentDetailNotFound on a real (retryable) server failure', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/documents/doc-1',
+      { title: 'Server Error', status: 500 },
+      500,
+    );
+    const catalog = buildService();
+
+    catalog.loadDocumentDetail('doc-1');
+    await settle();
+
+    expect(catalog.documentDetailNotFound()).toBe(false);
+    expect(catalog.documentDetailState().status).toBe('error');
+  });
+
+  it('clears a stale documentDetailNotFound flag once a load succeeds', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/documents/missing-doc',
+      { title: 'Not Found', status: 404 },
+      404,
+    );
+    const catalog = buildService();
+    catalog.loadDocumentDetail('missing-doc');
+    await settle();
+    expect(catalog.documentDetailNotFound()).toBe(true);
+
+    stubRoute('GET', '/api/marketplace/documents/doc-1', {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสาร doc-1',
+    });
+    catalog.loadDocumentDetail('doc-1');
+    await settle();
+
+    expect(catalog.documentDetailNotFound()).toBe(false);
+    expect(catalog.documentDetailState().status).toBe('idle');
+    expect(catalog.getById('doc-1')?.title).toBe('เอกสาร doc-1');
+  });
+});

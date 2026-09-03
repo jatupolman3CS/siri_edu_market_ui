@@ -4,11 +4,21 @@
       </div>
     } @else if (catalog.documentDetailState().status === 'error') {
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
-        <app-empty-state emoji="⚠️" title="โหลดรายละเอียดไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
-          <button class="btn-pink mt-4" type="button" (click)="catalog.loadDocumentDetail(id())">
-            ลองใหม่
-          </button>
-        </app-empty-state>
+        <!-- Bug #8: a 404 (document doesn't exist / was removed) is not a transient failure —
+             no retry button, since retrying can never succeed for this case. -->
+        @if (catalog.documentDetailNotFound()) {
+          <app-empty-state
+            emoji="🔍"
+            title="ไม่พบเอกสารนี้"
+            description="เอกสารนี้อาจถูกลบหรือย้ายไปแล้ว"
+          />
+        } @else {
+          <app-empty-state emoji="⚠️" title="โหลดรายละเอียดไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+            <button class="btn-pink mt-4" type="button" (click)="catalog.loadDocumentDetail(id())">
+              ลองใหม่
+            </button>
+          </app-empty-state>
+        }
       </div>
     } @else if (doc(); as d) {
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">

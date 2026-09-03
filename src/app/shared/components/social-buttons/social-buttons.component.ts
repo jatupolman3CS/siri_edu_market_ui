@@ -15,13 +15,14 @@ export class SocialButtonsComponent {
   readonly select = output<AuthProvider>();
 
   /**
-   * D-08: WAVE D connects a database and nothing else, so there is no Google OAuth client id.
-   * The button used to look ready and only admit otherwise after being pressed. It now says so
-   * before the press — disabled with the reason on it, not removed: hiding the button would hide
-   * the gap as well (the S-07 rule), and the button has to come back on its own once a client id
-   * is configured.
+   * D-08 originally kept this `true` by default and rendered the button disabled with a
+   * "(ยังไม่ได้ตั้งค่า)" caption when Google wasn't configured (the S-07 rule: don't hide gaps).
+   * Bug #5 (QA audit): a disabled, clearly-non-functional auth button shown to every visitor is
+   * worse than briefly absent — the template now hides the button entirely while this is false,
+   * so it defaults to `false` (hidden) until `checkGoogle()` confirms a real client id, instead of
+   * flashing a button that then has to disappear.
    */
-  readonly googleAvailable = signal(true);
+  readonly googleAvailable = signal(false);
 
   constructor() {
     void this.checkGoogle();

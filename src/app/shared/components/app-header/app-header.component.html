@@ -8,7 +8,7 @@
 
           <!-- Nav -->
           <nav class="hidden md:flex items-center gap-1 ml-4">
-            @for (item of navItems; track item.href) {
+            @for (item of navItems(); track item.href) {
               <a
                 [routerLink]="item.href"
                 routerLinkActive="!bg-pink-50 !text-pink-600"
@@ -41,6 +41,19 @@
 
           <!-- Right actions -->
           <div class="flex items-center gap-2 ml-auto lg:ml-0">
+            <!-- Mobile nav toggle (Q-bugfix item 1): the only way to reach nav links + login below md -->
+            <button
+              #mobileMenuToggle
+              type="button"
+              class="btn-icon md:hidden"
+              [attr.aria-expanded]="mobileMenuOpen()"
+              aria-controls="mobile-nav-panel"
+              [attr.aria-label]="mobileMenuOpen() ? 'ปิดเมนู' : 'เปิดเมนู'"
+              (click)="toggleMobileMenu()"
+            >
+              <app-icon [name]="mobileMenuOpen() ? 'close' : 'menu'" [size]="20" />
+            </button>
+
             <a routerLink="/marketplace" class="btn-icon lg:hidden">
               <app-icon name="search" [size]="18" />
             </a>
@@ -182,5 +195,86 @@
             }
           </div>
         </div>
+
+        <!-- Mobile nav panel (Q-bugfix item 1) -->
+        @if (mobileMenuOpen()) {
+          <nav
+            #mobileMenuPanel
+            id="mobile-nav-panel"
+            class="md:hidden flex flex-col gap-1 pb-4 border-t border-line pt-3"
+            (keydown.escape)="closeMobileMenu()"
+          >
+            @for (item of navItems(); track item.href) {
+              <a
+                [routerLink]="item.href"
+                routerLinkActive="!bg-pink-50 !text-pink-600"
+                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                {{ item.label }}
+              </a>
+            }
+
+            @if (auth.user(); as u) {
+              <div class="my-2 border-t border-line"></div>
+              <a
+                routerLink="/account"
+                class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                บัญชีของฉัน
+              </a>
+              <a
+                routerLink="/orders"
+                class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                ประวัติคำสั่งซื้อ
+              </a>
+              @if (auth.isSeller() || auth.isAdmin()) {
+                <a
+                  routerLink="/seller"
+                  class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                  (click)="closeMobileMenu()"
+                >
+                  Siri Studio (ผู้ขาย)
+                </a>
+              }
+              @if (auth.isAdmin()) {
+                <a
+                  routerLink="/admin"
+                  class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                  (click)="closeMobileMenu()"
+                >
+                  Admin Panel
+                </a>
+              }
+              <button
+                type="button"
+                class="text-left px-3.5 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-pink-50 transition-colors"
+                (click)="signOut(); closeMobileMenu()"
+              >
+                ออกจากระบบ
+              </button>
+            } @else {
+              <div class="my-2 border-t border-line"></div>
+              <a
+                routerLink="/auth/login"
+                class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                เข้าสู่ระบบ
+              </a>
+              <a
+                routerLink="/auth/register"
+                class="btn-pink !justify-start !px-3.5 !py-2.5 text-sm"
+                (click)="closeMobileMenu()"
+              >
+                สมัครฟรี
+              </a>
+            }
+          </nav>
+        }
       </div>
     </header>
