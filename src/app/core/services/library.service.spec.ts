@@ -181,3 +181,90 @@ describe('LibraryService — libraryFilter', () => {
     expect(call?.search).not.toContain('unreviewedOnly');
   });
 });
+
+/**
+ * order-status-tabs v1 §4: `ordersTab` mirrors `libraryFilter` above — switching a tab must
+ * re-fetch `GET /api/orders` (page 1), never `Array.filter()` over the page already loaded.
+ */
+describe('LibraryService — ordersTab (order-status-tabs v1)', () => {
+  function ordersGetCount(): number {
+    return requests.filter((r) => r.method === 'GET' && r.path === '/api/orders').length;
+  }
+
+  function ordersPage(items: unknown[]) {
+    return { items, page: 1, pageSize: 20, totalCount: items.length, totalPages: 1 };
+  }
+
+  it('starts on the "all" tab', () => {
+    const library = buildService();
+
+    expect(library.ordersTab()).toBe('all');
+  });
+
+  it('switching the tab issues a new GET /api/orders instead of reusing the loaded page', async () => {
+    stubRoute('GET', '/api/orders', ordersPage([]));
+    const library = buildService();
+
+    await library.refreshOrders();
+    expect(ordersGetCount()).toBe(1);
+
+    await library.setOrdersTab('awaiting_payment');
+
+    expect(library.ordersTab()).toBe('awaiting_payment');
+    expect(ordersGetCount()).toBe(2);
+  });
+
+  it('does not re-fetch when set to the tab that is already active', async () => {
+    stubRoute('GET', '/api/orders', ordersPage([]));
+    const library = buildService();
+    await library.refreshOrders();
+    expect(ordersGetCount()).toBe(1);
+
+    await library.setOrdersTab('all');
+
+    expect(ordersGetCount()).toBe(1);
+  });
+
+  it('resets the pager back to page 1 on tab switch (fresh page replaces the loaded items)', async () => {
+    stubRoute('GET', '/api/orders', ordersPage([{ id: 'order-1', orderNumber: 'ORD-1', status: 'awaiting_payment' }]));
+    const library = buildService();
+    await library.refreshOrders();
+    expect(library.orders().length).toBe(1);
+
+    stubRoute('GET', '/api/orders', ordersPage([]));
+    await library.setOrdersTab('successful');
+
+    expect(library.orders().length).toBe(0);
+  });
+
+  /**
+   * §3.1: wire values must be sent verbatim — `awaiting_payment` / `successful` /
+   * `cancelled_refunded`. Tightened post-regen: the stub round only checked that a re-fetch
+   * happened, not that `tab` actually reached the request query string.
+   */
+  it.each([
+    ['awaiting_payment', 'tab=awaiting_payment'],
+    ['successful', 'tab=successful'],
+    ['cancelled_refunded', 'tab=cancelled_refunded'],
+  ] as const)('sends tab=%s as a query param when that tab is active', async (tab, expectedSearch) => {
+    stubRoute('GET', '/api/orders', ordersPage([]));
+    const library = buildService();
+
+    await library.setOrdersTab(tab);
+    await settle();
+
+    const call = requests.find((r) => r.method === 'GET' && r.path === '/api/orders');
+    expect(call?.search).toContain(expectedSearch);
+  });
+
+  it('does not send a tab query param on the "all" tab', async () => {
+    stubRoute('GET', '/api/orders', ordersPage([]));
+    const library = buildService();
+
+    await library.refreshOrders();
+    await settle();
+
+    const call = requests.find((r) => r.method === 'GET' && r.path === '/api/orders');
+    expect(call?.search).not.toContain('tab');
+  });
+});

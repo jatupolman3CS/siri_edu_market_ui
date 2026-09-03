@@ -28,6 +28,15 @@
         description="ดูสถานะการชำระเงินและรายละเอียดเอกสารที่ซื้อทุกรายการ"
       />
 
+      <!-- order-status-tabs v1 §4: tab strip only — the order list below is shared content,
+           fetched fresh per tab via library.setOrdersTab (not client-side filtered). -->
+      <nz-tabs [nzSelectedIndex]="selectedTabIndex()" (nzSelectChange)="onTabChange($event)">
+        <nz-tab nzTitle="ทั้งหมด" />
+        <nz-tab nzTitle="รอชำระเงิน" />
+        <nz-tab nzTitle="สำเร็จ" />
+        <nz-tab nzTitle="ยกเลิก/คืนเงิน" />
+      </nz-tabs>
+
       @if (library.orders().length === 0) {
         <app-empty-state
           emoji="📜"
@@ -94,6 +103,20 @@
                 <a routerLink="/library" class="text-pink-600 hover:underline font-semibold">
                   ดาวน์โหลด
                 </a>
+                <!-- order-status-tabs v1 §4/AC-12: same condition + copy/disabled state as
+                     BuyerOrderDetailPage.cancelOrder — buyers cancel an accidental duplicate
+                     order that has not been paid yet. -->
+                @if (o.status === 'awaiting_payment') {
+                  <span>·</span>
+                  <button
+                    type="button"
+                    class="btn-ghost !py-1.5 !px-3 text-xs"
+                    [disabled]="cancellingId() !== null"
+                    (click)="cancelOrder(o.id)"
+                  >
+                    {{ cancellingId() === o.id ? 'กำลังยกเลิก…' : 'ยกเลิกคำสั่งซื้อ' }}
+                  </button>
+                }
               </footer>
             </article>
           }

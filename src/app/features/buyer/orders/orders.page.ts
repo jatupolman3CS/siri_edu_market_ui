@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AuthService, LibraryService } from '../../../core/services';
+import { NzTabChangeEvent, NzTabsModule } from 'ng-zorro-antd/tabs';
+import { AuthService, LibraryService, OrderService } from '../../../core/services';
+import type { OrderTabFilter } from '../../../core/services/library.service';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -9,11 +11,23 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
+/**
+ * order-status-tabs v1 §4: order of the tabs on screen, matching the Thai copy table exactly.
+ * Index into this array is what `nz-tabs` reports on `(nzSelectChange)`.
+ */
+const TAB_ORDER: readonly OrderTabFilter[] = [
+  'all',
+  'awaiting_payment',
+  'successful',
+  'cancelled_refunded',
+];
+
 @Component({
   selector: 'app-buyer-orders',
   standalone: true,
   imports: [
     RouterLink,
+    NzTabsModule,
     PageHeroComponent,
     IconComponent,
     EmptyStateComponent,
@@ -27,11 +41,21 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 })
 export class BuyerOrdersPage {
   readonly library = inject(LibraryService);
+  private readonly orderService = inject(OrderService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly showSuccess = signal<boolean>(false);
+
+  /** order-status-tabs v1 §4: which tab is highlighted, kept in sync with `library.ordersTab()`. */
+  readonly selectedTabIndex = computed(() => {
+    const index = TAB_ORDER.indexOf(this.library.ordersTab());
+    return index === -1 ? 0 : index;
+  });
+
+  /** order-status-tabs v1 §4: guards against firing a second cancel while one is in flight. */
+  readonly cancellingId = signal<string | null>(null);
 
   constructor() {
     if (!this.auth.isAuthenticated()) {
@@ -48,6 +72,38 @@ export class BuyerOrdersPage {
 
   dismissSuccess(): void {
     this.showSuccess.set(false);
+  }
+
+  /**
+   * order-status-tabs v1 §4/AC-11: 1 tab switch = 1 `setOrdersTab` call. `nz-tabs` does not fire
+   * `nzSelectChange` on the initial render (only on an actual change of the selected index), so
+   * this never runs before the user interacts with the tab strip.
+   */
+  onTabChange(event: NzTabChangeEvent): void {
+    if (event.index == null) return;
+    const tab = TAB_ORDER[event.index];
+    if (!tab) return;
+    void this.library.setOrdersTab(tab);
+  }
+
+  /**
+   * order-status-tabs v1 §4/AC-12..AC-15: mirrors `BuyerOrderDetailPage.cancelOrder` — cancel
+   * via `OrderService.cancel` (not `LibraryService`, cancel is not its job), then refresh the
+   * current tab's page 1 on success so the card updates/disappears per AC-14. `OrderService`
+   * already reports failures through `ApiFailureReporter` and returns `null`, so there is
+   * nothing else to do on the error path here.
+   */
+  async cancelOrder(id: string): Promise<void> {
+    if (this.cancellingId() !== null) return;
+    this.cancellingId.set(id);
+    try {
+      const result = await this.orderService.cancel(id);
+      if (result !== null) {
+        await this.library.refreshOrders();
+      }
+    } finally {
+      this.cancellingId.set(null);
+    }
   }
 
   statusLabel(s: string): string {

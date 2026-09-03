@@ -79,6 +79,8 @@ import type {
   GetApiAdminSettingsResponses,
   GetApiAdminStorageUsageData,
   GetApiAdminStorageUsageResponses,
+  GetApiAdminSystemConfigJobTogglesData,
+  GetApiAdminSystemConfigJobTogglesResponses,
   GetApiAdminTransactionsData,
   GetApiAdminTransactionsResponses,
   GetApiAuthOauthClientsData,
@@ -348,6 +350,9 @@ import type {
   PutApiAdminSettingsData,
   PutApiAdminSettingsErrors,
   PutApiAdminSettingsResponses,
+  PutApiAdminSystemConfigJobTogglesByJobKeyData,
+  PutApiAdminSystemConfigJobTogglesByJobKeyErrors,
+  PutApiAdminSystemConfigJobTogglesByJobKeyResponses,
   PutApiMeProfileData,
   PutApiMeProfileErrors,
   PutApiMeProfileResponses,
@@ -712,6 +717,35 @@ export const getApiAdminStorageUsage = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).get<GetApiAdminStorageUsageResponses, unknown, ThrowOnError>({
     url: '/api/admin/storage/usage',
     ...options,
+  });
+
+export const getApiAdminSystemConfigJobToggles = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminSystemConfigJobTogglesData, ThrowOnError>,
+): RequestResult<GetApiAdminSystemConfigJobTogglesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminSystemConfigJobTogglesResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/admin/system-config/job-toggles', ...options });
+
+export const putApiAdminSystemConfigJobTogglesByJobKey = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminSystemConfigJobTogglesByJobKeyData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminSystemConfigJobTogglesByJobKeyResponses,
+  PutApiAdminSystemConfigJobTogglesByJobKeyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminSystemConfigJobTogglesByJobKeyResponses,
+    PutApiAdminSystemConfigJobTogglesByJobKeyErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/system-config/job-toggles/{jobKey}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const getApiAuthOauthClients = <ThrowOnError extends boolean = false>(

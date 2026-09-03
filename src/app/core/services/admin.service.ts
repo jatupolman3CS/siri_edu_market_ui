@@ -14,6 +14,7 @@ import {
   getApiAdminSellers,
   getApiAdminSettings,
   getApiAdminStorageUsage,
+  getApiAdminSystemConfigJobToggles,
   getApiAdminTransactions,
   postApiAdminCategories,
   postApiAdminCategoriesByCategoryIdSubcategories,
@@ -26,6 +27,7 @@ import {
   putApiAdminCategoriesById,
   putApiAdminCategoriesByCategoryIdSubcategoriesById,
   putApiAdminSettings,
+  putApiAdminSystemConfigJobTogglesByJobKey,
 } from '../api';
 import type {
   AdminDashboardResponse,
@@ -38,6 +40,7 @@ import type {
   CreateSubcategoryRequest,
   PlatformSettingsResponse,
   StorageUsageResponse,
+  SystemConfigJobToggleItem,
   UpdateCategoryRequest,
   UpdateSubcategoryRequest,
 } from '../api/types.gen';
@@ -63,6 +66,22 @@ export interface StorageUsage {
   isConfigured: boolean;
 }
 
+/**
+ * system-config-job-toggle v1 §4 (`docs/contracts/system-config-job-toggle.md`) — one of the 4
+ * fixed background-job toggles shown on the Admin Settings page. Kept as the service's own
+ * contract (same reasoning as `PlatformSettings`/`StorageUsage` above): the generated
+ * `SystemConfigJobToggleItem` marks every field but `jobKey` optional, and the toggle rows need
+ * a complete object to bind to.
+ */
+export interface SystemConfigJobToggle {
+  jobKey: string;
+  category: string | null;
+  displayName: string | null;
+  description: string | null;
+  enabled: boolean;
+  updatedAt: string | null;
+}
+
 function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
   return {
     feeRatePercent: res.feeRatePercent ?? 0,
@@ -78,6 +97,17 @@ function toStorageUsage(res: StorageUsageResponse): StorageUsage {
     objectCount: res.objectCount ?? 0,
     totalBytes: res.totalBytes ?? 0,
     isConfigured: res.isConfigured ?? false,
+  };
+}
+
+function toSystemConfigJobToggle(res: SystemConfigJobToggleItem): SystemConfigJobToggle {
+  return {
+    jobKey: res.jobKey,
+    category: res.category ?? null,
+    displayName: res.displayName ?? null,
+    description: res.description ?? null,
+    enabled: res.enabled ?? false,
+    updatedAt: res.updatedAt ?? null,
   };
 }
 import {
@@ -107,11 +137,13 @@ export class AdminService {
   private readonly _adminCategories = signal<Category[]>([]);
   private readonly _settings = signal<PlatformSettings | null>(null);
   private readonly _storageUsage = signal<StorageUsage | null>(null);
+  private readonly _jobToggles = signal<SystemConfigJobToggle[]>([]);
 
   readonly dashboard = this._dashboard.asReadonly();
   readonly adminCategories = this._adminCategories.asReadonly();
   readonly settings = this._settings.asReadonly();
   readonly storageUsage = this._storageUsage.asReadonly();
+  readonly jobToggles = this._jobToggles.asReadonly();
 
   /**
    * real-data-stats v1 §3.6: `AdminDashboardResponse.revenueTrendPercent` / `.feesTrendPercent`
@@ -391,6 +423,43 @@ export class AdminService {
       this.apiFail.report('โหลดสถิติพื้นที่จัดเก็บ', e);
       this._storageUsage.set(null);
       return null;
+    }
+  }
+
+  // ========== Background job toggles (system-config-job-toggle v1) ==========
+  // docs/contracts/system-config-job-toggle.md §3-4.
+
+  async loadJobToggles(): Promise<SystemConfigJobToggle[]> {
+    try {
+      const items = (
+        unwrapSdkResult(await getApiAdminSystemConfigJobToggles()) ?? []
+      ).map(toSystemConfigJobToggle);
+      this._jobToggles.set(items);
+      return items;
+    } catch (e) {
+      this.apiFail.report('โหลดสถานะงานอัตโนมัติเบื้องหลัง', e);
+      this._jobToggles.set([]);
+      return [];
+    }
+  }
+
+  async updateJobToggle(jobKey: string, enabled: boolean): Promise<SystemConfigJobToggle | null> {
+    try {
+      const item = toSystemConfigJobToggle(
+        unwrapSdkResult(
+          await putApiAdminSystemConfigJobTogglesByJobKey({
+            path: { jobKey },
+            body: { enabled },
+          }),
+        ),
+      );
+      this._jobToggles.update((toggles) =>
+        toggles.map((t) => (t.jobKey === jobKey ? item : t)),
+      );
+      return item;
+    } catch (e) {
+      this.apiFail.report('อัปเดตสถานะงานอัตโนมัติเบื้องหลัง', e);
+      throw e;
     }
   }
 

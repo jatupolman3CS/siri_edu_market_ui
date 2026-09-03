@@ -123,4 +123,43 @@
           }
         </button>
       </div>
+
+      <!-- system-config-job-toggle v1 §4: not part of the fee/VAT form above — each row saves
+           on flip, no batched "บันทึกการเปลี่ยนแปลง" for this section. -->
+      <section class="card-soft p-6 mb-6 mt-6">
+        <h2 class="text-lg font-bold text-ink mb-1">งานอัตโนมัติเบื้องหลัง (Background Jobs)</h2>
+        <p class="text-xs text-ink-muted mb-5">
+          เปิด/ปิดการทำงานของ background job แบบ runtime — มีผลภายใน ~1 นาทีโดยไม่ต้อง restart ระบบ
+        </p>
+
+        @if (jobToggles().length === 0) {
+          <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">กำลังโหลด…</div>
+        } @else {
+          <ul class="space-y-3">
+            @for (job of jobToggles(); track job.jobKey) {
+              <li class="flex items-start gap-4 p-4 rounded-2xl border border-line">
+                <nz-switch
+                  [attr.name]="'job-switch-' + job.jobKey"
+                  [ngModel]="job.enabled"
+                  [nzDisabled]="savingJobKey() === job.jobKey"
+                  (ngModelChange)="toggleJob(job, $event)"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-bold text-ink">{{ job.displayName || job.jobKey }}</div>
+                  @if (job.description) {
+                    <div class="text-xs text-ink-muted mt-1">{{ job.description }}</div>
+                  }
+                  <div class="text-xs text-ink-muted mt-1">
+                    @if (job.updatedAt) {
+                      แก้ไขล่าสุด {{ job.updatedAt | date: 'dd MMM yyyy HH:mm' }}
+                    } @else {
+                      ยังไม่เคยเปลี่ยนแปลง
+                    }
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
     </div>

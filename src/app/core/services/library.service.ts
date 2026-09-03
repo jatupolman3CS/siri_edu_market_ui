@@ -21,6 +21,14 @@ import { createInfinitePager } from './infinite-pager';
 
 export type LibraryFilter = 'all' | 'unreviewed';
 
+/**
+ * order-status-tabs v1 §1/§4: the 4 tabs shown on `/orders`. "successful" groups
+ * `Paid` + `Fulfilled`, "cancelled_refunded" groups `Cancelled` + `Refunded` — the grouping
+ * itself happens at the backend (§1 decision 2), this type only names the wire value sent as
+ * the `tab` query param.
+ */
+export type OrderTabFilter = 'all' | 'awaiting_payment' | 'successful' | 'cancelled_refunded';
+
 export interface SubmitReviewRequest {
   rating: number;
   comment: string;
@@ -52,6 +60,13 @@ export class LibraryService {
    */
   readonly libraryFilter = signal<LibraryFilter>('all');
 
+  /**
+   * order-status-tabs v1 §4: same reasoning as `libraryFilter` above — the 4 order tabs must
+   * re-query `GET /api/orders` (grouping happens server-side), never `Array.filter()` the page
+   * already loaded.
+   */
+  readonly ordersTab = signal<OrderTabFilter>('all');
+
   private readonly libraryPager = createInfinitePager<LibraryItem>({
     pageSize: 24,
     errorMessage: 'โหลดคลังของฉันไม่สำเร็จ',
@@ -78,7 +93,15 @@ export class LibraryService {
     pageSize: 20,
     errorMessage: 'โหลดคำสั่งซื้อไม่สำเร็จ',
     fetch: async (Page, PageSize) => {
-      const result = await getApiOrders({ query: { Page, PageSize } });
+      const result = await getApiOrders({
+        query: {
+          Page,
+          PageSize,
+          // order-status-tabs v1 §3.1: wire values ต้องตรงตาราง §3.1 เป๊ะ ๆ (ห้ามแปลงคำ) —
+          // 'all' ไม่ส่ง param นี้เลย (undefined) เพื่อให้ backend ไม่กรอง
+          tab: this.ordersTab() === 'all' ? undefined : this.ordersTab(),
+        },
+      });
       const data = unwrapSdkResult(result);
       return {
         items: (data.items ?? []).map(mapOrder),
@@ -138,6 +161,16 @@ export class LibraryService {
     if (this.libraryFilter() === filter) return;
     this.libraryFilter.set(filter);
     await this.refreshLibrary();
+  }
+
+  /**
+   * order-status-tabs v1 §4: switching tabs resets the pager back to page 1 and re-fetches
+   * (`refreshOrders` → `ordersPager.loadFirst()`) — mirrors `setLibraryFilter` above.
+   */
+  async setOrdersTab(tab: OrderTabFilter): Promise<void> {
+    if (this.ordersTab() === tab) return;
+    this.ordersTab.set(tab);
+    await this.refreshOrders();
   }
 
   /**

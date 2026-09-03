@@ -1175,6 +1175,15 @@ export type SubmitSellerApplicationRequest = {
   specialties?: Array<string>;
 };
 
+export type SystemConfigJobToggleItem = {
+  jobKey: string;
+  category?: string | null;
+  displayName?: string | null;
+  description?: string | null;
+  enabled?: boolean;
+  updatedAt?: string | null;
+};
+
 export type SystemStatusResponse = {
   name: string;
   environment: string;
@@ -1257,6 +1266,10 @@ export type UpdateSubcategoryRequest = {
   icon?: string;
   isActive?: boolean;
   sortOrder?: number;
+};
+
+export type UpdateSystemConfigJobToggleRequest = {
+  enabled: boolean;
 };
 
 export type UploadBase64Request = {
@@ -1986,6 +1999,56 @@ export type GetApiAdminStorageUsageResponses = {
 
 export type GetApiAdminStorageUsageResponse =
   GetApiAdminStorageUsageResponses[keyof GetApiAdminStorageUsageResponses];
+
+export type GetApiAdminSystemConfigJobTogglesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/system-config/job-toggles';
+};
+
+export type GetApiAdminSystemConfigJobTogglesResponses = {
+  /**
+   * OK
+   */
+  200: Array<SystemConfigJobToggleItem>;
+};
+
+export type GetApiAdminSystemConfigJobTogglesResponse =
+  GetApiAdminSystemConfigJobTogglesResponses[keyof GetApiAdminSystemConfigJobTogglesResponses];
+
+export type PutApiAdminSystemConfigJobTogglesByJobKeyData = {
+  body: UpdateSystemConfigJobToggleRequest;
+  path: {
+    jobKey: string;
+  };
+  query?: never;
+  url: '/api/admin/system-config/job-toggles/{jobKey}';
+};
+
+export type PutApiAdminSystemConfigJobTogglesByJobKeyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiAdminSystemConfigJobTogglesByJobKeyError =
+  PutApiAdminSystemConfigJobTogglesByJobKeyErrors[keyof PutApiAdminSystemConfigJobTogglesByJobKeyErrors];
+
+export type PutApiAdminSystemConfigJobTogglesByJobKeyResponses = {
+  /**
+   * OK
+   */
+  200: SystemConfigJobToggleItem;
+};
+
+export type PutApiAdminSystemConfigJobTogglesByJobKeyResponse =
+  PutApiAdminSystemConfigJobTogglesByJobKeyResponses[keyof PutApiAdminSystemConfigJobTogglesByJobKeyResponses];
 
 export type GetApiAuthOauthClientsData = {
   body?: never;
@@ -3493,6 +3556,7 @@ export type GetApiOrdersData = {
   query?: {
     Page?: number;
     PageSize?: number;
+    tab?: string;
   };
   url: '/api/orders';
 };

@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { AdminService, type PlatformSettings } from '../../../core/services';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { AdminService, type PlatformSettings, type SystemConfigJobToggle } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
-  imports: [FormsModule, IconComponent, DecimalPipe],
+  imports: [FormsModule, IconComponent, DecimalPipe, DatePipe, NzSwitchModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-admin.page.html',
   styleUrl: './settings-admin.page.scss',
@@ -32,6 +33,11 @@ export class AdminSettingsPage {
     return (u.totalBytes / (1024 * 1024 * 1024)).toFixed(2);
   });
 
+  /** system-config-job-toggle v1 §4: list is server-confirmed state only — no local optimistic copy. */
+  readonly jobToggles = this.admin.jobToggles;
+  /** jobKey currently mid-PUT — disables that row's switch and guards against double-click. */
+  readonly savingJobKey = signal<string | null>(null);
+
   readonly gateways = [
     { name: 'Stripe', icon: '💳', note: 'บัตรเครดิต / PromptPay / wallet — เปิดปิดที่ Stripe Dashboard' },
     { name: 'GB Prime Pay', icon: '🏦', note: 'PromptPay QR และ Internet Banking' },
@@ -52,6 +58,7 @@ export class AdminSettingsPage {
     const [s] = await Promise.all([
       this.admin.loadSettings(),
       this.admin.loadStorageUsage(),
+      this.admin.loadJobToggles(),
     ]);
     if (s) {
       this.form.set({
@@ -76,6 +83,24 @@ export class AdminSettingsPage {
       // apiFail already toasted by AdminService
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  /**
+   * system-config-job-toggle v1 §4: saves immediately on flip (not batched with `save()` above).
+   * The bound value is `admin.jobToggles()` itself, so on failure the row simply falls back to
+   * whatever `_jobToggles` still holds (untouched by a failed PUT) — no manual "revert" needed.
+   */
+  async toggleJob(item: SystemConfigJobToggle, enabled: boolean): Promise<void> {
+    if (this.savingJobKey()) return;
+    this.savingJobKey.set(item.jobKey);
+    try {
+      await this.admin.updateJobToggle(item.jobKey, enabled);
+      this.message.success('อัปเดตสถานะงานเรียบร้อย');
+    } catch {
+      // apiFail already toasted by AdminService
+    } finally {
+      this.savingJobKey.set(null);
     }
   }
 }
