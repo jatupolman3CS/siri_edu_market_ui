@@ -1,4 +1,13 @@
 <div class="max-w-4xl space-y-6">
+  @if (sellerProfileRequired()) {
+    <app-empty-state
+      emoji="🏪"
+      title="บัญชีนี้ยังไม่มีร้านค้า"
+      description="สมัครเป็นผู้ขายก่อนถึงจะสร้างแพ็กเกจได้"
+    >
+      <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+    </app-empty-state>
+  } @else {
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
       <h1 class="text-3xl font-extrabold text-ink mb-1">แพ็กเกจของฉัน</h1>
@@ -197,5 +206,6 @@
         </li>
       }
     </ul>
+  }
   }
 </div>

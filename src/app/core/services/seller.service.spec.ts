@@ -98,3 +98,84 @@ describe('SellerService — nextPayoutDate (real-data-stats v1 §3.5)', () => {
     expect(service.nextPayoutDate()).toBeNull();
   });
 });
+
+describe('SellerService — seller_profile_required (QA fix: friendly 403, not a generic toast)', () => {
+  function buildServiceWithReporterSpy(): { service: SellerService; report: ReturnType<typeof vi.fn> } {
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [SellerService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    return { service: TestBed.inject(SellerService), report };
+  }
+
+  it('refreshDashboard() sets sellerProfileRequired without a generic toast on 403 seller_profile_required', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/dashboard',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await service.refreshDashboard();
+
+    expect(service.sellerProfileRequired()).toBe(true);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('refreshDashboard() still reports a generic failure for any other error', async () => {
+    stubRoute('GET', '/api/seller/dashboard', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await service.refreshDashboard();
+
+    expect(service.sellerProfileRequired()).toBe(false);
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshDocuments() sets sellerProfileRequired without a generic toast on 403 seller_profile_required', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/documents',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await service.refreshDocuments();
+
+    expect(service.sellerProfileRequired()).toBe(true);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('clears sellerProfileRequired once a later call succeeds', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/dashboard',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service } = buildServiceWithReporterSpy();
+    await service.refreshDashboard();
+    expect(service.sellerProfileRequired()).toBe(true);
+
+    stubRoute('GET', '/api/seller/dashboard', {
+      totalRevenue: 0,
+      monthlyRevenue: 0,
+      totalDownloads: 0,
+      monthlyDownloads: 0,
+      averageRating: 0,
+      totalReviews: 0,
+      pendingPayout: 0,
+      activeListings: 0,
+      pendingApproval: 0,
+      followerCount: 0,
+      newFollowersThisMonth: 0,
+      revenueByMonth: [],
+      topCategories: [],
+    });
+    await service.refreshDashboard();
+
+    expect(service.sellerProfileRequired()).toBe(false);
+  });
+});

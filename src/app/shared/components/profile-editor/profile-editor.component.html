@@ -23,7 +23,8 @@
       <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อที่แสดง</label>
       <input
         class="input-soft"
-        [(ngModel)]="displayName"
+        [ngModel]="displayName()"
+        (ngModelChange)="displayName.set($event)"
         name="displayName"
         autocomplete="name"
         maxlength="200"

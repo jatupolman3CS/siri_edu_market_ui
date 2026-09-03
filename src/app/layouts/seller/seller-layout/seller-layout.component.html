@@ -66,34 +66,40 @@
       <header
         class="lg:hidden sticky top-0 z-20 bg-white border-b border-line w-full"
       >
-        <div class="flex items-center justify-between px-4 h-16">
+        <div class="flex items-center justify-between px-4 h-16 gap-2">
           <app-logo link="/seller" />
-          <div class="flex items-center gap-2">
-            <a routerLink="/" class="btn-ghost !py-2 !px-3 text-xs">
+          <div class="flex items-center gap-1.5 shrink-0">
+            <a routerLink="/" class="btn-ghost !py-1.5 !px-2.5 text-xs whitespace-nowrap">
               ออกจาก Studio
             </a>
             <button
               type="button"
               (click)="signOut()"
-              class="flex items-center gap-1 !py-2 !px-3 text-xs text-rose-500"
+              class="flex items-center gap-1 !py-1.5 !px-2.5 text-xs text-rose-500 whitespace-nowrap"
             >
               <app-icon name="logout" [size]="14" />
               ออกจากระบบ
             </button>
           </div>
         </div>
-        <nav class="flex overflow-x-auto px-4 pb-3 gap-2">
-          @for (item of navItems; track item.href) {
-            <a
-              [routerLink]="item.href"
-              routerLinkActive="!bg-pink-500 !text-white"
-              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-              class="px-3 py-1.5 rounded-full bg-pink-50 text-ink-soft text-xs font-medium whitespace-nowrap"
-            >
-              {{ item.label }}
-            </a>
-          }
-        </nav>
+        <!-- Trailing fade so a scrollable tab bar with more tabs off-screen is noticeable. -->
+        <div class="relative">
+          <nav class="flex overflow-x-auto px-4 pb-3 gap-2">
+            @for (item of navItems; track item.href) {
+              <a
+                [routerLink]="item.href"
+                routerLinkActive="!bg-pink-500 !text-white"
+                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                class="px-3 py-1.5 rounded-full bg-pink-50 text-ink-soft text-xs font-medium whitespace-nowrap"
+              >
+                {{ item.label }}
+              </a>
+            }
+          </nav>
+          <div
+            class="pointer-events-none absolute right-0 top-0 bottom-3 w-10 bg-gradient-to-l from-white to-transparent"
+          ></div>
+        </div>
       </header>
 
       <!-- Main -->

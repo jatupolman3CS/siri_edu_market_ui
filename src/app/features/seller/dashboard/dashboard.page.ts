@@ -7,9 +7,11 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { PlatformStatsService, SellerService } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
@@ -22,6 +24,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     RouterLink,
     FormsModule,
     StatCardComponent,
+    EmptyStateComponent,
     IconComponent,
     ThbPipe,
     CompactPipe,
@@ -35,6 +38,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 export class SellerDashboardPage {
   readonly seller = inject(SellerService);
   readonly platformStats = inject(PlatformStatsService);
+  private readonly router = inject(Router);
+  private readonly message = inject(NzMessageService);
 
   readonly maxMonth = computed(() =>
     Math.max(...this.seller.stats().revenueByMonth.map((m) => m.amount), 1),
@@ -80,5 +85,18 @@ export class SellerDashboardPage {
     // same earnings endpoint the /seller/earnings page uses (§3.5) — this page needs its own load.
     void this.seller.loadEarnings();
     this.platformStats.loadStats();
+  }
+
+  /**
+   * QA fix: "ขอถอนเงินทันที" used to have no click handler at all — enabled at ฿0 balance,
+   * clicking it did nothing observable. The real request flow (bank account form, pending-request
+   * guard) already lives on /seller/earnings; this is a shortcut into it, gated by balance.
+   */
+  requestWithdraw(): void {
+    if (this.seller.stats().pendingPayout <= 0) {
+      this.message.warning('ยังไม่มียอดเงินให้ถอนในตอนนี้');
+      return;
+    }
+    void this.router.navigate(['/seller/earnings']);
   }
 }

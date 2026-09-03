@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import type { StoreSectionResponse } from '../../../core/api';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { SellerService } from '../../../core/services';
@@ -15,13 +16,14 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 @Component({
   selector: 'app-seller-store-sections',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, EmptyStateComponent, NzModalModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './store-sections.page.html',
 })
 export class SellerStoreSectionsPage {
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly modal = inject(NzModalService);
   readonly seller = inject(SellerService);
 
   readonly sections = signal<StoreSectionResponse[]>([]);
@@ -121,7 +123,19 @@ export class SellerStoreSectionsPage {
     }
   }
 
-  async remove(sectionId: string): Promise<void> {
+  confirmRemove(section: StoreSectionResponse): void {
+    if (this.saving() || !section.id) return;
+    this.modal.confirm({
+      nzTitle: 'ยืนยันการลบหมวด',
+      nzContent: `ต้องการลบหมวด "${section.name ?? ''}" ใช่ไหม?`,
+      nzOkText: 'ลบ',
+      nzOkDanger: true,
+      nzCancelText: 'ยกเลิก',
+      nzOnOk: () => this.remove(section.id!),
+    });
+  }
+
+  private async remove(sectionId: string): Promise<void> {
     if (this.saving()) return;
     this.saving.set(true);
     try {

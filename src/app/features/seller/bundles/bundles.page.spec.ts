@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerBundlesPage } from './bundles.page';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
@@ -49,6 +50,7 @@ function renderPage() {
   TestBed.configureTestingModule({
     imports: [SellerBundlesPage],
     providers: [
+      provideRouter([]),
       { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
       {
         provide: NzMessageService,
@@ -319,6 +321,31 @@ describe('SellerBundlesPage', () => {
     expect(page.title()).toBe('ชุดข้อสอบคณิต');
   });
 
+  it('opens the create form when "สร้างแพ็กเกจใหม่" is clicked', async () => {
+    // QA-reported regression: the create button had "zero visible effect". This clicks the
+    // rendered DOM button (not the method directly) so a broken template binding would fail it.
+    stubEmptyList([candidate('doc-1', 120)]);
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.formOpen()).toBe(false);
+
+    const createButton = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((btn) => (btn as HTMLButtonElement).textContent?.includes('สร้างแพ็กเกจใหม่')) as
+      | HTMLButtonElement
+      | undefined;
+    expect(createButton).toBeTruthy();
+
+    createButton!.click();
+    fixture.detectChanges();
+    await settle();
+
+    expect(fixture.componentInstance.formOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('input[name="title"]')).toBeTruthy();
+  });
+
   it('does not swallow a failed load', async () => {
     stubRoute('GET', '/api/seller/bundles', { status: 500 }, 500);
     stubRoute('GET', '/api/seller/bundles/candidates', []);
@@ -327,5 +354,29 @@ describe('SellerBundlesPage', () => {
 
     expect(fixture.componentInstance.bundles()).toEqual([]);
     expect(fixture.componentInstance.loading()).toBe(false);
+  });
+
+  it('shows a friendly "no store yet" state on 403 seller_profile_required, not a toast', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/bundles',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    stubRoute('GET', '/api/seller/bundles/candidates', []);
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.sellerProfileRequired()).toBe(true);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('บัญชีนี้ยังไม่มีร้านค้า');
+    expect(text).not.toContain('สร้างแพ็กเกจใหม่');
+
+    const becomeSellerLink = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href="/become-seller"]',
+    );
+    expect(becomeSellerLink).toBeTruthy();
   });
 });

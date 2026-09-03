@@ -1,14 +1,24 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, Injector, inject, signal } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { getApiMeProfile, postApiFilesUpload, putApiMeProfile } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { AuthService } from './auth.service';
 import type { UpdateProfileRequest, UploadResponse, UserProfileResponse } from '../api/types.gen';
 
 @Injectable({ providedIn: 'root' })
 export class MeService {
   private readonly apiFail = inject(ApiFailureReporter);
+  /**
+   * QA fix (stale header identity): resolved lazily via `Injector` — not an eager `inject()`
+   * field — for the same reason `AuthService` now resolves `CartService`/`WishlistService`
+   * lazily (see `BUG-CART-401-RACE` in `auth.service.ts`): `AuthService` itself is constructed
+   * very early (`provideSdkAuthBridge`'s `APP_INITIALIZER`), and an eager field here would make
+   * *that* construction reach back into `MeService` for no reason this class actually needs
+   * before `loadProfile()`/`updateProfile()` are first called.
+   */
+  private readonly injector = inject(Injector);
 
   private readonly _profile = signal<UserProfileResponse | null>(null);
 
@@ -17,7 +27,13 @@ export class MeService {
   loadProfile(): Observable<UserProfileResponse> {
     return from(getApiMeProfile()).pipe(
       map(unwrapSdkResult),
-      tap((p) => this._profile.set(p)),
+      tap((p) => {
+        this._profile.set(p);
+        // QA fix: reconcile the header identity (`auth.user()`) against the live, authoritative
+        // profile every time it loads, so a stale session from an earlier login never keeps
+        // showing the wrong account's name/role indefinitely.
+        this.injector.get(AuthService).syncUserFromProfile(p);
+      }),
       catchError((e) => {
         this.apiFail.report('โหลดโปรไฟล์', e);
         return throwError(() => e);
@@ -31,7 +47,12 @@ export class MeService {
   updateProfile(request: UpdateProfileRequest): Observable<UserProfileResponse> {
     return from(putApiMeProfile({ body: request })).pipe(
       map(unwrapSdkResult),
-      tap((p) => this._profile.set(p)),
+      tap((p) => {
+        this._profile.set(p);
+        // Same reconciliation as loadProfile() — a saved display-name change shows in the
+        // header immediately instead of waiting for the next full profile reload.
+        this.injector.get(AuthService).syncUserFromProfile(p);
+      }),
       catchError((e) => {
         this.apiFail.report('บันทึกโปรไฟล์', e);
         return throwError(() => e);

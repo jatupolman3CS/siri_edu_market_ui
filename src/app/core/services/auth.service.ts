@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { User, UserRole } from '../models';
@@ -56,9 +56,19 @@ export class AuthService {
    * into their account transparently on sign-in, but `CartService`/`WishlistService` are
    * `providedIn: 'root'` singletons that already loaded their in-memory state while still
    * anonymous. Neither injects `AuthService`, so this direction is safe (no circular DI).
+   *
+   * BUG-CART-401-RACE: these used to be eager `inject()` fields, which meant *constructing*
+   * `AuthService` (e.g. from `provideSdkAuthBridge`'s `APP_INITIALIZER`, before it has called
+   * `setAuthTokenGetter`) had the side effect of constructing `CartService`/`WishlistService`
+   * too — and both fire their first `GET /api/cart` / `GET /api/wishlist` synchronously from
+   * their own constructors. That request left with no `Authorization` header (the token getter
+   * wasn't wired up yet), got a 401, and — because it looked like an anonymous request — was
+   * never retried after a refresh (see the D-11 comment in `api-runtime.ts`), surfacing a false
+   * "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ" toast for a signed-in user on nearly every page load. Resolving
+   * these lazily through `Injector` at the point of use (post sign-in only) keeps `AuthService`'s
+   * own construction free of that side effect.
    */
-  private readonly cart = inject(CartService);
-  private readonly wishlist = inject(WishlistService);
+  private readonly injector = inject(Injector);
 
   private readonly _session = signal<AuthSession | null>(this.loadSession());
   private readonly _pending = signal<PendingAuth | null>(this.loadPending());
@@ -467,6 +477,54 @@ export class AuthService {
     }
   }
 
+  /**
+   * QA fix (stale header identity): `auth.user()` used to be frozen at whatever the login
+   * response (or a session restored from `localStorage`) said, and nothing ever reconciled it
+   * against the live, authoritative account the JWT actually resolves to server-side — so a
+   * session left over from an earlier login in the same browser (a different seeded account,
+   * multiple tabs, etc.) could keep showing that account's name/role in the header indefinitely,
+   * even though every real API call was already correctly scoped to whoever the token belongs
+   * to. `MeService.loadProfile()` already calls `GET /api/me/profile` on every authenticated
+   * header/Studio page load — this reconciles `auth.user()` against that live result each time,
+   * so the header self-heals to the actually-authenticated account instead of staying stale.
+   */
+  syncUserFromProfile(profile: {
+    id?: string | null;
+    name?: string | null;
+    email?: string | null;
+    role?: string | null;
+  }): void {
+    const current = this._session();
+    if (!current) return;
+
+    const nextUser: User = {
+      ...current.user,
+      id: profile.id || current.user.id,
+      name: profile.name ?? current.user.name,
+      email: profile.email || current.user.email,
+      role: this.normalizeRole(profile.role),
+    };
+
+    if (
+      nextUser.id === current.user.id &&
+      nextUser.name === current.user.name &&
+      nextUser.email === current.user.email &&
+      nextUser.role === current.user.role
+    ) {
+      return;
+    }
+
+    const nextSession: AuthSession = { ...current, user: nextUser };
+    this._session.set(nextSession);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   // ========== Internals ==========
 
   /**
@@ -476,8 +534,8 @@ export class AuthService {
    * while still anonymous.
    */
   private reloadCartAndWishlistAfterSignIn(): void {
-    this.cart.loadCart();
-    void this.wishlist.refresh();
+    this.injector.get(CartService).loadCart();
+    void this.injector.get(WishlistService).refresh();
   }
 
   private completeSignIn(user: User, provider: AuthProvider): void {

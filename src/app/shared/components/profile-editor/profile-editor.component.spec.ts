@@ -1,6 +1,7 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { of } from 'rxjs';
+import { from, of } from 'rxjs';
 import { ProfileEditorComponent } from './profile-editor.component';
 import { MeService } from '../../../core/services';
 import type {
@@ -97,8 +98,8 @@ describe('ProfileEditorComponent — avatar optimized URL (AC-11)', () => {
 
     await selectAvatarFile(component, buildFile());
 
-    expect(component.avatarUrl).toBe('https://cdn.example.test/optimized-avatar.webp');
-    expect(component.avatarStorageKey).toBe('users/user-1/2026/09/01/optimized/avatar.webp');
+    expect(component.avatarUrl()).toBe('https://cdn.example.test/optimized-avatar.webp');
+    expect(component.avatarStorageKey()).toBe('users/user-1/2026/09/01/optimized/avatar.webp');
     expect(updateProfileCalls).toHaveLength(1);
     // storage-key-persistence v1 §4.1: payload carries the bare key, never a URL.
     expect(updateProfileCalls[0].avatarStorageKey).toBe(
@@ -117,8 +118,8 @@ describe('ProfileEditorComponent — avatar optimized URL (AC-11)', () => {
 
     await selectAvatarFile(component, buildFile());
 
-    expect(component.avatarUrl).toBe('https://cdn.example.test/original-avatar.png');
-    expect(component.avatarStorageKey).toBe('users/user-1/2026/09/01/avatar.png');
+    expect(component.avatarUrl()).toBe('https://cdn.example.test/original-avatar.png');
+    expect(component.avatarStorageKey()).toBe('users/user-1/2026/09/01/avatar.png');
     expect(updateProfileCalls).toHaveLength(1);
     expect(updateProfileCalls[0].avatarStorageKey).toBe('users/user-1/2026/09/01/avatar.png');
   });
@@ -139,12 +140,64 @@ describe('ProfileEditorComponent — storage-key round-trip (storage-key-persist
     // still be the value sent, even though this edit never touches the avatar at all — this is
     // the exact regression the spec calls out: resubmitting a stale field must never leak a URL
     // into the storage-key column.
-    component.displayName = 'ครูเอ (แก้ชื่อ)';
+    component.displayName.set('ครูเอ (แก้ชื่อ)');
     component.save();
 
     expect(updateProfileCalls).toHaveLength(1);
     expect(updateProfileCalls[0].name).toBe('ครูเอ (แก้ชื่อ)');
     expect(updateProfileCalls[0].avatarStorageKey).toBe('users/user-1/original-avatar.png');
     expect(updateProfileCalls[0]).not.toHaveProperty('avatarUrl');
+  });
+});
+
+/**
+ * QA fix (buyer /account display-name blank on load): `AccountPage`'s template mounts
+ * `<app-profile-editor />` with no input bindings at all, unlike `/seller/settings`, whose
+ * template reads `[secondaryLabel]="studioLabel()"` — a signal read that (incidentally) forces
+ * Angular to re-check this OnPush child whenever that unrelated signal changes, masking the real
+ * issue: `displayName`/`avatarUrl`/`avatarStorageKey` used to be plain (non-signal) fields
+ * mutated from an RxJS `subscribe()` callback outside any template-tracked reactive read, so a
+ * host with no such incidental trigger (like `AccountPage`) never re-rendered them after the
+ * async `GET /api/me/profile` resolved. Converting them to signals makes the component track its
+ * own state correctly regardless of what any host does — see the fields' definitions.
+ */
+@Component({
+  selector: 'app-profile-editor-test-host',
+  standalone: true,
+  imports: [ProfileEditorComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<app-profile-editor />`,
+})
+class ProfileEditorTestHostComponent {}
+
+describe('ProfileEditorComponent — async prefill through a host with no incidental input triggers', () => {
+  it('prefills the name input once the (genuinely async) profile load resolves', async () => {
+    const fakeMeService: Partial<MeService> = {
+      // `from(Promise.resolve(...))` resolves on a microtask, same as the real
+      // `from(getApiMeProfile())` in MeService — unlike `of(...)`, which is synchronous.
+      loadProfile: () => from(Promise.resolve(profile)),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [ProfileEditorTestHostComponent],
+      providers: [
+        { provide: MeService, useValue: fakeMeService },
+        { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
+      ],
+    });
+
+    // Mirrors AccountPage exactly: the host — not ProfileEditorComponent — is the fixture root,
+    // and its template passes no bindings to <app-profile-editor> at all.
+    const fixture = TestBed.createComponent(ProfileEditorTestHostComponent);
+    fixture.autoDetectChanges(true);
+
+    for (let i = 0; i < 6; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    const nameInput: HTMLInputElement = fixture.nativeElement.querySelector(
+      'input[name="displayName"]',
+    );
+    expect(nameInput.value).toBe('ครูเอ');
   });
 });

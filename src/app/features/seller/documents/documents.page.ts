@@ -8,6 +8,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { placeholderCoverUrl } from '../../../core/brand-assets';
 import { DocumentItem } from '../../../core/models';
 import { SellerService } from '../../../core/services';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
@@ -20,6 +21,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
   imports: [
     RouterLink,
     FormsModule,
+    EmptyStateComponent,
     IconComponent,
     NzModalModule,
     ThbPipe,

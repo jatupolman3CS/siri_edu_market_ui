@@ -3,12 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { DocumentService } from '../../../core/services/document.service';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-pdf-preview-upload',
   standalone: true,
-  imports: [FormsModule, ImgFallbackDirective],
+  imports: [FormsModule, IconComponent, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pdf-preview-upload.page.html',
   styleUrl: './pdf-preview-upload.page.scss',
@@ -20,6 +21,8 @@ export class PdfPreviewUploadPage {
   readonly uploading = signal(false);
   readonly documentId = signal<string>('');
   readonly previewUrls = signal<string[]>([]);
+  /** QA fix: shown in the branded dropzone instead of the browser's native "No file chosen". */
+  readonly selectedFileName = signal<string>('');
 
   resolveUrl(url: string): string {
     return resolvePublicUrl(url);
@@ -31,6 +34,7 @@ export class PdfPreviewUploadPage {
     input.value = '';
     if (!file) return;
 
+    this.selectedFileName.set(file.name);
     void this.doUpload(file);
   }
 

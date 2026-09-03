@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { RouterLink } from '@angular/router';
 import type { SellerBundleItemResponse, SellerBundleResponse } from '../../../core/api';
 import { BundleService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { extractErrorCode, extractErrorStatus } from '../../../core/services/api-result';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
@@ -24,7 +26,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 @Component({
   selector: 'app-seller-bundles',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmptyStateComponent, ThbPipe],
+  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent, ThbPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundles.page.html',
 })
@@ -37,6 +39,12 @@ export class SellerBundlesPage {
   readonly candidates = signal<SellerBundleItemResponse[]>([]);
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
+  /**
+   * QA fix: `RequireSellerProfileFilter` answers a clean `403 seller_profile_required` for a
+   * caller (typically an Admin) with no `SELLER_PROFILE` row — shown as a friendly "no store yet"
+   * state instead of the generic connection-failure toast.
+   */
+  readonly sellerProfileRequired = signal<boolean>(false);
 
   /** Bundle being edited; null while creating a new one. */
   readonly editingId = signal<string | null>(null);
@@ -93,8 +101,13 @@ export class SellerBundlesPage {
       ]);
       this.bundles.set(bundles);
       this.candidates.set(candidates);
+      this.sellerProfileRequired.set(false);
     } catch (e) {
-      this.apiFail.report('โหลดแพ็กเกจของฉัน', e);
+      if (extractErrorStatus(e) === 403 && extractErrorCode(e) === 'seller_profile_required') {
+        this.sellerProfileRequired.set(true);
+      } else {
+        this.apiFail.report('โหลดแพ็กเกจของฉัน', e);
+      }
       this.bundles.set([]);
     } finally {
       this.loading.set(false);

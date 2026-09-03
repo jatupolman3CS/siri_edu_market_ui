@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerDashboardPage } from './dashboard.page';
 import { PlatformStatsService, SellerService } from '../../../core/services';
 import type { PlatformStats, SellerStats } from '../../../core/models';
@@ -35,11 +36,14 @@ function render(opts: {
   stats?: Partial<SellerStats>;
   nextPayoutDate?: string | null;
   platformStats?: PlatformStats;
+  messageWarning?: (text: string) => void;
+  sellerProfileRequired?: boolean;
 }) {
   const fakeSeller = {
     stats: () => buildStats(opts.stats),
     myDocuments: () => [],
     nextPayoutDate: () => opts.nextPayoutDate ?? null,
+    sellerProfileRequired: () => opts.sellerProfileRequired ?? false,
     refreshDashboard: vi.fn(async () => {}),
     loadEarnings: vi.fn(async () => {}),
   };
@@ -54,6 +58,7 @@ function render(opts: {
       provideRouter([]),
       { provide: SellerService, useValue: fakeSeller },
       { provide: PlatformStatsService, useValue: fakePlatformStats },
+      { provide: NzMessageService, useValue: { warning: opts.messageWarning ?? vi.fn() } },
     ],
   });
 
@@ -133,5 +138,68 @@ describe('SellerDashboardPage — โอนรอบถัดไป (real-data-s
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('โอนรอบถัดไป');
     expect(text).toContain('2026');
+  });
+});
+
+describe('SellerDashboardPage — ขอถอนเงินทันที (QA fix: no-op button at ฿0 balance)', () => {
+  it('disables the button when pendingPayout is ฿0', () => {
+    const fixture = render({ stats: { pendingPayout: 0 } });
+
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((btn) => btn.textContent?.includes('ขอถอนเงินทันที')) as HTMLButtonElement | undefined;
+
+    expect(button).toBeTruthy();
+    expect(button!.disabled).toBe(true);
+  });
+
+  it('warns instead of navigating when clicked with nothing to withdraw', () => {
+    const warning = vi.fn();
+    const fixture = render({ stats: { pendingPayout: 0 }, messageWarning: warning });
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    fixture.componentInstance.requestWithdraw();
+
+    expect(warning).toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('enables the button and navigates to /seller/earnings when balance is positive', () => {
+    const fixture = render({ stats: { pendingPayout: 5000 } });
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((btn) => btn.textContent?.includes('ขอถอนเงินทันที')) as HTMLButtonElement | undefined;
+    expect(button!.disabled).toBe(false);
+
+    fixture.componentInstance.requestWithdraw();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/seller/earnings']);
+  });
+});
+
+describe('SellerDashboardPage — seller_profile_required (QA fix: friendly 403 state)', () => {
+  it('shows a friendly "no store yet" state instead of the dashboard content', () => {
+    const fixture = render({ sellerProfileRequired: true });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('บัญชีนี้ยังไม่มีร้านค้า');
+    expect(text).not.toContain('ภาพรวมร้านของคุณ');
+
+    const becomeSellerLink = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href="/become-seller"]',
+    );
+    expect(becomeSellerLink).toBeTruthy();
+  });
+
+  it('shows the normal dashboard when the account has a seller profile', () => {
+    const fixture = render({ sellerProfileRequired: false });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ภาพรวมร้านของคุณ');
+    expect(text).not.toContain('บัญชีนี้ยังไม่มีร้านค้า');
   });
 });

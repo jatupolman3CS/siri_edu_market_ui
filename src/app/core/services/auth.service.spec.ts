@@ -458,3 +458,101 @@ describe('AuthService reloads cart wishlist after sign-in AC17', () => {
     expect(wishlist.refresh).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('AuthService construction does not eagerly construct CartService/WishlistService (BUG-CART-401-RACE)', () => {
+  /**
+   * QA fix: `provideSdkAuthBridge`'s `APP_INITIALIZER` factory constructs `AuthService` (via
+   * `inject(AuthService)`) *before* it calls `setAuthTokenGetter(...)`. `CartService` and
+   * `WishlistService` each fire their first API call synchronously from their own constructor —
+   * so if constructing `AuthService` had the side effect of constructing them too (as it used to,
+   * via eager `inject()` fields), that first `GET /api/cart` / `GET /api/wishlist` would go out
+   * with no Authorization header even for an already-signed-in user, get a 401, and — because it
+   * looked like an anonymous request — never retry after a refresh (see the D-11 comment in
+   * `api-runtime.ts`), surfacing a false "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ" toast on nearly every load.
+   * This asserts the fix: `CartService`/`WishlistService` are built lazily, only when a sign-in
+   * flow actually needs to reload them.
+   */
+  it('injecting AuthService alone never constructs CartService or WishlistService', () => {
+    let cartConstructed = false;
+    let wishlistConstructed = false;
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+        { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } },
+        { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
+        { provide: GoogleOauthService, useValue: {} },
+        { provide: GoogleOauthConfigService, useValue: { load: vi.fn() } },
+        {
+          provide: CartService,
+          useFactory: () => {
+            cartConstructed = true;
+            return { loadCart: vi.fn() };
+          },
+        },
+        {
+          provide: WishlistService,
+          useFactory: () => {
+            wishlistConstructed = true;
+            return { refresh: vi.fn().mockResolvedValue(undefined) };
+          },
+        },
+      ],
+    });
+
+    TestBed.inject(AuthService);
+
+    expect(cartConstructed).toBe(false);
+    expect(wishlistConstructed).toBe(false);
+  });
+});
+
+describe('AuthService.syncUserFromProfile (QA fix: stale header identity)', () => {
+  it('reconciles auth.user() with the live GET /api/me/profile result', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const auth = buildService();
+    await auth.signIn('teacher@example.com', 'secret123');
+    expect(auth.user()?.name).toBe('x');
+
+    // Simulates a session that was actually left over from an earlier login (e.g. a different
+    // seeded account, or another tab) — the live profile is what the JWT actually resolves to.
+    auth.syncUserFromProfile({
+      id: 'u-1',
+      name: 'Admin จริง',
+      email: 'admin@siriedumarket.local',
+      role: 'Admin',
+    });
+
+    expect(auth.user()?.name).toBe('Admin จริง');
+    expect(auth.user()?.email).toBe('admin@siriedumarket.local');
+    expect(auth.role()).toBe('admin');
+    expect(auth.isAdmin()).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).user.name).toBe('Admin จริง');
+  });
+
+  it('does nothing when there is no session to reconcile', () => {
+    const auth = buildService();
+
+    auth.syncUserFromProfile({ id: 'u-1', name: 'Someone', email: 'x@example.com', role: 'buyer' });
+
+    expect(auth.user()).toBeNull();
+  });
+
+  it('is a no-op when the live profile already matches the session (no redundant write)', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const auth = buildService();
+    await auth.signIn('teacher@example.com', 'secret123');
+    const before = auth.user();
+
+    auth.syncUserFromProfile({
+      id: 'u-1',
+      name: 'x',
+      email: 'teacher@example.com',
+      role: 'buyer',
+    });
+
+    // Same object reference — nothing was rewritten for an already-matching profile.
+    expect(auth.user()).toBe(before);
+  });
+});

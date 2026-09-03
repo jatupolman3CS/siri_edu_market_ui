@@ -1,4 +1,13 @@
 <div class="max-w-6xl">
+      @if (seller.sellerProfileRequired()) {
+        <app-empty-state
+          emoji="🏪"
+          title="บัญชีนี้ยังไม่มีร้านค้า"
+          description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
+        >
+          <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+        </app-empty-state>
+      } @else {
       <!-- Greeting -->
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -83,34 +92,42 @@
         <section class="card-soft p-6">
           <h2 class="text-lg font-bold text-ink mb-1">หมวดที่ขายดี</h2>
           <p class="text-xs text-ink-muted mb-5">จัดอันดับตามจำนวนยอดขายในเดือนนี้</p>
-          <ul class="space-y-3">
-            @for (c of seller.stats().topCategories; track c.category; let i = $index) {
-              <li>
-                <div class="flex items-center justify-between text-sm mb-1.5">
-                  <div class="flex items-center gap-2">
-                    <span
-                      class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center"
-                      [class]="
-                        i === 0 ? 'bg-pink-500 text-white' :
-                        i === 1 ? 'bg-pink-300 text-pink-700' :
-                        'bg-pink-100 text-pink-600'
-                      "
-                    >
-                      {{ i + 1 }}
-                    </span>
-                    <span class="font-medium text-ink">{{ c.category }}</span>
+          @if (seller.stats().topCategories.length === 0) {
+            <app-empty-state
+              emoji="🏷️"
+              title="ยังไม่มียอดขาย"
+              description="เมื่อมีเอกสารขายได้ หมวดที่ขายดีจะแสดงที่นี่"
+            />
+          } @else {
+            <ul class="space-y-3">
+              @for (c of seller.stats().topCategories; track c.category; let i = $index) {
+                <li>
+                  <div class="flex items-center justify-between text-sm mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center"
+                        [class]="
+                          i === 0 ? 'bg-pink-500 text-white' :
+                          i === 1 ? 'bg-pink-300 text-pink-700' :
+                          'bg-pink-100 text-pink-600'
+                        "
+                      >
+                        {{ i + 1 }}
+                      </span>
+                      <span class="font-medium text-ink">{{ c.category }}</span>
+                    </div>
+                    <span class="font-bold text-ink">{{ c.sales | compact }}</span>
                   </div>
-                  <span class="font-bold text-ink">{{ c.sales | compact }}</span>
-                </div>
-                <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
-                  <div
-                    class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
-                    [style.width.%]="(c.sales / topCategoryMax()) * 100"
-                  ></div>
-                </div>
-              </li>
-            }
-          </ul>
+                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                    <div
+                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      [style.width.%]="(c.sales / topCategoryMax()) * 100"
+                    ></div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
         </section>
       </div>
 
@@ -122,27 +139,35 @@
             <h2 class="text-lg font-bold text-ink">เอกสารล่าสุดของคุณ</h2>
             <a routerLink="/seller/documents" class="text-sm text-pink-600 hover:underline font-semibold">ดูทั้งหมด →</a>
           </header>
-          <ul class="divide-y divide-line">
-            @for (d of seller.myDocuments().slice(0, 5); track d.id) {
-              <li class="py-3 flex items-center gap-4">
-                <img appImgFallback [src]="d.cover" [alt]="d.title" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" />
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
-                  <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">
-                    <span class="uppercase">{{ d.format }}</span>
-                    <span>·</span>
-                    <span>{{ d.downloads }} ดาวน์โหลด</span>
-                    <span>·</span>
-                    <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
+          @if (seller.myDocuments().length === 0) {
+            <app-empty-state
+              emoji="📄"
+              title="ยังไม่มีเอกสาร"
+              description="อัปโหลดเอกสารแรกของคุณเพื่อเริ่มขาย"
+            />
+          } @else {
+            <ul class="divide-y divide-line">
+              @for (d of seller.myDocuments().slice(0, 5); track d.id) {
+                <li class="py-3 flex items-center gap-4">
+                  <img appImgFallback [src]="d.cover" [alt]="d.title" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
+                    <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">
+                      <span class="uppercase">{{ d.format }}</span>
+                      <span>·</span>
+                      <span>{{ d.downloads }} ดาวน์โหลด</span>
+                      <span>·</span>
+                      <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
+                    </div>
                   </div>
-                </div>
-                <div class="text-right">
-                  <div class="text-sm font-bold text-ink">{{ d.price | thb }}</div>
-                  <span class="pill-pink !py-0 !text-[10px]">{{ d.status === 'approved' ? 'เผยแพร่' : 'รออนุมัติ' }}</span>
-                </div>
-              </li>
-            }
-          </ul>
+                  <div class="text-right">
+                    <div class="text-sm font-bold text-ink">{{ d.price | thb }}</div>
+                    <span class="pill-pink !py-0 !text-[10px]">{{ d.status === 'approved' ? 'เผยแพร่' : 'รออนุมัติ' }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
         </section>
 
         <!-- Payout -->
@@ -155,7 +180,11 @@
           @if (seller.nextPayoutDate(); as payoutDate) {
             <div class="text-xs text-ink-muted mt-2">โอนรอบถัดไป: {{ payoutDate | date: 'd MMM yyyy' }}</div>
           }
-          <button class="btn-pink w-full mt-5 !py-2.5">
+          <button
+            class="btn-pink w-full mt-5 !py-2.5"
+            [disabled]="seller.stats().pendingPayout <= 0"
+            (click)="requestWithdraw()"
+          >
             <app-icon name="wallet" [size]="16" />
             ขอถอนเงินทันที
           </button>
@@ -262,4 +291,5 @@
           </div>
         </div>
       </section>
+      }
     </div>

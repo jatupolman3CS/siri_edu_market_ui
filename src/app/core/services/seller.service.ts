@@ -33,7 +33,7 @@ import type {
   SellerEarningsResponse,
   UploadResponse,
 } from '../api/types.gen';
-import { unwrapSdkResult, type SdkResult } from './api-result';
+import { extractErrorCode, extractErrorStatus, unwrapSdkResult, type SdkResult } from './api-result';
 import { putApiSellerDocumentsById, type UpdateSellerDocumentRequest } from '../api/seller-document-update';
 import {
   getApiSellerDocumentsByIdMainFiles,
@@ -85,6 +85,25 @@ export class SellerService {
   readonly earnings = this._earnings.asReadonly();
 
   /**
+   * QA fix: `RequireSellerProfileFilter` now answers a clean `403` (ProblemDetails code
+   * `seller_profile_required`) from the dashboard/documents/bundles endpoints for a caller
+   * (typically an Admin) with no `SELLER_PROFILE` row, instead of a demo-looking identity or a
+   * bare 500. Studio pages read this to show a friendly "no store yet" state instead of the
+   * generic connection-failure toast.
+   */
+  private readonly _sellerProfileRequired = signal(false);
+  readonly sellerProfileRequired = this._sellerProfileRequired.asReadonly();
+
+  /** True when `error` is the expected `403 seller_profile_required` — never the generic toast. */
+  private handleSellerScopedError(context: string, error: unknown): void {
+    if (extractErrorStatus(error) === 403 && extractErrorCode(error) === 'seller_profile_required') {
+      this._sellerProfileRequired.set(true);
+      return;
+    }
+    this.apiFail.report(context, error);
+  }
+
+  /**
    * real-data-stats v1 §3.5: `SellerEarningsResponse.nextPayoutDate` — `null` means the backend
    * couldn't parse `PLATFORM_SETTING.PayoutSchedule` (§3.5), which hides the "โอนรอบถัดไป" line
    * per §4.6/§4.5.
@@ -133,8 +152,9 @@ export class SellerService {
       const result = await getApiSellerDashboard();
       const data = unwrapSdkResult(result);
       if (data) this._stats.set(mapSellerStats(data));
+      this._sellerProfileRequired.set(false);
     } catch (e) {
-      this.apiFail.report('โหลดแดชบอร์ดผู้ขาย', e);
+      this.handleSellerScopedError('โหลดแดชบอร์ดผู้ขาย', e);
     }
   }
 
@@ -166,8 +186,9 @@ export class SellerService {
   async refreshDocuments(): Promise<void> {
     try {
       await this.docsPager.loadFirst();
+      this._sellerProfileRequired.set(false);
     } catch (e) {
-      this.apiFail.report('โหลดเอกสารของฉัน', e);
+      this.handleSellerScopedError('โหลดเอกสารของฉัน', e);
     }
   }
 

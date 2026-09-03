@@ -1,4 +1,13 @@
 <div>
+      @if (seller.sellerProfileRequired()) {
+        <app-empty-state
+          emoji="🏪"
+          title="บัญชีนี้ยังไม่มีร้านค้า"
+          description="สมัครเป็นผู้ขายก่อนถึงจะจัดการเอกสารได้"
+        >
+          <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+        </app-empty-state>
+      } @else {
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-3xl font-extrabold text-ink mb-1">เอกสารของฉัน</h1>
@@ -46,6 +55,15 @@
       </div>
 
       <!-- Doc table -->
+      @if (filteredDocs().length === 0) {
+        <div class="card-soft">
+          <app-empty-state
+            emoji="📄"
+            title="ยังไม่มีเอกสาร"
+            description="อัปโหลดเอกสารแรกของคุณ หรือปรับตัวกรอง/คำค้นหาด้านบนดู"
+          />
+        </div>
+      } @else {
       <div class="card-soft overflow-x-auto">
         <table class="w-full min-w-[600px]">
           <thead class="bg-pink-50">
@@ -121,6 +139,7 @@
           </tbody>
         </table>
       </div>
+      }
 
       @if (seller.docsHasMore()) {
         <div class="flex justify-center mt-6">
@@ -133,5 +152,6 @@
             โหลดเพิ่ม
           </button>
         </div>
+      }
       }
     </div>

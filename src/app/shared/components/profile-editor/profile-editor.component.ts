@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { firstValueFrom } from 'rxjs';
@@ -31,26 +31,36 @@ export class ProfileEditorComponent {
   readonly secondaryLabel = input<string>('');
   readonly secondaryLabelText = input<string>('');
 
-  displayName = '';
-  avatarUrl = '';
+  /**
+   * QA fix: these used to be plain (non-signal) fields set from an RxJS `subscribe()` callback.
+   * A component whose host template passes it no input bindings (e.g. `AccountPage`, which
+   * mounts `<app-profile-editor />` with nothing dynamic) had no reactive trigger telling
+   * zoneless change detection to re-check this OnPush view once the async `GET /api/me/profile`
+   * resolved, so the name/avatar stayed blank until something else happened to refresh the page.
+   * `/seller/settings` only "worked" by accident, because its own template reads
+   * `[secondaryLabel]="studioLabel()"` — an unrelated signal whose change happens to force this
+   * child to be re-checked. Signals make the component correct on its own, regardless of the host.
+   */
+  readonly displayName = signal('');
+  readonly avatarUrl = signal('');
   /**
    * storage-key-persistence v1 §4.1: the bare object-storage key, kept separate from `avatarUrl`
    * (display-only) — this is what must round-trip back into `updateProfile()`, never the URL.
    */
-  avatarStorageKey = '';
+  readonly avatarStorageKey = signal('');
 
   readonly saving = signal(false);
   readonly avatarUploading = signal(false);
   readonly loaded = signal(false);
 
-  readonly avatarSrc = () => resolveAvatarUrl(this.avatarUrl);
+  readonly avatarSrc = computed(() => resolveAvatarUrl(this.avatarUrl()));
 
   constructor() {
     this.me.loadProfile().subscribe({
       next: (p) => {
-        this.displayName = p.name ?? '';
-        this.avatarUrl = p.avatarUrl ?? '';
-        this.avatarStorageKey = p.avatarStorageKey ?? '';
+        this.displayName.set(p.name ?? '');
+        this.avatarUrl.set(p.avatarUrl ?? '');
+        this.avatarStorageKey.set(p.avatarStorageKey ?? '');
         this.loaded.set(true);
       },
       error: () => {
@@ -77,15 +87,15 @@ export class ProfileEditorComponent {
       // image-upload-optimization v1 §4: avatar has no separate "original" column to keep, so
       // the optimized URL (when the backend produced one) replaces publicUrl outright — both
       // for what renders here and for what gets persisted.
-      this.avatarUrl = data.optimizedUrl ?? data.publicUrl;
+      this.avatarUrl.set(data.optimizedUrl ?? data.publicUrl);
       // storage-key-persistence v1 §4.1: persist the bare key from UploadResponse, never a URL.
-      this.avatarStorageKey = data.optimizedKey ?? data.key;
+      this.avatarStorageKey.set(data.optimizedKey ?? data.key);
       // The name goes up with it: PUT /api/me/profile replaces the profile, so sending the
       // avatar alone would blank a name the user had typed but not yet saved.
       await firstValueFrom(
         this.me.updateProfile({
-          name: this.displayName,
-          avatarStorageKey: this.avatarStorageKey,
+          name: this.displayName(),
+          avatarStorageKey: this.avatarStorageKey(),
         }),
       );
       this.message.success('อัปโหลดรูปโปรไฟล์และบันทึกแล้ว');
@@ -102,7 +112,7 @@ export class ProfileEditorComponent {
     // `avatarUrl` is a resolved display URL and would corrupt the stored key on every edit that
     // doesn't touch the avatar.
     this.me
-      .updateProfile({ name: this.displayName, avatarStorageKey: this.avatarStorageKey })
+      .updateProfile({ name: this.displayName(), avatarStorageKey: this.avatarStorageKey() })
       .subscribe({
         next: () => {
           this.saving.set(false);

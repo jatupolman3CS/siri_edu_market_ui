@@ -32,3 +32,29 @@ export function unwrapSdkResult<T>(result: SdkResult<T>): T {
   }
   return result.data;
 }
+
+/**
+ * Best-effort HTTP status out of a thrown SDK/ProblemDetails error — a caller-facing sibling to
+ * {@link unwrapSdkResult} for the (less common) case where a service branches on the status
+ * instead of just reporting it, e.g. distinguishing an expected 403 from a generic failure.
+ */
+export function extractErrorStatus(error: unknown): number | undefined {
+  if (error == null || typeof error !== 'object') return undefined;
+  const o = error as Record<string, unknown>;
+  if (typeof o['status'] === 'number') return o['status'] as number;
+  if (typeof o['statusCode'] === 'number') return o['statusCode'] as number;
+  const r = o['response'] as Record<string, unknown> | undefined;
+  if (r && typeof r['status'] === 'number') return r['status'] as number;
+  return undefined;
+}
+
+/**
+ * Best-effort machine-readable error code out of a ProblemDetails error (e.g.
+ * `seller_profile_required`) — ASP.NET Core's ProblemDetails carries this as `code`.
+ */
+export function extractErrorCode(error: unknown): string | undefined {
+  if (error == null || typeof error !== 'object') return undefined;
+  const o = error as Record<string, unknown>;
+  if (typeof o['code'] === 'string') return o['code'] as string;
+  return undefined;
+}
