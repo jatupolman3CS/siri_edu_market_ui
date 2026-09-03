@@ -13,6 +13,7 @@ export * from './follow.service';
 export * from './bundle.service';
 export * from './quick-view.service';
 export * from './me.service';
+export * from './payment-method.service';
 export * from './notification.service';
 export * from './system-status.service';
 export * from './platform-stats.service';

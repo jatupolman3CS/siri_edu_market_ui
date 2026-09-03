@@ -43,6 +43,7 @@ import type {
   PlatformStats,
   QnAItem,
   ResourceType,
+  SavedPaymentMethod,
   Seller,
   SellerQnaItem,
   SellerStats,
@@ -735,6 +736,38 @@ export function mapLoyaltyEntry(d: LoyaltyEntryResponse): LoyaltyEntry {
     reason: d.reason ?? '',
     orderNumber: d.orderNumber ?? undefined,
     occurredAt: d.occurredAt ?? '',
+  };
+}
+
+/**
+ * saved-credit-cards v1 §3.2: `SavedPaymentMethodResponse` (docs/contracts/saved-credit-cards.md
+ * §3.2). Hand-typed locally rather than imported from `core/api/types.gen` — the backend for
+ * `GET/POST /api/me/payment-methods` etc. hasn't shipped yet, so the generated SDK has no such
+ * type this round. Field names/casing already match the contract exactly, so once
+ * `npm run generate:api` ships `SavedPaymentMethodResponse` this alias can be swapped for an
+ * import from `../api` with no change to the mapper body below.
+ */
+export type SavedPaymentMethodResponseShape = {
+  id?: string | null;
+  stripePaymentMethodId?: string | null;
+  brand?: string | null;
+  last4?: string | null;
+  expMonth?: number | null;
+  expYear?: number | null;
+  isDefault?: boolean | null;
+  createdAt?: string | null;
+};
+
+export function mapSavedPaymentMethod(d: SavedPaymentMethodResponseShape): SavedPaymentMethod {
+  return {
+    id: d.id ?? '',
+    stripePaymentMethodId: d.stripePaymentMethodId ?? '',
+    brand: d.brand ?? '',
+    last4: d.last4 ?? '',
+    expMonth: d.expMonth ?? 0,
+    expYear: d.expYear ?? 0,
+    isDefault: d.isDefault ?? false,
+    createdAt: d.createdAt ?? new Date().toISOString(),
   };
 }
 

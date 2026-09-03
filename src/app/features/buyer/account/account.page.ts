@@ -4,6 +4,7 @@ import { AuthService } from '../../../core/services';
 import { ChangePasswordComponent } from '../../../shared/components/change-password/change-password.component';
 import { NotificationSettingsComponent } from '../../../shared/components/notification-settings/notification-settings.component';
 import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
+import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
 
 /**
  * F-07 (N-03): the buyer's own account page.
@@ -24,6 +25,7 @@ import { ProfileEditorComponent } from '../../../shared/components/profile-edito
     ProfileEditorComponent,
     ChangePasswordComponent,
     NotificationSettingsComponent,
+    SavedCardsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.page.html',

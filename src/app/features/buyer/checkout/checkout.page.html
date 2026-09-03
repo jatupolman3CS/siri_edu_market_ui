@@ -70,13 +70,32 @@
                 </div>
               } @else {
                 @if (!paymentReady()) {
-                  <p class="text-sm text-ink-soft leading-relaxed">
-                    กด «ดำเนินการชำระเงิน» เพื่อสร้างคำสั่งซื้อ จากนั้นเลือกวิธีชำระเงินได้ในกล่องของ Stripe
-                    — บัตรเครดิต, PromptPay หรือ wallet ที่เปิดให้บริการอยู่
-                  </p>
-                  <p class="text-xs text-ink-muted mt-3">
-                    ข้อมูลบัตรของคุณถูกกรอกและส่งให้ Stripe โดยตรง ไม่ผ่านเซิร์ฟเวอร์ของเรา
-                  </p>
+                  <!-- saved-credit-cards v1 §4: only shows a picker at all when the buyer has
+                       ≥1 saved card — "ใช้บัตรใหม่" is always one of the options once it does. -->
+                  <app-saved-cards mode="select" [(selected)]="selectedSavedCardId" />
+
+                  @if (selectedSavedCardId() === 'new') {
+                    <label class="flex items-center gap-2 text-sm text-ink-soft mb-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="saveNewCard()"
+                        (change)="saveNewCard.set($any($event.target).checked)"
+                        class="w-4 h-4 accent-pink-500"
+                      />
+                      บันทึกบัตรนี้ไว้สำหรับชำระเงินครั้งถัดไป
+                    </label>
+                    <p class="text-sm text-ink-soft leading-relaxed">
+                      กด «ดำเนินการชำระเงิน» เพื่อสร้างคำสั่งซื้อ จากนั้นเลือกวิธีชำระเงินได้ในกล่องของ Stripe
+                      — บัตรเครดิต, PromptPay หรือ wallet ที่เปิดให้บริการอยู่
+                    </p>
+                    <p class="text-xs text-ink-muted mt-3">
+                      ข้อมูลบัตรของคุณถูกกรอกและส่งให้ Stripe โดยตรง ไม่ผ่านเซิร์ฟเวอร์ของเรา
+                    </p>
+                  } @else {
+                    <p class="text-sm text-ink-soft leading-relaxed">
+                      กด «ดำเนินการชำระเงิน» เพื่อชำระด้วยบัตรที่เลือกไว้ทันที
+                    </p>
+                  }
                 } @else {
                   <p class="text-xs text-ink-muted mb-4">
                     เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»

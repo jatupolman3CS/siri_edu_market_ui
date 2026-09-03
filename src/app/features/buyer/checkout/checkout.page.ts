@@ -7,12 +7,14 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService, CartService, OrderService } from '../../../core/services';
+import { AuthService, CartService, OrderService, PaymentMethodService } from '../../../core/services';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
+import { isSavedCardEntryExpired } from '../../../core/util/saved-card.util';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 /**
@@ -24,11 +26,24 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
  * Nothing here concludes that an order is paid. `payment_intent.succeeded` at the webhook does,
  * which is why the buyer lands on the order page in a "confirming" state rather than a
  * "success" one.
+ *
+ * saved-credit-cards v1 (docs/contracts/saved-credit-cards.md §4): the buyer may instead pick a
+ * previously saved card (`selectedSavedCardId`, default preselected to their default card). That
+ * path skips the Payment Element entirely — there is nothing left to type — and confirms the
+ * payment with `stripe.confirmCardPayment` directly. The "new card" path is unchanged except for
+ * an added "บันทึกบัตรนี้ไว้..." checkbox and a best-effort save-the-card call after payment.
  */
 @Component({
   selector: 'app-buyer-checkout',
   standalone: true,
-  imports: [RouterLink, ThbPipe, IconComponent, EmptyStateComponent, ImgFallbackDirective],
+  imports: [
+    RouterLink,
+    ThbPipe,
+    IconComponent,
+    EmptyStateComponent,
+    ImgFallbackDirective,
+    SavedCardsComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './checkout.page.html',
   styleUrl: './checkout.page.scss',
@@ -38,6 +53,7 @@ export class BuyerCheckoutPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly orders = inject(OrderService);
+  readonly paymentMethods = inject(PaymentMethodService);
   private readonly message = inject(NzMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
@@ -65,9 +81,21 @@ export class BuyerCheckoutPage {
    */
   readonly paymentsUnavailable = signal(false);
 
+  /**
+   * saved-credit-cards v1 §4 step 1: `'new'` = pay with a freshly entered card through the
+   * Payment Element (the pre-existing flow); anything else is a `SavedPaymentMethod.id` to pay
+   * with directly. Preselected to the buyer's default saved card, if any, once the list loads.
+   */
+  readonly selectedSavedCardId = signal<string>('new');
+
+  /** saved-credit-cards v1 §4 step 3: only meaningful on the "ใช้บัตรใหม่" path. */
+  readonly saveNewCard = signal(false);
+
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
   private orderId: string | null = null;
+  /** Set only on the "new card" path — needed by step 4's `retrievePaymentIntent` call. */
+  private newCardClientSecret: string | null = null;
 
   /**
    * Step one: turn the cart into an order and open a payment for it. Everything the buyer needs
@@ -76,6 +104,7 @@ export class BuyerCheckoutPage {
    */
   constructor() {
     void this.checkPaymentsConfigured();
+    void this.loadSavedCards();
   }
 
   /**
@@ -94,6 +123,21 @@ export class BuyerCheckoutPage {
     this.cdr.markForCheck();
   }
 
+  /**
+   * saved-credit-cards v1 §4 step 1: loads the buyer's saved cards and preselects the default one
+   * (skipping an expired default, since it cannot be paid with anyway).
+   */
+  private async loadSavedCards(): Promise<void> {
+    await this.paymentMethods.refreshList();
+    const defaultCard = this.paymentMethods
+      .list()
+      .find((card) => card.isDefault && !isSavedCardEntryExpired(card));
+    if (defaultCard) {
+      this.selectedSavedCardId.set(defaultCard.id);
+    }
+    this.cdr.markForCheck();
+  }
+
   async startPayment(): Promise<void> {
     if (this.busy() || this.paymentUnderReview() || this.paymentsUnavailable()) return;
 
@@ -102,9 +146,14 @@ export class BuyerCheckoutPage {
       return;
     }
 
+    const savedCardId = this.selectedSavedCardId();
+    const payingWithSavedCard = savedCardId !== 'new';
+
     this.busy.set(true);
     try {
-      const outcome = await this.orders.create({});
+      const outcome = payingWithSavedCard
+        ? await this.orders.create({ savedPaymentMethodId: savedCardId })
+        : await this.orders.create({ saveNewCard: this.saveNewCard() });
       this.cdr.markForCheck();
 
       if (!outcome.ok) {
@@ -137,6 +186,13 @@ export class BuyerCheckoutPage {
       }
 
       this.orderId = order.id;
+
+      if (payingWithSavedCard) {
+        await this.payWithSavedCard(clientSecret, savedCardId);
+        return;
+      }
+
+      this.newCardClientSecret = clientSecret;
       await this.mountPaymentElement(clientSecret);
       this.paymentReady.set(true);
     } catch (e) {
@@ -150,9 +206,51 @@ export class BuyerCheckoutPage {
   }
 
   /**
-   * Step two: hand the payment to Stripe. A successful confirmation usually redirects the
-   * browser to `return_url`; when it does not (a card that needs no extra step), we navigate
-   * there ourselves so both routes end on the same page.
+   * saved-credit-cards v1 §4 step 2: no Payment Element to mount — the buyer already picked a
+   * card, so this confirms straight against the PaymentIntent the backend opened with that card
+   * attached. 3-D Secure, if the issuer needs it, is Stripe.js's own modal — nothing to add here.
+   */
+  private async payWithSavedCard(clientSecret: string, savedCardId: string): Promise<void> {
+    const card = this.paymentMethods.list().find((c) => c.id === savedCardId);
+    if (!card) {
+      this.message.error('ไม่พบบัตรที่เลือก — โปรดลองใหม่');
+      this.orders.resetCheckout();
+      return;
+    }
+
+    await loadStripeScript();
+    const stripeFactory = window.Stripe;
+    if (!stripeFactory) {
+      throw new Error('โหลด Stripe.js ไม่สำเร็จ');
+    }
+    const publishableKey = await this.orders.getStripePublishableKey();
+    if (!publishableKey) {
+      throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
+    }
+
+    const stripe = stripeFactory(publishableKey);
+    const result = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: card.stripePaymentMethodId,
+    });
+
+    // Same toast pattern as `confirmPayment()` below: Stripe only returns here when the payment
+    // could not be confirmed.
+    if (result.error) {
+      this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ');
+      return;
+    }
+
+    await this.ngZone.run(() =>
+      this.router.navigateByUrl(
+        this.router.createUrlTree(['/orders', this.orderId!], { queryParams: { pay: '1' } }),
+      ),
+    );
+  }
+
+  /**
+   * Step two (new-card path only): hand the payment to Stripe. A successful confirmation usually
+   * redirects the browser to `return_url`; when it does not (a card that needs no extra step), we
+   * navigate there ourselves so both routes end on the same page.
    */
   async confirmPayment(): Promise<void> {
     if (this.busy() || this.paymentUnderReview()) return;
@@ -173,6 +271,20 @@ export class BuyerCheckoutPage {
       if (result.error) {
         this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ');
         return;
+      }
+
+      // saved-credit-cards v1 §4 step 4: best-effort save of the card just used — the payment
+      // already succeeded, so any failure here must never surface as an error toast.
+      if (this.saveNewCard() && this.newCardClientSecret) {
+        try {
+          const retrieved = await this.stripe.retrievePaymentIntent(this.newCardClientSecret);
+          const pmId = retrieved.paymentIntent?.payment_method;
+          if (pmId) {
+            await this.paymentMethods.confirmSaved(pmId);
+          }
+        } catch {
+          // best-effort — swallow silently, per §4 step 4.
+        }
       }
 
       await this.ngZone.run(() =>
@@ -204,7 +316,12 @@ export class BuyerCheckoutPage {
 
     this.stripe = stripeFactory(publishableKey);
     this.elements = this.stripe.elements({ clientSecret });
-    this.elements.create('payment').mount('#stripe-payment-element');
+    this.elements
+      .create('payment', {
+        fields: { billingDetails: { email: 'never' } },
+        defaultValues: { billingDetails: { email: this.auth.user()?.email ?? '' } },
+      })
+      .mount('#stripe-payment-element');
   }
 
   /** Absolute, because Stripe redirects the browser to it from its own domain. */

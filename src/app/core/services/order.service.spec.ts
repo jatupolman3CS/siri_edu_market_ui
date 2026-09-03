@@ -64,6 +64,34 @@ afterEach(() => {
   TestBed.resetTestingModule();
 });
 
+describe('OrderService.create — saved-credit-cards v1 §4: request body', () => {
+  it('sends savedPaymentMethodId when paying with a saved card', async () => {
+    let sentBody = '';
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      sentBody = await request.clone().text();
+      return jsonResponse({ id: 'order-1', orderNumber: 'SE-1', status: 'awaiting_payment' }, 200);
+    }) as typeof globalThis.fetch;
+
+    await buildService().create({ savedPaymentMethodId: 'spm-1' });
+
+    expect(JSON.parse(sentBody)).toEqual({ savedPaymentMethodId: 'spm-1' });
+  });
+
+  it('sends saveNewCard when paying with a new card and opting to save it', async () => {
+    let sentBody = '';
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      sentBody = await request.clone().text();
+      return jsonResponse({ id: 'order-1', orderNumber: 'SE-1', status: 'awaiting_payment' }, 200);
+    }) as typeof globalThis.fetch;
+
+    await buildService().create({ saveNewCard: true });
+
+    expect(JSON.parse(sentBody)).toEqual({ saveNewCard: true });
+  });
+});
+
 describe('OrderService.create — 409 branches', () => {
   it('flags a charged-but-unreconciled payment instead of claiming the buyer owns it', async () => {
     const detail =

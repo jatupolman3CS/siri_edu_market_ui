@@ -18,11 +18,16 @@ import { mapOrder } from '../api-mappers/mappers';
 import type { Order } from '../models';
 
 /**
- * S-04: checkout sends nothing. The buyer picks a payment method inside Stripe's Payment
- * Element after the order exists, so there is no card token and no phone number to carry — and
- * no way for this layer to touch either.
+ * saved-credit-cards v1 §4: `POST /api/orders` (`CreateOrderRequest`, §3.1) grew two optional
+ * fields. `savedPaymentMethodId` picks an existing `SAVED_PAYMENT_METHOD` row to pay with instead
+ * of collecting a fresh card through the Payment Element; `saveNewCard` only matters when
+ * `savedPaymentMethodId` is absent, and asks Stripe to keep the card just entered for next time.
+ * Neither is sent unless the buyer opted in — see `checkout.page.ts`.
  */
-export type CreateOrderInput = Record<string, never>;
+export interface CreateOrderInput {
+  savedPaymentMethodId?: string;
+  saveNewCard?: boolean;
+}
 
 export type CreateOrderOutcome =
   | { ok: true; order: Order }
@@ -59,10 +64,15 @@ export class OrderService {
   private readonly _detail = signal<Order | null>(null);
   readonly detail = this._detail.asReadonly();
 
-  async create(_input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
+  async create(input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
     this._checkoutState.set(loadingActionState());
     try {
-      const result = await postApiOrders({ body: {} });
+      // saved-credit-cards v1 §4: `CreateOrderRequest` (generated as an open `{ [key: string]:
+      // unknown }` index signature until the backend round ships and `npm run generate:api`
+      // narrows it) now carries `savedPaymentMethodId` / `saveNewCard` straight through.
+      const result = await postApiOrders({
+        body: { savedPaymentMethodId: input.savedPaymentMethodId, saveNewCard: input.saveNewCard },
+      });
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);
       this._checkoutState.set(successActionState('สร้างคำสั่งซื้อสำเร็จ'));

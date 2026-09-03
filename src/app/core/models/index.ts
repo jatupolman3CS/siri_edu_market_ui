@@ -345,6 +345,23 @@ export interface LoyaltyEntry {
   occurredAt: string;
 }
 
+// ====== Saved payment methods (saved-credit-cards v1 §4) ======
+// Mirrors `SavedPaymentMethodResponse` (docs/contracts/saved-credit-cards.md §3.2) exactly.
+// `stripePaymentMethodId` is intentionally sent to the frontend — it is required to call
+// `stripe.confirmCardPayment(clientSecret, { payment_method: id })` when paying with a saved
+// card; knowing it alone is useless without a `clientSecret` for an order the caller owns.
+
+export interface SavedPaymentMethod {
+  id: string;
+  stripePaymentMethodId: string;
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 // ====== User ======
 
 export interface User {
