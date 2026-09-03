@@ -263,7 +263,12 @@ export class BuyerCheckoutPage {
     try {
       const result = await this.stripe.confirmPayment({
         elements: this.elements,
-        confirmParams: { return_url: this.returnUrlFor(this.orderId) },
+        confirmParams: {
+          return_url: this.returnUrlFor(this.orderId),
+          // The Payment Element was mounted with fields.billingDetails.email: 'never', so Stripe
+          // needs the email handed back here instead — otherwise confirmation fails.
+          payment_method_data: { billing_details: { email: this.auth.user()?.email ?? '' } },
+        },
       });
 
       // Stripe only returns here when the payment could not be confirmed; anything else has

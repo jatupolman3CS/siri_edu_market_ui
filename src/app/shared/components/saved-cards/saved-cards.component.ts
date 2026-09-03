@@ -91,7 +91,12 @@ export class SavedCardsComponent {
     try {
       const result = await this.stripe.confirmSetup({
         elements: this.elements,
-        confirmParams: { return_url: window.location.href },
+        confirmParams: {
+          return_url: window.location.href,
+          // The Payment Element was mounted with fields.billingDetails.email: 'never', so Stripe
+          // needs the email handed back here instead — otherwise confirmation fails.
+          payment_method_data: { billing_details: { email: this.auth.user()?.email ?? '' } },
+        },
         redirect: 'if_required',
       });
 

@@ -16,7 +16,10 @@ interface StripeInstance {
   elements(options: { clientSecret: string; appearance?: Record<string, unknown> }): StripeElements;
   confirmPayment(options: {
     elements: StripeElements;
-    confirmParams: { return_url: string };
+    confirmParams: {
+      return_url: string;
+      payment_method_data?: { billing_details?: { email?: string } };
+    };
   }): Promise<{ error?: { message?: string; type?: string } }>;
   /**
    * saved-credit-cards v1 §4: pays with a previously saved card directly, without mounting a
@@ -34,7 +37,10 @@ interface StripeInstance {
    */
   confirmSetup(options: {
     elements: StripeElements;
-    confirmParams: { return_url: string };
+    confirmParams: {
+      return_url: string;
+      payment_method_data?: { billing_details?: { email?: string } };
+    };
     redirect?: 'if_required';
   }): Promise<{
     setupIntent?: { payment_method?: string };
