@@ -236,14 +236,14 @@ export class AuthService {
       const res = unwrapSdkResult(result);
       this.setAccessToken(res.accessToken);
       this.setRefreshToken(res.refreshToken ?? null);
-      const role = this.normalizeRole((res.user as { role?: string }).role);
+      const role = this.normalizeRole(res.user.role);
       const user: User = {
         id: res.user.id,
         name: res.user.displayName,
         email: res.user.email,
         avatar: '',
         role,
-        roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+        roles: this.normalizeRoles(res.user.roles, role),
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -320,14 +320,14 @@ export class AuthService {
       const res = unwrapSdkResult(result);
       this.setAccessToken(res.accessToken);
       this.setRefreshToken(res.refreshToken ?? null);
-      const role = this.normalizeRole((res.user as { role?: string }).role);
+      const role = this.normalizeRole(res.user.role);
       const user: User = {
         id: res.user.id ?? '',
         name: res.user.displayName ?? '',
         email: res.user.email ?? '',
         avatar: '',
         role,
-        roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+        roles: this.normalizeRoles(res.user.roles, role),
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -387,14 +387,14 @@ export class AuthService {
         const res = unwrapSdkResult(result);
         this.setAccessToken(res.accessToken);
         this.setRefreshToken(res.refreshToken ?? null);
-        const role = this.normalizeRole((res.user as { role?: string }).role);
+        const role = this.normalizeRole(res.user.role);
         const user: User = {
           id: res.user.id,
           name: res.user.displayName,
           email: res.user.email,
           avatar: '',
           role,
-          roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+          roles: this.normalizeRoles(res.user.roles, role),
           joinedAt: new Date().toISOString(),
         };
         this.completeSignIn(user, 'google');
@@ -623,11 +623,12 @@ export class AuthService {
 
   /**
    * multi-role-permissions v1 §4: parses `AuthUserResponse.roles`/`UserProfileResponse.roles`
-   * (`string[]`, not yet on the generated SDK types — see the `unknown`-typed callers). Falls
-   * back to `[fallbackRole]` — the already-normalized single `role` as a one-element array — so
-   * a response that hasn't shipped `roles` yet (older backend build, or a session restored from
-   * `localStorage` before this rollout) still resolves to something sane instead of an empty
-   * array or silently dropping back to `'buyer'` for a known seller/admin.
+   * (`string[]`). `raw` stays `unknown` because this also normalizes a session restored from
+   * `localStorage` (parsed JSON, not SDK-typed). Falls back to `[fallbackRole]` — the
+   * already-normalized single `role` as a one-element array — so a response that hasn't shipped
+   * `roles` yet (older backend build, or a session persisted before this rollout) still resolves
+   * to something sane instead of an empty array or silently dropping back to `'buyer'` for a
+   * known seller/admin.
    */
   private normalizeRoles(raw: unknown, fallbackRole: UserRole): UserRole[] {
     if (Array.isArray(raw)) {

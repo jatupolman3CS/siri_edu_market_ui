@@ -57,6 +57,13 @@ import type {
   GetApiAdminCategoriesResponses,
   GetApiAdminDashboardData,
   GetApiAdminDashboardResponses,
+  GetApiAdminDocumentGenerationCategoriesData,
+  GetApiAdminDocumentGenerationCategoriesResponses,
+  GetApiAdminDocumentGenerationRunsByIdData,
+  GetApiAdminDocumentGenerationRunsByIdErrors,
+  GetApiAdminDocumentGenerationRunsByIdResponses,
+  GetApiAdminDocumentGenerationRunsData,
+  GetApiAdminDocumentGenerationRunsResponses,
   GetApiAdminDocumentsByIdData,
   GetApiAdminDocumentsByIdErrors,
   GetApiAdminDocumentsByIdReportsData,
@@ -201,6 +208,9 @@ import type {
   PostApiAdminCategoriesData,
   PostApiAdminCategoriesErrors,
   PostApiAdminCategoriesResponses,
+  PostApiAdminDocumentGenerationRunData,
+  PostApiAdminDocumentGenerationRunErrors,
+  PostApiAdminDocumentGenerationRunResponses,
   PostApiAdminDocumentsBulkData,
   PostApiAdminDocumentsBulkErrors,
   PostApiAdminDocumentsBulkResponses,
@@ -1031,6 +1041,57 @@ export const putApiAdminCategoriesById = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
+
+export const postApiAdminDocumentGenerationRun = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminDocumentGenerationRunData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminDocumentGenerationRunResponses,
+  PostApiAdminDocumentGenerationRunErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminDocumentGenerationRunResponses,
+    PostApiAdminDocumentGenerationRunErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/document-generation/run',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiAdminDocumentGenerationRuns = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminDocumentGenerationRunsData, ThrowOnError>,
+): RequestResult<GetApiAdminDocumentGenerationRunsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminDocumentGenerationRunsResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/admin/document-generation/runs', ...options });
+
+export const getApiAdminDocumentGenerationRunsById = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminDocumentGenerationRunsByIdData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminDocumentGenerationRunsByIdResponses,
+  GetApiAdminDocumentGenerationRunsByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminDocumentGenerationRunsByIdResponses,
+    GetApiAdminDocumentGenerationRunsByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/document-generation/runs/{id}', ...options });
+
+export const getApiAdminDocumentGenerationCategories = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminDocumentGenerationCategoriesData, ThrowOnError>,
+): RequestResult<GetApiAdminDocumentGenerationCategoriesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminDocumentGenerationCategoriesResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/admin/document-generation/categories', ...options });
 
 export const postApiDocumentUpload = <ThrowOnError extends boolean = false>(
   options: Options<PostApiDocumentUploadData, ThrowOnError>,

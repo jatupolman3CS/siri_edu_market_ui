@@ -1,8 +1,8 @@
 # Endpoint coverage report
 
-- backend endpoints parsed: **136**
-- SDK functions exported: **136**
-- SDK functions imported by app code: **136**
+- backend endpoints parsed: **140**
+- SDK functions exported: **140**
+- SDK functions imported by app code: **140**
 - orphan frontend (SDK -> no backend route match): **0**
 - orphan backend (route -> no SDK call): **0**
 - unused SDK exports (defined but never imported): **0**
