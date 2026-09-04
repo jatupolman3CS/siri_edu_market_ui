@@ -1,4 +1,13 @@
 <div class="max-w-5xl">
+      @if (seller.sellerProfileRequired()) {
+        <app-empty-state
+          emoji="🏪"
+          title="ร้านนี้ยังไม่มีร้านค้า"
+          description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
+        >
+          <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+        </app-empty-state>
+      } @else {
       <header class="mb-8">
         <h1 class="text-3xl font-extrabold text-ink mb-1">รายได้ & Payout</h1>
         <p class="text-sm text-ink-soft">
@@ -128,4 +137,5 @@
         </table>
         </div>
       </section>
+      }
     </div>

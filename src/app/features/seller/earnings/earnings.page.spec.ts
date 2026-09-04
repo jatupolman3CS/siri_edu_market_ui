@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { PlatformStatsService, SellerService } from '../../../core/services';
 import { SellerEarningsPage } from './earnings.page';
 import type { PlatformStats, SellerStats } from '../../../core/models';
@@ -32,11 +33,13 @@ function render(opts: {
   stats?: Partial<SellerStats>;
   nextPayoutDate?: string | null;
   platformStats?: PlatformStats;
+  sellerProfileRequired?: boolean;
 }) {
   const fakeSeller = {
     stats: () => buildStats(opts.stats),
     earnings: () => ({ totalEarnings: 5000, pendingBalance: 1200, payouts: [] }),
     nextPayoutDate: () => opts.nextPayoutDate ?? null,
+    sellerProfileRequired: () => opts.sellerProfileRequired ?? false,
     loadEarnings: vi.fn(async () => {}),
     refreshDashboard: vi.fn(async () => {}),
     requestPayout: vi.fn(async () => ({ ok: true })),
@@ -46,6 +49,7 @@ function render(opts: {
   TestBed.configureTestingModule({
     imports: [SellerEarningsPage],
     providers: [
+      provideRouter([]),
       { provide: SellerService, useValue: fakeSeller },
       { provide: PlatformStatsService, useValue: fakePlatformStats },
     ],
@@ -110,5 +114,28 @@ describe('SellerEarningsPage — โอนรอบถัดไป (real-data-st
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('โอนรอบถัดไป');
     expect(text).toContain('2026');
+  });
+});
+
+describe('SellerEarningsPage — seller_profile_required (QA fix: friendly 403 state)', () => {
+  it('shows a friendly "no store yet" state instead of the earnings content', () => {
+    const fixture = render({ sellerProfileRequired: true });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ร้านนี้ยังไม่มีร้านค้า');
+    expect(text).not.toContain('รายได้ & Payout');
+
+    const becomeSellerLink = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href="/become-seller"]',
+    );
+    expect(becomeSellerLink).toBeTruthy();
+  });
+
+  it('shows the normal earnings page when the account has a seller profile', () => {
+    const fixture = render({ sellerProfileRequired: false });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('รายได้ & Payout');
+    expect(text).not.toContain('ร้านนี้ยังไม่มีร้านค้า');
   });
 });

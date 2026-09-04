@@ -163,8 +163,9 @@ export class SellerService {
       const result = await getApiSellerEarnings();
       const data = unwrapSdkResult(result);
       if (data) this._earnings.set(data);
+      this._sellerProfileRequired.set(false);
     } catch (e) {
-      this.apiFail.report('โหลดรายได้ของฉัน', e);
+      this.handleSellerScopedError('โหลดรายได้ของฉัน', e);
     }
   }
 
@@ -352,6 +353,7 @@ export class SellerService {
     try {
       const result = await getApiSellerReviews({ query: { Page: page, PageSize: pageSize } });
       const data = unwrapSdkResult(result as SdkResult<GetApiSellerReviewsResponse>);
+      this._sellerProfileRequired.set(false);
       return (data.items ?? []).map((r) => ({
         id: r.id ?? '',
         documentTitle: r.documentTitle ?? '',
@@ -364,7 +366,7 @@ export class SellerService {
         sellerRepliedAt: r.sellerRepliedAt,
       }));
     } catch (e) {
-      this.apiFail.report('โหลดรีวิวของฉัน', e);
+      this.handleSellerScopedError('โหลดรีวิวของฉัน', e);
       return [];
     }
   }

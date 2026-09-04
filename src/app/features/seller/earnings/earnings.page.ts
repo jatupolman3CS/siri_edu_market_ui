@@ -1,16 +1,27 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { PlatformStatsService, SellerService } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 @Component({
   selector: 'app-seller-earnings',
   standalone: true,
-  imports: [StatCardComponent, IconComponent, ThbPipe, CommonModule, DatePipe, FormsModule],
+  imports: [
+    RouterLink,
+    StatCardComponent,
+    EmptyStateComponent,
+    IconComponent,
+    ThbPipe,
+    CommonModule,
+    DatePipe,
+    FormsModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './earnings.page.html',
   styleUrl: './earnings.page.scss',

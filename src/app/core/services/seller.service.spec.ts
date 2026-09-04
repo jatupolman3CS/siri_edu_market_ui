@@ -178,4 +178,90 @@ describe('SellerService — seller_profile_required (QA fix: friendly 403, not a
 
     expect(service.sellerProfileRequired()).toBe(false);
   });
+
+  it('loadEarnings() sets sellerProfileRequired without a generic toast on 403 seller_profile_required', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/earnings',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await service.loadEarnings();
+
+    expect(service.sellerProfileRequired()).toBe(true);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('loadEarnings() still reports a generic failure for any other error', async () => {
+    stubRoute('GET', '/api/seller/earnings', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await service.loadEarnings();
+
+    expect(service.sellerProfileRequired()).toBe(false);
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  it('loadEarnings() clears sellerProfileRequired once a later call succeeds', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/earnings',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service } = buildServiceWithReporterSpy();
+    await service.loadEarnings();
+    expect(service.sellerProfileRequired()).toBe(true);
+
+    stubRoute('GET', '/api/seller/earnings', { totalEarnings: 0, pendingBalance: 0, payouts: [] });
+    await service.loadEarnings();
+
+    expect(service.sellerProfileRequired()).toBe(false);
+  });
+
+  it('loadReviews() sets sellerProfileRequired without a generic toast on 403 seller_profile_required', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/reviews',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service, report } = buildServiceWithReporterSpy();
+
+    const rows = await service.loadReviews();
+
+    expect(rows).toEqual([]);
+    expect(service.sellerProfileRequired()).toBe(true);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('loadReviews() still reports a generic failure for any other error', async () => {
+    stubRoute('GET', '/api/seller/reviews', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    const { service, report } = buildServiceWithReporterSpy();
+
+    const rows = await service.loadReviews();
+
+    expect(rows).toEqual([]);
+    expect(service.sellerProfileRequired()).toBe(false);
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  it('loadReviews() clears sellerProfileRequired once a later call succeeds', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/reviews',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service } = buildServiceWithReporterSpy();
+    await service.loadReviews();
+    expect(service.sellerProfileRequired()).toBe(true);
+
+    stubRoute('GET', '/api/seller/reviews', { items: [], totalCount: 0 });
+    await service.loadReviews();
+
+    expect(service.sellerProfileRequired()).toBe(false);
+  });
 });
