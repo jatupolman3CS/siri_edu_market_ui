@@ -75,5 +75,7 @@ export class AdminLayoutComponent {
     { label: 'หมวดหมู่', href: '/admin/categories', icon: 'tag' as const },
     { label: 'ตั้งค่าแพลตฟอร์ม', href: '/admin/settings', icon: 'gear' as const },
     { label: 'ประวัติการทำงาน', href: '/admin/audit', icon: 'doc' as const },
+    // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.
+    { label: 'สร้างเอกสารอัตโนมัติ', href: '/admin/document-generation', icon: 'doc' as const },
   ];
 }

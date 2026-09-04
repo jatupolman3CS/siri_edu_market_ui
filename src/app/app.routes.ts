@@ -324,6 +324,16 @@ export const routes: Routes = [
             (m) => m.AdminSettingsPage,
           ),
       },
+      // category-content-auto-generation v1: trigger/inspect the document auto-generation job —
+      // generated documents land in the existing /admin/approval queue automatically.
+      {
+        path: 'document-generation',
+        loadComponent: () =>
+          import('./features/admin/document-generation/document-generation.page').then(
+            (m) => m.AdminDocumentGenerationPage,
+          ),
+        title: 'สร้างเอกสารอัตโนมัติ — Admin',
+      },
     ],
   },
 

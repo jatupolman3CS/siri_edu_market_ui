@@ -82,6 +82,36 @@ export interface SystemConfigJobToggle {
   updatedAt: string | null;
 }
 
+/**
+ * category-content-auto-generation v1 §3.1/§4 (`docs/contracts/category-content-auto-generation.md`)
+ * — response of `GET /api/admin/document-generation/categories`. Kept as the service's own
+ * contract (same reasoning as `SystemConfigJobToggle` above) since the SDK for this endpoint does
+ * not exist yet (`TODO(contract)` — see the methods below, awaiting backend gate-1 + SDK regen).
+ */
+export interface DocumentGenerationEligibleCategory {
+  categoryId: string;
+  name: string;
+  hasGeneratedDocument: boolean;
+}
+
+/**
+ * category-content-auto-generation v1 §3.1/§4 — shape of `DocumentGenerationRunResponse`
+ * (used by `POST .../run` and `GET .../runs`[`/{id}`]).
+ */
+export interface DocumentGenerationRun {
+  id: string;
+  triggeredBy: 'Scheduled' | 'Manual';
+  triggeredByUserId: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  status: 'Success' | 'PartialFailure' | 'Failed';
+  categoriesScanned: number;
+  documentsGenerated: number;
+  failureCount: number;
+  errorSummary: string | null;
+  generatedDocumentIds: string[];
+}
+
 function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
   return {
     feeRatePercent: res.feeRatePercent ?? 0,
@@ -117,9 +147,9 @@ import {
   mapCategory,
   mapSubcategoryAdmin,
 } from '../api-mappers/mappers';
-import { unwrapSdkResult } from './api-result';
+import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
-import { createInfinitePager } from './infinite-pager';
+import { createInfinitePager, type PagedResult } from './infinite-pager';
 import { getApiAdminDocumentById, type AdminDocumentDetail } from '../api/admin-documents.api';
 
 @Injectable({ providedIn: 'root' })
@@ -613,5 +643,56 @@ export class AdminService {
       path: { categoryId, id },
     });
     if (result.error !== undefined) throw result.error;
+  }
+
+  // ========== Document generation (category-content-auto-generation v1) ==========
+  // docs/contracts/category-content-auto-generation.md §3-4. Backend (4 new endpoints under
+  // api/admin/document-generation) is not built yet in this round — bodies are stubbed no-ops
+  // with `// TODO(contract)` markers at the real SDK call site, per §4 "งานเล็กไม่มี spec" default
+  // (UI/state/service round now, wire the generated SDK after backend gate-1 + `npm run generate:api`).
+
+  async loadDocumentGenerationCategories(): Promise<DocumentGenerationEligibleCategory[]> {
+    try {
+      // TODO(contract): call GET /api/admin/document-generation/categories via sdk.gen once
+      // backend gate-1 passes and `npm run generate:api` is re-run.
+      return [];
+    } catch (e) {
+      this.apiFail.report('โหลดรายการหมวดหมู่สำหรับสร้างเอกสารอัตโนมัติ', e);
+      return [];
+    }
+  }
+
+  /**
+   * §4: unlike the rest of this service, a `409` (another run already in flight) must NOT go
+   * through `apiFail.report`'s generic "{context} — {detail}" toast — the backend's Thai message
+   * (§3.2) is already user-facing and the page shows it verbatim. Other errors still report
+   * normally before rethrowing (same pattern as `approveDocument`/`updateJobToggle`).
+   */
+  async runDocumentGeneration(categoryId: string | null): Promise<DocumentGenerationRun | null> {
+    try {
+      // TODO(contract): call POST /api/admin/document-generation/run via sdk.gen once backend
+      // gate-1 passes and `npm run generate:api` is re-run.
+      return null;
+    } catch (e) {
+      if (extractErrorStatus(e) === 409) {
+        throw e;
+      }
+      this.apiFail.report('สั่งสร้างเอกสารอัตโนมัติ', e);
+      throw e;
+    }
+  }
+
+  async loadDocumentGenerationRuns(
+    page: number,
+    pageSize: number,
+  ): Promise<PagedResult<DocumentGenerationRun>> {
+    try {
+      // TODO(contract): call GET /api/admin/document-generation/runs via sdk.gen once backend
+      // gate-1 passes and `npm run generate:api` is re-run.
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+    } catch (e) {
+      this.apiFail.report('โหลดประวัติการรันสร้างเอกสารอัตโนมัติ', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+    }
   }
 }
