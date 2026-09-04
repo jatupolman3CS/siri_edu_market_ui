@@ -13,10 +13,9 @@ import {
 /**
  * category-content-auto-generation v1 (docs/contracts/category-content-auto-generation.md §4).
  *
- * Drives the page against a stubbed `AdminService` (via `vi.spyOn`) — same pattern as
- * `settings-admin.page.spec.ts` — since `AdminService.loadDocumentGenerationCategories` /
- * `runDocumentGeneration` / `loadDocumentGenerationRuns` are still `TODO(contract)` no-op stubs
- * awaiting the backend + SDK regen. This spec exercises the page's rendering/wiring only.
+ * Drives the page against a mocked `AdminService` (via `vi.spyOn`) — same pattern as
+ * `settings-admin.page.spec.ts` — so this spec exercises the page's rendering/wiring only,
+ * independent of `AdminService`'s real SDK-backed implementation.
  */
 let messages: { success: string[]; warning: string[]; error: string[] };
 

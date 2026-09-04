@@ -9,6 +9,8 @@ import {
   getApiAdminCategoriesByCategoryIdSubcategoriesById,
   getApiAdminAudit,
   getApiAdminDashboard,
+  getApiAdminDocumentGenerationCategories,
+  getApiAdminDocumentGenerationRuns,
   getApiAdminPayouts,
   getApiAdminReports,
   getApiAdminSellers,
@@ -18,6 +20,7 @@ import {
   getApiAdminTransactions,
   postApiAdminCategories,
   postApiAdminCategoriesByCategoryIdSubcategories,
+  postApiAdminDocumentGenerationRun,
   postApiAdminDocumentsPendingSearch,
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
@@ -34,6 +37,8 @@ import type {
   AdminAuditLogResponse,
   AdminOpenReportResponse,
   AdminPayoutResponse,
+  DocumentGenerationCategoryStatusResponse,
+  DocumentGenerationRunResponse,
   PagedResponseOfAdminAuditLogResponse,
   PagedResponseOfAdminOpenReportResponse,
   CreateCategoryRequest,
@@ -85,8 +90,9 @@ export interface SystemConfigJobToggle {
 /**
  * category-content-auto-generation v1 §3.1/§4 (`docs/contracts/category-content-auto-generation.md`)
  * — response of `GET /api/admin/document-generation/categories`. Kept as the service's own
- * contract (same reasoning as `SystemConfigJobToggle` above) since the SDK for this endpoint does
- * not exist yet (`TODO(contract)` — see the methods below, awaiting backend gate-1 + SDK regen).
+ * contract (same reasoning as `SystemConfigJobToggle` above): the generated
+ * `DocumentGenerationCategoryStatusResponse` marks `hasGeneratedDocument` optional, and callers
+ * need a complete object to bind to.
  */
 export interface DocumentGenerationEligibleCategory {
   categoryId: string;
@@ -138,6 +144,37 @@ function toSystemConfigJobToggle(res: SystemConfigJobToggleItem): SystemConfigJo
     description: res.description ?? null,
     enabled: res.enabled ?? false,
     updatedAt: res.updatedAt ?? null,
+  };
+}
+
+/**
+ * category-content-auto-generation v1 §3.1 — `triggeredBy`/`status` are generated as bare
+ * `string` (the OpenAPI schema doesn't emit string-literal enums), so this mapper narrows them
+ * to the fixed set §3.1 documents. Backend only ever emits these exact values.
+ */
+function toDocumentGenerationRun(res: DocumentGenerationRunResponse): DocumentGenerationRun {
+  return {
+    id: res.id,
+    triggeredBy: res.triggeredBy as DocumentGenerationRun['triggeredBy'],
+    triggeredByUserId: res.triggeredByUserId ?? null,
+    startedAt: res.startedAt,
+    completedAt: res.completedAt ?? null,
+    status: res.status as DocumentGenerationRun['status'],
+    categoriesScanned: res.categoriesScanned ?? 0,
+    documentsGenerated: res.documentsGenerated ?? 0,
+    failureCount: res.failureCount ?? 0,
+    errorSummary: res.errorSummary ?? null,
+    generatedDocumentIds: res.generatedDocumentIds ?? [],
+  };
+}
+
+function toDocumentGenerationEligibleCategory(
+  res: DocumentGenerationCategoryStatusResponse,
+): DocumentGenerationEligibleCategory {
+  return {
+    categoryId: res.categoryId,
+    name: res.name,
+    hasGeneratedDocument: res.hasGeneratedDocument ?? false,
   };
 }
 import {
@@ -646,16 +683,13 @@ export class AdminService {
   }
 
   // ========== Document generation (category-content-auto-generation v1) ==========
-  // docs/contracts/category-content-auto-generation.md §3-4. Backend (4 new endpoints under
-  // api/admin/document-generation) is not built yet in this round — bodies are stubbed no-ops
-  // with `// TODO(contract)` markers at the real SDK call site, per §4 "งานเล็กไม่มี spec" default
-  // (UI/state/service round now, wire the generated SDK after backend gate-1 + `npm run generate:api`).
+  // docs/contracts/category-content-auto-generation.md §3-4. Wired to the generated SDK after
+  // backend gate-1 passed and `npm run generate:api` was re-run against the live backend.
 
   async loadDocumentGenerationCategories(): Promise<DocumentGenerationEligibleCategory[]> {
     try {
-      // TODO(contract): call GET /api/admin/document-generation/categories via sdk.gen once
-      // backend gate-1 passes and `npm run generate:api` is re-run.
-      return [];
+      const items = unwrapSdkResult(await getApiAdminDocumentGenerationCategories()) ?? [];
+      return items.map(toDocumentGenerationEligibleCategory);
     } catch (e) {
       this.apiFail.report('โหลดรายการหมวดหมู่สำหรับสร้างเอกสารอัตโนมัติ', e);
       return [];
@@ -670,9 +704,8 @@ export class AdminService {
    */
   async runDocumentGeneration(categoryId: string | null): Promise<DocumentGenerationRun | null> {
     try {
-      // TODO(contract): call POST /api/admin/document-generation/run via sdk.gen once backend
-      // gate-1 passes and `npm run generate:api` is re-run.
-      return null;
+      const result = await postApiAdminDocumentGenerationRun({ body: { categoryId } });
+      return toDocumentGenerationRun(unwrapSdkResult(result));
     } catch (e) {
       if (extractErrorStatus(e) === 409) {
         throw e;
@@ -687,9 +720,16 @@ export class AdminService {
     pageSize: number,
   ): Promise<PagedResult<DocumentGenerationRun>> {
     try {
-      // TODO(contract): call GET /api/admin/document-generation/runs via sdk.gen once backend
-      // gate-1 passes and `npm run generate:api` is re-run.
-      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+      const result = unwrapSdkResult(
+        await getApiAdminDocumentGenerationRuns({ query: { Page: page, PageSize: pageSize } }),
+      );
+      return {
+        items: (result.items ?? []).map(toDocumentGenerationRun),
+        page: result.page,
+        pageSize: result.pageSize,
+        totalCount: result.totalCount,
+        totalPages: result.totalPages,
+      };
     } catch (e) {
       this.apiFail.report('โหลดประวัติการรันสร้างเอกสารอัตโนมัติ', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };

@@ -254,6 +254,7 @@ export type AuthUserResponse = {
   displayName: string;
   isEmailVerified: boolean;
   role: string;
+  roles: Array<string>;
 };
 
 export type BundleDetailResponse = {
@@ -388,6 +389,30 @@ export type CreateSubcategoryRequest = {
 export type DocumentGalleryItemRequest = {
   id?: string | null;
   imageStorageKey?: string;
+};
+
+export type DocumentGenerationCategoryStatusResponse = {
+  categoryId: string;
+  name: string;
+  hasGeneratedDocument?: boolean;
+};
+
+export type DocumentGenerationRunRequest = {
+  categoryId?: string | null;
+};
+
+export type DocumentGenerationRunResponse = {
+  id: string;
+  triggeredBy: string;
+  triggeredByUserId?: string | null;
+  startedAt: string;
+  completedAt?: string | null;
+  status: string;
+  categoriesScanned?: number;
+  documentsGenerated?: number;
+  failureCount?: number;
+  errorSummary?: string | null;
+  generatedDocumentIds?: Array<string>;
 };
 
 export type DocumentQnaResponse = {
@@ -681,6 +706,14 @@ export type PagedResponseOfAdminTransactionResponse = {
 
 export type PagedResponseOfBundleResponse = {
   items?: Array<BundleResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfDocumentGenerationRunResponse = {
+  items?: Array<DocumentGenerationRunResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -1293,6 +1326,7 @@ export type UserProfileResponse = {
   avatarUrl?: string | null;
   avatarStorageKey?: string | null;
   role?: string;
+  roles?: Array<string>;
   joinedAt?: string;
   isEmailVerified?: boolean;
   sellerProfile?: SellerProfileSummary | null;
@@ -2601,6 +2635,107 @@ export type PutApiAdminCategoriesByIdResponses = {
 export type PutApiAdminCategoriesByIdResponse =
   PutApiAdminCategoriesByIdResponses[keyof PutApiAdminCategoriesByIdResponses];
 
+export type PostApiAdminDocumentGenerationRunData = {
+  body: DocumentGenerationRunRequest;
+  path?: never;
+  query?: never;
+  url: '/api/admin/document-generation/run';
+};
+
+export type PostApiAdminDocumentGenerationRunErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminDocumentGenerationRunError =
+  PostApiAdminDocumentGenerationRunErrors[keyof PostApiAdminDocumentGenerationRunErrors];
+
+export type PostApiAdminDocumentGenerationRunResponses = {
+  /**
+   * OK
+   */
+  200: DocumentGenerationRunResponse;
+};
+
+export type PostApiAdminDocumentGenerationRunResponse =
+  PostApiAdminDocumentGenerationRunResponses[keyof PostApiAdminDocumentGenerationRunResponses];
+
+export type GetApiAdminDocumentGenerationRunsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/document-generation/runs';
+};
+
+export type GetApiAdminDocumentGenerationRunsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfDocumentGenerationRunResponse;
+};
+
+export type GetApiAdminDocumentGenerationRunsResponse =
+  GetApiAdminDocumentGenerationRunsResponses[keyof GetApiAdminDocumentGenerationRunsResponses];
+
+export type GetApiAdminDocumentGenerationRunsByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/document-generation/runs/{id}';
+};
+
+export type GetApiAdminDocumentGenerationRunsByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminDocumentGenerationRunsByIdError =
+  GetApiAdminDocumentGenerationRunsByIdErrors[keyof GetApiAdminDocumentGenerationRunsByIdErrors];
+
+export type GetApiAdminDocumentGenerationRunsByIdResponses = {
+  /**
+   * OK
+   */
+  200: DocumentGenerationRunResponse;
+};
+
+export type GetApiAdminDocumentGenerationRunsByIdResponse =
+  GetApiAdminDocumentGenerationRunsByIdResponses[keyof GetApiAdminDocumentGenerationRunsByIdResponses];
+
+export type GetApiAdminDocumentGenerationCategoriesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/document-generation/categories';
+};
+
+export type GetApiAdminDocumentGenerationCategoriesResponses = {
+  /**
+   * OK
+   */
+  200: Array<DocumentGenerationCategoryStatusResponse>;
+};
+
+export type GetApiAdminDocumentGenerationCategoriesResponse =
+  GetApiAdminDocumentGenerationCategoriesResponses[keyof GetApiAdminDocumentGenerationCategoriesResponses];
+
 export type PostApiDocumentUploadData = {
   body: {
     file?: IFormFile;
@@ -2870,6 +3005,7 @@ export type GetApiMarketplaceCatalogData = {
   body?: never;
   path?: never;
   query?: {
+    SellerId?: string;
     Page?: number;
     PageSize?: number;
   };

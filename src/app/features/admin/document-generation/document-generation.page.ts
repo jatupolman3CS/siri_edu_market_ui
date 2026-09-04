@@ -22,9 +22,8 @@ const RUN_PAGE_SIZE = 20;
  * §4 — admin page to trigger/inspect the document auto-generation job. Approving generated
  * documents happens on the existing `/admin/approval` queue (§0/§4) — this page never touches it.
  *
- * UI/state/service round (backend's 4 endpoints are not built yet) — `AdminService`'s three new
- * methods are stubbed no-ops (`TODO(contract)`), so every list here renders empty until the SDK
- * is wired in a later round. This page is built against that eventual shape now.
+ * `AdminService`'s three document-generation methods are wired to the generated SDK
+ * (backend gate-1 passed; see `docs/contracts/category-content-auto-generation.md`).
  */
 @Component({
   selector: 'app-admin-document-generation',
