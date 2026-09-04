@@ -369,7 +369,14 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
+  /** Highest-privilege label (admin > seller > buyer) — back-compat, kept as-is. */
   role: UserRole;
+  /**
+   * multi-role-permissions v1 §4: every role the user actually holds, e.g. `['buyer']`,
+   * `['buyer','seller']`, `['buyer','admin']` — additive on top of `role`, not a replacement.
+   * A seller keeps buying rights; an admin does not automatically gain seller rights.
+   */
+  roles: UserRole[];
   joinedAt: string;
 }
 

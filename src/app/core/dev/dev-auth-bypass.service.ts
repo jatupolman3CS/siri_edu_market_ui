@@ -75,12 +75,14 @@ export class DevAuthBypassService {
     try {
       const profile = (await getApiMeProfile()).data;
       if (!profile) return;
+      const role = this.normalizeRole(profile.role);
       this.installSession({
         id: profile.id ?? '',
         name: profile.name ?? '',
         email: profile.email ?? '',
         avatar: profile.avatarUrl ?? '',
-        role: this.normalizeRole(profile.role),
+        role,
+        roles: this.normalizeRoles((profile as { roles?: string[] }).roles, role),
         joinedAt: profile.joinedAt ?? new Date().toISOString(),
       });
     } catch {
@@ -93,7 +95,11 @@ export class DevAuthBypassService {
     this.auth.applyDevBypassSession(user, DEV_ACCESS_TOKEN);
   }
 
-  /** Shown until `GET /api/me/profile` answers, so guards can run before the first response. */
+  /**
+   * Shown until `GET /api/me/profile` answers, so guards can run before the first response.
+   * multi-role-permissions v1 §4: `roles: [role]` — a single-role placeholder is correct enough
+   * for header/guard checks before `syncWithServer()` resolves the real `roles` array.
+   */
   private placeholderUser(role: UserRole): User {
     return {
       id: '',
@@ -101,6 +107,7 @@ export class DevAuthBypassService {
       email: `dev-${role}@localhost`,
       avatar: '',
       role,
+      roles: [role],
       joinedAt: new Date().toISOString(),
     };
   }
@@ -118,5 +125,23 @@ export class DevAuthBypassService {
     return value === 'admin' || value === 'seller' || value === 'buyer'
       ? value
       : environment.devAuth.role;
+  }
+
+  /**
+   * multi-role-permissions v1 §4: this file does not inject `AuthService` to reuse its
+   * `normalizeRoles`, so it mirrors the same parsing logic locally (same reasoning as
+   * `normalizeRole` above). Parses `UserProfileResponse.roles` (`string[]`, not yet on the
+   * generated SDK types), falling back to `[fallbackRole]` when missing/unparseable.
+   */
+  private normalizeRoles(raw: unknown, fallbackRole: UserRole): UserRole[] {
+    if (Array.isArray(raw)) {
+      const normalized = raw
+        .filter((v): v is string => typeof v === 'string')
+        .map((v) => v.toLowerCase())
+        .filter((v): v is UserRole => v === 'admin' || v === 'seller' || v === 'buyer');
+      const deduped = Array.from(new Set(normalized));
+      if (deduped.length > 0) return deduped;
+    }
+    return [fallbackRole];
   }
 }

@@ -92,4 +92,26 @@ describe('MeService reconciles AuthService session identity', () => {
     await expect(firstValueFrom(meService.loadProfile())).rejects.toBeTruthy();
     expect(syncUserFromProfile).not.toHaveBeenCalled();
   });
+
+  // multi-role-permissions v1 §4/AC-14: `roles` is a new additive field on `UserProfileResponse`
+  // that `MeService` forwards through untouched — `AuthService.syncUserFromProfile` is the one
+  // that parses it, so this only has to prove the whole profile object (including `roles`) makes
+  // it to that call unmodified.
+  it('forwards the roles array from UserProfileResponse into syncUserFromProfile', async () => {
+    const profile = {
+      id: 'u-1',
+      name: 'Seller คนหนึ่ง',
+      email: 'seller@siriedumarket.local',
+      role: 'seller',
+      roles: ['buyer', 'seller'],
+    };
+    stubRoute('GET', '/api/me/profile', profile);
+    const { meService, syncUserFromProfile } = render();
+
+    await firstValueFrom(meService.loadProfile());
+
+    expect(syncUserFromProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ roles: ['buyer', 'seller'] }),
+    );
+  });
 });

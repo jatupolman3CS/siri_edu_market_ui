@@ -108,8 +108,18 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this._session() !== null);
   readonly isPendingVerification = computed(() => this._pending() !== null);
   readonly role = computed<UserRole | null>(() => this._session()?.user.role ?? null);
-  readonly isAdmin = computed(() => this.role() === 'admin');
-  readonly isSeller = computed(() => this.role() === 'seller');
+  /**
+   * multi-role-permissions v1 §4: every role the signed-in user actually holds — additive, not
+   * exclusive (a seller keeps `'buyer'`, an admin does not automatically gain `'seller'`).
+   */
+  readonly roles = computed<UserRole[]>(() => this._session()?.user.roles ?? []);
+  readonly isAdmin = computed(() => this.roles().includes('admin'));
+  /**
+   * multi-role-permissions v1 §4: intentionally **not** OR'd with `isAdmin()` here — every
+   * existing caller already writes `isSeller() || isAdmin()` itself (guards, `become-seller.page`,
+   * `app-header`), so keeping this exclusive to the `'seller'` flag preserves that behaviour.
+   */
+  readonly isSeller = computed(() => this.roles().includes('seller'));
 
   constructor() {
     if (typeof localStorage === 'undefined') return;
@@ -226,12 +236,14 @@ export class AuthService {
       const res = unwrapSdkResult(result);
       this.setAccessToken(res.accessToken);
       this.setRefreshToken(res.refreshToken ?? null);
+      const role = this.normalizeRole((res.user as { role?: string }).role);
       const user: User = {
         id: res.user.id,
         name: res.user.displayName,
         email: res.user.email,
         avatar: '',
-        role: this.normalizeRole((res.user as { role?: string }).role),
+        role,
+        roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -308,12 +320,14 @@ export class AuthService {
       const res = unwrapSdkResult(result);
       this.setAccessToken(res.accessToken);
       this.setRefreshToken(res.refreshToken ?? null);
+      const role = this.normalizeRole((res.user as { role?: string }).role);
       const user: User = {
         id: res.user.id ?? '',
         name: res.user.displayName ?? '',
         email: res.user.email ?? '',
         avatar: '',
-        role: this.normalizeRole((res.user as { role?: string }).role),
+        role,
+        roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -373,12 +387,14 @@ export class AuthService {
         const res = unwrapSdkResult(result);
         this.setAccessToken(res.accessToken);
         this.setRefreshToken(res.refreshToken ?? null);
+        const role = this.normalizeRole((res.user as { role?: string }).role);
         const user: User = {
           id: res.user.id,
           name: res.user.displayName,
           email: res.user.email,
           avatar: '',
-          role: this.normalizeRole((res.user as { role?: string }).role),
+          role,
+          roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
           joinedAt: new Date().toISOString(),
         };
         this.completeSignIn(user, 'google');
@@ -493,23 +509,28 @@ export class AuthService {
     name?: string | null;
     email?: string | null;
     role?: string | null;
+    roles?: string[] | null;
   }): void {
     const current = this._session();
     if (!current) return;
 
+    const role = this.normalizeRole(profile.role);
     const nextUser: User = {
       ...current.user,
       id: profile.id || current.user.id,
       name: profile.name ?? current.user.name,
       email: profile.email || current.user.email,
-      role: this.normalizeRole(profile.role),
+      role,
+      roles: this.normalizeRoles(profile.roles, role),
     };
 
     if (
       nextUser.id === current.user.id &&
       nextUser.name === current.user.name &&
       nextUser.email === current.user.email &&
-      nextUser.role === current.user.role
+      nextUser.role === current.user.role &&
+      nextUser.roles.length === current.user.roles.length &&
+      nextUser.roles.every((r) => current.user.roles.includes(r))
     ) {
       return;
     }
@@ -598,6 +619,26 @@ export class AuthService {
     const v = (raw ?? '').toLowerCase();
     if (v === 'admin' || v === 'seller' || v === 'buyer') return v;
     return 'buyer';
+  }
+
+  /**
+   * multi-role-permissions v1 §4: parses `AuthUserResponse.roles`/`UserProfileResponse.roles`
+   * (`string[]`, not yet on the generated SDK types — see the `unknown`-typed callers). Falls
+   * back to `[fallbackRole]` — the already-normalized single `role` as a one-element array — so
+   * a response that hasn't shipped `roles` yet (older backend build, or a session restored from
+   * `localStorage` before this rollout) still resolves to something sane instead of an empty
+   * array or silently dropping back to `'buyer'` for a known seller/admin.
+   */
+  private normalizeRoles(raw: unknown, fallbackRole: UserRole): UserRole[] {
+    if (Array.isArray(raw)) {
+      const normalized = raw
+        .filter((v): v is string => typeof v === 'string')
+        .map((v) => v.toLowerCase())
+        .filter((v): v is UserRole => v === 'admin' || v === 'seller' || v === 'buyer');
+      const deduped = Array.from(new Set(normalized));
+      if (deduped.length > 0) return deduped;
+    }
+    return [fallbackRole];
   }
 
   /**

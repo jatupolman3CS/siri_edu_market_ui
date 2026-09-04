@@ -32,7 +32,7 @@ export class BecomeSellerPage {
   readonly loading = this.applications.loading;
 
   readonly status = computed(() => this.application()?.status ?? null);
-  readonly isSeller = computed(() => this.auth.role() === 'seller' || this.auth.role() === 'admin');
+  readonly isSeller = computed(() => this.auth.isSeller() || this.auth.isAdmin());
 
   /** A rejected applicant may fix the details and send it again. */
   readonly canSubmit = computed(() => {

@@ -20,7 +20,7 @@ export const adminGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
     });
   }
 
-  if (auth.role() !== 'admin') {
+  if (!auth.isAdmin()) {
     message.error('คุณไม่มีสิทธิ์เข้าถึงส่วนนี้');
     return router.createUrlTree(['/']);
   }
@@ -43,8 +43,7 @@ export const sellerGuard: CanActivateFn = (_route, state): boolean | UrlTree => 
     });
   }
 
-  const role = auth.role();
-  if (role !== 'seller' && role !== 'admin') {
+  if (!auth.isSeller() && !auth.isAdmin()) {
     message.error('คุณต้องเป็นผู้ขายเพื่อเข้าถึงส่วนนี้');
     return router.createUrlTree(['/']);
   }

@@ -46,7 +46,13 @@ function stubRoute(method: string, path: string, body: unknown, status = 200): v
   routes.set(`${method.toUpperCase()} ${path}`, { body, status });
 }
 
-function loginBody(over: Partial<{ accessToken: string; refreshToken: string }> = {}) {
+function loginBody(
+  over: Partial<{
+    accessToken: string;
+    refreshToken: string;
+    user: { id: string; displayName: string; email: string; role: string; roles?: string[] };
+  }> = {},
+) {
   return {
     accessToken: 'access-1',
     refreshToken: 'refresh-1',
@@ -554,5 +560,81 @@ describe('AuthService.syncUserFromProfile (QA fix: stale header identity)', () =
 
     // Same object reference — nothing was rewritten for an already-matching profile.
     expect(auth.user()).toBe(before);
+  });
+});
+
+describe('AuthService multi-role permissions (multi-role-permissions v1 AC-14/AC-15)', () => {
+  it('signIn parses roles: ["buyer","seller"] — isSeller() true, isAdmin() false', async () => {
+    stubRoute(
+      'POST',
+      '/api/auth/login',
+      loginBody({
+        user: {
+          id: 'u-1',
+          displayName: 'x',
+          email: 'seller@example.com',
+          role: 'seller',
+          roles: ['buyer', 'seller'],
+        },
+      }),
+    );
+    const auth = buildService();
+
+    await auth.signIn('seller@example.com', 'secret123');
+
+    expect(auth.roles()).toEqual(['buyer', 'seller']);
+    expect(auth.isSeller()).toBe(true);
+    expect(auth.isAdmin()).toBe(false);
+  });
+
+  it('signIn parses roles: ["buyer","admin"] — isAdmin() true, isSeller() false', async () => {
+    stubRoute(
+      'POST',
+      '/api/auth/login',
+      loginBody({
+        user: {
+          id: 'u-1',
+          displayName: 'x',
+          email: 'admin@example.com',
+          role: 'admin',
+          roles: ['buyer', 'admin'],
+        },
+      }),
+    );
+    const auth = buildService();
+
+    await auth.signIn('admin@example.com', 'secret123');
+
+    expect(auth.roles()).toEqual(['buyer', 'admin']);
+    expect(auth.isAdmin()).toBe(true);
+    expect(auth.isSeller()).toBe(false);
+  });
+
+  it('falls back to a single-element roles array from `role` when the response omits `roles`', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const auth = buildService();
+
+    await auth.signIn('teacher@example.com', 'secret123');
+
+    expect(auth.roles()).toEqual(['buyer']);
+  });
+
+  it('syncUserFromProfile updates roles() and isAdmin()/isSeller() from the live profile', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const auth = buildService();
+    await auth.signIn('teacher@example.com', 'secret123');
+    expect(auth.isSeller()).toBe(false);
+
+    auth.syncUserFromProfile({
+      id: 'u-1',
+      name: 'x',
+      email: 'teacher@example.com',
+      role: 'seller',
+      roles: ['buyer', 'seller'],
+    });
+
+    expect(auth.roles()).toEqual(['buyer', 'seller']);
+    expect(auth.isSeller()).toBe(true);
+    expect(auth.isAdmin()).toBe(false);
   });
 });
