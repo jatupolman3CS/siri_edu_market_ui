@@ -1,15 +1,26 @@
 @switch (mode()) {
   @case ('manage') {
-    <section class="card-soft p-6">
-      <h2 class="text-lg font-bold text-ink mb-1">บัตรที่บันทึกไว้</h2>
-      <p class="text-xs text-ink-muted mb-5">จัดการบัตรที่บันทึกไว้สำหรับการชำระเงินครั้งถัดไป</p>
+    <section class="card-soft p-6" id="cards">
+      <div class="flex items-start gap-3 mb-5">
+        <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+          <app-icon name="wallet" [size]="18" />
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-ink mb-1">บัตรที่บันทึกไว้</h2>
+          <p class="text-xs text-ink-muted">จัดการบัตรที่บันทึกไว้สำหรับการชำระเงินครั้งถัดไป</p>
+        </div>
+      </div>
 
       @if (paymentMethods.state().status === 'loading') {
         <p class="text-sm text-ink-soft mb-4">กำลังโหลด…</p>
       } @else if (paymentMethods.state().status === 'error') {
         <p class="text-sm text-rose-600 mb-4">โหลดรายการบัตรไม่สำเร็จ</p>
       } @else if (paymentMethods.list().length === 0) {
-        <p class="text-sm text-ink-soft mb-4">ยังไม่มีบัตรที่บันทึกไว้ — เพิ่มได้จากปุ่มด้านล่าง</p>
+        <app-empty-state
+          emoji="💳"
+          title="ยังไม่มีบัตรที่บันทึกไว้"
+          description="เพิ่มได้จากปุ่มด้านล่าง"
+        />
       } @else {
         <ul class="space-y-3 mb-4">
           @for (card of paymentMethods.list(); track card.id) {

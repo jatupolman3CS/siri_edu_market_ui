@@ -1,7 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/services';
+import { AuthService, MeService } from '../../../core/services';
+import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { ChangePasswordComponent } from '../../../shared/components/change-password/change-password.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { NotificationSettingsComponent } from '../../../shared/components/notification-settings/notification-settings.component';
 import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
 import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
@@ -22,6 +25,8 @@ import { SavedCardsComponent } from '../../../shared/components/saved-cards/save
   standalone: true,
   imports: [
     RouterLink,
+    IconComponent,
+    ImgFallbackDirective,
     ProfileEditorComponent,
     ChangePasswordComponent,
     NotificationSettingsComponent,
@@ -32,6 +37,20 @@ import { SavedCardsComponent } from '../../../shared/components/saved-cards/save
 })
 export class AccountPage {
   readonly auth = inject(AuthService);
+  private readonly me = inject(MeService);
+
+  /** Reads the same `MeService.profile()` signal `app-profile-editor` already populates — no extra request. */
+  readonly avatarSrc = computed(() =>
+    resolveAvatarUrl(this.me.profile()?.avatarUrl ?? this.auth.user()?.avatar),
+  );
+
+  readonly sectionNav = [
+    { href: '#profile', label: 'โปรไฟล์', icon: 'user' as const },
+    { href: '#password', label: 'เปลี่ยนรหัสผ่าน', icon: 'lock' as const },
+    { href: '#notifications', label: 'การแจ้งเตือน', icon: 'bell' as const },
+    { href: '#cards', label: 'บัตรที่บันทึกไว้', icon: 'wallet' as const },
+    { href: '#shortcuts', label: 'ทางลัด', icon: 'dashboard' as const },
+  ];
 
   readonly shortcuts = [
     { href: '/library', emoji: '📚', label: 'คลังของฉัน', description: 'เอกสารที่ซื้อไว้แล้ว' },

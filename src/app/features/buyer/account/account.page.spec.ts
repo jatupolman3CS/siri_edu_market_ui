@@ -157,11 +157,10 @@ describe('AccountPage', () => {
     await settle();
     fixture.detectChanges();
 
-    const checkbox: HTMLInputElement = fixture.nativeElement.querySelector(
-      'app-notification-settings input[type="checkbox"]',
+    const switchButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'app-notification-settings button.ant-switch',
     );
-    checkbox.checked = false;
-    checkbox.dispatchEvent(new Event('change'));
+    switchButton.click();
     await settle();
 
     const put = requests.find(

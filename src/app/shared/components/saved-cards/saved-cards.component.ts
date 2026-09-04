@@ -5,6 +5,8 @@ import { AuthService, OrderService, PaymentMethodService } from '../../../core/s
 import type { SavedPaymentMethod } from '../../../core/models';
 import { isSavedCardEntryExpired } from '../../../core/util/saved-card.util';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
+import { EmptyStateComponent } from '../empty-state/empty-state.component';
+import { IconComponent } from '../icon/icon.component';
 
 /**
  * saved-credit-cards v1 (docs/contracts/saved-credit-cards.md §4) — one component, two modes:
@@ -21,7 +23,7 @@ import { loadStripeScript } from '../../../core/util/load-stripe-script';
 @Component({
   selector: 'app-saved-cards',
   standalone: true,
-  imports: [NzModalModule],
+  imports: [NzModalModule, EmptyStateComponent, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './saved-cards.component.html',
   styleUrl: './saved-cards.component.scss',

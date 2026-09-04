@@ -142,7 +142,9 @@ describe('SavedCardsComponent — manage mode (AC-18)', () => {
     const fixture = render('manage', fakePaymentMethods([]));
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    expect(text).toContain('ยังไม่มีบัตรที่บันทึกไว้ — เพิ่มได้จากปุ่มด้านล่าง');
+    // Rendered via `<app-empty-state>` as separate title/description elements (no "— " joiner).
+    expect(text).toContain('ยังไม่มีบัตรที่บันทึกไว้');
+    expect(text).toContain('เพิ่มได้จากปุ่มด้านล่าง');
     expect(text).toContain('เพิ่มบัตรใหม่');
   });
 

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../../../core/services';
+import { IconComponent } from '../icon/icon.component';
 
 /**
  * F-08 (N-04): change your password while signed in.
@@ -15,7 +16,7 @@ import { AuthService } from '../../../core/services';
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './change-password.component.html',
 })

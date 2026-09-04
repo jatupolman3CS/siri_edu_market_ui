@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NotificationService } from '../../../core/services';
+import { IconComponent } from '../icon/icon.component';
 
 /**
  * F-07: the notification switches, shared by /account and /seller/settings.
@@ -16,6 +19,7 @@ import { NotificationService } from '../../../core/services';
 @Component({
   selector: 'app-notification-settings',
   standalone: true,
+  imports: [FormsModule, NzSwitchModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-settings.component.html',
 })

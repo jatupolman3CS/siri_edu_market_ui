@@ -1,14 +1,29 @@
-<section class="card-soft p-6">
-  <h2 class="text-lg font-bold text-ink mb-1">โปรไฟล์</h2>
-  <p class="text-xs text-ink-muted mb-5">ชื่อที่แสดงและรูปโปรไฟล์ของคุณ</p>
+<section class="card-soft p-6" id="profile">
+  <div class="flex items-start gap-3 mb-5">
+    <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+      <app-icon name="user" [size]="18" />
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-ink mb-1">โปรไฟล์</h2>
+      <p class="text-xs text-ink-muted">ชื่อที่แสดงและรูปโปรไฟล์ของคุณ</p>
+    </div>
+  </div>
 
   <div class="flex items-center gap-5 mb-6 flex-wrap">
-    <img
-      appImgFallback
-      [src]="avatarSrc()"
-      class="w-20 h-20 rounded-3xl object-cover ring-2 ring-pink-100"
-      alt="รูปโปรไฟล์"
-    />
+    <label class="relative flex-shrink-0 cursor-pointer group">
+      <input type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
+      <img
+        appImgFallback
+        [src]="avatarSrc()"
+        class="w-24 h-24 rounded-[1.75rem] object-cover ring-4 ring-pink-100 transition-opacity group-hover:opacity-80"
+        alt="รูปโปรไฟล์"
+      />
+      <span
+        class="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-xl bg-white border border-line shadow-soft flex items-center justify-center text-pink-600"
+      >
+        <app-icon name="edit" [size]="14" />
+      </span>
+    </label>
     <div class="flex flex-col gap-2">
       <label class="btn-ghost !py-2 !px-4 text-sm cursor-pointer w-fit">
         <input type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
