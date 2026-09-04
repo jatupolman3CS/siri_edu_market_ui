@@ -14,7 +14,7 @@
   @if (loading()) {
     <p class="text-ink-muted text-sm">กำลังโหลด…</p>
   } @else if (!doc()) {
-    <p class="text-rose-600 text-sm">ไม่พบเอกสาร</p>
+    <app-empty-state emoji="😕" title="ไม่พบเอกสาร" description="อาจถูกลบหรือรหัสเอกสารไม่ถูกต้อง" />
   } @else {
     <div class="space-y-6">
       <div class="card-soft p-5 space-y-4">
@@ -48,15 +48,14 @@
             <label class="block text-xs text-ink-muted mb-1">หมวดหมู่ (เลือกได้หลายหมวด)</label>
             <div class="space-y-1 max-h-40 overflow-auto p-2 rounded-2xl border border-line bg-white/70">
               @for (c of admin.adminCategories(); track c.id) {
-                <label class="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-pink-50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    class="w-4 h-4 accent-pink-500"
-                    [checked]="(doc()!.categoryIds ?? []).includes(c.id)"
-                    (change)="patchDoc({ categoryIds: ((doc()!.categoryIds ?? []).includes(c.id)
-                      ? (doc()!.categoryIds ?? []).filter((id) => id !== c.id)
-                      : [ ...(doc()!.categoryIds ?? []), c.id ]) })"
-                  />
+                <label
+                  nz-checkbox
+                  class="px-2 py-1 rounded-xl hover:bg-pink-50"
+                  [nzChecked]="(doc()!.categoryIds ?? []).includes(c.id)"
+                  (nzCheckedChange)="patchDoc({ categoryIds: ((doc()!.categoryIds ?? []).includes(c.id)
+                    ? (doc()!.categoryIds ?? []).filter((id) => id !== c.id)
+                    : [ ...(doc()!.categoryIds ?? []), c.id ]) })"
+                >
                   <span class="text-sm">{{ c.icon }} {{ c.name }}</span>
                 </label>
               } @empty {
@@ -95,19 +94,19 @@
               <option value="en">English (en)</option>
             </select>
           </div>
-          <div class="sm:col-span-2 flex flex-wrap gap-4">
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" [ngModel]="doc()!.isFeatured" (ngModelChange)="patchDoc({ isFeatured: $event })" />
+          <div class="sm:col-span-2 flex flex-wrap gap-6">
+            <div class="flex items-center gap-2 text-sm">
+              <nz-switch [ngModel]="doc()!.isFeatured" (ngModelChange)="patchDoc({ isFeatured: $event })" />
               Featured
-            </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" [ngModel]="doc()!.isFree" (ngModelChange)="patchDoc({ isFree: $event })" />
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <nz-switch [ngModel]="doc()!.isFree" (ngModelChange)="patchDoc({ isFree: $event })" />
               ฟรี
-            </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" [ngModel]="doc()!.watermarkEnabled" (ngModelChange)="patchDoc({ watermarkEnabled: $event })" />
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <nz-switch [ngModel]="doc()!.watermarkEnabled" (ngModelChange)="patchDoc({ watermarkEnabled: $event })" />
               ลายน้ำ
-            </label>
+            </div>
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs text-ink-muted mb-1">แท็ก</label>
@@ -128,8 +127,12 @@
             <label class="block text-xs text-ink-muted mb-2">ระดับชั้น</label>
             <div class="flex flex-wrap gap-2">
               @for (g of gradePresets; track g.value) {
-                <label class="inline-flex items-center gap-1.5 text-xs bg-pink-50/80 px-2 py-1 rounded-lg cursor-pointer">
-                  <input type="checkbox" [checked]="gradeChecked(g.value)" (change)="toggleGrade(g.value, ($any($event.target)).checked)" />
+                <label
+                  nz-checkbox
+                  class="text-xs bg-pink-50/80 px-2 py-1 rounded-lg"
+                  [nzChecked]="gradeChecked(g.value)"
+                  (nzCheckedChange)="toggleGrade(g.value, $event)"
+                >
                   {{ g.label }}
                 </label>
               }
@@ -141,8 +144,12 @@
             <label class="block text-xs text-ink-muted mb-2">มาตรฐาน / สอบ</label>
             <div class="flex flex-wrap gap-2">
               @for (s of standardPresets; track s) {
-                <label class="inline-flex items-center gap-1.5 text-xs bg-slate-50 px-2 py-1 rounded-lg cursor-pointer border border-line">
-                  <input type="checkbox" [checked]="standardChecked(s)" (change)="toggleStandard(s, ($any($event.target)).checked)" />
+                <label
+                  nz-checkbox
+                  class="text-xs bg-slate-50 px-2 py-1 rounded-lg border border-line"
+                  [nzChecked]="standardChecked(s)"
+                  (nzCheckedChange)="toggleStandard(s, $event)"
+                >
                   {{ s }}
                 </label>
               }

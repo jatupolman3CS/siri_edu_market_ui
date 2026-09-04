@@ -59,7 +59,7 @@
           @if (item.specialties?.length) {
             <ul class="flex flex-wrap gap-2 mt-4">
               @for (specialty of item.specialties; track specialty) {
-                <li class="px-3 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-semibold">
+                <li class="pill-pink font-semibold">
                   {{ specialty }}
                 </li>
               }

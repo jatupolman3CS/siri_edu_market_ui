@@ -8,6 +8,7 @@ import { BundleService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { extractErrorCode, extractErrorStatus } from '../../../core/services/api-result';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 /**
@@ -26,7 +27,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 @Component({
   selector: 'app-seller-bundles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent, ThbPipe],
+  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent, IconComponent, ThbPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundles.page.html',
 })

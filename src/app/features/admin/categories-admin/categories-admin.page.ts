@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { AdminService, CatalogService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import {
@@ -23,7 +24,7 @@ interface DeleteConflict {
 @Component({
   selector: 'app-admin-categories',
   standalone: true,
-  imports: [FormsModule, NzModalModule, IconComponent, CompactPipe],
+  imports: [FormsModule, NzModalModule, NzSwitchModule, IconComponent, CompactPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories-admin.page.html',
   styleUrl: './categories-admin.page.scss',

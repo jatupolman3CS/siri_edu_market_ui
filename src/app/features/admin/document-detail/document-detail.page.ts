@@ -2,7 +2,9 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import {
   CdkDrag,
   CdkDropList,
@@ -30,6 +32,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { SellerService } from '../../../core/services/seller.service';
 import { unwrapSdkResult } from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -52,6 +55,9 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
   imports: [
     FormsModule,
     RouterLink,
+    NzCheckboxModule,
+    NzSwitchModule,
+    EmptyStateComponent,
     IconComponent,
     DatePipe,
     CdkDropList,

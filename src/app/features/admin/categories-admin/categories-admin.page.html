@@ -167,8 +167,8 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <input type="checkbox" id="subIsActive" [(ngModel)]="subIsActive" name="subIsActive" />
-        <label for="subIsActive" class="text-xs font-semibold text-ink-soft">เปิดใช้งาน</label>
+        <nz-switch [attr.name]="'subIsActive'" [(ngModel)]="subIsActive" />
+        <span class="text-xs font-semibold text-ink-soft">เปิดใช้งาน</span>
       </div>
     </div>
   </ng-container>

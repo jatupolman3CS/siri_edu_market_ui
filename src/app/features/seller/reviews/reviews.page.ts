@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -22,7 +23,14 @@ type ReviewRow = {
 @Component({
   selector: 'app-seller-reviews',
   standalone: true,
-  imports: [RouterLink, EmptyStateComponent, RatingStarsComponent, TimeAgoPipe, ImgFallbackDirective],
+  imports: [
+    RouterLink,
+    EmptyStateComponent,
+    IconComponent,
+    RatingStarsComponent,
+    TimeAgoPipe,
+    ImgFallbackDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reviews.page.html',
   styleUrl: './reviews.page.scss',

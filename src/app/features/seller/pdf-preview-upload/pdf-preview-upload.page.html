@@ -39,7 +39,7 @@
   @if (previewUrls().length) {
     <div class="mt-6 grid gap-4 sm:grid-cols-1">
       @for (u of previewUrls(); track u) {
-        <figure class="rounded-xl border border-line overflow-hidden bg-white shadow-sm">
+        <figure class="rounded-2xl border border-line overflow-hidden bg-white shadow-soft">
           <img appImgFallback [src]="resolveUrl(u)" alt="พรีวิวหน้า PDF" class="w-full h-auto object-contain max-h-[80vh]" />
         </figure>
       }

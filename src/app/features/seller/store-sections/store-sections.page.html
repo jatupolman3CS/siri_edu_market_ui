@@ -56,7 +56,7 @@
                     class="w-5 h-5 rounded border flex items-center justify-center text-xs shrink-0"
                     [class]="isSelected(doc.id) ? 'bg-pink-500 border-pink-500 text-white' : 'border-line'"
                   >
-                    @if (isSelected(doc.id)) { ✓ }
+                    @if (isSelected(doc.id)) { <app-icon name="check" [size]="12" /> }
                   </span>
                   <span class="text-sm text-ink truncate">{{ doc.title }}</span>
                 </button>

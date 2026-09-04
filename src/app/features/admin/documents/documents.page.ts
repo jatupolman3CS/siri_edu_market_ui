@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
   getApiAdminDocumentsList,
@@ -30,7 +31,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 @Component({
   selector: 'app-admin-documents',
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, ThbPipe, TimeAgoPipe],
+  imports: [FormsModule, RouterLink, NzCheckboxModule, IconComponent, ThbPipe, TimeAgoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.page.html',
   styleUrl: './documents.page.scss',

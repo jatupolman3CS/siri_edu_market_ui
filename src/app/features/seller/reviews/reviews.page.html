@@ -55,40 +55,46 @@
       </section>
 
       <!-- Reviews -->
-      <ul class="flex flex-col gap-4">
-        @if (!items().length) {
-          <li class="card-soft p-8 text-center text-sm text-ink-muted">
-            ยังไม่มีรีวิวในรายการนี้
-          </li>
-        }
-        @for (rv of items(); track rv.id) {
-          <li class="card-soft p-5">
-            <div class="flex items-start gap-4">
-              <img
-                appImgFallback
-                [src]="rv.buyerAvatar"
-                [alt]="rv.buyerName"
-                class="w-12 h-12 rounded-full object-cover flex-shrink-0"
-              />
-              <div class="flex-1">
-                <div class="flex items-start justify-between mb-2 gap-3">
-                  <div>
-                    <div class="text-sm font-bold text-ink">{{ rv.buyerName }}</div>
-                    <div class="flex items-center gap-2 mt-0.5">
-                      <app-rating-stars [value]="rv.rating" [size]="13" [showValue]="false" />
-                      <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
+      @if (!items().length) {
+        <app-empty-state
+          emoji="⭐"
+          title="ยังไม่มีรีวิวในรายการนี้"
+          description="รีวิวจากลูกค้าจะแสดงที่นี่หลังมีคนซื้อและให้คะแนนเอกสารของคุณ"
+        />
+      } @else {
+        <ul class="flex flex-col gap-4">
+          @for (rv of items(); track rv.id) {
+            <li class="card-soft p-5">
+              <div class="flex items-start gap-4">
+                <img
+                  appImgFallback
+                  [src]="rv.buyerAvatar"
+                  [alt]="rv.buyerName"
+                  class="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                />
+                <div class="flex-1">
+                  <div class="flex items-start justify-between mb-2 gap-3">
+                    <div>
+                      <div class="text-sm font-bold text-ink">{{ rv.buyerName }}</div>
+                      <div class="flex items-center gap-2 mt-0.5">
+                        <app-rating-stars [value]="rv.rating" [size]="13" [showValue]="false" />
+                        <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
+                      </div>
                     </div>
+                    <span class="pill-soft text-[10px]">
+                      <app-icon name="doc" [size]="10" />
+                      {{ rv.docTitle }}
+                    </span>
                   </div>
-                  <span class="pill-soft text-[10px]">📚 {{ rv.docTitle }}</span>
+                  <p class="text-sm text-ink-soft leading-relaxed mb-3">{{ rv.comment }}</p>
+                  <button type="button" class="text-xs text-pink-600 font-bold hover:underline">
+                    ตอบกลับรีวิว →
+                  </button>
                 </div>
-                <p class="text-sm text-ink-soft leading-relaxed mb-3">{{ rv.comment }}</p>
-                <button type="button" class="text-xs text-pink-600 font-bold hover:underline">
-                  ตอบกลับรีวิว →
-                </button>
               </div>
-            </div>
-          </li>
-        }
-      </ul>
+            </li>
+          }
+        </ul>
+      }
       }
     </div>

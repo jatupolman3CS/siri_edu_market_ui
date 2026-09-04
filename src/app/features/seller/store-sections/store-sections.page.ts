@@ -7,6 +7,7 @@ import type { StoreSectionResponse } from '../../../core/api';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /**
  * GAP-07: arranging the storefront. STORE_SECTION and STORE_SECTION_ITEM were seeded but
@@ -16,7 +17,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 @Component({
   selector: 'app-seller-store-sections',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmptyStateComponent, NzModalModule],
+  imports: [CommonModule, FormsModule, EmptyStateComponent, IconComponent, NzModalModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './store-sections.page.html',
 })

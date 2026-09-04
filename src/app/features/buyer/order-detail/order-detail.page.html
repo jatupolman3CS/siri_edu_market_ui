@@ -1,0 +1,148 @@
+<div class="max-w-3xl mx-auto px-4 lg:px-6 py-8">
+  @if (loading()) {
+    <app-empty-state emoji="⏳" title="กำลังโหลด…" description="รอสักครู่นะคะ" />
+  } @else if (!order()) {
+    <app-empty-state
+      emoji="😕"
+      title="ไม่พบคำสั่งซื้อ"
+      description="อาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง"
+    >
+      <a routerLink="/orders" class="btn-pink mt-4">กลับไปหน้าคำสั่งซื้อ</a>
+    </app-empty-state>
+  } @else {
+    @if (order(); as o) {
+      <a routerLink="/orders" class="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-pink-600 mb-6">
+        <app-icon name="arrow-left" [size]="14" />
+        กลับไปหน้าคำสั่งซื้อ
+      </a>
+
+      <app-page-hero
+        [eyebrow]="'คำสั่งซื้อ ' + o.orderNumber"
+        title="รายละเอียดคำสั่งซื้อ"
+        [description]="'สั่งซื้อเมื่อ ' + (o.createdAt | timeAgo)"
+      />
+
+      <!-- Status & Summary -->
+      <div class="card-soft p-6 mb-6">
+        <div class="flex flex-wrap items-center gap-4 mb-4">
+          <span [class]="statusClass(o.status)" class="pill text-sm">
+            {{ statusLabel(o.status) }}
+          </span>
+          <span class="text-sm text-ink-muted">
+            ชำระผ่าน {{ paymentLabel(o.paymentMethod) }}
+          </span>
+        </div>
+
+        @if (o.status === 'awaiting_payment') {
+          <div class="mb-6 p-5 rounded-2xl border border-amber-200 bg-amber-50/80">
+            <h3 class="text-base font-bold text-ink mb-2 flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              กำลังยืนยันการชำระเงิน
+            </h3>
+            <!-- S-04: after Stripe redirects the buyer back here the order is still
+                 awaiting_payment for a moment, because payment_intent.succeeded has not
+                 arrived yet. Saying "รอชำระเงิน" here would read as "your payment failed". -->
+            <p class="text-xs text-ink-muted leading-relaxed">
+              ถ้าคุณชำระเงินเรียบร้อยแล้ว ระบบกำลังรอการยืนยันจากผู้ให้บริการชำระเงิน
+              ปกติใช้เวลาไม่กี่วินาที หน้านี้จะอัปเดตสถานะให้เองอัตโนมัติ
+              <strong>กรุณาอย่าชำระเงินซ้ำ</strong>
+            </p>
+            @if (o.paymentHints?.stripePaymentIntentId) {
+              <p class="text-[11px] text-ink-muted mt-2">
+                รหัสการชำระเงิน: <span class="font-mono">{{ o.paymentHints?.stripePaymentIntentId }}</span>
+              </p>
+            }
+            <div class="flex flex-wrap items-center gap-3 mt-4">
+              <button
+                class="btn-ghost !py-2 text-sm disabled:opacity-50"
+                [disabled]="refreshing()"
+                (click)="refreshStatus(o.id)"
+              >
+                <app-icon name="arrow-right" [size]="14" />
+                {{ refreshing() ? 'กำลังตรวจสอบ…' : 'ตรวจสอบสถานะอีกครั้ง' }}
+              </button>
+              <span class="text-[11px] text-ink-muted">
+                ยังไม่อัปเดตหลังผ่านไปสักพัก? ติดต่อฝ่ายสนับสนุนพร้อมแจ้งเลข {{ o.orderNumber }}
+              </span>
+            </div>
+          </div>
+        }
+
+        <!-- BUG-01: prices include VAT, so the receipt breaks the tax out of the total
+             instead of adding it on top. -->
+        <dl class="text-sm space-y-2 border-t border-line pt-5">
+          <div class="flex justify-between">
+            <dt class="text-ink-muted">มูลค่าก่อนภาษี</dt>
+            <dd class="text-ink tabular-nums">{{ o.subtotal | thb }}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-ink-muted">ภาษีมูลค่าเพิ่ม (รวมในราคาแล้ว)</dt>
+            <dd class="text-ink tabular-nums">{{ o.vatAmount | thb }}</dd>
+          </div>
+          <div class="flex justify-between items-baseline border-t border-line pt-3">
+            <dt class="font-bold text-ink">ยอดรวมทั้งสิ้น</dt>
+            <dd class="text-2xl font-bold text-ink tabular-nums">{{ o.total | thb }}</dd>
+          </div>
+          <div class="flex justify-between text-xs text-ink-muted">
+            <dt>จำนวนรายการ</dt>
+            <dd>{{ o.items.length }} ไอเทม</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Items -->
+      <div class="card-soft overflow-hidden">
+        <header class="px-6 py-4 bg-pink-50 border-b border-pink-100">
+          <h3 class="font-bold text-ink">รายการสินค้า</h3>
+        </header>
+        <ul class="divide-y divide-line">
+          @for (item of o.items; track item.document.id) {
+            <li class="flex items-center gap-4 p-4">
+              <img
+                appImgFallback
+                [src]="item.document.cover"
+                [alt]="item.document.title"
+                class="w-16 h-20 object-cover rounded-xl flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-ink-muted">{{ item.document.seller.studioName }}</div>
+                <div class="font-bold text-ink line-clamp-2">{{ item.document.title }}</div>
+                <div class="text-xs text-ink-muted mt-1 uppercase">
+                  {{ item.document.format }} · {{ item.document.pages }} หน้า
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-ink">{{ item.document.price | thb }}</div>
+                <a
+                  [routerLink]="['/document', item.document.id]"
+                  class="text-xs text-pink-600 hover:underline mt-1 inline-block"
+                >
+                  ดูสินค้า
+                </a>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-3 mt-6">
+        <a routerLink="/library" class="btn-pink">
+          <app-icon name="download" [size]="14" />
+          ไปคลังเอกสาร
+        </a>
+        <button class="btn-ghost" (click)="printReceipt()">
+          <app-icon name="doc" [size]="14" />
+          ดูใบเสร็จ
+        </button>
+        <!-- BUG-09: an unpaid order blocks a fresh checkout for the same documents,
+             so the buyer needs a way to release it. -->
+        @if (o.status === 'awaiting_payment') {
+          <button class="btn-ghost" [disabled]="cancelling()" (click)="cancelOrder(o.id)">
+            {{ cancelling() ? 'กำลังยกเลิก…' : 'ยกเลิกคำสั่งซื้อ' }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

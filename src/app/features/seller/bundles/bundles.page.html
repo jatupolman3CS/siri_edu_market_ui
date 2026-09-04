@@ -78,7 +78,7 @@
                         : 'border-line'
                     "
                   >
-                    @if (isSelected(doc.documentId!)) { ✓ }
+                    @if (isSelected(doc.documentId!)) { <app-icon name="check" [size]="12" /> }
                   </span>
                   <span class="text-sm text-ink truncate flex-1">{{ doc.title }}</span>
                   <span class="text-xs text-ink-muted shrink-0">{{ doc.price ?? 0 | thb }}</span>
@@ -197,7 +197,7 @@
           @if (bundle.items?.length) {
             <ul class="flex flex-wrap gap-2 mt-4">
               @for (item of bundle.items!; track item.documentId) {
-                <li class="px-3 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-semibold">
+                <li class="pill-pink font-semibold">
                   {{ item.title }}
                 </li>
               }
