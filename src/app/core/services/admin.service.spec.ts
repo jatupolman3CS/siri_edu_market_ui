@@ -249,3 +249,34 @@ describe('AdminService — dashboardTrends (real-data-stats v1 §3.6)', () => {
     });
   });
 });
+
+/**
+ * Production 404 fix — protected document files ("ไฟล์ขาย"/"ไฟล์หลัก") 404'd on a direct
+ * `<a href>` link because that navigation carries no JWT and `CanReadAsync` denies anonymous
+ * requests. `getFileDownloadUrl` calls the authenticated presigned-URL endpoint
+ * (`GET /api/files/presigned/{key}`) instead, mirroring `LibraryService.download`.
+ */
+describe('AdminService — getFileDownloadUrl (presigned document downloads)', () => {
+  it('returns the presigned url on success', async () => {
+    stubRoute('GET', '/api/files/presigned/orig%2Fmain.pdf', {
+      body: { url: 'https://r2.example.com/orig/main.pdf?sig=abc', expiresSeconds: 600 },
+    });
+    const admin = buildService();
+
+    const url = await admin.getFileDownloadUrl('orig/main.pdf');
+
+    expect(url).toBe('https://r2.example.com/orig/main.pdf?sig=abc');
+  });
+
+  it('reports the failure and returns null when the backend denies access (404)', async () => {
+    stubRoute('GET', '/api/files/presigned/missing.pdf', {
+      status: 404,
+      body: { title: 'Not Found', status: 404 },
+    });
+    const admin = buildService();
+
+    const url = await admin.getFileDownloadUrl('missing.pdf');
+
+    expect(url).toBeNull();
+  });
+});

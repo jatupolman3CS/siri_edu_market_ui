@@ -474,9 +474,22 @@ export class AdminDocumentDetailPage {
     });
   }
 
-  mainFileDownloadUrl(): string {
+  /**
+   * The "ไฟล์เอกสารหลัก" link is a protected document file — it 404s on a direct `<a href>`
+   * link because the browser navigation carries no JWT. `hasMainFile` stays synchronous (the
+   * template still gates the link on "is there a key at all"); the actual download URL is
+   * fetched on click through `AdminService.getFileDownloadUrl`, which calls the authenticated
+   * presigned-URL endpoint before opening the tab.
+   */
+  hasMainFile(): boolean {
+    return !!this.doc()?.fileStorageKey?.trim();
+  }
+
+  async downloadMainFile(): Promise<void> {
     const key = this.doc()?.fileStorageKey?.trim();
-    return key ? downloadUrlForStorageKey(key) : '';
+    if (!key) return;
+    const url = await this.admin.getFileDownloadUrl(key);
+    if (url) window.open(url, '_blank', 'noopener');
   }
 
   async onMainFile(ev: Event): Promise<void> {

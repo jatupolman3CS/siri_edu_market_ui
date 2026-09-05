@@ -12,6 +12,7 @@ import {
   getApiAdminDocumentGenerationCategories,
   getApiAdminDocumentGenerationRuns,
   getApiAdminPayouts,
+  getApiFilesPresignedByKey,
   getApiAdminReports,
   getApiAdminSellers,
   getApiAdminSettings,
@@ -733,6 +734,26 @@ export class AdminService {
     } catch (e) {
       this.apiFail.report('โหลดประวัติการรันสร้างเอกสารอัตโนมัติ', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+    }
+  }
+
+  /**
+   * Protected document files (`Documents.FileStorageKey` / `DocumentMainFiles.StorageKey`) 404
+   * on a direct `<a href>` link in production — the browser navigates without the JWT the
+   * `CanReadAsync` check needs, so `EfStorageAccessPolicy` sees an anonymous request and denies
+   * it. This calls the authenticated presigned-URL endpoint instead (same pattern as
+   * `LibraryService.download`): the auth check happens on the API call, which carries the
+   * Bearer token via the interceptor, and the resulting URL is presigned so opening it
+   * afterwards needs no auth header at all.
+   */
+  async getFileDownloadUrl(key: string): Promise<string | null> {
+    try {
+      const result = await getApiFilesPresignedByKey({ path: { key } });
+      const data = unwrapSdkResult(result) as { url?: string } | undefined;
+      return data?.url ?? null;
+    } catch (e) {
+      this.apiFail.report('ขอลิงก์ดาวน์โหลดไฟล์', e);
+      return null;
     }
   }
 }

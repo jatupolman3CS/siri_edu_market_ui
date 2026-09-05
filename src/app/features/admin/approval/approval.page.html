@@ -225,12 +225,10 @@
                         เปิดใช้ลายน้ำ — การดาวน์โหลดของผู้ซื้ออาจถูกจำกัดตามนโยบายระบบ
                       </p>
                     }
-                    @if (saleFileDownloadUrl()) {
+                    @if (hasSaleFile()) {
                       <a
-                        [href]="saleFileDownloadUrl()"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-2 text-sm font-bold text-pink-600 hover:underline"
+                        (click)="downloadSaleFile()"
+                        class="inline-flex items-center gap-2 text-sm font-bold text-pink-600 hover:underline cursor-pointer"
                       >
                         <app-icon name="doc" [size]="16" />
                         เปิด / ดาวน์โหลดไฟล์ขาย
@@ -254,12 +252,10 @@
                               <span class="text-[10px] font-bold uppercase text-pink-600 shrink-0">ขาย</span>
                             }
                             <span class="flex-1 min-w-0 truncate">{{ m.originalFileName || m.storageKey }}</span>
-                            @if (mainFileDownloadUrl(m.storageKey)) {
+                            @if (hasMainFile(m.storageKey)) {
                               <a
-                                [href]="mainFileDownloadUrl(m.storageKey)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="text-xs font-semibold text-pink-600 hover:underline shrink-0"
+                                (click)="downloadMainFile(m.storageKey)"
+                                class="text-xs font-semibold text-pink-600 hover:underline shrink-0 cursor-pointer"
                                 >ดาวน์โหลด</a
                               >
                             }

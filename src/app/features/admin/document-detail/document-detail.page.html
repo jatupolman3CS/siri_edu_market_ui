@@ -216,11 +216,9 @@
               {{ mainFileUploading() ? 'กำลังอัปโหลด…' : 'อัปโหลดไฟล์หลัก' }}
               <input type="file" class="hidden" [disabled]="mainFileUploading()" (change)="onMainFile($event)" />
             </label>
-            @if (mainFileDownloadUrl()) {
+            @if (hasMainFile()) {
               <a
-                [href]="mainFileDownloadUrl()"
-                target="_blank"
-                rel="noopener noreferrer"
+                (click)="downloadMainFile()"
                 class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1 text-pink-600"
               >
                 <app-icon name="doc" [size]="14" />

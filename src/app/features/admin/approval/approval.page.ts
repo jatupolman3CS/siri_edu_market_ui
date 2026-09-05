@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminDocumentDetail } from '../../../core/api/admin-documents.api';
-import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
+import { resolvePublicUrl } from '../../../core/api-runtime';
 import { AdminService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -179,14 +179,33 @@ export class AdminApprovalPage {
     return resolvePublicUrl(raw.replaceAll('%2F', '/'));
   }
 
-  saleFileDownloadUrl(): string {
-    const key = this.previewDetail()?.fileStorageKey?.trim();
-    return key ? downloadUrlForStorageKey(key) : '';
+  /**
+   * F-xx: "ไฟล์ขาย"/"ไฟล์หลัก" are protected document files — they 404 on a direct `<a href>`
+   * link because the browser navigation carries no JWT. `hasSaleFile`/`hasMainFile` stay
+   * synchronous (template still gates the button/link on "is there a key at all"); the actual
+   * download URL is fetched on click through `AdminService.getFileDownloadUrl`, which calls the
+   * authenticated presigned-URL endpoint before opening the tab.
+   */
+  hasSaleFile(): boolean {
+    return !!this.previewDetail()?.fileStorageKey?.trim();
   }
 
-  mainFileDownloadUrl(storageKey: string | null | undefined): string {
-    const k = storageKey?.trim();
-    return k ? downloadUrlForStorageKey(k) : '';
+  hasMainFile(storageKey: string | null | undefined): boolean {
+    return !!storageKey?.trim();
+  }
+
+  async downloadSaleFile(): Promise<void> {
+    const key = this.previewDetail()?.fileStorageKey?.trim();
+    if (!key) return;
+    const url = await this.admin.getFileDownloadUrl(key);
+    if (url) window.open(url, '_blank', 'noopener');
+  }
+
+  async downloadMainFile(storageKey: string | null | undefined): Promise<void> {
+    const key = storageKey?.trim();
+    if (!key) return;
+    const url = await this.admin.getFileDownloadUrl(key);
+    if (url) window.open(url, '_blank', 'noopener');
   }
 
   async approve(id: string, title: string): Promise<void> {
