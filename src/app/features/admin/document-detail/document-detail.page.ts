@@ -474,6 +474,11 @@ export class AdminDocumentDetailPage {
     });
   }
 
+  mainFileDownloadUrl(): string {
+    const key = this.doc()?.fileStorageKey?.trim();
+    return key ? downloadUrlForStorageKey(key) : '';
+  }
+
   async onMainFile(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];

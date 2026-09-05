@@ -216,6 +216,19 @@
               {{ mainFileUploading() ? 'กำลังอัปโหลด…' : 'อัปโหลดไฟล์หลัก' }}
               <input type="file" class="hidden" [disabled]="mainFileUploading()" (change)="onMainFile($event)" />
             </label>
+            @if (mainFileDownloadUrl()) {
+              <a
+                [href]="mainFileDownloadUrl()"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1 text-pink-600"
+              >
+                <app-icon name="doc" [size]="14" />
+                เปิด / ดาวน์โหลดไฟล์
+              </a>
+            } @else {
+              <p class="text-xs text-ink-muted">ยังไม่มีไฟล์ให้ดาวน์โหลด</p>
+            }
             <input
               class="input-soft w-full !py-2 font-mono text-xs"
               [ngModel]="doc()!.fileStorageKey ?? ''"
