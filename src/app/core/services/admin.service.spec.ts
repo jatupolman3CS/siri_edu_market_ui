@@ -171,6 +171,203 @@ describe('AdminService — subcategory admin (subcategory-admin-crud v1)', () =>
 });
 
 /**
+ * announcement-popup v1 (docs/contracts/announcement-popup.md §3-4). Round 2: these specs drive
+ * `AdminService`'s 5 announcement methods against a stubbed `fetch`, exercising the real generated
+ * SDK calls end to end — mirrors the subcategory admin block above (`AnnouncementPopupService`'s
+ * own spec already covers the queue/dismiss/sessionStorage logic against a hand-stubbed
+ * `fetchActive`, so this file's job is just the HTTP wiring + response mapping).
+ */
+describe('AdminService — announcement admin (announcement-popup v1)', () => {
+  const image = (id: string) => ({
+    id,
+    imageUrl: `https://cdn.example.com/${id}.jpg`,
+    linkUrl: null,
+    altText: null,
+    sortOrder: 0,
+  });
+
+  it('lists every announcement (every status, unfiltered), mapped to the domain model', async () => {
+    stubRoute('GET', '/api/admin/announcements', {
+      body: [
+        {
+          id: 'ann-1',
+          title: 'ประกาศทดสอบ',
+          isEnabled: true,
+          startAt: null,
+          endAt: null,
+          sortOrder: 0,
+          images: [image('img-1'), image('img-2')],
+        },
+      ],
+    });
+    const admin = buildService();
+
+    const list = await admin.listAnnouncements();
+
+    expect(list).toEqual([
+      {
+        id: 'ann-1',
+        title: 'ประกาศทดสอบ',
+        isEnabled: true,
+        startAt: null,
+        endAt: null,
+        sortOrder: 0,
+        images: [image('img-1'), image('img-2')],
+      },
+    ]);
+  });
+
+  it('getAnnouncement returns the mapped announcement by id', async () => {
+    stubRoute('GET', '/api/admin/announcements/ann-1', {
+      body: {
+        id: 'ann-1',
+        title: 'ประกาศทดสอบ',
+        isEnabled: true,
+        startAt: null,
+        endAt: null,
+        sortOrder: 0,
+        images: [image('img-1')],
+      },
+    });
+    const admin = buildService();
+
+    const found = await admin.getAnnouncement('ann-1');
+
+    expect(found?.id).toBe('ann-1');
+  });
+
+  it('AC-2: getAnnouncement rejects when the id does not exist (404)', async () => {
+    stubRoute('GET', '/api/admin/announcements/missing', {
+      status: 404,
+      body: { title: 'Not Found', status: 404 },
+    });
+    const admin = buildService();
+
+    await expect(admin.getAnnouncement('missing')).rejects.toBeTruthy();
+  });
+
+  it('AC-3: creates an announcement (5-10 images) and returns the mapped response', async () => {
+    const images = [1, 2, 3, 4, 5].map((n) => image(`img-${n}`));
+    stubRoute('POST', '/api/admin/announcements', {
+      status: 201,
+      body: {
+        id: 'ann-new',
+        title: 'ประกาศใหม่',
+        isEnabled: true,
+        startAt: null,
+        endAt: null,
+        sortOrder: 0,
+        images,
+      },
+    });
+    const admin = buildService();
+
+    const created = await admin.createAnnouncement({
+      title: 'ประกาศใหม่',
+      isEnabled: true,
+      startAt: null,
+      endAt: null,
+      sortOrder: 0,
+      images: images.map((img, index) => ({
+        id: null,
+        imageUrl: img.imageUrl,
+        linkUrl: null,
+        altText: null,
+        sortOrder: index,
+      })),
+    });
+
+    expect(created?.id).toBe('ann-new');
+    expect(created?.images).toHaveLength(5);
+  });
+
+  it('AC-5: a 400 on create (endAt before startAt) surfaces the ProblemDetails error', async () => {
+    stubRoute('POST', '/api/admin/announcements', {
+      status: 400,
+      body: { title: 'Bad Request', status: 400, message: 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มแสดง' },
+    });
+    const admin = buildService();
+
+    await expect(
+      admin.createAnnouncement({
+        title: 'x',
+        isEnabled: true,
+        startAt: '2026-02-01T00:00:00Z',
+        endAt: '2026-01-01T00:00:00Z',
+        sortOrder: 0,
+        images: [],
+      }),
+    ).rejects.toBeTruthy();
+  });
+
+  it('AC-7: updates an announcement and returns the mapped response', async () => {
+    stubRoute('PUT', '/api/admin/announcements/ann-1', {
+      body: {
+        id: 'ann-1',
+        title: 'แก้ไขแล้ว',
+        isEnabled: false,
+        startAt: null,
+        endAt: null,
+        sortOrder: 2,
+        images: [image('img-1'), image('img-2')],
+      },
+    });
+    const admin = buildService();
+
+    const updated = await admin.updateAnnouncement('ann-1', {
+      title: 'แก้ไขแล้ว',
+      isEnabled: false,
+      startAt: null,
+      endAt: null,
+      sortOrder: 2,
+      images: [
+        { id: 'img-1', imageUrl: image('img-1').imageUrl, linkUrl: null, altText: null, sortOrder: 0 },
+        { id: 'img-2', imageUrl: image('img-2').imageUrl, linkUrl: null, altText: null, sortOrder: 1 },
+      ],
+    });
+
+    expect(updated?.title).toBe('แก้ไขแล้ว');
+    expect(updated?.isEnabled).toBe(false);
+  });
+
+  it('AC-7: updateAnnouncement rejects when the id does not exist (404)', async () => {
+    stubRoute('PUT', '/api/admin/announcements/missing', {
+      status: 404,
+      body: { title: 'Not Found', status: 404 },
+    });
+    const admin = buildService();
+
+    await expect(
+      admin.updateAnnouncement('missing', {
+        title: 'x',
+        isEnabled: true,
+        startAt: null,
+        endAt: null,
+        sortOrder: 0,
+        images: [],
+      }),
+    ).rejects.toBeTruthy();
+  });
+
+  it('AC-11: a successful delete resolves without throwing', async () => {
+    stubRoute('DELETE', '/api/admin/announcements/ann-1', { status: 204, body: null });
+    const admin = buildService();
+
+    await expect(admin.deleteAnnouncement('ann-1')).resolves.toBeUndefined();
+  });
+
+  it('AC-11: delete rejects when the announcement does not exist (404)', async () => {
+    stubRoute('DELETE', '/api/admin/announcements/missing', {
+      status: 404,
+      body: { title: 'Not Found', status: 404 },
+    });
+    const admin = buildService();
+
+    await expect(admin.deleteAnnouncement('missing')).rejects.toBeTruthy();
+  });
+});
+
+/**
  * real-data-stats v1 §3.6 — `AdminDashboardResponse.revenueTrendPercent` / `.feesTrendPercent`
  * / `.refundTrendPercent` aren't on the generated type yet (backend hasn't
  * shipped/regenerated). `dashboardTrends()` must default every field to `null` (hide the trend

@@ -1,9 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { Category, DocumentItem, Seller, SubcategoryAdmin } from '../models';
+import type { AnnouncementAdmin, Category, DocumentItem, Seller, SubcategoryAdmin } from '../models';
 import { AdminTransaction } from '../models';
 import {
+  deleteApiAdminAnnouncementsById,
   deleteApiAdminCategoriesById,
   deleteApiAdminCategoriesByCategoryIdSubcategoriesById,
+  getApiAdminAnnouncements,
+  getApiAdminAnnouncementsById,
   getApiAdminCategories,
   getApiAdminCategoriesByCategoryIdSubcategories,
   getApiAdminCategoriesByCategoryIdSubcategoriesById,
@@ -19,6 +22,8 @@ import {
   getApiAdminStorageUsage,
   getApiAdminSystemConfigJobToggles,
   getApiAdminTransactions,
+  getApiAnnouncementsActive,
+  postApiAdminAnnouncements,
   postApiAdminCategories,
   postApiAdminCategoriesByCategoryIdSubcategories,
   postApiAdminDocumentGenerationRun,
@@ -28,6 +33,7 @@ import {
   postApiAdminDocumentsByIdReportsByReportIdResolve,
   postApiAdminOrdersByOrderIdRefund,
   postApiAdminPayoutsByPayoutIdStatus,
+  putApiAdminAnnouncementsById,
   putApiAdminCategoriesById,
   putApiAdminCategoriesByCategoryIdSubcategoriesById,
   putApiAdminSettings,
@@ -119,6 +125,33 @@ export interface DocumentGenerationRun {
   generatedDocumentIds: string[];
 }
 
+/**
+ * announcement-popup v1 §3.1/§4 (`docs/contracts/announcement-popup.md`) — matches the generated
+ * `CreateAnnouncementRequest`/`UpdateAnnouncementRequest` field-for-field (the contract defines
+ * both with the same shape, and so does the generated SDK — two structurally identical types).
+ * Kept as one shared, fully-required interface rather than switching callers to the two generated
+ * (all-fields-but-title/images-optional) types: `announcements-admin.page.ts` always fills in
+ * every field before calling either `createAnnouncement`/`updateAnnouncement`, and a value of this
+ * shape is assignable to both generated request types as-is (no conversion needed) since it has no
+ * fields beyond what they declare.
+ */
+export interface AnnouncementImageRequest {
+  id: string | null;
+  imageUrl: string;
+  linkUrl: string | null;
+  altText: string | null;
+  sortOrder: number;
+}
+
+export interface AnnouncementRequest {
+  title: string;
+  isEnabled: boolean;
+  startAt: string | null;
+  endAt: string | null;
+  sortOrder: number;
+  images: AnnouncementImageRequest[];
+}
+
 function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
   return {
     feeRatePercent: res.feeRatePercent ?? 0,
@@ -182,6 +215,7 @@ import {
   mapAdminPendingToDocumentItem,
   mapAdminSellerCard,
   mapAdminTransaction,
+  mapAnnouncementAdmin,
   mapCategory,
   mapSubcategoryAdmin,
 } from '../api-mappers/mappers';
@@ -755,5 +789,43 @@ export class AdminService {
       this.apiFail.report('ขอลิงก์ดาวน์โหลดไฟล์', e);
       return null;
     }
+  }
+
+  // ========== Announcement admin (announcement-popup v1) ==========
+  // docs/contracts/announcement-popup.md §3-4. Wired to the generated SDK after backend gate 1
+  // passed and `npm run generate:api` was re-run against the live backend — same pattern as
+  // `listSubcategories`/`createSubcategory`/`updateSubcategory`/`deleteSubcategory` above (errors
+  // propagate uncaught; `announcements-admin.page.ts` owns the reporting via its own toasts).
+
+  async listAnnouncements(): Promise<AnnouncementAdmin[]> {
+    const result = await getApiAdminAnnouncements();
+    const data = unwrapSdkResult(result);
+    return (data ?? []).map(mapAnnouncementAdmin);
+  }
+
+  async getAnnouncement(id: string): Promise<AnnouncementAdmin | null> {
+    const result = await getApiAdminAnnouncementsById({ path: { id } });
+    const data = unwrapSdkResult(result);
+    return data ? mapAnnouncementAdmin(data) : null;
+  }
+
+  async createAnnouncement(request: AnnouncementRequest): Promise<AnnouncementAdmin | null> {
+    const result = await postApiAdminAnnouncements({ body: request });
+    const data = unwrapSdkResult(result);
+    return data ? mapAnnouncementAdmin(data) : null;
+  }
+
+  async updateAnnouncement(
+    id: string,
+    request: AnnouncementRequest,
+  ): Promise<AnnouncementAdmin | null> {
+    const result = await putApiAdminAnnouncementsById({ path: { id }, body: request });
+    const data = unwrapSdkResult(result);
+    return data ? mapAnnouncementAdmin(data) : null;
+  }
+
+  async deleteAnnouncement(id: string): Promise<void> {
+    const result = await deleteApiAdminAnnouncementsById({ path: { id } });
+    if (result.error !== undefined) throw result.error;
   }
 }

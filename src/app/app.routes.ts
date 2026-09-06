@@ -324,6 +324,15 @@ export const routes: Routes = [
             (m) => m.AdminSettingsPage,
           ),
       },
+      // announcement-popup v1: CRUD for the buyer-facing popup announcements.
+      {
+        path: 'announcements',
+        loadComponent: () =>
+          import('./features/admin/announcements-admin/announcements-admin.page').then(
+            (m) => m.AnnouncementsAdminPage,
+          ),
+        title: 'จัดการประกาศข่าวสาร — Admin',
+      },
       // category-content-auto-generation v1: trigger/inspect the document auto-generation job —
       // generated documents land in the existing /admin/approval queue automatically.
       {

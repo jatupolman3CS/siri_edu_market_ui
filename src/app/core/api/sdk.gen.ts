@@ -10,6 +10,9 @@ import {
 } from './client';
 import { client } from './client.gen';
 import type {
+  DeleteApiAdminAnnouncementsByIdData,
+  DeleteApiAdminAnnouncementsByIdErrors,
+  DeleteApiAdminAnnouncementsByIdResponses,
   DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdData,
   DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
   DeleteApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
@@ -42,6 +45,11 @@ import type {
   DeleteApiWishlistData,
   DeleteApiWishlistErrors,
   DeleteApiWishlistResponses,
+  GetApiAdminAnnouncementsByIdData,
+  GetApiAdminAnnouncementsByIdErrors,
+  GetApiAdminAnnouncementsByIdResponses,
+  GetApiAdminAnnouncementsData,
+  GetApiAdminAnnouncementsResponses,
   GetApiAdminAuditData,
   GetApiAdminAuditResponses,
   GetApiAdminCategoriesByCategoryIdSubcategoriesByIdData,
@@ -90,6 +98,8 @@ import type {
   GetApiAdminSystemConfigJobTogglesResponses,
   GetApiAdminTransactionsData,
   GetApiAdminTransactionsResponses,
+  GetApiAnnouncementsActiveData,
+  GetApiAnnouncementsActiveResponses,
   GetApiAuthOauthClientsData,
   GetApiAuthOauthClientsResponses,
   GetApiCartData,
@@ -202,6 +212,9 @@ import type {
   PatchApiAdminDocumentsByIdData,
   PatchApiAdminDocumentsByIdErrors,
   PatchApiAdminDocumentsByIdResponses,
+  PostApiAdminAnnouncementsData,
+  PostApiAdminAnnouncementsErrors,
+  PostApiAdminAnnouncementsResponses,
   PostApiAdminCategoriesByCategoryIdSubcategoriesData,
   PostApiAdminCategoriesByCategoryIdSubcategoriesErrors,
   PostApiAdminCategoriesByCategoryIdSubcategoriesResponses,
@@ -340,6 +353,9 @@ import type {
   PostApiSellerStoreSectionsData,
   PostApiSellerStoreSectionsErrors,
   PostApiSellerStoreSectionsResponses,
+  PostApiSystemSearchReindexData,
+  PostApiSystemSearchReindexErrors,
+  PostApiSystemSearchReindexResponses,
   PostApiSystemStorageKeyBackfillData,
   PostApiSystemStorageKeyBackfillErrors,
   PostApiSystemStorageKeyBackfillResponses,
@@ -351,6 +367,9 @@ import type {
   PostApiWishlistData,
   PostApiWishlistErrors,
   PostApiWishlistResponses,
+  PutApiAdminAnnouncementsByIdData,
+  PutApiAdminAnnouncementsByIdErrors,
+  PutApiAdminAnnouncementsByIdResponses,
   PutApiAdminCategoriesByCategoryIdSubcategoriesByIdData,
   PutApiAdminCategoriesByCategoryIdSubcategoriesByIdErrors,
   PutApiAdminCategoriesByCategoryIdSubcategoriesByIdResponses,
@@ -756,6 +775,88 @@ export const putApiAdminSystemConfigJobTogglesByJobKey = <ThrowOnError extends b
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,
+): RequestResult<GetApiAdminAnnouncementsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminAnnouncementsResponses, unknown, ThrowOnError>({
+    url: '/api/admin/announcements',
+    ...options,
+  });
+
+export const postApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminAnnouncementsData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminAnnouncementsResponses,
+  PostApiAdminAnnouncementsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminAnnouncementsResponses,
+    PostApiAdminAnnouncementsErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/announcements',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const deleteApiAdminAnnouncementsById = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteApiAdminAnnouncementsByIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiAdminAnnouncementsByIdResponses,
+  DeleteApiAdminAnnouncementsByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiAdminAnnouncementsByIdResponses,
+    DeleteApiAdminAnnouncementsByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/announcements/{id}', ...options });
+
+export const getApiAdminAnnouncementsById = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminAnnouncementsByIdData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminAnnouncementsByIdResponses,
+  GetApiAdminAnnouncementsByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminAnnouncementsByIdResponses,
+    GetApiAdminAnnouncementsByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/announcements/{id}', ...options });
+
+export const putApiAdminAnnouncementsById = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminAnnouncementsByIdData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminAnnouncementsByIdResponses,
+  PutApiAdminAnnouncementsByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminAnnouncementsByIdResponses,
+    PutApiAdminAnnouncementsByIdErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/announcements/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiAnnouncementsActive = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAnnouncementsActiveData, ThrowOnError>,
+): RequestResult<GetApiAnnouncementsActiveResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAnnouncementsActiveResponses, unknown, ThrowOnError>({
+    url: '/api/announcements/active',
+    ...options,
   });
 
 export const getApiAuthOauthClients = <ThrowOnError extends boolean = false>(
@@ -2143,6 +2244,19 @@ export const postApiSystemStorageKeyBackfill = <ThrowOnError extends boolean = f
     PostApiSystemStorageKeyBackfillErrors,
     ThrowOnError
   >({ url: '/api/system/storage-key-backfill', ...options });
+
+export const postApiSystemSearchReindex = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiSystemSearchReindexData, ThrowOnError>,
+): RequestResult<
+  PostApiSystemSearchReindexResponses,
+  PostApiSystemSearchReindexErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiSystemSearchReindexResponses,
+    PostApiSystemSearchReindexErrors,
+    ThrowOnError
+  >({ url: '/api/system/search-reindex', ...options });
 
 export const postApiSystemTestEmail = <ThrowOnError extends boolean = false>(
   options: Options<PostApiSystemTestEmailData, ThrowOnError>,

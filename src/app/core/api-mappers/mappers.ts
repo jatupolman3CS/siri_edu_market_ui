@@ -7,6 +7,9 @@ import type {
   AdminPendingDocumentResponse,
   AdminSellerResponse,
   AdminTransactionResponse,
+  AnnouncementAdminResponse,
+  AnnouncementImageResponse,
+  AnnouncementPopupResponse,
   BundleDetailResponse,
   BundleResponse,
   CategoryResponse,
@@ -29,6 +32,9 @@ import type {
 } from '../api';
 import type {
   AdminTransaction,
+  AnnouncementAdmin,
+  AnnouncementImage,
+  AnnouncementPopup,
   Bundle,
   Category,
   DocumentItem,
@@ -180,6 +186,43 @@ export function mapSubcategoryAdmin(s: SubcategoryAdminResponse): SubcategoryAdm
     isActive: s.isActive ?? true,
     sortOrder: s.sortOrder ?? 0,
     documentCount: s.documentCount ?? 0,
+  };
+}
+
+/**
+ * announcement-popup v1 §3.1 (`docs/contracts/announcement-popup.md`) — shared by both
+ * `AnnouncementAdminResponse.images` and `AnnouncementPopupResponse.images` (same
+ * `AnnouncementImageResponse` shape on the wire per §3.1).
+ */
+function mapAnnouncementImage(i: AnnouncementImageResponse): AnnouncementImage {
+  return {
+    id: i.id ?? '',
+    imageUrl: i.imageUrl ?? '',
+    linkUrl: i.linkUrl ?? null,
+    altText: i.altText ?? null,
+    sortOrder: i.sortOrder ?? 0,
+  };
+}
+
+/** announcement-popup v1 §3.1 — admin CRUD response (`/api/admin/announcements*`). */
+export function mapAnnouncementAdmin(a: AnnouncementAdminResponse): AnnouncementAdmin {
+  return {
+    id: a.id ?? '',
+    title: a.title ?? '',
+    isEnabled: a.isEnabled ?? false,
+    startAt: a.startAt ?? null,
+    endAt: a.endAt ?? null,
+    sortOrder: a.sortOrder ?? 0,
+    images: (a.images ?? []).map(mapAnnouncementImage),
+  };
+}
+
+/** announcement-popup v1 §3.1 — buyer-facing response (`GET /api/announcements/active`). */
+export function mapAnnouncementPopup(a: AnnouncementPopupResponse): AnnouncementPopup {
+  return {
+    id: a.id ?? '',
+    title: a.title ?? '',
+    images: (a.images ?? []).map(mapAnnouncementImage),
   };
 }
 

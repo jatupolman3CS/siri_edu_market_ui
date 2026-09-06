@@ -58,7 +58,7 @@ export class AdminLayoutComponent {
   readonly navItems: {
     label: string;
     href: string;
-    icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear';
+    icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell';
     exact?: boolean;
     badge?: string;
   }[] = [
@@ -73,6 +73,8 @@ export class AdminLayoutComponent {
     // GAP-01: review queue for buyers applying to sell.
     { label: 'ใบสมัครผู้ขาย', href: '/admin/seller-applications', icon: 'shield' as const },
     { label: 'หมวดหมู่', href: '/admin/categories', icon: 'tag' as const },
+    // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
+    { label: 'ประกาศข่าวสาร', href: '/admin/announcements', icon: 'bell' as const },
     { label: 'ตั้งค่าแพลตฟอร์ม', href: '/admin/settings', icon: 'gear' as const },
     { label: 'ประวัติการทำงาน', href: '/admin/audit', icon: 'doc' as const },
     // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.

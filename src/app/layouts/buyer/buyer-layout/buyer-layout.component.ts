@@ -5,6 +5,7 @@ import { AppFooterComponent } from '../../../shared/components/app-footer/app-fo
 import { CartDrawerComponent } from '../../../shared/components/cart-drawer/cart-drawer.component';
 import { QuickViewModalComponent } from '../../../shared/components/quick-view-modal/quick-view-modal.component';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
+import { AnnouncementPopupComponent } from '../../../shared/components/announcement-popup/announcement-popup.component';
 
 @Component({
   selector: 'app-buyer-layout',
@@ -16,6 +17,7 @@ import { GlobalLoaderComponent } from '../../../shared/components/global-loader/
     CartDrawerComponent,
     QuickViewModalComponent,
     GlobalLoaderComponent,
+    AnnouncementPopupComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './buyer-layout.component.html',

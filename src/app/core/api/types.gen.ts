@@ -229,6 +229,38 @@ export type AdminTransactionResponse = {
   createdAt?: string;
 };
 
+export type AnnouncementAdminResponse = {
+  id?: string;
+  title?: string;
+  isEnabled?: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  sortOrder?: number;
+  images?: Array<AnnouncementImageResponse>;
+};
+
+export type AnnouncementImageRequest = {
+  id?: string | null;
+  imageUrl: string;
+  linkUrl?: string | null;
+  altText?: string | null;
+  sortOrder?: number;
+};
+
+export type AnnouncementImageResponse = {
+  id?: string;
+  imageUrl?: string;
+  linkUrl?: string | null;
+  altText?: string | null;
+  sortOrder?: number;
+};
+
+export type AnnouncementPopupResponse = {
+  id?: string;
+  title?: string;
+  images?: Array<AnnouncementImageResponse>;
+};
+
 export type AnswerDocumentQuestionRequest = {
   answer: string;
 };
@@ -336,6 +368,15 @@ export type ChangePasswordRequest = {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+};
+
+export type CreateAnnouncementRequest = {
+  title: string;
+  isEnabled?: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  sortOrder?: number;
+  images: Array<AnnouncementImageRequest>;
 };
 
 export type CreateCategoryRequest = {
@@ -927,6 +968,14 @@ export type SaveStoreSectionRequest = {
   documentIds?: Array<string>;
 };
 
+export type SearchReindexResponse = {
+  dryRun?: boolean;
+  approvedDocumentsPushed?: number;
+  staleIndexEntriesRemoved?: number;
+  extractionRowsRequeued?: number;
+  processedAt?: string;
+};
+
 export type SellerApplicationResponse = {
   userId?: string;
   studioName?: string;
@@ -1233,6 +1282,15 @@ export type TestEmailRequest = {
 export type TopCategoryItem = {
   category?: string;
   sales?: number;
+};
+
+export type UpdateAnnouncementRequest = {
+  title: string;
+  isEnabled?: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  sortOrder?: number;
+  images: Array<AnnouncementImageRequest>;
 };
 
 export type UpdateCategoryRequest = {
@@ -2083,6 +2141,158 @@ export type PutApiAdminSystemConfigJobTogglesByJobKeyResponses = {
 
 export type PutApiAdminSystemConfigJobTogglesByJobKeyResponse =
   PutApiAdminSystemConfigJobTogglesByJobKeyResponses[keyof PutApiAdminSystemConfigJobTogglesByJobKeyResponses];
+
+export type GetApiAdminAnnouncementsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/announcements';
+};
+
+export type GetApiAdminAnnouncementsResponses = {
+  /**
+   * OK
+   */
+  200: Array<AnnouncementAdminResponse>;
+};
+
+export type GetApiAdminAnnouncementsResponse =
+  GetApiAdminAnnouncementsResponses[keyof GetApiAdminAnnouncementsResponses];
+
+export type PostApiAdminAnnouncementsData = {
+  body: CreateAnnouncementRequest;
+  path?: never;
+  query?: never;
+  url: '/api/admin/announcements';
+};
+
+export type PostApiAdminAnnouncementsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type PostApiAdminAnnouncementsError =
+  PostApiAdminAnnouncementsErrors[keyof PostApiAdminAnnouncementsErrors];
+
+export type PostApiAdminAnnouncementsResponses = {
+  /**
+   * Created
+   */
+  201: AnnouncementAdminResponse;
+};
+
+export type PostApiAdminAnnouncementsResponse =
+  PostApiAdminAnnouncementsResponses[keyof PostApiAdminAnnouncementsResponses];
+
+export type DeleteApiAdminAnnouncementsByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/announcements/{id}';
+};
+
+export type DeleteApiAdminAnnouncementsByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type DeleteApiAdminAnnouncementsByIdError =
+  DeleteApiAdminAnnouncementsByIdErrors[keyof DeleteApiAdminAnnouncementsByIdErrors];
+
+export type DeleteApiAdminAnnouncementsByIdResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiAdminAnnouncementsByIdResponse =
+  DeleteApiAdminAnnouncementsByIdResponses[keyof DeleteApiAdminAnnouncementsByIdResponses];
+
+export type GetApiAdminAnnouncementsByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/announcements/{id}';
+};
+
+export type GetApiAdminAnnouncementsByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminAnnouncementsByIdError =
+  GetApiAdminAnnouncementsByIdErrors[keyof GetApiAdminAnnouncementsByIdErrors];
+
+export type GetApiAdminAnnouncementsByIdResponses = {
+  /**
+   * OK
+   */
+  200: AnnouncementAdminResponse;
+};
+
+export type GetApiAdminAnnouncementsByIdResponse =
+  GetApiAdminAnnouncementsByIdResponses[keyof GetApiAdminAnnouncementsByIdResponses];
+
+export type PutApiAdminAnnouncementsByIdData = {
+  body: UpdateAnnouncementRequest;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/announcements/{id}';
+};
+
+export type PutApiAdminAnnouncementsByIdErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiAdminAnnouncementsByIdError =
+  PutApiAdminAnnouncementsByIdErrors[keyof PutApiAdminAnnouncementsByIdErrors];
+
+export type PutApiAdminAnnouncementsByIdResponses = {
+  /**
+   * OK
+   */
+  200: AnnouncementAdminResponse;
+};
+
+export type PutApiAdminAnnouncementsByIdResponse =
+  PutApiAdminAnnouncementsByIdResponses[keyof PutApiAdminAnnouncementsByIdResponses];
+
+export type GetApiAnnouncementsActiveData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/announcements/active';
+};
+
+export type GetApiAnnouncementsActiveResponses = {
+  /**
+   * OK
+   */
+  200: Array<AnnouncementPopupResponse>;
+};
+
+export type GetApiAnnouncementsActiveResponse =
+  GetApiAnnouncementsActiveResponses[keyof GetApiAnnouncementsActiveResponses];
 
 export type GetApiAuthOauthClientsData = {
   body?: never;
@@ -4966,6 +5176,39 @@ export type PostApiSystemStorageKeyBackfillResponses = {
 
 export type PostApiSystemStorageKeyBackfillResponse =
   PostApiSystemStorageKeyBackfillResponses[keyof PostApiSystemStorageKeyBackfillResponses];
+
+export type PostApiSystemSearchReindexData = {
+  body?: never;
+  path?: never;
+  query?: {
+    dryRun?: boolean;
+  };
+  url: '/api/system/search-reindex';
+};
+
+export type PostApiSystemSearchReindexErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type PostApiSystemSearchReindexError =
+  PostApiSystemSearchReindexErrors[keyof PostApiSystemSearchReindexErrors];
+
+export type PostApiSystemSearchReindexResponses = {
+  /**
+   * OK
+   */
+  200: SearchReindexResponse;
+};
+
+export type PostApiSystemSearchReindexResponse =
+  PostApiSystemSearchReindexResponses[keyof PostApiSystemSearchReindexResponses];
 
 export type PostApiSystemTestEmailData = {
   body: TestEmailRequest;

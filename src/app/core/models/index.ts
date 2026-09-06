@@ -480,3 +480,33 @@ export const RESOURCE_TYPE_ICONS: Record<ResourceType, string> = {
   'workbook': '📖',
   'bundle': '📦',
 };
+
+// ====== Announcement popup (announcement-popup v1, docs/contracts/announcement-popup.md §3.1/§4) ======
+// Shared between the buyer-facing popup (`GET /api/announcements/active`) and the admin CRUD
+// page (`/admin/announcements`) — both endpoints return the same `AnnouncementImageResponse` shape.
+
+export interface AnnouncementImage {
+  id: string;
+  imageUrl: string;
+  linkUrl: string | null;
+  altText: string | null;
+  sortOrder: number;
+}
+
+/** ฝั่ง buyer-facing — จาก GET /api/announcements/active */
+export interface AnnouncementPopup {
+  id: string;
+  title: string;
+  images: AnnouncementImage[];
+}
+
+/** ฝั่ง admin CRUD — announcement-popup v1 §3.1 */
+export interface AnnouncementAdmin {
+  id: string;
+  title: string;
+  isEnabled: boolean;
+  startAt: string | null;
+  endAt: string | null;
+  sortOrder: number;
+  images: AnnouncementImage[];
+}
