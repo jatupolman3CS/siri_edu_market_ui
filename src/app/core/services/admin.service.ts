@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { AnnouncementAdmin, Category, DocumentItem, Seller, SubcategoryAdmin } from '../models';
+import type { AdminSellerRow, AnnouncementAdmin, Category, DocumentItem, SubcategoryAdmin } from '../models';
 import { AdminTransaction } from '../models';
 import {
   deleteApiAdminAnnouncementsById,
@@ -44,6 +44,7 @@ import type {
   AdminAuditLogResponse,
   AdminOpenReportResponse,
   AdminPayoutResponse,
+  AdminSellersSort,
   DocumentGenerationCategoryStatusResponse,
   DocumentGenerationRunResponse,
   PagedResponseOfAdminAuditLogResponse,
@@ -213,7 +214,6 @@ function toDocumentGenerationEligibleCategory(
 }
 import {
   mapAdminPendingToDocumentItem,
-  mapAdminSellerCard,
   mapAdminTransaction,
   mapAnnouncementAdmin,
   mapCategory,
@@ -304,31 +304,12 @@ export class AdminService {
     },
   });
 
-  private readonly sellersPager = createInfinitePager<Seller>({
-    pageSize: 50,
-    errorMessage: 'โหลดรายชื่อผู้ขายไม่สำเร็จ',
-    fetch: async (Page, PageSize) => {
-      const result = await getApiAdminSellers({ query: { Page, PageSize } });
-      const data = unwrapSdkResult(result);
-      return {
-        items: (data.items ?? []).map(mapAdminSellerCard),
-        page: data.page,
-        pageSize: data.pageSize,
-        totalCount: data.totalCount,
-        totalPages: data.totalPages,
-      };
-    },
-  });
-
   readonly transactions = this.txnsPager.items;
   readonly transactionsState = this.txnsPager.state;
   readonly transactionsHasMore = this.txnsPager.hasMore;
   readonly pendingDocuments = this.pendingPager.items;
   readonly pendingState = this.pendingPager.state;
   readonly pendingHasMore = this.pendingPager.hasMore;
-  readonly adminSellers = this.sellersPager.items;
-  readonly sellersState = this.sellersPager.state;
-  readonly sellersHasMore = this.sellersPager.hasMore;
 
   readonly totalRevenue = computed(() =>
     this.transactions()
@@ -429,16 +410,58 @@ export class AdminService {
     }
   }
 
-  async refreshSellers(): Promise<void> {
+  /**
+   * backend-wide-pagination-and-seller-directory v1 §4.2: table-result search, page-based (not
+   * an infinite pager — mirrors `loadDocumentGenerationRuns`'s error-handling shape) so the page
+   * component owns paging state the same way `documents.page.ts` does for its own filter form.
+   */
+  async searchSellers(query: {
+    page: number;
+    pageSize: number;
+    q?: string;
+    verifiedOnly?: boolean;
+    joinedFrom?: string;
+    joinedTo?: string;
+    sort?: AdminSellersSort;
+  }): Promise<PagedResult<AdminSellerRow>> {
     try {
-      await this.sellersPager.loadFirst();
+      const result = unwrapSdkResult(
+        await getApiAdminSellers({
+          query: {
+            Page: query.page,
+            PageSize: query.pageSize,
+            Q: query.q || undefined,
+            VerifiedOnly: query.verifiedOnly || undefined,
+            JoinedFrom: query.joinedFrom || undefined,
+            JoinedTo: query.joinedTo || undefined,
+            Sort: query.sort,
+          },
+        }),
+      );
+      return {
+        items: (result.items ?? []).map(
+          (s): AdminSellerRow => ({
+            id: s.id ?? '',
+            studioName: s.studioName ?? '',
+            ownerName: s.ownerName ?? '',
+            email: s.email ?? '',
+            avatarUrl: s.avatarUrl ?? null,
+            isVerified: s.isVerified ?? false,
+            totalDocuments: s.totalDocuments ?? 0,
+            totalSales: s.totalSales ?? 0,
+            totalRevenue: s.totalRevenue ?? 0,
+            joinedAt: s.joinedAt ?? '',
+          }),
+        ),
+        page: result.page,
+        pageSize: result.pageSize,
+        totalCount: result.totalCount,
+        totalPages: result.totalPages,
+      };
     } catch (e) {
-      this.apiFail.report('โหลดรายชื่อผู้ขาย', e);
+      this.apiFail.report('ค้นหาผู้ขาย', e);
+      return { items: [], page: query.page, pageSize: query.pageSize, totalCount: 0, totalPages: 1 };
     }
-  }
-
-  loadMoreSellers(): Promise<void> {
-    return this.sellersPager.loadMore();
   }
 
   async refreshAdminCategories(): Promise<void> {

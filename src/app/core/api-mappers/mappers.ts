@@ -5,7 +5,6 @@
 
 import type {
   AdminPendingDocumentResponse,
-  AdminSellerResponse,
   AdminTransactionResponse,
   AnnouncementAdminResponse,
   AnnouncementImageResponse,
@@ -287,24 +286,6 @@ export function mapAdminPendingToDocumentItem(
     isFeatured: false,
     isEditorsPick: false,
     bundleDocumentIds: [],
-  };
-}
-
-export function mapAdminSellerCard(s: AdminSellerResponse): Seller {
-  const name = s.studioName ?? s.ownerName ?? 'Seller';
-  return {
-    id: s.id ?? '',
-    studioName: name,
-    ownerName: s.ownerName ?? '',
-    avatar: resolveAvatarUrl(s.avatarUrl),
-    bio: s.email ? `ติดต่อ: ${s.email}` : '',
-    joinedAt: s.joinedAt ?? new Date().toISOString(),
-    rating: 0,
-    totalSales: s.totalSales ?? 0,
-    totalDocuments: s.totalDocuments ?? 0,
-    followerCount: 0,
-    responseHours: 0,
-    badges: s.isVerified ? ['Verified'] : [],
   };
 }
 

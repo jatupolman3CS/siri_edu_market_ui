@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { CartService, WishlistService } from '../../../core/services';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
@@ -12,6 +13,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
   standalone: true,
   imports: [
     RouterLink,
+    NzModalModule,
     PageHeroComponent,
     DocumentCardComponent,
     EmptyStateComponent,
@@ -25,6 +27,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 export class BuyerWishlistPage {
   readonly wishlist = inject(WishlistService);
   private readonly cart = inject(CartService);
+  private readonly modal = inject(NzModalService);
 
   totalValue(): number {
     return this.wishlist.items().reduce((sum, d) => sum + d.price, 0);
@@ -39,8 +42,13 @@ export class BuyerWishlistPage {
   }
 
   confirmClear(): void {
-    if (confirm('ลบทุกรายการโปรดออก?')) {
-      this.wishlist.clear();
-    }
+    this.modal.confirm({
+      nzTitle: 'ยืนยันล้างรายการโปรด',
+      nzContent: 'ลบทุกรายการโปรดออก?',
+      nzOkText: 'ลบทั้งหมด',
+      nzOkDanger: true,
+      nzCancelText: 'ยกเลิก',
+      nzOnOk: () => this.wishlist.clear(),
+    });
   }
 }

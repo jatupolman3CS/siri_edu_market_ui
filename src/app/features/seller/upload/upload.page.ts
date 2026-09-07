@@ -20,6 +20,7 @@ import {
 import type { DocumentGalleryItemRequest } from '../../../core/api/types.gen';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { FileNamePipe } from '../../../shared/pipes/file-name.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const MAX_GALLERY_IMAGES = 10;
@@ -48,6 +49,7 @@ type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
     FormsModule,
     IconComponent,
     ThbPipe,
+    FileNamePipe,
     CdkDropList,
     CdkDrag,
     SlicePipe,

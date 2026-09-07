@@ -40,6 +40,11 @@ export class SellerBundlesPage {
   readonly candidates = signal<SellerBundleItemResponse[]>([]);
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
+
+  // backend-wide-pagination-and-seller-directory v1 §4 point 5: `GET /api/seller/bundles` is now
+  // paginated — prev/next only, no filter (spec explicitly out of scope for this endpoint).
+  readonly page = signal(1);
+  readonly totalPages = signal(1);
   /**
    * QA fix: `RequireSellerProfileFilter` answers a clean `403 seller_profile_required` for a
    * caller (typically an Admin) with no `SELLER_PROFILE` row — shown as a friendly "no store yet"
@@ -96,11 +101,13 @@ export class SellerBundlesPage {
   async reload(): Promise<void> {
     this.loading.set(true);
     try {
-      const [bundles, candidates] = await Promise.all([
-        this.bundleService.listMyBundles(),
+      const [bundlesPage, candidates] = await Promise.all([
+        this.bundleService.listMyBundles(this.page()),
         this.bundleService.listBundleCandidates(),
       ]);
-      this.bundles.set(bundles);
+      this.bundles.set(bundlesPage.items ?? []);
+      this.page.set(bundlesPage.page ?? 1);
+      this.totalPages.set(Math.max(1, bundlesPage.totalPages ?? 1));
       this.candidates.set(candidates);
       this.sellerProfileRequired.set(false);
     } catch (e) {
@@ -113,6 +120,12 @@ export class SellerBundlesPage {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  goToPage(next: number): void {
+    if (next < 1 || next > this.totalPages()) return;
+    this.page.set(next);
+    void this.reload();
   }
 
   startCreate(): void {

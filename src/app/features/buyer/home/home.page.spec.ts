@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { BuyerHomePage } from './home.page';
 import {
   BundleService,
@@ -211,5 +211,24 @@ describe('BuyerHomePage — bundle savings subtitle (Group A, §4.2)', () => {
 
     const page = fixture.componentInstance;
     expect(page.bundlesSubtitle()).toBe('ครีเอเตอร์รวมเอกสารที่เข้ากันให้แล้ว ประหยัดได้สูงสุด 40%');
+  });
+});
+
+
+describe('Home search', () => {
+  it.each(['  TOEIC  ', '   '])('submits the native form with normalized query %s', (value) => {
+    const fixture = render({});
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const form = (fixture.nativeElement as HTMLElement).querySelector('form') as HTMLFormElement;
+    const input = form.elements.namedItem('q') as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    expect(navigate).not.toHaveBeenCalled();
+    const event = new Event('submit', { bubbles: true, cancelable: true });
+    form.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(navigate).toHaveBeenCalledWith(['/marketplace'], {
+      queryParams: value.trim() ? { q: value.trim() } : {},
+    });
   });
 });

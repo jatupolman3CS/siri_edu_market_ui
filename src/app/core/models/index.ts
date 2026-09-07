@@ -97,6 +97,22 @@ export interface SubcategoryAdmin {
   documentCount: number;
 }
 
+// ====== Admin — seller directory (backend-wide-pagination-and-seller-directory v1) ======
+
+/** Row shape for `/admin/sellers` — mirrors `AdminSellerResponse` 1:1, no placeholder fields. */
+export interface AdminSellerRow {
+  id: string;
+  studioName: string;
+  ownerName: string;
+  email: string;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  totalDocuments: number;
+  totalSales: number;
+  totalRevenue: number;
+  joinedAt: string;
+}
+
 // ====== Seller ======
 
 export interface Seller {

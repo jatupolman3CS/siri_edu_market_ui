@@ -16,8 +16,8 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import type { AnnouncementAdmin } from '../../../core/models';
 
-/** announcement-popup v1 §3.1: images per announcement, enforced client-side before hitting the API (AC-26). */
-const MIN_IMAGES = 5;
+/** announcement-popup v2 §3.1: images per announcement, enforced client-side before hitting the API (AC-26). */
+const MIN_IMAGES = 1;
 const MAX_IMAGES = 10;
 
 /** One row in the create/edit form's image list — `key` is a client-only stable `@for` track id. */

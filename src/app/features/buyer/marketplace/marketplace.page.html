@@ -340,8 +340,11 @@
             <!-- Toolbar -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div class="flex items-center gap-2 text-sm flex-wrap">
-                <span class="font-bold text-ink">{{ catalog.filtered().length }}</span>
+                <span class="font-bold text-ink">{{ catalog.resultTotal() ?? catalog.filtered().length }}</span>
                 <span class="text-ink-muted">เอกสารที่ตรงกับการค้นหา</span>
+                @if (catalog.filters().search) {
+                  <span class="text-ink">“{{ catalog.filters().search }}”</span>
+                }
               </div>
 
               <div class="flex items-center gap-3">

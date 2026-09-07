@@ -145,7 +145,7 @@ export class BuyerHomePage {
     const form = event.target as HTMLFormElement;
     const input = form.elements.namedItem('q') as HTMLInputElement;
     this.router.navigate(['/marketplace'], {
-      queryParams: input.value ? { q: input.value } : {},
+      queryParams: input.value.trim() ? { q: input.value.trim() } : {},
     });
   }
 }

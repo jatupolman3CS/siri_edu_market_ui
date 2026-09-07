@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AccountPage } from './account.page';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
@@ -88,6 +89,37 @@ beforeEach(() => {
 afterEach(() => {
   globalThis.fetch = realFetch;
   TestBed.resetTestingModule();
+});
+
+it('keeps every sidebar link on /account without recreating the page', async () => {
+  stubProfileAndSettings();
+  stubRoute('GET', '/api/me/payment-methods', []);
+  TestBed.configureTestingModule({
+    providers: [
+      provideRouter([{ path: 'account', component: AccountPage }]),
+      { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+      { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
+    ],
+  });
+  const harness = await RouterTestingHarness.create();
+  const page = await harness.navigateByUrl('/account', AccountPage);
+  await settle();
+  harness.detectChanges();
+  const initialRequests = requests.length;
+  for (const item of page.sectionNav) {
+    const element = harness.routeNativeElement!;
+    const link = element.querySelector(`nav a[href="/account#${item.fragment}"]`) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(element.querySelector(`#${item.fragment}`)).toBeTruthy();
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    link.dispatchEvent(event);
+    await settle();
+    harness.detectChanges();
+    expect(event.defaultPrevented).toBe(true);
+    expect(TestBed.inject(Router).url).toBe(`/account#${item.fragment}`);
+    expect(harness.routeDebugElement?.componentInstance).toBe(page);
+  }
+  expect(requests.length).toBe(initialRequests);
 });
 
 describe('AccountPage', () => {

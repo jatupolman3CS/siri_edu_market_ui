@@ -233,7 +233,7 @@
                         <app-icon name="doc" [size]="16" />
                         เปิด / ดาวน์โหลดไฟล์ขาย
                       </a>
-                      <p class="text-[11px] text-ink-muted mt-1 font-mono break-all">{{ pd2.fileStorageKey }}</p>
+                      <p class="text-[11px] text-ink-muted mt-1 font-mono break-all">{{ pd2.fileStorageKey | fileName }}</p>
                     } @else {
                       <p class="text-sm text-ink-muted">ยังไม่มีไฟล์หลัก (FileStorageKey)</p>
                     }
@@ -251,7 +251,7 @@
                             @if (m.isListedForSale) {
                               <span class="text-[10px] font-bold uppercase text-pink-600 shrink-0">ขาย</span>
                             }
-                            <span class="flex-1 min-w-0 truncate">{{ m.originalFileName || m.storageKey }}</span>
+                            <span class="flex-1 min-w-0 truncate">{{ (m.originalFileName || m.storageKey) | fileName }}</span>
                             @if (hasMainFile(m.storageKey)) {
                               <a
                                 (click)="downloadMainFile(m.storageKey)"

@@ -82,8 +82,18 @@ export class AdminCategoriesPage {
     }
   }
 
-  async removeCategory(c: Category): Promise<void> {
-    if (!confirm(`ลบหมวด "${c.name}" ?`)) return;
+  removeCategory(c: Category): void {
+    this.modal.confirm({
+      nzTitle: 'ยืนยันลบหมวดหมู่',
+      nzContent: `ลบหมวด "${c.name}" ?`,
+      nzOkText: 'ลบ',
+      nzOkDanger: true,
+      nzCancelText: 'ยกเลิก',
+      nzOnOk: () => this.doRemoveCategory(c),
+    });
+  }
+
+  private async doRemoveCategory(c: Category): Promise<void> {
     try {
       await this.admin.deleteCategory(c.id);
       this.catalog.loadCategories();

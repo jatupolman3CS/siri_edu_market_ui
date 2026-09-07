@@ -167,18 +167,30 @@ describe('AnnouncementsAdminPage (announcement-popup v1 §4 — AC-26)', () => {
     expect(page.formOpen()).toBe(true);
   });
 
-  it('AC-26: save() blocks and warns when there are fewer than 5 images, without calling the API', async () => {
+  it('AC-26 [v2]: save() blocks and warns when there are 0 images, without calling the API', async () => {
     const { page, admin } = renderPage();
     const createSpy = vi.spyOn(admin, 'createAnnouncement').mockResolvedValue(null);
     page.openCreate();
     page.formTitle.set('ทดสอบ');
-    page.formImages.set(fiveValidRows().slice(0, 3));
+    page.formImages.set([]);
 
     await page.save();
 
     expect(createSpy).not.toHaveBeenCalled();
-    expect(messages.warning.some((m) => m.includes('5 รูป'))).toBe(true);
+    expect(messages.warning.some((m) => m.includes('1 รูป'))).toBe(true);
     expect(page.formOpen()).toBe(true);
+  });
+
+  it('AC-26 [v2]: save() proceeds with a single image (new minimum lowered from 5 to 1)', async () => {
+    const { page, admin } = renderPage();
+    const createSpy = vi.spyOn(admin, 'createAnnouncement').mockResolvedValue(null);
+    page.openCreate();
+    page.formTitle.set('ทดสอบ');
+    page.formImages.set(fiveValidRows().slice(0, 1));
+
+    await page.save();
+
+    expect(createSpy).toHaveBeenCalledTimes(1);
   });
 
   it('AC-26: save() blocks and warns when there are more than 10 images, without calling the API', async () => {

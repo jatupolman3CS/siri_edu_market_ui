@@ -246,7 +246,7 @@ describe('AdminService — announcement admin (announcement-popup v1)', () => {
     await expect(admin.getAnnouncement('missing')).rejects.toBeTruthy();
   });
 
-  it('AC-3: creates an announcement (5-10 images) and returns the mapped response', async () => {
+  it('AC-3: creates an announcement (1-10 images) and returns the mapped response', async () => {
     const images = [1, 2, 3, 4, 5].map((n) => image(`img-${n}`));
     stubRoute('POST', '/api/admin/announcements', {
       status: 201,

@@ -41,6 +41,7 @@ function buildCatalogFake(categories: Category[] = []) {
     freeResources: () => [],
     newArrivals: () => [],
     filtered: () => [],
+    resultTotal: () => 0,
     filters: () => DEFAULT_FILTERS,
     tab: () => 'all' as const,
     catalogState: () => idleActionState(),
@@ -74,7 +75,7 @@ function buildPlatformStatsFake(stats: PlatformStats | undefined) {
   };
 }
 
-function render(catalog: ReturnType<typeof buildCatalogFake>, platformStats: ReturnType<typeof buildPlatformStatsFake>) {
+function render(catalog: ReturnType<typeof buildCatalogFake>, platformStats: ReturnType<typeof buildPlatformStatsFake>, query: Record<string, string> = {}) {
   TestBed.configureTestingModule({
     imports: [BuyerMarketplacePage],
     providers: [
@@ -86,7 +87,7 @@ function render(catalog: ReturnType<typeof buildCatalogFake>, platformStats: Ret
       {
         provide: ActivatedRoute,
         useValue: {
-          queryParamMap: of(convertToParamMap({})),
+          queryParamMap: of(convertToParamMap(query)),
         },
       },
     ],
@@ -133,5 +134,21 @@ describe('BuyerMarketplacePage — hero description (real-data-stats v1 §4)', (
     render(buildCatalogFake(), platformStats);
 
     expect(platformStats.loadStats).toHaveBeenCalled();
+  });
+});
+
+
+describe('Marketplace search URL', () => {
+  it('automatically applies the incoming query after clearing previous filters', () => {
+    const catalog = buildCatalogFake();
+    render(catalog, buildPlatformStatsFake(undefined), { q: '  TOEIC  ' });
+    expect(catalog.resetFilters).toHaveBeenCalled();
+    expect(catalog.setFilters).toHaveBeenCalledWith({ search: 'TOEIC' });
+  });
+  it('opens all documents for an empty query', () => {
+    const catalog = buildCatalogFake();
+    render(catalog, buildPlatformStatsFake(undefined));
+    expect(catalog.resetFilters).toHaveBeenCalled();
+    expect(catalog.setFilters).not.toHaveBeenCalled();
   });
 });

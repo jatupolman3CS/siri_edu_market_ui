@@ -12,6 +12,7 @@ import {
   putApiSellerBundlesByBundleId,
 } from '../api';
 import type {
+  PagedResponseOfSellerBundleResponse,
   SaveBundleRequest,
   SellerBundleItemResponse,
   SellerBundleResponse,
@@ -128,8 +129,13 @@ export class BundleService {
   // that existed were the seeder's. These call the seller-scoped endpoints. Errors are left to
   // the page, which is the layer that knows which action the seller was performing.
 
-  async listMyBundles(): Promise<SellerBundleResponse[]> {
-    return unwrapSdkResult(await getApiSellerBundles()) ?? [];
+  /**
+   * backend-wide-pagination-and-seller-directory v1 §3.2: `GET /api/seller/bundles` now returns
+   * `PagedResponse<SellerBundleResponse>` (breaking response shape) instead of a bare array —
+   * `page`/`pageSize` default to the controller's own defaults (`1`/`50`) when omitted.
+   */
+  async listMyBundles(page?: number, pageSize?: number): Promise<PagedResponseOfSellerBundleResponse> {
+    return unwrapSdkResult(await getApiSellerBundles({ query: { page, pageSize } }));
   }
 
   /** The seller's approved documents, for the picker in the bundle form. */

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AppHeaderComponent } from './app-header.component';
-import { AuthService, CartService, MeService, WishlistService } from '../../../core/services';
+import { AuthService, CartService, CatalogService, MeService, WishlistService } from '../../../core/services';
 
 /**
  * Mobile-nav-inaccessible fix (QA bug #1): a Playwright sweep across 375-768px found the main
@@ -30,6 +30,7 @@ function render(loggedIn = false) {
     providers: [
       provideRouter([]),
       { provide: AuthService, useValue: auth },
+      { provide: CatalogService, useValue: { resetFilters: vi.fn(), setFilters: vi.fn() } },
       { provide: CartService, useValue: { count: () => 0, toggleDrawer: vi.fn() } },
       { provide: WishlistService, useValue: { count: () => 0 } },
       { provide: MeService, useValue: { profile: signal(null), loadProfile: () => ({ subscribe: () => {} }) } },
@@ -100,5 +101,35 @@ describe('AppHeaderComponent — mobile nav toggle (bug #1)', () => {
     expect(text).toContain('บัญชีของฉัน');
     expect(text).toContain('ออกจากระบบ');
     expect(text).not.toContain('เข้าสู่ระบบ');
+  });
+});
+
+
+describe('AppHeaderComponent search submission', () => {
+  it('keeps typing local and submits a trimmed marketplace query without old filters', async () => {
+    const fixture = render();
+    await fixture.whenStable();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const input = (fixture.nativeElement as HTMLElement).querySelector('input[name="q"]') as HTMLInputElement;
+    input.value = '  TOEIC  ';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(navigate).not.toHaveBeenCalled();
+    const button = input.form?.querySelector('button[type="submit"]') as HTMLButtonElement;
+    button.click();
+    expect(navigate).toHaveBeenCalledWith(['/marketplace'], {
+      queryParams: { q: 'TOEIC' }, onSameUrlNavigation: 'reload',
+    });
+  });
+
+  it('submits whitespace as the unfiltered marketplace', () => {
+    const fixture = render();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.query.set('   ');
+    fixture.componentInstance.search();
+    expect(navigate).toHaveBeenCalledWith(['/marketplace'], {
+      queryParams: { q: null }, onSameUrlNavigation: 'reload',
+    });
   });
 });

@@ -45,11 +45,11 @@ export class AccountPage {
   );
 
   readonly sectionNav = [
-    { href: '#profile', label: 'โปรไฟล์', icon: 'user' as const },
-    { href: '#password', label: 'เปลี่ยนรหัสผ่าน', icon: 'lock' as const },
-    { href: '#notifications', label: 'การแจ้งเตือน', icon: 'bell' as const },
-    { href: '#cards', label: 'บัตรที่บันทึกไว้', icon: 'wallet' as const },
-    { href: '#shortcuts', label: 'ทางลัด', icon: 'dashboard' as const },
+    { fragment: 'profile', label: 'โปรไฟล์', icon: 'user' as const },
+    { fragment: 'password', label: 'เปลี่ยนรหัสผ่าน', icon: 'lock' as const },
+    { fragment: 'notifications', label: 'การแจ้งเตือน', icon: 'bell' as const },
+    { fragment: 'cards', label: 'บัตรที่บันทึกไว้', icon: 'wallet' as const },
+    { fragment: 'shortcuts', label: 'ทางลัด', icon: 'dashboard' as const },
   ];
 
   readonly shortcuts = [

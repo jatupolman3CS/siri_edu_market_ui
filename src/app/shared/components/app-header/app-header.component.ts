@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import {
   CartService,
+  CatalogService,
   AuthService,
   WishlistService,
   MeService,
@@ -48,6 +49,7 @@ export class AppHeaderComponent {
   readonly wishlist = inject(WishlistService);
   private readonly me = inject(MeService);
   private readonly router = inject(Router);
+  private readonly catalog = inject(CatalogService);
   private readonly message = inject(NzMessageService);
 
   readonly query = signal<string>('');
@@ -140,9 +142,11 @@ export class AppHeaderComponent {
 
   search(): void {
     const q = this.query().trim();
+    this.catalog.resetFilters();
+    this.catalog.setFilters({ search: q });
     this.router.navigate(['/marketplace'], {
       queryParams: { q: q || null },
-      queryParamsHandling: 'merge',
+      onSameUrlNavigation: 'reload',
     });
   }
 

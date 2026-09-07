@@ -174,6 +174,16 @@ export class CatalogService {
     }
     return this.catalogPager.hasMore();
   });
+  /** Exact server total only when no additional client-side filtering is applied. */
+  readonly resultTotal = computed(() => {
+    const f = this.filters();
+    if (this.tab() === 'top-rated' || f.minRating > 0 ||
+        [f.categoryIds, f.subcategoryIds, f.formats, f.gradeLevels,
+         f.resourceTypes, f.standards].some(values => values.length > 1)) return null;
+    return this._listSource() === 'search'
+      ? this._searchTotalCount()
+      : this.catalogPager.totalCount();
+  });
   readonly freeHasMore = this.freePager.hasMore;
 
   constructor() {

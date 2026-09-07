@@ -23,9 +23,10 @@
       }
 
       <nav class="card-soft p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
-        @for (item of sectionNav; track item.href) {
+        @for (item of sectionNav; track item.fragment) {
           <a
-            [href]="item.href"
+            [routerLink]="['/account']"
+            [fragment]="item.fragment"
             class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
           >
             <app-icon [name]="item.icon" [size]="18" />

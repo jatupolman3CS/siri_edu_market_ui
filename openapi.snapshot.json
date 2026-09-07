@@ -1274,6 +1274,43 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "VerifiedOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "JoinedFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "JoinedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AdminSellersSort"
+            }
           }
         ],
         "responses": {
@@ -6542,32 +6579,43 @@
         "tags": [
           "SellerBundles"
         ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SellerBundleResponse"
-                  }
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBundleResponse"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SellerBundleResponse"
-                  }
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBundleResponse"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SellerBundleResponse"
-                  }
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBundleResponse"
                 }
               }
             }
@@ -10364,6 +10412,9 @@
           }
         }
       },
+      "AdminSellersSort": {
+        "type": "integer"
+      },
       "AdminTransactionResponse": {
         "type": "object",
         "properties": {
@@ -10900,7 +10951,7 @@
           },
           "images": {
             "maxItems": 10,
-            "minItems": 5,
+            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AnnouncementImageRequest"
@@ -12279,6 +12330,33 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OrderResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfSellerBundleResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SellerBundleResponse"
             }
           },
           "page": {
@@ -13962,7 +14040,7 @@
           },
           "images": {
             "maxItems": 10,
-            "minItems": 5,
+            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AnnouncementImageRequest"

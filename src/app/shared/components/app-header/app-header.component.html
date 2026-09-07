@@ -23,11 +23,11 @@
           <!-- Search -->
           <div class="flex-1 max-w-md ml-auto hidden lg:block">
             <form class="relative" (ngSubmit)="search()">
-              <span
+              <button type="submit" aria-label="ค้นหา"
                 class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted"
               >
                 <app-icon name="search" [size]="18" />
-              </span>
+              </button>
               <input
                 type="search"
                 name="q"

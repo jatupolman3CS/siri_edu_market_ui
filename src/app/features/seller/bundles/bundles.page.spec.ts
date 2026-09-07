@@ -35,9 +35,24 @@ function candidate(id: string, price: number, title = `เอกสาร ${id}`
   return { documentId: id, title, price, coverUrl: `https://cdn/${id}.png` };
 }
 
-function stubEmptyList(candidates: unknown[] = []): void {
-  stubRoute('GET', '/api/seller/bundles', []);
+/**
+ * backend-wide-pagination-and-seller-directory v1 §3.2 (AC-15 regression): `GET /api/seller/bundles`
+ * now returns `PagedResponse<SellerBundleResponse>`, not a bare array — every stub of this route
+ * must wrap `items` accordingly.
+ */
+function stubBundlesList(bundles: unknown[] = [], candidates: unknown[] = []): void {
+  stubRoute('GET', '/api/seller/bundles', {
+    items: bundles,
+    page: 1,
+    pageSize: 50,
+    totalCount: bundles.length,
+    totalPages: 1,
+  });
   stubRoute('GET', '/api/seller/bundles/candidates', candidates);
+}
+
+function stubEmptyList(candidates: unknown[] = []): void {
+  stubBundlesList([], candidates);
 }
 
 async function settle(): Promise<void> {
@@ -344,6 +359,45 @@ describe('SellerBundlesPage', () => {
 
     expect(fixture.componentInstance.formOpen()).toBe(true);
     expect(fixture.nativeElement.querySelector('input[name="title"]')).toBeTruthy();
+  });
+
+  it('reads bundles from the PagedResponse .items (AC-15 regression)', async () => {
+    const bundle = {
+      id: 'bundle-1',
+      title: 'ชุดข้อสอบ',
+      description: '',
+      coverUrl: '',
+      price: 100,
+      originalPrice: 150,
+      items: [],
+      canDelete: true,
+    };
+    stubBundlesList([bundle], []);
+    const fixture = renderPage();
+    await settle();
+
+    expect(fixture.componentInstance.bundles()).toEqual([bundle]);
+  });
+
+  it('shows prev/next controls driven by the PagedResponse page/totalPages (AC-15 regression)', async () => {
+    stubRoute('GET', '/api/seller/bundles', {
+      items: [{ id: 'bundle-1', title: 'ชุด 1', items: [], canDelete: true }],
+      page: 2,
+      pageSize: 1,
+      totalCount: 3,
+      totalPages: 3,
+    });
+    stubRoute('GET', '/api/seller/bundles/candidates', []);
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+
+    const page = fixture.componentInstance;
+    expect(page.page()).toBe(2);
+    expect(page.totalPages()).toBe(3);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('หน้า 2 / 3');
   });
 
   it('does not swallow a failed load', async () => {

@@ -132,6 +132,7 @@ export class BuyerMarketplacePage {
 
   constructor() {
     // Explicit init to avoid root service auto-fetching on unrelated pages.
+    this.catalog.resetFilters();
     this.catalog.initForMarketplace();
     // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
@@ -139,10 +140,13 @@ export class BuyerMarketplacePage {
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())
       .subscribe((params) => {
-        const q = params.get('q') ?? '';
+        const q = (params.get('q') ?? '').trim();
         const cat = params.get('category');
         const sub = params.get('subcategory');
         const tab = params.get('tab');
+        if (!cat && !sub && !tab) {
+          this.catalog.resetFilters();
+        }
         if (q !== this.catalog.filters().search) {
           this.catalog.setFilters({ search: q });
         }
@@ -164,7 +168,7 @@ export class BuyerMarketplacePage {
           }
         }
         if (tab && ['all', 'free', 'top-rated', 'new', 'bundles'].includes(tab)) {
-          this.catalog.setTab(tab as any);
+          this.catalog.setTab(tab as 'all' | 'free' | 'top-rated' | 'new' | 'bundles');
         }
       });
   }

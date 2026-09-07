@@ -215,6 +215,8 @@ export type AdminSellerResponse = {
   joinedAt?: string;
 };
 
+export type AdminSellersSort = number;
+
 export type AdminTransactionResponse = {
   id?: string;
   orderNumber?: string;
@@ -793,6 +795,14 @@ export type PagedResponseOfOrderResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfSellerBundleResponse = {
+  items?: Array<SellerBundleResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfSellerDocumentSummaryResponse = {
   items?: Array<SellerDocumentSummaryResponse>;
   page?: number;
@@ -973,6 +983,7 @@ export type SearchReindexResponse = {
   approvedDocumentsPushed?: number;
   staleIndexEntriesRemoved?: number;
   extractionRowsRequeued?: number;
+  extractionRowsBackfilled?: number;
   processedAt?: string;
 };
 
@@ -1869,6 +1880,11 @@ export type GetApiAdminSellersData = {
   query?: {
     Page?: number;
     PageSize?: number;
+    Q?: string;
+    VerifiedOnly?: boolean;
+    JoinedFrom?: string;
+    JoinedTo?: string;
+    Sort?: AdminSellersSort;
   };
   url: '/api/admin/sellers';
 };
@@ -4021,7 +4037,10 @@ export type GetApiPaymentsStripeConfigResponse =
 export type GetApiSellerBundlesData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    page?: number;
+    pageSize?: number;
+  };
   url: '/api/seller/bundles';
 };
 
@@ -4029,7 +4048,7 @@ export type GetApiSellerBundlesResponses = {
   /**
    * OK
    */
-  200: Array<SellerBundleResponse>;
+  200: PagedResponseOfSellerBundleResponse;
 };
 
 export type GetApiSellerBundlesResponse =

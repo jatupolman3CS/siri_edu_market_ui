@@ -22,11 +22,13 @@
             </p>
 
             <!-- Hero search -->
-            <form class="relative max-w-xl mb-6" (ngSubmit)="goSearch($event)">
+            <form class="relative max-w-xl mb-6" (submit)="goSearch($event)">
               <span class="absolute left-5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                 <app-icon name="search" [size]="20" />
               </span>
               <input
+                type="search"
+                aria-label="ค้นหาเอกสารในตลาด"
                 name="q"
                 placeholder="ลองค้นหา: 'สรุปคณิต ม.ปลาย', 'Pitch Deck', 'TOEIC'…"
                 class="w-full pl-14 pr-32 py-4 rounded-full bg-white shadow-soft border border-line focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-base"
