@@ -100,18 +100,24 @@
                 <label class="text-xs font-semibold text-ink-soft mb-2 block">
                   คำค้นหา
                 </label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
-                    <app-icon name="search" [size]="16" />
-                  </span>
+                <form class="relative flex items-center" (ngSubmit)="applySearch()">
                   <input
                     type="search"
-                    [ngModel]="catalog.filters().search"
-                    (ngModelChange)="catalog.setFilters({ search: $event })"
+                    name="marketplaceSearch"
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="searchTerm.set($event)"
                     placeholder="ค้นหาเอกสาร…"
-                    class="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
+                    class="w-full pl-3.5 pr-10 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
                   />
-                </div>
+                  <button
+                    type="submit"
+                    aria-label="ค้นหา"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl text-ink-muted hover:text-pink-600 hover:bg-pink-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                    title="ค้นหา"
+                  >
+                    <app-icon name="search" [size]="16" />
+                  </button>
+                </form>
               </div>
 
               <!-- Categories with sub-categories -->
@@ -367,6 +373,11 @@
             <!-- Active chips -->
             @if (anyActive()) {
               <div class="flex flex-wrap gap-2 mb-5">
+                @if (catalog.filters().search) {
+                  <button class="pill-pink" (click)="clearSearch()">
+                    🔍 “{{ catalog.filters().search }}” <app-icon name="x" [size]="11" />
+                  </button>
+                }
                 @for (id of catalog.filters().categoryIds; track id) {
                   @if (catalog.getCategoryById(id); as c) {
                     <button class="pill-pink" (click)="toggleCategory(id)">

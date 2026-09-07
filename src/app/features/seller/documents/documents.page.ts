@@ -39,6 +39,7 @@ export class SellerDocumentsPage {
   private readonly modal = inject(NzModalService);
   private readonly router = inject(Router);
 
+  readonly searchInput = signal<string>('');
   readonly search = signal<string>('');
   readonly status = signal<'all' | 'approved' | 'pending' | 'rejected' | 'draft'>(
     'all',
@@ -55,16 +56,23 @@ export class SellerDocumentsPage {
 
   constructor() {
     void this.seller.refreshDocuments();
+  }
 
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    effect(() => {
-      const q = this.search();
-      const s = this.status();
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        this.seller.setDocumentsQuery({ status: s, search: q });
-      }, 250);
-    });
+  onStatusChange(newStatus: 'all' | 'approved' | 'pending' | 'rejected' | 'draft'): void {
+    this.status.set(newStatus);
+    this.seller.setDocumentsQuery({ status: newStatus, search: this.search() });
+  }
+
+  applySearch(): void {
+    const q = this.searchInput().trim();
+    this.search.set(q);
+    this.seller.setDocumentsQuery({ status: this.status(), search: q });
+  }
+
+  clearSearch(): void {
+    this.searchInput.set('');
+    this.search.set('');
+    this.seller.setDocumentsQuery({ status: this.status(), search: '' });
   }
 
   filteredDocs() {

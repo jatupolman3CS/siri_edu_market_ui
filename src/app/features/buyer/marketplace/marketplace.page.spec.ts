@@ -152,3 +152,41 @@ describe('Marketplace search URL', () => {
     expect(catalog.setFilters).not.toHaveBeenCalled();
   });
 });
+
+describe('Marketplace explicit search submission', () => {
+  it('keeps typing local in searchTerm and only triggers catalog filter on applySearch / button click', async () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    await fixture.whenStable();
+
+    const input = (fixture.nativeElement as HTMLElement).querySelector('input[name="marketplaceSearch"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+
+    input.value = 'คณิต ม.ปลาย';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // typing alone does NOT call setFilters with the new search
+    expect(catalog.setFilters).not.toHaveBeenCalledWith({ search: 'คณิต ม.ปลาย' });
+
+    // clicking the search button or submitting form triggers search
+    const searchBtn = input.form?.querySelector('button[type="submit"]') as HTMLButtonElement;
+    searchBtn.click();
+    await fixture.whenStable();
+
+    expect(catalog.setFilters).toHaveBeenCalledWith({ search: 'คณิต ม.ปลาย' });
+  });
+
+  it('clears search on clearSearch()', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), { q: 'ชีวะ' });
+    const page = fixture.componentInstance;
+    expect(page.searchTerm()).toBe('ชีวะ');
+
+    page.clearSearch();
+    expect(page.searchTerm()).toBe('');
+    expect(catalog.setFilters).toHaveBeenCalledWith({ search: '' });
+  });
+});
+

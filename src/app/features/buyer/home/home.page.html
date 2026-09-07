@@ -23,14 +23,19 @@
 
             <!-- Hero search -->
             <form class="relative max-w-xl mb-6" (submit)="goSearch($event)">
-              <span class="absolute left-5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+              <button
+                type="submit"
+                aria-label="ค้นหา"
+                class="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                title="ค้นหา"
+              >
                 <app-icon name="search" [size]="20" />
-              </span>
+              </button>
               <input
                 type="search"
-                aria-label="ค้นหาเอกสารในตลาด"
                 name="q"
-                placeholder="ลองค้นหา: 'สรุปคณิต ม.ปลาย', 'Pitch Deck', 'TOEIC'…"
+                aria-label="ค้นหาเอกสารในตลาด"
+                placeholder="ค้นหาเอกสาร เช่น สรุปฟิสิกส์, บัญชี, Resume..."
                 class="w-full pl-14 pr-32 py-4 rounded-full bg-white shadow-soft border border-line focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-base"
               />
               <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 btn-pink !px-5 !py-2.5">

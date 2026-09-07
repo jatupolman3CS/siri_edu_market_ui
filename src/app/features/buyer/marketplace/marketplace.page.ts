@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSliderModule } from 'ng-zorro-antd/slider';
@@ -58,7 +58,11 @@ export class BuyerMarketplacePage {
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
+
+  /** Local search input value, submitted only on magnifying glass click or Enter press */
+  readonly searchTerm = signal<string>('');
 
   /**
    * real-data-stats v1 §4 (project-owner instruction — see round 2 dispatch notes): the hero's
@@ -141,6 +145,7 @@ export class BuyerMarketplacePage {
       .pipe(takeUntilDestroyed())
       .subscribe((params) => {
         const q = (params.get('q') ?? '').trim();
+        this.searchTerm.set(q);
         const cat = params.get('category');
         const sub = params.get('subcategory');
         const tab = params.get('tab');
@@ -171,6 +176,26 @@ export class BuyerMarketplacePage {
           this.catalog.setTab(tab as 'all' | 'free' | 'top-rated' | 'new' | 'bundles');
         }
       });
+  }
+
+  applySearch(): void {
+    const q = this.searchTerm().trim();
+    this.catalog.setFilters({ search: q });
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: q || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  clearSearch(): void {
+    this.searchTerm.set('');
+    this.catalog.setFilters({ search: '' });
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   toggleCategory(id: string): void {
@@ -253,6 +278,12 @@ export class BuyerMarketplacePage {
   }
 
   reset(): void {
+    this.searchTerm.set('');
     this.catalog.resetFilters();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: null, category: null, subcategory: null },
+      queryParamsHandling: 'merge',
+    });
   }
 }

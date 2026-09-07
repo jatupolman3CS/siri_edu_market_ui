@@ -60,9 +60,14 @@ body {
   color: var(--ink);
 }
 
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink-300) transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -72,7 +77,44 @@ body {
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  background: var(--pink-400);
+}
+
+/* ---------------- Table & List Scrollbars ---------------- */
+.table-scroll,
+.table-responsive,
+div:has(> table) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink-300) var(--pink-100);
+}
+
+.table-scroll::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar,
+div:has(> table)::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track,
+div:has(> table)::-webkit-scrollbar-track {
+  background: var(--pink-100);
+  border-radius: 999px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb,
+div:has(> table)::-webkit-scrollbar-thumb {
   background: var(--pink-300);
+  border-radius: 999px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover,
+div:has(> table)::-webkit-scrollbar-thumb:hover {
+  background: var(--pink-400);
 }
 
 /* ---------------- NG-ZORRO theme overrides ---------------- */
