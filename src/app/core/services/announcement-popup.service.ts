@@ -45,18 +45,21 @@ export class AnnouncementPopupService {
   }
 
   /**
-   * §1.6: closing any other way than "ไม่ต้องแสดงอีก" (X, ESC, mask click, clicking a linked
-   * image) only drops the current announcement from this page load's in-memory queue — it does
-   * not touch `sessionStorage`, so a fresh page load shows it again (AC-20).
+   * Closes the announcement popup for the current page session.
    */
   close(): void {
-    this._queue.update((q) => q.slice(1));
+    this._queue.set([]);
   }
 
-  /** §1.4: dismiss scope is per-announcement (every image in it), not per-image. */
-  dismissForever(id: string): void {
+  /** §1.4: dismiss scope persists all active announcement IDs for the current browser session. */
+  dismissForever(id?: string): void {
     const dismissed = this.loadDismissed();
-    dismissed.add(id);
+    if (id) {
+      dismissed.add(id);
+    }
+    for (const item of this._queue()) {
+      dismissed.add(item.id);
+    }
     this.persistDismissed(dismissed);
     this.close();
   }

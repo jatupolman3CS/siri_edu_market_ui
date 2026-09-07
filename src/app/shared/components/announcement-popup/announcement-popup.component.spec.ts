@@ -128,10 +128,11 @@ describe('AnnouncementPopupComponent (announcement-popup v3 §1.10/§1.11/§4)',
     page.toggleDontShowAgain(true);
     page.closeCurrent();
 
-    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(page.popup.current()).toBeNull();
+    expect(page.isModalVisible()).toBe(false);
     expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toContain('ann-1');
 
-    // Simulate a same-tab reload: fresh service instance, same (unclreared) sessionStorage.
+    // Simulate a same-tab reload: fresh service instance, same (uncleared) sessionStorage.
     TestBed.resetTestingModule();
     const { service: service2, createFixture: createFixture2 } = renderPopup();
     stubFetchActive(service2, [
@@ -142,10 +143,11 @@ describe('AnnouncementPopupComponent (announcement-popup v3 §1.10/§1.11/§4)',
     fixture2.detectChanges();
     await settle();
 
-    expect(fixture2.componentInstance.popup.current()?.id).toBe('ann-2');
+    expect(fixture2.componentInstance.popup.current()).toBeNull();
+    expect(fixture2.componentInstance.isModalVisible()).toBe(false);
   });
 
-  it('AC-22/AC-32: two active announcements — closing the first cycles the modal through a genuine close-then-reopen (§1.12), and the second starts with a fresh checkbox/index', async () => {
+  it('AC-22: closing via closeCurrent() closes the modal completely and stays closed on afterClose', async () => {
     const { service, createFixture } = renderPopup();
     stubFetchActive(service, [
       announcement('ann-1', [image('img-1')]),
@@ -159,30 +161,21 @@ describe('AnnouncementPopupComponent (announcement-popup v3 §1.10/§1.11/§4)',
     expect(page.popup.current()?.id).toBe('ann-1');
     expect(page.isModalVisible()).toBe(true);
 
-    page.toggleDontShowAgain(true);
-    expect(page.dontShowAgainChecked()).toBe(true);
     page.closeCurrent();
     fixture.detectChanges();
     await settle();
 
-    // [v4] §1.12: the service queue advances synchronously (closeCurrent()/dismissForever() are
-    // still sync — §1.12), but the modal itself must NOT swap content while `nzVisible` stays
-    // `true` — it closes fully first and waits for `(nzAfterClose)`.
-    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(page.popup.current()).toBeNull();
     expect(page.isModalVisible()).toBe(false);
 
-    // Simulate `nz-modal` firing `(nzAfterClose)` once its leave animation actually finishes.
     page.onModalAfterClose();
     fixture.detectChanges();
     await settle();
 
-    expect(page.isModalVisible()).toBe(true);
-    expect(page.popup.current()?.id).toBe('ann-2');
-    expect(page.dontShowAgainChecked()).toBe(false);
-    expect(page.currentImageIndex()).toBe(0);
+    expect(page.isModalVisible()).toBe(false);
   });
 
-  it('AC-31: three active announcements — closing each non-last one cycles the modal via (nzAfterClose) instead of hanging on the previous announcement, and the modal disappears entirely after the last one closes', async () => {
+  it('AC-31: closing the announcement closes the modal immediately and does not chain-open other announcements', async () => {
     const { service, createFixture } = renderPopup();
     stubFetchActive(service, [
       announcement('ann-1', [image('img-1')]),
@@ -197,36 +190,13 @@ describe('AnnouncementPopupComponent (announcement-popup v3 §1.10/§1.11/§4)',
     expect(page.popup.current()?.id).toBe('ann-1');
     expect(page.isModalVisible()).toBe(true);
 
-    // Close announcement 1 (not the last in the queue) via X (closeCurrent()).
-    page.closeCurrent();
-    fixture.detectChanges();
-    await settle();
-    expect(page.popup.current()?.id).toBe('ann-2');
-    expect(page.isModalVisible()).toBe(false); // must not still be showing ann-1's content
-    page.onModalAfterClose();
-    fixture.detectChanges();
-    await settle();
-    expect(page.isModalVisible()).toBe(true);
-    expect(page.popup.current()?.id).toBe('ann-2');
-
-    // Close announcement 2 (also not the last).
-    page.closeCurrent();
-    fixture.detectChanges();
-    await settle();
-    expect(page.popup.current()?.id).toBe('ann-3');
-    expect(page.isModalVisible()).toBe(false);
-    page.onModalAfterClose();
-    fixture.detectChanges();
-    await settle();
-    expect(page.isModalVisible()).toBe(true);
-    expect(page.popup.current()?.id).toBe('ann-3');
-
-    // Close announcement 3 (the last one) — the modal must disappear entirely, no hang.
+    // Close announcement via X (closeCurrent()).
     page.closeCurrent();
     fixture.detectChanges();
     await settle();
     expect(page.popup.current()).toBeNull();
     expect(page.isModalVisible()).toBe(false);
+
     page.onModalAfterClose();
     fixture.detectChanges();
     await settle();
@@ -321,10 +291,8 @@ describe('AnnouncementPopupComponent (announcement-popup v3 §1.10/§1.11/§4)',
     await settle();
 
     const page = fixture.componentInstance;
-    expect(page.dontShowAgainChecked()).toBe(false);
     page.closeCurrent();
-
-    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(page.popup.current()).toBeNull();
     expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toBeNull();
   });
 

@@ -107,13 +107,11 @@ export class AnnouncementPopupComponent {
   }
 
   /**
-   * [v4] Bound to `(nzAfterClose)` — fires only after the leave animation has actually finished,
-   * at which point `nzVisible` is genuinely `false`, so it's safe to open the next announcement
-   * (`nzVisible: false→true`, the reliable path per §0.2 item 5).
+   * Bound to `(nzAfterClose)` — fires when modal closing animation finishes.
+   * Ensures modal visibility state is false.
    */
   onModalAfterClose(): void {
-    const ann = this.popup.current();
-    if (ann) this.showAnnouncement(ann);
+    this.modalVisible.set(false);
   }
 
   prevImage(): void {
@@ -147,20 +145,12 @@ export class AnnouncementPopupComponent {
   }
 
   /**
-   * [v3] §1.11 — the single decision point for "close normally" vs. "persist dismiss-forever".
-   * Every close path (X / mask / ESC / clicking a linked image) must go through this instead of
-   * calling `popup.close()` directly, so the checkbox actually has an effect no matter how the
-   * popup gets closed.
-   *
-   * [v5] §0.3/§1.12 — a plain event handler bound directly to a template event, never an
-   * `effect()`, so it carries none of the self-reference risk that broke v4: it sets
-   * `this.modalVisible.set(false)` directly right here (genuine `nzVisible: true→false`) and then
-   * stops — it does *not* decide what opens next. That's `onModalAfterClose()`'s job only, once
-   * `nz-modal` confirms the close animation actually finished.
+   * Closes the current popup modal completely.
+   * If "ไม่ต้องแสดงอีก" is checked, persists dismissal to sessionStorage for the entire session.
    */
   closeCurrent(): void {
     const id = this.popup.current()?.id;
-    if (this.dontShowAgain() && id) {
+    if (this.dontShowAgain()) {
       this.popup.dismissForever(id);
     } else {
       this.popup.close();

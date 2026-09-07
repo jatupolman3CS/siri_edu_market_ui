@@ -95,18 +95,18 @@ describe('AnnouncementPopupService (announcement-popup v1 §4)', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it('AC-22: closing the current announcement reveals the next one immediately, no re-fetch', async () => {
+  it('AC-22: closing the announcement closes the popup for the current session without re-fetch', async () => {
     const service = buildService();
     const spy = stubFetchActive(service, [announcement('ann-1'), announcement('ann-2')]);
     await service.initialize();
 
     service.close();
 
-    expect(service.current()?.id).toBe('ann-2');
+    expect(service.current()).toBeNull();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it('close() past the last announcement leaves the queue empty and is not an error', async () => {
+  it('close() leaves the queue empty and is not an error when called repeatedly', async () => {
     const service = buildService();
     stubFetchActive(service, [announcement('ann-1')]);
     await service.initialize();
@@ -135,26 +135,26 @@ describe('AnnouncementPopupService (announcement-popup v1 §4)', () => {
     expect(second.current()?.id).toBe('ann-1');
   });
 
-  it('AC-21: "ไม่ต้องแสดงอีก" persists to sessionStorage and survives a same-tab reload, without hiding other announcements', async () => {
+  it('AC-21: "ไม่ต้องแสดงอีก" persists to sessionStorage and survives a same-tab reload', async () => {
     const first = buildService();
     stubFetchActive(first, [announcement('ann-1'), announcement('ann-2')]);
     await first.initialize();
 
     first.dismissForever('ann-1');
 
-    expect(first.current()?.id).toBe('ann-2');
+    expect(first.current()).toBeNull();
     expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toContain('ann-1');
 
-    // Same-tab reload: new service instance, same (unclreared) sessionStorage.
+    // Same-tab reload: new service instance, same (uncleared) sessionStorage.
     TestBed.resetTestingModule();
     const second = buildService();
-    stubFetchActive(second, [announcement('ann-1'), announcement('ann-2')]);
+    stubFetchActive(second, [announcement('ann-1')]);
     await second.initialize();
 
-    expect(second.current()?.id).toBe('ann-2');
+    expect(second.current()).toBeNull();
   });
 
-  it('dismissing the only announcement empties the queue', async () => {
+  it('dismissing the announcement empties the queue', async () => {
     const service = buildService();
     stubFetchActive(service, [announcement('ann-1')]);
     await service.initialize();
