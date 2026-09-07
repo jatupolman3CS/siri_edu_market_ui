@@ -5,14 +5,29 @@ import { AnnouncementPopupService } from '../../../core/services/announcement-po
 import type { AnnouncementImage, AnnouncementPopup } from '../../../core/models';
 
 /**
- * announcement-popup v1 §1/§4 (`docs/contracts/announcement-popup.md`) — AC-19 to AC-25.
+ * announcement-popup v4 §0.2/§1.10/§1.11/§1.12/§4 (`docs/contracts/announcement-popup.md`) —
+ * AC-19 to AC-25, AC-28 to AC-32.
  *
- * `AnnouncementPopupService.fetchActive()` is a private, hardcoded round-1 stub (§4 "การแบ่งงาน" —
- * wiring to the real `GET /api/announcements/active` is round 2). These specs grab the real
- * singleton via `TestBed.inject` *before* creating the component (whose constructor calls
- * `initialize()`), and monkey-patch `fetchActive` on it — same technique as
- * `announcement-popup.service.spec.ts` — so the component is exercised against the real
- * production service logic end to end, not a hand-rolled fake.
+ * [v3] `nz-carousel` is gone — the image slider is a plain `signal<number>` index, and the
+ * "ไม่ต้องแสดงอีก" button is now a checkbox that only takes effect through `closeCurrent()` when
+ * the popup is actually closed (§1.11).
+ *
+ * [v4] `[nzVisible]` is now driven by `isModalVisible()`, not `!!popup.current()` directly, and
+ * always cycles `true→false→true` through `(nzAfterClose)` when the announcement changes (§1.12)
+ * — this is what actually fixes AC-31 (closing a non-last announcement in the queue used to hang
+ * forever, §0.2). Note that `fixture.detectChanges()`/TestBed here forces *synchronous* change
+ * detection and `nz-modal`'s real leave animation never plays in these specs, so tests that
+ * simulate "close, then the next announcement opens" call `component.onModalAfterClose()`
+ * directly instead of waiting on a real animation timer (per §4's note on this file) — the
+ * genuinely browser-dependent regression (AC-20/AC-30/AC-31 against a real `nz-modal`) is verified
+ * separately against a real browser per §4, not here.
+ *
+ * `AnnouncementPopupService.fetchActive()` is a private method wired to the real
+ * `GET /api/announcements/active` in production. These specs grab the real singleton via
+ * `TestBed.inject` *before* creating the component (whose constructor calls `initialize()`), and
+ * monkey-patch `fetchActive` on it — same technique as `announcement-popup.service.spec.ts` — so
+ * the component is exercised against the real production service logic end to end, not a
+ * hand-rolled fake.
  */
 type ServiceWithFetchActive = { fetchActive(): Promise<AnnouncementPopup[]> };
 
@@ -34,6 +49,8 @@ function image(id: string, overrides: Partial<AnnouncementImage> = {}): Announce
 function announcement(id: string, images: AnnouncementImage[]): AnnouncementPopup {
   return { id, title: `ประกาศ ${id}`, images };
 }
+
+const DISMISSED_STORAGE_KEY = 'siriedu.announcementsDismissed';
 
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) {
@@ -60,13 +77,18 @@ function renderPopup(): {
   };
 }
 
+beforeEach(() => {
+  sessionStorage.clear();
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
+  sessionStorage.clear();
   TestBed.resetTestingModule();
 });
 
-describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
-  it('AC-19: shows the first announcement automatically once initialize() resolves', async () => {
+describe('AnnouncementPopupComponent (announcement-popup v3 §1.10/§1.11/§4)', () => {
+  it('AC-19: shows the first announcement automatically once initialize() resolves, with an index-based slider (no nz-carousel)', async () => {
     const { service, createFixture } = renderPopup();
     stubFetchActive(service, [announcement('ann-1', [image('img-1'), image('img-2')])]);
 
@@ -74,11 +96,56 @@ describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
     fixture.detectChanges();
     await settle();
 
-    expect(fixture.componentInstance.popup.current()?.id).toBe('ann-1');
-    expect(fixture.componentInstance.popup.current()?.images.length).toBe(2);
+    const page = fixture.componentInstance;
+    expect(page.popup.current()?.id).toBe('ann-1');
+    expect(page.popup.current()?.images.length).toBe(2);
+    expect(page.currentImageIndex()).toBe(0);
+
+    page.nextImage();
+    expect(page.currentImageIndex()).toBe(1);
+
+    // wrap-around (§1.10)
+    page.nextImage();
+    expect(page.currentImageIndex()).toBe(0);
+    page.prevImage();
+    expect(page.currentImageIndex()).toBe(1);
+
+    page.goToImage(0);
+    expect(page.currentImageIndex()).toBe(0);
   });
 
-  it('AC-22: two active announcements — the second appears immediately after the first closes, same page load', async () => {
+  it('AC-21: checking "ไม่ต้องแสดงอีก" then closing via closeCurrent() persists dismiss-forever and survives a simulated reload', async () => {
+    const { service, createFixture } = renderPopup();
+    stubFetchActive(service, [
+      announcement('ann-1', [image('img-1')]),
+      announcement('ann-2', [image('img-2')]),
+    ]);
+    const fixture = createFixture();
+    fixture.detectChanges();
+    await settle();
+
+    const page = fixture.componentInstance;
+    page.toggleDontShowAgain(true);
+    page.closeCurrent();
+
+    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toContain('ann-1');
+
+    // Simulate a same-tab reload: fresh service instance, same (unclreared) sessionStorage.
+    TestBed.resetTestingModule();
+    const { service: service2, createFixture: createFixture2 } = renderPopup();
+    stubFetchActive(service2, [
+      announcement('ann-1', [image('img-1')]),
+      announcement('ann-2', [image('img-2')]),
+    ]);
+    const fixture2 = createFixture2();
+    fixture2.detectChanges();
+    await settle();
+
+    expect(fixture2.componentInstance.popup.current()?.id).toBe('ann-2');
+  });
+
+  it('AC-22/AC-32: two active announcements — closing the first cycles the modal through a genuine close-then-reopen (§1.12), and the second starts with a fresh checkbox/index', async () => {
     const { service, createFixture } = renderPopup();
     stubFetchActive(service, [
       announcement('ann-1', [image('img-1')]),
@@ -88,11 +155,82 @@ describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
     const fixture = createFixture();
     fixture.detectChanges();
     await settle();
-    expect(fixture.componentInstance.popup.current()?.id).toBe('ann-1');
+    const page = fixture.componentInstance;
+    expect(page.popup.current()?.id).toBe('ann-1');
+    expect(page.isModalVisible()).toBe(true);
 
-    fixture.componentInstance.popup.close();
+    page.toggleDontShowAgain(true);
+    expect(page.dontShowAgainChecked()).toBe(true);
+    page.closeCurrent();
+    fixture.detectChanges();
+    await settle();
 
-    expect(fixture.componentInstance.popup.current()?.id).toBe('ann-2');
+    // [v4] §1.12: the service queue advances synchronously (closeCurrent()/dismissForever() are
+    // still sync — §1.12), but the modal itself must NOT swap content while `nzVisible` stays
+    // `true` — it closes fully first and waits for `(nzAfterClose)`.
+    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(page.isModalVisible()).toBe(false);
+
+    // Simulate `nz-modal` firing `(nzAfterClose)` once its leave animation actually finishes.
+    page.onModalAfterClose();
+    fixture.detectChanges();
+    await settle();
+
+    expect(page.isModalVisible()).toBe(true);
+    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(page.dontShowAgainChecked()).toBe(false);
+    expect(page.currentImageIndex()).toBe(0);
+  });
+
+  it('AC-31: three active announcements — closing each non-last one cycles the modal via (nzAfterClose) instead of hanging on the previous announcement, and the modal disappears entirely after the last one closes', async () => {
+    const { service, createFixture } = renderPopup();
+    stubFetchActive(service, [
+      announcement('ann-1', [image('img-1')]),
+      announcement('ann-2', [image('img-2')]),
+      announcement('ann-3', [image('img-3')]),
+    ]);
+
+    const fixture = createFixture();
+    fixture.detectChanges();
+    await settle();
+    const page = fixture.componentInstance;
+    expect(page.popup.current()?.id).toBe('ann-1');
+    expect(page.isModalVisible()).toBe(true);
+
+    // Close announcement 1 (not the last in the queue) via X (closeCurrent()).
+    page.closeCurrent();
+    fixture.detectChanges();
+    await settle();
+    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(page.isModalVisible()).toBe(false); // must not still be showing ann-1's content
+    page.onModalAfterClose();
+    fixture.detectChanges();
+    await settle();
+    expect(page.isModalVisible()).toBe(true);
+    expect(page.popup.current()?.id).toBe('ann-2');
+
+    // Close announcement 2 (also not the last).
+    page.closeCurrent();
+    fixture.detectChanges();
+    await settle();
+    expect(page.popup.current()?.id).toBe('ann-3');
+    expect(page.isModalVisible()).toBe(false);
+    page.onModalAfterClose();
+    fixture.detectChanges();
+    await settle();
+    expect(page.isModalVisible()).toBe(true);
+    expect(page.popup.current()?.id).toBe('ann-3');
+
+    // Close announcement 3 (the last one) — the modal must disappear entirely, no hang.
+    page.closeCurrent();
+    fixture.detectChanges();
+    await settle();
+    expect(page.popup.current()).toBeNull();
+    expect(page.isModalVisible()).toBe(false);
+    page.onModalAfterClose();
+    fixture.detectChanges();
+    await settle();
+    expect(page.isModalVisible()).toBe(false);
   });
 
   it('fallbackAlt() builds a meaningful alt from the title and 1-based index when altText is blank', async () => {
@@ -107,7 +245,7 @@ describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
     expect(page.fallbackAlt(current.images[0], 0)).toBe('ประกาศ ann-1 - รูปที่ 1');
   });
 
-  it('AC-23: clicking an image with an internal link closes the popup and navigates through the Router', async () => {
+  it('AC-23: clicking an image with an internal link closes the popup (honoring the checkbox) and navigates through the Router', async () => {
     const { service, createFixture } = renderPopup();
     stubFetchActive(service, [announcement('ann-1', [image('img-1', { linkUrl: '/marketplace' })])]);
     const fixture = createFixture();
@@ -115,10 +253,12 @@ describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
     await settle();
 
     const page = fixture.componentInstance;
+    page.toggleDontShowAgain(true);
     page.onImageClick(page.popup.current()!.images[0]);
 
     expect(navigateByUrl).toHaveBeenCalledWith('/marketplace');
     expect(page.popup.current()).toBeNull();
+    expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toContain('ann-1');
   });
 
   it('AC-24: clicking an image with an external link closes the popup and opens a new tab, without navigating the current page', async () => {
@@ -155,6 +295,39 @@ describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
     expect(page.popup.current()?.id).toBe('ann-1');
   });
 
+  it('AC-28: checking "ไม่ต้องแสดงอีก" alone does not close the popup or write sessionStorage yet', async () => {
+    const { service, createFixture } = renderPopup();
+    stubFetchActive(service, [announcement('ann-1', [image('img-1')])]);
+    const fixture = createFixture();
+    fixture.detectChanges();
+    await settle();
+
+    const page = fixture.componentInstance;
+    page.toggleDontShowAgain(true);
+
+    expect(page.popup.current()?.id).toBe('ann-1');
+    expect(page.dontShowAgainChecked()).toBe(true);
+    expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toBeNull();
+  });
+
+  it('AC-29: closing without checking "ไม่ต้องแสดงอีก" via closeCurrent() behaves like a plain close — no sessionStorage write', async () => {
+    const { service, createFixture } = renderPopup();
+    stubFetchActive(service, [
+      announcement('ann-1', [image('img-1')]),
+      announcement('ann-2', [image('img-2')]),
+    ]);
+    const fixture = createFixture();
+    fixture.detectChanges();
+    await settle();
+
+    const page = fixture.componentInstance;
+    expect(page.dontShowAgainChecked()).toBe(false);
+    page.closeCurrent();
+
+    expect(page.popup.current()?.id).toBe('ann-2');
+    expect(sessionStorage.getItem(DISMISSED_STORAGE_KEY)).toBeNull();
+  });
+
   it('keyboard arrow handlers are safe no-ops when no announcement is showing', async () => {
     const { service, createFixture } = renderPopup();
     stubFetchActive(service, []);
@@ -166,5 +339,20 @@ describe('AnnouncementPopupComponent (announcement-popup v1 §1/§4)', () => {
     expect(page.popup.current()).toBeNull();
     expect(() => page.onArrowLeft()).not.toThrow();
     expect(() => page.onArrowRight()).not.toThrow();
+  });
+
+  it('keyboard arrow handlers move the slider index the same way prevImage()/nextImage() do', async () => {
+    const { service, createFixture } = renderPopup();
+    stubFetchActive(service, [announcement('ann-1', [image('img-1'), image('img-2'), image('img-3')])]);
+    const fixture = createFixture();
+    fixture.detectChanges();
+    await settle();
+
+    const page = fixture.componentInstance;
+    expect(page.currentImageIndex()).toBe(0);
+    page.onArrowRight();
+    expect(page.currentImageIndex()).toBe(1);
+    page.onArrowLeft();
+    expect(page.currentImageIndex()).toBe(0);
   });
 });

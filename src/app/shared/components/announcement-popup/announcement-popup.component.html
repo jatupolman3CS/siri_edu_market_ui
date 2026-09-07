@@ -1,35 +1,34 @@
 <nz-modal
-  [nzVisible]="!!popup.current()"
+  [nzVisible]="isModalVisible()"
   [nzTitle]="popup.current()?.title"
   [nzFooter]="null"
   [nzWidth]="'min(90vw, 560px)'"
-  (nzOnCancel)="popup.close()"
+  (nzOnCancel)="closeCurrent()"
+  (nzAfterClose)="onModalAfterClose()"
 >
   <ng-container *nzModalContent>
     @if (popup.current(); as announcement) {
       <div class="flex flex-col gap-4">
         <div class="relative">
-          <nz-carousel [nzDots]="announcement.images.length > 1" [nzEnableSwipe]="true">
-            @for (image of announcement.images; track image.id; let i = $index) {
-              <div nz-carousel-content>
-                <img
-                  appImgFallback
-                  [src]="image.imageUrl"
-                  [alt]="image.altText || fallbackAlt(image, i)"
-                  class="w-full aspect-[4/3] object-cover rounded-2xl"
-                  [class.cursor-pointer]="!!image.linkUrl"
-                  (click)="onImageClick(image)"
-                />
-              </div>
+          @for (image of announcement.images; track image.id; let i = $index) {
+            @if (i === currentImageIndex()) {
+              <img
+                appImgFallback
+                [src]="image.imageUrl"
+                [alt]="image.altText || fallbackAlt(image, i)"
+                class="w-full aspect-[4/3] object-cover rounded-2xl transition-opacity duration-200"
+                [class.cursor-pointer]="!!image.linkUrl"
+                (click)="onImageClick(image)"
+              />
             }
-          </nz-carousel>
+          }
 
           @if (announcement.images.length > 1) {
             <button
               type="button"
               class="btn-icon absolute top-1/2 left-2 -translate-y-1/2 z-10 !border-0 !bg-white/90 shadow-soft"
               aria-label="รูปก่อนหน้า"
-              (click)="onArrowLeft()"
+              (click)="prevImage()"
             >
               <app-icon name="arrow-left" [size]="16" />
             </button>
@@ -37,20 +36,38 @@
               type="button"
               class="btn-icon absolute top-1/2 right-2 -translate-y-1/2 z-10 !border-0 !bg-white/90 shadow-soft"
               aria-label="รูปถัดไป"
-              (click)="onArrowRight()"
+              (click)="nextImage()"
             >
               <app-icon name="arrow-right" [size]="16" />
             </button>
+
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+              @for (image of announcement.images; track image.id; let i = $index) {
+                <button
+                  type="button"
+                  [class]="
+                    i === currentImageIndex()
+                      ? 'h-2 w-2 rounded-full bg-white transition-colors'
+                      : 'h-2 w-2 rounded-full bg-white/60 transition-colors'
+                  "
+                  [attr.aria-label]="'ไปที่รูปที่ ' + (i + 1)"
+                  [attr.aria-current]="i === currentImageIndex() ? 'true' : null"
+                  (click)="goToImage(i)"
+                ></button>
+              }
+            </div>
           }
         </div>
 
-        <button
-          type="button"
-          class="btn-ghost w-full"
-          (click)="popup.dismissForever(announcement.id)"
-        >
+        <label class="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
+          <input
+            type="checkbox"
+            [checked]="dontShowAgainChecked()"
+            (change)="toggleDontShowAgain($any($event.target).checked)"
+            class="w-4 h-4 accent-pink-500"
+          />
           ไม่ต้องแสดงอีก
-        </button>
+        </label>
       </div>
     }
   </ng-container>
