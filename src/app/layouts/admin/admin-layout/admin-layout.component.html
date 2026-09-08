@@ -1,38 +1,40 @@
 <div class="min-h-screen bg-canvas flex flex-col lg:flex-row">
       <app-global-loader />
       <aside
-        class="hidden lg:flex flex-col w-72 bg-ink text-pink-50 p-6 sticky top-0 h-screen"
+        class="hidden lg:flex flex-col w-72 bg-ink text-pink-50 p-5 sticky top-0 h-screen overflow-hidden shrink-0 z-30"
       >
-        <div class="flex items-center gap-2.5">
-          <span class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 shadow-soft">
-            <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-white">
-              <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-          <div class="leading-none">
-            <div class="text-sm font-extrabold">ADMIN PANEL</div>
-            <div class="text-[10px] uppercase tracking-[0.2em] text-pink-300 mt-1">SIRIEDUMARKET</div>
+        <div class="shrink-0 mb-4">
+          <div class="flex items-center gap-2.5">
+            <span class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 shadow-soft">
+              <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-white">
+                <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div class="leading-none">
+              <div class="text-sm font-extrabold">ADMIN PANEL</div>
+              <div class="text-[10px] uppercase tracking-[0.2em] text-pink-300 mt-1">SIRIEDUMARKET</div>
+            </div>
+          </div>
+
+          <div class="mt-2.5 pl-1">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-200 text-[10px] font-bold uppercase tracking-wider">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse-soft"></span>
+              High access
+            </span>
           </div>
         </div>
 
-        <div class="mt-3 mb-8 pl-1">
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-200 text-[10px] font-bold uppercase tracking-wider">
-            <span class="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse-soft"></span>
-            High access
-          </span>
-        </div>
-
-        <nav class="flex flex-col gap-1.5 flex-1">
+        <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
           @for (item of navItems; track item.href) {
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-white/10 !text-white"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-              class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
             >
               <app-icon [name]="item.icon" [size]="18" />
-              <span class="flex-1">{{ item.label }}</span>
+              <span class="flex-1 truncate">{{ item.label }}</span>
               @if (item.href === '/admin/approval' && pendingCount() > 0) {
                 <span class="pill bg-pink-500 text-white !py-0 !px-2 !text-[10px]">{{ pendingCount() }}</span>
               } @else if (item.badge) {
@@ -42,34 +44,36 @@
           }
         </nav>
 
-        <a routerLink="/" class="mt-4 flex items-center gap-2 px-4 py-3 rounded-2xl text-sm text-pink-100/70 hover:bg-white/5 hover:text-white">
-          <app-icon name="arrow-left" [size]="16" />
-          กลับสู่หน้าตลาด
-        </a>
+        <div class="shrink-0 pt-3 border-t border-white/10 mt-2 flex flex-col gap-1">
+          <a routerLink="/" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors">
+            <app-icon name="arrow-left" [size]="16" />
+            กลับสู่หน้าตลาด
+          </a>
 
-        <button
-          type="button"
-          (click)="signOut()"
-          class="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm text-rose-300 hover:bg-white/5 hover:text-rose-200"
-        >
-          <app-icon name="logout" [size]="16" />
-          ออกจากระบบ
-        </button>
+          <button
+            type="button"
+            (click)="signOut()"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-rose-300 hover:bg-white/5 hover:text-rose-200 transition-colors"
+          >
+            <app-icon name="logout" [size]="16" />
+            ออกจากระบบ
+          </button>
 
-        @if (auth.user(); as u) {
-          <div class="mt-4 flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-            <img
-              appImgFallback
-              [src]="avatarSrc()"
-              class="w-9 h-9 rounded-full object-cover ring-2 ring-white/20"
-              [alt]="u.name"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-white truncate">{{ u.name }}</div>
-              <div class="text-[10px] text-pink-300 truncate uppercase tracking-wider">Admin</div>
+          @if (auth.user(); as u) {
+            <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 border border-white/10">
+              <img
+                appImgFallback
+                [src]="avatarSrc()"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-white/20 shrink-0"
+                [alt]="u.name"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-bold text-white truncate">{{ u.name }}</div>
+                <div class="text-[10px] text-pink-300 truncate uppercase tracking-wider">Admin</div>
+              </div>
             </div>
-          </div>
-        }
+          }
+        </div>
       </aside>
 
       <!-- Mobile -->

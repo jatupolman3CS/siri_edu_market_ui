@@ -11,6 +11,7 @@ import {
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { extractErrorStatus } from '../../../core/services/api-result';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 /** system-config-job-toggle v1 §2.4 — the 5th catalog entry this page's toggle status reads. */
 const DOCUMENT_GENERATION_JOB_KEY = 'job.document-generation.enabled';
@@ -28,7 +29,7 @@ const RUN_PAGE_SIZE = 20;
 @Component({
   selector: 'app-admin-document-generation',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, EmptyStateComponent],
+  imports: [DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-generation.page.html',
   styleUrl: './document-generation.page.scss',
@@ -37,6 +38,8 @@ export class AdminDocumentGenerationPage {
   private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+
+  readonly pageSize = signal(RUN_PAGE_SIZE);
 
   // ===== §4.1 toggle status (read-only) =====
   readonly jobToggles = this.admin.jobToggles;
@@ -87,7 +90,7 @@ export class AdminDocumentGenerationPage {
   async loadRuns(): Promise<void> {
     this.runsLoading.set(true);
     try {
-      const result = await this.admin.loadDocumentGenerationRuns(this.page(), RUN_PAGE_SIZE);
+      const result = await this.admin.loadDocumentGenerationRuns(this.page(), this.pageSize());
       this.runs.set(result.items ?? []);
       this.totalCount.set(result.totalCount ?? 0);
       this.totalPages.set(Math.max(1, result.totalPages ?? 1));
@@ -99,6 +102,12 @@ export class AdminDocumentGenerationPage {
   goToPage(next: number): void {
     if (next < 1 || next > this.totalPages()) return;
     this.page.set(next);
+    void this.loadRuns();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
     void this.loadRuns();
   }
 

@@ -1,0 +1,17 @@
+nav::-webkit-scrollbar {
+  width: 5px;
+}
+nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+nav::-webkit-scrollbar-thumb {
+  background: var(--pink-200);
+  border-radius: 999px;
+}
+nav::-webkit-scrollbar-thumb:hover {
+  background: var(--pink-300);
+}
+nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink-200) transparent;
+}

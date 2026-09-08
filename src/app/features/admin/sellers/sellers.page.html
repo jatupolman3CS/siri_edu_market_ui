@@ -108,11 +108,12 @@
     </table>
   </div>
 
-  <div class="flex items-center justify-between mt-4 text-sm text-ink-soft">
-    <span>ทั้งหมด {{ totalCount() }} รายการ · หน้า {{ page() }} / {{ totalPagesSafe() }}</span>
-    <div class="flex gap-2">
-      <button type="button" class="btn-ghost text-xs" [disabled]="page() <= 1" (click)="prevPage()">ก่อนหน้า</button>
-      <button type="button" class="btn-ghost text-xs" [disabled]="page() >= totalPagesSafe()" (click)="nextPage()">ถัดไป</button>
-    </div>
-  </div>
+  <app-pagination
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [total]="totalCount()"
+    [totalPages]="totalPagesSafe()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+  />
 </div>

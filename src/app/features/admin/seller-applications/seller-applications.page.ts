@@ -5,12 +5,13 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerApplicationService } from '../../../core/services/seller-application.service';
 import type { AdminSellerApplicationResponse } from '../../../core/api';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 /** GAP-01: admin queue for reviewing buyer requests to become sellers. */
 @Component({
   selector: 'app-admin-seller-applications',
   standalone: true,
-  imports: [DatePipe, FormsModule, EmptyStateComponent],
+  imports: [DatePipe, FormsModule, EmptyStateComponent, PaginationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-applications.page.html',
 })
@@ -20,6 +21,10 @@ export class AdminSellerApplicationsPage {
 
   readonly items = signal<AdminSellerApplicationResponse[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+  readonly total = signal(0);
+
   /** userId currently being approved/rejected, so only that row's buttons disable. */
   readonly busyUserId = signal<string | null>(null);
 
@@ -31,10 +36,23 @@ export class AdminSellerApplicationsPage {
     void this.reload();
   }
 
+  onPageChange(p: number): void {
+    this.page.set(p);
+    void this.reload();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
+    void this.reload();
+  }
+
   async reload(): Promise<void> {
     this.loading.set(true);
     try {
-      this.items.set(await this.applications.listPending());
+      const res = await this.applications.listPendingPaged(this.page(), this.pageSize());
+      this.items.set(res.items);
+      this.total.set(res.totalCount);
     } finally {
       this.loading.set(false);
     }

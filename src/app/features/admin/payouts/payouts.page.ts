@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminPayoutResponse } from '../../../core/api';
 import { AdminService } from '../../../core/services/admin.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
@@ -16,7 +17,7 @@ type PayoutFilter = 'pending' | 'processing' | 'paid' | 'failed' | 'all';
 @Component({
   selector: 'app-admin-payouts',
   standalone: true,
-  imports: [CommonModule, DatePipe, ThbPipe, EmptyStateComponent],
+  imports: [CommonModule, DatePipe, ThbPipe, EmptyStateComponent, PaginationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './payouts.page.html',
 })
@@ -24,6 +25,10 @@ export class AdminPayoutsPage {
   private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+  readonly total = signal(0);
 
   readonly items = signal<AdminPayoutResponse[]>([]);
   readonly loading = signal<boolean>(false);
@@ -44,6 +49,18 @@ export class AdminPayoutsPage {
 
   setFilter(next: PayoutFilter): void {
     this.filter.set(next);
+    this.page.set(1);
+    void this.reload();
+  }
+
+  onPageChange(p: number): void {
+    this.page.set(p);
+    void this.reload();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
     void this.reload();
   }
 
@@ -51,10 +68,17 @@ export class AdminPayoutsPage {
     this.loading.set(true);
     try {
       const status = this.filter();
-      this.items.set(await this.admin.listPayouts(status === 'all' ? undefined : status));
+      const res = await this.admin.listPayoutsPaged(
+        status === 'all' ? undefined : status,
+        this.page(),
+        this.pageSize(),
+      );
+      this.items.set(res.items ?? []);
+      this.total.set(res.totalCount ?? 0);
     } catch (e) {
       this.apiFail.report('โหลดรายการถอนเงิน', e);
       this.items.set([]);
+      this.total.set(0);
     } finally {
       this.loading.set(false);
     }

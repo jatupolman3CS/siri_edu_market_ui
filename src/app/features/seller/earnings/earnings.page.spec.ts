@@ -43,6 +43,7 @@ function render(opts: {
     loadEarnings: vi.fn(async () => {}),
     refreshDashboard: vi.fn(async () => {}),
     requestPayout: vi.fn(async () => ({ ok: true })),
+    loadPayoutsPaged: vi.fn(async () => ({ items: [], totalCount: 0, page: 1, pageSize: 10, totalPages: 1 })),
   };
   const fakePlatformStats = { stats: () => opts.platformStats, loadStats: vi.fn() };
 

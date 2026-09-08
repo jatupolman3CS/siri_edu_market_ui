@@ -94,5 +94,15 @@
         </article>
       }
     </div>
+
+    <div class="mt-6 pt-3 border-t border-line">
+      <app-pagination
+        [page]="page()"
+        [pageSize]="pageSize()"
+        [total]="total()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
+    </div>
   }
 </div>

@@ -1,0 +1,83 @@
+<div class="flex flex-wrap items-center justify-between gap-4 py-3 text-sm text-ink-soft select-none">
+  <!-- Info count & Page size selector -->
+  <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-ink-muted">
+    @if (showTotal()) {
+      @if (total() > 0) {
+        <span>แสดง <strong>{{ startRecord() }} - {{ endRecord() }}</strong> จากทั้งหมด <strong>{{ total() }}</strong> รายการ</span>
+        <span class="opacity-50">·</span>
+        <span>หน้า <strong>{{ page() }}</strong> / <strong>{{ computedTotalPages() }}</strong></span>
+      } @else {
+        <span>ทั้งหมด <strong>0</strong> รายการ</span>
+      }
+    }
+
+    @if (showPageSize()) {
+      <div class="inline-flex items-center gap-1.5">
+        <span class="text-xs text-ink-muted">ต่อหน้า:</span>
+        <select
+          class="bg-white border border-line rounded-lg px-2 py-1 text-xs text-ink font-medium focus:outline-none focus:border-pink-500 hover:border-pink-300 transition-colors cursor-pointer shadow-xs"
+          [value]="pageSize()"
+          (change)="onPageSizeChange($event)"
+          aria-label="เลือกจำนวนรายการต่อหน้า"
+        >
+          @for (opt of pageSizeOptions(); track opt) {
+            <option [value]="opt">{{ opt }} รายการ</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <!-- Page Controls -->
+  @if (computedTotalPages() > 1) {
+    <nav class="flex items-center gap-1 ml-auto" aria-label="Pagination Navigation">
+      <!-- Prev Button -->
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
+        [disabled]="page() <= 1"
+        (click)="prev()"
+        aria-label="หน้าก่อนหน้า"
+      >
+        <app-icon name="arrow-left" [size]="14" />
+        <span class="hidden sm:inline">ก่อนหน้า</span>
+      </button>
+
+      <!-- Page Numbers -->
+      <div class="flex items-center gap-1">
+        @for (p of pages(); track $index) {
+          @if (p === '...') {
+            <span class="w-8 h-8 flex items-center justify-center text-xs text-ink-muted font-bold">…</span>
+          } @else {
+            <button
+              type="button"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center cursor-pointer"
+              [class.bg-pink-500]="page() === p"
+              [class.text-white]="page() === p"
+              [class.shadow-soft]="page() === p"
+              [class.text-ink]="page() !== p"
+              [class.hover:bg-pink-50]="page() !== p"
+              [class.hover:text-pink-600]="page() !== p"
+              [attr.aria-current]="page() === p ? 'page' : null"
+              (click)="goToPage(p)"
+            >
+              {{ p }}
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Next Button -->
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
+        [disabled]="page() >= computedTotalPages()"
+        (click)="next()"
+        aria-label="หน้าถัดไป"
+      >
+        <span class="hidden sm:inline">ถัดไป</span>
+        <app-icon name="arrow-right" [size]="14" />
+      </button>
+    </nav>
+  }
+</div>

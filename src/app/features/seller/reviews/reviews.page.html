@@ -95,6 +95,18 @@
             </li>
           }
         </ul>
+
+        @if (totalCount() > 0) {
+          <div class="mt-6 pt-3 border-t border-line">
+            <app-pagination
+              [page]="page()"
+              [pageSize]="pageSize()"
+              [total]="totalCount()"
+              (pageChange)="onPageChange($event)"
+              (pageSizeChange)="onPageSizeChange($event)"
+            />
+          </div>
+        }
       }
       }
     </div>

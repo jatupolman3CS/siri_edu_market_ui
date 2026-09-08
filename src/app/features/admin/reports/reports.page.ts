@@ -6,6 +6,7 @@ import type { AdminOpenReportResponse } from '../../../core/api';
 import { AdminService } from '../../../core/services/admin.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 /**
  * F-09 (N-05): one place to read document reports.
@@ -17,7 +18,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterLink, EmptyStateComponent],
+  imports: [CommonModule, DatePipe, RouterLink, EmptyStateComponent, PaginationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reports.page.html',
 })
@@ -30,6 +31,8 @@ export class AdminReportsPage {
   readonly loading = signal(false);
   readonly busyId = signal<string | null>(null);
   readonly openOnly = signal(true);
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
   readonly total = signal(0);
 
   readonly categoryLabels: Record<string, string> = {
@@ -50,18 +53,31 @@ export class AdminReportsPage {
 
   setOpenOnly(next: boolean): void {
     this.openOnly.set(next);
+    this.page.set(1);
+    void this.reload();
+  }
+
+  onPageChange(p: number): void {
+    this.page.set(p);
+    void this.reload();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
     void this.reload();
   }
 
   async reload(): Promise<void> {
     this.loading.set(true);
     try {
-      const page = await this.admin.listReports(this.openOnly());
-      this.reports.set(page.items ?? []);
-      this.total.set(page.totalCount ?? 0);
+      const paged = await this.admin.listReports(this.openOnly(), this.page(), this.pageSize());
+      this.reports.set(paged.items ?? []);
+      this.total.set(paged.totalCount ?? 0);
     } catch (e) {
       this.apiFail.report('โหลดรายงานเอกสาร', e);
       this.reports.set([]);
+      this.total.set(0);
     } finally {
       this.loading.set(false);
     }

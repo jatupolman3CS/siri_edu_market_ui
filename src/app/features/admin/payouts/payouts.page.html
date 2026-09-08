@@ -96,6 +96,16 @@
           </tbody>
         </table>
       </div>
+
+      <div class="mt-4 pt-3 border-t border-line">
+        <app-pagination
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [total]="total()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
     </div>
   }
 </div>

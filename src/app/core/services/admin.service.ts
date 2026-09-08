@@ -346,6 +346,26 @@ export class AdminService {
     return this.txnsPager.loadMore();
   }
 
+  async listTransactionsPaged(
+    page = 1,
+    pageSize = 10,
+  ): Promise<PagedResult<AdminTransaction>> {
+    try {
+      const result = await getApiAdminTransactions({ query: { Page: page, PageSize: pageSize } });
+      const data = unwrapSdkResult(result);
+      return {
+        items: (data.items ?? []).map(mapAdminTransaction),
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 1,
+      };
+    } catch (e) {
+      this.apiFail.report('โหลดธุรกรรมแอดมิน', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+    }
+  }
+
   async refreshDashboard(): Promise<void> {
     try {
       const result = await getApiAdminDashboard();
@@ -605,6 +625,29 @@ export class AdminService {
       query: { Page: page, PageSize: pageSize, ...(status ? { status } : {}) },
     });
     return unwrapSdkResult(result).items ?? [];
+  }
+
+  async listPayoutsPaged(
+    status: string | undefined,
+    page = 1,
+    pageSize = 10,
+  ): Promise<PagedResult<AdminPayoutResponse>> {
+    try {
+      const result = await getApiAdminPayouts({
+        query: { Page: page, PageSize: pageSize, ...(status ? { status } : {}) },
+      });
+      const data = unwrapSdkResult(result);
+      return {
+        items: data.items ?? [],
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 1,
+      };
+    } catch (e) {
+      this.apiFail.report('โหลดรายการถอนเงิน', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+    }
   }
 
   async setPayoutStatus(

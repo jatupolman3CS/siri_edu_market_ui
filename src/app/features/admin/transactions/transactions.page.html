@@ -78,7 +78,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (t of filtered(); track t.id) {
+            @for (t of items(); track t.id) {
               <tr class="border-t border-line hover:bg-pink-50/40">
                 <td class="px-5 py-3 text-xs text-ink font-mono whitespace-nowrap">{{ t.orderNumber }}</td>
                 <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ t.buyerName }}</td>
@@ -132,16 +132,13 @@
         </table>
       </div>
 
-      @if (admin.transactionsHasMore()) {
-        <div class="flex justify-center mt-6">
-          <button
-            type="button"
-            class="btn-pink"
-            (click)="admin.loadMoreTransactions()"
-            [disabled]="admin.transactionsState().status === 'loading'"
-          >
-            โหลดเพิ่ม
-          </button>
-        </div>
-      }
+      <div class="mt-4 pt-3 border-t border-line">
+        <app-pagination
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [total]="total()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
     </div>

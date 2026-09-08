@@ -2,16 +2,25 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminService } from '../../../core/services';
+import type { AdminTransaction } from '../../../core/models';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 @Component({
   selector: 'app-admin-transactions',
   standalone: true,
-  imports: [FormsModule, StatCardComponent, IconComponent, ThbPipe, TimeAgoPipe],
+  imports: [
+    FormsModule,
+    StatCardComponent,
+    IconComponent,
+    PaginationComponent,
+    ThbPipe,
+    TimeAgoPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transactions.page.html',
   styleUrl: './transactions.page.scss',
@@ -20,6 +29,12 @@ export class AdminTransactionsPage {
   readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+  readonly total = signal(0);
+  readonly items = signal<AdminTransaction[]>([]);
+  readonly loading = signal(false);
 
   /** F-11: the order currently being refunded, so only one button spins. */
   readonly refundingId = signal<string | null>(null);
@@ -38,22 +53,32 @@ export class AdminTransactionsPage {
     { value: 'refunded' as const, label: 'คืนเงิน' },
   ];
 
-  readonly filtered = computed(() => {
-    let list = this.admin.transactions();
-    if (this.status() !== 'all') {
-      list = list.filter((t) => t.status === this.status());
+  constructor() {
+    void this.admin.refreshDashboard();
+    void this.reload();
+  }
+
+  async reload(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const res = await this.admin.listTransactionsPaged(this.page(), this.pageSize());
+      this.items.set(res.items ?? []);
+      this.total.set(res.totalCount ?? 0);
+    } finally {
+      this.loading.set(false);
     }
-    if (this.search().trim()) {
-      const q = this.search().toLowerCase();
-      list = list.filter(
-        (t) =>
-          t.orderNumber.toLowerCase().includes(q) ||
-          t.buyerName.toLowerCase().includes(q) ||
-          t.documentTitle.toLowerCase().includes(q),
-      );
-    }
-    return list;
-  });
+  }
+
+  onPageChange(p: number): void {
+    this.page.set(p);
+    void this.reload();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
+    void this.reload();
+  }
 
   badgeClass(s: string): string {
     return {
@@ -83,9 +108,6 @@ export class AdminTransactionsPage {
     }[p] ?? p;
   }
 
-  constructor() {
-    void this.admin.refreshTransactions();
-  }
 
   /** Only settled money can be given back — the server enforces this too. */
   canRefund(status: string | undefined): boolean {

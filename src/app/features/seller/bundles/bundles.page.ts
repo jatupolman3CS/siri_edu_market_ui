@@ -9,6 +9,7 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import { extractErrorCode, extractErrorStatus } from '../../../core/services/api-result';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 /**
@@ -27,7 +28,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 @Component({
   selector: 'app-seller-bundles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent, IconComponent, ThbPipe],
+  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent, IconComponent, PaginationComponent, ThbPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundles.page.html',
 })
@@ -42,8 +43,10 @@ export class SellerBundlesPage {
   readonly saving = signal<boolean>(false);
 
   // backend-wide-pagination-and-seller-directory v1 §4 point 5: `GET /api/seller/bundles` is now
-  // paginated — prev/next only, no filter (spec explicitly out of scope for this endpoint).
+  // paginated.
   readonly page = signal(1);
+  readonly pageSize = signal(20);
+  readonly totalCount = signal(0);
   readonly totalPages = signal(1);
   /**
    * QA fix: `RequireSellerProfileFilter` answers a clean `403 seller_profile_required` for a
@@ -102,11 +105,13 @@ export class SellerBundlesPage {
     this.loading.set(true);
     try {
       const [bundlesPage, candidates] = await Promise.all([
-        this.bundleService.listMyBundles(this.page()),
+        this.bundleService.listMyBundles(this.page(), this.pageSize()),
         this.bundleService.listBundleCandidates(),
       ]);
       this.bundles.set(bundlesPage.items ?? []);
       this.page.set(bundlesPage.page ?? 1);
+      this.pageSize.set(bundlesPage.pageSize ?? this.pageSize());
+      this.totalCount.set(bundlesPage.totalCount ?? (bundlesPage.items?.length ?? 0));
       this.totalPages.set(Math.max(1, bundlesPage.totalPages ?? 1));
       this.candidates.set(candidates);
       this.sellerProfileRequired.set(false);
@@ -125,6 +130,12 @@ export class SellerBundlesPage {
   goToPage(next: number): void {
     if (next < 1 || next > this.totalPages()) return;
     this.page.set(next);
+    void this.reload();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
     void this.reload();
   }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { DocumentItem } from '../../../core/models';
 import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -23,6 +24,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     FormsModule,
     EmptyStateComponent,
     IconComponent,
+    PaginationComponent,
     NzModalModule,
     ThbPipe,
     CompactPipe,
@@ -38,6 +40,12 @@ export class SellerDocumentsPage {
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
   private readonly router = inject(Router);
+
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+  readonly total = signal(0);
+  readonly items = signal<DocumentItem[]>([]);
+  readonly loading = signal(false);
 
   readonly searchInput = signal<string>('');
   readonly search = signal<string>('');
@@ -55,28 +63,54 @@ export class SellerDocumentsPage {
   ];
 
   constructor() {
-    void this.seller.refreshDocuments();
+    void this.reload();
+  }
+
+  async reload(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const res = await this.seller.listDocumentsPaged({
+        status: this.status(),
+        search: this.search(),
+        page: this.page(),
+        pageSize: this.pageSize(),
+      });
+      this.items.set(res.items ?? []);
+      this.total.set(res.totalCount ?? 0);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   onStatusChange(newStatus: 'all' | 'approved' | 'pending' | 'rejected' | 'draft'): void {
     this.status.set(newStatus);
-    this.seller.setDocumentsQuery({ status: newStatus, search: this.search() });
+    this.page.set(1);
+    void this.reload();
   }
 
   applySearch(): void {
     const q = this.searchInput().trim();
     this.search.set(q);
-    this.seller.setDocumentsQuery({ status: this.status(), search: q });
+    this.page.set(1);
+    void this.reload();
   }
 
   clearSearch(): void {
     this.searchInput.set('');
     this.search.set('');
-    this.seller.setDocumentsQuery({ status: this.status(), search: '' });
+    this.page.set(1);
+    void this.reload();
   }
 
-  filteredDocs() {
-    return this.seller.myDocuments();
+  onPageChange(p: number): void {
+    this.page.set(p);
+    void this.reload();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
+    void this.reload();
   }
 
   statusLabel(status: string): string {

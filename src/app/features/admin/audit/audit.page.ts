@@ -6,6 +6,7 @@ import type { AdminAuditLogResponse } from '../../../core/api';
 import { AdminService } from '../../../core/services/admin.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 /**
  * F-10: the admin audit log.
@@ -19,7 +20,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 @Component({
   selector: 'app-admin-audit',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule, RouterLink, EmptyStateComponent],
+  imports: [CommonModule, DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './audit.page.html',
 })
@@ -30,6 +31,7 @@ export class AdminAuditPage {
   readonly entries = signal<AdminAuditLogResponse[]>([]);
   readonly loading = signal(false);
   readonly page = signal(1);
+  readonly pageSize = signal(50);
   readonly totalPages = signal(1);
   readonly total = signal(0);
   readonly expandedId = signal<string | null>(null);
@@ -89,6 +91,12 @@ export class AdminAuditPage {
     void this.reload();
   }
 
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
+    void this.reload();
+  }
+
   async reload(): Promise<void> {
     this.loading.set(true);
     try {
@@ -97,6 +105,7 @@ export class AdminAuditPage {
         from: this.from || undefined,
         to: this.to || undefined,
         page: this.page(),
+        pageSize: this.pageSize(),
       });
       this.entries.set(result.items ?? []);
       this.total.set(result.totalCount ?? 0);

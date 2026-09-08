@@ -6,6 +6,7 @@ import { AdminService } from '../../../core/services';
 import type { AdminSellersSort } from '../../../core/api/types.gen';
 import type { AdminSellerRow } from '../../../core/models';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -20,7 +21,16 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 @Component({
   selector: 'app-admin-sellers',
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, CompactPipe, ThbPipe, DatePipe, ImgFallbackDirective],
+  imports: [
+    FormsModule,
+    RouterLink,
+    IconComponent,
+    PaginationComponent,
+    CompactPipe,
+    ThbPipe,
+    DatePipe,
+    ImgFallbackDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sellers.page.html',
   styleUrl: './sellers.page.scss',
@@ -85,6 +95,17 @@ export class AdminSellersPage {
   }
 
   applyFilters(): void {
+    this.page.set(1);
+    void this.fetchList();
+  }
+
+  onPageChange(nextPage: number): void {
+    this.page.set(nextPage);
+    void this.fetchList();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
     this.page.set(1);
     void this.fetchList();
   }

@@ -58,7 +58,7 @@ export class AdminLayoutComponent {
   readonly navItems: {
     label: string;
     href: string;
-    icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell';
+    icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell' | 'flag' | 'sparkle' | 'package';
     exact?: boolean;
     badge?: string;
   }[] = [
@@ -68,7 +68,7 @@ export class AdminLayoutComponent {
     { label: 'ธุรกรรม', href: '/admin/transactions', icon: 'wallet' as const },
     { label: 'ผู้ขาย', href: '/admin/sellers', icon: 'user' as const },
     // GAP-02: seller payout queue.
-    { label: 'รายงานเอกสาร', href: '/admin/reports', icon: 'shield' as const },
+    { label: 'รายงานเอกสาร', href: '/admin/reports', icon: 'flag' as const },
     { label: 'ถอนเงินผู้ขาย', href: '/admin/payouts', icon: 'wallet' as const },
     // GAP-01: review queue for buyers applying to sell.
     { label: 'ใบสมัครผู้ขาย', href: '/admin/seller-applications', icon: 'shield' as const },
@@ -78,6 +78,6 @@ export class AdminLayoutComponent {
     { label: 'ตั้งค่าแพลตฟอร์ม', href: '/admin/settings', icon: 'gear' as const },
     { label: 'ประวัติการทำงาน', href: '/admin/audit', icon: 'doc' as const },
     // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.
-    { label: 'สร้างเอกสารอัตโนมัติ', href: '/admin/document-generation', icon: 'doc' as const },
+    { label: 'สร้างเอกสารอัตโนมัติ', href: '/admin/document-generation', icon: 'sparkle' as const },
   ];
 }

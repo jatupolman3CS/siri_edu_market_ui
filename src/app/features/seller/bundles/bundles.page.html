@@ -207,25 +207,15 @@
       }
     </ul>
 
-    @if (totalPages() > 1) {
-      <div class="flex items-center justify-center gap-3 mt-6">
-        <button
-          class="btn-ghost !py-2 !px-4 text-sm"
-          [disabled]="page() <= 1"
-          (click)="goToPage(page() - 1)"
-        >
-          ก่อนหน้า
-        </button>
-        <span class="text-sm text-ink-soft">หน้า {{ page() }} / {{ totalPages() }}</span>
-        <button
-          class="btn-ghost !py-2 !px-4 text-sm"
-          [disabled]="page() >= totalPages()"
-          (click)="goToPage(page() + 1)"
-        >
-          ถัดไป
-        </button>
-      </div>
-    }
+    <div class="mt-6 pt-3 border-t border-line">
+      <app-pagination
+        [page]="page()"
+        [pageSize]="pageSize()"
+        [total]="totalCount()"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
+    </div>
   }
   }
 </div>

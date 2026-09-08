@@ -3,10 +3,11 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { PlatformStatsService, SellerService } from '../../../core/services';
+import { PlatformStatsService, SellerService, type SellerPayoutRow } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 @Component({
@@ -17,6 +18,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
     StatCardComponent,
     EmptyStateComponent,
     IconComponent,
+    PaginationComponent,
     ThbPipe,
     CommonModule,
     DatePipe,
@@ -30,6 +32,12 @@ export class SellerEarningsPage {
   readonly seller = inject(SellerService);
   readonly platformStats = inject(PlatformStatsService);
   private readonly message = inject(NzMessageService);
+
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+  readonly totalPayouts = signal(0);
+  readonly payouts = signal<SellerPayoutRow[]>([]);
+  readonly loadingPayouts = signal(false);
 
   /** GAP-02: figures now come from the earnings endpoint rather than dashboard stats. */
   readonly totalEarnings = computed(() => this.seller.earnings()?.totalEarnings ?? 0);
@@ -64,6 +72,29 @@ export class SellerEarningsPage {
     // real-data-stats v1 §4.6: needed for the "รายได้เดือนนี้" trend badge and the fee % below.
     void this.seller.refreshDashboard();
     this.platformStats.loadStats();
+    void this.loadPayouts();
+  }
+
+  async loadPayouts(): Promise<void> {
+    this.loadingPayouts.set(true);
+    try {
+      const res = await this.seller.loadPayoutsPaged(this.page(), this.pageSize());
+      this.payouts.set(res.items ?? []);
+      this.totalPayouts.set(res.totalCount ?? 0);
+    } finally {
+      this.loadingPayouts.set(false);
+    }
+  }
+
+  onPageChange(p: number): void {
+    this.page.set(p);
+    void this.loadPayouts();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
+    void this.loadPayouts();
   }
 
   openRequest(): void {
@@ -89,6 +120,7 @@ export class SellerEarningsPage {
       if (result.ok) {
         this.message.success('ส่งคำขอถอนเงินเรียบร้อย รอทีมงานดำเนินการ');
         this.cancelRequest();
+        void this.loadPayouts();
       }
     } finally {
       this.submitting.set(false);

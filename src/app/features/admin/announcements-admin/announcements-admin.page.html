@@ -22,7 +22,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (a of items(); track a.id) {
+        @for (a of pagedAnnouncements(); track a.id) {
           <tr class="border-t border-line hover:bg-pink-50/40">
             <td class="px-5 py-3">
               <div class="flex items-center gap-3">
@@ -67,6 +67,14 @@
       </tbody>
     </table>
   </div>
+
+  <app-pagination
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [total]="items().length"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+  />
 </div>
 
 <nz-modal

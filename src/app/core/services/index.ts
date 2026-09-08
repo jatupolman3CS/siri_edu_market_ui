@@ -18,3 +18,4 @@ export * from './notification.service';
 export * from './system-status.service';
 export * from './platform-stats.service';
 export * from './action-state';
+export * from './server-pager';

@@ -13,6 +13,7 @@ import {
   type ActionState,
 } from '../../../core/services/action-state';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import type { AnnouncementAdmin } from '../../../core/models';
 
@@ -59,7 +60,14 @@ const STATUS_LABELS: Record<AnnouncementStatus, string> = {
 @Component({
   selector: 'app-announcements-admin',
   standalone: true,
-  imports: [FormsModule, NzModalModule, NzSwitchModule, IconComponent, ImgFallbackDirective],
+  imports: [
+    FormsModule,
+    NzModalModule,
+    NzSwitchModule,
+    IconComponent,
+    PaginationComponent,
+    ImgFallbackDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './announcements-admin.page.html',
   styleUrl: './announcements-admin.page.scss',
@@ -70,9 +78,27 @@ export class AnnouncementsAdminPage {
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
 
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+
   readonly items = signal<AnnouncementAdmin[]>([]);
   readonly state = signal<ActionState>(idleActionState());
   readonly loading = computed(() => this.state().status === 'loading');
+
+  readonly pagedAnnouncements = computed(() => {
+    const list = this.items();
+    const start = (this.page() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
+  onPageChange(next: number): void {
+    this.page.set(next);
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
+    this.page.set(1);
+  }
 
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);

@@ -42,7 +42,19 @@ import {
   putApiSellerDocumentsByIdListedMainFile,
 } from '../api/seller-document-main-files';
 import { ApiFailureReporter } from './api-failure-reporter.service';
-import { createInfinitePager } from './infinite-pager';
+import { createInfinitePager, type PagedResult } from './infinite-pager';
+import { client } from '../api/client.gen';
+
+export interface SellerPayoutRow {
+  id: string;
+  grossAmount: number;
+  fee: number;
+  netAmount: number;
+  status: string;
+  bankAccount: string;
+  createdAt: string;
+  paidAt?: string | null;
+}
 
 export type SellerReviewRow = {
   id: string;
@@ -208,6 +220,78 @@ export class SellerService {
     return this.docsPager.loadMore();
   }
 
+  async listDocumentsPaged(query: {
+    status?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<PagedResult<DocumentItem>> {
+    try {
+      const result = await getApiSellerDocuments({
+        query: {
+          Page: query.page ?? 1,
+          PageSize: query.pageSize ?? 10,
+          Status: query.status && query.status !== 'all' ? query.status : undefined,
+          Search: query.search || undefined,
+        },
+      });
+      const data = unwrapSdkResult(result);
+      this._sellerProfileRequired.set(false);
+      return {
+        items: (data.items ?? []).map(mapSellerDocumentSummary),
+        page: data.page ?? query.page ?? 1,
+        pageSize: data.pageSize ?? query.pageSize ?? 10,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 1,
+      };
+    } catch (e) {
+      this.handleSellerScopedError('โหลดเอกสารของฉัน', e);
+      return {
+        items: [],
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? 10,
+        totalCount: 0,
+        totalPages: 1,
+      };
+    }
+  }
+
+  async loadPayoutsPaged(
+    page = 1,
+    pageSize = 10,
+  ): Promise<PagedResult<SellerPayoutRow>> {
+    try {
+      const result = await client.get<unknown>({
+        url: '/api/seller/payouts',
+        query: { Page: page, PageSize: pageSize },
+      });
+      const data = unwrapSdkResult(result as SdkResult<{
+        items?: SellerPayoutRow[];
+        page?: number;
+        pageSize?: number;
+        totalCount?: number;
+        totalPages?: number;
+      }>);
+      this._sellerProfileRequired.set(false);
+      return {
+        items: data?.items ?? [],
+        page: data?.page ?? page,
+        pageSize: data?.pageSize ?? pageSize,
+        totalCount: data?.totalCount ?? 0,
+        totalPages: data?.totalPages ?? 1,
+      };
+    } catch (e) {
+      this.handleSellerScopedError('โหลดประวัติการถอนเงิน', e);
+      return {
+        items: [],
+        page,
+        pageSize,
+        totalCount: 0,
+        totalPages: 1,
+      };
+    }
+  }
+
   /**
    * Full document + gallery for edit flow (GET /api/seller/documents/{id}).
    * Returns null on failure after reporting to the user.
@@ -350,24 +434,41 @@ export class SellerService {
    * this service so audit-guard stays clean.
    */
   async loadReviews(page = 1, pageSize = 100): Promise<SellerReviewRow[]> {
+    const res = await this.loadReviewsPaged(page, pageSize);
+    return res.items;
+  }
+
+  /**
+   * Server-side paginated reviews list returning totalCount for pagination component.
+   */
+  async loadReviewsPaged(
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: SellerReviewRow[]; totalCount: number; page: number; pageSize: number; totalPages: number }> {
     try {
       const result = await getApiSellerReviews({ query: { Page: page, PageSize: pageSize } });
       const data = unwrapSdkResult(result as SdkResult<GetApiSellerReviewsResponse>);
       this._sellerProfileRequired.set(false);
-      return (data.items ?? []).map((r) => ({
-        id: r.id ?? '',
-        documentTitle: r.documentTitle ?? '',
-        buyerName: r.buyerName ?? '',
-        buyerAvatarUrl: r.buyerAvatarUrl ?? '',
-        rating: r.rating ?? 0,
-        comment: r.comment ?? '',
-        createdAt: r.createdAt ?? '',
-        sellerReplyText: r.sellerReplyText,
-        sellerRepliedAt: r.sellerRepliedAt,
-      }));
+      return {
+        items: (data.items ?? []).map((r) => ({
+          id: r.id ?? '',
+          documentTitle: r.documentTitle ?? '',
+          buyerName: r.buyerName ?? '',
+          buyerAvatarUrl: r.buyerAvatarUrl ?? '',
+          rating: r.rating ?? 0,
+          comment: r.comment ?? '',
+          createdAt: r.createdAt ?? '',
+          sellerReplyText: r.sellerReplyText,
+          sellerRepliedAt: r.sellerRepliedAt,
+        })),
+        totalCount: data.totalCount ?? 0,
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalPages: data.totalPages ?? 1,
+      };
     } catch (e) {
-      this.handleSellerScopedError('โหลดรีวิวของฉัน', e);
-      return [];
+      this.handleSellerScopedError('โหลดรีวิวลูกค้า', e);
+      return { items: [], totalCount: 0, page, pageSize, totalPages: 0 };
     }
   }
 

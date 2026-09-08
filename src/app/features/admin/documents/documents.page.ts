@@ -25,13 +25,22 @@ type AdminDocumentRow = AdminDocumentListItem & {
 import { unwrapSdkResult } from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 @Component({
   selector: 'app-admin-documents',
   standalone: true,
-  imports: [FormsModule, RouterLink, NzCheckboxModule, IconComponent, ThbPipe, TimeAgoPipe],
+  imports: [
+    FormsModule,
+    RouterLink,
+    NzCheckboxModule,
+    IconComponent,
+    PaginationComponent,
+    ThbPipe,
+    TimeAgoPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.page.html',
   styleUrl: './documents.page.scss',
@@ -141,6 +150,17 @@ export class AdminDocumentsPage {
   }
 
   applyFilters(): void {
+    this.page.set(1);
+    void this.fetchList();
+  }
+
+  onPageChange(nextPage: number): void {
+    this.page.set(nextPage);
+    void this.fetchList();
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize.set(newSize);
     this.page.set(1);
     void this.fetchList();
   }

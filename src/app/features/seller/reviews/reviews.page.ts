@@ -5,6 +5,7 @@ import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
@@ -28,6 +29,7 @@ type ReviewRow = {
     EmptyStateComponent,
     IconComponent,
     RatingStarsComponent,
+    PaginationComponent,
     TimeAgoPipe,
     ImgFallbackDirective,
   ],
@@ -39,6 +41,10 @@ export class SellerReviewsPage {
   readonly seller = inject(SellerService);
 
   readonly items = signal<ReviewRow[]>([]);
+  readonly loading = signal<boolean>(false);
+  readonly page = signal<number>(1);
+  readonly pageSize = signal<number>(20);
+  readonly totalCount = signal<number>(0);
 
   /** Aggregates from loaded review rows (not mock). */
   readonly reviewStats = computed(() => {
@@ -74,19 +80,38 @@ export class SellerReviewsPage {
     void this.load();
   }
 
-  private async load(): Promise<void> {
-    const rows = await this.seller.loadReviews(1, 100);
-    const list: ReviewRow[] = rows.map((r) => ({
-      id: r.id,
-      docTitle: r.documentTitle,
-      buyerName: r.buyerName,
-      buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
-      rating: r.rating,
-      comment: r.comment,
-      createdAt: r.createdAt,
-      sellerReplyText: r.sellerReplyText,
-      sellerRepliedAt: r.sellerRepliedAt,
-    }));
-    this.items.set(list);
+  async load(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const paged = await this.seller.loadReviewsPaged(this.page(), this.pageSize());
+      const list: ReviewRow[] = paged.items.map((r) => ({
+        id: r.id,
+        docTitle: r.documentTitle,
+        buyerName: r.buyerName,
+        buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+        sellerReplyText: r.sellerReplyText,
+        sellerRepliedAt: r.sellerRepliedAt,
+      }));
+      this.items.set(list);
+      this.totalCount.set(paged.totalCount);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  onPageChange(p: number): void {
+    if (p === this.page()) return;
+    this.page.set(p);
+    void this.load();
+  }
+
+  onPageSizeChange(s: number): void {
+    if (s === this.pageSize()) return;
+    this.pageSize.set(s);
+    this.page.set(1);
+    void this.load();
   }
 }

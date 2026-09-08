@@ -77,6 +77,26 @@ export class SellerApplicationService {
     }
   }
 
+  async listPendingPaged(
+    page = 1,
+    pageSize = 10,
+  ): Promise<{ items: AdminSellerApplicationResponse[]; totalCount: number; page: number; pageSize: number; totalPages: number }> {
+    try {
+      const result = await getApiAdminSellerApplications({ query: { Page: page, PageSize: pageSize } });
+      const data = unwrapSdkResult(result);
+      return {
+        items: data.items ?? [],
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 1,
+      };
+    } catch (e) {
+      this.apiFail.report('โหลดใบสมัครผู้ขาย', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
+    }
+  }
+
   async approve(userId: string): Promise<boolean> {
     try {
       await postApiAdminSellerApplicationsByUserIdApprove({ path: { userId }, throwOnError: true });

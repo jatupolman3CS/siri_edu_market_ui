@@ -49,6 +49,13 @@ function render(opts: {
     sellerProfileRequired: () => opts.sellerProfileRequired ?? false,
     refreshDashboard: vi.fn(async () => {}),
     loadReviews: vi.fn(async () => opts.reviews ?? []),
+    loadReviewsPaged: vi.fn(async (page = 1, pageSize = 20) => ({
+      items: opts.reviews ?? [],
+      totalCount: (opts.reviews ?? []).length,
+      page,
+      pageSize,
+      totalPages: 1,
+    })),
   };
 
   TestBed.configureTestingModule({
