@@ -28,6 +28,7 @@ import {
   type ActionState,
 } from './action-state';
 import { createInfinitePager } from './infinite-pager';
+import { createServerPager } from './server-pager';
 
 /**
  * Tokenizes a search query into up to 8 distinct lower-cased tokens (>=2 chars each)
@@ -155,6 +156,82 @@ export class CatalogService {
     },
   });
 
+  /**
+   * marketplace-paged-results v1 §4.2: server-side page-based pager for the marketplace results
+   * panel — separate from `_documents`/`catalogPager`/`freePager` so home/free/category-detail
+   * (which still share `_documents` via infinite-scroll) are untouched.
+   */
+  private readonly marketplacePager = createServerPager<DocumentItem>({
+    pageSize: 24,
+    pageSizeOptions: [12, 24, 48],
+    errorMessage: 'ค้นหาเอกสารไม่สำเร็จ',
+    fetch: async (page, pageSize) => {
+      const result = await getApiMarketplaceSearch(this.buildSearchOptions(page, pageSize));
+      const data = unwrapSdkResult(result as SdkResult<MarketplaceSearchResponse>);
+      return {
+        items: (data.items ?? []).map(mapDocument),
+        page: data.page,
+        pageSize: data.pageSize,
+        totalCount: data.totalCount,
+        totalPages: data.totalPages,
+      };
+    },
+  });
+
+  readonly marketplaceResultsState = this.marketplacePager.state;
+  readonly marketplaceResultsPage = this.marketplacePager.page;
+  readonly marketplaceResultsPageSize = this.marketplacePager.pageSize;
+  readonly marketplaceResultsTotalCount = this.marketplacePager.totalCount;
+  readonly marketplaceResultsTotalPages = this.marketplacePager.totalPages;
+  readonly marketplacePageSizeOptions = this.marketplacePager.pageSizeOptions;
+
+  /**
+   * ผลลัพธ์ของหน้าปัจจุบันเท่านั้น (ไม่สะสมข้ามหน้าเหมือน catalogPager/freePager) — กรองซ้ำฝั่ง client
+   * เฉพาะกรณี multi-select เกิน 1 ค่าต่อ dimension ที่ /marketplace/search รับได้แค่ค่าเดียว
+   * (ตรรกะเดียวกับที่ `filtered()` เดิมใช้กับ branch 'search') — กรองเฉพาะ "หน้านี้" ไม่ใช่ทั้งชุด
+   */
+  readonly marketplaceResults = computed<DocumentItem[]>(() => {
+    const f = this._filters();
+    const t = this._tab();
+    let docs = [...this.marketplacePager.items()];
+    if (t === 'top-rated') docs = docs.filter((d) => d.rating >= 4.7);
+    if (f.categoryIds.length > 1) docs = docs.filter((d) => f.categoryIds.some((id) => d.categoryIds.includes(id)));
+    if (f.subcategoryIds.length > 1) docs = docs.filter((d) => d.subcategoryId != null && f.subcategoryIds.includes(d.subcategoryId));
+    if (f.minRating > 0) docs = docs.filter((d) => d.rating >= f.minRating);
+    if (f.formats.length > 1) docs = docs.filter((d) => f.formats.includes(d.format));
+    if (f.gradeLevels.length > 1) docs = docs.filter((d) => d.gradeLevels.some((g) => f.gradeLevels.includes(g)));
+    if (f.resourceTypes.length > 1) docs = docs.filter((d) => f.resourceTypes.includes(d.resourceType));
+    if (f.standards.length > 1) docs = docs.filter((d) => (d.standards ?? []).some((s) => f.standards.includes(s)));
+    return docs;
+  });
+
+  loadMarketplaceResultsPage(page: number): void {
+    void this.safeMarketplaceFetch(() => this.marketplacePager.onPageChange(page));
+  }
+
+  setMarketplacePageSize(size: number): void {
+    void this.safeMarketplaceFetch(() => this.marketplacePager.onPageSizeChange(size));
+  }
+
+  /** ลองใหม่ "หน้าเดิม" ที่ error ไว้ (ไม่กระโดดกลับหน้า 1) — ตาม AC-8 */
+  retryMarketplaceResults(): void {
+    void this.safeMarketplaceFetch(() => this.marketplacePager.onPageChange(this.marketplacePager.page()));
+  }
+
+  private refreshMarketplaceResults(): void {
+    void this.safeMarketplaceFetch(() => this.marketplacePager.reloadFromPage1());
+  }
+
+  /** เหมือน infinite-pager.ts's loadMore() — กลืน rejection ไว้ (createServerPager.executeFetch rethrow)
+   *  เพราะ error ถูกบันทึกใน marketplacePager.state ให้ template อ่านอยู่แล้ว ผู้เรียกเป็น fire-and-forget */
+  private async safeMarketplaceFetch(run: () => Promise<void>): Promise<void> {
+    try {
+      await run();
+    } catch (e) {
+      this.apiFail.report('ค้นหาเอกสาร', e);
+    }
+  }
+
   readonly documents = this._documents.asReadonly();
   readonly categories = this._categories.asReadonly();
   readonly subcategories = this._subcategories.asReadonly();
@@ -239,11 +316,13 @@ export class CatalogService {
     }
     if (immediate) {
       void this.syncListWithBackend();
+      this.refreshMarketplaceResults();
       return;
     }
     this._listRefreshTimer = setTimeout(() => {
       this._listRefreshTimer = null;
       void this.syncListWithBackend();
+      this.refreshMarketplaceResults();
     }, 320);
   }
 
@@ -283,6 +362,7 @@ export class CatalogService {
 
   private buildSearchOptions(
     page: number,
+    pageSize = 24,
   ): NonNullable<Parameters<typeof getApiMarketplaceSearch>[0]> {
     const f = this._filters();
     const t = this._tab();
@@ -290,7 +370,7 @@ export class CatalogService {
       NonNullable<Parameters<typeof getApiMarketplaceSearch>[0]>['query']
     > = {
       Page: page,
-      PageSize: 24,
+      PageSize: pageSize,
       Sort: this.resolveApiSort(f, t),
     };
     const term = f.search.trim();

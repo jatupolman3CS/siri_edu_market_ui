@@ -1,12 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
+  effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSliderModule } from 'ng-zorro-antd/slider';
@@ -32,6 +36,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-buyer-marketplace',
@@ -47,6 +52,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     EmptyStateComponent,
     PageHeroComponent,
     ImgFallbackDirective,
+    PaginationComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketplace.page.html',
@@ -59,6 +65,7 @@ export class BuyerMarketplacePage {
   readonly platformStats = inject(PlatformStatsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly compactPipe = new CompactPipe();
 
   /** Local search input value, submitted only on magnifying glass click or Enter press */
@@ -124,6 +131,9 @@ export class BuyerMarketplacePage {
     );
   });
 
+  /** marketplace-paged-results v1 §4.3: results panel's own scroll container (AC-12). */
+  readonly resultsPanel = viewChild<ElementRef<HTMLDivElement>>('resultsPanel');
+
   gradeLabel(g: GradeLevel): string {
     return GRADE_LEVEL_LABELS[g];
   }
@@ -176,26 +186,46 @@ export class BuyerMarketplacePage {
           this.catalog.setTab(tab as 'all' | 'free' | 'top-rated' | 'new' | 'bundles');
         }
       });
+
+    // marketplace-paged-results v1 §4.3 (AC-12): reset the results panel's own scroll position
+    // to the top the moment a new page/filter fetch starts — never touch window scroll.
+    effect(() => {
+      if (this.catalog.marketplaceResultsState().status === 'loading') {
+        const el = this.resultsPanel()?.nativeElement;
+        if (el) el.scrollTop = 0;
+      }
+    });
+  }
+
+  /**
+   * marketplace-paged-results v1 §4 (AC-12 fix): updates the `?q=`/category/subcategory query
+   * params for bookmarking/sharing WITHOUT going through `Router.navigate()`. The app-wide
+   * `withInMemoryScrolling({ scrollPositionRestoration: 'top' })` (app.config.ts) scrolls the
+   * window to the top on every completed Router navigation — including query-param-only ones —
+   * which broke "search must not jump the page scroll" the moment `applySearch()`/`reset()`
+   * called `router.navigate()`. `Location.go()` pushes the same URL to browser history (still
+   * bookmarkable/shareable, still restorable on refresh) without running it through the Router
+   * pipeline, so no `Scroll` event — and no scroll-to-top — fires.
+   */
+  private updateQueryParamsQuietly(queryParams: Record<string, string | null>): void {
+    const tree = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
+    this.location.go(this.router.serializeUrl(tree));
   }
 
   applySearch(): void {
     const q = this.searchTerm().trim();
     this.catalog.setFilters({ search: q });
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: q || null },
-      queryParamsHandling: 'merge',
-    });
+    this.updateQueryParamsQuietly({ q: q || null });
   }
 
   clearSearch(): void {
     this.searchTerm.set('');
     this.catalog.setFilters({ search: '' });
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: null },
-      queryParamsHandling: 'merge',
-    });
+    this.updateQueryParamsQuietly({ q: null });
   }
 
   toggleCategory(id: string): void {
@@ -280,10 +310,6 @@ export class BuyerMarketplacePage {
   reset(): void {
     this.searchTerm.set('');
     this.catalog.resetFilters();
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { q: null, category: null, subcategory: null },
-      queryParamsHandling: 'merge',
-    });
+    this.updateQueryParamsQuietly({ q: null, category: null, subcategory: null });
   }
 }

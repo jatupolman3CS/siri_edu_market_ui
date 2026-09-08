@@ -100,20 +100,20 @@
                 <label class="text-xs font-semibold text-ink-soft mb-2 block">
                   คำค้นหา
                 </label>
-                <form class="relative flex items-center" (ngSubmit)="applySearch()">
+                <form class="flex items-center gap-2" (ngSubmit)="applySearch()">
                   <input
                     type="search"
                     name="marketplaceSearch"
                     [ngModel]="searchTerm()"
                     (ngModelChange)="searchTerm.set($event)"
                     placeholder="ค้นหาเอกสาร…"
-                    class="w-full pl-3.5 pr-10 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
+                    class="flex-1 min-w-0 pl-3.5 pr-3.5 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
                   />
                   <button
                     type="submit"
                     aria-label="ค้นหา"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl text-ink-muted hover:text-pink-600 hover:bg-pink-50 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                     title="ค้นหา"
+                    class="btn-icon flex-shrink-0"
                   >
                     <app-icon name="search" [size]="16" />
                   </button>
@@ -346,7 +346,7 @@
             <!-- Toolbar -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div class="flex items-center gap-2 text-sm flex-wrap">
-                <span class="font-bold text-ink">{{ catalog.resultTotal() ?? catalog.filtered().length }}</span>
+                <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span>
                 <span class="text-ink-muted">เอกสารที่ตรงกับการค้นหา</span>
                 @if (catalog.filters().search) {
                   <span class="text-ink">“{{ catalog.filters().search }}”</span>
@@ -423,43 +423,55 @@
               </div>
             }
 
-            <!-- Grid -->
-            @if (catalog.catalogState().status === 'loading') {
-              <app-empty-state emoji="⏳" title="กำลังโหลดรายการเอกสาร…" description="รอสักครู่นะคะ" />
-            } @else if (catalog.catalogState().status === 'error') {
-              <app-empty-state emoji="⚠️" title="โหลดรายการเอกสารไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
-                <button class="btn-pink mt-4" type="button" (click)="catalog.loadCatalog()">
-                  ลองใหม่
-                </button>
-              </app-empty-state>
-            } @else if (catalog.filtered().length === 0) {
-              <app-empty-state
-                emoji="🔎"
-                title="ไม่พบเอกสารที่ตรงกัน"
-                description="ลองปรับตัวกรองหรือล้างคำค้นหาดูครับ"
-              >
-                <button class="btn-pink mt-4" (click)="reset()">ล้างตัวกรอง</button>
-              </app-empty-state>
-            } @else {
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 gap-3 md:gap-4">
-                @for (doc of catalog.filtered(); track doc.id) {
-                  <app-document-card [doc]="doc" density="compact" />
-                }
-              </div>
-
-              @if (catalog.catalogHasMore()) {
-                <div class="flex justify-center mt-6">
-                  <button
-                    type="button"
-                    class="btn-pink"
-                    (click)="catalog.loadMoreCatalog()"
-                    [disabled]="catalog.catalogState().status === 'loading'"
-                  >
-                    โหลดเพิ่ม
+            <!-- Result panel (marketplace-paged-results v1 §4.4) — scrollable, page-based -->
+            <div
+              #resultsPanel
+              class="relative max-h-[75vh] min-h-[420px] overflow-y-auto pr-1"
+            >
+              @if (catalog.marketplaceResultsState().status === 'error' && catalog.marketplaceResults().length === 0) {
+                <app-empty-state emoji="⚠️" title="โหลดรายการเอกสารไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+                  <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
+                    ลองใหม่
                   </button>
+                </app-empty-state>
+              } @else if (catalog.marketplaceResultsState().status !== 'loading' && catalog.marketplaceResults().length === 0) {
+                <app-empty-state
+                  emoji="🔎"
+                  title="ไม่พบเอกสารที่ตรงกัน"
+                  description="ลองปรับตัวกรองหรือล้างคำค้นหาดูครับ"
+                >
+                  <button class="btn-pink mt-4" (click)="reset()">ล้างตัวกรอง</button>
+                </app-empty-state>
+              } @else {
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 gap-3 md:gap-4">
+                  @for (doc of catalog.marketplaceResults(); track doc.id) {
+                    <app-document-card [doc]="doc" density="compact" />
+                  }
                 </div>
               }
-            }
+
+              @if (catalog.marketplaceResultsState().status === 'loading') {
+                <div
+                  class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span class="w-7 h-7 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+                  <span class="text-xs font-semibold text-ink-soft">กำลังโหลด…</span>
+                </div>
+              }
+            </div>
+
+            <app-pagination
+              class="block mt-4"
+              [page]="catalog.marketplaceResultsPage()"
+              [pageSize]="catalog.marketplaceResultsPageSize()"
+              [total]="catalog.marketplaceResultsTotalCount()"
+              [totalPages]="catalog.marketplaceResultsTotalPages()"
+              [pageSizeOptions]="catalog.marketplacePageSizeOptions"
+              (pageChange)="catalog.loadMarketplaceResultsPage($event)"
+              (pageSizeChange)="catalog.setMarketplacePageSize($event)"
+            />
           </div>
         </div>
       }

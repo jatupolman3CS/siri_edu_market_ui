@@ -55,6 +55,16 @@ function buildCatalogFake(categories: Category[] = []) {
     getSubcategoryBySlug: () => undefined,
     getCategoryById: () => undefined,
     getSubcategoryById: () => undefined,
+    marketplaceResults: () => [],
+    marketplaceResultsState: () => idleActionState(),
+    marketplaceResultsPage: () => 1,
+    marketplaceResultsPageSize: () => 24,
+    marketplaceResultsTotalCount: () => 0,
+    marketplaceResultsTotalPages: () => 1,
+    marketplacePageSizeOptions: [12, 24, 48],
+    loadMarketplaceResultsPage: vi.fn(),
+    setMarketplacePageSize: vi.fn(),
+    retryMarketplaceResults: vi.fn(),
   };
 }
 
@@ -187,6 +197,42 @@ describe('Marketplace explicit search submission', () => {
     page.clearSearch();
     expect(page.searchTerm()).toBe('');
     expect(catalog.setFilters).toHaveBeenCalledWith({ search: '' });
+  });
+});
+
+describe('Marketplace results panel (marketplace-paged-results v1)', () => {
+  it('AC-9: renders the search button as a flex sibling of the input, not an absolute overlay', () => {
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+
+    const input = (fixture.nativeElement as HTMLElement).querySelector(
+      'input[name="marketplaceSearch"]',
+    ) as HTMLInputElement;
+    const form = input.closest('form') as HTMLElement;
+    const button = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+    expect(button).not.toBeNull();
+    expect(button.parentElement).toBe(form);
+    expect(form.classList.contains('flex')).toBe(true);
+    expect(button.classList.contains('btn-icon')).toBe(true);
+    expect(getComputedStyle(button).position).not.toBe('absolute');
+  });
+
+  it('clicking a page number in <app-pagination> calls catalog.loadMarketplaceResultsPage with the target page', () => {
+    const catalog = buildCatalogFake();
+    catalog.marketplaceResultsTotalPages = () => 3;
+    catalog.marketplaceResultsPage = () => 1;
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+
+    const pageButtons = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-pagination nav button'),
+    ) as HTMLButtonElement[];
+    const page2Button = pageButtons.find((b) => b.textContent?.trim() === '2');
+    expect(page2Button).toBeDefined();
+
+    page2Button!.click();
+    fixture.detectChanges();
+
+    expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);
   });
 });
 

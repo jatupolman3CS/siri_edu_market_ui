@@ -378,6 +378,150 @@ describe('CatalogService — document preview and questions (F-01)', () => {
   });
 });
 
+describe('CatalogService — marketplace results panel (marketplace-paged-results v1)', () => {
+  it('AC-1/AC-2: resetFilters() loads page 1 from /marketplace/search with default page size 24', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    await settle();
+
+    const search = requests.find((r) => r.path === '/api/marketplace/search');
+    expect(search).toBeDefined();
+    expect(search!.query.get('Page')).toBe('1');
+    expect(search!.query.get('PageSize')).toBe('24');
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-1']);
+  });
+
+  it('AC-2: applying a search term resets to page 1 even from another page', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1'), documentRow('doc-2')]));
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    await settle();
+    // response must echo page 2 back — the stub's `searchPage()` helper hardcodes page: 1,
+    // which would otherwise mask whether the pager actually moved to page 2.
+    stubRoute('GET', '/api/marketplace/search', {
+      items: [documentRow('doc-2')],
+      page: 2,
+      pageSize: 24,
+      totalCount: 2,
+      totalPages: 1,
+    });
+    catalog.loadMarketplaceResultsPage(2);
+    await settle();
+    expect(catalog.marketplaceResultsPage()).toBe(2);
+
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-3')]));
+    catalog.setFilters({ search: 'คณิต' }); // debounced 320ms (search-only patch)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const last = requests.filter((r) => r.path === '/api/marketplace/search').pop();
+    expect(last!.query.get('Q')).toBe('คณิต');
+    expect(last!.query.get('Page')).toBe('1');
+    expect(catalog.marketplaceResultsPage()).toBe(1);
+  });
+
+  it('AC-3: loading the results panel does not touch documents()/newArrivals()', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    stubRoute('GET', '/api/marketplace/catalog', { documents: searchPage([]) });
+    const catalog = buildService();
+
+    catalog.setTab('all');
+    await settle();
+
+    expect(catalog.documents()).toEqual([]);
+    expect(catalog.newArrivals()).toEqual([]);
+  });
+
+  it('AC-4: changing a filter resets the results panel to page 1 and refetches', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    await settle();
+    catalog.loadMarketplaceResultsPage(1);
+    await settle();
+
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-2')]));
+    catalog.setFilters({ freeOnly: true });
+    await settle();
+
+    expect(catalog.marketplaceResultsPage()).toBe(1);
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-2']);
+  });
+
+  it('AC-5: loadMarketplaceResultsPage requests a new page without resetting filters', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    await settle();
+    catalog.setFilters({ freeOnly: true });
+    await settle();
+
+    catalog.loadMarketplaceResultsPage(2);
+    await settle();
+
+    const last = requests.filter((r) => r.path === '/api/marketplace/search').pop();
+    expect(last!.query.get('Page')).toBe('2');
+    expect(last!.query.get('FreeOnly')).toBe('true');
+  });
+
+  it('AC-6: setMarketplacePageSize fetches with the new page size and resets to page 1', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    await settle();
+    catalog.loadMarketplaceResultsPage(2);
+    await settle();
+
+    // response must echo pageSize: 48 back — the stub's `searchPage()` helper hardcodes
+    // pageSize: 24, which would otherwise mask whether the pager state actually updated.
+    stubRoute('GET', '/api/marketplace/search', {
+      items: [documentRow('doc-1')],
+      page: 1,
+      pageSize: 48,
+      totalCount: 1,
+      totalPages: 1,
+    });
+    catalog.setMarketplacePageSize(48);
+    await settle();
+
+    const last = requests.filter((r) => r.path === '/api/marketplace/search').pop();
+    expect(last!.query.get('PageSize')).toBe('48');
+    expect(last!.query.get('Page')).toBe('1');
+    expect(catalog.marketplaceResultsPage()).toBe(1);
+    expect(catalog.marketplaceResultsPageSize()).toBe(48);
+  });
+
+  it('AC-8: an error surfaces in marketplaceResultsState and retry re-fetches the same (not page-1) page', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1'), documentRow('doc-2')]));
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    await settle();
+    catalog.loadMarketplaceResultsPage(2);
+    await settle();
+
+    stubRoute('GET', '/api/marketplace/search', { status: 500 }, 500);
+    catalog.loadMarketplaceResultsPage(3);
+    await settle();
+
+    expect(catalog.marketplaceResultsState().status).toBe('error');
+
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-9')]));
+    catalog.retryMarketplaceResults();
+    await settle();
+
+    const last = requests.filter((r) => r.path === '/api/marketplace/search').pop();
+    expect(last!.query.get('Page')).toBe('3');
+    expect(catalog.marketplaceResultsState().status).toBe('idle');
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-9']);
+  });
+});
+
 describe('CatalogService — document detail 404 vs generic failure (QA bug #8)', () => {
   it('flags documentDetailNotFound (not a generic error) on a real 404', async () => {
     stubRoute(

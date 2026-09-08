@@ -28,6 +28,7 @@ export interface ServerPager<T, TFilter = void> {
   onPageSizeChange: (newSize: number) => Promise<void>;
   reload: (filter?: TFilter) => Promise<void>;
   reset: () => void;
+  reloadFromPage1: (filter?: TFilter) => Promise<void>;
 }
 
 /**
@@ -47,11 +48,16 @@ export function createServerPager<T, TFilter = void>(
   const loading = computed(() => state().status === 'loading');
   const pageSizeOptions = opts.pageSizeOptions ?? [10, 20, 50, 100];
   let currentFilter: TFilter | undefined;
+  // Request-generation guard: prevents a response for an older request (e.g. page 2) that
+  // resolves after a newer one (e.g. page 3) from overwriting the newer state (AC-7).
+  let requestGeneration = 0;
 
   async function executeFetch(): Promise<void> {
     state.set(loadingActionState());
+    const gen = ++requestGeneration;
     try {
       const res = await opts.fetch(page(), pageSize(), currentFilter);
+      if (gen !== requestGeneration) return; // superseded by a newer request already
       items.set(res.items ?? []);
       page.set(res.page ?? page());
       pageSize.set(res.pageSize ?? pageSize());
@@ -61,6 +67,7 @@ export function createServerPager<T, TFilter = void>(
       totalPages.set(res.totalPages != null && res.totalPages > 0 ? res.totalPages : computedPages);
       state.set(idleActionState());
     } catch (e) {
+      if (gen !== requestGeneration) return;
       state.set(errorActionState(opts.errorMessage ?? 'โหลดข้อมูลไม่สำเร็จ'));
       items.set([]);
       throw e;
@@ -96,6 +103,17 @@ export function createServerPager<T, TFilter = void>(
     state.set(idleActionState());
   }
 
+  /**
+   * Resets to page 1 and fetches immediately — unlike `reset()` (clears state, no fetch) and
+   * `onPageChange`/`onPageSizeChange` (don't accept a new filter). Used when filters/tab/search
+   * change and the results panel must reload from page 1 with the current filter.
+   */
+  async function reloadFromPage1(filter?: TFilter): Promise<void> {
+    if (filter !== undefined) currentFilter = filter;
+    page.set(1);
+    await executeFetch();
+  }
+
   return {
     items: items.asReadonly(),
     page: page.asReadonly(),
@@ -109,5 +127,6 @@ export function createServerPager<T, TFilter = void>(
     onPageSizeChange,
     reload,
     reset,
+    reloadFromPage1,
   };
 }
