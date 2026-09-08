@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSliderModule } from 'ng-zorro-antd/slider';
@@ -65,7 +64,6 @@ export class BuyerMarketplacePage {
   readonly platformStats = inject(PlatformStatsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly location = inject(Location);
   private readonly compactPipe = new CompactPipe();
 
   /** Local search input value, submitted only on magnifying glass click or Enter press */
@@ -198,34 +196,38 @@ export class BuyerMarketplacePage {
   }
 
   /**
-   * marketplace-paged-results v1 §4 (AC-12 fix): updates the `?q=`/category/subcategory query
-   * params for bookmarking/sharing WITHOUT going through `Router.navigate()`. The app-wide
-   * `withInMemoryScrolling({ scrollPositionRestoration: 'top' })` (app.config.ts) scrolls the
-   * window to the top on every completed Router navigation — including query-param-only ones —
-   * which broke "search must not jump the page scroll" the moment `applySearch()`/`reset()`
-   * called `router.navigate()`. `Location.go()` pushes the same URL to browser history (still
-   * bookmarkable/shareable, still restorable on refresh) without running it through the Router
-   * pipeline, so no `Scroll` event — and no scroll-to-top — fires.
+   * marketplace-paged-results v1 §4 (AC-12 fix, round 2): updates the `?q=`/category/subcategory
+   * query params for bookmarking/sharing through a *real* `Router.navigate()` — a prior attempt
+   * used `Location.go()` to dodge the app-wide `withInMemoryScrolling({ scrollPositionRestoration:
+   * 'top' })` (app.config.ts) scroll-to-top, but that left the Router's internal `currentUrlTree`
+   * bookkeeping stale: pressing browser Back immediately after a search (no real navigation in
+   * between) reverted the URL bar via popstate, yet the Router never learned about it, so
+   * `ActivatedRoute.queryParamMap` never re-emitted and `searchTerm`/filters stayed stuck on the
+   * old value. `NavigationExtras.scroll: 'manual'` is the router's own documented per-navigation
+   * escape hatch (see `@angular/router` `NavigationBehaviorOptions.scroll`): the navigation still
+   * runs through the full Router pipeline (bookkeeping stays correct, back/forward always sync),
+   * it just tells `RouterScroller` to skip the scroll-restoration step for this one navigation —
+   * no need to touch the global `app.config.ts` setting at all.
    */
-  private updateQueryParamsQuietly(queryParams: Record<string, string | null>): void {
-    const tree = this.router.createUrlTree([], {
+  private updateQueryParams(queryParams: Record<string, string | null>): void {
+    void this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
       queryParamsHandling: 'merge',
+      scroll: 'manual',
     });
-    this.location.go(this.router.serializeUrl(tree));
   }
 
   applySearch(): void {
     const q = this.searchTerm().trim();
     this.catalog.setFilters({ search: q });
-    this.updateQueryParamsQuietly({ q: q || null });
+    this.updateQueryParams({ q: q || null });
   }
 
   clearSearch(): void {
     this.searchTerm.set('');
     this.catalog.setFilters({ search: '' });
-    this.updateQueryParamsQuietly({ q: null });
+    this.updateQueryParams({ q: null });
   }
 
   toggleCategory(id: string): void {
@@ -310,6 +312,6 @@ export class BuyerMarketplacePage {
   reset(): void {
     this.searchTerm.set('');
     this.catalog.resetFilters();
-    this.updateQueryParamsQuietly({ q: null, category: null, subcategory: null });
+    this.updateQueryParams({ q: null, category: null, subcategory: null });
   }
 }
