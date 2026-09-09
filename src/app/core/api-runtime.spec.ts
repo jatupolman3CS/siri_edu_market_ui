@@ -104,12 +104,52 @@ describe('resolveApiUrl / resolvePublicUrl (AC-13)', () => {
     );
   });
 
-  it('returns an empty string for null / undefined / blank', async () => {
-    const { resolvePublicUrl } = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+  it('converts an R2 URL to an API download URL', async () => {
+    const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({
+      apiUrl: 'http://localhost:5282',
+    });
 
-    expect(resolvePublicUrl(null)).toBe('');
-    expect(resolvePublicUrl(undefined)).toBe('');
-    expect(resolvePublicUrl('   ')).toBe('');
+    const r2Url = 'https://acc123.r2.cloudflarestorage.com/siriedumarket/docs/orig.pdf?X-Amz-Signature=123';
+    expect(resolvePublicUrl(r2Url)).toBe(
+      `${API_BASE_URL}/api/files/download/docs/orig.pdf`,
+    );
+  });
+
+  it('converts an R2 custom/dev domain URL to an API download URL', async () => {
+    const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({
+      apiUrl: 'http://localhost:5282',
+    });
+
+    const r2Url = 'https://pub-abc.r2.dev/seller-1/doc.pdf';
+    expect(resolvePublicUrl(r2Url)).toBe(
+      `${API_BASE_URL}/api/files/download/doc.pdf`,
+    );
+  });
+
+  it('resolves download URL with authentication token and filename', async () => {
+    const { API_BASE_URL, resolveDownloadUrl } = await loadApiRuntime({
+      apiUrl: 'http://localhost:5282',
+    });
+
+    const url = resolveDownloadUrl(
+      '/api/files/download/docs/orig.pdf',
+      'my.jwt.token',
+      'myfile.pdf',
+    );
+    expect(url).toContain(`${API_BASE_URL}/api/files/download/docs/orig.pdf`);
+    expect(url).toContain('token=my.jwt.token');
+    expect(url).toContain('filename=myfile.pdf');
+  });
+
+  it('resolves download URL from an R2 presigned URL with token attached', async () => {
+    const { API_BASE_URL, resolveDownloadUrl } = await loadApiRuntime({
+      apiUrl: 'http://localhost:5282',
+    });
+
+    const r2Url = 'https://acc123.r2.cloudflarestorage.com/siriedumarket/seller/2026/sheet.xlsx?X-Amz-Signature=xyz';
+    const url = resolveDownloadUrl(r2Url, 'auth_token');
+    expect(url).toContain(`${API_BASE_URL}/api/files/download/seller/2026/sheet.xlsx`);
+    expect(url).toContain('token=auth_token');
   });
 });
 

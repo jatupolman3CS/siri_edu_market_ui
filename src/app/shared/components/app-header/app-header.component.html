@@ -25,9 +25,9 @@
         <form class="relative" (ngSubmit)="search()">
           <button
             type="submit"
-            aria-label="ค้นหา"
+            [attr.aria-label]="'header.searchAria' | trans"
             class="absolute left-3.5 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-            title="ค้นหา"
+            [title]="'header.searchAria' | trans"
           >
             <app-icon name="search" [size]="18" />
           </button>
@@ -36,7 +36,7 @@
             name="q"
             [ngModel]="query()"
             (ngModelChange)="query.set($event)"
-            placeholder="ค้นหาเอกสาร เทมเพลต หรือผู้ขาย…"
+            [placeholder]="'header.searchPlaceholder' | trans"
             class="w-full pl-11 pr-4 py-2.5 rounded-full border border-line bg-pink-50/40 focus:bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm transition-all"
           />
         </form>
@@ -51,7 +51,7 @@
           class="btn-icon md:hidden"
           [attr.aria-expanded]="mobileMenuOpen()"
           aria-controls="mobile-nav-panel"
-          [attr.aria-label]="mobileMenuOpen() ? 'ปิดเมนู' : 'เปิดเมนู'"
+          [attr.aria-label]="mobileMenuOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
           (click)="toggleMobileMenu()"
         >
           <app-icon [name]="mobileMenuOpen() ? 'close' : 'menu'" [size]="20" />
@@ -61,11 +61,16 @@
           <app-icon name="search" [size]="18" />
         </a>
 
+        <!-- Language switcher (desktop) -->
+        <div class="hidden sm:flex items-center">
+          <app-language-switcher variant="compact" />
+        </div>
+
         <!-- Wishlist -->
         <a
           routerLink="/wishlist"
           class="relative btn-icon"
-          title="รายการโปรด"
+          [title]="'header.wishlistTitle' | trans"
         >
           <app-icon name="heart" [size]="18" />
           @if (wishlist.count() > 0) {
@@ -80,7 +85,7 @@
         <a
           routerLink="/library"
           class="btn-icon"
-          title="คลังเอกสารของฉัน"
+          [title]="'header.libraryTitle' | trans"
         >
           <app-icon name="package" [size]="18" />
         </a>
@@ -90,7 +95,7 @@
           type="button"
           class="relative btn-icon"
           (click)="cart.toggleDrawer()"
-          [attr.aria-label]="'ตะกร้าสินค้า ' + cart.count() + ' รายการ'"
+          [attr.aria-label]="'header.cartCount' | trans: { count: cart.count() }"
         >
           <app-icon name="cart" [size]="18" />
           @if (cart.count() > 0) {
@@ -141,26 +146,26 @@
               <li nz-menu-item (click)="go('/account')" class="!rounded-xl">
                 <span class="flex items-center gap-2 text-ink">
                   <app-icon name="gear" [size]="16" />
-                  บัญชีของฉัน
+                  {{ 'nav.myAccount' | trans }}
                 </span>
               </li>
               <li nz-menu-item (click)="go('/library')" class="!rounded-xl">
                 <span class="flex items-center gap-2 text-ink">
                   <app-icon name="package" [size]="16" />
-                  คลังเอกสารของฉัน
+                  {{ 'nav.library' | trans }}
                 </span>
               </li>
               <li nz-menu-item (click)="go('/orders')" class="!rounded-xl">
                 <span class="flex items-center gap-2 text-ink">
                   <app-icon name="doc" [size]="16" />
-                  ประวัติคำสั่งซื้อ
+                  {{ 'seller.orders' | trans }}
                 </span>
               </li>
               @if (auth.isSeller() || auth.isAdmin()) {
                 <li nz-menu-item (click)="go('/seller')" class="!rounded-xl">
                   <span class="flex items-center gap-2 text-ink">
                     <app-icon name="dashboard" [size]="16" />
-                    Siri Studio (ผู้ขาย)
+                    {{ 'nav.studio' | trans }}
                   </span>
                 </li>
               } @else {
@@ -169,7 +174,7 @@
                 <li nz-menu-item (click)="go('/become-seller')" class="!rounded-xl">
                   <span class="flex items-center gap-2 text-ink">
                     <app-icon name="dashboard" [size]="16" />
-                    เปิดร้านขายเอกสาร
+                    {{ 'home.becomeSeller' | trans }}
                   </span>
                 </li>
               }
@@ -177,7 +182,7 @@
                 <li nz-menu-item (click)="go('/admin')" class="!rounded-xl">
                   <span class="flex items-center gap-2 text-ink">
                     <app-icon name="shield" [size]="16" />
-                    Admin Panel
+                    {{ 'nav.admin' | trans }}
                   </span>
                 </li>
               }
@@ -185,7 +190,7 @@
               <li nz-menu-item (click)="signOut()" class="!rounded-xl">
                 <span class="flex items-center gap-2 text-rose-500">
                   <app-icon name="logout" [size]="16" />
-                  ออกจากระบบ
+                  {{ 'nav.signOut' | trans }}
                 </span>
               </li>
             </ul>
@@ -195,10 +200,10 @@
             routerLink="/auth/login"
             class="hidden sm:inline-flex items-center text-sm font-medium text-ink hover:text-pink-600 px-3 py-2"
           >
-            เข้าสู่ระบบ
+            {{ 'nav.signIn' | trans }}
           </a>
           <a routerLink="/auth/register" class="btn-pink !px-4 !py-2 text-sm">
-            สมัครฟรี
+            {{ 'nav.register' | trans }}
           </a>
         }
       </div>
@@ -212,6 +217,11 @@
         class="md:hidden flex flex-col gap-1 pb-4 border-t border-line pt-3"
         (keydown.escape)="closeMobileMenu()"
       >
+        <div class="px-3.5 py-2 flex items-center justify-between border-b border-line mb-1">
+          <span class="text-xs font-semibold text-ink-muted">{{ 'header.switchLanguage' | trans }}</span>
+          <app-language-switcher variant="compact" />
+        </div>
+
         @for (item of navItems(); track item.href) {
           <a
             [routerLink]="item.href"
@@ -231,21 +241,21 @@
             class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
             (click)="closeMobileMenu()"
           >
-            บัญชีของฉัน
+            {{ 'nav.myAccount' | trans }}
           </a>
           <a
             routerLink="/orders"
             class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
             (click)="closeMobileMenu()"
           >
-            ประวัติคำสั่งซื้อ
+            {{ 'seller.orders' | trans }}
           </a>
           <a
             routerLink="/notifications"
             class="relative px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
             (click)="closeMobileMenu()"
           >
-            การแจ้งเตือน
+            {{ 'header.notifications' | trans }}
             @if (feed.unreadCount() > 0) {
               <span
                 class="ml-1.5 inline-flex min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold items-center justify-center align-middle"
@@ -260,7 +270,7 @@
               class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
               (click)="closeMobileMenu()"
             >
-              Siri Studio (ผู้ขาย)
+              {{ 'nav.studio' | trans }}
             </a>
           }
           @if (auth.isAdmin()) {
@@ -269,7 +279,7 @@
               class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
               (click)="closeMobileMenu()"
             >
-              Admin Panel
+              {{ 'nav.admin' | trans }}
             </a>
           }
           <button
@@ -277,7 +287,7 @@
             class="text-left px-3.5 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-pink-50 transition-colors"
             (click)="signOut(); closeMobileMenu()"
           >
-            ออกจากระบบ
+            {{ 'nav.signOut' | trans }}
           </button>
         } @else {
           <div class="my-2 border-t border-line"></div>
@@ -286,14 +296,14 @@
             class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
             (click)="closeMobileMenu()"
           >
-            เข้าสู่ระบบ
+            {{ 'nav.signIn' | trans }}
           </a>
           <a
             routerLink="/auth/register"
             class="btn-pink !justify-start !px-3.5 !py-2.5 text-sm"
             (click)="closeMobileMenu()"
           >
-            สมัครฟรี
+            {{ 'nav.register' | trans }}
           </a>
         }
       </nav>

@@ -22,5 +22,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (devRole) headers['X-Dev-Role'] = devRole;
 
+  try {
+    const lang = typeof window !== 'undefined' ? window.localStorage?.getItem('siriedu_lang') : null;
+    headers['Accept-Language'] = lang === 'en' ? 'en-US,en;q=0.9' : 'th-TH,th;q=0.9';
+  } catch {
+    headers['Accept-Language'] = 'th-TH,th;q=0.9';
+  }
+
   return Object.keys(headers).length > 0 ? next(req.clone({ setHeaders: headers })) : next(req);
 };

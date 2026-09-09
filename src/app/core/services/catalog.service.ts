@@ -1008,6 +1008,37 @@ export class CatalogService {
     }
   }
 
+  updateSellerFollowerCount(delta: number, sellerId?: string): void {
+    const current = this._sellerProfile();
+    if (current) {
+      this._sellerProfile.set({
+        ...current,
+        followerCount: Math.max(0, (current.followerCount ?? 0) + delta),
+      });
+    }
+
+    const targetSellerId = sellerId ?? current?.id;
+    if (targetSellerId) {
+      this._documentDetails.update((map) => {
+        let changed = false;
+        const newMap = new Map(map);
+        for (const [docId, doc] of newMap.entries()) {
+          if (doc.seller && doc.seller.id === targetSellerId) {
+            newMap.set(docId, {
+              ...doc,
+              seller: {
+                ...doc.seller,
+                followerCount: Math.max(0, (doc.seller.followerCount ?? 0) + delta),
+              },
+            });
+            changed = true;
+          }
+        }
+        return changed ? newMap : map;
+      });
+    }
+  }
+
   /** Loads the documents of one seller — call from the storefront page. */
   loadSellerDocuments(sellerId: string): void {
     if (!sellerId) {

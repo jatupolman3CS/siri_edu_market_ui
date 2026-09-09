@@ -4,44 +4,36 @@
           <div class="md:col-span-1">
             <app-logo />
             <p class="text-sm text-ink-muted mt-4 leading-relaxed">
-              แพลตฟอร์มตลาดกลางสำหรับเอกสารวิชาการ
-              สรุปบทเรียน และเทมเพลตคุณภาพสูง
-              สร้างโดยผู้สร้างคอนเทนต์ตัวจริงทั่วประเทศ
+              {{ 'footer.tagline' | trans }}
             </p>
-            <!-- Bug #4: Facebook/Instagram/Line don't have real destinations yet — these were
-                 dead `href="#"` links, so they're hidden entirely until real social URLs exist
-                 rather than left as broken-looking links on every page. -->
           </div>
 
           <div>
-            <h4 class="text-sm font-bold text-ink mb-4">สำรวจ</h4>
+            <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.quickLinks' | trans }}</h4>
             <ul class="space-y-3 text-sm text-ink-soft">
-              <li><a routerLink="/marketplace" class="hover:text-pink-600">ตลาดเอกสาร</a></li>
-              <li><a routerLink="/categories" class="hover:text-pink-600">หมวดหมู่</a></li>
-              <li><a routerLink="/" class="hover:text-pink-600">เอกสารแนะนำ</a></li>
-              <li><a routerLink="/" class="hover:text-pink-600">ผู้ขายแนะนำ</a></li>
+              <li><a routerLink="/marketplace" class="hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a></li>
+              <li><a routerLink="/categories" class="hover:text-pink-600">{{ 'nav.categories' | trans }}</a></li>
+              <li><a routerLink="/bundles" class="hover:text-pink-600">{{ 'nav.bundles' | trans }}</a></li>
+              <li><a routerLink="/free" class="hover:text-pink-600">{{ 'nav.free' | trans }}</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 class="text-sm font-bold text-ink mb-4">เริ่มต้นกับเรา</h4>
+            <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.categories' | trans }}</h4>
             <ul class="space-y-3 text-sm text-ink-soft">
-              <li><a routerLink="/seller" class="hover:text-pink-600">เปิดร้าน Siri Studio</a></li>
-              <li><a routerLink="/seller/upload" class="hover:text-pink-600">อัปโหลดเอกสาร</a></li>
-              <li><a routerLink="/library" class="hover:text-pink-600">คลังของฉัน</a></li>
-              <li><a routerLink="/" class="hover:text-pink-600">โปรแกรมพันธมิตร</a></li>
+              <li><a routerLink="/seller" class="hover:text-pink-600">{{ 'seller.studioTitle' | trans }}</a></li>
+              <li><a routerLink="/seller/upload" class="hover:text-pink-600">{{ 'seller.upload' | trans }}</a></li>
+              <li><a routerLink="/library" class="hover:text-pink-600">{{ 'library.title' | trans }}</a></li>
+              <li><a routerLink="/become-seller" class="hover:text-pink-600">{{ 'home.becomeSeller' | trans }}</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 class="text-sm font-bold text-ink mb-4">ช่วยเหลือ</h4>
+            <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.support' | trans }}</h4>
             <ul class="space-y-3 text-sm text-ink-soft">
-              <!-- Bug #4: same dead-link issue as the social icons above — ศูนย์ช่วยเหลือ /
-                   privacy / terms pages don't exist in this app yet, so these are plain text
-                   until real destinations exist instead of `href="#"`. -->
-              <li class="text-ink-muted">ศูนย์ช่วยเหลือ</li>
-              <li class="text-ink-muted">นโยบายความเป็นส่วนตัว</li>
-              <li class="text-ink-muted">เงื่อนไขการใช้งาน</li>
+              <li class="text-ink-muted">{{ 'footer.helpCenter' | trans }}</li>
+              <li class="text-ink-muted">{{ 'footer.privacy' | trans }}</li>
+              <li class="text-ink-muted">{{ 'footer.terms' | trans }}</li>
               <li>
                 <a class="inline-flex items-center gap-1 hover:text-pink-600" href="mailto:hello@siriedumarket.co">
                   <app-icon name="mail" [size]="14" />
@@ -55,9 +47,12 @@
         <div
           class="mt-12 pt-6 border-t border-line flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
         >
-          <p class="text-xs text-ink-muted">
-            © 2026 SIRIEDUMARKET — Document Studio. All rights reserved.
-          </p>
+          <div class="flex items-center gap-4 flex-wrap">
+            <p class="text-xs text-ink-muted">
+              © 2026 SIRIEDUMARKET. {{ 'footer.allRightsReserved' | trans }}
+            </p>
+            <app-language-switcher variant="pill" />
+          </div>
           <div class="flex items-center gap-3 text-xs text-ink-muted">
             <span class="inline-flex items-center gap-1">
               <app-icon name="shield" [size]="12" />

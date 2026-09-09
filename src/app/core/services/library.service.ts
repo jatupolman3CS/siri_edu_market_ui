@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { LibraryItem, Order } from '../models';
 import { mapLibraryItem, mapOrder } from '../api-mappers/mappers';
-import { resolvePublicUrl, resolveApiUrl } from '../api-runtime';
+import { resolvePublicUrl, resolveApiUrl, resolveDownloadUrl } from '../api-runtime';
 import {
   getApiLibrary,
   getApiOrders,
@@ -212,7 +212,7 @@ export class LibraryService {
         const result = await postApiLibraryByDocumentIdDownload({ path: { documentId } });
         const data = unwrapSdkResult(result);
         this._state.set(successActionState('ดาวน์โหลดเรียบร้อย'));
-        const url = resolvePublicUrl(data?.downloadUrl);
+        const url = resolveDownloadUrl(data?.downloadUrl, this.auth.accessToken());
         if (url) {
           window.open(url, '_blank', 'noopener');
         }

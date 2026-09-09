@@ -19,6 +19,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
+import { TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-home',
@@ -34,6 +35,7 @@ import { ExamCountdownFormComponent } from '../../../shared/components/exam-coun
     EmptyStateComponent,
     ImgFallbackDirective,
     ExamCountdownFormComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',

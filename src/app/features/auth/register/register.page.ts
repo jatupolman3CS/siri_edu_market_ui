@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthProvider, AuthService } from '../../../core/services';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 import { AuthLayoutComponent } from '../../../layouts/auth/auth-layout/auth-layout.component';
 import { SocialButtonsComponent } from '../../../shared/components/social-buttons/social-buttons.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -16,6 +17,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
     AuthLayoutComponent,
     SocialButtonsComponent,
     IconComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './register.page.html',
@@ -25,6 +27,7 @@ export class AuthRegisterPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly i18n = inject(TranslationService);
 
   readonly name = signal<string>('');
   readonly email = signal<string>('');
@@ -55,7 +58,10 @@ export class AuthRegisterPage {
 
   strengthLabel(): string {
     const s = this.strengthLevel();
-    return ['อ่อนมาก', 'อ่อน', 'พอใช้', 'ดี', 'แข็งแรง'][s] ?? '';
+    const labelsTh = ['อ่อนมาก', 'อ่อน', 'พอใช้', 'ดี', 'แข็งแรง'];
+    const labelsEn = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+    const list = this.i18n.currentLang() === 'en' ? labelsEn : labelsTh;
+    return list[s] ?? '';
   }
 
   strengthColor(): string {

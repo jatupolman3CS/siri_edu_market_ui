@@ -49,20 +49,30 @@
 
             <!-- Action -->
             <div class="flex flex-col gap-2 min-w-[200px]">
-              <button
-                class="!py-3 transition-all"
-                [class.btn-pink]="!isFollowing()"
-                [class.btn-ghost]="isFollowing()"
-                (click)="toggleFollow()"
-              >
-                @if (isFollowing()) {
-                  <app-icon name="check" [size]="16" />
-                  กำลังติดตาม
-                } @else {
-                  <app-icon name="plus" [size]="16" />
-                  ติดตามร้าน
-                }
-              </button>
+              @if (isOwner()) {
+                <a
+                  routerLink="/seller/store-sections"
+                  class="btn-ghost !py-3 flex items-center justify-center gap-2 transition-all font-semibold"
+                >
+                  <app-icon name="package" [size]="16" />
+                  จัดการหน้าร้านของคุณ
+                </a>
+              } @else {
+                <button
+                  class="!py-3 transition-all"
+                  [class.btn-pink]="!isFollowing()"
+                  [class.btn-ghost]="isFollowing()"
+                  (click)="toggleFollow()"
+                >
+                  @if (isFollowing()) {
+                    <app-icon name="check" [size]="16" />
+                    กำลังติดตาม
+                  } @else {
+                    <app-icon name="plus" [size]="16" />
+                    ติดตามร้าน
+                  }
+                </button>
+              }
               <p class="text-[11px] text-ink-muted leading-relaxed text-center px-1">
                 <app-icon name="lock" [size]="11" className="text-pink-500" />
                 การซื้อขายและสอบถามทำผ่านระบบในเว็บเท่านั้น

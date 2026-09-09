@@ -19,9 +19,9 @@
                 <app-icon name="cart" [size]="18" />
               </span>
               <div>
-                <h3 class="text-base font-bold text-ink">ตะกร้าสินค้า</h3>
+                <h3 class="text-base font-bold text-ink">{{ 'cartDrawer.title' | trans }}</h3>
                 <span class="text-xs text-ink-muted">
-                  {{ cart.count() }} รายการ
+                  {{ 'cartDrawer.itemCount' | trans:{ count: cart.count() } }}
                 </span>
               </div>
             </div>
@@ -35,11 +35,11 @@
             @if (cart.count() === 0) {
               <app-empty-state
                 emoji="🛒"
-                title="ยังไม่มีสินค้าในตะกร้า"
-                description="ลองเลือกเอกสารจากหน้าตลาดและเพิ่มลงตะกร้าได้เลย"
+                [title]="'cartDrawer.emptyTitle' | trans"
+                [description]="'cartDrawer.emptyDesc' | trans"
               >
                 <a routerLink="/marketplace" class="btn-pink mt-4" (click)="cart.closeDrawer()">
-                  เริ่มเลือกซื้อ
+                  {{ 'cartDrawer.browseMarket' | trans }}
                 </a>
               </app-empty-state>
             } @else {
@@ -68,7 +68,7 @@
                           (click)="cart.remove(item.document.id)"
                         >
                           <app-icon name="trash" [size]="14" />
-                          ลบ
+                          {{ 'cartDrawer.remove' | trans }}
                         </button>
                       </div>
                     </div>
@@ -83,38 +83,37 @@
             <footer class="bg-white border-t border-line px-6 py-5">
               <dl class="space-y-2 text-sm mb-4">
                 <div class="flex justify-between text-ink-soft">
-                  <dt>ยอดสินค้า</dt>
+                  <dt>{{ 'cartDrawer.subtotal' | trans }}</dt>
                   <dd>{{ cart.subtotal() | thb }}</dd>
                 </div>
                 @if (cart.savings() > 0) {
                   <div class="flex justify-between text-emerald-600">
-                    <dt>ส่วนลดรวม</dt>
+                    <dt>{{ 'cartDrawer.discount' | trans }}</dt>
                     <dd>- {{ cart.savings() | thb }}</dd>
                   </div>
                 }
                 <div class="flex justify-between text-ink-soft">
-                  <dt>VAT (รวมในราคาแล้ว)</dt>
+                  <dt>{{ 'cartDrawer.vatIncluded' | trans }}</dt>
                   <dd>{{ cart.vatIncluded() | thb }}</dd>
                 </div>
                 <div
                   class="flex justify-between pt-3 border-t border-line text-base font-bold text-ink"
                 >
-                  <dt>ยอดที่ต้องชำระ</dt>
+                  <dt>{{ 'cartDrawer.total' | trans }}</dt>
                   <dd>{{ cart.total() | thb }}</dd>
                 </div>
               </dl>
               <div class="flex gap-3">
                 <button class="btn-ghost flex-1" (click)="cart.closeDrawer()">
-                  เลือกซื้อต่อ
+                  {{ 'cartDrawer.continueShopping' | trans }}
                 </button>
                 <button class="btn-pink flex-1" (click)="checkout()">
-                  ชำระเงิน
+                  {{ 'cartDrawer.checkout' | trans }}
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
               </div>
               <p class="text-[11px] text-ink-muted text-center mt-3">
-                <app-icon name="lock" [size]="11" /> ชำระเงินผ่านระบบที่ปลอดภัย —
-                PromptPay / บัตรเครดิต
+                <app-icon name="lock" [size]="11" /> {{ 'cartDrawer.securePayment' | trans }}
               </p>
             </footer>
           }

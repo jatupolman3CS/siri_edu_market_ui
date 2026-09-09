@@ -28,6 +28,9 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-header',
@@ -41,6 +44,8 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
     IconComponent,
     NotificationBellComponent,
     ImgFallbackDirective,
+    LanguageSwitcherComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-header.component.html',
@@ -50,6 +55,7 @@ export class AppHeaderComponent {
   readonly cart = inject(CartService);
   readonly auth = inject(AuthService);
   readonly wishlist = inject(WishlistService);
+  readonly translation = inject(TranslationService);
   /** follow-store-notifications v1: badge count reused by the mobile drawer link (the desktop
    *  bell renders its own badge inside `NotificationBellComponent`). */
   readonly feed = inject(NotificationFeedService);
@@ -130,14 +136,14 @@ export class AppHeaderComponent {
    */
   readonly navItems = computed(() => {
     const items: { label: string; href: string; exact?: boolean }[] = [
-      { label: 'หน้าแรก', href: '/', exact: true },
-      { label: 'ตลาด', href: '/marketplace' },
-      { label: 'หมวดหมู่', href: '/categories' },
-      { label: 'แพ็กเกจ', href: '/bundles' },
-      { label: 'ฟรี', href: '/free' },
+      { label: this.translation.t('nav.home'), href: '/', exact: true },
+      { label: this.translation.t('nav.marketplace'), href: '/marketplace' },
+      { label: this.translation.t('nav.categories'), href: '/categories' },
+      { label: this.translation.t('nav.bundles'), href: '/bundles' },
+      { label: this.translation.t('nav.free'), href: '/free' },
     ];
     if (this.auth.isSeller() || this.auth.isAdmin()) {
-      items.push({ label: 'Siri Studio', href: '/seller' });
+      items.push({ label: this.translation.t('nav.studio'), href: '/seller' });
     }
     return items;
   });
@@ -162,7 +168,7 @@ export class AppHeaderComponent {
 
   signOut(): void {
     this.auth.signOut();
-    this.message.info('ออกจากระบบเรียบร้อย — แล้วเจอกันใหม่ 👋');
+    this.message.info(this.translation.t('header.signedOutSuccess'));
     this.router.navigate(['/']);
   }
 }

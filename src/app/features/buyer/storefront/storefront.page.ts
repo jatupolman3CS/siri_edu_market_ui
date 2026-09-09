@@ -5,10 +5,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
+  AuthService,
   BundleService,
   CatalogService,
   FollowService,
@@ -46,11 +47,18 @@ export class BuyerStorefrontPage {
   readonly catalog = inject(CatalogService);
   private readonly bundleService = inject(BundleService);
   readonly follow = inject(FollowService);
+  readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly message = inject(NzMessageService);
 
   readonly sellerId = signal<string>('');
   readonly tab = signal<'all' | 'bundles' | 'free' | 'top'>('all');
+
+  readonly isOwner = computed(() => {
+    const currentUserId = this.auth.user()?.id;
+    return Boolean(currentUserId && currentUserId === this.sellerId());
+  });
 
   readonly seller = this.catalog.sellerProfile;
   // Both requests are fired together, so gate the page on both and the tab counts
@@ -115,18 +123,39 @@ export class BuyerStorefrontPage {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((p) => {
       const id = p.get('id') ?? '';
       this.sellerId.set(id);
-      void this.catalog.loadSellerProfile(id);
+      void (async () => {
+        const profile = await this.catalog.loadSellerProfile(id);
+        if (profile && typeof profile.isFollowing === 'boolean') {
+          this.follow.setFollowing(id, profile.isFollowing);
+        } else {
+          void this.follow.hydrateFromApi(id);
+        }
+      })();
       this.catalog.loadSellerDocuments(id);
-      void this.follow.hydrateFromApi(id);
     });
   }
 
-  toggleFollow(): void {
-    const now = this.follow.toggle(this.sellerId());
-    if (now) {
-      this.message.success(`เริ่มติดตาม ${this.seller()?.studioName} แล้ว 💗`);
+  async toggleFollow(): Promise<void> {
+    const seller = this.seller();
+    if (!seller) return;
+
+    if (!this.auth.isAuthenticated()) {
+      this.message.warning('กรุณาเข้าสู่ระบบเพื่อติดตามร้านค้า');
+      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
+    if (this.isOwner()) {
+      this.message.info('คุณไม่สามารถติดตามร้านค้าของตัวเองได้');
+      return;
+    }
+
+    const isNowFollowing = await this.follow.toggle(this.sellerId());
+    this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1);
+    if (isNowFollowing) {
+      this.message.success(`เริ่มติดตาม ${seller.studioName} แล้ว 💗`);
     } else {
-      this.message.info(`เลิกติดตาม ${this.seller()?.studioName}`);
+      this.message.info(`เลิกติดตาม ${seller.studioName}`);
     }
   }
 }

@@ -15,13 +15,15 @@ import { provideSdkAuthBridge } from './core/api/sdk-auth-bridge';
 import { provideDevAuthBypass } from './core/dev/dev-auth-bypass.provider';
 import { registerLocaleData } from '@angular/common';
 import en from '@angular/common/locales/en';
-import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
+import th from '@angular/common/locales/th';
+import { th_TH, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { FormsModule } from '@angular/forms';
 
 import { routes } from './app.routes';
 
 registerLocaleData(en);
+registerLocaleData(th);
 
 
 
@@ -44,8 +46,8 @@ export const appConfig: ApplicationConfig = {
     provideSdkAuthBridge(),
     // DEV-BYPASS: enters the app as a seeded account while sign-in is unfinished. Inert in production.
     provideDevAuthBypass(),
-    provideNzI18n(en_US),
-    { provide: LOCALE_ID, useValue: 'en-US' },
+    provideNzI18n(th_TH),
+    { provide: LOCALE_ID, useValue: 'th-TH' },
     importProvidersFrom(FormsModule, NzIconModule),
   ],
 };

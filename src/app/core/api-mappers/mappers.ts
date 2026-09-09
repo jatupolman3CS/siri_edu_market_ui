@@ -357,6 +357,7 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
     previewPages: 0,
     seller: {
       ...emptySeller(),
+      id: (d as { sellerId?: string }).sellerId ?? '',
       studioName: d.sellerName ?? '',
       ownerName: d.sellerName ?? '',
     },

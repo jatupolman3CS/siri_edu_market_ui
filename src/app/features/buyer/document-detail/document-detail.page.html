@@ -619,18 +619,24 @@
                       <span>{{ d.seller.followerCount | compact }} ฟอลโลเวอร์</span>
                     </div>
                     <div class="flex gap-2">
-                      <button
-                        class="!py-1.5 !px-4 text-xs flex-1"
-                        [class.btn-pink]="!isFollowing()"
-                        [class.btn-ghost]="isFollowing()"
-                        (click)="follow.toggle(d.seller.id)"
-                      >
-                        @if (isFollowing()) {
-                          ✓ ติดตามอยู่
-                        } @else {
-                          + ติดตาม
-                        }
-                      </button>
+                      @if (isOwner()) {
+                        <a routerLink="/seller/store-sections" class="btn-ghost !py-1.5 !px-3 text-xs flex-1 text-center">
+                          จัดการหน้าร้าน
+                        </a>
+                      } @else {
+                        <button
+                          class="!py-1.5 !px-4 text-xs flex-1"
+                          [class.btn-pink]="!isFollowing()"
+                          [class.btn-ghost]="isFollowing()"
+                          (click)="toggleFollow()"
+                        >
+                          @if (isFollowing()) {
+                            ✓ ติดตามอยู่
+                          } @else {
+                            + ติดตาม
+                          }
+                        </button>
+                      }
                       <a [routerLink]="['/store', d.seller.id]" class="btn-ghost !py-1.5 !px-4 text-xs">
                         ดูร้าน
                       </a>

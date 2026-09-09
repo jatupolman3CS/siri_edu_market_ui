@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminDocumentDetail } from '../../../core/api/admin-documents.api';
-import { resolvePublicUrl } from '../../../core/api-runtime';
-import { AdminService } from '../../../core/services';
+import { resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
+import { AdminService, AuthService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -28,6 +28,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 export class AdminApprovalPage {
   readonly admin = inject(AdminService);
   private readonly message = inject(NzMessageService);
+  private readonly auth = inject(AuthService);
 
   private suppressAutoSearch = false;
   private readonly autoSearchDebounceMs = 400;
@@ -205,14 +206,16 @@ export class AdminApprovalPage {
   async downloadSaleFile(): Promise<void> {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
-    const url = await this.admin.getFileDownloadUrl(key);
+    const rawUrl = await this.admin.getFileDownloadUrl(key);
+    const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
     if (url) window.open(url, '_blank', 'noopener');
   }
 
   async downloadMainFile(storageKey: string | null | undefined): Promise<void> {
     const key = storageKey?.trim();
     if (!key) return;
-    const url = await this.admin.getFileDownloadUrl(key);
+    const rawUrl = await this.admin.getFileDownloadUrl(key);
+    const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
     if (url) window.open(url, '_blank', 'noopener');
   }
 

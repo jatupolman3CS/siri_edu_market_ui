@@ -29,10 +29,10 @@ import type { Bundle, DocumentItem } from '../../../core/models';
  * already existed, matching what round 2 (SDK wired) will do.
  */
 
-const fakeAuth = { isAuthenticated: () => false, accessToken: () => undefined };
+const fakeAuth = { isAuthenticated: () => false, accessToken: () => undefined, user: () => null };
 const fakeCart = { has: () => false, openDrawer: vi.fn(), add: vi.fn() };
 const fakeWishlist = { has: () => false, toggle: vi.fn() };
-const fakeFollow = { toggle: vi.fn(), isFollowing: () => false };
+const fakeFollow = { toggle: vi.fn(), isFollowing: () => false, hydrateFromApi: vi.fn(async () => {}) };
 const fakeLibrary = {
   library: () => [],
   refreshLibraryOnce: vi.fn(async () => {}),

@@ -5,7 +5,10 @@
         class="hidden lg:flex flex-col w-72 bg-white border-r border-line p-5 sticky top-0 h-screen overflow-hidden shrink-0 z-30"
       >
         <div class="shrink-0 mb-4">
-          <app-logo link="/seller" />
+          <div class="flex items-center justify-between">
+            <app-logo link="/seller" />
+            <app-language-switcher variant="compact" />
+          </div>
 
           <div class="mt-2.5 pl-1">
             <span class="pill-pink !text-[10px]">
@@ -16,7 +19,7 @@
         </div>
 
         <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
-          @for (item of navItems; track item.href) {
+          @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-pink-50 !text-pink-600 !border-pink-200"
@@ -35,7 +38,7 @@
             class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
           >
             <app-icon name="arrow-left" [size]="16" />
-            กลับสู่หน้าตลาด
+            {{ 'nav.backToMarket' | trans }}
           </a>
 
           <button
@@ -44,7 +47,7 @@
             class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-rose-500 hover:bg-rose-50 transition-colors"
           >
             <app-icon name="logout" [size]="16" />
-            ออกจากระบบ
+            {{ 'nav.signOut' | trans }}
           </button>
 
           @if (auth.user(); as u) {
@@ -73,8 +76,9 @@
         <div class="flex items-center justify-between px-4 h-16 gap-2">
           <app-logo link="/seller" />
           <div class="flex items-center gap-1.5 shrink-0">
+            <app-language-switcher variant="compact" />
             <a routerLink="/" class="btn-ghost !py-1.5 !px-2.5 text-xs whitespace-nowrap">
-              ออกจาก Studio
+              {{ 'nav.backToMarket' | trans }}
             </a>
             <button
               type="button"
@@ -82,14 +86,14 @@
               class="flex items-center gap-1 !py-1.5 !px-2.5 text-xs text-rose-500 whitespace-nowrap"
             >
               <app-icon name="logout" [size]="14" />
-              ออกจากระบบ
+              {{ 'nav.signOut' | trans }}
             </button>
           </div>
         </div>
         <!-- Trailing fade so a scrollable tab bar with more tabs off-screen is noticeable. -->
         <div class="relative">
           <nav class="flex overflow-x-auto px-4 pb-3 gap-2">
-            @for (item of navItems; track item.href) {
+            @for (item of navItems(); track item.href) {
               <a
                 [routerLink]="item.href"
                 routerLinkActive="!bg-pink-500 !text-white"

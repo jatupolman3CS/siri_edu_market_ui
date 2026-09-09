@@ -130,10 +130,15 @@ function resolveR2AssetUrl(raw: string): string | null {
       return null;
     }
 
+    let key: string | null = null;
     const bucketIndex = path.indexOf(R2_BUCKET_PATH);
-    if (bucketIndex < 0) return null;
+    if (bucketIndex >= 0) {
+      key = path.slice(bucketIndex + R2_BUCKET_PATH.length);
+    } else if (parsed.hostname.includes('r2.cloudflarestorage.com') || parsed.hostname.includes('.r2.dev')) {
+      const parts = path.split('/').filter(Boolean);
+      key = parts.length > 1 ? parts.slice(1).join('/') : parts.join('/');
+    }
 
-    const key = path.slice(bucketIndex + R2_BUCKET_PATH.length);
     if (!key) return null;
 
     return buildBackendDownloadAssetUrl(key);
@@ -165,6 +170,47 @@ export function resolvePublicUrl(url: string | null | undefined): string {
   // Common case: `/api/...` or `api/...`
   if (raw.startsWith('/')) return `${API_BASE_URL}${raw}`;
   return `${API_BASE_URL}/${raw}`;
+}
+
+/**
+ * Resolves a downloadable file URL:
+ * - Converts raw R2 URLs to backend API download URLs
+ * - Resolves relative paths to absolute API base URLs
+ * - Appends authentication token query param (?token=...) when provided so window.open()
+ *   authenticates with ASP.NET Core
+ * - Appends optional filename query param (?filename=...) to set Content-Disposition
+ */
+export function resolveDownloadUrl(
+  url: string | null | undefined,
+  token?: string | null,
+  filename?: string | null,
+): string {
+  const resolved = resolvePublicUrl(url);
+  if (!resolved) return '';
+
+  try {
+    const parsed = new URL(resolved, typeof window !== 'undefined' ? window.location?.origin : undefined);
+    if (token && !parsed.searchParams.has('token') && !parsed.searchParams.has('access_token')) {
+      parsed.searchParams.set('token', token);
+    }
+    if (filename && !parsed.searchParams.has('filename')) {
+      parsed.searchParams.set('filename', filename);
+    }
+    return parsed.toString();
+  } catch {
+    let result = resolved;
+    const params: string[] = [];
+    if (token && !result.includes('token=')) {
+      params.push(`token=${encodeURIComponent(token)}`);
+    }
+    if (filename && !result.includes('filename=')) {
+      params.push(`filename=${encodeURIComponent(filename)}`);
+    }
+    if (params.length > 0) {
+      result += (result.includes('?') ? '&' : '?') + params.join('&');
+    }
+    return result;
+  }
 }
 
 /**
@@ -217,11 +263,18 @@ export const createClientConfig: CreateClientConfig = (config) => ({
         // even though prod is same-origin via the nginx proxy already.
         const request = new Request(input, { ...init, credentials: 'include' });
         const devRole = _devRoleGetter?.() ?? null;
-        if (!token && !devRole) return fetch(request);
 
         const headers = new Headers(request.headers);
         if (token) headers.set('Authorization', `Bearer ${token}`);
         if (devRole) headers.set('X-Dev-Role', devRole);
+        if (!headers.has('Accept-Language')) {
+          try {
+            const lang = typeof window !== 'undefined' ? window.localStorage?.getItem('siriedu_lang') : null;
+            headers.set('Accept-Language', lang === 'en' ? 'en-US,en;q=0.9' : 'th-TH,th;q=0.9');
+          } catch {
+            headers.set('Accept-Language', 'th-TH,th;q=0.9');
+          }
+        }
         return fetch(new Request(request, { headers, credentials: 'include' }));
       };
 

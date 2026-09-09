@@ -4,14 +4,13 @@
         <div class="text-[120px] md:text-[200px] font-extrabold text-pink-200 leading-none select-none">
           404
         </div>
-        <h1 class="text-3xl font-extrabold text-ink -mt-8 mb-3">ไม่พบหน้าที่ต้องการ</h1>
+        <h1 class="text-3xl font-extrabold text-ink -mt-8 mb-3">{{ 'notFound.title' | trans }}</h1>
         <p class="text-base text-ink-soft mb-8 max-w-md">
-          หน้าเว็บที่คุณค้นหาอาจถูกย้าย ถูกลบ หรือไม่เคยมีอยู่จริง
-          ลองกลับไปที่หน้าแรกหรือใช้ตัวค้นหากันใหม่
+          {{ 'notFound.desc' | trans }}
         </p>
         <div class="flex flex-wrap items-center justify-center gap-3">
-          <a routerLink="/" class="btn-pink">กลับหน้าแรก</a>
-          <a routerLink="/marketplace" class="btn-ghost">เลือกเอกสาร</a>
+          <a routerLink="/" class="btn-pink">{{ 'notFound.backHome' | trans }}</a>
+          <a routerLink="/marketplace" class="btn-ghost">{{ 'notFound.exploreMarket' | trans }}</a>
         </div>
       </div>
     </div>

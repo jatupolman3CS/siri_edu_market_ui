@@ -17,16 +17,17 @@
             </div>
           </div>
 
-          <div class="mt-2.5 pl-1">
+          <div class="mt-2.5 pl-1 flex items-center justify-between">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-200 text-[10px] font-bold uppercase tracking-wider">
               <span class="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse-soft"></span>
               High access
             </span>
+            <app-language-switcher variant="compact" theme="dark" />
           </div>
         </div>
 
         <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
-          @for (item of navItems; track item.href) {
+          @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-white/10 !text-white"
@@ -47,7 +48,7 @@
         <div class="shrink-0 pt-3 border-t border-white/10 mt-2 flex flex-col gap-1">
           <a routerLink="/" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors">
             <app-icon name="arrow-left" [size]="16" />
-            กลับสู่หน้าตลาด
+            {{ 'nav.backToMarket' | trans }}
           </a>
 
           <button
@@ -56,7 +57,7 @@
             class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-rose-300 hover:bg-white/5 hover:text-rose-200 transition-colors"
           >
             <app-icon name="logout" [size]="16" />
-            ออกจากระบบ
+            {{ 'nav.signOut' | trans }}
           </button>
 
           @if (auth.user(); as u) {
@@ -83,20 +84,21 @@
             <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500"></span>
             <span class="text-sm font-bold">ADMIN</span>
           </div>
-          <div class="flex items-center gap-3">
-            <a routerLink="/" class="text-xs text-pink-200">กลับหน้าตลาด</a>
+          <div class="flex items-center gap-2">
+            <app-language-switcher variant="compact" theme="dark" />
+            <a routerLink="/" class="text-xs text-pink-200">{{ 'nav.backToMarket' | trans }}</a>
             <button
               type="button"
               (click)="signOut()"
               class="flex items-center gap-1 text-xs text-rose-300"
             >
               <app-icon name="logout" [size]="14" />
-              ออกจากระบบ
+              {{ 'nav.signOut' | trans }}
             </button>
           </div>
         </div>
         <nav class="flex overflow-x-auto px-4 pb-3 gap-2">
-          @for (item of navItems; track item.href) {
+          @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-pink-500"

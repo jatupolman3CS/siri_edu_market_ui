@@ -85,20 +85,20 @@
               <div class="flex items-center justify-between mb-5">
                 <h3 class="text-base font-bold text-ink flex items-center gap-2">
                   <app-icon name="filter" [size]="16" />
-                  ตัวกรอง
+                  {{ 'common.filter' | trans }}
                 </h3>
                 <button
                   class="text-xs text-pink-600 hover:underline font-semibold"
                   (click)="reset()"
                 >
-                  ล้างทั้งหมด
+                  {{ 'marketplace.resetFilters' | trans }}
                 </button>
               </div>
 
               <!-- Search -->
               <div class="mb-5">
                 <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                  คำค้นหา
+                  {{ 'common.search' | trans }}
                 </label>
                 <form class="flex items-center gap-2" (ngSubmit)="applySearch()">
                   <input
@@ -106,13 +106,13 @@
                     name="marketplaceSearch"
                     [ngModel]="searchTerm()"
                     (ngModelChange)="searchTerm.set($event)"
-                    placeholder="ค้นหาเอกสาร…"
+                    [placeholder]="'marketplace.searchPlaceholder' | trans"
                     class="flex-1 min-w-0 pl-3.5 pr-3.5 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
                   />
                   <button
                     type="submit"
-                    aria-label="ค้นหา"
-                    title="ค้นหา"
+                    [attr.aria-label]="'common.search' | trans"
+                    [attr.title]="'common.search' | trans"
                     class="btn-icon flex-shrink-0"
                   >
                     <app-icon name="search" [size]="16" />
@@ -123,10 +123,10 @@
               <!-- Categories with sub-categories -->
               <div class="mb-6">
                 <label class="text-xs font-semibold text-ink-soft mb-3 flex items-center justify-between">
-                  <span>หมวดหมู่</span>
+                  <span>{{ 'footer.categories' | trans }}</span>
                   @if (catalog.filters().categoryIds.length) {
                     <button class="text-pink-600 text-[10px] hover:underline" (click)="catalog.setFilters({ categoryIds: [], subcategoryIds: [] })">
-                      ล้าง
+                      {{ 'cartDrawer.clearAll' | trans }}
                     </button>
                   }
                 </label>
@@ -192,7 +192,7 @@
               <!-- Grade Level -->
               <div class="mb-6">
                 <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  ระดับชั้น
+                  {{ 'marketplace.filterByGrade' | trans }}
                 </label>
                 <div class="flex flex-wrap gap-1.5">
                   @for (g of grades; track g) {
@@ -214,7 +214,7 @@
               <!-- Resource Type -->
               <div class="mb-6">
                 <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  ประเภทเอกสาร
+                  {{ 'marketplace.filterBySubject' | trans }}
                 </label>
                 <div class="flex flex-wrap gap-1.5">
                   @for (rt of resourceTypes; track rt) {
@@ -287,7 +287,7 @@
                     (change)="catalog.setFilters({ freeOnly: !catalog.filters().freeOnly })"
                     class="w-5 h-5 accent-pink-500"
                   />
-                  <span class="text-sm font-semibold text-ink flex-1">ฟรีเท่านั้น</span>
+                  <span class="text-sm font-semibold text-ink flex-1">{{ 'marketplace.priceFree' | trans }}</span>
                   <span class="text-base">🎁</span>
                 </label>
               </div>
@@ -295,7 +295,7 @@
               <!-- Price -->
               <div class="mb-6">
                 <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  ช่วงราคา (THB)
+                  {{ 'marketplace.filterByPrice' | trans }} (THB)
                 </label>
                 <nz-slider
                   [nzRange]="true"
@@ -314,7 +314,7 @@
               <!-- Min rating -->
               <div>
                 <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  คะแนนรีวิวขั้นต่ำ
+                  {{ 'common.rating' | trans }}
                 </label>
                 <div class="flex flex-col gap-1">
                   @for (r of [4.5, 4.0, 3.5, 0]; track r) {
@@ -330,9 +330,9 @@
                       />
                       @if (r > 0) {
                         <span class="text-pink-500">★</span>
-                        <span class="text-ink">{{ r }} ขึ้นไป</span>
+                        <span class="text-ink">{{ r }}+</span>
                       } @else {
-                        <span class="text-ink">ทั้งหมด</span>
+                        <span class="text-ink">{{ 'common.all' | trans }}</span>
                       }
                     </label>
                   }
@@ -347,25 +347,25 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div class="flex items-center gap-2 text-sm flex-wrap">
                 <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span>
-                <span class="text-ink-muted">เอกสารที่ตรงกับการค้นหา</span>
+                <span class="text-ink-muted">{{ 'common.items' | trans }}</span>
                 @if (catalog.filters().search) {
                   <span class="text-ink">“{{ catalog.filters().search }}”</span>
                 }
               </div>
 
               <div class="flex items-center gap-3">
-                <span class="text-xs text-ink-muted">เรียงตาม</span>
+                <span class="text-xs text-ink-muted">{{ 'marketplace.sortBy' | trans }}</span>
                 <nz-select
                   [ngModel]="catalog.filters().sort"
                   (ngModelChange)="catalog.setFilters({ sort: $event })"
                   style="min-width: 180px"
                 >
-                  <nz-option nzValue="relevance" nzLabel="ความเกี่ยวข้อง" />
-                  <nz-option nzValue="popular" nzLabel="ความนิยม" />
-                  <nz-option nzValue="newest" nzLabel="ล่าสุด" />
-                  <nz-option nzValue="rating" nzLabel="คะแนนรีวิวสูงสุด" />
-                  <nz-option nzValue="price-asc" nzLabel="ราคา ต่ำ → สูง" />
-                  <nz-option nzValue="price-desc" nzLabel="ราคา สูง → ต่ำ" />
+                  <nz-option nzValue="relevance" [nzLabel]="'marketplace.sortPopular' | trans" />
+                  <nz-option nzValue="popular" [nzLabel]="'marketplace.sortPopular' | trans" />
+                  <nz-option nzValue="newest" [nzLabel]="'marketplace.sortNewest' | trans" />
+                  <nz-option nzValue="rating" [nzLabel]="'marketplace.sortRating' | trans" />
+                  <nz-option nzValue="price-asc" [nzLabel]="'marketplace.sortPriceAsc' | trans" />
+                  <nz-option nzValue="price-desc" [nzLabel]="'marketplace.sortPriceDesc' | trans" />
                 </nz-select>
               </div>
             </div>
@@ -429,18 +429,18 @@
               class="relative max-h-[75vh] min-h-[420px] overflow-y-auto pr-1"
             >
               @if (catalog.marketplaceResultsState().status === 'error' && catalog.marketplaceResults().length === 0) {
-                <app-empty-state emoji="⚠️" title="โหลดรายการเอกสารไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+                <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                   <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
-                    ลองใหม่
+                    {{ 'common.retry' | trans }}
                   </button>
                 </app-empty-state>
               } @else if (catalog.marketplaceResultsState().status !== 'loading' && catalog.marketplaceResults().length === 0) {
                 <app-empty-state
                   emoji="🔎"
-                  title="ไม่พบเอกสารที่ตรงกัน"
-                  description="ลองปรับตัวกรองหรือล้างคำค้นหาดูครับ"
+                  [title]="'marketplace.noResults' | trans"
+                  description=""
                 >
-                  <button class="btn-pink mt-4" (click)="reset()">ล้างตัวกรอง</button>
+                  <button class="btn-pink mt-4" (click)="reset()">{{ 'marketplace.resetFilters' | trans }}</button>
                 </app-empty-state>
               } @else {
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 gap-3 md:gap-4">
@@ -457,7 +457,7 @@
                   aria-live="polite"
                 >
                   <span class="w-7 h-7 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
-                  <span class="text-xs font-semibold text-ink-soft">กำลังโหลด…</span>
+                  <span class="text-xs font-semibold text-ink-soft">{{ 'common.loading' | trans }}</span>
                 </div>
               }
             </div>

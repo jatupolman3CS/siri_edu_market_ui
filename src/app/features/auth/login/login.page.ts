@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthProvider, AuthService } from '../../../core/services';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 import { AuthLayoutComponent } from '../../../layouts/auth/auth-layout/auth-layout.component';
 import { SocialButtonsComponent } from '../../../shared/components/social-buttons/social-buttons.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -17,6 +18,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
     AuthLayoutComponent,
     SocialButtonsComponent,
     IconComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.page.html',
@@ -27,6 +29,7 @@ export class AuthLoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly message = inject(NzMessageService);
+  readonly i18n = inject(TranslationService);
 
   readonly email = signal<string>('');
   readonly password = signal<string>('');

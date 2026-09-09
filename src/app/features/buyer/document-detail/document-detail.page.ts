@@ -217,8 +217,39 @@ export class BuyerDocumentDetailPage {
     }));
   });
 
+  readonly isOwner = computed(() => {
+    const user = this.auth.user?.();
+    const doc = this.doc();
+    return !!(user?.id && doc?.seller?.id && user.id === doc.seller.id);
+  });
+
   isFollowing(): boolean {
     return this.follow.isFollowing(this.doc()?.seller.id ?? '');
+  }
+
+  async toggleFollow(): Promise<void> {
+    const d = this.doc();
+    if (!d?.seller?.id) return;
+
+    if (!this.auth.isAuthenticated()) {
+      this.message.warning('กรุณาเข้าสู่ระบบเพื่อติดตามร้านค้า');
+      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
+    if (this.isOwner()) {
+      this.message.info('คุณไม่สามารถติดตามร้านค้าของตัวเองได้');
+      return;
+    }
+
+    const sellerId = d.seller.id;
+    const isNowFollowing = await this.follow.toggle(sellerId);
+    this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);
+    if (isNowFollowing) {
+      this.message.success(`เริ่มติดตาม ${d.seller.studioName} แล้ว 💗`);
+    } else {
+      this.message.info(`เลิกติดตาม ${d.seller.studioName}`);
+    }
   }
 
   resourceLabel(t: string): string {
@@ -263,7 +294,12 @@ export class BuyerDocumentDetailPage {
     // Track recently viewed
     effect(() => {
       const d = this.doc();
-      if (d) this.recent.push(d);
+      if (d) {
+        this.recent.push(d);
+        if (d.seller?.id) {
+          void this.follow.hydrateFromApi?.(d.seller.id);
+        }
+      }
     });
     // Best-effort: load library once for owned-check
     effect(() => {

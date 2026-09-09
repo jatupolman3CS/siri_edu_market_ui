@@ -36,6 +36,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-marketplace',
@@ -52,6 +53,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
     PageHeroComponent,
     ImgFallbackDirective,
     PaginationComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketplace.page.html',
@@ -62,6 +64,7 @@ export class BuyerMarketplacePage {
   readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
+  readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
@@ -77,7 +80,15 @@ export class BuyerMarketplacePage {
    * hardcoded count.
    */
   readonly heroDescription = computed(() => {
+    const isEn = this.i18n.currentLang() === 'en';
     const totalDocs = this.platformStats.stats()?.totalApprovedDocuments;
+    if (isEn) {
+      const base =
+        totalDocs != null
+          ? `Over ${this.compactPipe.transform(totalDocs)} documents from verified creators nationwide`
+          : 'Quality educational documents from verified creators nationwide';
+      return `${base} — use filters on the left to find what you need`;
+    }
     const base =
       totalDocs != null
         ? `กว่า ${this.compactPipe.transform(totalDocs)} เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ`
@@ -99,13 +110,16 @@ export class BuyerMarketplacePage {
     'TGAT', 'TPAT', 'A-Level', 'O-NET', 'IELTS', 'TOEIC', 'TOEFL',
   ];
 
-  readonly tabs = computed(() => [
-    { value: 'all' as const, label: 'ทั้งหมด', icon: '🌸', count: this.catalog.documents().length },
-    { value: 'free' as const, label: 'ฟรี', icon: '🎁', count: this.catalog.freeResources().length },
-    { value: 'top-rated' as const, label: 'คะแนนสูง', icon: '⭐', count: this.catalog.documents().filter(d => d.rating >= 4.7).length },
-    { value: 'new' as const, label: 'มาใหม่', icon: '✨', count: this.catalog.newArrivals().length },
-    { value: 'bundles' as const, label: 'แพ็กเกจ', icon: '📦', count: this.bundles.bundles().length },
-  ]);
+  readonly tabs = computed(() => {
+    const isEn = this.i18n.currentLang() === 'en';
+    return [
+      { value: 'all' as const, label: isEn ? 'All' : 'ทั้งหมด', icon: '🌸', count: this.catalog.documents().length },
+      { value: 'free' as const, label: isEn ? 'Free' : 'ฟรี', icon: '🎁', count: this.catalog.freeResources().length },
+      { value: 'top-rated' as const, label: isEn ? 'Top Rated' : 'คะแนนสูง', icon: '⭐', count: this.catalog.documents().filter(d => d.rating >= 4.7).length },
+      { value: 'new' as const, label: isEn ? 'New Arrivals' : 'มาใหม่', icon: '✨', count: this.catalog.newArrivals().length },
+      { value: 'bundles' as const, label: isEn ? 'Bundles' : 'แพ็กเกจ', icon: '📦', count: this.bundles.bundles().length },
+    ];
+  });
 
   readonly priceRange = computed<[number, number]>(() => [
     this.catalog.filters().minPrice,
@@ -133,10 +147,10 @@ export class BuyerMarketplacePage {
   readonly resultsPanel = viewChild<ElementRef<HTMLDivElement>>('resultsPanel');
 
   gradeLabel(g: GradeLevel): string {
-    return GRADE_LEVEL_LABELS[g];
+    return this.i18n.t(`gradeLevels.${g}` as any) || GRADE_LEVEL_LABELS[g];
   }
   resourceLabel(t: ResourceType): string {
-    return RESOURCE_TYPE_LABELS[t];
+    return this.i18n.t(`resourceTypes.${t}` as any) || RESOURCE_TYPE_LABELS[t];
   }
   resourceIcon(t: ResourceType): string {
     return RESOURCE_TYPE_ICONS[t];

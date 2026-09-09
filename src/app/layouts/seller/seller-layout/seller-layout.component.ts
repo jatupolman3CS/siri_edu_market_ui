@@ -8,6 +8,9 @@ import { GlobalLoaderComponent } from '../../../shared/components/global-loader/
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-seller-layout',
@@ -20,6 +23,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     IconComponent,
     GlobalLoaderComponent,
     ImgFallbackDirective,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-layout.component.html',
@@ -27,6 +32,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 })
 export class SellerLayoutComponent {
   readonly auth = inject(AuthService);
+  readonly translation = inject(TranslationService);
   private readonly me = inject(MeService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
@@ -49,22 +55,20 @@ export class SellerLayoutComponent {
 
   signOut(): void {
     this.auth.signOut();
-    this.message.info('ออกจากระบบเรียบร้อย — แล้วเจอกันใหม่ 👋');
+    this.message.info(this.translation.t('header.signedOutSuccess'));
     this.router.navigate(['/']);
   }
 
-  readonly navItems = [
-    { label: 'ภาพรวม', href: '/seller', icon: 'dashboard' as const, exact: true },
-    { label: 'เอกสารของฉัน', href: '/seller/documents', icon: 'doc' as const },
-    { label: 'อัปโหลดเอกสาร', href: '/seller/upload', icon: 'upload' as const },
-    { label: 'พรีวิว PDF', href: '/seller/pdf-preview', icon: 'eye' as const },
-    // G-05: the AI Assistant entry is removed until the endpoint behind it does something.
-    { label: 'รายได้ & Payout', href: '/seller/earnings', icon: 'wallet' as const },
-    // GAP-06 / GAP-07: answering buyer questions and arranging the storefront.
-    { label: 'คำถามจากผู้ซื้อ', href: '/seller/qna', icon: 'bell' as const },
-    { label: 'หมวดหน้าร้าน', href: '/seller/store-sections', icon: 'package' as const },
-    { label: 'แพ็กเกจของฉัน', href: '/seller/bundles', icon: 'package' as const },
-    { label: 'รีวิวลูกค้า', href: '/seller/reviews', icon: 'star' as const },
-    { label: 'ตั้งค่าร้าน', href: '/seller/settings', icon: 'gear' as const },
-  ];
+  readonly navItems = computed(() => [
+    { label: this.translation.t('seller.dashboard'), href: '/seller', icon: 'dashboard' as const, exact: true },
+    { label: this.translation.t('seller.documents'), href: '/seller/documents', icon: 'doc' as const },
+    { label: this.translation.t('seller.upload'), href: '/seller/upload', icon: 'upload' as const },
+    { label: this.translation.currentLang() === 'th' ? 'พรีวิว PDF' : 'PDF Preview', href: '/seller/pdf-preview', icon: 'eye' as const },
+    { label: this.translation.t('seller.payout'), href: '/seller/earnings', icon: 'wallet' as const },
+    { label: this.translation.currentLang() === 'th' ? 'คำถามจากผู้ซื้อ' : 'Customer Q&A', href: '/seller/qna', icon: 'bell' as const },
+    { label: this.translation.currentLang() === 'th' ? 'หมวดหน้าร้าน' : 'Storefront Sections', href: '/seller/store-sections', icon: 'package' as const },
+    { label: this.translation.currentLang() === 'th' ? 'แพ็กเกจของฉัน' : 'My Bundles', href: '/seller/bundles', icon: 'package' as const },
+    { label: this.translation.currentLang() === 'th' ? 'รีวิวลูกค้า' : 'Customer Reviews', href: '/seller/reviews', icon: 'star' as const },
+    { label: this.translation.t('seller.settings'), href: '/seller/settings', icon: 'gear' as const },
+  ]);
 }

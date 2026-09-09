@@ -9,10 +9,10 @@ import {
   type CdkDragDrop,
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
-import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
+import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
 import { DocumentItem, DocumentPricingHint } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
-import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
+import { AuthService, CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
@@ -68,6 +68,7 @@ export class SellerUploadPage {
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
 
   readonly editId = signal<string>('');
   readonly isEditMode = computed(() => !!this.editId());
@@ -294,7 +295,8 @@ export class SellerUploadPage {
     void (async () => {
       const docId = this.editId();
       if (!docId) return;
-      const url = await this.seller.getMainFileDownloadUrl(docId, fileId);
+      const rawUrl = await this.seller.getMainFileDownloadUrl(docId, fileId);
+      const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
       if (url) window.open(url, '_blank', 'noopener,noreferrer');
     })();
   }

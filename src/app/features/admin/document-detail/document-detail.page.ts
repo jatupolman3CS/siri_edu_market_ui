@@ -29,12 +29,13 @@ import {
   type ResourceType,
 } from '../../../core/models';
 import { AdminService } from '../../../core/services/admin.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { SellerService } from '../../../core/services/seller.service';
 import { unwrapSdkResult } from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
-import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
+import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const GRADE_PRESET_KEYS = Object.keys(GRADE_LEVEL_LABELS) as GradeLevel[];
@@ -78,6 +79,7 @@ export class AdminDocumentDetailPage {
   private readonly message = inject(NzMessageService);
   readonly admin = inject(AdminService);
   private readonly seller = inject(SellerService);
+  private readonly auth = inject(AuthService);
 
   readonly doc = signal<AdminDocumentDetail | null>(null);
   readonly reports = signal<AdminDocumentReport[]>([]);
@@ -488,7 +490,8 @@ export class AdminDocumentDetailPage {
   async downloadMainFile(): Promise<void> {
     const key = this.doc()?.fileStorageKey?.trim();
     if (!key) return;
-    const url = await this.admin.getFileDownloadUrl(key);
+    const rawUrl = await this.admin.getFileDownloadUrl(key);
+    const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
     if (url) window.open(url, '_blank', 'noopener');
   }
 

@@ -51,7 +51,8 @@ function render(salesByMonth: SellerSalesByMonthPoint[]) {
   const fakeFollow: Partial<FollowService> = {
     isFollowing: () => false,
     hydrateFromApi: vi.fn(async () => {}),
-    toggle: () => false,
+    setFollowing: vi.fn(),
+    toggle: vi.fn(async () => false),
   };
 
   TestBed.configureTestingModule({

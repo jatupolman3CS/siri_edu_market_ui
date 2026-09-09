@@ -7,6 +7,9 @@ import { AdminService, AuthService, MeService } from '../../../core/services';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-admin-layout',
@@ -18,6 +21,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     IconComponent,
     GlobalLoaderComponent,
     ImgFallbackDirective,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-layout.component.html',
@@ -25,6 +30,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 })
 export class AdminLayoutComponent {
   readonly auth = inject(AuthService);
+  readonly translation = inject(TranslationService);
   private readonly me = inject(MeService);
   private readonly admin = inject(AdminService);
   private readonly router = inject(Router);
@@ -51,35 +57,40 @@ export class AdminLayoutComponent {
 
   signOut(): void {
     this.auth.signOut();
-    this.message.info('ออกจากระบบเรียบร้อย — แล้วเจอกันใหม่ 👋');
+    this.message.info(this.translation.t('header.signedOutSuccess'));
     this.router.navigate(['/']);
   }
 
-  readonly navItems: {
-    label: string;
-    href: string;
-    icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell' | 'flag' | 'sparkle' | 'package';
-    exact?: boolean;
-    badge?: string;
-  }[] = [
-    { label: 'ภาพรวม', href: '/admin', icon: 'dashboard' as const, exact: true },
-    { label: 'จัดการเอกสาร', href: '/admin/documents', icon: 'doc' as const },
-    { label: 'อนุมัติเอกสาร', href: '/admin/approval', icon: 'shield' as const },
-    { label: 'ธุรกรรม', href: '/admin/transactions', icon: 'wallet' as const },
-    { label: 'ผู้ขาย', href: '/admin/sellers', icon: 'user' as const },
-    // GAP-02: seller payout queue.
-    { label: 'รายงานเอกสาร', href: '/admin/reports', icon: 'flag' as const },
-    { label: 'ถอนเงินผู้ขาย', href: '/admin/payouts', icon: 'wallet' as const },
-    // GAP-01: review queue for buyers applying to sell.
-    { label: 'ใบสมัครผู้ขาย', href: '/admin/seller-applications', icon: 'shield' as const },
-    { label: 'หมวดหมู่', href: '/admin/categories', icon: 'tag' as const },
-    // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
-    { label: 'ประกาศข่าวสาร', href: '/admin/announcements', icon: 'bell' as const },
-    { label: 'ตั้งค่าแพลตฟอร์ม', href: '/admin/settings', icon: 'gear' as const },
-    { label: 'ประวัติการทำงาน', href: '/admin/audit', icon: 'doc' as const },
-    // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.
-    { label: 'สร้างเอกสารอัตโนมัติ', href: '/admin/document-generation', icon: 'sparkle' as const },
-    // exam-hub-landing-pages v1 §4: CMS management for the 4 exam hub pages.
-    { label: 'จัดการเนื้อหา Exam Hub', href: '/admin/exam-hub', icon: 'doc' as const },
-  ];
+  readonly navItems = computed<
+    Array<{
+      label: string;
+      href: string;
+      icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell' | 'flag' | 'sparkle' | 'package';
+      exact?: boolean;
+      badge?: string;
+    }>
+  >(() => {
+    const isTh = this.translation.currentLang() === 'th';
+    return [
+      { label: isTh ? 'ภาพรวม' : 'Overview', href: '/admin', icon: 'dashboard' as const, exact: true },
+      { label: isTh ? 'จัดการเอกสาร' : 'Documents', href: '/admin/documents', icon: 'doc' as const },
+      { label: isTh ? 'อนุมัติเอกสาร' : 'Document Approval', href: '/admin/approval', icon: 'shield' as const },
+      { label: isTh ? 'ธุรกรรม' : 'Transactions', href: '/admin/transactions', icon: 'wallet' as const },
+      { label: isTh ? 'ผู้ขาย' : 'Sellers', href: '/admin/sellers', icon: 'user' as const },
+      // GAP-02: seller payout queue.
+      { label: isTh ? 'รายงานเอกสาร' : 'Reports', href: '/admin/reports', icon: 'flag' as const },
+      { label: isTh ? 'ถอนเงินผู้ขาย' : 'Seller Payouts', href: '/admin/payouts', icon: 'wallet' as const },
+      // GAP-01: review queue for buyers applying to sell.
+      { label: isTh ? 'ใบสมัครผู้ขาย' : 'Seller Applications', href: '/admin/seller-applications', icon: 'shield' as const },
+      { label: isTh ? 'หมวดหมู่' : 'Categories', href: '/admin/categories', icon: 'tag' as const },
+      // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
+      { label: isTh ? 'ประกาศข่าวสาร' : 'Announcements', href: '/admin/announcements', icon: 'bell' as const },
+      { label: isTh ? 'ตั้งค่าแพลตฟอร์ม' : 'Settings', href: '/admin/settings', icon: 'gear' as const },
+      { label: isTh ? 'ประวัติการทำงาน' : 'Audit Logs', href: '/admin/audit', icon: 'doc' as const },
+      // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.
+      { label: isTh ? 'สร้างเอกสารอัตโนมัติ' : 'Auto Generation', href: '/admin/document-generation', icon: 'sparkle' as const },
+      // exam-hub-landing-pages v1 §4: CMS management for the 4 exam hub pages.
+      { label: isTh ? 'จัดการเนื้อหา Exam Hub' : 'Exam Hub CMS', href: '/admin/exam-hub', icon: 'doc' as const },
+    ];
+  });
 }
