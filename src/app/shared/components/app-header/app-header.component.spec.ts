@@ -158,4 +158,22 @@ describe('AppHeaderComponent search submission', () => {
       queryParams: { q: null }, onSameUrlNavigation: 'reload',
     });
   });
+
+  it('searches with trending keyword when searchTag is called', () => {
+    const fixture = render();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.searchTag('สรุปชีวะ');
+    expect(fixture.componentInstance.query()).toBe('สรุปชีวะ');
+    expect(navigate).toHaveBeenCalledWith(['/marketplace'], {
+      queryParams: { q: 'สรุปชีวะ' }, onSameUrlNavigation: 'reload',
+    });
+  });
+
+  it('clears search query on clearQuery', () => {
+    const fixture = render();
+    fixture.componentInstance.query.set('testing');
+    fixture.componentInstance.clearQuery();
+    expect(fixture.componentInstance.query()).toBe('');
+  });
 });
+

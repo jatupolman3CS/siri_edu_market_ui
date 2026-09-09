@@ -66,6 +66,17 @@ export class AppHeaderComponent {
 
   readonly query = signal<string>('');
 
+  /** Trending / popular search tags displayed below the prominent search bar */
+  readonly quickSearches = [
+    'สรุปชีวะ',
+    'ข้อสอบ ก.พ.',
+    'Portfolio',
+    'คณิต ม.ปลาย',
+    'ใบงานปฐมวัย',
+    'TOEIC',
+    'เทมเพลต',
+  ];
+
   /**
    * Q-bugfix item 1: below the `md` breakpoint the desktop `<nav>` and the "เข้าสู่ระบบ" link
    * are both `hidden` (see template) with nothing in their place — a Playwright sweep across
@@ -160,6 +171,15 @@ export class AppHeaderComponent {
       queryParams: { q: q || null },
       onSameUrlNavigation: 'reload',
     });
+  }
+
+  searchTag(tag: string): void {
+    this.query.set(tag);
+    this.search();
+  }
+
+  clearQuery(): void {
+    this.query.set('');
   }
 
   go(path: string): void {
