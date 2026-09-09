@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { NotificationFeedService, type NotificationFeedItemResponse } from '../../../core/services';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 /**
@@ -14,7 +15,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 @Component({
   selector: 'app-buyer-notifications',
   standalone: true,
-  imports: [RouterLink, PageHeroComponent, EmptyStateComponent, TimeAgoPipe],
+  imports: [RouterLink, PageHeroComponent, EmptyStateComponent, IconComponent, TimeAgoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notifications.page.html',
   styleUrl: './notifications.page.scss',

@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService, CatalogService } from '../../../core/services';
+import { IconComponent } from '../icon/icon.component';
 
 /**
  * F-09 (N-05): "report this document".
@@ -17,7 +19,7 @@ import { AuthService, CatalogService } from '../../../core/services';
 @Component({
   selector: 'app-report-document',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NzModalModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './report-document.component.html',
 })

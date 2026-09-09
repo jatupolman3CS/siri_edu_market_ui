@@ -21,19 +21,44 @@
         <li>
           <button
             type="button"
-            class="w-full text-left card-soft p-4 flex items-start gap-3 transition-colors"
-            [class.bg-pink-50]="!item.isRead"
+            class="w-full text-left card-soft p-4 md:p-5 flex items-start gap-4 transition-all hover:shadow-pop hover:-translate-y-0.5 group"
+            [class.bg-gradient-to-r]="!item.isRead"
+            [class.from-pink-50/70]="!item.isRead"
+            [class.to-white]="!item.isRead"
+            [class.border-pink-200]="!item.isRead"
             (click)="onItemClick(item)"
           >
-            @if (!item.isRead) {
-              <span class="mt-1.5 w-2.5 h-2.5 rounded-full bg-pink-500 flex-shrink-0"></span>
-            }
+            <div
+              class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+              [class]="!item.isRead ? 'bg-pink-500 text-white shadow-soft' : 'bg-pink-100 text-pink-500'"
+            >
+              <app-icon name="bell" [size]="18" />
+            </div>
+
             <div class="min-w-0 flex-1">
-              <p class="text-sm text-ink" [class.font-semibold]="!item.isRead">
-                {{ item.title }}
-              </p>
-              <p class="text-sm text-ink-muted mt-0.5">{{ item.body }}</p>
-              <p class="text-xs text-ink-muted mt-1">{{ item.createdAt | timeAgo }}</p>
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-sm md:text-base text-ink leading-snug" [class.font-bold]="!item.isRead" [class.font-semibold]="item.isRead">
+                  {{ item.title }}
+                </p>
+                @if (!item.isRead) {
+                  <span class="pill-pink text-[10px] !py-0.5 !px-2 flex-shrink-0">
+                    ใหม่
+                  </span>
+                }
+              </div>
+
+              <p class="text-xs md:text-sm text-ink-soft mt-1 leading-relaxed">{{ item.body }}</p>
+
+              <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-line/50">
+                <span class="text-xs text-ink-muted flex items-center gap-1">
+                  {{ item.createdAt | timeAgo }}
+                </span>
+
+                <span class="text-xs font-semibold text-pink-600 inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                  ดูรายละเอียด
+                  <app-icon name="arrow-right" [size]="12" />
+                </span>
+              </div>
             </div>
           </button>
         </li>
@@ -41,14 +66,14 @@
     </ul>
 
     @if (hasMore()) {
-      <div class="flex justify-center mt-6">
+      <div class="flex justify-center mt-8">
         <button
           type="button"
-          class="btn-pink"
+          class="btn-pink shadow-soft hover:shadow-pop transition-all"
           (click)="loadMore()"
           [disabled]="feed.loading()"
         >
-          โหลดเพิ่มเติม
+          {{ feed.loading() ? 'กำลังโหลด…' : 'โหลดเพิ่มเติม' }}
         </button>
       </div>
     }

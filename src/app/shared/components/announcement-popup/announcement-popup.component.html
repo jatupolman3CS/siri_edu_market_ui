@@ -1,22 +1,34 @@
 <nz-modal
   [nzVisible]="isModalVisible()"
-  [nzTitle]="popup.current()?.title"
-  [nzFooter]="null"
+  [nzTitle]="modalTitle"
+  [nzFooter]="modalFooter"
   [nzWidth]="'min(90vw, 560px)'"
+  [nzCentered]="true"
   (nzOnCancel)="closeCurrent()"
   (nzAfterClose)="onModalAfterClose()"
 >
+  <ng-template #modalTitle>
+    <div class="flex items-center gap-2.5">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0">
+        <app-icon name="sparkle" [size]="16" />
+      </span>
+      <span class="font-bold text-ink text-base md:text-lg truncate">
+        {{ popup.current()?.title || 'ประกาศข่าวสาร' }}
+      </span>
+    </div>
+  </ng-template>
+
   <ng-container *nzModalContent>
     @if (popup.current(); as announcement) {
       <div class="flex flex-col gap-4">
-        <div class="relative">
+        <div class="relative overflow-hidden rounded-2xl bg-pink-50 border border-line">
           @for (image of announcement.images; track image.id; let i = $index) {
             @if (i === currentImageIndex()) {
               <img
                 appImgFallback
                 [src]="image.imageUrl"
                 [alt]="image.altText || fallbackAlt(image, i)"
-                class="w-full aspect-[4/3] object-cover rounded-2xl transition-opacity duration-200"
+                class="w-full aspect-[4/3] object-cover transition-opacity duration-200"
                 [class.cursor-pointer]="!!image.linkUrl"
                 (click)="onImageClick(image)"
               />
@@ -24,9 +36,15 @@
           }
 
           @if (announcement.images.length > 1) {
+            <!-- Slide count badge -->
+            <span class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[11px] font-medium select-none z-10">
+              {{ currentImageIndex() + 1 }} / {{ announcement.images.length }}
+            </span>
+
+            <!-- Navigation buttons -->
             <button
               type="button"
-              class="btn-icon absolute top-1/2 left-2 -translate-y-1/2 z-10 !border-0 !bg-white/90 shadow-soft"
+              class="absolute top-1/2 left-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
               aria-label="รูปก่อนหน้า"
               (click)="prevImage()"
             >
@@ -34,21 +52,22 @@
             </button>
             <button
               type="button"
-              class="btn-icon absolute top-1/2 right-2 -translate-y-1/2 z-10 !border-0 !bg-white/90 shadow-soft"
+              class="absolute top-1/2 right-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
               aria-label="รูปถัดไป"
               (click)="nextImage()"
             >
               <app-icon name="arrow-right" [size]="16" />
             </button>
 
-            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+            <!-- Indicators -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/35 backdrop-blur-sm">
               @for (image of announcement.images; track image.id; let i = $index) {
                 <button
                   type="button"
                   [class]="
                     i === currentImageIndex()
-                      ? 'h-2 w-2 rounded-full bg-white transition-colors'
-                      : 'h-2 w-2 rounded-full bg-white/60 transition-colors'
+                      ? 'h-2 w-5 rounded-full bg-white transition-all duration-200'
+                      : 'h-2 w-2 rounded-full bg-white/50 hover:bg-white/80 transition-all duration-200'
                   "
                   [attr.aria-label]="'ไปที่รูปที่ ' + (i + 1)"
                   [attr.aria-current]="i === currentImageIndex() ? 'true' : null"
@@ -58,17 +77,43 @@
             </div>
           }
         </div>
+      </div>
+    }
+  </ng-container>
 
-        <label class="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
+  <ng-template #modalFooter>
+    @if (popup.current(); as announcement) {
+      <div class="w-full flex items-center justify-between gap-3">
+        <label class="inline-flex items-center gap-2 text-xs md:text-sm text-ink-soft hover:text-ink cursor-pointer select-none">
           <input
             type="checkbox"
             [checked]="dontShowAgainChecked()"
             (change)="toggleDontShowAgain($any($event.target).checked)"
-            class="w-4 h-4 accent-pink-500"
+            class="w-4 h-4 rounded border-line text-pink-500 focus:ring-pink-300 accent-pink-500 cursor-pointer"
           />
-          ไม่ต้องแสดงอีก
+          <span>ไม่ต้องแสดงอีก</span>
         </label>
+
+        <div class="flex items-center gap-2">
+          @if (announcement.images[currentImageIndex()]?.linkUrl) {
+            <button
+              type="button"
+              class="btn-pink !py-2 !px-4 text-xs md:text-sm"
+              (click)="onImageClick(announcement.images[currentImageIndex()])"
+            >
+              ดูรายละเอียด
+              <app-icon name="arrow-right" [size]="14" />
+            </button>
+          }
+          <button
+            type="button"
+            class="btn-ghost !py-2 !px-4 text-xs md:text-sm"
+            (click)="closeCurrent()"
+          >
+            ปิด
+          </button>
+        </div>
       </div>
     }
-  </ng-container>
+  </ng-template>
 </nz-modal>

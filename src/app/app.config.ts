@@ -17,6 +17,7 @@ import { registerLocaleData } from '@angular/common';
 import en from '@angular/common/locales/en';
 import th from '@angular/common/locales/th';
 import { th_TH, provideNzI18n } from 'ng-zorro-antd/i18n';
+import { provideNzConfig } from 'ng-zorro-antd/core/config';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { FormsModule } from '@angular/forms';
 
@@ -47,6 +48,23 @@ export const appConfig: ApplicationConfig = {
     // DEV-BYPASS: enters the app as a seeded account while sign-in is unfinished. Inert in production.
     provideDevAuthBypass(),
     provideNzI18n(th_TH),
+    provideNzConfig({
+      message: {
+        nzTop: 24,
+        nzDuration: 3200,
+        nzMaxStack: 4,
+        nzPauseOnHover: true,
+      },
+      notification: {
+        nzTop: 24,
+        nzDuration: 4000,
+        nzPlacement: 'topRight',
+        nzPauseOnHover: true,
+      },
+      modal: {
+        nzMaskClosable: true,
+      },
+    }),
     { provide: LOCALE_ID, useValue: 'th-TH' },
     importProvidersFrom(FormsModule, NzIconModule),
   ],

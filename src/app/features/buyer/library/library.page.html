@@ -225,52 +225,70 @@
       }
     </div>
 
-<!-- Review Modal -->
+<!-- Review Modal (Standardized System Popup) -->
 @if (reviewModal(); as modal) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" (click)="closeReviewModal()">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold text-ink">เขียนรีวิว</h3>
-        <button class="text-ink-muted hover:text-ink" (click)="closeReviewModal()">
-          <app-icon name="x" [size]="20" />
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(42,27,34,0.45)] backdrop-blur-md" (click)="closeReviewModal()">
+    <div class="card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line overflow-hidden animate-in fade-in zoom-in-95 duration-150" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3.5 border-b border-line mb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0">
+            <app-icon name="star" [size]="16" />
+          </span>
+          <h3 class="text-base md:text-lg font-bold text-ink">เขียนรีวิวเอกสาร</h3>
+        </div>
+        <button class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft hover:text-pink-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" aria-label="ปิด">
+          <app-icon name="close" [size]="14" />
         </button>
       </div>
 
-      <p class="text-sm text-ink-soft mb-4 line-clamp-2">{{ modal.title }}</p>
+      <div class="p-3 bg-pink-50/70 rounded-2xl border border-pink-100 mb-4">
+        <p class="text-[11px] font-medium text-ink-muted mb-0.5">เอกสารที่คุณกำลังรีวิว:</p>
+        <p class="text-sm font-semibold text-ink line-clamp-2">{{ modal.title }}</p>
+      </div>
 
       @if (library.reviewState(); as rs) {
         @if (rs.status === 'success') {
-          <div class="text-center py-8">
-            <span class="text-4xl">🎉</span>
-            <p class="text-lg font-semibold text-emerald-600 mt-2">{{ rs.message ?? 'รีวิวสำเร็จ!' }}</p>
+          <div class="text-center py-6">
+            <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">
+              ✓
+            </div>
+            <p class="text-base font-bold text-emerald-700">{{ rs.message ?? 'รีวิวสำเร็จ!' }}</p>
+            <p class="text-xs text-ink-muted mt-1">ขอบคุณสำหรับความคิดเห็นของคุณ</p>
+            <button type="button" class="btn-pink mt-5 !py-2 !px-6 text-sm" (click)="closeReviewModal()">
+              ปิดหน้าต่าง
+            </button>
           </div>
         } @else {
         <form (ngSubmit)="submitReview()">
           <!-- Rating -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-ink mb-2">ให้คะแนน</label>
-            <div class="flex gap-1">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <button
-                  type="button"
-                  class="text-2xl transition-transform hover:scale-110"
-                  [class.text-yellow-400]="star <= reviewForm().rating"
-                  [class.text-gray-300]="star > reviewForm().rating"
-                  (click)="setRating(star)"
-                >
-                  ★
-                </button>
-              }
+            <label class="block text-xs font-semibold text-ink-soft mb-2">ให้คะแนนความพึงพอใจ</label>
+            <div class="flex items-center justify-between p-3 bg-pink-50/50 rounded-2xl border border-line">
+              <div class="flex gap-1.5">
+                @for (star of [1, 2, 3, 4, 5]; track star) {
+                  <button
+                    type="button"
+                    class="text-2xl transition-transform hover:scale-125 focus:outline-none select-none"
+                    [class.text-amber-400]="star <= reviewForm().rating"
+                    [class.text-stone-300]="star > reviewForm().rating"
+                    (click)="setRating(star)"
+                    [title]="star + ' ดาว'"
+                  >
+                    ★
+                  </button>
+                }
+              </div>
+              <span class="text-xs font-bold text-pink-600 bg-pink-100 px-2.5 py-1 rounded-full">{{ reviewForm().rating }} / 5 ดาว</span>
             </div>
           </div>
 
           <!-- Comment -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-ink mb-2">ความคิดเห็น</label>
+            <label class="block text-xs font-semibold text-ink-soft mb-1.5">ความคิดเห็นของคุณ</label>
             <textarea
-              class="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+              class="input-soft resize-none text-sm"
               rows="4"
-              placeholder="แชร์ประสบการณ์การใช้เอกสารนี้..."
+              placeholder="แชร์ประสบการณ์การใช้เอกสารนี้ เช่น คุณภาพเนื้อหา เข้าใจง่าย นำไปสอนได้จริง..."
               [ngModel]="reviewForm().comment"
               (ngModelChange)="reviewForm.update(f => ({ ...f, comment: $event }))"
               name="comment"
@@ -279,20 +297,23 @@
           </div>
 
           @if (rs.status === 'error') {
-            <p class="text-sm text-red-500 mb-4">{{ rs.message }}</p>
+            <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600 mb-4 flex items-center gap-2">
+              <app-icon name="close" [size]="14" />
+              <span>{{ rs.message }}</span>
+            </div>
           }
 
-          <div class="flex gap-3">
-            <button type="button" class="btn-ghost flex-1" (click)="closeReviewModal()">
+          <div class="flex gap-2.5 pt-3 border-t border-line">
+            <button type="button" class="btn-ghost flex-1 !py-2.5 text-sm" (click)="closeReviewModal()">
               ยกเลิก
             </button>
             <button
               type="submit"
-              class="btn-pink flex-1"
+              class="btn-pink flex-1 !py-2.5 text-sm"
               [disabled]="rs.status === 'loading' || !reviewForm().comment.trim()"
             >
               @if (rs.status === 'loading') {
-                <span class="animate-spin">⏳</span>
+                <span>กำลังส่ง…</span>
               } @else {
                 ส่งรีวิว
               }

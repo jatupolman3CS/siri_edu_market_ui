@@ -207,9 +207,309 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   border-radius: 2rem 0 0 2rem !important;
 }
 
+/* ---------------- Modals & Popups (Standardized System Popups) ---------------- */
+.ant-modal-mask {
+  background: rgba(42, 27, 34, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.ant-modal {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', system-ui, sans-serif !important;
+}
+
 .ant-modal-content {
-  border-radius: 2rem !important;
+  border-radius: 1.75rem !important;
+  background: #ffffff !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 24px 60px -12px rgba(42, 27, 34, 0.22), 0 4px 16px -4px rgba(42, 27, 34, 0.08) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.ant-modal-header {
+  background: #ffffff !important;
+  padding: 1.25rem 1.5rem 1rem 1.5rem !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 1.75rem 1.75rem 0 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.ant-modal-title {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  font-family: inherit !important;
+  line-height: 1.4 !important;
+}
+
+.ant-modal-close {
+  top: 1rem !important;
+  right: 1.25rem !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  border-radius: 9999px !important;
+  background: var(--pink-50) !important;
+  border: 1px solid var(--line) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--ink-soft) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ant-modal-close:hover {
+  background: var(--pink-100) !important;
+  color: var(--pink-600) !important;
+  transform: scale(1.06) !important;
+}
+
+.ant-modal-close:active {
+  transform: scale(0.95) !important;
+}
+
+.ant-modal-close-x {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  width: 100% !important;
+  height: 100% !important;
+  line-height: 1 !important;
+}
+
+.ant-modal-body {
   padding: 1.5rem !important;
+  color: var(--ink-soft) !important;
+  font-size: 0.925rem !important;
+}
+
+.ant-modal-footer {
+  background: var(--pink-50) !important;
+  padding: 1rem 1.5rem !important;
+  border-top: 1px solid var(--line) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+  border-radius: 0 0 1.75rem 1.75rem !important;
+  margin-top: 0 !important;
+}
+
+/* Modal Confirm & Alert Dialogs (Delete/Confirm/Warning Popups) */
+.ant-modal-confirm .ant-modal-content {
+  padding: 1.75rem !important;
+}
+
+.ant-modal-confirm .ant-modal-body {
+  padding: 0 !important;
+}
+
+.ant-modal-confirm-body {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 1.15rem !important;
+}
+
+.ant-modal-confirm-body > .anticon {
+  font-size: 22px !important;
+  margin-right: 0 !important;
+  flex-shrink: 0 !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ant-modal-confirm-confirm .ant-modal-confirm-body > .anticon-question-circle,
+.ant-modal-confirm-warning .ant-modal-confirm-body > .anticon-exclamation-circle {
+  background: #FFFBEB !important;
+  color: #D97706 !important;
+  border: 1px solid #FDE68A !important;
+}
+
+.ant-modal-confirm-error .ant-modal-confirm-body > .anticon-close-circle {
+  background: #FFF1F2 !important;
+  color: #E11D48 !important;
+  border: 1px solid #FECDD3 !important;
+}
+
+.ant-modal-confirm-success .ant-modal-confirm-body > .anticon-check-circle {
+  background: #ECFDF5 !important;
+  color: #059669 !important;
+  border: 1px solid #A7F3D0 !important;
+}
+
+.ant-modal-confirm-info .ant-modal-confirm-body > .anticon-info-circle {
+  background: var(--pink-50) !important;
+  color: var(--pink-600) !important;
+  border: 1px solid var(--pink-200) !important;
+}
+
+.ant-modal-confirm-body .ant-modal-confirm-title {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+}
+
+.ant-modal-confirm-body .ant-modal-confirm-content {
+  font-size: 0.925rem !important;
+  color: var(--ink-soft) !important;
+  margin-top: 0.5rem !important;
+  line-height: 1.6 !important;
+}
+
+.ant-modal-confirm-btns {
+  margin-top: 1.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+  float: none !important;
+}
+
+.ant-modal-confirm-btns .ant-btn {
+  min-height: 40px !important;
+  padding: 0 1.25rem !important;
+  font-size: 0.875rem !important;
+}
+
+.ant-btn-dangerous,
+.ant-btn-primary.ant-btn-dangerous {
+  background: #E11D48 !important;
+  border-color: #E11D48 !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 16px -2px rgba(225, 29, 72, 0.35) !important;
+}
+
+.ant-btn-dangerous:hover,
+.ant-btn-primary.ant-btn-dangerous:hover {
+  background: #BE123C !important;
+  border-color: #BE123C !important;
+  color: #ffffff !important;
+}
+
+/* ---------------- Notifications & Alerts Redesign ---------------- */
+/* Floating Toast Message (NzMessageService) */
+.ant-message {
+  top: 24px !important;
+  pointer-events: none !important;
+  z-index: 2050 !important;
+}
+
+.ant-message-notice {
+  padding: 6px 0 !important;
+  text-align: center !important;
+}
+
+.ant-message-notice-content {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 0.75rem 1.4rem !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: 9999px !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 16px 36px -6px rgba(42, 27, 34, 0.14), 0 4px 12px -2px rgba(42, 27, 34, 0.06) !important;
+  pointer-events: auto !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.ant-message-custom-content {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+}
+
+.ant-message-custom-content .anticon {
+  font-size: 1.15rem !important;
+  margin-right: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 9999px !important;
+}
+
+/* Toast Color Accents */
+.ant-message-success .anticon {
+  color: #059669 !important;
+  background: #ECFDF5 !important;
+}
+
+.ant-message-error .anticon {
+  color: #E11D48 !important;
+  background: #FFF1F2 !important;
+}
+
+.ant-message-warning .anticon {
+  color: #D97706 !important;
+  background: #FFFBEB !important;
+}
+
+.ant-message-info .anticon {
+  color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+}
+
+.ant-message-loading .anticon {
+  color: var(--pink-500) !important;
+  background: var(--pink-50) !important;
+}
+
+/* Floating Rich Notification Card (NzNotificationService) */
+.ant-notification {
+  top: 24px !important;
+  right: 24px !important;
+  z-index: 2050 !important;
+}
+
+.ant-notification-notice {
+  border-radius: 1.5rem !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 20px 48px -8px rgba(42, 27, 34, 0.16), 0 4px 14px -2px rgba(42, 27, 34, 0.06) !important;
+  padding: 1.25rem 1.5rem !important;
+  margin-bottom: 1rem !important;
+  overflow: hidden !important;
+}
+
+.ant-notification-notice-message {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.ant-notification-notice-description {
+  font-size: 0.875rem !important;
+  color: var(--ink-soft) !important;
+  line-height: 1.55 !important;
+}
+
+.ant-notification-notice-close {
+  top: 1rem !important;
+  right: 1.25rem !important;
+  color: var(--ink-muted) !important;
+  transition: color 0.2s ease !important;
+}
+
+.ant-notification-notice-close:hover {
+  color: var(--pink-600) !important;
 }
 
 .ant-table {
