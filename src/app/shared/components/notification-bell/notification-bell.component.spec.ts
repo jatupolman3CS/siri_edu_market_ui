@@ -115,4 +115,20 @@ describe('NotificationBellComponent', () => {
     ) as HTMLElement;
     expect(trigger.querySelector('span.bg-pink-500')).toBeNull();
   });
+
+  it('renders topbar variant with text and badge when unreadCount > 0', () => {
+    const { fixture, feed } = buildFixture();
+    fixture.componentRef.setInput('variant', 'topbar');
+    feed.setUnreadCountForTest(3);
+    fixture.detectChanges();
+
+    const trigger = (fixture.nativeElement as HTMLElement).querySelector(
+      'button[nz-dropdown]',
+    ) as HTMLElement;
+    expect(trigger).toBeTruthy();
+    expect(trigger.textContent).toContain('การแจ้งเตือน');
+    const badge = trigger.querySelector('span.bg-pink-500');
+    expect(badge?.textContent?.trim()).toBe('3');
+  });
 });
+

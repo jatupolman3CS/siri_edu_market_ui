@@ -175,5 +175,16 @@ describe('AppHeaderComponent search submission', () => {
     fixture.componentInstance.clearQuery();
     expect(fixture.componentInstance.query()).toBe('');
   });
+
+  it('subnavItems excludes /free and /categories for the desktop left nav', () => {
+    const fixture = render();
+    const hrefs = fixture.componentInstance.subnavItems().map((i) => i.href);
+    expect(hrefs).not.toContain('/free');
+    expect(hrefs).not.toContain('/categories');
+    expect(hrefs).toContain('/');
+    expect(hrefs).toContain('/marketplace');
+    expect(hrefs).toContain('/bundles');
+  });
 });
+
 

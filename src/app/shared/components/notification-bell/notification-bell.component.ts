@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
@@ -31,6 +31,9 @@ export class NotificationBellComponent {
   readonly feed = inject(NotificationFeedService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+
+  /** Presentation variant: 'icon' (default standalone bell button) or 'topbar' (inline text link with badge) */
+  readonly variant = input<'icon' | 'topbar'>('icon');
 
   /** Latest preview items only — full history lives at /notifications without being wiped by the bell. */
   readonly previewItems = computed(() => {

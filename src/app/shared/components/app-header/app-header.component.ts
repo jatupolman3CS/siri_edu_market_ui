@@ -159,6 +159,14 @@ export class AppHeaderComponent {
     return items;
   });
 
+  /**
+   * Sub-nav items displayed on desktop left side:
+   * excludes 'free' (which is highlighted on the right side) and 'categories' (has its own dedicated button).
+   */
+  readonly subnavItems = computed(() =>
+    this.navItems().filter((item) => item.href !== '/free' && item.href !== '/categories'),
+  );
+
   firstName(full: string): string {
     return full.split(' ')[0];
   }
