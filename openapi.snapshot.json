@@ -10,6 +10,60 @@
     }
   ],
   "paths": {
+    "/api/admin/subscriptions": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminSubscriptionListItemResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminSubscriptionListItemResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminSubscriptionListItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/orders/{orderId}/refund": {
       "post": {
         "tags": [
@@ -7212,6 +7266,318 @@
         }
       }
     },
+    "/api/me/subscription": {
+      "post": {
+        "tags": [
+          "Me"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionMembershipRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionMembershipRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionMembershipRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/subscription/cancel": {
+      "post": {
+        "tags": [
+          "Me"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/subscription/access-history": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSubscriptionAccessHistoryItemResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSubscriptionAccessHistoryItemResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSubscriptionAccessHistoryItemResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications/settings": {
       "get": {
         "tags": [
@@ -12415,6 +12781,46 @@
       "AdminSellersSort": {
         "type": "integer"
       },
+      "AdminSubscriptionListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "buyerName": {
+            "type": "string"
+          },
+          "buyerEmail": {
+            "type": "string"
+          },
+          "categoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "monthlyPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "currentPeriodStart": {
+            "type": "string"
+          },
+          "currentPeriodEnd": {
+            "type": "string"
+          },
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        }
+      },
       "AdminTransactionResponse": {
         "type": "object",
         "properties": {
@@ -12895,6 +13301,11 @@
           "subcategoryCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "subscriptionMonthlyPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -12996,6 +13407,11 @@
           "sortOrder": {
             "type": "integer",
             "format": "int32"
+          },
+          "subscriptionMonthlyPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -13152,6 +13568,21 @@
           "sortOrder": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "CreateSubscriptionMembershipRequest": {
+        "required": [
+          "categoryIds"
+        ],
+        "type": "object",
+        "properties": {
+          "categoryIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -13870,6 +14301,9 @@
           "soldThisMonthCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "isAccessibleViaActiveSubscription": {
+            "type": "boolean"
           }
         }
       },
@@ -14379,6 +14813,33 @@
           }
         }
       },
+      "PagedResponseOfAdminSubscriptionListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSubscriptionListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PagedResponseOfAdminTransactionResponse": {
         "type": "object",
         "properties": {
@@ -14710,6 +15171,33 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SellerReviewResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfSubscriptionAccessHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionAccessHistoryItemResponse"
             }
           },
           "page": {
@@ -15853,6 +16341,10 @@
           "nextPayoutDate": {
             "type": "string",
             "nullable": true
+          },
+          "subscriptionNetLifetime": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -16507,6 +16999,99 @@
           }
         }
       },
+      "SubscriptionAccessHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "type": "string"
+          },
+          "sellerName": {
+            "type": "string"
+          },
+          "firstAccessedAt": {
+            "type": "string"
+          },
+          "lastAccessedAt": {
+            "type": "string"
+          },
+          "accessCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stillAccessible": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SubscriptionPaymentHintsResponse": {
+        "type": "object",
+        "properties": {
+          "stripeSubscriptionId": {
+            "type": "string"
+          },
+          "clientSecret": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "awaitingWebhook": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SubscriptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "categoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "monthlyPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "currentPeriodStart": {
+            "type": "string"
+          },
+          "currentPeriodEnd": {
+            "type": "string"
+          },
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          },
+          "canceledAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentHints": {
+            "type": "object",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionPaymentHintsResponse"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
       "SystemConfigJobToggleItem": {
         "required": [
           "jobKey"
@@ -16664,6 +17249,11 @@
           "sortOrder": {
             "type": "integer",
             "format": "int32"
+          },
+          "subscriptionMonthlyPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },

@@ -1,0 +1,104 @@
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <header class="mb-6">
+    <h1 class="text-3xl font-extrabold text-ink mb-1">สมัครสมาชิกรายเดือน</h1>
+    <p class="text-sm text-ink-soft">
+      เลือกหมวดหมู่ที่ต้องการ แล้วดาวน์โหลดเอกสารในหมวดที่เลือกได้ไม่จำกัดตลอดรอบบิล
+    </p>
+  </header>
+
+  <div class="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
+    <section class="card-soft p-6">
+      <h2 class="text-base font-bold text-ink mb-4">เลือกหมวดหมู่ที่ต้องการ</h2>
+
+      @if (catalog.categories().length === 0) {
+        <p class="text-sm text-ink-muted">กำลังโหลดหมวดหมู่…</p>
+      } @else {
+        <ul class="divide-y divide-line">
+          @for (c of eligibleCategories(); track c.id) {
+            <li class="py-3 flex items-center justify-between gap-3">
+              <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  class="w-5 h-5 accent-pink-500 rounded shrink-0"
+                  [checked]="isSelected(c.id)"
+                  (change)="toggleCategory(c.id)"
+                />
+                <span class="text-xl shrink-0">{{ c.icon }}</span>
+                <span class="text-sm font-semibold text-ink truncate">{{ c.name }}</span>
+              </label>
+              <span class="text-sm font-bold text-pink-600 whitespace-nowrap">
+                {{ c.subscriptionMonthlyPrice | thb }}/เดือน
+              </span>
+            </li>
+          } @empty {
+            <li class="py-6 text-sm text-ink-muted text-center">
+              ยังไม่มีหมวดหมู่ที่เปิดให้สมัครสมาชิกในตอนนี้
+            </li>
+          }
+        </ul>
+
+        @if (ineligibleCategories().length > 0) {
+          <div class="mt-4 pt-4 border-t border-line">
+            <p class="text-xs font-semibold text-ink-muted mb-2">หมวดที่ยังไม่เปิดให้สมัครสมาชิก</p>
+            <ul class="flex flex-wrap gap-2">
+              @for (c of ineligibleCategories(); track c.id) {
+                <li class="pill-soft text-xs opacity-70">{{ c.name }}</li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </section>
+
+    <aside>
+      <div class="card-soft p-6 lg:sticky lg:top-[88px]">
+        <h2 class="text-base font-bold text-ink mb-4">สรุปการสมัครสมาชิก</h2>
+
+        <p class="text-sm text-ink-soft mb-1">ราคารวม {{ totalPrice() | thb: false }} บาท/เดือน</p>
+        <p class="text-xs text-ink-muted mb-5">{{ selectedCategoryIds().length }} หมวดหมู่ที่เลือก</p>
+
+        @if (!hasSavedCard()) {
+          <div
+            class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed mb-4"
+          >
+            <p class="font-bold mb-1">กรุณาเพิ่มบัตรเครดิต/เดบิตก่อนสมัครสมาชิก</p>
+            <a [routerLink]="['/account']" fragment="cards" class="text-pink-600 font-semibold underline">
+              ไปเพิ่มบัตร
+            </a>
+          </div>
+        }
+
+        @if (paymentFailed()) {
+          <div
+            class="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-relaxed mb-4"
+          >
+            <p class="font-bold mb-1">ยืนยันการชำระเงินไม่สำเร็จ</p>
+            <p>คุณสมัครสมาชิกไว้แล้ว แต่การชำระเงินยังไม่เสร็จสมบูรณ์ กรุณาลองยืนยันการชำระเงินอีกครั้ง</p>
+          </div>
+        }
+
+        @if (pendingClientSecret()) {
+          <button
+            type="button"
+            class="btn-pink w-full !py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="confirmingPayment()"
+            (click)="retryPayment()"
+          >
+            <app-icon name="lock" [size]="16" />
+            {{ confirmingPayment() ? 'กำลังยืนยันการชำระเงิน…' : 'ลองยืนยันการชำระเงินอีกครั้ง' }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn-pink w-full !py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="!canSubmit()"
+            (click)="subscribe()"
+          >
+            <app-icon name="lock" [size]="16" />
+            {{ submitting() ? (confirmingPayment() ? 'กำลังยืนยันการชำระเงิน…' : 'กำลังสมัคร…') : 'สมัครสมาชิกรายเดือน' }}
+          </button>
+        }
+      </div>
+    </aside>
+  </div>
+</div>

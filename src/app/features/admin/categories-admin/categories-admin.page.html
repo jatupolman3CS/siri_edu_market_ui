@@ -11,13 +11,14 @@
       </header>
 
       <div class="card-soft table-scroll overflow-x-auto pb-2">
-        <table class="w-full min-w-[640px]">
+        <table class="w-full min-w-[760px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-5 py-3 font-semibold">ชื่อหมวด</th>
               <th class="px-5 py-3 font-semibold">Slug</th>
               <th class="px-5 py-3 font-semibold">คำอธิบาย</th>
               <th class="px-5 py-3 font-semibold text-right">เอกสาร</th>
+              <th class="px-5 py-3 font-semibold text-right">ราคาสมาชิก/เดือน</th>
               <th class="px-5 py-3"></th>
             </tr>
           </thead>
@@ -45,6 +46,13 @@
                 <td class="px-5 py-3 text-sm font-bold text-ink text-right whitespace-nowrap">
                   {{ c.documentCount | compact }}
                 </td>
+                <td class="px-5 py-3 text-sm text-right whitespace-nowrap">
+                  @if (c.subscriptionMonthlyPrice != null) {
+                    <span class="font-bold text-ink">{{ c.subscriptionMonthlyPrice | thb }}</span>
+                  } @else {
+                    <span class="text-ink-muted">ยังไม่เปิด</span>
+                  }
+                </td>
                 <td class="px-5 py-3">
                   <div class="flex items-center gap-1 justify-end">
                     <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="editCategory(c)">
@@ -59,7 +67,7 @@
 
               @if (expandedCategoryId() === c.id) {
                 <tr class="bg-pink-50/30 border-t border-line">
-                  <td colspan="5" class="px-5 py-4">
+                  <td colspan="6" class="px-5 py-4">
                     <div class="flex items-center justify-between mb-3">
                       <h3 class="text-sm font-bold text-ink">หมวดย่อย</h3>
                       <button type="button" class="btn-pink !py-1.5 !px-4 text-xs" (click)="openCreateSubcategory(c)">

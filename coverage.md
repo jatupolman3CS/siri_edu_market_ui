@@ -1,10 +1,10 @@
 # Endpoint coverage report
 
-- backend endpoints parsed: **177**
-- SDK functions exported: **176**
-- SDK functions imported by app code: **176**
+- backend endpoints parsed: **182**
+- SDK functions exported: **182**
+- SDK functions imported by app code: **182**
 - orphan frontend (SDK -> no backend route match): **1**
-- orphan backend (route -> no SDK call): **2**
+- orphan backend (route -> no SDK call): **1**
 - unused SDK exports (defined but never imported): **0**
 
 ## Orphan frontend
@@ -14,7 +14,6 @@
 ## Orphan backend
 
 - PUT `api/exam-hub/api/admin/exam-hub/{examType}` (ExamHubController.cs)
-- POST `api/marketplace/documents/{id:guid}/view` (MarketplaceController.cs)
 
 ## Unused SDK exports
 

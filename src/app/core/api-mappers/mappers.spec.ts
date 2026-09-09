@@ -356,6 +356,32 @@ describe('mapDocumentDetail — FAQ fields (document-faq-tab v1.1)', () => {
   });
 });
 
+/**
+ * subscription-membership v2 §3.7 (round 1 stub — awaiting SDK regen):
+ * `MarketplaceDocumentDetailResponse.isAccessibleViaActiveSubscription`.
+ */
+describe('mapDocumentDetail — isAccessibleViaActiveSubscription (subscription-membership v2)', () => {
+  const base: MarketplaceDocumentDetailResponse = {
+    id: 'doc-1',
+    title: 'สรุปคณิต ม.6',
+  };
+
+  it('defaults to false when the backend response omits the field (round 1, not wired yet)', () => {
+    const mapped = mapDocumentDetail(base);
+
+    expect(mapped.isAccessibleViaActiveSubscription).toBe(false);
+  });
+
+  it('carries the real value through once the backend sends it', () => {
+    const mapped = mapDocumentDetail({
+      ...base,
+      ...({ isAccessibleViaActiveSubscription: true } as Partial<MarketplaceDocumentDetailResponse>),
+    });
+
+    expect(mapped.isAccessibleViaActiveSubscription).toBe(true);
+  });
+});
+
 describe('mapSellerQna (document-faq-tab v1 §3.3)', () => {
   const raw: SellerQnaResponse = {
     id: 'q-1',
@@ -447,6 +473,37 @@ describe('mapCategory (real-data-stats v1 §3.1 — subcategoryCount)', () => {
     const category = mapCategory(base);
 
     expect(category.subcategoryCount).toBeUndefined();
+  });
+});
+
+/**
+ * subscription-membership v2 §3.1 (round 1 stub — awaiting SDK regen):
+ * `CategoryResponse.subscriptionMonthlyPrice`.
+ */
+describe('mapCategory (subscription-membership v2 §3.1 — subscriptionMonthlyPrice)', () => {
+  const base: CategoryResponse = {
+    id: 'cat-1',
+    name: 'การศึกษา',
+    slug: 'education',
+    icon: '📚',
+    color: '#F9A8D4',
+    description: 'หมวดการศึกษา',
+    documentCount: 120,
+  };
+
+  it('reads subscriptionMonthlyPrice from the response once the backend sends it', () => {
+    const category = mapCategory({
+      ...base,
+      ...({ subscriptionMonthlyPrice: 199 } as Partial<CategoryResponse>),
+    });
+
+    expect(category.subscriptionMonthlyPrice).toBe(199);
+  });
+
+  it('defaults to null when the backend omits it (round 1, not wired yet)', () => {
+    const category = mapCategory(base);
+
+    expect(category.subscriptionMonthlyPrice).toBeNull();
   });
 });
 

@@ -783,3 +783,104 @@ describe('BuyerDocumentDetailPage — view-tracking entrySource wiring (seller-a
     expect(fakeCatalog.loadDocumentDetail).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * subscription-membership v2 §1 AC-24 / §4: buy-button area now has 3 states (was 2: buy /
+ * already-owned-download) — adds "ดาวน์โหลด (สิทธิ์สมาชิก)" when
+ * `isAccessibleViaActiveSubscription=true` and the buyer does not already own the document
+ * outright. Calls the SAME existing `POST /api/library/{id}/download` endpoint the free-download
+ * button already uses (`LibraryService.download`, already wired — no round-1 stub needed here).
+ */
+describe('BuyerDocumentDetailPage — three-state buy button (subscription-membership v2)', () => {
+  function renderDoc(
+    doc: DocumentItem,
+    opts: { owned?: boolean; authenticated?: boolean; routes?: Parameters<typeof provideRouter>[0] } = {},
+  ) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+    const libraryFake = {
+      library: () => (opts.owned ? [{ document: doc }] : []),
+      refreshLibraryOnce: vi.fn(async () => {}),
+      download: vi.fn(),
+    };
+    const authFake = {
+      isAuthenticated: () => opts.authenticated ?? true,
+      accessToken: () => (opts.authenticated ?? true ? 'token' : undefined),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter(opts.routes ?? []),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: authFake },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: libraryFake },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, libraryFake };
+  }
+
+  it('shows "ดาวน์โหลด (สิทธิ์สมาชิก)" when isAccessibleViaActiveSubscription=true and not owned', () => {
+    const doc = buildDoc({ isAccessibleViaActiveSubscription: true });
+    const { fixture } = renderDoc(doc, { owned: false });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ดาวน์โหลด (สิทธิ์สมาชิก)');
+    expect(text).not.toContain('เพิ่มลงตะกร้า');
+  });
+
+  it('prefers "อยู่ในคลังแล้ว" over the subscription state when the buyer already owns the document', () => {
+    const doc = buildDoc({ isAccessibleViaActiveSubscription: true });
+    const { fixture } = renderDoc(doc, { owned: true });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('อยู่ในคลังแล้ว');
+    expect(text).not.toContain('ดาวน์โหลด (สิทธิ์สมาชิก)');
+  });
+
+  it('falls back to the normal buy/add-to-cart state when isAccessibleViaActiveSubscription is false', () => {
+    const doc = buildDoc({ isAccessibleViaActiveSubscription: false });
+    const { fixture } = renderDoc(doc, { owned: false });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('เพิ่มลงตะกร้า');
+    expect(text).not.toContain('ดาวน์โหลด (สิทธิ์สมาชิก)');
+  });
+
+  it('clicking the subscription-download button calls the SAME LibraryService.download(id) the free-download path uses', () => {
+    const doc = buildDoc({ isAccessibleViaActiveSubscription: true });
+    const { fixture, libraryFake } = renderDoc(doc, { owned: false });
+
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('ดาวน์โหลด (สิทธิ์สมาชิก)'));
+    expect(button).toBeTruthy();
+    button?.dispatchEvent(new Event('click'));
+
+    expect(libraryFake.download).toHaveBeenCalledWith(doc.id);
+  });
+
+  it('redirects to login instead of downloading when not authenticated', () => {
+    const doc = buildDoc({ isAccessibleViaActiveSubscription: true });
+    // A real matching route for the redirect target, so `router.navigate(['/auth/login'], ...)`
+    // resolves instead of rejecting with NG04002 (unrelated to what this test verifies).
+    const { fixture, libraryFake } = renderDoc(doc, {
+      owned: false,
+      authenticated: false,
+      routes: [{ path: 'auth/login', children: [] }],
+    });
+
+    fixture.componentInstance.downloadViaSubscription();
+
+    expect(libraryFake.download).not.toHaveBeenCalled();
+  });
+});

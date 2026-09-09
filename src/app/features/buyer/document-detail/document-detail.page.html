@@ -544,6 +544,11 @@
                     <a routerLink="/library" class="btn-ghost !py-3.5">
                       ไปที่คลังของฉัน
                     </a>
+                  } @else if (accessibleViaSubscription()) {
+                    <button class="btn-pink !py-3.5 text-base" type="button" (click)="downloadViaSubscription()">
+                      <app-icon name="download" [size]="18" />
+                      ดาวน์โหลด (สิทธิ์สมาชิก)
+                    </button>
                   } @else {
                     <button type="button" class="btn-pink !py-3.5 text-base" (click)="cart.add(d)">
                       <app-icon name="cart" [size]="18" />

@@ -5,6 +5,7 @@
 
 import type {
   AdminPendingDocumentResponse,
+  AdminSubscriptionListItemResponse,
   AdminTransactionResponse,
   AnnouncementAdminResponse,
   AnnouncementImageResponse,
@@ -33,8 +34,12 @@ import type {
   StoreReadinessResponse,
   SubcategoryAdminResponse,
   SubcategoryResponse,
+  SubscriptionAccessHistoryItemResponse,
+  SubscriptionPaymentHintsResponse,
+  SubscriptionResponse,
 } from '../api';
 import type {
+  AdminSubscriptionListItem,
   AdminTransaction,
   AnnouncementAdmin,
   AnnouncementImage,
@@ -72,6 +77,10 @@ import type {
   StoreReadinessItem,
   Subcategory,
   SubcategoryAdmin,
+  Subscription,
+  SubscriptionAccessHistoryItem,
+  SubscriptionPaymentHints,
+  SubscriptionStatus,
 } from '../models';
 import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS, EXAM_COUNTDOWN_EXAM_TYPES } from '../models';
 import { resolvePublicUrl } from '../api-runtime';
@@ -178,6 +187,8 @@ export function mapCategory(c: CategoryResponse): Category {
     documentCount: c.documentCount ?? 0,
     // real-data-stats v1 §3.1: active subcategory count, computed server-side (1 query).
     subcategoryCount: c.subcategoryCount ?? undefined,
+    // subscription-membership v3 §3.1: monthly subscription price, `null` = not open yet.
+    subscriptionMonthlyPrice: c.subscriptionMonthlyPrice ?? null,
   };
 }
 
@@ -430,6 +441,9 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
     isFeatured: d.isFeatured,
     isEditorsPick: d.isEditorsPick,
     bundleDocumentIds: d.bundleIds ?? [],
+    // subscription-membership v3 §3.7: `true` only for a logged-in buyer with an active
+    // subscription covering this document — `false` for anonymous/every other case.
+    isAccessibleViaActiveSubscription: d.isAccessibleViaActiveSubscription ?? false,
   };
 }
 
@@ -1046,6 +1060,95 @@ export function mapLineConnectionStatus(d: LineConnectionStatusResponse): LineCo
     status,
     lineDisplayName: d.lineDisplayName ?? null,
     connectedAt: d.connectedAt ?? null,
+  };
+}
+
+/**
+ * subscription-membership v3 §3: `status` is a plain string on the wire on every subscription
+ * response (`SubscriptionResponse`/`AdminSubscriptionListItemResponse`, §3.2/§3.3/§3.4/§3.5), not
+ * an OpenAPI enum — validated against the 4 known values, falling back to `'incomplete'` for
+ * anything unexpected (the least-privileged status: it never implies active download access).
+ */
+const SUBSCRIPTION_STATUSES: readonly SubscriptionStatus[] = [
+  'incomplete',
+  'active',
+  'past_due',
+  'canceled',
+];
+
+function readSubscriptionStatus(status: string | null | undefined): SubscriptionStatus {
+  return (SUBSCRIPTION_STATUSES as readonly string[]).includes(status ?? '')
+    ? (status as SubscriptionStatus)
+    : 'incomplete';
+}
+
+/**
+ * subscription-membership v3 §3.3/§3.4/§3.5: `SubscriptionResponse.paymentHints` — only present
+ * right after `POST /api/me/subscription` or while still `incomplete` awaiting the first webhook;
+ * `GET`/`POST .../cancel` send `null` once there is nothing left to confirm client-side.
+ */
+function mapSubscriptionPaymentHints(
+  h: SubscriptionPaymentHintsResponse | null | undefined,
+): SubscriptionPaymentHints | null {
+  if (!h) return null;
+  return {
+    stripeSubscriptionId: h.stripeSubscriptionId ?? '',
+    clientSecret: h.clientSecret ?? null,
+    status: h.status ?? '',
+    awaitingWebhook: h.awaitingWebhook ?? false,
+  };
+}
+
+/**
+ * subscription-membership v3 §3.3/§3.4/§3.5: `SubscriptionResponse` → {@link Subscription}. Shared
+ * by `create`/`loadCurrent`/`cancel` in `core/services/subscription.service.ts` — all three
+ * endpoints return this exact shape.
+ */
+export function mapSubscription(d: SubscriptionResponse): Subscription {
+  return {
+    id: d.id ?? '',
+    status: readSubscriptionStatus(d.status),
+    categoryIds: d.categoryIds ?? [],
+    monthlyPrice: d.monthlyPrice ?? 0,
+    currentPeriodStart: d.currentPeriodStart ?? '',
+    currentPeriodEnd: d.currentPeriodEnd ?? '',
+    cancelAtPeriodEnd: d.cancelAtPeriodEnd ?? false,
+    canceledAt: d.canceledAt ?? null,
+    paymentHints: mapSubscriptionPaymentHints(d.paymentHints),
+  };
+}
+
+/** subscription-membership v3 §3.6: `SubscriptionAccessHistoryItemResponse` → {@link SubscriptionAccessHistoryItem}. */
+export function mapSubscriptionAccessHistoryItem(
+  d: SubscriptionAccessHistoryItemResponse,
+): SubscriptionAccessHistoryItem {
+  return {
+    documentId: d.documentId ?? '',
+    title: d.title ?? '',
+    coverUrl: resolveCoverUrl(d.coverUrl),
+    sellerName: d.sellerName ?? '',
+    firstAccessedAt: d.firstAccessedAt ?? '',
+    lastAccessedAt: d.lastAccessedAt ?? '',
+    accessCount: d.accessCount ?? 0,
+    stillAccessible: d.stillAccessible ?? false,
+  };
+}
+
+/** subscription-membership v3 §3.2: `AdminSubscriptionListItemResponse` → {@link AdminSubscriptionListItem}. */
+export function mapAdminSubscriptionListItem(
+  d: AdminSubscriptionListItemResponse,
+): AdminSubscriptionListItem {
+  return {
+    id: d.id ?? '',
+    buyerName: d.buyerName ?? '',
+    buyerEmail: d.buyerEmail ?? '',
+    categoryIds: d.categoryIds ?? [],
+    status: readSubscriptionStatus(d.status),
+    monthlyPrice: d.monthlyPrice ?? 0,
+    currentPeriodStart: d.currentPeriodStart ?? '',
+    currentPeriodEnd: d.currentPeriodEnd ?? '',
+    cancelAtPeriodEnd: d.cancelAtPeriodEnd ?? false,
+    createdAt: d.createdAt ?? '',
   };
 }
 

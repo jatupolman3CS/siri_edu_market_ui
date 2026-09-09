@@ -103,6 +103,8 @@ import type {
   GetApiAdminSettingsResponses,
   GetApiAdminStorageUsageData,
   GetApiAdminStorageUsageResponses,
+  GetApiAdminSubscriptionsData,
+  GetApiAdminSubscriptionsResponses,
   GetApiAdminSystemConfigJobTogglesData,
   GetApiAdminSystemConfigJobTogglesResponses,
   GetApiAdminTransactionsData,
@@ -181,6 +183,12 @@ import type {
   GetApiMeSellerApplicationData,
   GetApiMeSellerApplicationErrors,
   GetApiMeSellerApplicationResponses,
+  GetApiMeSubscriptionAccessHistoryData,
+  GetApiMeSubscriptionAccessHistoryErrors,
+  GetApiMeSubscriptionAccessHistoryResponses,
+  GetApiMeSubscriptionData,
+  GetApiMeSubscriptionErrors,
+  GetApiMeSubscriptionResponses,
   GetApiNotificationsFeedData,
   GetApiNotificationsFeedErrors,
   GetApiNotificationsFeedResponses,
@@ -376,6 +384,12 @@ import type {
   PostApiMeSellerApplicationData,
   PostApiMeSellerApplicationErrors,
   PostApiMeSellerApplicationResponses,
+  PostApiMeSubscriptionCancelData,
+  PostApiMeSubscriptionCancelErrors,
+  PostApiMeSubscriptionCancelResponses,
+  PostApiMeSubscriptionData,
+  PostApiMeSubscriptionErrors,
+  PostApiMeSubscriptionResponses,
   PostApiNotificationsFeedByIdReadData,
   PostApiNotificationsFeedByIdReadErrors,
   PostApiNotificationsFeedByIdReadResponses,
@@ -508,6 +522,14 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const getApiAdminSubscriptions = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminSubscriptionsData, ThrowOnError>,
+): RequestResult<GetApiAdminSubscriptionsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminSubscriptionsResponses, unknown, ThrowOnError>({
+    url: '/api/admin/subscriptions',
+    ...options,
+  });
 
 export const postApiAdminOrdersByOrderIdRefund = <ThrowOnError extends boolean = false>(
   options: Options<PostApiAdminOrdersByOrderIdRefundData, ThrowOnError>,
@@ -1883,6 +1905,57 @@ export const patchApiMeExamCountdownEnabled = <ThrowOnError extends boolean = fa
       ...options.headers,
     },
   });
+
+export const getApiMeSubscription = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeSubscriptionData, ThrowOnError>,
+): RequestResult<GetApiMeSubscriptionResponses, GetApiMeSubscriptionErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeSubscriptionResponses,
+    GetApiMeSubscriptionErrors,
+    ThrowOnError
+  >({ url: '/api/me/subscription', ...options });
+
+export const postApiMeSubscription = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMeSubscriptionData, ThrowOnError>,
+): RequestResult<PostApiMeSubscriptionResponses, PostApiMeSubscriptionErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiMeSubscriptionResponses,
+    PostApiMeSubscriptionErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/subscription',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiMeSubscriptionCancel = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiMeSubscriptionCancelData, ThrowOnError>,
+): RequestResult<
+  PostApiMeSubscriptionCancelResponses,
+  PostApiMeSubscriptionCancelErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiMeSubscriptionCancelResponses,
+    PostApiMeSubscriptionCancelErrors,
+    ThrowOnError
+  >({ url: '/api/me/subscription/cancel', ...options });
+
+export const getApiMeSubscriptionAccessHistory = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeSubscriptionAccessHistoryData, ThrowOnError>,
+): RequestResult<
+  GetApiMeSubscriptionAccessHistoryResponses,
+  GetApiMeSubscriptionAccessHistoryErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiMeSubscriptionAccessHistoryResponses,
+    GetApiMeSubscriptionAccessHistoryErrors,
+    ThrowOnError
+  >({ url: '/api/me/subscription/access-history', ...options });
 
 export const getApiNotificationsSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiNotificationsSettingsData, ThrowOnError>,

@@ -296,3 +296,126 @@ describe('AdminCategoriesPage — subcategory admin (subcategory-admin-crud v1)'
     expect(page.deleteConflict()).toBeNull();
   });
 });
+
+/**
+ * subscription-membership v2 §2/§3.1 (docs/contracts/subscription-membership.md): the existing
+ * create/edit category form gains a nullable `subscriptionMonthlyPrice` prompt — `window.prompt`
+ * returning `null` (Cancel) must never silently clear an existing price.
+ */
+describe('AdminCategoriesPage — subscription monthly price prompt (subscription-membership v2 §3.1)', () => {
+  // `window.prompt` spies from one `it()` otherwise keep accumulating call history into the next
+  // (nothing else in this file restores them) — `toHaveBeenNthCalledWith` below needs each test's
+  // spy to start clean.
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('addCategory(): passes a parsed number through to admin.createCategory', async () => {
+    stubRoute('GET', '/api/admin/categories', []);
+    const fixture = renderPage();
+    await settle();
+
+    const admin = TestBed.inject(AdminService);
+    const createSpy = vi.spyOn(admin, 'createCategory').mockResolvedValue();
+    vi.spyOn(window, 'prompt')
+      .mockReturnValueOnce('ภาษาไทย')
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce('199');
+
+    await fixture.componentInstance.addCategory();
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'ภาษาไทย', subscriptionMonthlyPrice: 199 }),
+    );
+  });
+
+  it('addCategory(): an empty (but not cancelled) price prompt explicitly clears it to null', async () => {
+    stubRoute('GET', '/api/admin/categories', []);
+    const fixture = renderPage();
+    await settle();
+
+    const admin = TestBed.inject(AdminService);
+    const createSpy = vi.spyOn(admin, 'createCategory').mockResolvedValue();
+    vi.spyOn(window, 'prompt')
+      .mockReturnValueOnce('ภาษาไทย')
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce('');
+
+    await fixture.componentInstance.addCategory();
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ subscriptionMonthlyPrice: null }),
+    );
+  });
+
+  it('addCategory(): cancelling the price prompt omits the field entirely (never an accidental clear)', async () => {
+    stubRoute('GET', '/api/admin/categories', []);
+    const fixture = renderPage();
+    await settle();
+
+    const admin = TestBed.inject(AdminService);
+    const createSpy = vi.spyOn(admin, 'createCategory').mockResolvedValue();
+    vi.spyOn(window, 'prompt')
+      .mockReturnValueOnce('ภาษาไทย')
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce(null);
+
+    await fixture.componentInstance.addCategory();
+
+    const payload = createSpy.mock.calls[0]?.[0];
+    expect(payload?.subscriptionMonthlyPrice).toBeUndefined();
+  });
+
+  it('addCategory(): rejects a non-numeric price and never calls createCategory', async () => {
+    stubRoute('GET', '/api/admin/categories', []);
+    const fixture = renderPage();
+    await settle();
+
+    const admin = TestBed.inject(AdminService);
+    const createSpy = vi.spyOn(admin, 'createCategory').mockResolvedValue();
+    vi.spyOn(window, 'prompt')
+      .mockReturnValueOnce('ภาษาไทย')
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce('abc');
+
+    await fixture.componentInstance.addCategory();
+
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(messages.warning).toContain('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
+  });
+
+  it('editCategory(): pre-fills the price prompt with the category\'s current price', async () => {
+    stubRoute('GET', '/api/admin/categories', [category('cat-1')]);
+    const fixture = renderPage();
+    await settle();
+
+    const admin = TestBed.inject(AdminService);
+    vi.spyOn(admin, 'updateCategory').mockResolvedValue();
+    const promptSpy = vi
+      .spyOn(window, 'prompt')
+      .mockReturnValueOnce('หมวด cat-1')
+      .mockReturnValueOnce('cat-1')
+      .mockReturnValueOnce('299');
+
+    await fixture.componentInstance.editCategory({
+      ...categoryModel('cat-1', 'หมวด cat-1'),
+      subscriptionMonthlyPrice: 150,
+    });
+
+    expect(promptSpy).toHaveBeenNthCalledWith(3, expect.any(String), '150');
+  });
+
+  it('renders the price when set, and "ยังไม่เปิด" when subscriptionMonthlyPrice is null', async () => {
+    stubRoute('GET', '/api/admin/categories', [
+      { ...category('cat-1', 'มีราคา'), subscriptionMonthlyPrice: 199 },
+      { ...category('cat-2', 'ยังไม่มีราคา'), subscriptionMonthlyPrice: null },
+    ]);
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('฿199');
+    expect(text).toContain('ยังไม่เปิด');
+  });
+});

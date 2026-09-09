@@ -14,6 +14,7 @@ import {
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import type { Category, SubcategoryAdmin } from '../../../core/models';
 
 /** Subcategory being deleted while `subcategoryState()` is holding a 409 — see confirmDeleteSubcategory. */
@@ -32,6 +33,7 @@ interface DeleteConflict {
     IconComponent,
     PaginationComponent,
     CompactPipe,
+    ThbPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories-admin.page.html',
@@ -70,6 +72,16 @@ export class AdminCategoriesPage {
     const name = prompt('ชื่อหมวดหมู่')?.trim();
     if (!name) return;
     const slug = prompt('Slug (เว้นว่างได้ — จะใช้จากชื่อ)', '')?.trim();
+    const priceInput = this.parseSubscriptionPriceInput(
+      prompt(
+        'ราคาสมาชิกรายเดือน (บาท, รวม VAT) — เว้นว่างถ้ายังไม่เปิดให้สมัครสมาชิก',
+        '',
+      ),
+    );
+    if (!priceInput.ok) {
+      this.message.warning('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
+      return;
+    }
     try {
       await this.admin.createCategory({
         id: crypto.randomUUID(),
@@ -79,6 +91,7 @@ export class AdminCategoriesPage {
         description: '',
         isActive: true,
         sortOrder: 0,
+        subscriptionMonthlyPrice: priceInput.value,
       });
       this.catalog.loadCategories();
       this.message.success('เพิ่มหมวดหมู่แล้ว');
@@ -91,6 +104,16 @@ export class AdminCategoriesPage {
     const name = prompt('ชื่อหมวดหมู่', c.name)?.trim();
     if (!name) return;
     const slug = prompt('Slug', c.slug)?.trim();
+    const priceInput = this.parseSubscriptionPriceInput(
+      prompt(
+        'ราคาสมาชิกรายเดือน (บาท, รวม VAT) — เว้นว่างถ้ายังไม่เปิดให้สมัครสมาชิก',
+        c.subscriptionMonthlyPrice != null ? String(c.subscriptionMonthlyPrice) : '',
+      ),
+    );
+    if (!priceInput.ok) {
+      this.message.warning('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
+      return;
+    }
     try {
       await this.admin.updateCategory(c.id, {
         name,
@@ -100,12 +123,29 @@ export class AdminCategoriesPage {
         description: c.description,
         isActive: true,
         sortOrder: 0,
+        subscriptionMonthlyPrice: priceInput.value,
       });
       this.catalog.loadCategories();
       this.message.success('อัปเดตหมวดหมู่แล้ว');
     } catch {
       this.message.error('อัปเดตไม่สำเร็จ');
     }
+  }
+
+  /**
+   * subscription-membership v2 §3.1: `prompt()` returns `null` on Cancel — treated as "no
+   * change" (`value: undefined`, field omitted from the request entirely), an empty string as an
+   * explicit clear (`value: null`), and anything else must parse to a non-negative number.
+   */
+  private parseSubscriptionPriceInput(
+    raw: string | null,
+  ): { ok: true; value?: number | null } | { ok: false } {
+    if (raw === null) return { ok: true, value: undefined };
+    const trimmed = raw.trim();
+    if (!trimmed) return { ok: true, value: null };
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed < 0) return { ok: false };
+    return { ok: true, value: parsed };
   }
 
   removeCategory(c: Category): void {

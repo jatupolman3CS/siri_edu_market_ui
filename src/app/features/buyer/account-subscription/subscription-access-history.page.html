@@ -1,0 +1,60 @@
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <header class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">ประวัติการเข้าถึงเอกสาร</h1>
+      <p class="text-sm text-ink-soft">เอกสารที่คุณเคยเข้าถึงผ่านสมาชิกรายเดือน</p>
+    </div>
+    <a routerLink="/account/subscription" class="btn-ghost !py-2.5 whitespace-nowrap">
+      กลับไปหน้าสมาชิก
+    </a>
+  </header>
+
+  @if (subscription.accessHistoryLoading()) {
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+  } @else if (subscription.accessHistory().length === 0) {
+    <app-empty-state
+      emoji="🗂️"
+      title="ยังไม่มีประวัติการเข้าถึงเอกสาร"
+      description="เอกสารที่คุณดาวน์โหลดผ่านสิทธิ์สมาชิกจะแสดงที่นี่"
+    >
+      <a routerLink="/subscribe" class="btn-pink mt-4">สมัครสมาชิก</a>
+    </app-empty-state>
+  } @else {
+    <div class="card-soft p-6">
+      <ul class="divide-y divide-line">
+        @for (item of subscription.accessHistory(); track item.documentId) {
+          <li class="py-3 flex items-center gap-4">
+            <img
+              appImgFallback
+              [src]="item.coverUrl"
+              [alt]="item.title"
+              class="w-12 h-16 rounded-xl object-cover flex-shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-ink truncate">{{ item.title }}</div>
+              <div class="text-xs text-ink-muted truncate">{{ item.sellerName }}</div>
+              <div class="text-[11px] text-ink-muted mt-0.5">
+                เข้าถึงล่าสุด {{ item.lastAccessedAt | date: 'd MMM yyyy' }} · {{ item.accessCount }} ครั้ง
+              </div>
+            </div>
+            @if (item.stillAccessible) {
+              <span class="pill-pink text-xs whitespace-nowrap">ยังเข้าถึงได้</span>
+            } @else {
+              <span class="pill-soft text-xs whitespace-nowrap">หมดสิทธิ์แล้ว</span>
+            }
+          </li>
+        }
+      </ul>
+
+      <div class="mt-4 pt-3 border-t border-line">
+        <app-pagination
+          [page]="subscription.accessHistoryPage()"
+          [pageSize]="subscription.accessHistoryPageSize()"
+          [total]="subscription.accessHistoryTotalCount()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
+    </div>
+  }
+</div>

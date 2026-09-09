@@ -62,5 +62,7 @@ export class AccountPage {
     { href: '/library', emoji: '📚', label: 'คลังของฉัน', description: 'เอกสารที่ซื้อไว้แล้ว' },
     { href: '/orders', emoji: '🧾', label: 'คำสั่งซื้อ', description: 'ประวัติการสั่งซื้อทั้งหมด' },
     { href: '/wishlist', emoji: '💖', label: 'รายการที่อยากได้', description: 'เก็บไว้ซื้อทีหลัง' },
+    // subscription-membership v2 §4: shortcut to the new subscription status page.
+    { href: '/account/subscription', emoji: '📦', label: 'สมาชิกรายเดือน', description: 'ดูสถานะและจัดการสมาชิก' },
   ];
 }

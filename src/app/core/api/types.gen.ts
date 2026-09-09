@@ -228,6 +228,19 @@ export type AdminSellerResponse = {
 
 export type AdminSellersSort = number;
 
+export type AdminSubscriptionListItemResponse = {
+  id?: string;
+  buyerName?: string;
+  buyerEmail?: string;
+  categoryIds?: Array<string>;
+  status?: string;
+  monthlyPrice?: number;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  createdAt?: string;
+};
+
 export type AdminTransactionResponse = {
   id?: string;
   orderNumber?: string;
@@ -375,6 +388,7 @@ export type CategoryResponse = {
   sortOrder?: number;
   documentCount?: number;
   subcategoryCount?: number;
+  subscriptionMonthlyPrice?: number | null;
 };
 
 export type ChangePasswordRequest = {
@@ -401,6 +415,7 @@ export type CreateCategoryRequest = {
   description?: string;
   isActive?: boolean;
   sortOrder?: number;
+  subscriptionMonthlyPrice?: number | null;
 };
 
 export type CreateDocumentReportRequest = {
@@ -442,6 +457,10 @@ export type CreateSubcategoryRequest = {
   icon?: string;
   isActive?: boolean;
   sortOrder?: number;
+};
+
+export type CreateSubscriptionMembershipRequest = {
+  categoryIds: Array<string>;
 };
 
 export type DocumentGalleryItemRequest = {
@@ -664,6 +683,7 @@ export type MarketplaceDocumentDetailResponse = {
   qnaCount?: number;
   discountExpiresAt?: string | null;
   soldThisMonthCount?: number;
+  isAccessibleViaActiveSubscription?: boolean;
 };
 
 export type MarketplaceDocumentPreviewResponse = {
@@ -820,6 +840,14 @@ export type PagedResponseOfAdminSellerResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfAdminSubscriptionListItemResponse = {
+  items?: Array<AdminSubscriptionListItemResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfAdminTransactionResponse = {
   items?: Array<AdminTransactionResponse>;
   page?: number;
@@ -918,6 +946,14 @@ export type PagedResponseOfSellerQnaResponse = {
 
 export type PagedResponseOfSellerReviewResponse = {
   items?: Array<SellerReviewResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfSubscriptionAccessHistoryItemResponse = {
+  items?: Array<SubscriptionAccessHistoryItemResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -1255,6 +1291,7 @@ export type SellerEarningsResponse = {
   pendingBalance?: number;
   payouts?: Array<PayoutResponse>;
   nextPayoutDate?: string | null;
+  subscriptionNetLifetime?: number;
 };
 
 export type SellerFollowStatusResponse = {
@@ -1466,6 +1503,36 @@ export type SubmitSellerApplicationRequest = {
   specialties?: Array<string>;
 };
 
+export type SubscriptionAccessHistoryItemResponse = {
+  documentId?: string;
+  title?: string;
+  coverUrl?: string;
+  sellerName?: string;
+  firstAccessedAt?: string;
+  lastAccessedAt?: string;
+  accessCount?: number;
+  stillAccessible?: boolean;
+};
+
+export type SubscriptionPaymentHintsResponse = {
+  stripeSubscriptionId?: string;
+  clientSecret?: string | null;
+  status?: string;
+  awaitingWebhook?: boolean;
+};
+
+export type SubscriptionResponse = {
+  id?: string;
+  status?: string;
+  categoryIds?: Array<string>;
+  monthlyPrice?: number;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  canceledAt?: string | null;
+  paymentHints?: SubscriptionPaymentHintsResponse | null;
+};
+
 export type SystemConfigJobToggleItem = {
   jobKey: string;
   category?: string | null;
@@ -1510,6 +1577,7 @@ export type UpdateCategoryRequest = {
   description?: string;
   isActive?: boolean;
   sortOrder?: number;
+  subscriptionMonthlyPrice?: number | null;
 };
 
 export type UpdateDocumentRequest = {
@@ -1635,6 +1703,27 @@ export type WishlistItemResponse = {
   format?: string | null;
   averageRating?: number | null;
 };
+
+export type GetApiAdminSubscriptionsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+    status?: string;
+  };
+  url: '/api/admin/subscriptions';
+};
+
+export type GetApiAdminSubscriptionsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminSubscriptionListItemResponse;
+};
+
+export type GetApiAdminSubscriptionsResponse =
+  GetApiAdminSubscriptionsResponses[keyof GetApiAdminSubscriptionsResponses];
 
 export type PostApiAdminOrdersByOrderIdRefundData = {
   body?: never;
@@ -4520,6 +4609,133 @@ export type PatchApiMeExamCountdownEnabledResponses = {
 
 export type PatchApiMeExamCountdownEnabledResponse =
   PatchApiMeExamCountdownEnabledResponses[keyof PatchApiMeExamCountdownEnabledResponses];
+
+export type GetApiMeSubscriptionData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/subscription';
+};
+
+export type GetApiMeSubscriptionErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiMeSubscriptionError =
+  GetApiMeSubscriptionErrors[keyof GetApiMeSubscriptionErrors];
+
+export type GetApiMeSubscriptionResponses = {
+  /**
+   * OK
+   */
+  200: SubscriptionResponse;
+};
+
+export type GetApiMeSubscriptionResponse =
+  GetApiMeSubscriptionResponses[keyof GetApiMeSubscriptionResponses];
+
+export type PostApiMeSubscriptionData = {
+  body: CreateSubscriptionMembershipRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/subscription';
+};
+
+export type PostApiMeSubscriptionErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiMeSubscriptionError =
+  PostApiMeSubscriptionErrors[keyof PostApiMeSubscriptionErrors];
+
+export type PostApiMeSubscriptionResponses = {
+  /**
+   * Created
+   */
+  201: SubscriptionResponse;
+};
+
+export type PostApiMeSubscriptionResponse =
+  PostApiMeSubscriptionResponses[keyof PostApiMeSubscriptionResponses];
+
+export type PostApiMeSubscriptionCancelData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/subscription/cancel';
+};
+
+export type PostApiMeSubscriptionCancelErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiMeSubscriptionCancelError =
+  PostApiMeSubscriptionCancelErrors[keyof PostApiMeSubscriptionCancelErrors];
+
+export type PostApiMeSubscriptionCancelResponses = {
+  /**
+   * OK
+   */
+  200: SubscriptionResponse;
+};
+
+export type PostApiMeSubscriptionCancelResponse =
+  PostApiMeSubscriptionCancelResponses[keyof PostApiMeSubscriptionCancelResponses];
+
+export type GetApiMeSubscriptionAccessHistoryData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/me/subscription/access-history';
+};
+
+export type GetApiMeSubscriptionAccessHistoryErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeSubscriptionAccessHistoryError =
+  GetApiMeSubscriptionAccessHistoryErrors[keyof GetApiMeSubscriptionAccessHistoryErrors];
+
+export type GetApiMeSubscriptionAccessHistoryResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfSubscriptionAccessHistoryItemResponse;
+};
+
+export type GetApiMeSubscriptionAccessHistoryResponse =
+  GetApiMeSubscriptionAccessHistoryResponses[keyof GetApiMeSubscriptionAccessHistoryResponses];
 
 export type GetApiNotificationsSettingsData = {
   body?: never;

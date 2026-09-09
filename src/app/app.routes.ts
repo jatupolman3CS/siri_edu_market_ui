@@ -144,6 +144,37 @@ export const routes: Routes = [
           import('./features/buyer/account/account.page').then((m) => m.AccountPage),
         title: 'บัญชีของฉัน — SIRIEDUMARKET',
       },
+      // subscription-membership v2 §4: "สมัครสมาชิกรายเดือน" — choose categories, see the
+      // running total, subscribe.
+      {
+        path: 'subscribe',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/subscribe/subscribe.page').then(
+            (m) => m.BuyerSubscribePage,
+          ),
+        title: 'สมัครสมาชิกรายเดือน — SIRIEDUMARKET',
+      },
+      // subscription-membership v2 §4: current subscription status + cancel.
+      {
+        path: 'account/subscription',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/account-subscription/account-subscription.page').then(
+            (m) => m.AccountSubscriptionPage,
+          ),
+        title: 'สมาชิกรายเดือน — SIRIEDUMARKET',
+      },
+      // subscription-membership v2 §4: history of documents accessed via subscription.
+      {
+        path: 'account/subscription/access-history',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import(
+            './features/buyer/account-subscription/subscription-access-history.page'
+          ).then((m) => m.SubscriptionAccessHistoryPage),
+        title: 'ประวัติการเข้าถึงเอกสาร — SIRIEDUMARKET',
+      },
       {
         path: 'checkout',
         canActivate: [authGuard],
@@ -355,6 +386,15 @@ export const routes: Routes = [
           import('./features/admin/categories-admin/categories-admin.page').then(
             (m) => m.AdminCategoriesPage,
           ),
+      },
+      // subscription-membership v2 §3.2/§4: read-only paginated list of all subscriptions.
+      {
+        path: 'subscriptions',
+        loadComponent: () =>
+          import('./features/admin/subscriptions-admin/subscriptions-admin.page').then(
+            (m) => m.AdminSubscriptionsPage,
+          ),
+        title: 'สมาชิกรายเดือน — Admin',
       },
       {
         path: 'settings',

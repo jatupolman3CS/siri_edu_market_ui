@@ -79,6 +79,15 @@ export interface Category {
   reviewCount?: number;
   // Hierarchical sub-categories
   subcategories?: Subcategory[];
+  /**
+   * subscription-membership v2 §2/§3.1: `CategoryResponse.subscriptionMonthlyPrice` — monthly
+   * subscription price for this category, VAT-inclusive (same convention as `DOCUMENT.Price`).
+   * `null` = this category is not open for subscription yet — either an admin genuinely hasn't
+   * set a price, **or** (round 1) the generated `CategoryResponse` type doesn't carry the field
+   * yet. `mapCategory` reads it defensively either way, so this starts reflecting real prices
+   * with no further model change once `npm run generate:api` ships the field for real.
+   */
+  subscriptionMonthlyPrice?: number | null;
 }
 
 /**
@@ -271,6 +280,15 @@ export interface DocumentItem {
   isEditorsPick?: boolean;
   // For bundles
   bundleDocumentIds?: string[];
+
+  /**
+   * subscription-membership v2 §3.7: `MarketplaceDocumentDetailResponse.isAccessibleViaActiveSubscription`
+   * — `true` only for a logged-in buyer with an `active` subscription covering one of this
+   * document's categories. Detail-only (list/card responses never carry it) — only
+   * `mapDocumentDetail` populates it, same as `faqCount`/`qnaCount` above. `undefined` until
+   * `npm run generate:api` ships the field on the generated response type (round 1).
+   */
+  isAccessibleViaActiveSubscription?: boolean;
 }
 
 // ====== Bundle ======
@@ -400,6 +418,68 @@ export interface PayoutAccount {
   accountHolderName: string;
   accountNumberMasked: string;
   updatedAt: string;
+}
+
+// ====== Subscription membership (subscription-membership v2 §3, §4) ======
+// Mirrors `SubscriptionResponse` / `SubscriptionAccessHistoryItemResponse` /
+// `AdminSubscriptionListItemResponse` exactly (docs/contracts/subscription-membership.md §3).
+// Round 1 stub: `core/services/subscription.service.ts` maps these once
+// `npm run generate:api` regenerates the SDK against a backend that ships this contract.
+
+export type SubscriptionStatus = 'incomplete' | 'active' | 'past_due' | 'canceled';
+
+/**
+ * `SubscriptionResponse.paymentHints` — mirrors `OrderPaymentHints` above; only present right
+ * after `POST /api/me/subscription` (`clientSecret` is never re-served from `GET`, same as
+ * `OrderResponse.paymentHints.clientSecret`).
+ */
+export interface SubscriptionPaymentHints {
+  stripeSubscriptionId: string;
+  clientSecret: string | null;
+  /** Stripe's PaymentIntent status at the moment the subscription was created/read. */
+  status: string;
+  awaitingWebhook: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  status: SubscriptionStatus;
+  categoryIds: string[];
+  /** VAT-inclusive, sum of every selected category's `subscriptionMonthlyPrice`. Immutable for the lifetime of this subscription (§5 out-of-scope: no proration). */
+  monthlyPrice: number;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  /** `true` after the buyer cancels — still `active`/`past_due` until `currentPeriodEnd`. */
+  cancelAtPeriodEnd: boolean;
+  canceledAt: string | null;
+  paymentHints: SubscriptionPaymentHints | null;
+}
+
+/** `GET /api/me/subscription/access-history` (§3.6) row. */
+export interface SubscriptionAccessHistoryItem {
+  documentId: string;
+  title: string;
+  coverUrl: string;
+  sellerName: string;
+  firstAccessedAt: string;
+  lastAccessedAt: string;
+  accessCount: number;
+  /** `true` only when the *current* subscription is `active` and still covers this document. */
+  stillAccessible: boolean;
+}
+
+/** `GET /api/admin/subscriptions` (§3.2) row — admin read-only list. */
+export interface AdminSubscriptionListItem {
+  id: string;
+  buyerName: string;
+  buyerEmail: string;
+  categoryIds: string[];
+  status: SubscriptionStatus;
+  monthlyPrice: number;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  createdAt: string;
 }
 
 /** ต้องตรงกับ canonical list ที่ contract ข้อ 2.1 เป๊ะ ๆ ทั้งจำนวนและสะกด */

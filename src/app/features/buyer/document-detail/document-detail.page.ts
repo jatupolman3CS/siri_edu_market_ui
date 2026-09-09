@@ -138,6 +138,16 @@ export class BuyerDocumentDetailPage {
     return this.library.library().some((x) => x.document.id === id);
   });
 
+  /**
+   * subscription-membership v2 §4: third buy-button state — "ดาวน์โหลด (สิทธิ์สมาชิก)" — shown
+   * only when the buyer has active subscription access AND does not already own the document
+   * outright (owning always wins, same priority `owned()` already has over "buy").
+   */
+  readonly accessibleViaSubscription = computed(() => {
+    const d = this.doc();
+    return !!d?.isAccessibleViaActiveSubscription && !this.owned();
+  });
+
   // ===== document-bundle-cross-sell v1 §4: "ในแพ็กเกจที่คุ้มกว่า" =====
   // Loaded non-blocking per document — a failure here (or the stub round returning `[]`)
   // must never stop the rest of the page from rendering, so the section just hides itself.
@@ -293,6 +303,26 @@ export class BuyerDocumentDetailPage {
   }
 
   downloadFree(): void {
+    if (!this.auth.isAuthenticated()) {
+      this.message.warning('กรุณาเข้าสู่ระบบเพื่อดาวน์โหลดและบันทึกในคลังของคุณ');
+      this.router.navigate(['/auth/login'], {
+        queryParams: { returnUrl: this.router.url },
+      });
+      return;
+    }
+    const d = this.doc();
+    if (d) {
+      this.library.download(d.id);
+    }
+  }
+
+  /**
+   * subscription-membership v2 §3.8/§4: calls the SAME existing `POST /api/library/{id}/download`
+   * endpoint `downloadFree()`/owned downloads already use — no new endpoint. Never creates a
+   * `LIBRARY_ITEM` server-side, so this document deliberately keeps NOT appearing in `/library`
+   * (§4's note that the library page must stay unchanged — subscription access is revocable).
+   */
+  downloadViaSubscription(): void {
     if (!this.auth.isAuthenticated()) {
       this.message.warning('กรุณาเข้าสู่ระบบเพื่อดาวน์โหลดและบันทึกในคลังของคุณ');
       this.router.navigate(['/auth/login'], {
