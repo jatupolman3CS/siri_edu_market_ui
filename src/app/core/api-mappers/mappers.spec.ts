@@ -10,8 +10,13 @@ import {
   mapCategoryDetail,
   mapSellerStats,
   mapPlatformStats,
+  mapReferralSummary,
+  mapReferralCodeValidation,
+  mapExamHubPage,
+  mapLineConnectionStatus,
 } from './mappers';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
+import { DEFAULT_STORE_READINESS } from '../models';
 import type {
   BundleDetailResponse,
   BundleResponse,
@@ -109,6 +114,17 @@ describe('mapOrder', () => {
 
     expect(order.paidAt).toBeUndefined();
   });
+
+  it('maps discountAmount from server or defaults to 0', () => {
+    const withDiscount = mapOrder({ ...paidOrder, discountAmount: 20 } as unknown as OrderResponse);
+    expect(withDiscount.discountAmount).toBe(20);
+
+    const withSnakeDiscount = mapOrder({ ...paidOrder, discount_amount: 15 } as unknown as OrderResponse);
+    expect(withSnakeDiscount.discountAmount).toBe(15);
+
+    const noDiscount = mapOrder(paidOrder);
+    expect(noDiscount.discountAmount).toBe(0);
+  });
 });
 
 describe('mapDocument', () => {
@@ -183,6 +199,35 @@ describe('mapLibraryItem', () => {
     expect(mapped.isReviewed).toBe(true);
     expect(mapped.myReviewId).toBe('rev-1');
     expect(mapped.myRating).toBe(4);
+  });
+
+  /** library-read-progress v1 §4: falls back to not-read when response omits isRead/markedReadAt */
+  it('falls back to not-read when the response omits isRead/markedReadAt', () => {
+    const item: LibraryItemResponse = {
+      documentId: 'doc-9',
+      title: 'ชีววิทยา',
+      purchasedAt: '2026-08-01T00:00:00Z',
+    };
+
+    const mapped = mapLibraryItem(item);
+
+    expect(mapped.isRead).toBe(false);
+    expect(mapped.markedReadAt).toBeUndefined();
+  });
+
+  /** library-read-progress v1 §4: carries isRead/markedReadAt through when present */
+  it('carries isRead/markedReadAt through when the response has them', () => {
+    const item: LibraryItemResponse = {
+      documentId: 'doc-9',
+      title: 'ชีววิทยา',
+      purchasedAt: '2026-08-01T00:00:00Z',
+      ...({ isRead: true, markedReadAt: '2026-09-08T12:00:00Z' } as any),
+    };
+
+    const mapped = mapLibraryItem(item);
+
+    expect(mapped.isRead).toBe(true);
+    expect(mapped.markedReadAt).toBe('2026-09-08T12:00:00Z');
   });
 });
 
@@ -489,6 +534,126 @@ describe('mapSellerStats (real-data-stats v1 §3.4 — trend fields)', () => {
 });
 
 /**
+ * store-readiness-score v1 §3.2/§4 (round 2 — SDK wired) — `mapSellerStats` reads
+ * `SellerDashboardResponse.storeReadiness` via `mapStoreReadiness`. Falls back to
+ * `DEFAULT_STORE_READINESS` only when the backend omits the field entirely (defensive).
+ */
+describe('mapSellerStats (store-readiness-score v1 §3.2/§4 — storeReadiness field)', () => {
+  const base: SellerDashboardResponse = {
+    totalRevenue: 100000,
+    monthlyRevenue: 20000,
+    totalDownloads: 500,
+    monthlyDownloads: 0,
+    averageRating: 4.7,
+    totalReviews: 40,
+    pendingPayout: 5000,
+    activeListings: 12,
+    pendingApproval: 1,
+    followerCount: 80,
+    newFollowersThisMonth: 3,
+    revenueByMonth: [],
+    topCategories: [],
+  };
+
+  it('AC-4/AC-6: maps percentComplete/isComplete/items/nextActionItemKey and per-item currentCount/targetCount', () => {
+    const stats = mapSellerStats({
+      ...base,
+      storeReadiness: {
+        percentComplete: 67,
+        isComplete: false,
+        nextActionItemKey: 'listings',
+        items: [
+          {
+            key: 'payout_account',
+            label: 'ตั้งค่าบัญชีรับเงิน',
+            done: true,
+            actionLabel: 'ตั้งค่าบัญชีรับเงิน',
+            actionRoute: '/seller/settings',
+            currentCount: null,
+            targetCount: null,
+          },
+          {
+            key: 'profile_picture',
+            label: 'อัปโหลดรูปโปรไฟล์ร้าน',
+            done: true,
+            actionLabel: 'อัปโหลดรูปโปรไฟล์',
+            actionRoute: '/seller/settings',
+            currentCount: null,
+            targetCount: null,
+          },
+          {
+            key: 'listings',
+            label: 'อัปโหลดเอกสารอย่างน้อย 3 ชิ้น',
+            done: false,
+            actionLabel: 'อัปโหลดเอกสาร',
+            actionRoute: '/seller/upload',
+            currentCount: 1,
+            targetCount: 3,
+          },
+        ],
+      },
+    });
+
+    expect(stats.storeReadiness).toEqual({
+      percentComplete: 67,
+      isComplete: false,
+      nextActionItemKey: 'listings',
+      items: [
+        {
+          key: 'payout_account',
+          label: 'ตั้งค่าบัญชีรับเงิน',
+          done: true,
+          actionLabel: 'ตั้งค่าบัญชีรับเงิน',
+          actionRoute: '/seller/settings',
+          currentCount: undefined,
+          targetCount: undefined,
+        },
+        {
+          key: 'profile_picture',
+          label: 'อัปโหลดรูปโปรไฟล์ร้าน',
+          done: true,
+          actionLabel: 'อัปโหลดรูปโปรไฟล์',
+          actionRoute: '/seller/settings',
+          currentCount: undefined,
+          targetCount: undefined,
+        },
+        {
+          key: 'listings',
+          label: 'อัปโหลดเอกสารอย่างน้อย 3 ชิ้น',
+          done: false,
+          actionLabel: 'อัปโหลดเอกสาร',
+          actionRoute: '/seller/upload',
+          currentCount: 1,
+          targetCount: 3,
+        },
+      ],
+    });
+  });
+
+  it('AC-5: maps isComplete=true / nextActionItemKey=null at 100%', () => {
+    const stats = mapSellerStats({
+      ...base,
+      storeReadiness: {
+        percentComplete: 100,
+        isComplete: true,
+        nextActionItemKey: null,
+        items: [],
+      },
+    });
+
+    expect(stats.storeReadiness.percentComplete).toBe(100);
+    expect(stats.storeReadiness.isComplete).toBe(true);
+    expect(stats.storeReadiness.nextActionItemKey).toBeNull();
+  });
+
+  it('falls back to DEFAULT_STORE_READINESS when the backend omits storeReadiness entirely (defensive)', () => {
+    const stats = mapSellerStats(base);
+
+    expect(stats.storeReadiness).toEqual(DEFAULT_STORE_READINESS);
+  });
+});
+
+/**
  * real-data-stats v1 §3.3/§4.1 — `mapPlatformStats` maps `PlatformStatsResponse` from
  * `GET /api/marketplace/stats`. `averageRating` / `positiveReviewPercent` must stay `undefined`
  * when the backend reports zero reviews (`null`), never `0` — AC-EPIC-3.
@@ -541,5 +706,205 @@ describe('mapPlatformStats (real-data-stats v1 §3.3/§4.1)', () => {
     expect(stats.feeRatePercent).toBe(0);
     expect(stats.averageRating).toBeUndefined();
     expect(stats.positiveReviewPercent).toBeUndefined();
+  });
+});
+
+describe('mapReferralSummary', () => {
+  it('maps summary correctly from server payload', () => {
+    const summary = mapReferralSummary({
+      code: 'ABCD2345',
+      shareUrl: 'http://localhost:4200/marketplace?ref=ABCD2345',
+      totalReferred: 3,
+      unusedCreditCount: 2,
+      unusedCreditTotal: 40,
+    });
+
+    expect(summary).toEqual({
+      code: 'ABCD2345',
+      shareUrl: 'http://localhost:4200/marketplace?ref=ABCD2345',
+      totalReferred: 3,
+      unusedCreditCount: 2,
+      unusedCreditTotal: 40,
+    });
+  });
+
+  it('handles snake_case fields and missing defaults', () => {
+    const summary = mapReferralSummary({
+      code: 'WXYZ6789',
+      share_url: 'http://localhost:4200/marketplace?ref=WXYZ6789',
+      total_referred: 1,
+      unused_credit_count: 1,
+      unused_credit_total: 20,
+    });
+
+    expect(summary.code).toBe('WXYZ6789');
+    expect(summary.shareUrl).toBe('http://localhost:4200/marketplace?ref=WXYZ6789');
+    expect(summary.totalReferred).toBe(1);
+    expect(summary.unusedCreditCount).toBe(1);
+    expect(summary.unusedCreditTotal).toBe(20);
+
+    const empty = mapReferralSummary({});
+    expect(empty.code).toBe('');
+    expect(empty.shareUrl).toBe('');
+    expect(empty.totalReferred).toBe(0);
+    expect(empty.unusedCreditCount).toBe(0);
+    expect(empty.unusedCreditTotal).toBe(0);
+  });
+});
+
+describe('mapReferralCodeValidation', () => {
+  it('maps valid code response correctly', () => {
+    const valid = mapReferralCodeValidation({
+      valid: true,
+      discountAmount: 20,
+      reasonText: null,
+    });
+
+    expect(valid.valid).toBe(true);
+    expect(valid.discountAmount).toBe(20);
+    expect(valid.reasonText).toBeUndefined();
+  });
+
+  it('maps invalid code response correctly', () => {
+    const invalid = mapReferralCodeValidation({
+      valid: false,
+      reasonText: 'ใช้โค้ดแนะนำเพื่อนของตัวเองไม่ได้',
+    });
+
+    expect(invalid.valid).toBe(false);
+    expect(invalid.discountAmount).toBeUndefined();
+    expect(invalid.reasonText).toBe('ใช้โค้ดแนะนำเพื่อนของตัวเองไม่ได้');
+  });
+
+  it('handles snake_case fallback for validation', () => {
+    const snakeValid = mapReferralCodeValidation({
+      valid: true,
+      discount_amount: 20,
+    });
+    expect(snakeValid.discountAmount).toBe(20);
+
+    const snakeInvalid = mapReferralCodeValidation({
+      valid: false,
+      reason_text: 'ไม่พบโค้ดแนะนำเพื่อนนี้',
+    });
+    expect(snakeInvalid.reasonText).toBe('ไม่พบโค้ดแนะนำเพื่อนนี้');
+  });
+});
+
+describe('mapExamHubPage', () => {
+  it('maps complete exam hub page response correctly', () => {
+    const page = mapExamHubPage({
+      examType: 'tgat-tpat',
+      title: 'TGAT/TPAT — เตรียมสอบวัดความถนัด',
+      metaDescription: 'รวมเอกสารติว TGAT และ TPAT ทุกพาร์ท',
+      introText: 'รวมเอกสารติว TGAT และ TPAT ทุกพาร์ท ครบถ้วน',
+      examDateInfo: '10-12 ธันวาคม 2569',
+      scoreCriteriaInfo: 'ใช้คะแนนยื่น TCAS รอบ 2 และ 3',
+      trendInfo: 'เน้นข้อสอบประยุกต์และ Critical Thinking',
+      updatedAt: '2026-09-08T12:00:00.000Z',
+    });
+
+    expect(page.examType).toBe('tgat-tpat');
+    expect(page.title).toBe('TGAT/TPAT — เตรียมสอบวัดความถนัด');
+    expect(page.metaDescription).toBe('รวมเอกสารติว TGAT และ TPAT ทุกพาร์ท');
+    expect(page.introText).toBe('รวมเอกสารติว TGAT และ TPAT ทุกพาร์ท ครบถ้วน');
+    expect(page.examDateInfo).toBe('10-12 ธันวาคม 2569');
+    expect(page.scoreCriteriaInfo).toBe('ใช้คะแนนยื่น TCAS รอบ 2 และ 3');
+    expect(page.trendInfo).toBe('เน้นข้อสอบประยุกต์และ Critical Thinking');
+    expect(page.updatedAt).toBe('2026-09-08T12:00:00.000Z');
+  });
+
+  it('handles snake_case fields and default fallbacks', () => {
+    const page = mapExamHubPage({
+      exam_type: 'a-level',
+      title: 'A-Level',
+      meta_description: 'A-Level desc',
+      intro_text: 'A-Level intro',
+      exam_date_info: null,
+      score_criteria_info: undefined,
+      trend_info: null,
+      updated_at: null,
+    });
+
+    expect(page.examType).toBe('a-level');
+    expect(page.title).toBe('A-Level');
+    expect(page.metaDescription).toBe('A-Level desc');
+    expect(page.introText).toBe('A-Level intro');
+    expect(page.examDateInfo).toBeUndefined();
+    expect(page.scoreCriteriaInfo).toBeUndefined();
+    expect(page.trendInfo).toBeUndefined();
+    expect(page.updatedAt).toBeUndefined();
+  });
+
+  it('handles null/empty raw object gracefully', () => {
+    const page = mapExamHubPage(null);
+
+    expect(page.examType).toBe('tcas');
+    expect(page.title).toBe('');
+    expect(page.metaDescription).toBe('');
+    expect(page.introText).toBe('');
+    expect(page.examDateInfo).toBeUndefined();
+  });
+});
+
+describe('mapLineConnectionStatus', () => {
+  it('maps a complete Connected response', () => {
+    const status = mapLineConnectionStatus({
+      isAvailable: true,
+      isConnected: true,
+      status: 'Connected',
+      lineDisplayName: 'สมชาย ใจดี',
+      connectedAt: '2026-09-08T00:00:00.000Z',
+    });
+
+    expect(status).toEqual({
+      isAvailable: true,
+      isConnected: true,
+      status: 'Connected',
+      lineDisplayName: 'สมชาย ใจดี',
+      connectedAt: '2026-09-08T00:00:00.000Z',
+    });
+  });
+
+  it('§1 item 8: isAvailable:false maps through as-is (not forced to NotConnected)', () => {
+    const status = mapLineConnectionStatus({
+      isAvailable: false,
+      isConnected: false,
+      status: 'NotConnected',
+      lineDisplayName: null,
+      connectedAt: null,
+    });
+
+    expect(status.isAvailable).toBe(false);
+  });
+
+  it('§3.7: maps Disconnected (auto-flip on push error) through as-is', () => {
+    const status = mapLineConnectionStatus({
+      isAvailable: true,
+      isConnected: false,
+      status: 'Disconnected',
+      lineDisplayName: 'สมชาย ใจดี',
+      connectedAt: '2026-09-08T00:00:00.000Z',
+    });
+
+    expect(status.status).toBe('Disconnected');
+  });
+
+  it('defaults every missing/unexpected field to a safe value', () => {
+    const status = mapLineConnectionStatus({});
+
+    expect(status).toEqual({
+      isAvailable: false,
+      isConnected: false,
+      status: 'NotConnected',
+      lineDisplayName: null,
+      connectedAt: null,
+    });
+  });
+
+  it('defaults an unrecognized status string to NotConnected (defensive — §3.3 says only 3 values exist)', () => {
+    const status = mapLineConnectionStatus({ status: 'SomethingUnexpected' });
+
+    expect(status.status).toBe('NotConnected');
   });
 });

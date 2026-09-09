@@ -80,6 +80,21 @@ export class BuyerStorefrontPage {
       .slice(0, 12),
   );
 
+  /**
+   * seller-pricing-and-storefront-stats v1 §3.3/§4: 6-month units-sold bar chart, below the
+   * profile stats strip. All-zero (or not-yet-loaded) `salesByMonth` makes
+   * `totalUnitsSoldInWindow()` compute to `0`, which is what hides the whole section (AC-15) —
+   * the exact same "empty array ⇒ hidden" pattern as the pricing hint box.
+   */
+  readonly salesByMonth = this.catalog.sellerSalesByMonth;
+  readonly totalUnitsSoldInWindow = computed(() =>
+    this.salesByMonth().reduce((sum, m) => sum + m.unitsSold, 0),
+  );
+  /** Floor `1` guards divide-by-zero in the bar-height calc — same idiom as `maxMonth()` in `dashboard.page.ts`. */
+  readonly maxUnitsSold = computed(() =>
+    Math.max(...this.salesByMonth().map((m) => m.unitsSold), 1),
+  );
+
   readonly tabs = computed(() => [
     { value: 'all' as const, label: 'ทั้งหมด', count: this.sellerDocs().length },
     { value: 'bundles' as const, label: 'แพ็กเกจ', count: this.sellerBundles().length },

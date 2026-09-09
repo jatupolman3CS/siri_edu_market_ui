@@ -14,18 +14,23 @@ import type {
   CategoryResponse,
   CategoryDetailResponse,
   LibraryItemResponse,
+  LineConnectionStatusResponse,
   LoyaltyEntryResponse,
   LoyaltySummaryResponse,
   MarketplaceDocumentDetailResponse,
   MarketplaceDocumentResponse,
   OrderResponse,
+  PayoutAccountResponse,
   PlatformStatsResponse,
   SavedPaymentMethodResponse,
   SellerDashboardResponse,
   SellerDocumentResponse,
   SellerDocumentSummaryResponse,
   SellerInfoResponse,
+  SellerInsightsResponse,
   SellerQnaResponse,
+  StoreReadinessItemResponse,
+  StoreReadinessResponse,
   SubcategoryAdminResponse,
   SubcategoryResponse,
 } from '../api';
@@ -38,24 +43,37 @@ import type {
   Category,
   DocumentItem,
   DocumentReview,
+  ExamCountdownExamType,
+  ExamCountdownSetting,
   FileFormat,
   GradeLevel,
   LibraryItem,
+  LineConnectionStatus,
+  LineConnectionStatusValue,
   LoyaltyEntry,
   LoyaltySummary,
   Order,
   OrderStatus,
   PaymentMethod,
+  PayoutAccount,
   PlatformStats,
   QnAItem,
+  ReferralCodeValidation,
+  ReferralSummary,
   ResourceType,
   SavedPaymentMethod,
   Seller,
+  SellerInsights,
   SellerQnaItem,
   SellerStats,
+  ExamHubPage,
+  ExamHubType,
+  StoreReadiness,
+  StoreReadinessItem,
   Subcategory,
   SubcategoryAdmin,
 } from '../models';
+import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS, EXAM_COUNTDOWN_EXAM_TYPES } from '../models';
 import { resolvePublicUrl } from '../api-runtime';
 import {
   defaultAvatarUrl,
@@ -379,6 +397,8 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
     price: d.price ?? 0,
     originalPrice: d.originalPrice ?? undefined,
     discountPercent: d.discountPercent ?? undefined,
+    discountExpiresAt: d.discountExpiresAt ?? undefined,
+    soldThisMonthCount: d.soldThisMonthCount ?? undefined,
     format: (d.format ?? 'pdf') as FileFormat,
     pages: d.pages ?? 0,
     fileSize: d.fileSize ?? '',
@@ -511,6 +531,8 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     isReviewed: item.isReviewed ?? false,
     myReviewId: item.myReviewId ?? undefined,
     myRating: item.myRating ?? undefined,
+    isRead: (item as any).isRead ?? false,
+    markedReadAt: (item as any).markedReadAt ?? undefined,
   };
 }
 
@@ -566,6 +588,66 @@ export function mapOrder(o: OrderResponse): Order {
           awaitingWebhook: o.paymentHints.awaitingWebhook ?? undefined,
         }
       : undefined,
+    discountAmount: Number((o as unknown as { discountAmount?: number | null; discount_amount?: number | null }).discountAmount ?? (o as unknown as { discount_amount?: number | null }).discount_amount ?? 0),
+  };
+}
+
+/**
+ * store-readiness-score v1 §4: `StoreReadinessItemResponse` → `StoreReadinessItem`.
+ * `currentCount`/`targetCount` stay `undefined` for `payout_account`/`profile_picture` — backend
+ * sends `null` for both on those items (only `listings` carries real numbers).
+ */
+function mapStoreReadinessItem(i: StoreReadinessItemResponse): StoreReadinessItem {
+  return {
+    key: i.key ?? '',
+    label: i.label ?? '',
+    done: i.done ?? false,
+    actionLabel: i.actionLabel ?? '',
+    actionRoute: i.actionRoute ?? '',
+    currentCount: i.currentCount ?? undefined,
+    targetCount: i.targetCount ?? undefined,
+  };
+}
+
+/** store-readiness-score v1 §3.2/§4: `StoreReadinessResponse` → `StoreReadiness`. */
+export function mapStoreReadiness(d: StoreReadinessResponse): StoreReadiness {
+  return {
+    percentComplete: d.percentComplete ?? 0,
+    isComplete: d.isComplete ?? false,
+    items: (d.items ?? []).map(mapStoreReadinessItem),
+    nextActionItemKey: d.nextActionItemKey ?? null,
+  };
+}
+
+/**
+ * seller-analytics-insights v1 §3.3/§4: `SellerInsightsResponse` → {@link SellerInsights}.
+ * `?? []`/`?? 0` fallback on every field, same convention as `mapStoreReadiness` above — the
+ * backend always sends this object (never `null`/omitted per AC-10), but every scalar/array
+ * field on it is technically optional on the generated type.
+ */
+export function mapSellerInsights(d: SellerInsightsResponse): SellerInsights {
+  const traffic = d.trafficBreakdown;
+  return {
+    documentConversions: (d.documentConversions ?? []).map((c) => ({
+      documentId: c.documentId ?? '',
+      title: c.title ?? '',
+      viewCount: c.viewCount ?? 0,
+      salesCount: c.salesCount ?? 0,
+      conversionRatePercent: c.conversionRatePercent ?? 0,
+    })),
+    topSearchTerms: (d.topSearchTerms ?? []).map((t) => ({
+      term: t.term ?? '',
+      hitCount: t.hitCount ?? 0,
+    })),
+    trafficBreakdown: {
+      totalViews: traffic?.totalViews ?? 0,
+      searchViews: traffic?.searchViews ?? 0,
+      categoryViews: traffic?.categoryViews ?? 0,
+      directViews: traffic?.directViews ?? 0,
+      searchPercent: traffic?.searchPercent ?? 0,
+      categoryPercent: traffic?.categoryPercent ?? 0,
+      directPercent: traffic?.directPercent ?? 0,
+    },
   };
 }
 
@@ -594,6 +676,11 @@ export function mapSellerStats(d: SellerDashboardResponse): SellerStats {
     // never `0` (AC-EPIC-3) — the trend badge hides on `undefined`.
     revenueTrendPercent: d.revenueTrendPercent ?? undefined,
     ratingTrendDelta: d.ratingTrendDelta ?? undefined,
+    // store-readiness-score v1 §4 "การแบ่งงาน" (รอบสอง): now wired to the real backend field.
+    storeReadiness: d.storeReadiness ? mapStoreReadiness(d.storeReadiness) : DEFAULT_STORE_READINESS,
+    // seller-analytics-insights v1 §4 "การแบ่งงาน" (รอบสอง): now wired to the real backend field,
+    // same pattern as `storeReadiness` above.
+    insights: d.insights ? mapSellerInsights(d.insights) : DEFAULT_SELLER_INSIGHTS,
   };
 }
 
@@ -703,7 +790,8 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     gallerySlots,
     galleryCount: d.galleryCount ?? gallery.length,
     price: d.price ?? 0,
-    originalPrice: undefined,
+    originalPrice: d.originalPrice ?? undefined,
+    discountExpiresAt: d.discountExpiresAt ?? undefined,
     discountPercent: undefined,
     format: (d.format ?? 'pdf') as FileFormat,
     pages: d.pages ?? 0,
@@ -718,6 +806,9 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     reviewCount: d.reviewCount ?? 0,
     downloads: d.downloads ?? 0,
     salesCount: d.salesCount ?? 0,
+    // seller-analytics-insights v1 §3.4/§4 (รอบสอง): per-document view count + conversion rate.
+    viewCount: d.viewCount ?? 0,
+    conversionRatePercent: d.conversionRatePercent ?? 0,
     status: (d.status ?? 'pending') as DocumentItem['status'],
     watermarkEnabled: d.watermarkEnabled ?? false,
     previewPages: d.previewPages ?? 0,
@@ -781,6 +872,21 @@ export function mapSavedPaymentMethod(d: SavedPaymentMethodResponse): SavedPayme
   };
 }
 
+/**
+ * seller-payout-account-self-service v1 §3.1: `PayoutAccountResponse`
+ * (docs/contracts/seller-payout-account-self-service.md §3.1), generated from the live backend by
+ * `npm run generate:api`.
+ */
+export function mapPayoutAccount(d: PayoutAccountResponse): PayoutAccount {
+  return {
+    hasAccount: d.hasAccount ?? false,
+    bankCode: d.bankCode ?? '',
+    accountHolderName: d.accountHolderName ?? '',
+    accountNumberMasked: d.accountNumberMasked ?? '',
+    updatedAt: d.updatedAt ?? '',
+  };
+}
+
 /** List row only — cover thumbnail; no full gallery metadata (edit loads via GET by id). */
 export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): DocumentItem {
   const coverRaw = (d.coverUrl ?? '').trim();
@@ -813,6 +919,9 @@ export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): Docu
     reviewCount: d.reviewCount ?? 0,
     downloads: d.downloads ?? 0,
     salesCount: d.salesCount ?? 0,
+    // seller-analytics-insights v1 §3.4/§4 (รอบสอง): per-document view count + conversion rate.
+    viewCount: d.viewCount ?? 0,
+    conversionRatePercent: d.conversionRatePercent ?? 0,
     status: (d.status ?? 'pending') as DocumentItem['status'],
     watermarkEnabled: false,
     previewPages: 0,
@@ -825,6 +934,118 @@ export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): Docu
     isFeatured: false,
     isEditorsPick: false,
     bundleDocumentIds: [],
+  };
+}
+
+export function mapReferralSummary(raw: unknown): ReferralSummary {
+  const r = (raw ?? {}) as {
+    code?: string | null;
+    shareUrl?: string | null;
+    share_url?: string | null;
+    totalReferred?: number | null;
+    total_referred?: number | null;
+    unusedCreditCount?: number | null;
+    unused_credit_count?: number | null;
+    unusedCreditTotal?: number | null;
+    unused_credit_total?: number | null;
+  };
+  return {
+    code: r.code ?? '',
+    shareUrl: r.shareUrl ?? r.share_url ?? '',
+    totalReferred: Number(r.totalReferred ?? r.total_referred ?? 0),
+    unusedCreditCount: Number(r.unusedCreditCount ?? r.unused_credit_count ?? 0),
+    unusedCreditTotal: Number(r.unusedCreditTotal ?? r.unused_credit_total ?? 0),
+  };
+}
+
+export function mapReferralCodeValidation(raw: unknown): ReferralCodeValidation {
+  const r = (raw ?? {}) as {
+    valid?: boolean | null;
+    discountAmount?: number | null;
+    discount_amount?: number | null;
+    reasonText?: string | null;
+    reason_text?: string | null;
+  };
+  return {
+    valid: Boolean(r.valid),
+    discountAmount: r.discountAmount != null ? Number(r.discountAmount) : (r.discount_amount != null ? Number(r.discount_amount) : undefined),
+    reasonText: r.reasonText ?? r.reason_text ?? undefined,
+  };
+}
+
+export function mapExamHubPage(raw: unknown): ExamHubPage {
+  const r = (raw ?? {}) as {
+    examType?: string | null;
+    exam_type?: string | null;
+    title?: string | null;
+    metaDescription?: string | null;
+    meta_description?: string | null;
+    introText?: string | null;
+    intro_text?: string | null;
+    examDateInfo?: string | null;
+    exam_date_info?: string | null;
+    scoreCriteriaInfo?: string | null;
+    score_criteria_info?: string | null;
+    trendInfo?: string | null;
+    trend_info?: string | null;
+    updatedAt?: string | null;
+    updated_at?: string | null;
+  };
+  return {
+    examType: (r.examType ?? r.exam_type ?? 'tcas') as ExamHubType,
+    title: r.title ?? '',
+    metaDescription: r.metaDescription ?? r.meta_description ?? '',
+    introText: r.introText ?? r.intro_text ?? '',
+    examDateInfo: r.examDateInfo ?? r.exam_date_info ?? undefined,
+    scoreCriteriaInfo: r.scoreCriteriaInfo ?? r.score_criteria_info ?? undefined,
+    trendInfo: r.trendInfo ?? r.trend_info ?? undefined,
+    updatedAt: r.updatedAt ?? r.updated_at ?? undefined,
+  };
+}
+
+/**
+ * exam-countdown-mode v1 §3.1/§4: `ExamCountdownSettingResponse` → {@link ExamCountdownSetting}.
+ * Takes `unknown` (not the generated type) — `npm run generate:api` hasn't shipped
+ * `ExamCountdownSettingResponse` yet (round 1, `docs/contracts/exam-countdown-mode.md` §4 "การแบ่งงาน"),
+ * same convention as `mapReferralSummary`/`mapExamHubPage` above. `examType` falls back to `'O-NET'`
+ * (the first preset) if the raw value is ever missing or outside the known 9 presets — defensive
+ * only, the backend never sends anything else per §3.2's validation.
+ */
+export function mapExamCountdownSetting(raw: unknown): ExamCountdownSetting {
+  const r = (raw ?? {}) as {
+    examType?: string | null;
+    exam_type?: string | null;
+    examDate?: string | null;
+    exam_date?: string | null;
+    isEnabled?: boolean | null;
+    is_enabled?: boolean | null;
+  };
+  const rawExamType = r.examType ?? r.exam_type ?? '';
+  const examType = (EXAM_COUNTDOWN_EXAM_TYPES as string[]).includes(rawExamType)
+    ? (rawExamType as ExamCountdownExamType)
+    : EXAM_COUNTDOWN_EXAM_TYPES[0];
+  return {
+    examType,
+    examDate: r.examDate ?? r.exam_date ?? '',
+    isEnabled: r.isEnabled ?? r.is_enabled ?? true,
+  };
+}
+
+/**
+ * line-notification-channel v1 §3.3: `LineConnectionStatusResponse` → `LineConnectionStatus`.
+ * `status` is a plain string on the wire (§3.3 note, no OpenAPI enum) — guarded against anything
+ * unexpected by defaulting to `'NotConnected'`, the same "no connection" meaning an absent/unknown
+ * value would imply.
+ */
+export function mapLineConnectionStatus(d: LineConnectionStatusResponse): LineConnectionStatus {
+  const status: LineConnectionStatusValue =
+    d.status === 'Connected' || d.status === 'Disconnected' ? d.status : 'NotConnected';
+  return {
+    isAvailable: d.isAvailable ?? false,
+    isConnected: d.isConnected ?? false,
+    status,
+    lineDisplayName: d.lineDisplayName ?? null,
+    connectedAt: d.connectedAt ?? null,
   };
 }
 

@@ -1,0 +1,61 @@
+@if (!isComplete()) {
+  <section class="card-soft p-5 md:p-6 mb-6" aria-label="ความสมบูรณ์ของร้าน">
+    <header class="flex items-center justify-between gap-3 mb-4">
+      <h2 class="text-base font-bold text-ink">ความสมบูรณ์ของร้าน {{ percentComplete() }}%</h2>
+    </header>
+
+    <div class="h-2 rounded-full bg-pink-50 overflow-hidden mb-5" role="progressbar" [attr.aria-valuenow]="percentComplete()" aria-valuemin="0" aria-valuemax="100">
+      <div
+        class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full transition-all duration-300"
+        [style.width.%]="percentComplete()"
+      ></div>
+    </div>
+
+    <ul class="space-y-2.5">
+      @for (item of items(); track item.key) {
+        <li
+          class="flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5"
+          [class.bg-pink-50]="item.key === nextActionItemKey()"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <span
+              class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+              [class]="item.done ? 'bg-emerald-100 text-emerald-600' : 'bg-pink-100 text-pink-400'"
+            >
+              @if (item.done) {
+                <app-icon name="check" [size]="12" />
+              } @else {
+                <span class="w-2 h-2 rounded-full bg-pink-400"></span>
+              }
+            </span>
+            <span class="text-sm font-medium text-ink truncate">
+              {{ item.label }}
+              @if (hasCount(item)) {
+                <span class="text-ink-muted font-normal">({{ item.currentCount }}/{{ item.targetCount }})</span>
+              }
+            </span>
+          </div>
+
+          @if (!item.done) {
+            <a
+              [routerLink]="item.actionRoute"
+              class="flex-shrink-0 text-xs font-semibold rounded-full transition-colors"
+              [class]="
+                item.key === nextActionItemKey()
+                  ? 'btn-pink !py-1.5 !px-4'
+                  : 'btn-ghost !py-1.5 !px-3'
+              "
+            >
+              {{ item.actionLabel }}
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+} @else {
+  <div class="card-soft p-4 mb-6 flex items-center gap-2 bg-gradient-pink !border-pink-200">
+    <app-icon name="check" [size]="14" className="text-emerald-500 flex-shrink-0" />
+    <span class="text-sm font-semibold text-ink">ร้านของคุณพร้อมขายเต็มที่แล้ว 🎉 100%</span>
+  </div>
+}

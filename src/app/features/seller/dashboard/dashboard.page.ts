@@ -10,9 +10,11 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { PlatformStatsService, SellerService } from '../../../core/services';
+import { DEFAULT_STORE_READINESS } from '../../../core/models';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { StoreReadinessBarComponent } from '../../../shared/components/store-readiness-bar/store-readiness-bar.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -26,6 +28,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     StatCardComponent,
     EmptyStateComponent,
     IconComponent,
+    StoreReadinessBarComponent,
     ThbPipe,
     CompactPipe,
     DatePipe,
@@ -48,6 +51,11 @@ export class SellerDashboardPage {
   readonly topCategoryMax = computed(() =>
     Math.max(...this.seller.stats().topCategories.map((c) => c.sales), 1),
   );
+
+  // store-readiness-score v1 §4: `SellerStats.storeReadiness` is typed optional (see
+  // `core/models/index.ts` for why) — always fall back to `DEFAULT_STORE_READINESS` rather than
+  // let the template deal with `undefined`.
+  readonly storeReadiness = computed(() => this.seller.stats().storeReadiness ?? DEFAULT_STORE_READINESS);
 
   // ===== real-data-stats v1 §4.6: platform fee % (was hardcoded 90%/10% in 3 spots) =====
   // Fallback 10 only while stats() hasn't loaded yet, to avoid a flash to a wrong number — the

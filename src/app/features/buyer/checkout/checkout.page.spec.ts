@@ -3,9 +3,34 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerCheckoutPage } from './checkout.page';
-import { AuthService, CartService, OrderService, PaymentMethodService } from '../../../core/services';
+import { AuthService, CartService, OrderService, PaymentMethodService, ReferralService } from '../../../core/services';
 import { idleActionState, type ActionState } from '../../../core/services/action-state';
-import type { CartItem, DocumentItem, SavedPaymentMethod, Seller } from '../../../core/models';
+import type {
+  CartItem,
+  DocumentItem,
+  ReferralCodeValidation,
+  ReferralSummary,
+  SavedPaymentMethod,
+  Seller,
+} from '../../../core/models';
+import { REFERRAL_HINT_STORAGE_KEY } from '../../../core/util/referral-capture';
+
+if (typeof globalThis.localStorage === 'undefined') {
+  const store = new Map<string, string>();
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+      setItem: (k: string, v: string) => void store.set(k, String(v)),
+      removeItem: (k: string) => void store.delete(k),
+      clear: () => store.clear(),
+      key: (i: number) => [...store.keys()][i] ?? null,
+      get length() {
+        return store.size;
+      },
+    },
+  });
+}
 
 /**
  * saved-credit-cards v1 (docs/contracts/saved-credit-cards.md §4) — AC-16/AC-17.
@@ -118,13 +143,33 @@ function fakePaymentMethods(initial: SavedPaymentMethod[] = []) {
   };
 }
 
+function fakeReferralService(initialSummary: ReferralSummary | null = null) {
+  const summary = signal<ReferralSummary | null>(initialSummary);
+  const state = signal<ActionState>(idleActionState());
+  return {
+    summary: summary.asReadonly(),
+    state: state.asReadonly(),
+    refreshSummary: vi.fn(async () => {}),
+    validateCode: vi.fn(async (code: string): Promise<ReferralCodeValidation> => {
+      if (code === 'FRIEND20') {
+        return { valid: true, discountAmount: 20 };
+      }
+      return { valid: false, reasonText: 'ไม่พบโค้ดแนะนำเพื่อนนี้' };
+    }),
+    setSummary: (s: ReferralSummary | null) => summary.set(s),
+  };
+}
+
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 }
 
-function render(paymentMethods: ReturnType<typeof fakePaymentMethods>) {
+function render(
+  paymentMethods: ReturnType<typeof fakePaymentMethods> = fakePaymentMethods([]),
+  referral: ReturnType<typeof fakeReferralService> = fakeReferralService(),
+) {
   const cart = fakeCart();
   const orders = {
     checkoutState: signal(idleActionState()).asReadonly(),
@@ -141,13 +186,14 @@ function render(paymentMethods: ReturnType<typeof fakePaymentMethods>) {
       { provide: AuthService, useValue: { isAuthenticated: () => true } },
       { provide: OrderService, useValue: orders },
       { provide: PaymentMethodService, useValue: paymentMethods },
+      { provide: ReferralService, useValue: referral },
       { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
     ],
   });
 
   const fixture = TestBed.createComponent(BuyerCheckoutPage);
   fixture.detectChanges();
-  return { fixture, cart, orders };
+  return { fixture, cart, orders, referral };
 }
 
 afterEach(() => TestBed.resetTestingModule());
@@ -231,3 +277,157 @@ describe('BuyerCheckoutPage — startPayment() saved-card path', () => {
     expect(orders.create).toHaveBeenCalledWith({ saveNewCard: true });
   });
 });
+
+describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)', () => {
+  beforeEach(() => {
+    localStorage.removeItem(REFERRAL_HINT_STORAGE_KEY);
+  });
+
+  afterEach(() => {
+    localStorage.removeItem(REFERRAL_HINT_STORAGE_KEY);
+  });
+
+  it('toggles referral input when "มีโค้ดแนะนำเพื่อน?" is clicked', async () => {
+    const { fixture } = render();
+    await settle();
+    fixture.detectChanges();
+
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
+    const toggleBtn = buttons.find((b) => b.textContent?.includes('มีโค้ดแนะนำเพื่อน?'));
+    expect(toggleBtn).toBeDefined();
+
+    toggleBtn?.dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+
+    const input = (fixture.nativeElement as HTMLElement).querySelector('input[placeholder="กรอกโค้ดแนะนำเพื่อน"]');
+    expect(input).not.toBeNull();
+  });
+
+  it('prefills and validates code immediately when referral hint exists in localStorage', async () => {
+    localStorage.setItem(REFERRAL_HINT_STORAGE_KEY, 'FRIEND20');
+    const referral = fakeReferralService();
+    const { fixture } = render(fakePaymentMethods([]), referral);
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.showReferralInput()).toBe(true);
+    expect(fixture.componentInstance.referralCode()).toBe('FRIEND20');
+    expect(referral.validateCode).toHaveBeenCalledWith('FRIEND20');
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('✓ ใช้โค้ดนี้ได้ ลด 20 บาท');
+  });
+
+  it('shows valid discount text when code validates successfully', async () => {
+    const referral = fakeReferralService();
+    const { fixture } = render(fakePaymentMethods([]), referral);
+    await settle();
+    fixture.componentInstance.showReferralInput.set(true);
+    fixture.detectChanges();
+
+    await fixture.componentInstance.validateReferralCode('FRIEND20');
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('✓ ใช้โค้ดนี้ได้ ลด 20 บาท');
+    expect(fixture.componentInstance.referralValidation()?.valid).toBe(true);
+  });
+
+  it('shows error reason text when code validation fails', async () => {
+    const referral = fakeReferralService();
+    const { fixture } = render(fakePaymentMethods([]), referral);
+    await settle();
+    fixture.componentInstance.showReferralInput.set(true);
+    fixture.detectChanges();
+
+    await fixture.componentInstance.validateReferralCode('INVALID99');
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ไม่พบโค้ดแนะนำเพื่อนนี้');
+    expect(fixture.componentInstance.referralValidation()?.valid).toBe(false);
+  });
+
+  it('shows credit checkbox only when unusedCreditCount > 0', async () => {
+    const referralService = fakeReferralService({
+      code: 'MYCODE1',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE1',
+      totalReferred: 0,
+      unusedCreditCount: 0,
+      unusedCreditTotal: 0,
+    });
+    const { fixture } = render(fakePaymentMethods([]), referralService);
+    await settle();
+    fixture.detectChanges();
+
+    let text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ใช้เครดิตแนะนำเพื่อน');
+
+    referralService.setSummary({
+      code: 'MYCODE2',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE2',
+      totalReferred: 2,
+      unusedCreditCount: 1,
+      unusedCreditTotal: 20,
+    });
+    fixture.detectChanges();
+
+    text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ใช้เครดิตแนะนำเพื่อน (20 บาท)');
+  });
+
+  it('includes referralCode in orders.create only when code is valid', async () => {
+    const referral = fakeReferralService();
+    const { fixture, orders } = render(fakePaymentMethods([]), referral);
+    await settle();
+
+    // Invalid code -> should NOT be sent
+    fixture.componentInstance.showReferralInput.set(true);
+    await fixture.componentInstance.validateReferralCode('INVALID99');
+    fixture.detectChanges();
+
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+    await fixture.componentInstance.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith({
+      saveNewCard: false,
+    });
+
+    // Valid code -> SHOULD be sent
+    orders.create.mockClear();
+    await fixture.componentInstance.validateReferralCode('FRIEND20');
+    fixture.detectChanges();
+
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+    await fixture.componentInstance.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith({
+      saveNewCard: false,
+      referralCode: 'FRIEND20',
+    });
+  });
+
+  it('includes useReferralCredit in orders.create when credit checkbox is checked', async () => {
+    const referral = fakeReferralService({
+      code: 'MYCODE',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+      totalReferred: 1,
+      unusedCreditCount: 1,
+      unusedCreditTotal: 20,
+    });
+    const { fixture, orders } = render(fakePaymentMethods([]), referral);
+    await settle();
+
+    fixture.componentInstance.useReferralCredit.set(true);
+    fixture.detectChanges();
+
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+    await fixture.componentInstance.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith({
+      saveNewCard: false,
+      useReferralCredit: true,
+    });
+  });
+});
+

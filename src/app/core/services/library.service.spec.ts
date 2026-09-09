@@ -180,6 +180,105 @@ describe('LibraryService — libraryFilter', () => {
     const call = requests.find((r) => r.method === 'GET' && r.path === '/api/library');
     expect(call?.search).not.toContain('unreviewedOnly');
   });
+
+  it('sends unreadOnly=true as a query param when the "unread" tab is active', async () => {
+    stubRoute('GET', '/api/library', libraryPage([row('doc-1')]));
+    const library = buildService();
+
+    await library.setLibraryFilter('unread');
+    await settle();
+
+    const call = requests.find((r) => r.method === 'GET' && r.path === '/api/library');
+    expect(call?.search).toContain('unreadOnly=true');
+  });
+
+  it('does not send unreadOnly on the "all" or "unreviewed" tab', async () => {
+    stubRoute('GET', '/api/library', libraryPage([row('doc-1')]));
+    const library = buildService();
+
+    await library.refreshLibrary();
+    await settle();
+
+    let call = requests.find((r) => r.method === 'GET' && r.path === '/api/library');
+    expect(call?.search).not.toContain('unreadOnly');
+
+    requests = [];
+    await library.setLibraryFilter('unreviewed');
+    await settle();
+
+    call = requests.find((r) => r.method === 'GET' && r.path === '/api/library');
+    expect(call?.search).not.toContain('unreadOnly');
+  });
+});
+
+describe('LibraryService — toggleRead (library-read-progress v1 §4)', () => {
+  it('calls PUT /api/library/{documentId}/read-status and updates item in-place without page reload', async () => {
+    stubRoute('GET', '/api/library', libraryPage([row('doc-1'), row('doc-2')]));
+    stubRoute('PUT', '/api/library/doc-1/read-status', {
+      documentId: 'doc-1',
+      isRead: true,
+      markedReadAt: '2026-09-08T15:00:00.000Z',
+    });
+
+    const library = buildService();
+    await library.refreshLibrary();
+    await settle();
+
+    expect(library.library().length).toBe(2);
+    expect(library.library()[0].isRead).toBe(false);
+
+    const initialGetCount = libraryGetCount();
+
+    await library.toggleRead('doc-1', true);
+    await settle();
+
+    const putCall = requests.find((r) => r.method === 'PUT' && r.path === '/api/library/doc-1/read-status');
+    expect(putCall).toBeDefined();
+
+    expect(library.library()[0].isRead).toBe(true);
+    expect(library.library()[0].markedReadAt).toBe('2026-09-08T15:00:00.000Z');
+    expect(library.library()[1].isRead).toBe(false);
+
+    expect(libraryGetCount()).toBe(initialGetCount);
+  });
+
+  it('can toggle read back to unread and clears markedReadAt', async () => {
+    stubRoute('GET', '/api/library', libraryPage([row('doc-1', { isRead: true, markedReadAt: '2026-09-08T12:00:00Z' })]));
+    stubRoute('PUT', '/api/library/doc-1/read-status', {
+      documentId: 'doc-1',
+      isRead: false,
+      markedReadAt: null,
+    });
+
+    const library = buildService();
+    await library.refreshLibrary();
+    await settle();
+
+    expect(library.library()[0].isRead).toBe(true);
+
+    await library.toggleRead('doc-1', false);
+    await settle();
+
+    expect(library.library()[0].isRead).toBe(false);
+    expect(library.library()[0].markedReadAt).toBeUndefined();
+  });
+
+  it('reports failure via apiFail when PUT fails', async () => {
+    stubRoute('GET', '/api/library', libraryPage([row('doc-1')]));
+    stubRoute('PUT', '/api/library/doc-1/read-status', { message: 'Failed' }, 500);
+
+    const library = buildService();
+    const reporter = TestBed.inject(ApiFailureReporter);
+
+    await library.refreshLibrary();
+    await settle();
+
+    await library.toggleRead('doc-1', true);
+    await settle();
+
+    expect(reporter.report).toHaveBeenCalledWith('อัปเดตสถานะการอ่านไม่สำเร็จ', expect.anything());
+    expect(library.library()[0].isRead).toBe(false);
+  });
 });
 
 /**

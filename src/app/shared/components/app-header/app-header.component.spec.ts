@@ -3,7 +3,14 @@ import { signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AppHeaderComponent } from './app-header.component';
-import { AuthService, CartService, CatalogService, MeService, WishlistService } from '../../../core/services';
+import {
+  AuthService,
+  CartService,
+  CatalogService,
+  MeService,
+  NotificationFeedService,
+  WishlistService,
+} from '../../../core/services';
 
 /**
  * Mobile-nav-inaccessible fix (QA bug #1): a Playwright sweep across 375-768px found the main
@@ -34,6 +41,23 @@ function render(loggedIn = false) {
       { provide: CartService, useValue: { count: () => 0, toggleDrawer: vi.fn() } },
       { provide: WishlistService, useValue: { count: () => 0 } },
       { provide: MeService, useValue: { profile: signal(null), loadProfile: () => ({ subscribe: () => {} }) } },
+      // follow-store-notifications v1: stand in for the bell's service so mounting
+      // `AppHeaderComponent`/`NotificationBellComponent` never touches the round-1 stub's
+      // real (always-failing) fetch, which would otherwise call `NzMessageService.error`
+      // (not mocked here — this file only cares about the mobile-nav/search behaviour).
+      {
+        provide: NotificationFeedService,
+        useValue: {
+          items: () => [],
+          unreadCount: () => 0,
+          loading: () => false,
+          totalCount: () => 0,
+          loadFeed: vi.fn(),
+          refreshUnreadCount: vi.fn(),
+          markRead: vi.fn(() => ({ subscribe: () => {} })),
+          markAllRead: vi.fn(() => ({ subscribe: () => {} })),
+        },
+      },
       { provide: NzMessageService, useValue: { info: vi.fn() } },
     ],
   });

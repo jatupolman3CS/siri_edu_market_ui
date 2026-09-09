@@ -60,8 +60,9 @@ function buildItem(documentId: string, over: Partial<LibraryItem> = {}): Library
 
 function renderWithItems(
   items: LibraryItem[],
-  filter: 'all' | 'unreviewed' = 'all',
+  filter: 'all' | 'unreviewed' | 'unread' = 'all',
   loyalty = fakeLoyalty(),
+  toggleReadSpy = vi.fn(async () => {}),
 ) {
   const fakeLibrary = {
     state: () => idleActionState(),
@@ -76,6 +77,7 @@ function renderWithItems(
     refreshOrders: vi.fn(async () => {}),
     loadMoreLibrary: vi.fn(async () => {}),
     download: vi.fn(),
+    toggleRead: toggleReadSpy,
     reviewState: () => idleActionState(),
     resetReviewState: vi.fn(),
     submitReview: vi.fn(async () => null),
@@ -125,11 +127,49 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
     expect(filledStars.length).toBe(4);
   });
 
+  it('shows "ทำเครื่องหมายว่าอ่านแล้ว" for an unread item and clicking toggles to read', () => {
+    const toggleSpy = vi.fn(async () => {});
+    const fixture = renderWithItems([buildItem('doc-1', { isRead: false })], 'all', fakeLoyalty(), toggleSpy);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('ทำเครื่องหมายว่าอ่านแล้ว');
+
+    const button = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((b) => b.textContent?.trim() === 'ทำเครื่องหมายว่าอ่านแล้ว');
+    expect(button).toBeDefined();
+
+    button!.click();
+    expect(toggleSpy).toHaveBeenCalledWith('doc-1', true);
+  });
+
+  it('shows "อ่านแล้ว" badge/button for a read item and clicking toggles to unread', () => {
+    const toggleSpy = vi.fn(async () => {});
+    const fixture = renderWithItems([buildItem('doc-1', { isRead: true })], 'all', fakeLoyalty(), toggleSpy);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('อ่านแล้ว');
+
+    const button = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((b) => b.textContent?.includes('อ่านแล้ว'));
+    expect(button).toBeDefined();
+    expect(button!.classList.contains('bg-sky-500')).toBe(true);
+
+    button!.click();
+    expect(toggleSpy).toHaveBeenCalledWith('doc-1', false);
+  });
+
   it('empty state on the "ยังไม่ได้รีวิว" tab reads exactly per spec §4', () => {
     const fixture = renderWithItems([], 'unreviewed');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).toContain('รีวิวครบทุกเอกสารแล้ว ขอบคุณค่ะ');
+  });
+
+  it('empty state on the "ยังไม่อ่าน" tab reads exactly per spec §4', () => {
+    const fixture = renderWithItems([], 'unread');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('อ่านครบทุกเอกสารแล้ว เก่งมากค่ะ');
   });
 
   it('empty state on the "ทั้งหมด" tab keeps the original copy, unchanged', () => {
@@ -138,6 +178,7 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
 
     expect(text).toContain('คลังของคุณยังว่างอยู่');
     expect(text).not.toContain('รีวิวครบทุกเอกสารแล้ว');
+    expect(text).not.toContain('อ่านครบทุกเอกสารแล้ว');
   });
 });
 
@@ -347,7 +388,27 @@ describe('BuyerLibraryPage — tab switch (AC-9)', () => {
     expect(libraryGetCount()).toBe(2);
   });
 
-  it('shows the "ทั้งหมด" / "ยังไม่ได้รีวิว" tab labels per spec §4', async () => {
+  it('AC-11: clicking "ยังไม่อ่าน" issues a new GET /api/library, never a client-side filter', async () => {
+    const fixture = renderRealPage();
+    await settle();
+    fixture.detectChanges();
+
+    expect(libraryGetCount()).toBe(1);
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    );
+    const unreadTab = buttons.find((b) => b.textContent?.trim() === 'ยังไม่อ่าน');
+    expect(unreadTab).toBeDefined();
+
+    unreadTab!.click();
+    await settle();
+    fixture.detectChanges();
+
+    expect(libraryGetCount()).toBe(2);
+  });
+
+  it('shows the "ทั้งหมด" / "ยังไม่ได้รีวิว" / "ยังไม่อ่าน" tab labels per spec §4', async () => {
     const fixture = renderRealPage();
     await settle();
     fixture.detectChanges();
@@ -355,5 +416,6 @@ describe('BuyerLibraryPage — tab switch (AC-9)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ทั้งหมด');
     expect(text).toContain('ยังไม่ได้รีวิว');
+    expect(text).toContain('ยังไม่อ่าน');
   });
 });

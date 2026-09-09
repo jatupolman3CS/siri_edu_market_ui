@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { PlatformStatsService, SellerService } from '../../../core/services';
 import { SellerEarningsPage } from './earnings.page';
+import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS } from '../../../core/models';
 import type { PlatformStats, SellerStats } from '../../../core/models';
 
 /**
@@ -25,6 +26,8 @@ function buildStats(over: Partial<SellerStats> = {}): SellerStats {
     newFollowersThisMonth: 3,
     revenueByMonth: [],
     topCategories: [],
+    storeReadiness: DEFAULT_STORE_READINESS,
+    insights: DEFAULT_SELLER_INSIGHTS,
     ...over,
   };
 }

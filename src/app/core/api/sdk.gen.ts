@@ -25,9 +25,15 @@ import type {
   DeleteApiCartItemsByDocumentIdErrors,
   DeleteApiCartItemsByDocumentIdResponses,
   DeleteApiCartResponses,
+  DeleteApiMeExamCountdownData,
+  DeleteApiMeExamCountdownErrors,
+  DeleteApiMeExamCountdownResponses,
   DeleteApiMePaymentMethodsByIdData,
   DeleteApiMePaymentMethodsByIdErrors,
   DeleteApiMePaymentMethodsByIdResponses,
+  DeleteApiNotificationsLineConnectionData,
+  DeleteApiNotificationsLineConnectionErrors,
+  DeleteApiNotificationsLineConnectionResponses,
   DeleteApiSellerBundlesByBundleIdData,
   DeleteApiSellerBundlesByBundleIdErrors,
   DeleteApiSellerBundlesByBundleIdResponses,
@@ -88,6 +94,9 @@ import type {
   GetApiAdminReportsResponses,
   GetApiAdminSellerApplicationsData,
   GetApiAdminSellerApplicationsResponses,
+  GetApiAdminSellersBySellerIdPayoutAccountData,
+  GetApiAdminSellersBySellerIdPayoutAccountErrors,
+  GetApiAdminSellersBySellerIdPayoutAccountResponses,
   GetApiAdminSellersData,
   GetApiAdminSellersResponses,
   GetApiAdminSettingsData,
@@ -105,6 +114,12 @@ import type {
   GetApiCartData,
   GetApiCartErrors,
   GetApiCartResponses,
+  GetApiExamHubByExamTypeData,
+  GetApiExamHubByExamTypeDocumentsData,
+  GetApiExamHubByExamTypeDocumentsErrors,
+  GetApiExamHubByExamTypeDocumentsResponses,
+  GetApiExamHubByExamTypeErrors,
+  GetApiExamHubByExamTypeResponses,
   GetApiFilesDownloadByKeyData,
   GetApiFilesDownloadByKeyErrors,
   GetApiFilesPresignedByKeyData,
@@ -136,10 +151,15 @@ import type {
   GetApiMarketplaceDocumentsByIdResponses,
   GetApiMarketplaceFreeData,
   GetApiMarketplaceFreeResponses,
+  GetApiMarketplaceRecommendedData,
+  GetApiMarketplaceRecommendedResponses,
   GetApiMarketplaceSearchData,
   GetApiMarketplaceSearchResponses,
   GetApiMarketplaceStatsData,
   GetApiMarketplaceStatsResponses,
+  GetApiMeExamCountdownData,
+  GetApiMeExamCountdownErrors,
+  GetApiMeExamCountdownResponses,
   GetApiMeLoyaltyData,
   GetApiMeLoyaltyEntriesData,
   GetApiMeLoyaltyEntriesErrors,
@@ -152,9 +172,29 @@ import type {
   GetApiMeProfileData,
   GetApiMeProfileErrors,
   GetApiMeProfileResponses,
+  GetApiMeReferralData,
+  GetApiMeReferralErrors,
+  GetApiMeReferralResponses,
+  GetApiMeReferralValidateData,
+  GetApiMeReferralValidateErrors,
+  GetApiMeReferralValidateResponses,
   GetApiMeSellerApplicationData,
   GetApiMeSellerApplicationErrors,
   GetApiMeSellerApplicationResponses,
+  GetApiNotificationsFeedData,
+  GetApiNotificationsFeedErrors,
+  GetApiNotificationsFeedResponses,
+  GetApiNotificationsFeedUnreadCountData,
+  GetApiNotificationsFeedUnreadCountErrors,
+  GetApiNotificationsFeedUnreadCountResponses,
+  GetApiNotificationsLineCallbackData,
+  GetApiNotificationsLineCallbackErrors,
+  GetApiNotificationsLineConnectionData,
+  GetApiNotificationsLineConnectionErrors,
+  GetApiNotificationsLineConnectionResponses,
+  GetApiNotificationsLineSettingsData,
+  GetApiNotificationsLineSettingsErrors,
+  GetApiNotificationsLineSettingsResponses,
   GetApiNotificationsSettingsData,
   GetApiNotificationsSettingsErrors,
   GetApiNotificationsSettingsResponses,
@@ -187,9 +227,16 @@ import type {
   GetApiSellerDocumentsByIdMainFilesResponses,
   GetApiSellerDocumentsByIdResponses,
   GetApiSellerDocumentsData,
+  GetApiSellerDocumentsPricingHintData,
+  GetApiSellerDocumentsPricingHintErrors,
+  GetApiSellerDocumentsPricingHintResponses,
   GetApiSellerDocumentsResponses,
   GetApiSellerEarningsData,
   GetApiSellerEarningsResponses,
+  GetApiSellerPayoutAccountData,
+  GetApiSellerPayoutAccountResponses,
+  GetApiSellerPayoutsData,
+  GetApiSellerPayoutsResponses,
   GetApiSellerQnaData,
   GetApiSellerQnaResponses,
   GetApiSellerReviewsData,
@@ -212,6 +259,9 @@ import type {
   PatchApiAdminDocumentsByIdData,
   PatchApiAdminDocumentsByIdErrors,
   PatchApiAdminDocumentsByIdResponses,
+  PatchApiMeExamCountdownEnabledData,
+  PatchApiMeExamCountdownEnabledErrors,
+  PatchApiMeExamCountdownEnabledResponses,
   PostApiAdminAnnouncementsData,
   PostApiAdminAnnouncementsErrors,
   PostApiAdminAnnouncementsResponses,
@@ -256,6 +306,9 @@ import type {
   PostApiAdminSellerApplicationsByUserIdRejectData,
   PostApiAdminSellerApplicationsByUserIdRejectErrors,
   PostApiAdminSellerApplicationsByUserIdRejectResponses,
+  PostApiAdminSellersBySellerIdPayoutAccountRevealData,
+  PostApiAdminSellersBySellerIdPayoutAccountRevealErrors,
+  PostApiAdminSellersBySellerIdPayoutAccountRevealResponses,
   PostApiAuthChangePasswordData,
   PostApiAuthChangePasswordErrors,
   PostApiAuthChangePasswordResponses,
@@ -308,6 +361,9 @@ import type {
   PostApiMarketplaceDocumentsByIdReportData,
   PostApiMarketplaceDocumentsByIdReportErrors,
   PostApiMarketplaceDocumentsByIdReportResponses,
+  PostApiMarketplaceDocumentsByIdViewData,
+  PostApiMarketplaceDocumentsByIdViewErrors,
+  PostApiMarketplaceDocumentsByIdViewResponses,
   PostApiMePaymentMethodsByIdDefaultData,
   PostApiMePaymentMethodsByIdDefaultErrors,
   PostApiMePaymentMethodsByIdDefaultResponses,
@@ -320,6 +376,15 @@ import type {
   PostApiMeSellerApplicationData,
   PostApiMeSellerApplicationErrors,
   PostApiMeSellerApplicationResponses,
+  PostApiNotificationsFeedByIdReadData,
+  PostApiNotificationsFeedByIdReadErrors,
+  PostApiNotificationsFeedByIdReadResponses,
+  PostApiNotificationsFeedReadAllData,
+  PostApiNotificationsFeedReadAllErrors,
+  PostApiNotificationsFeedReadAllResponses,
+  PostApiNotificationsLineConnectData,
+  PostApiNotificationsLineConnectErrors,
+  PostApiNotificationsLineConnectResponses,
   PostApiOrdersByIdCancelData,
   PostApiOrdersByIdCancelErrors,
   PostApiOrdersByIdCancelResponses,
@@ -341,6 +406,9 @@ import type {
   PostApiSellerDocumentsData,
   PostApiSellerDocumentsErrors,
   PostApiSellerDocumentsResponses,
+  PostApiSellerPayoutAccountRevealData,
+  PostApiSellerPayoutAccountRevealErrors,
+  PostApiSellerPayoutAccountRevealResponses,
   PostApiSellerPayoutsData,
   PostApiSellerPayoutsErrors,
   PostApiSellerPayoutsResponses,
@@ -376,15 +444,30 @@ import type {
   PutApiAdminCategoriesByIdData,
   PutApiAdminCategoriesByIdErrors,
   PutApiAdminCategoriesByIdResponses,
+  PutApiAdminExamHubByExamTypeData,
+  PutApiAdminExamHubByExamTypeErrors,
+  PutApiAdminExamHubByExamTypeResponses,
+  PutApiAdminSellersBySellerIdPayoutAccountData,
+  PutApiAdminSellersBySellerIdPayoutAccountErrors,
+  PutApiAdminSellersBySellerIdPayoutAccountResponses,
   PutApiAdminSettingsData,
   PutApiAdminSettingsErrors,
   PutApiAdminSettingsResponses,
   PutApiAdminSystemConfigJobTogglesByJobKeyData,
   PutApiAdminSystemConfigJobTogglesByJobKeyErrors,
   PutApiAdminSystemConfigJobTogglesByJobKeyResponses,
+  PutApiLibraryByDocumentIdReadStatusData,
+  PutApiLibraryByDocumentIdReadStatusErrors,
+  PutApiLibraryByDocumentIdReadStatusResponses,
+  PutApiMeExamCountdownData,
+  PutApiMeExamCountdownErrors,
+  PutApiMeExamCountdownResponses,
   PutApiMeProfileData,
   PutApiMeProfileErrors,
   PutApiMeProfileResponses,
+  PutApiNotificationsLineSettingsData,
+  PutApiNotificationsLineSettingsErrors,
+  PutApiNotificationsLineSettingsResponses,
   PutApiNotificationsSettingsData,
   PutApiNotificationsSettingsErrors,
   PutApiNotificationsSettingsResponses,
@@ -397,6 +480,9 @@ import type {
   PutApiSellerDocumentsByIdListedMainFileErrors,
   PutApiSellerDocumentsByIdListedMainFileResponses,
   PutApiSellerDocumentsByIdResponses,
+  PutApiSellerPayoutAccountData,
+  PutApiSellerPayoutAccountErrors,
+  PutApiSellerPayoutAccountResponses,
   PutApiSellerQnaByQuestionIdFaqData,
   PutApiSellerQnaByQuestionIdFaqErrors,
   PutApiSellerQnaByQuestionIdFaqResponses,
@@ -776,6 +862,54 @@ export const putApiAdminSystemConfigJobTogglesByJobKey = <ThrowOnError extends b
       ...options.headers,
     },
   });
+
+export const getApiAdminSellersBySellerIdPayoutAccount = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminSellersBySellerIdPayoutAccountData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminSellersBySellerIdPayoutAccountResponses,
+  GetApiAdminSellersBySellerIdPayoutAccountErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminSellersBySellerIdPayoutAccountResponses,
+    GetApiAdminSellersBySellerIdPayoutAccountErrors,
+    ThrowOnError
+  >({ url: '/api/admin/sellers/{sellerId}/payout-account', ...options });
+
+export const putApiAdminSellersBySellerIdPayoutAccount = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminSellersBySellerIdPayoutAccountData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminSellersBySellerIdPayoutAccountResponses,
+  PutApiAdminSellersBySellerIdPayoutAccountErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminSellersBySellerIdPayoutAccountResponses,
+    PutApiAdminSellersBySellerIdPayoutAccountErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/sellers/{sellerId}/payout-account',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAdminSellersBySellerIdPayoutAccountReveal = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PostApiAdminSellersBySellerIdPayoutAccountRevealData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminSellersBySellerIdPayoutAccountRevealResponses,
+  PostApiAdminSellersBySellerIdPayoutAccountRevealErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminSellersBySellerIdPayoutAccountRevealResponses,
+    PostApiAdminSellersBySellerIdPayoutAccountRevealErrors,
+    ThrowOnError
+  >({ url: '/api/admin/sellers/{sellerId}/payout-account/reveal', ...options });
 
 export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,
@@ -1211,6 +1345,48 @@ export const postApiDocumentUpload = <ThrowOnError extends boolean = false>(
     },
   });
 
+export const getApiExamHubByExamType = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiExamHubByExamTypeData, ThrowOnError>,
+): RequestResult<GetApiExamHubByExamTypeResponses, GetApiExamHubByExamTypeErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiExamHubByExamTypeResponses,
+    GetApiExamHubByExamTypeErrors,
+    ThrowOnError
+  >({ url: '/api/exam-hub/{examType}', ...options });
+
+export const putApiAdminExamHubByExamType = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminExamHubByExamTypeData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminExamHubByExamTypeResponses,
+  PutApiAdminExamHubByExamTypeErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminExamHubByExamTypeResponses,
+    PutApiAdminExamHubByExamTypeErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/exam-hub/{examType}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiExamHubByExamTypeDocuments = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiExamHubByExamTypeDocumentsData, ThrowOnError>,
+): RequestResult<
+  GetApiExamHubByExamTypeDocumentsResponses,
+  GetApiExamHubByExamTypeDocumentsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiExamHubByExamTypeDocumentsResponses,
+    GetApiExamHubByExamTypeDocumentsErrors,
+    ThrowOnError
+  >({ url: '/api/exam-hub/{examType}/documents', ...options });
+
 export const postApiFilesUpload = <ThrowOnError extends boolean = false>(
   options: Options<PostApiFilesUploadData, ThrowOnError>,
 ): RequestResult<PostApiFilesUploadResponses, unknown, ThrowOnError> =>
@@ -1258,6 +1434,26 @@ export const getApiLibrary = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).get<GetApiLibraryResponses, unknown, ThrowOnError>({
     url: '/api/library',
     ...options,
+  });
+
+export const putApiLibraryByDocumentIdReadStatus = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiLibraryByDocumentIdReadStatusData, ThrowOnError>,
+): RequestResult<
+  PutApiLibraryByDocumentIdReadStatusResponses,
+  PutApiLibraryByDocumentIdReadStatusErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiLibraryByDocumentIdReadStatusResponses,
+    PutApiLibraryByDocumentIdReadStatusErrors,
+    ThrowOnError
+  >({
+    url: '/api/library/{documentId}/read-status',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const postApiLibraryByDocumentIdDownload = <ThrowOnError extends boolean = false>(
@@ -1326,6 +1522,26 @@ export const postApiMarketplaceDocumentsByIdQna = <ThrowOnError extends boolean 
     ThrowOnError
   >({
     url: '/api/marketplace/documents/{id}/qna',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiMarketplaceDocumentsByIdView = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMarketplaceDocumentsByIdViewData, ThrowOnError>,
+): RequestResult<
+  PostApiMarketplaceDocumentsByIdViewResponses,
+  PostApiMarketplaceDocumentsByIdViewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiMarketplaceDocumentsByIdViewResponses,
+    PostApiMarketplaceDocumentsByIdViewErrors,
+    ThrowOnError
+  >({
+    url: '/api/marketplace/documents/{id}/view',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1417,6 +1633,14 @@ export const getApiMarketplaceCategoriesBySlug = <ThrowOnError extends boolean =
     GetApiMarketplaceCategoriesBySlugErrors,
     ThrowOnError
   >({ url: '/api/marketplace/categories/{slug}', ...options });
+
+export const getApiMarketplaceRecommended = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMarketplaceRecommendedData, ThrowOnError>,
+): RequestResult<GetApiMarketplaceRecommendedResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMarketplaceRecommendedResponses, unknown, ThrowOnError>({
+    url: '/api/marketplace/recommended',
+    ...options,
+  });
 
 export const getApiMarketplaceFree = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMarketplaceFreeData, ThrowOnError>,
@@ -1589,6 +1813,77 @@ export const postApiMePaymentMethodsSetupIntent = <ThrowOnError extends boolean 
     ThrowOnError
   >({ url: '/api/me/payment-methods/setup-intent', ...options });
 
+export const getApiMeReferral = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeReferralData, ThrowOnError>,
+): RequestResult<GetApiMeReferralResponses, GetApiMeReferralErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMeReferralResponses, GetApiMeReferralErrors, ThrowOnError>({
+    url: '/api/me/referral',
+    ...options,
+  });
+
+export const getApiMeReferralValidate = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeReferralValidateData, ThrowOnError>,
+): RequestResult<GetApiMeReferralValidateResponses, GetApiMeReferralValidateErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeReferralValidateResponses,
+    GetApiMeReferralValidateErrors,
+    ThrowOnError
+  >({ url: '/api/me/referral/validate', ...options });
+
+export const deleteApiMeExamCountdown = <ThrowOnError extends boolean = false>(
+  options?: Options<DeleteApiMeExamCountdownData, ThrowOnError>,
+): RequestResult<DeleteApiMeExamCountdownResponses, DeleteApiMeExamCountdownErrors, ThrowOnError> =>
+  (options?.client ?? client).delete<
+    DeleteApiMeExamCountdownResponses,
+    DeleteApiMeExamCountdownErrors,
+    ThrowOnError
+  >({ url: '/api/me/exam-countdown', ...options });
+
+export const getApiMeExamCountdown = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeExamCountdownData, ThrowOnError>,
+): RequestResult<GetApiMeExamCountdownResponses, GetApiMeExamCountdownErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeExamCountdownResponses,
+    GetApiMeExamCountdownErrors,
+    ThrowOnError
+  >({ url: '/api/me/exam-countdown', ...options });
+
+export const putApiMeExamCountdown = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiMeExamCountdownData, ThrowOnError>,
+): RequestResult<PutApiMeExamCountdownResponses, PutApiMeExamCountdownErrors, ThrowOnError> =>
+  (options.client ?? client).put<
+    PutApiMeExamCountdownResponses,
+    PutApiMeExamCountdownErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/exam-countdown',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const patchApiMeExamCountdownEnabled = <ThrowOnError extends boolean = false>(
+  options: Options<PatchApiMeExamCountdownEnabledData, ThrowOnError>,
+): RequestResult<
+  PatchApiMeExamCountdownEnabledResponses,
+  PatchApiMeExamCountdownEnabledErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    PatchApiMeExamCountdownEnabledResponses,
+    PatchApiMeExamCountdownEnabledErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/exam-countdown/enabled',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
 export const getApiNotificationsSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiNotificationsSettingsData, ThrowOnError>,
 ): RequestResult<
@@ -1615,6 +1910,134 @@ export const putApiNotificationsSettings = <ThrowOnError extends boolean = false
     ThrowOnError
   >({
     url: '/api/notifications/settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiNotificationsFeed = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiNotificationsFeedData, ThrowOnError>,
+): RequestResult<GetApiNotificationsFeedResponses, GetApiNotificationsFeedErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiNotificationsFeedResponses,
+    GetApiNotificationsFeedErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/feed', ...options });
+
+export const getApiNotificationsFeedUnreadCount = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiNotificationsFeedUnreadCountData, ThrowOnError>,
+): RequestResult<
+  GetApiNotificationsFeedUnreadCountResponses,
+  GetApiNotificationsFeedUnreadCountErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiNotificationsFeedUnreadCountResponses,
+    GetApiNotificationsFeedUnreadCountErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/feed/unread-count', ...options });
+
+export const postApiNotificationsFeedByIdRead = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiNotificationsFeedByIdReadData, ThrowOnError>,
+): RequestResult<
+  PostApiNotificationsFeedByIdReadResponses,
+  PostApiNotificationsFeedByIdReadErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiNotificationsFeedByIdReadResponses,
+    PostApiNotificationsFeedByIdReadErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/feed/{id}/read', ...options });
+
+export const postApiNotificationsFeedReadAll = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiNotificationsFeedReadAllData, ThrowOnError>,
+): RequestResult<
+  PostApiNotificationsFeedReadAllResponses,
+  PostApiNotificationsFeedReadAllErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiNotificationsFeedReadAllResponses,
+    PostApiNotificationsFeedReadAllErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/feed/read-all', ...options });
+
+export const postApiNotificationsLineConnect = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiNotificationsLineConnectData, ThrowOnError>,
+): RequestResult<
+  PostApiNotificationsLineConnectResponses,
+  PostApiNotificationsLineConnectErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiNotificationsLineConnectResponses,
+    PostApiNotificationsLineConnectErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/line/connect', ...options });
+
+export const getApiNotificationsLineCallback = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiNotificationsLineCallbackData, ThrowOnError>,
+): RequestResult<unknown, GetApiNotificationsLineCallbackErrors, ThrowOnError> =>
+  (options?.client ?? client).get<unknown, GetApiNotificationsLineCallbackErrors, ThrowOnError>({
+    url: '/api/notifications/line/callback',
+    ...options,
+  });
+
+export const deleteApiNotificationsLineConnection = <ThrowOnError extends boolean = false>(
+  options?: Options<DeleteApiNotificationsLineConnectionData, ThrowOnError>,
+): RequestResult<
+  DeleteApiNotificationsLineConnectionResponses,
+  DeleteApiNotificationsLineConnectionErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).delete<
+    DeleteApiNotificationsLineConnectionResponses,
+    DeleteApiNotificationsLineConnectionErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/line/connection', ...options });
+
+export const getApiNotificationsLineConnection = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiNotificationsLineConnectionData, ThrowOnError>,
+): RequestResult<
+  GetApiNotificationsLineConnectionResponses,
+  GetApiNotificationsLineConnectionErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiNotificationsLineConnectionResponses,
+    GetApiNotificationsLineConnectionErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/line/connection', ...options });
+
+export const getApiNotificationsLineSettings = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiNotificationsLineSettingsData, ThrowOnError>,
+): RequestResult<
+  GetApiNotificationsLineSettingsResponses,
+  GetApiNotificationsLineSettingsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiNotificationsLineSettingsResponses,
+    GetApiNotificationsLineSettingsErrors,
+    ThrowOnError
+  >({ url: '/api/notifications/line/settings', ...options });
+
+export const putApiNotificationsLineSettings = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiNotificationsLineSettingsData, ThrowOnError>,
+): RequestResult<
+  PutApiNotificationsLineSettingsResponses,
+  PutApiNotificationsLineSettingsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiNotificationsLineSettingsResponses,
+    PutApiNotificationsLineSettingsErrors,
+    ThrowOnError
+  >({
+    url: '/api/notifications/line/settings',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1866,6 +2289,14 @@ export const getApiSellerEarnings = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
+export const getApiSellerPayouts = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerPayoutsData, ThrowOnError>,
+): RequestResult<GetApiSellerPayoutsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerPayoutsResponses, unknown, ThrowOnError>({
+    url: '/api/seller/payouts',
+    ...options,
+  });
+
 export const postApiSellerPayouts = <ThrowOnError extends boolean = false>(
   options: Options<PostApiSellerPayoutsData, ThrowOnError>,
 ): RequestResult<PostApiSellerPayoutsResponses, PostApiSellerPayoutsErrors, ThrowOnError> =>
@@ -1890,6 +2321,47 @@ export const getApiSellerReviews = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
+export const getApiSellerPayoutAccount = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerPayoutAccountData, ThrowOnError>,
+): RequestResult<GetApiSellerPayoutAccountResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerPayoutAccountResponses, unknown, ThrowOnError>({
+    url: '/api/seller/payout-account',
+    ...options,
+  });
+
+export const putApiSellerPayoutAccount = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiSellerPayoutAccountData, ThrowOnError>,
+): RequestResult<
+  PutApiSellerPayoutAccountResponses,
+  PutApiSellerPayoutAccountErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiSellerPayoutAccountResponses,
+    PutApiSellerPayoutAccountErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/payout-account',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiSellerPayoutAccountReveal = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiSellerPayoutAccountRevealData, ThrowOnError>,
+): RequestResult<
+  PostApiSellerPayoutAccountRevealResponses,
+  PostApiSellerPayoutAccountRevealErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    PostApiSellerPayoutAccountRevealResponses,
+    PostApiSellerPayoutAccountRevealErrors,
+    ThrowOnError
+  >({ url: '/api/seller/payout-account/reveal', ...options });
+
 export const getApiSellerDocuments = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiSellerDocumentsData, ThrowOnError>,
 ): RequestResult<GetApiSellerDocumentsResponses, unknown, ThrowOnError> =>
@@ -1913,6 +2385,19 @@ export const postApiSellerDocuments = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
+
+export const getApiSellerDocumentsPricingHint = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerDocumentsPricingHintData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerDocumentsPricingHintResponses,
+  GetApiSellerDocumentsPricingHintErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiSellerDocumentsPricingHintResponses,
+    GetApiSellerDocumentsPricingHintErrors,
+    ThrowOnError
+  >({ url: '/api/seller/documents/pricing-hint', ...options });
 
 export const deleteApiSellerDocumentsById = <ThrowOnError extends boolean = false>(
   options: Options<DeleteApiSellerDocumentsByIdData, ThrowOnError>,

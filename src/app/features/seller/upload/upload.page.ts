@@ -10,7 +10,7 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
-import { DocumentItem } from '../../../core/models';
+import { DocumentItem, DocumentPricingHint } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import {
@@ -116,8 +116,21 @@ export class SellerUploadPage {
 
   readonly price = signal<number>(199);
   readonly originalPrice = signal<number>(0);
+  /**
+   * discount-urgency v1 §4: date-only `yyyy-MM-dd` string from `<input type="date">`, `''` = not
+   * set — same pattern as `formStartAt`/`formEndAt` in `announcements-admin.page.ts`.
+   */
+  readonly discountExpiresAt = signal<string>('');
   /** When true, document is free (price = 0, no platform fee). */
   readonly isFree = signal<boolean>(false);
+
+  /**
+   * seller-pricing-and-storefront-stats v1 §3.1/§4: competitor price range for step 3
+   * ("ตั้งราคา") — `null` while loading, not-yet-fetched, or on a failed request (AC-8/AC-10
+   * both render nothing; the template additionally hides the box when `sampleSize < 3`, AC-8).
+   */
+  readonly pricingHint = signal<DocumentPricingHint | null>(null);
+  readonly pricingHintLoading = signal<boolean>(false);
 
   /** Resolved category objects for the chip rendering in the upload form. */
   readonly selectedCategories = computed(() =>
@@ -180,6 +193,8 @@ export class SellerUploadPage {
     this.isFree.set(doc.isFree === true || doc.price === 0);
     this.language.set(doc.language);
     this.price.set(doc.price);
+    this.originalPrice.set(doc.originalPrice ?? 0);
+    this.discountExpiresAt.set(doc.discountExpiresAt ? doc.discountExpiresAt.slice(0, 10) : '');
     this.watermark.set(doc.watermarkEnabled ?? true);
     this.previewPages.set(doc.previewPages ?? 5);
     this.previewWatermarkSubtitle.set((doc.previewWatermarkSubtitle ?? '').trim());
@@ -399,10 +414,35 @@ export class SellerUploadPage {
   });
 
   next(): void {
+    // seller-pricing-and-storefront-stats v1 §4/AC-7: fetch the pricing hint only the moment the
+    // seller first reaches step 3 — not on every category checkbox toggle in step 2.
+    const enteringStep3 = this.step() !== 3;
     this.step.update((s) => Math.min(4, s + 1));
+    if (this.step() === 3 && enteringStep3) {
+      void this.loadPricingHint();
+    }
   }
   prev(): void {
     this.step.update((s) => Math.max(1, s - 1));
+  }
+
+  /** seller-pricing-and-storefront-stats v1 §4: one-shot fetch triggered from `next()` above. */
+  private async loadPricingHint(): Promise<void> {
+    const categoryIds = this.categoryIds();
+    if (categoryIds.length === 0) {
+      this.pricingHint.set(null);
+      return;
+    }
+    this.pricingHintLoading.set(true);
+    try {
+      const hint = await this.seller.getDocumentPricingHint(
+        categoryIds,
+        this.editId() || undefined,
+      );
+      this.pricingHint.set(hint);
+    } finally {
+      this.pricingHintLoading.set(false);
+    }
   }
 
   addTag(): void {
@@ -440,6 +480,7 @@ export class SellerUploadPage {
     if (value) {
       this.price.set(0);
       this.originalPrice.set(0);
+      this.discountExpiresAt.set('');
     }
   }
 
@@ -506,6 +547,9 @@ export class SellerUploadPage {
             previewWatermarkFontFamily: this.previewWatermarkFontFamily().trim(),
             pages: this.pages(),
             fileSize: this.fileSizeLabel().trim() || undefined,
+            originalPrice: this.isFree() ? 0 : this.originalPrice(),
+            discountExpiresAt:
+              this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
           };
           if (uploaded && f) {
             editBody.fileStorageKey = uploaded.key;
@@ -523,9 +567,7 @@ export class SellerUploadPage {
             this.message.error('กรุณาเลือกไฟล์เอกสารและรอให้อัปโหลดเสร็จก่อน');
             return;
           }
-          // Cast: the OpenAPI type still carries the legacy `categoryId: string` until regen.
-          // Backend already accepts `categoryIds: string[]` + `isFree: boolean`.
-          const createBody = {
+          const createBody: Parameters<typeof this.seller.createDocument>[0] = {
             title: this.title().trim(),
             shortDescription: this.shortDescription().trim(),
             description: this.longDescription().trim() || this.shortDescription().trim(),
@@ -546,7 +588,10 @@ export class SellerUploadPage {
             language: this.language(),
             previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
             previewWatermarkFontFamily: this.previewWatermarkFontFamily().trim(),
-          } as unknown as Parameters<typeof this.seller.createDocument>[0];
+            originalPrice: this.isFree() ? 0 : this.originalPrice(),
+            discountExpiresAt:
+              this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
+          };
           const doc = await this.seller.createDocument(createBody);
 
           if (doc?.id) {

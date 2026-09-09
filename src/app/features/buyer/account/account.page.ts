@@ -8,6 +8,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 import { NotificationSettingsComponent } from '../../../shared/components/notification-settings/notification-settings.component';
 import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
 import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
+import { ReferralCardComponent } from '../../../shared/components/referral-card/referral-card.component';
+import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
 
 /**
  * F-07 (N-03): the buyer's own account page.
@@ -31,6 +33,8 @@ import { SavedCardsComponent } from '../../../shared/components/saved-cards/save
     ChangePasswordComponent,
     NotificationSettingsComponent,
     SavedCardsComponent,
+    ReferralCardComponent,
+    ExamCountdownFormComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.page.html',
@@ -49,6 +53,8 @@ export class AccountPage {
     { fragment: 'password', label: 'เปลี่ยนรหัสผ่าน', icon: 'lock' as const },
     { fragment: 'notifications', label: 'การแจ้งเตือน', icon: 'bell' as const },
     { fragment: 'cards', label: 'บัตรที่บันทึกไว้', icon: 'wallet' as const },
+    { fragment: 'referral', label: 'ชวนเพื่อน', icon: 'tag' as const },
+    { fragment: 'exam-countdown', label: 'โหมดใกล้สอบ', icon: 'flag' as const },
     { fragment: 'shortcuts', label: 'ทางลัด', icon: 'dashboard' as const },
   ];
 

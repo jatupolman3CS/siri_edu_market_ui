@@ -95,6 +95,30 @@
           </dl>
         </header>
 
+        <!-- Sales-by-month chart (seller-pricing-and-storefront-stats v1 §3.3/§4) -->
+        @if (totalUnitsSoldInWindow() > 0) {
+          <section class="card-soft p-6 mb-8">
+            <h2 class="text-lg font-bold text-ink mb-1">ยอดขายรายเดือน</h2>
+            <p class="text-xs text-ink-muted mb-5">จำนวนเอกสารที่ขายได้ 6 เดือนล่าสุด</p>
+            <div class="overflow-x-auto -mx-2">
+              <div class="grid grid-cols-6 gap-3 items-end h-40 min-w-[320px] px-2">
+                @for (m of salesByMonth(); track m.month) {
+                  <div class="flex flex-col items-center gap-2 h-full justify-end">
+                    <span class="text-xs font-bold text-ink">{{ m.unitsSold }}</span>
+                    <div
+                      class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
+                      [style.height.%]="(m.unitsSold / maxUnitsSold()) * 100"
+                    >
+                      <div class="absolute inset-x-0 top-0 h-1 bg-pink-500 rounded-t-2xl"></div>
+                    </div>
+                    <span class="text-xs text-ink-muted">{{ m.month }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+
         <!-- Tabs -->
         <nav class="flex items-center gap-2 mb-6 overflow-x-auto">
           @for (t of tabs(); track t.value) {

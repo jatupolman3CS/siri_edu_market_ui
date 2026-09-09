@@ -19,10 +19,12 @@ import {
   AuthService,
   WishlistService,
   MeService,
+  NotificationFeedService,
 } from '../../../core/services';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../logo/logo.component';
 import { IconComponent } from '../icon/icon.component';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { defaultAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
@@ -37,6 +39,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
     NzDropDownModule,
     LogoComponent,
     IconComponent,
+    NotificationBellComponent,
     ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +50,9 @@ export class AppHeaderComponent {
   readonly cart = inject(CartService);
   readonly auth = inject(AuthService);
   readonly wishlist = inject(WishlistService);
+  /** follow-store-notifications v1: badge count reused by the mobile drawer link (the desktop
+   *  bell renders its own badge inside `NotificationBellComponent`). */
+  readonly feed = inject(NotificationFeedService);
   private readonly me = inject(MeService);
   private readonly router = inject(Router);
   private readonly catalog = inject(CatalogService);

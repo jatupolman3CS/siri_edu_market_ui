@@ -1,12 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
+  AuthService,
   BundleService,
   CatalogService,
+  ExamCountdownService,
   PlatformStatsService,
   RecentlyViewedService,
   calcBundleSavePercent,
+  daysRemainingFromExamDate,
 } from '../../../core/services';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
@@ -15,6 +18,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
 
 @Component({
   selector: 'app-buyer-home',
@@ -29,6 +33,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     DecimalPipe,
     EmptyStateComponent,
     ImgFallbackDirective,
+    ExamCountdownFormComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',
@@ -39,8 +44,30 @@ export class BuyerHomePage {
   readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
+  readonly auth = inject(AuthService);
+  readonly examCountdown = inject(ExamCountdownService);
   private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
+
+  // ===== exam-countdown-mode v1 §4 =====
+
+  /** Toggles the inline `<app-exam-countdown-form>` open on this page (§4 — mechanism left to the implementer). */
+  readonly examCountdownFormOpen = signal(false);
+
+  readonly examDaysRemaining = computed(() => {
+    const s = this.examCountdown.setting();
+    return s ? daysRemainingFromExamDate(s.examDate) : null;
+  });
+  readonly examIsPast = computed(() => (this.examDaysRemaining() ?? 0) < 0);
+  /** true = แสดง banner นับถอยหลัง + grid เต็มรูปแบบ (AC-16). */
+  readonly examCountdownActive = computed(() => {
+    const s = this.examCountdown.setting();
+    return Boolean(s?.isEnabled && !this.examIsPast());
+  });
+
+  openExamCountdownEdit(): void {
+    this.examCountdownFormOpen.set(true);
+  }
 
   // ===== real-data-stats v1 §4.2 =====
 
@@ -94,6 +121,16 @@ export class BuyerHomePage {
     () => 100 - (this.platformStats.stats()?.feeRatePercent ?? 10),
   );
 
+  // ===== personalized-recommendations v1 §4 =====
+
+  /** subtitle ของ section "แนะนำสำหรับคุณ" — คำอธิบายต่างกันตาม strategy ที่ backend เลือก
+   *  (`purchase-history` มีประวัติซื้อจริง vs `popular-fallback` ไม่มีสัญญาณ/ไม่ล็อกอิน) */
+  readonly recommendedSubtitle = computed(() =>
+    this.catalog.recommendedStrategy() === 'purchase-history'
+      ? 'เพราะคุณเคยเลือกเอกสารแนวนี้'
+      : 'เอกสารยอดนิยมที่ผู้ซื้อคนอื่นเลือกกัน',
+  );
+
   readonly quickSearches = [
     'สรุปคณิตม.ปลาย',
     'Pitch Deck',
@@ -128,8 +165,16 @@ export class BuyerHomePage {
     this.catalog.initForHome();
     // Ensure free section has fresh data (and visible loading/error state).
     this.catalog.loadFreeResources();
+    // personalized-recommendations v1 §4: home-page "แนะนำสำหรับคุณ" module — called once here,
+    // not from any computed/effect (AC-14).
+    this.catalog.loadRecommended();
     // real-data-stats v1 §4.2: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
+    // exam-countdown-mode v1 §0 ข้อ 11 / AC-14: guard ด้วย isAuthenticated() เสมอ — หน้าแรกเป็น
+    // public route ผู้เยี่ยมชมที่ไม่ล็อกอินต้องไม่ได้รับ 401 จาก GET /api/me/exam-countdown.
+    if (this.auth.isAuthenticated()) {
+      this.examCountdown.loadSetting();
+    }
   }
 
   get featuredSellers() {

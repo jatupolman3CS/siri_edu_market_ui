@@ -580,3 +580,167 @@ describe('CatalogService — document detail 404 vs generic failure (QA bug #8)'
     expect(catalog.getById('doc-1')?.title).toBe('เอกสาร doc-1');
   });
 });
+
+describe('CatalogService — loadDocumentDetail entrySource + view-tracking (seller-analytics-insights v1 round 2, AC-16)', () => {
+  it('accepts an optional entrySource without changing document-detail loading behavior', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1', {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสาร doc-1',
+    });
+    stubRoute('POST', '/api/marketplace/documents/doc-1/view', null, 204);
+    const catalog = buildService();
+
+    catalog.loadDocumentDetail('doc-1', { source: 'search', searchTerm: 'เลข ม.3' });
+    await settle();
+
+    expect(catalog.getById('doc-1')?.title).toBe('เอกสาร doc-1');
+    expect(catalog.documentDetailState().status).toBe('idle');
+  });
+
+  it('still loads correctly when entrySource is omitted (AC-19 fallback: no source sent is fine)', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1', {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสาร doc-1',
+    });
+    stubRoute('POST', '/api/marketplace/documents/doc-1/view', null, 204);
+    const catalog = buildService();
+
+    catalog.loadDocumentDetail('doc-1');
+    await settle();
+
+    expect(catalog.getById('doc-1')?.title).toBe('เอกสาร doc-1');
+  });
+
+  it('AC-16: fires exactly one POST .../view request after a successful document load', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1', {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสาร doc-1',
+    });
+    stubRoute('POST', '/api/marketplace/documents/doc-1/view', null, 204);
+    const catalog = buildService();
+
+    // The page renders off documentDetailState() the instant the GET resolves — logDocumentView()
+    // is fired without being awaited, so the caller never blocks on this second request.
+    catalog.loadDocumentDetail('doc-1', { source: 'direct' });
+    await settle();
+
+    expect(catalog.documentDetailState().status).toBe('idle');
+    const viewRequests = requests.filter(
+      (r) => r.method === 'POST' && r.path === '/api/marketplace/documents/doc-1/view',
+    );
+    expect(viewRequests.length).toBe(1);
+  });
+
+  it('AC-16: a failed view-tracking call never surfaces as an error and is not retried', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1', {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสาร doc-1',
+    });
+    stubRoute('POST', '/api/marketplace/documents/doc-1/view', { status: 500 }, 500);
+    const catalog = buildService();
+
+    catalog.loadDocumentDetail('doc-1', { source: 'direct' });
+    await settle();
+
+    // The document itself still loaded fine — a broken analytics call must never flip this to 'error'.
+    expect(catalog.documentDetailState().status).toBe('idle');
+    const viewRequests = requests.filter(
+      (r) => r.method === 'POST' && r.path === '/api/marketplace/documents/doc-1/view',
+    );
+    expect(viewRequests.length).toBe(1);
+  });
+
+  it('a failed document load never attempts view-tracking either (only a successful load counts as a view)', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1', { status: 500 }, 500);
+    const catalog = buildService();
+
+    catalog.loadDocumentDetail('doc-1', { source: 'search', searchTerm: 'math' });
+    await settle();
+
+    expect(catalog.documentDetailState().status).toBe('error');
+    expect(requests.some((r) => r.path.endsWith('/view'))).toBe(false);
+  });
+});
+
+describe('CatalogService — loadRecommended (personalized-recommendations v1, round 2)', () => {
+  it('populates recommended and recommendedStrategy from a "purchase-history" response', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [documentRow('doc-1'), documentRow('doc-2')],
+      strategy: 'purchase-history',
+    });
+    const catalog = buildService();
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommended().map((d) => d.id)).toEqual(['doc-1', 'doc-2']);
+    expect(catalog.recommendedStrategy()).toBe('purchase-history');
+    const last = requests.filter((r) => r.path === '/api/marketplace/recommended').pop();
+    expect(last!.query.get('Take')).toBe('8');
+  });
+
+  it('populates recommended and recommendedStrategy from a "popular-fallback" response', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [documentRow('doc-9')],
+      strategy: 'popular-fallback',
+    });
+    const catalog = buildService();
+
+    catalog.loadRecommended(4);
+    await settle();
+
+    expect(catalog.recommended().map((d) => d.id)).toEqual(['doc-9']);
+    expect(catalog.recommendedStrategy()).toBe('popular-fallback');
+    const last = requests.filter((r) => r.path === '/api/marketplace/recommended').pop();
+    expect(last!.query.get('Take')).toBe('4');
+  });
+
+  it('treats an empty items response as "no section" without touching recommendedStrategy incorrectly', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [],
+      strategy: 'popular-fallback',
+    });
+    const catalog = buildService();
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommended()).toEqual([]);
+    expect(catalog.recommendedStrategy()).toBe('popular-fallback');
+  });
+
+  it('on failure, clears both signals and reports via ApiFailureReporter (no throw, no toast of its own)', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', { title: 'Server Error', status: 500 }, 500);
+    const catalog = buildService();
+    const reporter = TestBed.inject(ApiFailureReporter);
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommended()).toEqual([]);
+    expect(catalog.recommendedStrategy()).toBeNull();
+    expect(reporter.report).toHaveBeenCalledWith('โหลดคำแนะนำสำหรับคุณ', expect.anything());
+  });
+
+  it('a later failed reload clears out a previously-successful recommendation list', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [documentRow('doc-1')],
+      strategy: 'purchase-history',
+    });
+    const catalog = buildService();
+    catalog.loadRecommended();
+    await settle();
+    expect(catalog.recommended().length).toBe(1);
+
+    stubRoute('GET', '/api/marketplace/recommended', { title: 'Server Error', status: 500 }, 500);
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommended()).toEqual([]);
+    expect(catalog.recommendedStrategy()).toBeNull();
+  });
+});

@@ -19,7 +19,7 @@ import {
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager } from './infinite-pager';
 
-export type LibraryFilter = 'all' | 'unreviewed';
+export type LibraryFilter = 'all' | 'unreviewed' | 'unread';
 
 /**
  * order-status-tabs v1 §1/§4: the 4 tabs shown on `/orders`. "successful" groups
@@ -71,12 +71,15 @@ export class LibraryService {
     pageSize: 24,
     errorMessage: 'โหลดคลังของฉันไม่สำเร็จ',
     fetch: async (Page, PageSize) => {
+      // TODO(contract): wire unreadOnly after SDK regen
+      const queryPayload: Record<string, unknown> = {
+        Page,
+        PageSize,
+        unreviewedOnly: this.libraryFilter() === 'unreviewed' ? true : undefined,
+        unreadOnly: this.libraryFilter() === 'unread' ? true : undefined,
+      };
       const result = await getApiLibrary({
-        query: {
-          Page,
-          PageSize,
-          unreviewedOnly: this.libraryFilter() === 'unreviewed' ? true : undefined,
-        },
+        query: queryPayload as unknown as NonNullable<Parameters<typeof getApiLibrary>[0]>['query'],
       });
       const data = unwrapSdkResult(result);
       return {
@@ -258,5 +261,49 @@ export class LibraryService {
 
   resetReviewState(): void {
     this._reviewState.set(idleActionState());
+  }
+
+  /**
+   * library-read-progress v1 §4: toggles read status for a document.
+   * Updates the item in `libraryPager` in-place without reloading the entire page.
+   */
+  async toggleRead(documentId: string, isRead: boolean): Promise<void> {
+    if (!this.auth.accessToken()) return;
+
+    try {
+      // TODO(contract): wire putApiLibraryByDocumentIdReadStatus หลัง regen — แทน fetch บรรทัดถัดไปด้วย:
+      // const res = unwrapSdkResult(await putApiLibraryByDocumentIdReadStatus({
+      //   path: { documentId },
+      //   body: { isRead },
+      // }));
+      const url = resolveApiUrl(`/api/library/${documentId}/read-status`);
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.auth.accessToken()}`,
+        },
+        body: JSON.stringify({ isRead }),
+      });
+
+      if (!response.ok) {
+        throw new Error('อัปเดตสถานะการอ่านไม่สำเร็จ');
+      }
+
+      const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      const markedReadAt = typeof data?.['markedReadAt'] === 'string'
+        ? (data['markedReadAt'] as string)
+        : (isRead ? new Date().toISOString() : undefined);
+
+      this.libraryPager.updateItems((prev) =>
+        prev.map((item) =>
+          item.document.id === documentId
+            ? { ...item, isRead, markedReadAt }
+            : item,
+        ),
+      );
+    } catch (e) {
+      this.apiFail.report('อัปเดตสถานะการอ่านไม่สำเร็จ', e);
+    }
   }
 }

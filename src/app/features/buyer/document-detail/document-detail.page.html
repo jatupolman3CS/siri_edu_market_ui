@@ -52,7 +52,7 @@
           <div class="lg:col-span-7">
             <!-- Cover -->
             <div class="relative card-soft overflow-hidden">
-              <div class="aspect-[4/5] relative">
+              <div class="aspect-[16/10] relative">
                 <img
                   appImgFallback
                   [src]="d.gallery[selectedImage()] || d.cover"
@@ -127,7 +127,17 @@
                           <div class="text-sm font-bold text-ink mb-2">{{ p.excerptTitle }}</div>
                         }
 
-                        @if (p.excerptLines?.length) {
+                        @if (d.format !== 'pdf' && previewRasterUrls().length === 0) {
+                          <!-- P0-3: ไฟล์ที่ไม่ใช่ PDF (เช่น ZIP) ไม่สามารถแปลงเป็นภาพพรีวิวได้ —
+                               เช็คก่อน excerptLines เสมอ เพราะ backend ส่ง excerptLines ที่ไม่ว่างเปล่าเสมอ
+                               (มี fallback text ฝั่ง backend) จึงพึ่ง @else if (excerptLines?.length) เดิมไม่ได้ —
+                               แจ้งตามจริงแทนคำว่า "ลองใหม่อีกครั้ง" ที่ทำให้เข้าใจผิดว่าระบบกำลังประมวลผลอยู่ -->
+                          <app-empty-state
+                            emoji="🗂️"
+                            title="ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้"
+                            description="รองรับพรีวิวแบบภาพเฉพาะไฟล์ PDF เท่านั้น กรุณาดูรายละเอียดในแท็บ “รายละเอียด” แทน"
+                          />
+                        } @else if (p.excerptLines?.length) {
                           <div class="rounded-2xl border border-line bg-white p-4">
                             <div class="space-y-2 text-sm text-ink-soft leading-relaxed">
                               @for (line of p.excerptLines!; track line) {
@@ -500,6 +510,18 @@
                   }
                 </div>
 
+                @if (!d.isFree) {
+                  @if (discountCountdownActive()) {
+                    <p class="text-xs text-ink-muted mt-2">
+                      ราคานี้ถึง {{ d.discountExpiresAt | date: 'd MMM yyyy' }}
+                    </p>
+                  } @else if (showSoldThisMonth()) {
+                    <p class="text-xs text-ink-muted mt-2">
+                      ขายแล้ว {{ d.soldThisMonthCount }} ครั้งในเดือนนี้
+                    </p>
+                  }
+                }
+
                 <div class="flex flex-col gap-3">
                   @if (cart.has(d.id)) {
                     <button class="btn-pink !py-3.5" disabled>
@@ -552,6 +574,10 @@
                 <div class="flex items-center gap-2 mt-2 pt-4 border-t border-line text-xs text-ink-muted justify-center">
                   <app-icon name="lock" [size]="12" />
                   <span>ชำระเงินปลอดภัยผ่าน PromptPay / บัตรเครดิต</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1.5 text-xs text-ink-muted justify-center">
+                  <app-icon name="shield" [size]="12" />
+                  <span>เนื้อหาไม่ตรงปก แจ้งคืนเงินได้ภายใน 3 วัน</span>
                 </div>
               </div>
 

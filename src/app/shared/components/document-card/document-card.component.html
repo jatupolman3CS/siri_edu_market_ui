@@ -128,12 +128,9 @@
         [class.!pt-2]="isCompact()"
         [class.!gap-1.5]="isCompact()"
       >
-        <!-- Resource type + Seller -->
+        <!-- Seller -->
         <div class="flex items-center gap-1.5 text-[11px] text-ink-muted">
-          <span class="pill-soft !py-0.5 !text-[10px] !bg-pink-50 !text-pink-700">
-            {{ resourceLabel() }}
-          </span>
-          <span class="truncate ml-auto flex items-center gap-1">
+          <span class="truncate flex items-center gap-1">
             <img
               appImgFallback
               [src]="doc().seller.avatar"

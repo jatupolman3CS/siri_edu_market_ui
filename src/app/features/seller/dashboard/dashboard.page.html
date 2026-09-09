@@ -27,6 +27,14 @@
         </div>
       </header>
 
+      <!-- Store readiness (store-readiness-score v1 §4) -->
+      <app-store-readiness-bar
+        [percentComplete]="storeReadiness().percentComplete"
+        [isComplete]="storeReadiness().isComplete"
+        [items]="storeReadiness().items"
+        [nextActionItemKey]="storeReadiness().nextActionItemKey"
+      />
+
       <!-- Stats -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <app-stat-card
@@ -129,6 +137,117 @@
             </ul>
           }
         </section>
+      </div>
+
+      <!-- Seller insights (seller-analytics-insights v1 §4) -->
+      <div class="grid lg:grid-cols-2 gap-6 mt-6">
+        <!-- Conversion rate ต่อเอกสาร -->
+        <section class="card-soft p-6">
+          <h2 class="text-lg font-bold text-ink mb-1">Conversion rate ต่อเอกสาร</h2>
+          <p class="text-xs text-ink-muted mb-5">คนดูกี่ครั้งแล้วซื้อกี่ครั้ง</p>
+          @if (seller.stats().insights.documentConversions.length === 0) {
+            <app-empty-state
+              emoji="📊"
+              title="ยังไม่มีข้อมูลการดู"
+              description="เมื่อมีคนเปิดดูเอกสารของคุณ ข้อมูล conversion จะแสดงที่นี่"
+            />
+          } @else {
+            <div class="overflow-x-auto -mx-2">
+              <table class="w-full text-sm min-w-[380px]">
+                <thead>
+                  <tr class="text-left text-xs text-ink-muted border-b border-line">
+                    <th class="py-2 px-2 font-semibold">เอกสาร</th>
+                    <th class="py-2 px-2 font-semibold text-right">จำนวนดู</th>
+                    <th class="py-2 px-2 font-semibold text-right">จำนวนขาย</th>
+                    <th class="py-2 px-2 font-semibold text-right">Conversion</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-line">
+                  @for (row of seller.stats().insights.documentConversions; track row.documentId) {
+                    <tr>
+                      <td class="py-2.5 px-2 font-medium text-ink line-clamp-1">{{ row.title }}</td>
+                      <td class="py-2.5 px-2 text-right text-ink-soft">{{ row.viewCount | compact }}</td>
+                      <td class="py-2.5 px-2 text-right text-ink-soft">{{ row.salesCount | compact }}</td>
+                      <td class="py-2.5 px-2 text-right font-bold text-pink-600">{{ row.conversionRatePercent.toFixed(1) }}%</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+
+        <div class="flex flex-col gap-6">
+          <!-- คำค้นหายอดนิยมที่พาคนมาเจอร้าน -->
+          <section class="card-soft p-6">
+            <h2 class="text-lg font-bold text-ink mb-1">คำค้นหาที่พาคนมาเจอร้านคุณ</h2>
+            <p class="text-xs text-ink-muted mb-5">คำค้นหายอดนิยมที่คนใช้แล้วเจอเอกสารของคุณ</p>
+            @if (seller.stats().insights.topSearchTerms.length === 0) {
+              <app-empty-state
+                emoji="🔍"
+                title="ยังไม่มีคำค้นหา"
+                description="เมื่อมีคนค้นหาแล้วเจอเอกสารของคุณ คำค้นหาจะแสดงที่นี่"
+              />
+            } @else {
+              <ul class="flex flex-wrap gap-2">
+                @for (t of seller.stats().insights.topSearchTerms; track t.term) {
+                  <li class="pill-soft">
+                    {{ t.term }}
+                    <span class="font-bold text-ink ml-1">{{ t.hitCount }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <!-- Breakdown ต้นทาง traffic ของร้าน -->
+          <section class="card-soft p-6">
+            <h2 class="text-lg font-bold text-ink mb-1">ต้นทาง traffic ของร้านคุณ</h2>
+            <p class="text-xs text-ink-muted mb-5">สัดส่วนที่มาของคนที่เปิดดูเอกสารในร้าน</p>
+            @if (seller.stats().insights.trafficBreakdown.totalViews === 0) {
+              <app-empty-state emoji="🧭" title="ยังไม่มีข้อมูล traffic" />
+            } @else {
+              <ul class="space-y-3">
+                <li>
+                  <div class="flex items-center justify-between text-sm mb-1.5">
+                    <span class="font-medium text-ink">ค้นหา</span>
+                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.searchPercent.toFixed(1) }}%</span>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                    <div
+                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      [style.width.%]="seller.stats().insights.trafficBreakdown.searchPercent"
+                    ></div>
+                  </div>
+                </li>
+                <li>
+                  <div class="flex items-center justify-between text-sm mb-1.5">
+                    <span class="font-medium text-ink">หมวดหมู่</span>
+                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.categoryPercent.toFixed(1) }}%</span>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                    <div
+                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      [style.width.%]="seller.stats().insights.trafficBreakdown.categoryPercent"
+                    ></div>
+                  </div>
+                </li>
+                <li>
+                  <div class="flex items-center justify-between text-sm mb-1.5">
+                    <span class="font-medium text-ink">ลิงก์ตรง</span>
+                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.directPercent.toFixed(1) }}%</span>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                    <div
+                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      [style.width.%]="seller.stats().insights.trafficBreakdown.directPercent"
+                    ></div>
+                  </div>
+                </li>
+              </ul>
+            }
+          </section>
+        </div>
       </div>
 
       <!-- Earnings Calculator + Recent docs + Payout -->

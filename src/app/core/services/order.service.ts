@@ -27,6 +27,8 @@ import type { Order } from '../models';
 export interface CreateOrderInput {
   savedPaymentMethodId?: string;
   saveNewCard?: boolean;
+  referralCode?: string;
+  useReferralCredit?: boolean;
 }
 
 export type CreateOrderOutcome =
@@ -71,7 +73,12 @@ export class OrderService {
       // `savedPaymentMethodId` / `saveNewCard` straight through. Both are optional on the wire —
       // `JSON.stringify` drops an `undefined` field rather than sending it as `null`.
       const result = await postApiOrders({
-        body: { savedPaymentMethodId: input.savedPaymentMethodId, saveNewCard: input.saveNewCard },
+        body: {
+          savedPaymentMethodId: input.savedPaymentMethodId,
+          saveNewCard: input.saveNewCard,
+          referralCode: input.referralCode,
+          useReferralCredit: input.useReferralCredit,
+        } as unknown as { savedPaymentMethodId?: string; saveNewCard?: boolean },
       });
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);

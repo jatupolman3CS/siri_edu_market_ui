@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SellerService } from './seller.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { DEFAULT_SELLER_INSIGHTS } from '../models';
 
 /**
  * real-data-stats v1 §3.5 — `SellerEarningsResponse.nextPayoutDate` isn't on the generated type
@@ -96,6 +97,38 @@ describe('SellerService — nextPayoutDate (real-data-stats v1 §3.5)', () => {
     await service.loadEarnings();
 
     expect(service.nextPayoutDate()).toBeNull();
+  });
+});
+
+describe('SellerService — insights (seller-analytics-insights v1 §4 round 1 stub)', () => {
+  it('defaults stats().insights to DEFAULT_SELLER_INSIGHTS before any dashboard load', () => {
+    const service = buildService();
+
+    expect(service.stats().insights).toEqual(DEFAULT_SELLER_INSIGHTS);
+  });
+
+  it('keeps stats().insights at DEFAULT_SELLER_INSIGHTS after a real dashboard load — mapSellerStats is not touched until round 2', async () => {
+    stubRoute('GET', '/api/seller/dashboard', {
+      totalRevenue: 1000,
+      monthlyRevenue: 200,
+      totalDownloads: 5,
+      monthlyDownloads: 2,
+      averageRating: 4.5,
+      totalReviews: 3,
+      pendingPayout: 100,
+      activeListings: 2,
+      pendingApproval: 0,
+      followerCount: 10,
+      newFollowersThisMonth: 1,
+      revenueByMonth: [],
+      topCategories: [],
+    });
+    const service = buildService();
+
+    await service.refreshDashboard();
+
+    expect(service.stats().insights).toEqual(DEFAULT_SELLER_INSIGHTS);
+    expect(service.stats().totalRevenue).toBe(1000);
   });
 });
 

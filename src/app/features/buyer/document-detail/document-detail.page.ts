@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
@@ -19,6 +20,7 @@ import {
   CatalogService,
   FollowService,
   LibraryService,
+  NavigationSourceService,
   RecentlyViewedService,
   WishlistService,
   calcBundleSaveAmount,
@@ -54,6 +56,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     FormsModule,
     RouterLink,
     NzTabsModule,
+    DatePipe,
     DocumentCardComponent,
     RatingStarsComponent,
     IconComponent,
@@ -77,6 +80,7 @@ export class BuyerDocumentDetailPage {
   private readonly auth = inject(AuthService);
   private readonly bundles = inject(BundleService);
   private readonly recent = inject(RecentlyViewedService);
+  private readonly navSource = inject(NavigationSourceService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
@@ -99,6 +103,27 @@ export class BuyerDocumentDetailPage {
     const d = this.doc();
     if (!d || !d.originalPrice) return 0;
     return calcBundleSavePercent(d.price, d.originalPrice);
+  });
+
+  /**
+   * discount-urgency v1 §4/AC-9: active only when `discountExpiresAt` is set and still in the
+   * future — same `new Date(iso).getTime() > Date.now()` convention as `announcementStatus()`
+   * in `announcements-admin.page.ts`.
+   */
+  readonly discountCountdownActive = computed(() => {
+    const d = this.doc();
+    if (!d?.discountExpiresAt) return false;
+    return new Date(d.discountExpiresAt).getTime() > Date.now();
+  });
+
+  /**
+   * discount-urgency v1 §4/AC-10/AC-11: social-proof fallback — only when there is no active
+   * countdown AND at least one sale this month. Not tied to having a discount at all (general
+   * trust signal).
+   */
+  readonly showSoldThisMonth = computed(() => {
+    const d = this.doc();
+    return !this.discountCountdownActive() && (d?.soldThisMonthCount ?? 0) > 0;
   });
 
   readonly previewRasterUrls = computed(() => {
@@ -218,7 +243,11 @@ export class BuyerDocumentDetailPage {
       this.selectedImage.set(0);
       this.showPreviewGallery.set(false);
       this.preview.set(null);
-      if (id) this.catalog.loadDocumentDetail(id);
+      // seller-analytics-insights v1 §4 (AC-16/17/18/19): the full detail page (not quick-view,
+      // not the preview sub-view) is the only mount point that counts as a "view" — classify the
+      // traffic source right here, synchronously, before this navigation's own NavigationEnd
+      // fires (see NavigationSourceService's class doc for why the timing matters).
+      if (id) this.catalog.loadDocumentDetail(id, this.navSource.classifyEntrySource());
       this.loadCrossSellBundles(id);
     });
     // Track recently viewed

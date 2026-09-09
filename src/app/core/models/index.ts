@@ -203,6 +203,10 @@ export interface DocumentItem {
   price: number;            // 0 = Free
   originalPrice?: number;
   discountPercent?: number;
+  /** discount-urgency v1 §4 — detail-only, raw `DiscountExpiresAt`; frontend checks future-ness. */
+  discountExpiresAt?: string;
+  /** discount-urgency v1 §4 — detail-only social-proof count for the current UTC calendar month. */
+  soldThisMonthCount?: number;
   format: FileFormat;
   pages: number;
   fileSize: string;
@@ -221,6 +225,10 @@ export interface DocumentItem {
   downloads: number;
   /** Paid/fulfilled order line items (not the same as download count). */
   salesCount?: number;
+  /** seller-analytics-insights v1 §3.4: lifetime view count — seller-facing only, undefined for buyer-facing responses. */
+  viewCount?: number;
+  /** seller-analytics-insights v1 §3.4: `round(salesCount/viewCount*100, 1)`, `0` when viewCount is 0. */
+  conversionRatePercent?: number;
   status: DocumentStatus;
   watermarkEnabled: boolean;
   previewPages: number;
@@ -323,6 +331,7 @@ export interface Order {
   createdAt: string;
   paidAt?: string;
   paymentHints?: OrderPaymentHints;
+  discountAmount: number;
 }
 
 export interface LibraryItem {
@@ -334,6 +343,8 @@ export interface LibraryItem {
   isReviewed: boolean;
   myReviewId?: string;
   myRating?: number;
+  isRead: boolean;
+  markedReadAt?: string;
 }
 
 // ====== Loyalty points ======
@@ -378,6 +389,39 @@ export interface SavedPaymentMethod {
   createdAt: string;
 }
 
+// ====== Seller payout account (seller-payout-account-self-service v1 §3.1/§4) ======
+// Mirrors `PayoutAccountResponse` (docs/contracts/seller-payout-account-self-service.md §3.1)
+// exactly — `accountNumberMasked` is the only representation of the account number this app ever
+// holds outside of a `reveal()` call, which is why the full number never lives in this model.
+
+export interface PayoutAccount {
+  hasAccount: boolean;
+  bankCode: string;
+  accountHolderName: string;
+  accountNumberMasked: string;
+  updatedAt: string;
+}
+
+/** ต้องตรงกับ canonical list ที่ contract ข้อ 2.1 เป๊ะ ๆ ทั้งจำนวนและสะกด */
+export const THAI_BANKS: ReadonlyArray<{ code: string; name: string }> = [
+  { code: 'BBL', name: 'ธนาคารกรุงเทพ' },
+  { code: 'KBANK', name: 'ธนาคารกสิกรไทย' },
+  { code: 'KTB', name: 'ธนาคารกรุงไทย' },
+  { code: 'SCB', name: 'ธนาคารไทยพาณิชย์' },
+  { code: 'BAY', name: 'ธนาคารกรุงศรีอยุธยา' },
+  { code: 'TTB', name: 'ธนาคารทหารไทยธนชาต' },
+  { code: 'CIMBT', name: 'ธนาคารซีไอเอ็มบีไทย' },
+  { code: 'UOBT', name: 'ธนาคารยูโอบี' },
+  { code: 'GSB', name: 'ธนาคารออมสิน' },
+  { code: 'GHB', name: 'ธนาคารอาคารสงเคราะห์' },
+  { code: 'BAAC', name: 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร' },
+  { code: 'KKP', name: 'ธนาคารเกียรตินาคินภัทร' },
+  { code: 'TISCO', name: 'ธนาคารทิสโก้' },
+  { code: 'LHBANK', name: 'ธนาคารแลนด์ แอนด์ เฮ้าส์' },
+  { code: 'ICBCT', name: 'ธนาคารไอซีบีซี (ไทย)' },
+  { code: 'SME', name: 'ธนาคารพัฒนาวิสาหกิจขนาดกลางและขนาดย่อมแห่งประเทศไทย' },
+];
+
 // ====== User ======
 
 export interface User {
@@ -420,7 +464,139 @@ export interface SellerStats {
    */
   revenueTrendPercent?: number;
   ratingTrendDelta?: number;
+  /**
+   * store-readiness-score v1 §3.2/§4. Required per spec literal — `mapSellerStats`
+   * (`core/api-mappers/mappers.ts`) now maps the real backend field (round 2, post-regen) and
+   * always returns a value (falling back to `DEFAULT_STORE_READINESS` defensively if the backend
+   * field is ever missing), so this never needs to be optional at the type level again.
+   */
+  storeReadiness: StoreReadiness;
+  /**
+   * seller-analytics-insights v1 §4. Required per spec literal — same reasoning as
+   * `storeReadiness` above. `mapSellerStats` (`core/api-mappers/mappers.ts`) now maps the real
+   * `d.insights` field via `mapSellerInsights` (round 2, post-regen), falling back to
+   * `DEFAULT_SELLER_INSIGHTS` defensively if the backend field is ever missing.
+   */
+  insights: SellerInsights;
 }
+
+// ====== Store readiness (store-readiness-score v1 §3.2/§4) ======
+// Mirrors `StoreReadinessResponse` / `StoreReadinessItemResponse`
+// (docs/contracts/store-readiness-score.md §3.2) exactly — derived, real-time data computed
+// inside `GET /api/seller/dashboard`, no schema/cache of its own.
+
+export interface StoreReadinessItem {
+  key: string;
+  label: string;
+  done: boolean;
+  actionLabel: string;
+  actionRoute: string;
+  /** Only set for the `"listings"` item — `undefined` for `payout_account`/`profile_picture`. */
+  currentCount?: number;
+  /** Only set for the `"listings"` item — `undefined` for `payout_account`/`profile_picture`. */
+  targetCount?: number;
+}
+
+export interface StoreReadiness {
+  percentComplete: number;
+  isComplete: boolean;
+  items: StoreReadinessItem[];
+  nextActionItemKey: string | null;
+}
+
+/**
+ * store-readiness-score v1 §4: literal copy of the backend §3.3 constants. Used as:
+ *  1. `SellerService._stats` initial signal value (before the first `refreshDashboard()` resolves), and
+ *  2. the defensive fallback inside `mapStoreReadiness`/`mapSellerStats` (`core/api-mappers/mappers.ts`)
+ *     if the backend ever omits `storeReadiness` from `SellerDashboardResponse`.
+ * Must stay byte-for-byte identical to the backend literals — this is genuinely rendered on
+ * screen during that window, not a throwaway placeholder.
+ */
+export const DEFAULT_STORE_READINESS: StoreReadiness = {
+  percentComplete: 0,
+  isComplete: false,
+  items: [
+    {
+      key: 'payout_account',
+      label: 'ตั้งค่าบัญชีรับเงิน',
+      done: false,
+      actionLabel: 'ตั้งค่าบัญชีรับเงิน',
+      actionRoute: '/seller/settings',
+    },
+    {
+      key: 'profile_picture',
+      label: 'อัปโหลดรูปโปรไฟล์ร้าน',
+      done: false,
+      actionLabel: 'อัปโหลดรูปโปรไฟล์',
+      actionRoute: '/seller/settings',
+    },
+    {
+      key: 'listings',
+      label: 'อัปโหลดเอกสารอย่างน้อย 3 ชิ้น',
+      done: false,
+      actionLabel: 'อัปโหลดเอกสาร',
+      actionRoute: '/seller/upload',
+      currentCount: 0,
+      targetCount: 3,
+    },
+  ],
+  nextActionItemKey: 'payout_account',
+};
+
+// ====== Seller insights (seller-analytics-insights v1 §3.2/§4) ======
+// Mirrors `SellerInsightsResponse` / `SellerDocumentConversionItem` / `SellerSearchTermItem` /
+// `SellerTrafficBreakdownResponse` (docs/contracts/seller-analytics-insights.md §3.2) — derived,
+// real-time data computed inside `GET /api/seller/dashboard`, no schema/cache of its own here.
+
+export interface SellerDocumentConversionItem {
+  documentId: string;
+  title: string;
+  viewCount: number;
+  salesCount: number;
+  conversionRatePercent: number;
+}
+
+export interface SellerSearchTermItem {
+  term: string;
+  hitCount: number;
+}
+
+export interface SellerTrafficBreakdown {
+  totalViews: number;
+  searchViews: number;
+  categoryViews: number;
+  directViews: number;
+  searchPercent: number;
+  categoryPercent: number;
+  directPercent: number;
+}
+
+export interface SellerInsights {
+  documentConversions: SellerDocumentConversionItem[];
+  topSearchTerms: SellerSearchTermItem[];
+  trafficBreakdown: SellerTrafficBreakdown;
+}
+
+/**
+ * seller-analytics-insights v1 §4: literal all-empty/all-zero shape. Used as:
+ *  1. `SellerService._stats` initial signal value (before the first `refreshDashboard()` resolves), and
+ *  2. the defensive fallback inside `mapSellerStats` (`core/api-mappers/mappers.ts`) if the
+ *     backend ever omits `insights` from `SellerDashboardResponse`.
+ * Every empty-state in `dashboard.page.html` (§4) renders correctly off this value.
+ */
+export const DEFAULT_SELLER_INSIGHTS: SellerInsights = {
+  documentConversions: [],
+  topSearchTerms: [],
+  trafficBreakdown: {
+    totalViews: 0,
+    searchViews: 0,
+    categoryViews: 0,
+    directViews: 0,
+    searchPercent: 0,
+    categoryPercent: 0,
+    directPercent: 0,
+  },
+};
 
 // ====== Platform stats (real-data-stats v1 §3.3/§4.1) ======
 // `GET /api/marketplace/stats` — public, anonymous. Single shared source for every page that
@@ -525,4 +701,108 @@ export interface AnnouncementAdmin {
   endAt: string | null;
   sortOrder: number;
   images: AnnouncementImage[];
+}
+
+// ====== Referral Program (referral-program v1, docs/contracts/referral-program.md §4) ======
+
+export interface ReferralSummary {
+  code: string;
+  shareUrl: string;
+  totalReferred: number;
+  unusedCreditCount: number;
+  unusedCreditTotal: number;
+}
+
+export interface ReferralCodeValidation {
+  valid: boolean;
+  discountAmount?: number;
+  reasonText?: string;
+}
+
+// ====== Exam Hub Landing Pages (exam-hub-landing-pages v1, docs/contracts/exam-hub-landing-pages.md §4) ======
+
+export type ExamHubType = 'tcas' | 'tgat-tpat' | 'a-level' | 'onet';
+
+export interface ExamHubPage {
+  examType: ExamHubType;
+  title: string;
+  metaDescription: string;
+  introText: string;
+  examDateInfo?: string;
+  scoreCriteriaInfo?: string;
+  trendInfo?: string;
+  updatedAt?: string;
+}
+
+// ====== Seller pricing hint (seller-pricing-and-storefront-stats v1 §3.1/§4) ======
+// Mirrors `DocumentPricingHintResponse` exactly. Local model — not a wrapper around a generated
+// SDK type — kept as its own shape so `upload.page.ts` never binds to the raw generated response
+// directly (`SellerService.getDocumentPricingHint` maps it here).
+
+export interface DocumentPricingHint {
+  sampleSize: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  averagePrice: number | null;
+}
+
+// ====== Storefront sales chart (seller-pricing-and-storefront-stats v1 §3.3/§4) ======
+// One point of `SellerProfileResponse.salesByMonth` — kept as its own model + signal
+// (`CatalogService.sellerSalesByMonth`) instead of reading `SellerProfileResponse.salesByMonth`
+// directly in the template, decoupling `storefront.page.ts` from the generated response shape.
+// `unitsSold` is intentionally the only numeric field — no ฿ amount is ever modeled here
+// (privacy decision, §1 of the contract).
+
+export interface SellerSalesByMonthPoint {
+  month: string;
+  unitsSold: number;
+}
+
+// ====== LINE notification channel (line-notification-channel v1, docs/contracts/line-notification-channel.md §3.3) ======
+// Mirrors `LineConnectionStatusResponse` exactly. `status` is a plain string, not an OpenAPI enum
+// (§3.3 note — no schema in this system declares an enum, kept consistent on purpose).
+
+export type LineConnectionStatusValue = 'NotConnected' | 'Connected' | 'Disconnected';
+
+export interface LineConnectionStatus {
+  isAvailable: boolean;
+  isConnected: boolean;
+  status: LineConnectionStatusValue;
+  lineDisplayName: string | null;
+  connectedAt: string | null;
+}
+
+// ====== Exam Countdown Mode (exam-countdown-mode v1, docs/contracts/exam-countdown-mode.md §4) ======
+// Mirrors `ExamCountdownSettingResponse` exactly — `examType` is one of the 9 `Standard` presets
+// already used by `DOCUMENT_STANDARD` (§0 การตัดสินใจที่ 1 ของ contract), reused as-is with no
+// separate label mapping. `examDate` stays a raw `'yyyy-MM-dd'` string — `daysRemaining`/`isPast`
+// are computed on the frontend only (`core/services/exam-countdown.service.ts`).
+
+export type ExamCountdownExamType =
+  | 'O-NET'
+  | 'TGAT'
+  | 'TPAT'
+  | 'GAT'
+  | 'PAT'
+  | 'สสวท.'
+  | 'A-Level'
+  | 'IELTS'
+  | 'TOEFL';
+
+export const EXAM_COUNTDOWN_EXAM_TYPES: ExamCountdownExamType[] = [
+  'O-NET',
+  'TGAT',
+  'TPAT',
+  'GAT',
+  'PAT',
+  'สสวท.',
+  'A-Level',
+  'IELTS',
+  'TOEFL',
+];
+
+export interface ExamCountdownSetting {
+  examType: ExamCountdownExamType;
+  examDate: string; // 'yyyy-MM-dd'
+  isEnabled: boolean;
 }

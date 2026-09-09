@@ -1,5 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { DocumentItem, SellerQnaItem, SellerStats } from '../models';
+import {
+  DEFAULT_SELLER_INSIGHTS,
+  DEFAULT_STORE_READINESS,
+  DocumentItem,
+  DocumentPricingHint,
+  SellerQnaItem,
+  SellerStats,
+} from '../models';
 import {
   mapSellerDocument,
   mapSellerDocumentSummary,
@@ -12,6 +19,7 @@ import {
   getApiSellerDashboard,
   getApiSellerDocuments,
   getApiSellerDocumentsById,
+  getApiSellerDocumentsPricingHint,
   getApiSellerEarnings,
   getApiSellerQna,
   getApiSellerReviews,
@@ -91,6 +99,8 @@ export class SellerService {
     newFollowersThisMonth: 0,
     revenueByMonth: [],
     topCategories: [],
+    storeReadiness: DEFAULT_STORE_READINESS,
+    insights: DEFAULT_SELLER_INSIGHTS,
   });
 
   private readonly _earnings = signal<SellerEarningsResponse | null>(null);
@@ -163,6 +173,10 @@ export class SellerService {
     try {
       const result = await getApiSellerDashboard();
       const data = unwrapSdkResult(result);
+      // store-readiness-score v1 §4 "การแบ่งงาน" (รอบสอง): `mapSellerStats` now maps the real
+      // `d.storeReadiness` field directly (post-regen) — no more override at the call site.
+      // seller-analytics-insights v1 §4 "การแบ่งงาน" (รอบสอง): `mapSellerStats` now maps the real
+      // `d.insights` field via `mapSellerInsights` (post-regen) — no more override at the call site.
       if (data) this._stats.set(mapSellerStats(data));
       this._sellerProfileRequired.set(false);
     } catch (e) {
@@ -413,6 +427,37 @@ export class SellerService {
     } catch (e) {
       this.apiFail.report('อัปโหลดไฟล์', e);
       throw e;
+    }
+  }
+
+  /**
+   * seller-pricing-and-storefront-stats v1 §3.1/§4: competitor price range (avg/min/max/sample
+   * size) for OTHER approved, non-free documents sharing at least one category — helps a seller
+   * set a competitive price at the upload page's step 3. `categoryIds` empty → skip the request
+   * entirely (nothing to filter by).
+   *
+   * No `apiFail`/error toast on purpose (§4 "การตัดสินใจ: ไม่ toast ตอน error") — this is a
+   * nice-to-have box on the upload flow, not core; a failed request just hides it (AC-10), same
+   * as `sampleSize < 3`.
+   */
+  async getDocumentPricingHint(
+    categoryIds: string[],
+    excludeDocumentId?: string,
+  ): Promise<DocumentPricingHint | null> {
+    if (categoryIds.length === 0) return null;
+    try {
+      const result = await getApiSellerDocumentsPricingHint({
+        query: { CategoryIds: categoryIds, ExcludeDocumentId: excludeDocumentId },
+      });
+      const data = unwrapSdkResult(result);
+      return {
+        sampleSize: data.sampleSize ?? 0,
+        minPrice: data.minPrice ?? null,
+        maxPrice: data.maxPrice ?? null,
+        averagePrice: data.averagePrice ?? null,
+      };
+    } catch {
+      return null;
     }
   }
 

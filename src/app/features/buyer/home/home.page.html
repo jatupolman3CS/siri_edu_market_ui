@@ -152,6 +152,74 @@
       </div>
     </section>
 
+    <!-- ===================== EXAM COUNTDOWN (exam-countdown-mode v1) ===================== -->
+    @if (auth.isAuthenticated()) {
+      @if (examCountdownActive()) {
+        <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+          <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-sm text-ink-muted">โหมดใกล้สอบ</p>
+              <p class="text-xl font-bold text-ink">
+                เหลืออีก {{ examDaysRemaining() }} วันก่อนสอบ {{ examCountdown.setting()?.examType }}
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" class="btn-ghost !px-5" (click)="openExamCountdownEdit()">แก้ไขวันสอบ</button>
+              <button type="button" class="btn-ghost !px-5" (click)="examCountdown.setEnabled(false)">ปิดโหมดนี้</button>
+            </div>
+          </div>
+
+          @if (examCountdownFormOpen()) {
+            <div class="mt-4">
+              <app-exam-countdown-form (saved)="examCountdownFormOpen.set(false)" />
+            </div>
+          }
+
+          <div class="mt-8">
+            <app-section-header title="เอกสารที่เกี่ยวข้องกับสอบของคุณ" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              @for (doc of examCountdown.docs(); track doc.id) {
+                <app-document-card [doc]="doc" />
+              }
+            </div>
+            @if (examCountdown.hasMoreDocs()) {
+              <div class="text-center mt-6">
+                <button type="button" class="btn-ghost" (click)="examCountdown.docsPager.loadMore()">โหลดเพิ่ม</button>
+              </div>
+            }
+            <div class="text-center mt-4">
+              <a routerLink="/marketplace" class="text-sm font-bold text-pink-600 hover:underline">ดูเอกสารทั้งหมด</a>
+            </div>
+          </div>
+        </section>
+      } @else if (examCountdown.setting()?.isEnabled && examIsPast()) {
+        <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+          <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
+            <p class="text-base font-semibold text-ink">สอบ {{ examCountdown.setting()?.examType }} ผ่านไปแล้ว</p>
+            <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">ตั้งวันสอบใหม่</button>
+          </div>
+          @if (examCountdownFormOpen()) {
+            <div class="mt-4">
+              <app-exam-countdown-form (saved)="examCountdownFormOpen.set(false)" />
+            </div>
+          }
+        </section>
+      } @else if (examCountdown.setting() === null && examCountdown.state().status !== 'loading') {
+        <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+          <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
+            <p class="text-base font-semibold text-ink">ตั้งวันสอบของคุณ เพื่อดูเอกสารที่เกี่ยวข้องและนับถอยหลังก่อนสอบ</p>
+            <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">ตั้งวันสอบ</button>
+          </div>
+          @if (examCountdownFormOpen()) {
+            <div class="mt-4">
+              <app-exam-countdown-form (saved)="examCountdownFormOpen.set(false)" />
+            </div>
+          }
+        </section>
+      }
+      <!-- isEnabled=false: ไม่ render อะไรเลย (§0 การตัดสินใจที่ 5, AC-19) -->
+    }
+
     <!-- ===================== RECENTLY VIEWED ===================== -->
     @if (recent.count() > 0) {
       <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
@@ -172,6 +240,22 @@
                 {{ d.title }}
               </div>
             </a>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ===================== RECOMMENDED FOR YOU ===================== -->
+    @if (catalog.recommended().length > 0) {
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+        <app-section-header
+          eyebrow="สำหรับคุณ"
+          title="แนะนำสำหรับคุณ"
+          [subtitle]="recommendedSubtitle()"
+        />
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          @for (doc of catalog.recommended(); track doc.id) {
+            <app-document-card [doc]="doc" />
           }
         </div>
       </section>

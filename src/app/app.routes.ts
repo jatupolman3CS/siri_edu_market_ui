@@ -86,6 +86,35 @@ export const routes: Routes = [
           ),
         title: 'รายการโปรด — SIRIEDUMARKET',
       },
+      // exam-hub-landing-pages v1 §4: 4 dedicated landing pages for national exam hubs.
+      {
+        path: 'tcas',
+        loadComponent: () =>
+          import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
+        data: { examType: 'tcas' },
+        title: 'TCAS — ระบบคัดเลือกเข้ามหาวิทยาลัย — SIRIEDUMARKET',
+      },
+      {
+        path: 'tgat-tpat',
+        loadComponent: () =>
+          import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
+        data: { examType: 'tgat-tpat' },
+        title: 'TGAT/TPAT — SIRIEDUMARKET',
+      },
+      {
+        path: 'a-level',
+        loadComponent: () =>
+          import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
+        data: { examType: 'a-level' },
+        title: 'A-Level — SIRIEDUMARKET',
+      },
+      {
+        path: 'onet',
+        loadComponent: () =>
+          import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
+        data: { examType: 'onet' },
+        title: 'O-NET — SIRIEDUMARKET',
+      },
 
       // Protected — require auth
       {
@@ -141,6 +170,16 @@ export const routes: Routes = [
             (m) => m.BuyerOrderDetailPage,
           ),
         title: 'รายละเอียดคำสั่งซื้อ — SIRIEDUMARKET',
+      },
+      // follow-store-notifications v1 §4: in-app notification history for follow-store alerts.
+      {
+        path: 'notifications',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/notifications/notifications.page').then(
+            (m) => m.NotificationsPage,
+          ),
+        title: 'การแจ้งเตือน — SIRIEDUMARKET',
       },
     ],
   },
@@ -342,6 +381,15 @@ export const routes: Routes = [
             (m) => m.AdminDocumentGenerationPage,
           ),
         title: 'สร้างเอกสารอัตโนมัติ — Admin',
+      },
+      // exam-hub-landing-pages v1 §4: CMS management for the 4 exam hub pages.
+      {
+        path: 'exam-hub',
+        loadComponent: () =>
+          import('./features/admin/exam-hub/exam-hub-admin.page').then(
+            (m) => m.ExamHubAdminPage,
+          ),
+        title: 'จัดการเนื้อหาหน้า Exam Hub — Admin',
       },
     ],
   },

@@ -85,6 +85,10 @@ export function createInfinitePager<T>(opts: {
     state.set(idleActionState());
   }
 
+  function updateItems(fn: (prev: T[]) => T[]): void {
+    items.update(fn);
+  }
+
   return {
     items: items.asReadonly(),
     page: page.asReadonly(),
@@ -95,6 +99,7 @@ export function createInfinitePager<T>(opts: {
     loadFirst,
     loadMore,
     reset,
+    updateItems,
   };
 }
 

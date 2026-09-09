@@ -576,7 +576,41 @@
                       />
                     </div>
                   </div>
+                  <div>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 block">วันหมดอายุส่วนลด (option)</label>
+                    <input
+                      [ngModel]="discountExpiresAt()"
+                      (ngModelChange)="discountExpiresAt.set($event || '')"
+                      type="date"
+                      class="input-soft"
+                    />
+                    <p class="text-xs text-ink-muted mt-1.5">
+                      ถ้าไม่ตั้ง ราคานี้จะลดอยู่แบบไม่มีกำหนดเวลา
+                    </p>
+                  </div>
                 </div>
+
+                <!-- Competitor pricing hint (seller-pricing-and-storefront-stats v1 §4) -->
+                @if (pricingHintLoading()) {
+                  <div class="mb-6 p-4 rounded-2xl border border-line bg-white/70 text-xs text-ink-muted">
+                    กำลังโหลดช่วงราคาคู่แข่ง…
+                  </div>
+                } @else if (pricingHint(); as hint) {
+                  @if (hint.sampleSize >= 3) {
+                    <div class="mb-6 p-4 rounded-2xl border border-pink-200 bg-pink-50/60">
+                      <div class="text-xs font-semibold text-ink-soft mb-1.5 flex items-center gap-1.5">
+                        <app-icon name="chart" [size]="13" className="text-pink-500" />
+                        ราคาคู่แข่งในหมวดเดียวกัน
+                      </div>
+                      <div class="text-sm text-ink">
+                        เฉลี่ย <span class="font-bold text-pink-600">{{ hint.averagePrice | thb }}</span>
+                        <span class="text-ink-muted">
+                          (ช่วง {{ hint.minPrice | thb }} – {{ hint.maxPrice | thb }} จาก {{ hint.sampleSize }} รายการ)
+                        </span>
+                      </div>
+                    </div>
+                  }
+                }
 
                 <!-- Suggestion chips -->
                 <div class="mb-6">

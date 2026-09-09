@@ -6,13 +6,9 @@
 
   <app-profile-editor [secondaryLabel]="studioLabel()" secondaryLabelText="ชื่อร้าน (จากระบบ)" />
 
-  <section class="card-soft p-6 opacity-80">
-    <h2 class="text-lg font-bold text-ink mb-1">บัญชีรับเงิน</h2>
-    <p class="text-xs text-ink-muted mb-2">
-      ฟีเจอร์นี้อยู่ระหว่างพัฒนา — ยังไม่สามารถบันทึกบัญชีรับเงินได้จากหน้านี้
-    </p>
-    <p class="text-sm text-ink-soft">ติดต่อแอดมินเพื่อตั้งค่าการโอนรายได้ในตอนนี้</p>
-  </section>
+  <app-payout-account-form />
 
   <app-notification-settings />
+
+  <app-line-notification />
 </div>

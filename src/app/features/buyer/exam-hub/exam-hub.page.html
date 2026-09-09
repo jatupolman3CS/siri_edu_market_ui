@@ -1,0 +1,115 @@
+<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+  <!-- Hero -->
+  <header class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-600 border border-pink-100 mb-3">
+      <span>🎯 สนามสอบ</span>
+    </div>
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-ink tracking-tight mb-3">
+      {{ page()?.title }}
+    </h1>
+    @if (page()?.introText) {
+      <p class="text-base text-ink-soft max-w-3xl leading-relaxed whitespace-pre-line">
+        {{ page()?.introText }}
+      </p>
+    }
+  </header>
+
+  <!-- 3 Info Cards (shown only if at least one is present) -->
+  @if (hasAnyInfoCard()) {
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10" data-testid="exam-hub-info-cards">
+      @if (page()?.examDateInfo) {
+        <div class="card-soft p-5 border border-pink-100/60 bg-gradient-to-br from-white to-pink-50/20">
+          <div class="flex items-center gap-2 text-pink-600 font-bold text-sm mb-2">
+            <span>📅</span>
+            <span>กำหนดการสอบ</span>
+          </div>
+          <p class="text-sm text-ink-soft whitespace-pre-line leading-relaxed">
+            {{ page()?.examDateInfo }}
+          </p>
+        </div>
+      }
+
+      @if (page()?.scoreCriteriaInfo) {
+        <div class="card-soft p-5 border border-purple-100/60 bg-gradient-to-br from-white to-purple-50/20">
+          <div class="flex items-center gap-2 text-purple-600 font-bold text-sm mb-2">
+            <app-icon name="chart" [size]="16" />
+            <span>เกณฑ์คะแนน</span>
+          </div>
+          <p class="text-sm text-ink-soft whitespace-pre-line leading-relaxed">
+            {{ page()?.scoreCriteriaInfo }}
+          </p>
+        </div>
+      }
+
+      @if (page()?.trendInfo) {
+        <div class="card-soft p-5 border border-indigo-100/60 bg-gradient-to-br from-white to-indigo-50/20">
+          <div class="flex items-center gap-2 text-indigo-600 font-bold text-sm mb-2">
+            <app-icon name="sparkle" [size]="16" />
+            <span>เทรนด์ข้อสอบ</span>
+          </div>
+          <p class="text-sm text-ink-soft whitespace-pre-line leading-relaxed">
+            {{ page()?.trendInfo }}
+          </p>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Documents Section -->
+  <section class="mt-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-ink flex items-center gap-2">
+        <app-icon name="doc" [size]="20" className="text-pink-500" />
+        <span>เอกสารสำหรับสนามสอบนี้</span>
+      </h2>
+      @if (docs().length > 0) {
+        <span class="text-xs text-ink-muted">
+          {{ docs().length }} รายการ
+        </span>
+      }
+    </div>
+
+    @if (docsState().status === 'loading' && docs().length === 0) {
+      <app-empty-state emoji="⏳" title="กำลังโหลดเอกสาร…" description="รอสักครู่นะคะ" />
+    } @else if (docsState().status === 'error' && docs().length === 0) {
+      <app-empty-state
+        emoji="⚠️"
+        title="โหลดข้อมูลไม่สำเร็จ"
+        description="ไม่สามารถโหลดเอกสารได้ โปรดลองอีกครั้ง"
+      >
+        <button class="btn-pink mt-4" (click)="retry()">ลองใหม่อีกครั้ง</button>
+      </app-empty-state>
+    } @else if (docs().length === 0) {
+      <app-empty-state
+        emoji="📚"
+        title="ยังไม่มีเอกสารสำหรับสนามสอบนี้ในตอนนี้"
+        description="ลองกลับมาดูใหม่ภายหลัง หรือค้นหาเอกสารอื่นในตลาดเอกสารนะคะ"
+      >
+        <a routerLink="/marketplace" class="btn-pink mt-4">ไปที่ตลาดเอกสาร</a>
+      </app-empty-state>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        @for (doc of docs(); track doc.id) {
+          <app-document-card [doc]="doc" />
+        }
+      </div>
+
+      @if (hasMore()) {
+        <div class="flex justify-center mt-8">
+          <button
+            type="button"
+            class="btn-pink px-8 py-2.5 font-medium"
+            (click)="loadMore()"
+            [disabled]="docsState().status === 'loading'"
+          >
+            @if (docsState().status === 'loading') {
+              <span>กำลังโหลด…</span>
+            } @else {
+              <span>โหลดเพิ่ม</span>
+            }
+          </button>
+        </div>
+      }
+    }
+  </section>
+</div>

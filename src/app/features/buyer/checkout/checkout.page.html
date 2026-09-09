@@ -137,6 +137,56 @@
                 </div>
               </dl>
 
+              <!-- Referral program (referral-program.md §4) -->
+              <div class="mt-4 pt-4 border-t border-line space-y-3">
+                @if (!showReferralInput()) {
+                  <button
+                    type="button"
+                    class="text-xs text-pink-600 hover:text-pink-700 font-medium cursor-pointer"
+                    (click)="showReferralInput.set(true)"
+                  >
+                    มีโค้ดแนะนำเพื่อน?
+                  </button>
+                } @else {
+                  <div class="space-y-1.5">
+                    <input
+                      type="text"
+                      [value]="referralCode()"
+                      (input)="onReferralCodeInput($any($event.target).value)"
+                      placeholder="กรอกโค้ดแนะนำเพื่อน"
+                      class="w-full text-xs px-3 py-2 border border-line rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-pink-500"
+                      [disabled]="busy() || paymentReady()"
+                    />
+                    @if (validatingReferral()) {
+                      <p class="text-[11px] text-ink-muted">กำลังตรวจสอบโค้ด…</p>
+                    } @else if (referralValidation(); as v) {
+                      @if (v.valid) {
+                        <p class="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                          <span>✓</span> ใช้โค้ดนี้ได้ ลด 20 บาท
+                        </p>
+                      } @else if (v.reasonText) {
+                        <p class="text-[11px] text-rose-500 font-medium">
+                          {{ v.reasonText }}
+                        </p>
+                      }
+                    }
+                  </div>
+                }
+
+                @if ((referral.summary()?.unusedCreditCount ?? 0) > 0) {
+                  <label class="flex items-center gap-2 text-xs text-ink-soft cursor-pointer">
+                    <input
+                      type="checkbox"
+                      [checked]="useReferralCredit()"
+                      (change)="useReferralCredit.set($any($event.target).checked)"
+                      [disabled]="busy() || paymentReady()"
+                      class="w-4 h-4 accent-pink-500 rounded"
+                    />
+                    <span>ใช้เครดิตแนะนำเพื่อน ({{ referral.summary()?.unusedCreditTotal ?? 0 }} บาท)</span>
+                  </label>
+                }
+              </div>
+
               @if (!paymentReady()) {
                 <button
                   class="btn-pink w-full !py-3.5 mt-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"

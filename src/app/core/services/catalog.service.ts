@@ -1,6 +1,14 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Category, DocumentItem, GradeLevel, ResourceType, Subcategory } from '../models';
+import {
+  Category,
+  DocumentItem,
+  GradeLevel,
+  ResourceType,
+  SellerSalesByMonthPoint,
+  Subcategory,
+} from '../models';
 import { mapCategory, mapCategoryDetail, mapDocument, mapDocumentDetail } from '../api-mappers/mappers';
+import type { DocumentEntrySource } from './navigation-source.service';
 import type { MarketplaceSearchResponse } from '../api/types.gen';
 import {
   getApiMarketplaceCatalog,
@@ -10,10 +18,12 @@ import {
   getApiMarketplaceDocumentsByIdPreview,
   getApiMarketplaceDocumentsByIdRelated,
   getApiMarketplaceFree,
+  getApiMarketplaceRecommended,
   getApiMarketplaceSearch,
   getApiSellersBySellerIdProfile,
   postApiMarketplaceDocumentsByIdQna,
   postApiMarketplaceDocumentsByIdReport,
+  postApiMarketplaceDocumentsByIdView,
 } from '../api';
 import type {
   MarketplaceDocumentPreviewResponse,
@@ -529,6 +539,33 @@ export class CatalogService {
     })();
   }
 
+  /**
+   * personalized-recommendations v1 §4: home-page "แนะนำสำหรับคุณ" module. Fixed-size (not paged —
+   * this is a curated home module, not a browsable list, same reasoning as `PlatformStatsResponse`
+   * having no paging at all). Safe to call for both logged-in and anonymous callers — the backend
+   * always resolves a strategy, this never needs to check auth state first.
+   *
+   * Error → same `ApiFailureReporter` convention as the rest of this service (§4 "การตัดสินใจ:
+   * error → รายงานผ่าน ApiFailureReporter"): reported for observability, but the section itself
+   * has no error UI of its own — clearing both signals just makes it not render (AC-12).
+   */
+  loadRecommended(take = 8): void {
+    void (async () => {
+      try {
+        const result = await getApiMarketplaceRecommended({ query: { Take: take } });
+        const data = unwrapSdkResult(result);
+        this._recommended.set((data.items ?? []).map(mapDocument));
+        this._recommendedStrategy.set(
+          data.strategy === 'purchase-history' ? 'purchase-history' : 'popular-fallback',
+        );
+      } catch (e) {
+        this._recommended.set([]);
+        this._recommendedStrategy.set(null);
+        this.apiFail.report('โหลดคำแนะนำสำหรับคุณ', e);
+      }
+    })();
+  }
+
   private readonly _categoryDetailState = signal<ActionState>(idleActionState());
   private readonly _categoryDocuments = signal<DocumentItem[]>([]);
   private readonly _categoryDocumentsState = signal<ActionState>(idleActionState());
@@ -638,8 +675,14 @@ export class CatalogService {
     }
   }
 
-  /** Loads (and caches) the full document detail — call from document-detail page. */
-  loadDocumentDetail(id: string): void {
+  /**
+   * Loads (and caches) the full document detail — call from document-detail page.
+   *
+   * `entrySource` (seller-analytics-insights v1 §4): the traffic source `NavigationSourceService`
+   * classified for this navigation, forwarded to `logDocumentView` as a fire-and-forget analytics
+   * call — never awaited, never blocks/affects this method's own state.
+   */
+  loadDocumentDetail(id: string, entrySource?: DocumentEntrySource): void {
     if (!id) return;
     void (async () => {
       this._documentDetailState.set(loadingActionState());
@@ -652,6 +695,7 @@ export class CatalogService {
         const item = mapDocumentDetail(doc);
         this._documentDetails.update((map) => new Map(map).set(id, item));
         this._documentDetailState.set(idleActionState());
+        this.logDocumentView(id, entrySource);
       } catch (e) {
         if (extractHttpStatus(e) === 404) {
           // Bug #8: a real 404 — don't spam the "โหลด...ไม่สำเร็จ" toast for something that
@@ -662,6 +706,26 @@ export class CatalogService {
         }
         this.apiFail.report('โหลดรายละเอียดเอกสาร', e);
         this._documentDetailState.set(errorActionState('โหลดรายละเอียดเอกสารไม่สำเร็จ'));
+      }
+    })();
+  }
+
+  /**
+   * seller-analytics-insights v1 §4 "การแบ่งงาน" (รอบสอง): fire-and-forget view-tracking call for
+   * `/document/{id}` mounts (not quick-view, not preview — see AC-16/AC-20 and contract §0).
+   * Never awaited by the caller, never surfaces an error to the user (AC-16) — best-effort
+   * analytics only, no retry.
+   */
+  private logDocumentView(id: string, entrySource?: DocumentEntrySource): void {
+    void (async () => {
+      try {
+        await postApiMarketplaceDocumentsByIdView({
+          path: { id },
+          body: { source: entrySource?.source ?? 'direct', searchTerm: entrySource?.searchTerm ?? null },
+          throwOnError: true,
+        });
+      } catch {
+        // best-effort analytics เท่านั้น — ห้ามโชว์ error ให้ user เห็นเด็ดขาด, ห้าม retry
       }
     })();
   }
@@ -695,6 +759,19 @@ export class CatalogService {
   readonly freeResources = computed(() =>
     this._documents().filter((d) => d.isFree),
   );
+
+  /**
+   * personalized-recommendations v1 §4: home-page "แนะนำสำหรับคุณ" module. Not derived from
+   * `_documents()` like `trending`/`newArrivals` above — the backend already returns the exact
+   * ranked+filtered list (purchase-history match or popular-fallback), so this is its own signal
+   * populated by `loadRecommended()` rather than a client-side re-derivation.
+   */
+  private readonly _recommended = signal<DocumentItem[]>([]);
+  readonly recommended = this._recommended.asReadonly();
+
+  private readonly _recommendedStrategy =
+    signal<'purchase-history' | 'popular-fallback' | null>(null);
+  readonly recommendedStrategy = this._recommendedStrategy.asReadonly();
 
   readonly trending = computed(() =>
     [...this._documents()].sort((a, b) => b.downloads - a.downloads).slice(0, 8),
@@ -897,6 +974,15 @@ export class CatalogService {
   readonly sellerDocuments = this._sellerDocuments.asReadonly();
   readonly sellerDocumentsState = this._sellerDocumentsState.asReadonly();
 
+  /**
+   * seller-pricing-and-storefront-stats v1 §3.3/§4: 6-month units-sold history for the public
+   * storefront's sales chart. Separate signal (not read off `sellerProfile()` directly) — kept
+   * that way post-regen too so the storefront page's `computed()`s stay decoupled from
+   * `SellerProfileResponse`'s exact shape. `[]` (all-zero) hides the chart section per AC-15.
+   */
+  private readonly _sellerSalesByMonth = signal<SellerSalesByMonthPoint[]>([]);
+  readonly sellerSalesByMonth = this._sellerSalesByMonth.asReadonly();
+
   async loadSellerProfile(sellerId: string): Promise<SellerProfileResponse | null> {
     if (!sellerId) return null;
 
@@ -905,12 +991,19 @@ export class CatalogService {
       const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
       const data = unwrapSdkResult(result);
       this._sellerProfile.set(data);
+      this._sellerSalesByMonth.set(
+        (data.salesByMonth ?? []).map((m) => ({
+          month: m.month ?? '',
+          unitsSold: m.unitsSold ?? 0,
+        })),
+      );
       this._sellerProfileState.set(idleActionState());
       return data;
     } catch (e) {
       this.apiFail.report('โหลดข้อมูลผู้ขาย', e);
       this._sellerProfileState.set(errorActionState('โหลดข้อมูลผู้ขายไม่สำเร็จ'));
       this._sellerProfile.set(null);
+      this._sellerSalesByMonth.set([]);
       return null;
     }
   }

@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerDashboardPage } from './dashboard.page';
 import { PlatformStatsService, SellerService } from '../../../core/services';
+import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS } from '../../../core/models';
 import type { PlatformStats, SellerStats } from '../../../core/models';
 
 /**
@@ -28,6 +29,8 @@ function buildStats(over: Partial<SellerStats> = {}): SellerStats {
     newFollowersThisMonth: 3,
     revenueByMonth: [{ month: 'ม.ค.', amount: 1000 }],
     topCategories: [{ category: 'คณิตศาสตร์', sales: 10 }],
+    storeReadiness: DEFAULT_STORE_READINESS,
+    insights: DEFAULT_SELLER_INSIGHTS,
     ...over,
   };
 }
@@ -201,5 +204,106 @@ describe('SellerDashboardPage — seller_profile_required (QA fix: friendly 403 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ภาพรวมร้านของคุณ');
     expect(text).not.toContain('บัญชีนี้ยังไม่มีร้านค้า');
+  });
+});
+
+describe('SellerDashboardPage — store readiness bar mount (store-readiness-score v1 AC-13)', () => {
+  it('does not render app-store-readiness-bar when sellerProfileRequired() is true', () => {
+    const fixture = render({ sellerProfileRequired: true });
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-store-readiness-bar'),
+    ).toBeNull();
+  });
+
+  it('renders app-store-readiness-bar bound to seller.stats().storeReadiness when sellerProfileRequired() is false', () => {
+    const fixture = render({ sellerProfileRequired: false });
+
+    const bar = (fixture.nativeElement as HTMLElement).querySelector('app-store-readiness-bar');
+    expect(bar).toBeTruthy();
+    // DEFAULT_STORE_READINESS (round 1 placeholder, real-data comes after SDK regen) — the page's
+    // "ความสมบูรณ์ของร้าน" title only appears once the readiness bar is actually mounted and bound.
+    expect(bar!.textContent).toContain('ความสมบูรณ์ของร้าน 0%');
+  });
+});
+
+describe('SellerDashboardPage — insights (seller-analytics-insights v1 §4/AC-21)', () => {
+  it('shows all 3 empty states when insights is still DEFAULT_SELLER_INSIGHTS (round-1 placeholder / genuinely no data)', () => {
+    const fixture = render({});
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('Conversion rate ต่อเอกสาร');
+    expect(text).toContain('ยังไม่มีข้อมูลการดู');
+    expect(text).toContain('คำค้นหาที่พาคนมาเจอร้านคุณ');
+    expect(text).toContain('ยังไม่มีคำค้นหา');
+    expect(text).toContain('ต้นทาง traffic ของร้านคุณ');
+    expect(text).toContain('ยังไม่มีข้อมูล traffic');
+  });
+
+  it('renders the document conversion table instead of the empty state when there is at least one row', () => {
+    const fixture = render({
+      stats: {
+        insights: {
+          ...DEFAULT_SELLER_INSIGHTS,
+          documentConversions: [
+            {
+              documentId: 'doc-1',
+              title: 'สรุปคณิต ม.6',
+              viewCount: 120,
+              salesCount: 12,
+              conversionRatePercent: 10,
+            },
+          ],
+        },
+      },
+    });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('สรุปคณิต ม.6');
+    expect(text).toContain('120');
+    expect(text).toContain('12');
+    expect(text).toContain('10.0%');
+    expect(text).not.toContain('ยังไม่มีข้อมูลการดู');
+  });
+
+  it('renders top search terms as a pill list instead of the empty state', () => {
+    const fixture = render({
+      stats: {
+        insights: {
+          ...DEFAULT_SELLER_INSIGHTS,
+          topSearchTerms: [{ term: 'เลข ม.3', hitCount: 8 }],
+        },
+      },
+    });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('เลข ม.3');
+    expect(text).toContain('8');
+    expect(text).not.toContain('ยังไม่มีคำค้นหา');
+  });
+
+  it('renders traffic breakdown percentages instead of the empty state when totalViews > 0', () => {
+    const fixture = render({
+      stats: {
+        insights: {
+          ...DEFAULT_SELLER_INSIGHTS,
+          trafficBreakdown: {
+            totalViews: 100,
+            searchViews: 40,
+            categoryViews: 35,
+            directViews: 25,
+            searchPercent: 40,
+            categoryPercent: 35,
+            directPercent: 25,
+          },
+        },
+      },
+    });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('40.0%');
+    expect(text).toContain('35.0%');
+    expect(text).toContain('25.0%');
+    expect(text).not.toContain('ยังไม่มีข้อมูล traffic');
   });
 });

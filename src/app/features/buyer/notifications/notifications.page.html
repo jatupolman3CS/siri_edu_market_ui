@@ -1,0 +1,56 @@
+<div class="max-w-3xl mx-auto px-4 lg:px-6 py-8">
+  <app-page-hero
+    eyebrow="การแจ้งเตือน"
+    title="การแจ้งเตือนของคุณ"
+    description="ข่าวสารเอกสารใหม่จากร้านที่คุณติดตาม"
+  />
+
+  @if (feed.loading() && feed.items().length === 0) {
+    <app-empty-state emoji="⏳" title="กำลังโหลดการแจ้งเตือน…" description="รอสักครู่นะคะ" />
+  } @else if (feed.items().length === 0) {
+    <app-empty-state
+      emoji="🔔"
+      title="ยังไม่มีการแจ้งเตือน"
+      description="ลองติดตามร้านที่ชอบเพื่อรับข่าวเอกสารใหม่ก่อนใคร"
+    >
+      <a routerLink="/marketplace" class="btn-pink mt-4">ค้นหาร้านที่ชอบ</a>
+    </app-empty-state>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (item of feed.items(); track item.id) {
+        <li>
+          <button
+            type="button"
+            class="w-full text-left card-soft p-4 flex items-start gap-3 transition-colors"
+            [class.bg-pink-50]="!item.isRead"
+            (click)="onItemClick(item)"
+          >
+            @if (!item.isRead) {
+              <span class="mt-1.5 w-2.5 h-2.5 rounded-full bg-pink-500 flex-shrink-0"></span>
+            }
+            <div class="min-w-0 flex-1">
+              <p class="text-sm text-ink" [class.font-semibold]="!item.isRead">
+                {{ item.title }}
+              </p>
+              <p class="text-sm text-ink-muted mt-0.5">{{ item.body }}</p>
+              <p class="text-xs text-ink-muted mt-1">{{ item.createdAt | timeAgo }}</p>
+            </div>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (hasMore()) {
+      <div class="flex justify-center mt-6">
+        <button
+          type="button"
+          class="btn-pink"
+          (click)="loadMore()"
+          [disabled]="feed.loading()"
+        >
+          โหลดเพิ่มเติม
+        </button>
+      </div>
+    }
+  }
+</div>

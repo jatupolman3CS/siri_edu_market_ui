@@ -151,6 +151,17 @@ export type AdminOpenReportResponse = {
   resolvedAt?: string | null;
 };
 
+export type AdminPayoutAccountResponse = {
+  sellerId?: string;
+  sellerName?: string;
+  sellerEmail?: string;
+  hasAccount?: boolean;
+  bankCode?: string | null;
+  accountHolderName?: string | null;
+  accountNumberMasked?: string | null;
+  updatedAt?: string | null;
+};
+
 export type AdminPayoutResponse = {
   sellerId?: string;
   sellerName?: string;
@@ -413,11 +424,15 @@ export type CreateDocumentRequest = {
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
   language?: string;
+  originalPrice?: number | null;
+  discountExpiresAt?: string | null;
 };
 
 export type CreateOrderRequest = {
   savedPaymentMethodId?: string | null;
   saveNewCard?: boolean;
+  referralCode?: string | null;
+  useReferralCredit?: boolean | null;
 };
 
 export type CreateSubcategoryRequest = {
@@ -458,6 +473,13 @@ export type DocumentGenerationRunResponse = {
   generatedDocumentIds?: Array<string>;
 };
 
+export type DocumentPricingHintResponse = {
+  sampleSize?: number;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  averagePrice?: number | null;
+};
+
 export type DocumentQnaResponse = {
   id?: string;
   buyerName?: string;
@@ -489,6 +511,23 @@ export type DownloadTokenResponse = {
   expiresAt?: string;
 };
 
+export type ExamCountdownSettingResponse = {
+  examType: string;
+  examDate: string;
+  isEnabled: boolean;
+};
+
+export type ExamHubPageResponse = {
+  examType: string;
+  title: string;
+  metaDescription: string;
+  introText: string;
+  examDateInfo?: string | null;
+  scoreCriteriaInfo?: string | null;
+  trendInfo?: string | null;
+  updatedAt?: string | null;
+};
+
 export type ExternalLoginRequest = {
   authorizationCode: string;
   redirectUri?: string | null;
@@ -517,6 +556,31 @@ export type LibraryItemResponse = {
   isReviewed?: boolean;
   myReviewId?: string | null;
   myRating?: number | null;
+  isRead?: boolean;
+  markedReadAt?: string | null;
+};
+
+export type LibraryReadStatusResponse = {
+  documentId?: string;
+  isRead?: boolean;
+  markedReadAt?: string | null;
+};
+
+export type LineConnectionStatusResponse = {
+  isAvailable?: boolean;
+  isConnected?: boolean;
+  status?: string;
+  lineDisplayName?: string | null;
+  connectedAt?: string | null;
+};
+
+export type LineConnectUrlResponse = {
+  authorizeUrl?: string;
+};
+
+export type LogDocumentViewRequest = {
+  source?: string | null;
+  searchTerm?: string | null;
 };
 
 export type LoginRequest = {
@@ -598,6 +662,8 @@ export type MarketplaceDocumentDetailResponse = {
   bundleIds?: Array<string> | null;
   faqCount?: number;
   qnaCount?: number;
+  discountExpiresAt?: string | null;
+  soldThisMonthCount?: number;
 };
 
 export type MarketplaceDocumentPreviewResponse = {
@@ -647,6 +713,20 @@ export type MarketplaceSearchResponse = {
   totalPages?: number;
 };
 
+export type NotificationFeedItemResponse = {
+  id?: string;
+  key?: string;
+  title?: string;
+  body?: string;
+  linkUrl?: string;
+  isRead?: boolean;
+  createdAt?: string;
+};
+
+export type NotificationFeedUnreadCountResponse = {
+  count?: number;
+};
+
 export type NotificationSettingResponse = {
   key?: string;
   label?: string;
@@ -681,6 +761,7 @@ export type OrderResponse = {
   paidAt?: string | null;
   items?: Array<OrderItemResponse>;
   paymentHints?: OrderPaymentHintsResponse | null;
+  discountAmount?: number;
 };
 
 export type PagedResponseOfAdminAuditLogResponse = {
@@ -787,8 +868,24 @@ export type PagedResponseOfMarketplaceDocumentResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfNotificationFeedItemResponse = {
+  items?: Array<NotificationFeedItemResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfOrderResponse = {
   items?: Array<OrderResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfPayoutResponse = {
+  items?: Array<PayoutResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -861,6 +958,14 @@ export type PatchAdminDocumentRequest = {
   previewStorageKey?: string | null;
 };
 
+export type PayoutAccountResponse = {
+  hasAccount?: boolean;
+  bankCode?: string | null;
+  accountHolderName?: string | null;
+  accountNumberMasked?: string | null;
+  updatedAt?: string | null;
+};
+
 export type PayoutResponse = {
   id?: string;
   grossAmount?: number;
@@ -907,6 +1012,25 @@ export type PublicOAuthClientsResponse = {
   googleClientId?: string;
 };
 
+export type RecommendedDocumentsResponse = {
+  items?: Array<MarketplaceDocumentResponse>;
+  strategy?: string;
+};
+
+export type ReferralCodeValidationResponse = {
+  valid?: boolean;
+  discountAmount?: number | null;
+  reasonText?: string | null;
+};
+
+export type ReferralSummaryResponse = {
+  code: string;
+  shareUrl: string;
+  totalReferred?: number;
+  unusedCreditCount?: number;
+  unusedCreditTotal?: number;
+};
+
 export type RefreshTokenRequest = {
   refreshToken: string;
 };
@@ -948,6 +1072,10 @@ export type ResetPasswordRequest = {
   confirmPassword: string;
 };
 
+export type RevealPayoutAccountResponse = {
+  accountNumber?: string;
+};
+
 export type RevenueByMonthItem = {
   month?: string;
   amount?: number;
@@ -970,6 +1098,12 @@ export type SavedPaymentMethodResponse = {
   expYear?: number;
   isDefault?: boolean;
   createdAt?: string;
+};
+
+export type SavePayoutAccountRequest = {
+  bankCode: string;
+  accountNumber: string;
+  accountHolderName: string;
 };
 
 export type SaveStoreSectionRequest = {
@@ -1036,6 +1170,16 @@ export type SellerDashboardResponse = {
   topCategories?: Array<TopCategoryItem>;
   revenueTrendPercent?: number | null;
   ratingTrendDelta?: number | null;
+  storeReadiness?: StoreReadinessResponse;
+  insights?: SellerInsightsResponse;
+};
+
+export type SellerDocumentConversionItem = {
+  documentId?: string;
+  title?: string;
+  viewCount?: number;
+  salesCount?: number;
+  conversionRatePercent?: number;
 };
 
 export type SellerDocumentGalleryItemResponse = {
@@ -1072,6 +1216,8 @@ export type SellerDocumentResponse = {
   reviewCount?: number;
   downloads?: number;
   salesCount?: number;
+  viewCount?: number;
+  conversionRatePercent?: number;
   previewPages?: number;
   watermarkEnabled?: boolean;
   previewWatermarkSubtitle?: string | null;
@@ -1082,6 +1228,8 @@ export type SellerDocumentResponse = {
   updatedAt?: string;
   mainFiles?: Array<SellerDocumentMainFileResponse>;
   listedMainFileId?: string | null;
+  originalPrice?: number | null;
+  discountExpiresAt?: string | null;
 };
 
 export type SellerDocumentSummaryResponse = {
@@ -1097,6 +1245,8 @@ export type SellerDocumentSummaryResponse = {
   reviewCount?: number;
   downloads?: number;
   salesCount?: number;
+  viewCount?: number;
+  conversionRatePercent?: number;
   updatedAt?: string;
 };
 
@@ -1128,6 +1278,12 @@ export type SellerInfoResponse = {
   specialties?: Array<string> | null;
 };
 
+export type SellerInsightsResponse = {
+  documentConversions?: Array<SellerDocumentConversionItem>;
+  topSearchTerms?: Array<SellerSearchTermItem>;
+  trafficBreakdown?: SellerTrafficBreakdownResponse;
+};
+
 export type SellerProfileResponse = {
   id?: string;
   studioName?: string;
@@ -1146,6 +1302,7 @@ export type SellerProfileResponse = {
   specialties?: Array<string> | null;
   isFollowing?: boolean;
   storeSections?: Array<StoreSectionResponse>;
+  salesByMonth?: Array<SellerSalesByMonthItem>;
 };
 
 export type SellerProfileSummary = {
@@ -1181,10 +1338,34 @@ export type SellerReviewResponse = {
   createdAt?: string;
 };
 
+export type SellerSalesByMonthItem = {
+  month?: string;
+  unitsSold?: number;
+};
+
+export type SellerSearchTermItem = {
+  term?: string;
+  hitCount?: number;
+};
+
+export type SellerTrafficBreakdownResponse = {
+  totalViews?: number;
+  searchViews?: number;
+  categoryViews?: number;
+  directViews?: number;
+  searchPercent?: number;
+  categoryPercent?: number;
+  directPercent?: number;
+};
+
 export type ServiceStatusItem = {
   name?: string;
   status?: string;
   message?: string | null;
+};
+
+export type SetExamCountdownEnabledRequest = {
+  enabled: boolean;
 };
 
 export type SetListedSellerDocumentMainFileRequest = {
@@ -1219,6 +1400,23 @@ export type StorageUsageResponse = {
   objectCount?: number;
   totalBytes?: number;
   isConfigured?: boolean;
+};
+
+export type StoreReadinessItemResponse = {
+  key?: string;
+  label?: string;
+  done?: boolean;
+  actionLabel?: string;
+  actionRoute?: string;
+  currentCount?: number | null;
+  targetCount?: number | null;
+};
+
+export type StoreReadinessResponse = {
+  percentComplete?: number;
+  isComplete?: boolean;
+  items?: Array<StoreReadinessItemResponse>;
+  nextActionItemKey?: string | null;
 };
 
 export type StoreSectionResponse = {
@@ -1338,6 +1536,21 @@ export type UpdateDocumentRequest = {
   previewWatermarkFontFamily?: string | null;
   galleryImageUrls?: Array<string> | null;
   galleryItems?: Array<DocumentGalleryItemRequest> | null;
+  originalPrice?: number | null;
+  discountExpiresAt?: string | null;
+};
+
+export type UpdateExamHubPageRequest = {
+  title?: string | null;
+  metaDescription?: string | null;
+  introText?: string | null;
+  examDateInfo?: string | null;
+  scoreCriteriaInfo?: string | null;
+  trendInfo?: string | null;
+};
+
+export type UpdateLibraryReadStatusRequest = {
+  isRead?: boolean;
 };
 
 export type UpdateNotificationSettingsRequest = {
@@ -1386,6 +1599,11 @@ export type UploadResponse = {
   eTag: string;
   optimizedKey: string | null;
   optimizedUrl: string | null;
+};
+
+export type UpsertExamCountdownSettingRequest = {
+  examType: string;
+  examDate: string;
 };
 
 export type UserProfileResponse = {
@@ -2157,6 +2375,97 @@ export type PutApiAdminSystemConfigJobTogglesByJobKeyResponses = {
 
 export type PutApiAdminSystemConfigJobTogglesByJobKeyResponse =
   PutApiAdminSystemConfigJobTogglesByJobKeyResponses[keyof PutApiAdminSystemConfigJobTogglesByJobKeyResponses];
+
+export type GetApiAdminSellersBySellerIdPayoutAccountData = {
+  body?: never;
+  path: {
+    sellerId: string;
+  };
+  query?: never;
+  url: '/api/admin/sellers/{sellerId}/payout-account';
+};
+
+export type GetApiAdminSellersBySellerIdPayoutAccountErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminSellersBySellerIdPayoutAccountError =
+  GetApiAdminSellersBySellerIdPayoutAccountErrors[keyof GetApiAdminSellersBySellerIdPayoutAccountErrors];
+
+export type GetApiAdminSellersBySellerIdPayoutAccountResponses = {
+  /**
+   * OK
+   */
+  200: AdminPayoutAccountResponse;
+};
+
+export type GetApiAdminSellersBySellerIdPayoutAccountResponse =
+  GetApiAdminSellersBySellerIdPayoutAccountResponses[keyof GetApiAdminSellersBySellerIdPayoutAccountResponses];
+
+export type PutApiAdminSellersBySellerIdPayoutAccountData = {
+  body: SavePayoutAccountRequest;
+  path: {
+    sellerId: string;
+  };
+  query?: never;
+  url: '/api/admin/sellers/{sellerId}/payout-account';
+};
+
+export type PutApiAdminSellersBySellerIdPayoutAccountErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiAdminSellersBySellerIdPayoutAccountError =
+  PutApiAdminSellersBySellerIdPayoutAccountErrors[keyof PutApiAdminSellersBySellerIdPayoutAccountErrors];
+
+export type PutApiAdminSellersBySellerIdPayoutAccountResponses = {
+  /**
+   * OK
+   */
+  200: AdminPayoutAccountResponse;
+};
+
+export type PutApiAdminSellersBySellerIdPayoutAccountResponse =
+  PutApiAdminSellersBySellerIdPayoutAccountResponses[keyof PutApiAdminSellersBySellerIdPayoutAccountResponses];
+
+export type PostApiAdminSellersBySellerIdPayoutAccountRevealData = {
+  body?: never;
+  path: {
+    sellerId: string;
+  };
+  query?: never;
+  url: '/api/admin/sellers/{sellerId}/payout-account/reveal';
+};
+
+export type PostApiAdminSellersBySellerIdPayoutAccountRevealErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiAdminSellersBySellerIdPayoutAccountRevealError =
+  PostApiAdminSellersBySellerIdPayoutAccountRevealErrors[keyof PostApiAdminSellersBySellerIdPayoutAccountRevealErrors];
+
+export type PostApiAdminSellersBySellerIdPayoutAccountRevealResponses = {
+  /**
+   * OK
+   */
+  200: RevealPayoutAccountResponse;
+};
+
+export type PostApiAdminSellersBySellerIdPayoutAccountRevealResponse =
+  PostApiAdminSellersBySellerIdPayoutAccountRevealResponses[keyof PostApiAdminSellersBySellerIdPayoutAccountRevealResponses];
 
 export type GetApiAdminAnnouncementsData = {
   body?: never;
@@ -2991,6 +3300,104 @@ export type PostApiDocumentUploadResponses = {
 export type PostApiDocumentUploadResponse =
   PostApiDocumentUploadResponses[keyof PostApiDocumentUploadResponses];
 
+export type GetApiExamHubByExamTypeData = {
+  body?: never;
+  path: {
+    examType: string;
+  };
+  query?: never;
+  url: '/api/exam-hub/{examType}';
+};
+
+export type GetApiExamHubByExamTypeErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiExamHubByExamTypeError =
+  GetApiExamHubByExamTypeErrors[keyof GetApiExamHubByExamTypeErrors];
+
+export type GetApiExamHubByExamTypeResponses = {
+  /**
+   * OK
+   */
+  200: ExamHubPageResponse;
+};
+
+export type GetApiExamHubByExamTypeResponse =
+  GetApiExamHubByExamTypeResponses[keyof GetApiExamHubByExamTypeResponses];
+
+export type PutApiAdminExamHubByExamTypeData = {
+  body: UpdateExamHubPageRequest;
+  path: {
+    examType: string;
+  };
+  query?: never;
+  url: '/api/admin/exam-hub/{examType}';
+};
+
+export type PutApiAdminExamHubByExamTypeErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiAdminExamHubByExamTypeError =
+  PutApiAdminExamHubByExamTypeErrors[keyof PutApiAdminExamHubByExamTypeErrors];
+
+export type PutApiAdminExamHubByExamTypeResponses = {
+  /**
+   * OK
+   */
+  200: ExamHubPageResponse;
+};
+
+export type PutApiAdminExamHubByExamTypeResponse =
+  PutApiAdminExamHubByExamTypeResponses[keyof PutApiAdminExamHubByExamTypeResponses];
+
+export type GetApiExamHubByExamTypeDocumentsData = {
+  body?: never;
+  path: {
+    examType: string;
+  };
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/exam-hub/{examType}/documents';
+};
+
+export type GetApiExamHubByExamTypeDocumentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiExamHubByExamTypeDocumentsError =
+  GetApiExamHubByExamTypeDocumentsErrors[keyof GetApiExamHubByExamTypeDocumentsErrors];
+
+export type GetApiExamHubByExamTypeDocumentsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfMarketplaceDocumentResponse;
+};
+
+export type GetApiExamHubByExamTypeDocumentsResponse =
+  GetApiExamHubByExamTypeDocumentsResponses[keyof GetApiExamHubByExamTypeDocumentsResponses];
+
 export type PostApiFilesUploadData = {
   body: {
     file?: IFormFile;
@@ -3074,6 +3481,7 @@ export type GetApiLibraryData = {
     Page?: number;
     PageSize?: number;
     unreviewedOnly?: boolean;
+    unreadOnly?: boolean;
   };
   url: '/api/library';
 };
@@ -3086,6 +3494,39 @@ export type GetApiLibraryResponses = {
 };
 
 export type GetApiLibraryResponse = GetApiLibraryResponses[keyof GetApiLibraryResponses];
+
+export type PutApiLibraryByDocumentIdReadStatusData = {
+  body: UpdateLibraryReadStatusRequest;
+  path: {
+    documentId: string;
+  };
+  query?: never;
+  url: '/api/library/{documentId}/read-status';
+};
+
+export type PutApiLibraryByDocumentIdReadStatusErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiLibraryByDocumentIdReadStatusError =
+  PutApiLibraryByDocumentIdReadStatusErrors[keyof PutApiLibraryByDocumentIdReadStatusErrors];
+
+export type PutApiLibraryByDocumentIdReadStatusResponses = {
+  /**
+   * OK
+   */
+  200: LibraryReadStatusResponse;
+};
+
+export type PutApiLibraryByDocumentIdReadStatusResponse =
+  PutApiLibraryByDocumentIdReadStatusResponses[keyof PutApiLibraryByDocumentIdReadStatusResponses];
 
 export type PostApiLibraryByDocumentIdDownloadData = {
   body?: never;
@@ -3226,6 +3667,35 @@ export type PostApiMarketplaceDocumentsByIdQnaResponses = {
 
 export type PostApiMarketplaceDocumentsByIdQnaResponse =
   PostApiMarketplaceDocumentsByIdQnaResponses[keyof PostApiMarketplaceDocumentsByIdQnaResponses];
+
+export type PostApiMarketplaceDocumentsByIdViewData = {
+  body: LogDocumentViewRequest;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/marketplace/documents/{id}/view';
+};
+
+export type PostApiMarketplaceDocumentsByIdViewErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiMarketplaceDocumentsByIdViewError =
+  PostApiMarketplaceDocumentsByIdViewErrors[keyof PostApiMarketplaceDocumentsByIdViewErrors];
+
+export type PostApiMarketplaceDocumentsByIdViewResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type PostApiMarketplaceDocumentsByIdViewResponse =
+  PostApiMarketplaceDocumentsByIdViewResponses[keyof PostApiMarketplaceDocumentsByIdViewResponses];
 
 export type GetApiMarketplaceCatalogData = {
   body?: never;
@@ -3437,6 +3907,25 @@ export type GetApiMarketplaceCategoriesBySlugResponses = {
 
 export type GetApiMarketplaceCategoriesBySlugResponse =
   GetApiMarketplaceCategoriesBySlugResponses[keyof GetApiMarketplaceCategoriesBySlugResponses];
+
+export type GetApiMarketplaceRecommendedData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Take?: number;
+  };
+  url: '/api/marketplace/recommended';
+};
+
+export type GetApiMarketplaceRecommendedResponses = {
+  /**
+   * OK
+   */
+  200: RecommendedDocumentsResponse;
+};
+
+export type GetApiMarketplaceRecommendedResponse =
+  GetApiMarketplaceRecommendedResponses[keyof GetApiMarketplaceRecommendedResponses];
 
 export type GetApiMarketplaceFreeData = {
   body?: never;
@@ -3858,6 +4347,180 @@ export type PostApiMePaymentMethodsSetupIntentResponses = {
 export type PostApiMePaymentMethodsSetupIntentResponse =
   PostApiMePaymentMethodsSetupIntentResponses[keyof PostApiMePaymentMethodsSetupIntentResponses];
 
+export type GetApiMeReferralData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/referral';
+};
+
+export type GetApiMeReferralErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeReferralError = GetApiMeReferralErrors[keyof GetApiMeReferralErrors];
+
+export type GetApiMeReferralResponses = {
+  /**
+   * OK
+   */
+  200: ReferralSummaryResponse;
+};
+
+export type GetApiMeReferralResponse = GetApiMeReferralResponses[keyof GetApiMeReferralResponses];
+
+export type GetApiMeReferralValidateData = {
+  body?: never;
+  path?: never;
+  query?: {
+    code?: string;
+  };
+  url: '/api/me/referral/validate';
+};
+
+export type GetApiMeReferralValidateErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeReferralValidateError =
+  GetApiMeReferralValidateErrors[keyof GetApiMeReferralValidateErrors];
+
+export type GetApiMeReferralValidateResponses = {
+  /**
+   * OK
+   */
+  200: ReferralCodeValidationResponse;
+};
+
+export type GetApiMeReferralValidateResponse =
+  GetApiMeReferralValidateResponses[keyof GetApiMeReferralValidateResponses];
+
+export type DeleteApiMeExamCountdownData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/exam-countdown';
+};
+
+export type DeleteApiMeExamCountdownErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type DeleteApiMeExamCountdownError =
+  DeleteApiMeExamCountdownErrors[keyof DeleteApiMeExamCountdownErrors];
+
+export type DeleteApiMeExamCountdownResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiMeExamCountdownResponse =
+  DeleteApiMeExamCountdownResponses[keyof DeleteApiMeExamCountdownResponses];
+
+export type GetApiMeExamCountdownData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/exam-countdown';
+};
+
+export type GetApiMeExamCountdownErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiMeExamCountdownError =
+  GetApiMeExamCountdownErrors[keyof GetApiMeExamCountdownErrors];
+
+export type GetApiMeExamCountdownResponses = {
+  /**
+   * OK
+   */
+  200: ExamCountdownSettingResponse;
+};
+
+export type GetApiMeExamCountdownResponse =
+  GetApiMeExamCountdownResponses[keyof GetApiMeExamCountdownResponses];
+
+export type PutApiMeExamCountdownData = {
+  body: UpsertExamCountdownSettingRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/exam-countdown';
+};
+
+export type PutApiMeExamCountdownErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PutApiMeExamCountdownError =
+  PutApiMeExamCountdownErrors[keyof PutApiMeExamCountdownErrors];
+
+export type PutApiMeExamCountdownResponses = {
+  /**
+   * OK
+   */
+  200: ExamCountdownSettingResponse;
+};
+
+export type PutApiMeExamCountdownResponse =
+  PutApiMeExamCountdownResponses[keyof PutApiMeExamCountdownResponses];
+
+export type PatchApiMeExamCountdownEnabledData = {
+  body: SetExamCountdownEnabledRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/exam-countdown/enabled';
+};
+
+export type PatchApiMeExamCountdownEnabledErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PatchApiMeExamCountdownEnabledError =
+  PatchApiMeExamCountdownEnabledErrors[keyof PatchApiMeExamCountdownEnabledErrors];
+
+export type PatchApiMeExamCountdownEnabledResponses = {
+  /**
+   * OK
+   */
+  200: ExamCountdownSettingResponse;
+};
+
+export type PatchApiMeExamCountdownEnabledResponse =
+  PatchApiMeExamCountdownEnabledResponses[keyof PatchApiMeExamCountdownEnabledResponses];
+
 export type GetApiNotificationsSettingsData = {
   body?: never;
   path?: never;
@@ -3911,6 +4574,304 @@ export type PutApiNotificationsSettingsResponses = {
 
 export type PutApiNotificationsSettingsResponse =
   PutApiNotificationsSettingsResponses[keyof PutApiNotificationsSettingsResponses];
+
+export type GetApiNotificationsFeedData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/notifications/feed';
+};
+
+export type GetApiNotificationsFeedErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiNotificationsFeedError =
+  GetApiNotificationsFeedErrors[keyof GetApiNotificationsFeedErrors];
+
+export type GetApiNotificationsFeedResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfNotificationFeedItemResponse;
+};
+
+export type GetApiNotificationsFeedResponse =
+  GetApiNotificationsFeedResponses[keyof GetApiNotificationsFeedResponses];
+
+export type GetApiNotificationsFeedUnreadCountData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/feed/unread-count';
+};
+
+export type GetApiNotificationsFeedUnreadCountErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiNotificationsFeedUnreadCountError =
+  GetApiNotificationsFeedUnreadCountErrors[keyof GetApiNotificationsFeedUnreadCountErrors];
+
+export type GetApiNotificationsFeedUnreadCountResponses = {
+  /**
+   * OK
+   */
+  200: NotificationFeedUnreadCountResponse;
+};
+
+export type GetApiNotificationsFeedUnreadCountResponse =
+  GetApiNotificationsFeedUnreadCountResponses[keyof GetApiNotificationsFeedUnreadCountResponses];
+
+export type PostApiNotificationsFeedByIdReadData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/notifications/feed/{id}/read';
+};
+
+export type PostApiNotificationsFeedByIdReadErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiNotificationsFeedByIdReadError =
+  PostApiNotificationsFeedByIdReadErrors[keyof PostApiNotificationsFeedByIdReadErrors];
+
+export type PostApiNotificationsFeedByIdReadResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type PostApiNotificationsFeedByIdReadResponse =
+  PostApiNotificationsFeedByIdReadResponses[keyof PostApiNotificationsFeedByIdReadResponses];
+
+export type PostApiNotificationsFeedReadAllData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/feed/read-all';
+};
+
+export type PostApiNotificationsFeedReadAllErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PostApiNotificationsFeedReadAllError =
+  PostApiNotificationsFeedReadAllErrors[keyof PostApiNotificationsFeedReadAllErrors];
+
+export type PostApiNotificationsFeedReadAllResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type PostApiNotificationsFeedReadAllResponse =
+  PostApiNotificationsFeedReadAllResponses[keyof PostApiNotificationsFeedReadAllResponses];
+
+export type PostApiNotificationsLineConnectData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/line/connect';
+};
+
+export type PostApiNotificationsLineConnectErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Service Unavailable
+   */
+  503: unknown;
+};
+
+export type PostApiNotificationsLineConnectError =
+  PostApiNotificationsLineConnectErrors[keyof PostApiNotificationsLineConnectErrors];
+
+export type PostApiNotificationsLineConnectResponses = {
+  /**
+   * OK
+   */
+  200: LineConnectUrlResponse;
+};
+
+export type PostApiNotificationsLineConnectResponse =
+  PostApiNotificationsLineConnectResponses[keyof PostApiNotificationsLineConnectResponses];
+
+export type GetApiNotificationsLineCallbackData = {
+  body?: never;
+  path?: never;
+  query?: {
+    code?: string;
+    state?: string;
+    error?: string;
+    error_description?: string;
+  };
+  url: '/api/notifications/line/callback';
+};
+
+export type GetApiNotificationsLineCallbackErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiNotificationsLineCallbackError =
+  GetApiNotificationsLineCallbackErrors[keyof GetApiNotificationsLineCallbackErrors];
+
+export type DeleteApiNotificationsLineConnectionData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/line/connection';
+};
+
+export type DeleteApiNotificationsLineConnectionErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type DeleteApiNotificationsLineConnectionError =
+  DeleteApiNotificationsLineConnectionErrors[keyof DeleteApiNotificationsLineConnectionErrors];
+
+export type DeleteApiNotificationsLineConnectionResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiNotificationsLineConnectionResponse =
+  DeleteApiNotificationsLineConnectionResponses[keyof DeleteApiNotificationsLineConnectionResponses];
+
+export type GetApiNotificationsLineConnectionData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/line/connection';
+};
+
+export type GetApiNotificationsLineConnectionErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type GetApiNotificationsLineConnectionError =
+  GetApiNotificationsLineConnectionErrors[keyof GetApiNotificationsLineConnectionErrors];
+
+export type GetApiNotificationsLineConnectionResponses = {
+  /**
+   * OK
+   */
+  200: LineConnectionStatusResponse;
+};
+
+export type GetApiNotificationsLineConnectionResponse =
+  GetApiNotificationsLineConnectionResponses[keyof GetApiNotificationsLineConnectionResponses];
+
+export type GetApiNotificationsLineSettingsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/line/settings';
+};
+
+export type GetApiNotificationsLineSettingsErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type GetApiNotificationsLineSettingsError =
+  GetApiNotificationsLineSettingsErrors[keyof GetApiNotificationsLineSettingsErrors];
+
+export type GetApiNotificationsLineSettingsResponses = {
+  /**
+   * OK
+   */
+  200: Array<NotificationSettingResponse>;
+};
+
+export type GetApiNotificationsLineSettingsResponse =
+  GetApiNotificationsLineSettingsResponses[keyof GetApiNotificationsLineSettingsResponses];
+
+export type PutApiNotificationsLineSettingsData = {
+  body: UpdateNotificationSettingsRequest;
+  path?: never;
+  query?: never;
+  url: '/api/notifications/line/settings';
+};
+
+export type PutApiNotificationsLineSettingsErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type PutApiNotificationsLineSettingsError =
+  PutApiNotificationsLineSettingsErrors[keyof PutApiNotificationsLineSettingsErrors];
+
+export type PutApiNotificationsLineSettingsResponses = {
+  /**
+   * OK
+   */
+  200: Array<NotificationSettingResponse>;
+};
+
+export type PutApiNotificationsLineSettingsResponse =
+  PutApiNotificationsLineSettingsResponses[keyof PutApiNotificationsLineSettingsResponses];
 
 export type GetApiOrdersData = {
   body?: never;
@@ -4409,6 +5370,26 @@ export type GetApiSellerEarningsResponses = {
 export type GetApiSellerEarningsResponse =
   GetApiSellerEarningsResponses[keyof GetApiSellerEarningsResponses];
 
+export type GetApiSellerPayoutsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/seller/payouts';
+};
+
+export type GetApiSellerPayoutsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfPayoutResponse;
+};
+
+export type GetApiSellerPayoutsResponse =
+  GetApiSellerPayoutsResponses[keyof GetApiSellerPayoutsResponses];
+
 export type PostApiSellerPayoutsData = {
   body: RequestPayoutRequest;
   path?: never;
@@ -4455,6 +5436,77 @@ export type GetApiSellerReviewsResponses = {
 
 export type GetApiSellerReviewsResponse =
   GetApiSellerReviewsResponses[keyof GetApiSellerReviewsResponses];
+
+export type GetApiSellerPayoutAccountData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/seller/payout-account';
+};
+
+export type GetApiSellerPayoutAccountResponses = {
+  /**
+   * OK
+   */
+  200: PayoutAccountResponse;
+};
+
+export type GetApiSellerPayoutAccountResponse =
+  GetApiSellerPayoutAccountResponses[keyof GetApiSellerPayoutAccountResponses];
+
+export type PutApiSellerPayoutAccountData = {
+  body: SavePayoutAccountRequest;
+  path?: never;
+  query?: never;
+  url: '/api/seller/payout-account';
+};
+
+export type PutApiSellerPayoutAccountErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type PutApiSellerPayoutAccountError =
+  PutApiSellerPayoutAccountErrors[keyof PutApiSellerPayoutAccountErrors];
+
+export type PutApiSellerPayoutAccountResponses = {
+  /**
+   * OK
+   */
+  200: PayoutAccountResponse;
+};
+
+export type PutApiSellerPayoutAccountResponse =
+  PutApiSellerPayoutAccountResponses[keyof PutApiSellerPayoutAccountResponses];
+
+export type PostApiSellerPayoutAccountRevealData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/seller/payout-account/reveal';
+};
+
+export type PostApiSellerPayoutAccountRevealErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiSellerPayoutAccountRevealError =
+  PostApiSellerPayoutAccountRevealErrors[keyof PostApiSellerPayoutAccountRevealErrors];
+
+export type PostApiSellerPayoutAccountRevealResponses = {
+  /**
+   * OK
+   */
+  200: RevealPayoutAccountResponse;
+};
+
+export type PostApiSellerPayoutAccountRevealResponse =
+  PostApiSellerPayoutAccountRevealResponses[keyof PostApiSellerPayoutAccountRevealResponses];
 
 export type GetApiSellerDocumentsData = {
   body?: never;
@@ -4504,6 +5556,37 @@ export type PostApiSellerDocumentsResponses = {
 
 export type PostApiSellerDocumentsResponse =
   PostApiSellerDocumentsResponses[keyof PostApiSellerDocumentsResponses];
+
+export type GetApiSellerDocumentsPricingHintData = {
+  body?: never;
+  path?: never;
+  query?: {
+    CategoryIds?: Array<string>;
+    GradeLevel?: string;
+    ExcludeDocumentId?: string;
+  };
+  url: '/api/seller/documents/pricing-hint';
+};
+
+export type GetApiSellerDocumentsPricingHintErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiSellerDocumentsPricingHintError =
+  GetApiSellerDocumentsPricingHintErrors[keyof GetApiSellerDocumentsPricingHintErrors];
+
+export type GetApiSellerDocumentsPricingHintResponses = {
+  /**
+   * OK
+   */
+  200: DocumentPricingHintResponse;
+};
+
+export type GetApiSellerDocumentsPricingHintResponse =
+  GetApiSellerDocumentsPricingHintResponses[keyof GetApiSellerDocumentsPricingHintResponses];
 
 export type DeleteApiSellerDocumentsByIdData = {
   body?: never;

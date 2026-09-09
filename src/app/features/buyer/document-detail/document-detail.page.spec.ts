@@ -9,6 +9,7 @@ import {
   CatalogService,
   FollowService,
   LibraryService,
+  NavigationSourceService,
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
@@ -495,5 +496,290 @@ describe('BuyerDocumentDetailPage — FAQ tab (document-faq-tab v1)', () => {
     expect(text).toContain('ถาม-ตอบ (2)');
     expect(text).toContain('คำถามทั่วไป');
     expect(text).toContain('อีกคำถาม');
+  });
+});
+
+/**
+ * Preview-tab empty state regression: `GetPreviewAsync` on the backend always returns a
+ * non-empty `excerptLines` (real content, or its own hardcoded "Preview not available."
+ * fallback when there's nothing else) — so the non-PDF "ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้"
+ * message must be decided BEFORE the `excerptLines?.length` check, not as a trailing
+ * `@else if` after it (which QA found was permanently unreachable).
+ */
+describe('BuyerDocumentDetailPage — preview tab empty state (non-PDF vs excerpt fallback)', () => {
+  function renderWithPreview(doc: DocumentItem, previewResponse: { excerptTitle?: string; excerptLines?: string[]; previewImageUrls?: string[] }) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+    const catalog = {
+      ...buildCatalog(doc),
+      loadDocumentPreview: vi.fn(async () => previewResponse),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: catalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function clickOpenPreview(fixture: { nativeElement: HTMLElement; detectChanges: () => void }): void {
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLElement[];
+    const target = buttons.find((el) => (el.textContent ?? '').includes('เปิดพรีวิว'));
+    if (!target) throw new Error('เปิดพรีวิว button not found');
+    target.click();
+    fixture.detectChanges();
+  }
+
+  it('non-PDF doc with no raster previews shows "ไม่มีตัวอย่างแบบภาพ" even though excerptLines is non-empty (backend fallback text)', async () => {
+    const doc = buildDoc({ format: 'zip', previewPages: 3 });
+    const fixture = renderWithPreview(doc, {
+      excerptLines: ['Preview not available.'],
+      previewImageUrls: [],
+    });
+    clickOpenPreview(fixture);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้');
+    expect(text).not.toContain('Preview not available.');
+  });
+
+  it('PDF doc with real excerpt content still shows its excerpt text normally (regression)', async () => {
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const fixture = renderWithPreview(doc, {
+      excerptTitle: 'บทที่ 1',
+      excerptLines: ['เนื้อหาตัวอย่างบรรทัดที่ 1', 'เนื้อหาตัวอย่างบรรทัดที่ 2'],
+      previewImageUrls: [],
+    });
+    clickOpenPreview(fixture);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('บทที่ 1');
+    expect(text).toContain('เนื้อหาตัวอย่างบรรทัดที่ 1');
+    expect(text).toContain('เนื้อหาตัวอย่างบรรทัดที่ 2');
+    expect(text).not.toContain('ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้');
+  });
+
+  it('PDF doc with no rasters and empty excerptLines still shows the "ยังไม่มีตัวอย่างพรีวิว" processing message (unchanged)', async () => {
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const fixture = renderWithPreview(doc, {
+      excerptLines: [],
+      previewImageUrls: [],
+    });
+    clickOpenPreview(fixture);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ยังไม่มีตัวอย่างพรีวิว');
+  });
+});
+
+/**
+ * discount-urgency v1 §1/§4 — AC-9/AC-10/AC-11: countdown vs social-proof fallback on the price
+ * card, mutually exclusive, and no empty placeholder when neither applies.
+ */
+describe('BuyerDocumentDetailPage — discount urgency countdown / social proof (discount-urgency v1)', () => {
+  function renderDoc(doc: DocumentItem) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const futureIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const pastIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  it('AC-9: discountExpiresAt in the future shows the countdown only, even when soldThisMonthCount > 0', () => {
+    const doc = buildDoc({
+      price: 150,
+      originalPrice: 200,
+      discountExpiresAt: futureIso,
+      soldThisMonthCount: 42,
+    });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ราคานี้ถึง');
+    expect(text).not.toContain('ขายแล้ว');
+    expect(text).not.toContain('ครั้งในเดือนนี้');
+  });
+
+  it('AC-10: discountExpiresAt is null and soldThisMonthCount > 0 shows social proof only', () => {
+    const doc = buildDoc({
+      price: 150,
+      originalPrice: 200,
+      discountExpiresAt: undefined,
+      soldThisMonthCount: 7,
+    });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ขายแล้ว 7 ครั้งในเดือนนี้');
+    expect(text).not.toContain('ราคานี้ถึง');
+  });
+
+  it('AC-10: discountExpiresAt already in the past and soldThisMonthCount > 0 shows social proof only', () => {
+    const doc = buildDoc({
+      price: 150,
+      originalPrice: 200,
+      discountExpiresAt: pastIso,
+      soldThisMonthCount: 3,
+    });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ขายแล้ว 3 ครั้งในเดือนนี้');
+    expect(text).not.toContain('ราคานี้ถึง');
+  });
+
+  it('AC-11: neither discountExpiresAt nor soldThisMonthCount shows nothing (no empty placeholder)', () => {
+    const doc = buildDoc({
+      price: 150,
+      originalPrice: 200,
+      discountExpiresAt: undefined,
+      soldThisMonthCount: undefined,
+    });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ราคานี้ถึง');
+    expect(text).not.toContain('ขายแล้ว');
+    expect(text).not.toContain('ครั้งในเดือนนี้');
+  });
+
+  it('AC-11: soldThisMonthCount = 0 (past/no discount) shows nothing', () => {
+    const doc = buildDoc({
+      price: 150,
+      originalPrice: 200,
+      discountExpiresAt: pastIso,
+      soldThisMonthCount: 0,
+    });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ราคานี้ถึง');
+    expect(text).not.toContain('ขายแล้ว');
+  });
+
+  it('does not show the countdown/social-proof line on a free document even if fields are set', () => {
+    const doc = buildDoc({
+      price: 0,
+      isFree: true,
+      originalPrice: undefined,
+      discountExpiresAt: undefined,
+      soldThisMonthCount: 9,
+    });
+    const fixture = renderDoc(doc);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ขายแล้ว');
+    expect(text).not.toContain('ครั้งในเดือนนี้');
+  });
+});
+
+/**
+ * seller-analytics-insights v1 §4 (AC-16/17/18/19) — the page must forward
+ * `NavigationSourceService.classifyEntrySource()` straight through to
+ * `catalog.loadDocumentDetail()` on mount, exactly once per navigation.
+ */
+describe('BuyerDocumentDetailPage — view-tracking entrySource wiring (seller-analytics-insights v1 §4)', () => {
+  function renderWithNavSource(classifyEntrySource: () => { source: 'search' | 'category' | 'direct'; searchTerm?: string }) {
+    const doc = buildDoc();
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+    const fakeCatalog = buildCatalog(doc);
+    const fakeNavSource = { classifyEntrySource: vi.fn(classifyEntrySource) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+        { provide: NavigationSourceService, useValue: fakeNavSource },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, fakeCatalog, fakeNavSource, doc };
+  }
+
+  it('AC-17: forwards a "search" classification (with searchTerm) to catalog.loadDocumentDetail on mount', () => {
+    const { fakeCatalog, fakeNavSource, doc } = renderWithNavSource(() => ({
+      source: 'search',
+      searchTerm: 'เลข ม.3',
+    }));
+
+    expect(fakeNavSource.classifyEntrySource).toHaveBeenCalledTimes(1);
+    expect(fakeCatalog.loadDocumentDetail).toHaveBeenCalledWith(doc.id, {
+      source: 'search',
+      searchTerm: 'เลข ม.3',
+    });
+  });
+
+  it('AC-18: forwards a "category" classification to catalog.loadDocumentDetail on mount', () => {
+    const { fakeCatalog, doc } = renderWithNavSource(() => ({ source: 'category' }));
+
+    expect(fakeCatalog.loadDocumentDetail).toHaveBeenCalledWith(doc.id, { source: 'category' });
+  });
+
+  it('AC-19: forwards a "direct" classification to catalog.loadDocumentDetail on mount', () => {
+    const { fakeCatalog, doc } = renderWithNavSource(() => ({ source: 'direct' }));
+
+    expect(fakeCatalog.loadDocumentDetail).toHaveBeenCalledWith(doc.id, { source: 'direct' });
+  });
+
+  it('AC-16: classifies and loads exactly once per mount, even across extra change-detection cycles', () => {
+    const { fixture, fakeCatalog, fakeNavSource } = renderWithNavSource(() => ({ source: 'direct' }));
+
+    fixture.detectChanges();
+    fixture.detectChanges();
+
+    expect(fakeNavSource.classifyEntrySource).toHaveBeenCalledTimes(1);
+    expect(fakeCatalog.loadDocumentDetail).toHaveBeenCalledTimes(1);
   });
 });

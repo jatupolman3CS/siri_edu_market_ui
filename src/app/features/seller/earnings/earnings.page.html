@@ -1,153 +1,123 @@
 <div class="max-w-5xl">
-      @if (seller.sellerProfileRequired()) {
-        <app-empty-state
-          emoji="🏪"
-          title="ร้านนี้ยังไม่มีร้านค้า"
-          description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
-        >
-          <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
-        </app-empty-state>
-      } @else {
-      <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">รายได้ & Payout</h1>
-        <p class="text-sm text-ink-soft">
-          ดูรายได้ ค่าธรรมเนียม และประวัติการถอนเงิน
-        </p>
-      </header>
+  @if (seller.sellerProfileRequired()) {
+  <app-empty-state emoji="🏪" title="ร้านนี้ยังไม่มีร้านค้า"
+    description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้">
+    <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+  </app-empty-state>
+  } @else {
+  <header class="mb-8">
+    <h1 class="text-3xl font-extrabold text-ink mb-1">รายได้ & Payout</h1>
+    <p class="text-sm text-ink-soft">
+      ดูรายได้ ค่าธรรมเนียม และประวัติการถอนเงิน
+    </p>
+  </header>
 
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <app-stat-card
-          label="รายได้รวม"
-          [value]="totalEarnings() | thb"
-          icon="💰"
-        />
-        <app-stat-card
-          label="ยอดถอนได้"
-          [value]="pendingBalance() | thb"
-          icon="⏳"
-        />
-        <app-stat-card
-          label="เดือนนี้"
-          [value]="seller.stats().monthlyRevenue | thb"
-          icon="📅"
-          [trend]="revenueTrendDisplay()"
-        />
-        <app-stat-card
-          label="ส่วนแบ่งของคุณ"
-          [value]="sellerSharePercent() + '%'"
-          icon="🌸"
-        />
-      </section>
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <app-stat-card label="รายได้รวม" [value]="totalEarnings() | thb" icon="💰" />
+    <app-stat-card label="ยอดถอนได้" [value]="pendingBalance() | thb" icon="⏳" />
+    <app-stat-card label="เดือนนี้" [value]="seller.stats().monthlyRevenue | thb" icon="📅"
+      [trend]="revenueTrendDisplay()" />
+    <app-stat-card label="ส่วนแบ่งของคุณ" [value]="sellerSharePercent() + '%'" icon="🌸" />
+  </section>
 
-      @if (seller.nextPayoutDate(); as payoutDate) {
-        <div class="text-sm text-ink-soft mb-6 -mt-4">
-          โอนรอบถัดไป: <span class="font-bold text-ink">{{ payoutDate | date: 'd MMM yyyy' }}</span>
+  @if (seller.nextPayoutDate(); as payoutDate) {
+  <div class="text-sm text-ink-soft mb-6 -mt-4">
+    โอนรอบถัดไป: <span class="font-bold text-ink">{{ payoutDate | date: 'd MMM yyyy' }}</span>
+  </div>
+  }
+
+  <div class="card-soft p-6 mb-6 bg-gradient-pink">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div>
+        <div class="text-xs text-ink-muted mb-1">ยอดที่ถอนได้ตอนนี้</div>
+        <div class="text-4xl md:text-5xl font-extrabold text-pink-700">
+          {{ pendingBalance() | thb }}
         </div>
-      }
-
-      <div class="card-soft p-6 mb-6 bg-gradient-pink">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div>
-            <div class="text-xs text-ink-muted mb-1">ยอดที่ถอนได้ตอนนี้</div>
-            <div class="text-4xl md:text-5xl font-extrabold text-pink-700">
-              {{ pendingBalance() | thb }}
-            </div>
-            <div class="text-sm text-ink-soft mt-2">
-              หักค่าธรรมเนียมแพลตฟอร์มจากทุกคำสั่งซื้อที่ชำระแล้วเรียบร้อย
-            </div>
-          </div>
-
-          @if (hasOpenRequest()) {
-            <div class="text-sm text-ink-soft md:text-right">
-              มีคำขอถอนเงินที่กำลังดำเนินการอยู่<br />
-              รอให้รายการปัจจุบันเสร็จก่อนจึงขอถอนใหม่ได้
-            </div>
-          } @else if (!requestOpen()) {
-            <button class="btn-pink !px-7 !py-3.5" (click)="openRequest()">
-              <app-icon name="wallet" [size]="18" />
-              ขอถอนเงิน
-            </button>
-          }
+        <div class="text-sm text-ink-soft mt-2">
+          หักค่าธรรมเนียมแพลตฟอร์มจากทุกคำสั่งซื้อที่ชำระแล้วเรียบร้อย
         </div>
-
-        @if (requestOpen() && !hasOpenRequest()) {
-          <div class="mt-5 pt-5 border-t border-white/50 space-y-3">
-            <label class="text-xs font-semibold text-ink-soft block">
-              บัญชีปลายทาง
-              <span class="font-normal text-ink-muted">(เช่น กสิกรไทย ****1234)</span>
-            </label>
-            <input
-              type="text"
-              [(ngModel)]="bankAccount"
-              name="bankAccount"
-              class="input-soft"
-              placeholder="ธนาคาร และเลขบัญชี 4 ตัวท้าย"
-              maxlength="200"
-            />
-            <div class="flex gap-2">
-              <button class="btn-pink !py-2 !px-5 text-sm" [disabled]="submitting()" (click)="submitRequest()">
-                {{ submitting() ? 'กำลังส่ง…' : 'ยืนยันคำขอ' }}
-              </button>
-              <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancelRequest()">ยกเลิก</button>
-            </div>
-          </div>
-        }
       </div>
 
-      <!-- Recent payout history -->
-      <section class="card-soft p-6">
-        <h2 class="text-lg font-bold text-ink mb-1">ประวัติการถอน</h2>
-        <p class="text-xs text-ink-muted mb-5">รายการการโอนเงินเข้าบัญชีของคุณ</p>
-        <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
-        <table class="w-full min-w-[560px]">
-          <thead class="bg-pink-50">
-            <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-5 py-3 font-semibold">วันที่</th>
-              <th class="px-5 py-3 font-semibold">ยอดที่ถอน</th>
-              <th class="px-5 py-3 font-semibold">ค่าธรรมเนียม</th>
-              <th class="px-5 py-3 font-semibold">สถานะ</th>
-              <th class="px-5 py-3 font-semibold">บัญชี</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (payouts().length > 0) {
-              @for (p of payouts(); track p.id) {
-                <tr class="border-t border-line">
-                  <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ p.createdAt | date: 'dd MMM yyyy' }}</td>
-                  <td class="px-5 py-3 text-sm text-ink font-bold whitespace-nowrap">{{ p.netAmount | thb }}</td>
-                  <td class="px-5 py-3 text-sm text-ink-muted whitespace-nowrap">{{ p.fee | thb }}</td>
-                  <td class="px-5 py-3 whitespace-nowrap">
-                    @if (p.status === 'paid') {
-                      <span class="pill bg-emerald-100 text-emerald-700">โอนเรียบร้อย</span>
-                    } @else if (p.status === 'pending') {
-                      <span class="pill bg-amber-100 text-amber-700">กำลังดำเนินการ</span>
-                    } @else if (p.status === 'processing') {
-                      <span class="pill bg-sky-100 text-sky-700">กำลังโอน</span>
-                    } @else {
-                      <span class="pill bg-red-100 text-red-700">{{ p.status }}</span>
-                    }
-                  </td>
-                  <td class="px-5 py-3 text-sm text-ink-soft whitespace-nowrap">{{ p.bankAccount }}</td>
-                </tr>
-              }
-            } @else {
-              <tr>
-                <td colspan="5" class="px-5 py-3 text-center text-sm text-ink-muted">ยังไม่มีข้อมูลการถอนเงิน</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        </div>
-
-        <div class="mt-4 pt-3 border-t border-line">
-          <app-pagination
-            [page]="page()"
-            [pageSize]="pageSize()"
-            [total]="totalPayouts()"
-            (pageChange)="onPageChange($event)"
-            (pageSizeChange)="onPageSizeChange($event)"
-          />
-        </div>
-      </section>
+      @if (hasOpenRequest()) {
+      <div class="text-sm text-ink-soft md:text-right">
+        มีคำขอถอนเงินที่กำลังดำเนินการอยู่<br />
+        รอให้รายการปัจจุบันเสร็จก่อนจึงขอถอนใหม่ได้
+      </div>
+      } @else if (!requestOpen()) {
+      <button class="btn-pink !px-7 !py-3.5" (click)="openRequest()">
+        <app-icon name="wallet" [size]="18" />
+        ขอถอนเงิน
+      </button>
       }
     </div>
+
+    @if (requestOpen() && !hasOpenRequest()) {
+    <div class="mt-5 pt-5 border-t border-white/50 space-y-3">
+      <label class="text-xs font-semibold text-ink-soft block">
+        บัญชีปลายทาง
+        <span class="font-normal text-ink-muted">(เช่น กสิกรไทย ****1234)</span>
+      </label>
+      <input type="text" [(ngModel)]="bankAccount" name="bankAccount" class="input-soft"
+        placeholder="ธนาคาร และเลขบัญชี 4 ตัวท้าย" maxlength="200" />
+      <div class="flex gap-2">
+        <button class="btn-pink !py-2 !px-5 text-sm" [disabled]="submitting()" (click)="submitRequest()">
+          {{ submitting() ? 'กำลังส่ง…' : 'ยืนยันคำขอ' }}
+        </button>
+        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancelRequest()">ยกเลิก</button>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Recent payout history -->
+  <section class="card-soft p-6">
+    <h2 class="text-lg font-bold text-ink mb-1">ประวัติการถอน</h2>
+    <p class="text-xs text-ink-muted mb-5">รายการการโอนเงินเข้าบัญชีของคุณ</p>
+    <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
+      <table class="w-full min-w-[560px]">
+        <thead class="bg-pink-50">
+          <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+            <th class="px-5 py-3 font-semibold">วันที่</th>
+            <th class="px-5 py-3 font-semibold">ยอดที่ถอน</th>
+            <th class="px-5 py-3 font-semibold">ค่าธรรมเนียม</th>
+            <th class="px-5 py-3 font-semibold">สถานะ</th>
+            <th class="px-5 py-3 font-semibold">บัญชี</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (payouts().length > 0) {
+          @for (p of payouts(); track p.id) {
+          <tr class="border-t border-line">
+            <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ p.createdAt | date: 'dd MMM yyyy' }}</td>
+            <td class="px-5 py-3 text-sm text-ink font-bold whitespace-nowrap">{{ p.netAmount | thb }}</td>
+            <td class="px-5 py-3 text-sm text-ink-muted whitespace-nowrap">{{ p.fee | thb }}</td>
+            <td class="px-5 py-3 whitespace-nowrap">
+              @if (p.status === 'paid') {
+              <span class="pill bg-emerald-100 text-emerald-700">โอนเรียบร้อย</span>
+              } @else if (p.status === 'pending') {
+              <span class="pill bg-amber-100 text-amber-700">กำลังดำเนินการ</span>
+              } @else if (p.status === 'processing') {
+              <span class="pill bg-sky-100 text-sky-700">กำลังโอน</span>
+              } @else {
+              <span class="pill bg-red-100 text-red-700">{{ p.status }}</span>
+              }
+            </td>
+            <td class="px-5 py-3 text-sm text-ink-soft whitespace-nowrap">{{ p.bankAccount }}</td>
+          </tr>
+          }
+          } @else {
+          <tr>
+            <td colspan="5" class="px-5 py-3 text-center text-sm text-ink-muted">ยังไม่มีข้อมูลการถอนเงิน</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 pt-3 border-t border-line">
+      <app-pagination [page]="page()" [pageSize]="pageSize()" [total]="totalPayouts()"
+        (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)" />
+    </div>
+  </section>
+  }
+</div>

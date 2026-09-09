@@ -1,10 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      // seller-analytics-insights v1 §4: App now injects NavigationSourceService (root-provided,
+      // depends on Router) at startup — needs a Router in the injector even with no real routes.
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 

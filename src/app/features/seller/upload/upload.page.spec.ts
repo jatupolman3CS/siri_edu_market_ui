@@ -344,3 +344,315 @@ describe('SellerUploadPage — gallery imageStorageKey round-trip (storage-key-p
     expect(galleryItems[0].imageStorageKey).not.toContain('http');
   });
 });
+
+/**
+ * discount-urgency v1 §1/§4 — AC-12/AC-13: the "ราคาเดิม" input closes a dead-field gap (§0.2 —
+ * `originalPrice` was previously never sent in the submit payload), and the new
+ * "วันหมดอายุส่วนลด" field follows the same `formStartAt`/`formEndAt` date-string pattern. Both
+ * `originalPrice`/`discountExpiresAt` are TODO(contract) on `UpdateDocumentRequest`/
+ * `SellerDocumentResponse` (not in the generated SDK yet) — `renderForEdit` below builds the raw
+ * response as an untyped object + `as SellerDocumentResponse` cast so the extra fields don't trip
+ * excess-property checking, matching `mapSellerDocument`'s own `readSellerOriginalPriceFields`
+ * staging in `core/api-mappers/mappers.ts`.
+ */
+describe('SellerUploadPage — discount urgency originalPrice/discountExpiresAt (discount-urgency v1 §4)', () => {
+  function readDiscountFields(
+    body: UpdateSellerDocumentRequest,
+  ): { originalPrice?: number | null; discountExpiresAt?: string | null } {
+    return body as unknown as { originalPrice?: number | null; discountExpiresAt?: string | null };
+  }
+
+  function renderForEdit(rawDocOverrides: Record<string, unknown> = {}) {
+    const updateDocumentCalls: { id: string; body: UpdateSellerDocumentRequest }[] = [];
+    const rawDoc = {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      price: 300,
+      ...rawDocOverrides,
+    };
+    const doc = mapSellerDocument(rawDoc as SellerDocumentResponse);
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async (id: string, body: UpdateSellerDocumentRequest) => {
+        updateDocumentCalls.push({ id, body });
+      },
+    };
+    const fakeCatalogForEdit: Partial<CatalogService> = {
+      loadCategories: () => {},
+      getCategoryById: () => undefined,
+    };
+    const fakePlatformStats = { stats: () => undefined, loadStats: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) },
+        },
+        { provide: CatalogService, useValue: fakeCatalogForEdit },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: fakePlatformStats },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, updateDocumentCalls };
+  }
+
+  async function settleConstructorLoad(): Promise<void> {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  }
+
+  it('AC-13: edit-mode prefill sets originalPrice/discountExpiresAt (date-only) from the loaded document', async () => {
+    const { component } = renderForEdit({
+      originalPrice: 599,
+      discountExpiresAt: '2026-12-31T00:00:00Z',
+    });
+    await settleConstructorLoad();
+
+    expect(component.originalPrice()).toBe(599);
+    expect(component.discountExpiresAt()).toBe('2026-12-31');
+  });
+
+  it('AC-13: prefill leaves discountExpiresAt as "" when the document has none set', async () => {
+    const { component } = renderForEdit({ originalPrice: 599, discountExpiresAt: null });
+    await settleConstructorLoad();
+
+    expect(component.originalPrice()).toBe(599);
+    expect(component.discountExpiresAt()).toBe('');
+  });
+
+  it('AC-12: submit sends originalPrice/discountExpiresAt matching the form signals', async () => {
+    const { component, updateDocumentCalls } = renderForEdit();
+    await settleConstructorLoad();
+
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+    component.originalPrice.set(599);
+    component.discountExpiresAt.set('2026-12-31');
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const body = readDiscountFields(updateDocumentCalls[0].body);
+    expect(body.originalPrice).toBe(599);
+    expect(body.discountExpiresAt).toBe('2026-12-31');
+  });
+
+  it('AC-12: clearing "ราคาเดิม" to 0 and submitting sends originalPrice: 0 (closes the dead-field gap, §0.2)', async () => {
+    const { component, updateDocumentCalls } = renderForEdit({
+      originalPrice: 599,
+      discountExpiresAt: '2026-12-31T00:00:00Z',
+    });
+    await settleConstructorLoad();
+    expect(component.originalPrice()).toBe(599);
+
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+    component.originalPrice.set(0);
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const body = readDiscountFields(updateDocumentCalls[0].body);
+    expect(body.originalPrice).toBe(0);
+  });
+
+  it('sets both fields to null/0 in the payload when "ตั้งเป็นเอกสารฟรี" is toggled on', async () => {
+    const { component, updateDocumentCalls } = renderForEdit({
+      originalPrice: 599,
+      discountExpiresAt: '2026-12-31T00:00:00Z',
+    });
+    await settleConstructorLoad();
+
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+    component.setIsFree(true);
+
+    expect(component.originalPrice()).toBe(0);
+    expect(component.discountExpiresAt()).toBe('');
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const body = readDiscountFields(updateDocumentCalls[0].body);
+    expect(body.originalPrice).toBe(0);
+    expect(body.discountExpiresAt).toBeNull();
+  });
+});
+
+/**
+ * seller-pricing-and-storefront-stats v1 §4 — AC-7..AC-10: the competitor pricing hint box on
+ * step 3 ("ตั้งราคา"). `getDocumentPricingHint` must fire exactly once on first entry to step 3
+ * (never while toggling categories on step 2), and the hint box only renders once the response
+ * arrives with `sampleSize >= 3` — anything else (loading, `null`, thrown error, too-few-samples)
+ * must render nothing and never toast.
+ */
+describe('SellerUploadPage — competitor pricing hint (seller-pricing-and-storefront-stats v1 §4)', () => {
+  function renderForPricingHint(
+    getDocumentPricingHint: SellerService['getDocumentPricingHint'],
+    messageError = vi.fn(),
+  ) {
+    const fakeSellerForHint: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => null,
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      getDocumentPricingHint,
+    };
+    const fakeCatalogForHint: Partial<CatalogService> = {
+      loadCategories: () => {},
+      getCategoryById: () => undefined,
+    };
+    const fakePlatformStats = { stats: () => undefined, loadStats: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+        { provide: CatalogService, useValue: fakeCatalogForHint },
+        { provide: SellerService, useValue: fakeSellerForHint },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: messageError, info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: fakePlatformStats },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, messageError };
+  }
+
+  it('AC-7: does not fetch while toggling categories on step 2', async () => {
+    const getDocumentPricingHint = vi.fn(async () => null);
+    const { component } = renderForPricingHint(getDocumentPricingHint);
+
+    component.next(); // step 1 -> 2 (never triggers the hint fetch)
+    component.toggleCategory('cat-1');
+    component.toggleCategory('cat-2');
+    component.removeCategory('cat-1');
+    await Promise.resolve();
+
+    expect(getDocumentPricingHint).not.toHaveBeenCalled();
+  });
+
+  it('AC-7: fetches exactly once on first entry to step 3 with the selected categories', async () => {
+    const getDocumentPricingHint = vi.fn(async () => null);
+    const { component } = renderForPricingHint(getDocumentPricingHint);
+
+    component.next(); // -> 2
+    component.toggleCategory('cat-1');
+    component.toggleCategory('cat-2');
+    component.next(); // -> 3, first entry: exactly one fetch
+    await Promise.resolve();
+
+    expect(getDocumentPricingHint).toHaveBeenCalledTimes(1);
+    expect(getDocumentPricingHint).toHaveBeenCalledWith(['cat-1', 'cat-2'], undefined);
+  });
+
+  it('AC-8: no categories selected on entering step 3 → box stays hidden, no fetch of an empty array', async () => {
+    const getDocumentPricingHint = vi.fn(async () => null);
+    const { fixture, component } = renderForPricingHint(getDocumentPricingHint);
+
+    component.next(); // -> 2
+    component.next(); // -> 3, categoryIds still []
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(component.pricingHint()).toBeNull();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ราคาคู่แข่งในหมวดเดียวกัน');
+  });
+
+  it('AC-8: sampleSize < 3 → hint box does not render', async () => {
+    const getDocumentPricingHint = vi.fn(async () => ({
+      sampleSize: 2,
+      minPrice: 100,
+      maxPrice: 200,
+      averagePrice: 150,
+    }));
+    const { fixture, component } = renderForPricingHint(getDocumentPricingHint);
+
+    component.next();
+    component.toggleCategory('cat-1');
+    component.next();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(component.pricingHint()?.sampleSize).toBe(2);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ราคาคู่แข่งในหมวดเดียวกัน');
+  });
+
+  it('AC-9: sampleSize >= 3 → shows avg/min/max/sample count formatted with ThbPipe', async () => {
+    const getDocumentPricingHint = vi.fn(async () => ({
+      sampleSize: 5,
+      minPrice: 100,
+      maxPrice: 300,
+      averagePrice: 200,
+    }));
+    const { fixture, component } = renderForPricingHint(getDocumentPricingHint);
+
+    component.next();
+    component.toggleCategory('cat-1');
+    component.next();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ราคาคู่แข่งในหมวดเดียวกัน');
+    expect(text).toContain('฿200');
+    expect(text).toContain('฿100');
+    expect(text).toContain('฿300');
+    expect(text).toContain('5 รายการ');
+  });
+
+  it('AC-10: request failure (service resolves null per §4 "ไม่ toast ตอน error") hides the box silently — no toast/error state', async () => {
+    // The real SellerService.getDocumentPricingHint (round 2) wraps its network call in a
+    // try/catch and resolves `null` on failure by design (§4) — it never rejects, so the page
+    // never needs its own error handling for this request. This fake reproduces that contract.
+    const getDocumentPricingHint = vi.fn(async () => null);
+    const messageError = vi.fn();
+    const { fixture, component } = renderForPricingHint(getDocumentPricingHint, messageError);
+
+    component.next();
+    component.toggleCategory('cat-1');
+    component.next();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(component.pricingHint()).toBeNull();
+    expect(component.pricingHintLoading()).toBe(false);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ราคาคู่แข่งในหมวดเดียวกัน');
+    expect(messageError).not.toHaveBeenCalled();
+  });
+});

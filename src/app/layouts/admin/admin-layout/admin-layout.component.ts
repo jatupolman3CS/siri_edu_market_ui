@@ -79,5 +79,7 @@ export class AdminLayoutComponent {
     { label: 'ประวัติการทำงาน', href: '/admin/audit', icon: 'doc' as const },
     // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.
     { label: 'สร้างเอกสารอัตโนมัติ', href: '/admin/document-generation', icon: 'sparkle' as const },
+    // exam-hub-landing-pages v1 §4: CMS management for the 4 exam hub pages.
+    { label: 'จัดการเนื้อหา Exam Hub', href: '/admin/exam-hub', icon: 'doc' as const },
   ];
 }

@@ -96,6 +96,8 @@
       @if (library.library().length === 0) {
         @if (library.libraryFilter() === 'unreviewed') {
           <app-empty-state emoji="✅" title="รีวิวครบทุกเอกสารแล้ว ขอบคุณค่ะ" />
+        } @else if (library.libraryFilter() === 'unread') {
+          <app-empty-state emoji="✅" title="อ่านครบทุกเอกสารแล้ว เก่งมากค่ะ" />
         } @else {
           <app-empty-state
             emoji="📚"
@@ -132,6 +134,16 @@
                     <app-icon name="star" [size]="11" />
                     รีวิวแล้ว
                   </span>
+                }
+                @if (item.isRead) {
+                  <button type="button" class="absolute bottom-3 right-3 pill bg-sky-500 text-white shadow-soft" (click)="library.toggleRead(item.document.id, false)">
+                    <app-icon name="check" [size]="11" />
+                    อ่านแล้ว
+                  </button>
+                } @else {
+                  <button type="button" class="absolute bottom-3 right-3 pill bg-white/90 backdrop-blur text-ink-soft" (click)="library.toggleRead(item.document.id, true)">
+                    ทำเครื่องหมายว่าอ่านแล้ว
+                  </button>
                 }
               </div>
               <div class="p-5 flex flex-col gap-2 flex-1">

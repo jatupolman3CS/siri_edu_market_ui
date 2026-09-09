@@ -3,11 +3,21 @@ import {
   ChangeDetectorRef,
   Component,
   NgZone,
+  OnDestroy,
   inject,
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService, CartService, OrderService, PaymentMethodService } from '../../../core/services';
+import {
+  AuthService,
+  CartService,
+  OrderService,
+  PaymentMethodService,
+  ReferralService,
+} from '../../../core/services';
+import type { CreateOrderInput } from '../../../core/services/order.service';
+import type { ReferralCodeValidation } from '../../../core/models';
+import { getReferralCodeHint } from '../../../core/util/referral-capture';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -48,12 +58,13 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
   templateUrl: './checkout.page.html',
   styleUrl: './checkout.page.scss',
 })
-export class BuyerCheckoutPage {
+export class BuyerCheckoutPage implements OnDestroy {
   readonly cart = inject(CartService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly orders = inject(OrderService);
   readonly paymentMethods = inject(PaymentMethodService);
+  readonly referral = inject(ReferralService);
   private readonly message = inject(NzMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
@@ -91,6 +102,14 @@ export class BuyerCheckoutPage {
   /** saved-credit-cards v1 §4 step 3: only meaningful on the "ใช้บัตรใหม่" path. */
   readonly saveNewCard = signal(false);
 
+  /** referral-program v1 (docs/contracts/referral-program.md §4) */
+  readonly showReferralInput = signal(false);
+  readonly referralCode = signal('');
+  readonly referralValidation = signal<ReferralCodeValidation | null>(null);
+  readonly validatingReferral = signal(false);
+  readonly useReferralCredit = signal(false);
+  private referralDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
   private orderId: string | null = null;
@@ -105,6 +124,67 @@ export class BuyerCheckoutPage {
   constructor() {
     void this.checkPaymentsConfigured();
     void this.loadSavedCards();
+    void this.referral.refreshSummary();
+    this.initReferralHint();
+  }
+
+  ngOnDestroy(): void {
+    if (this.referralDebounceTimer) {
+      clearTimeout(this.referralDebounceTimer);
+      this.referralDebounceTimer = null;
+    }
+  }
+
+  private initReferralHint(): void {
+    const hint = getReferralCodeHint();
+    if (hint && !this.referralCode().trim()) {
+      this.showReferralInput.set(true);
+      this.referralCode.set(hint);
+      void this.validateReferralCode(hint);
+    }
+  }
+
+  onReferralCodeInput(value: string): void {
+    this.referralCode.set(value);
+    this.referralValidation.set(null);
+    if (this.referralDebounceTimer) {
+      clearTimeout(this.referralDebounceTimer);
+      this.referralDebounceTimer = null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      this.validatingReferral.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+    this.validatingReferral.set(true);
+    this.referralDebounceTimer = setTimeout(() => {
+      void this.validateReferralCode(trimmed);
+    }, 500);
+  }
+
+  async validateReferralCode(code: string): Promise<void> {
+    this.referralCode.set(code);
+    const trimmed = code.trim();
+    if (!trimmed) {
+      this.referralValidation.set(null);
+      this.validatingReferral.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.validatingReferral.set(true);
+    this.cdr.markForCheck();
+
+    try {
+      const result = await this.referral.validateCode(trimmed);
+      if (this.referralCode().trim().toUpperCase() === trimmed.toUpperCase()) {
+        this.referralValidation.set(result);
+      }
+    } finally {
+      this.validatingReferral.set(false);
+      this.cdr.markForCheck();
+    }
   }
 
   /**
@@ -149,11 +229,20 @@ export class BuyerCheckoutPage {
     const savedCardId = this.selectedSavedCardId();
     const payingWithSavedCard = savedCardId !== 'new';
 
+    const createInput: CreateOrderInput = payingWithSavedCard
+      ? { savedPaymentMethodId: savedCardId }
+      : { saveNewCard: this.saveNewCard() };
+
+    if (this.referralValidation()?.valid && this.referralCode().trim()) {
+      createInput.referralCode = this.referralCode().trim().toUpperCase();
+    }
+    if (this.useReferralCredit()) {
+      createInput.useReferralCredit = true;
+    }
+
     this.busy.set(true);
     try {
-      const outcome = payingWithSavedCard
-        ? await this.orders.create({ savedPaymentMethodId: savedCardId })
-        : await this.orders.create({ saveNewCard: this.saveNewCard() });
+      const outcome = await this.orders.create(createInput);
       this.cdr.markForCheck();
 
       if (!outcome.ok) {

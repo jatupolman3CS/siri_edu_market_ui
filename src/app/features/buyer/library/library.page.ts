@@ -53,6 +53,7 @@ export class BuyerLibraryPage {
   readonly tabs: { value: LibraryFilter; label: string }[] = [
     { value: 'all', label: 'ทั้งหมด' },
     { value: 'unreviewed', label: 'ยังไม่ได้รีวิว' },
+    { value: 'unread', label: 'ยังไม่อ่าน' },
   ];
 
   readonly reviewModal = signal<{ documentId: string; title: string } | null>(null);

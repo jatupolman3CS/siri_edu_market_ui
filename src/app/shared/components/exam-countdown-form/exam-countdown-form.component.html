@@ -1,0 +1,83 @@
+<section class="card-soft p-6" id="exam-countdown">
+  <div class="flex items-start gap-3 mb-5">
+    <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+      <app-icon name="flag" [size]="18" />
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-ink mb-1">โหมดใกล้สอบ</h2>
+      <p class="text-xs text-ink-muted">ตั้งวันสอบของคุณ ระบบจะนับถอยหลังและแนะนำเอกสารที่เกี่ยวข้องให้อัตโนมัติ</p>
+    </div>
+  </div>
+
+  @if (showForm()) {
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">ประเภทสอบ</label>
+        <select
+          class="input-soft cursor-pointer"
+          name="examType"
+          [ngModel]="formExamType()"
+          (ngModelChange)="formExamType.set($event)"
+        >
+          <option value="">เลือกประเภทสอบ</option>
+          @for (t of examTypes; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">วันสอบ</label>
+        <input
+          type="date"
+          class="input-soft"
+          name="examDate"
+          [min]="todayIso"
+          [ngModel]="formExamDate()"
+          (ngModelChange)="formExamDate.set($event)"
+        />
+      </div>
+    </div>
+
+    @if (saveError()) {
+      <div class="mt-4 px-4 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-sm flex items-center gap-2">
+        <app-icon name="flag" [size]="14" />
+        {{ saveError() }}
+      </div>
+    }
+
+    <div class="flex flex-wrap justify-end gap-2 mt-6">
+      @if (examCountdown.setting()) {
+        <button type="button" class="btn-ghost !px-6" [disabled]="saving()" (click)="confirmClear()">
+          ล้างค่า
+        </button>
+      }
+      <button type="button" class="btn-pink !px-7" [disabled]="saving()" (click)="submit()">
+        <app-icon name="check" [size]="16" />
+        บันทึก
+      </button>
+    </div>
+  } @else {
+    <div class="grid gap-3 sm:grid-cols-2 text-sm">
+      <div>
+        <p class="text-xs text-ink-muted mb-1">ประเภทสอบ</p>
+        <p class="font-semibold text-ink">{{ examCountdown.setting()?.examType }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-ink-muted mb-1">วันสอบ</p>
+        <p class="font-semibold text-ink">{{ examCountdown.setting()?.examDate }}</p>
+      </div>
+      <div class="sm:col-span-2">
+        <p class="text-xs text-ink-muted mb-1">สถานะ</p>
+        <p class="font-semibold text-ink">
+          {{ examCountdown.setting()?.isEnabled ? 'เปิดใช้งานอยู่' : 'ปิดใช้งานอยู่' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap justify-end gap-2 mt-6">
+      <button type="button" class="btn-ghost !px-6" (click)="confirmClear()">ล้างค่า</button>
+      <button type="button" class="btn-pink !px-7" (click)="startEdit()">แก้ไขวันสอบ</button>
+    </div>
+  }
+</section>
