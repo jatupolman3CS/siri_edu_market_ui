@@ -41,14 +41,15 @@ export class SellerReviewsPage {
   readonly seller = inject(SellerService);
 
   readonly items = signal<ReviewRow[]>([]);
+  readonly statsRows = signal<ReviewRow[] | null>(null);
   readonly loading = signal<boolean>(false);
   readonly page = signal<number>(1);
   readonly pageSize = signal<number>(20);
   readonly totalCount = signal<number>(0);
 
-  /** Aggregates from loaded review rows (not mock). */
+  /** Aggregates from all reviews (up to 100), avoiding pagination-based statistical fluctuations. */
   readonly reviewStats = computed(() => {
-    const rows = this.items();
+    const rows = this.statsRows() ?? this.items();
     const n = rows.length;
     if (!n) {
       return { positivePct: 0, replyPct: 0, avgHours: null as number | null };
@@ -78,6 +79,7 @@ export class SellerReviewsPage {
   constructor() {
     void this.seller.refreshDashboard();
     void this.load();
+    void this.loadAllStats();
   }
 
   async load(): Promise<void> {
@@ -97,8 +99,31 @@ export class SellerReviewsPage {
       }));
       this.items.set(list);
       this.totalCount.set(paged.totalCount);
+      if (paged.totalCount <= this.pageSize()) {
+        this.statsRows.set(list);
+      }
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async loadAllStats(): Promise<void> {
+    try {
+      const all = await this.seller.loadReviews(1, 100);
+      const list: ReviewRow[] = all.map((r) => ({
+        id: r.id,
+        docTitle: r.documentTitle,
+        buyerName: r.buyerName,
+        buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+        sellerReplyText: r.sellerReplyText,
+        sellerRepliedAt: r.sellerRepliedAt,
+      }));
+      this.statsRows.set(list);
+    } catch {
+      // Best-effort; falls back to current page items
     }
   }
 

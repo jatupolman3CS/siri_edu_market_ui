@@ -477,3 +477,39 @@ describe('AdminService — getFileDownloadUrl (presigned document downloads)', (
     expect(url).toBeNull();
   });
 });
+
+/**
+ * ai-approval-prescreen v1 §0.2 Fix-3 / §1: `prescreenDocument` used to call
+ * `(client.post as any)` directly — this spec pins it down to the generated SDK function
+ * (`postApiAdminDocumentsByIdAiPrescreen`) after the regen against a live backend, and confirms
+ * the pending queue refreshes afterwards (so the new risk badge/flags show up without a manual
+ * reload).
+ */
+describe('AdminService — prescreenDocument (ai-approval-prescreen v1 §0.2/§1)', () => {
+  it('AC-6: calls the ai-prescreen endpoint through the generated SDK and refreshes the queue', async () => {
+    stubRoute('POST', '/api/admin/documents/doc-1/ai-prescreen', {
+      body: { isSuccess: true, riskLevel: 'Warning', flags: ['empty_or_short'], reason: 'สั้นเกินไป' },
+    });
+    stubRoute('POST', '/api/admin/documents/pending/search', {
+      body: { items: [], page: 1, pageSize: 50, totalCount: 0, totalPages: 1 },
+    });
+    const admin = buildService();
+
+    await expect(admin.prescreenDocument('doc-1')).resolves.toBeUndefined();
+  });
+
+  it('reports and rethrows when the AI prescreen call fails', async () => {
+    stubRoute('POST', '/api/admin/documents/doc-2/ai-prescreen', {
+      status: 400,
+      body: { isSuccess: false, riskLevel: null, flags: [], reason: 'Document not found' },
+    });
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [AdminService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const admin = TestBed.inject(AdminService);
+
+    await expect(admin.prescreenDocument('doc-2')).rejects.toBeTruthy();
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+});

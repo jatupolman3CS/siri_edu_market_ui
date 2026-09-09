@@ -13,6 +13,53 @@ describe('ExamHubPage', () => {
   let examHubService: ExamHubService;
   let titleService: Title;
   let metaService: Meta;
+  let realFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    realFetch = globalThis.fetch;
+    const titles: Record<string, string> = {
+      tcas: 'TCAS — ระบบคัดเลือกเข้ามหาวิทยาลัย',
+      'tgat-tpat': 'TGAT/TPAT — เตรียมสอบวัดความถนัด',
+      'a-level': 'A-Level — สอบวิชาสามัญ',
+      onet: 'O-NET — สอบมาตรฐานการศึกษา',
+    };
+
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      const path = new URL(request.url).pathname;
+
+      if (request.method === 'GET' && path.includes('/documents')) {
+        return new Response(
+          JSON.stringify({
+            items: [],
+            page: 1,
+            pageSize: 20,
+            totalCount: 0,
+            totalPages: 0,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+
+      if (request.method === 'GET' && path.startsWith('/api/exam-hub/')) {
+        const type = path.replace('/api/exam-hub/', '');
+        return new Response(
+          JSON.stringify({
+            examType: type,
+            title: titles[type] ?? 'Title',
+            metaDescription: 'Desc',
+            introText: 'Intro',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as typeof globalThis.fetch;
+  });
 
   function setup(examType: ExamHubType) {
     TestBed.configureTestingModule({
@@ -37,7 +84,10 @@ describe('ExamHubPage', () => {
     metaService = TestBed.inject(Meta);
   }
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    TestBed.resetTestingModule();
+  });
 
   it('renders correctly for tgat-tpat with its specific title and empty state', async () => {
     setup('tgat-tpat');

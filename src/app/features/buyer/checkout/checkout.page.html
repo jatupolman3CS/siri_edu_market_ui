@@ -127,13 +127,19 @@
                     <dd>- {{ cart.savings() | thb }}</dd>
                   </div>
                 }
+                @if (referralDiscount() > 0) {
+                  <div class="flex justify-between text-emerald-600">
+                    <dt>ส่วนลดแนะนำเพื่อน</dt>
+                    <dd>- {{ referralDiscount() | thb }}</dd>
+                  </div>
+                }
                 <div class="flex justify-between text-ink-soft">
                   <dt>VAT (รวมในราคาแล้ว)</dt>
                   <dd>{{ cart.vatIncluded() | thb }}</dd>
                 </div>
                 <div class="border-t border-line pt-3 flex justify-between text-base font-bold text-ink">
                   <dt>ยอดที่ต้องชำระ</dt>
-                  <dd class="text-pink-600">{{ cart.total() | thb }}</dd>
+                  <dd class="text-pink-600">{{ payableTotal() | thb }}</dd>
                 </div>
               </dl>
 

@@ -216,6 +216,21 @@ export class AdminApprovalPage {
     if (url) window.open(url, '_blank', 'noopener');
   }
 
+  readonly prescreening = signal<boolean>(false);
+
+  async runPrescreen(id: string): Promise<void> {
+    if (this.prescreening()) return;
+    this.prescreening.set(true);
+    try {
+      await this.admin.prescreenDocument(id);
+      this.message.success('ประเมินความเสี่ยงด้วย AI เรียบร้อย');
+    } catch {
+      this.message.error('ประเมินความเสี่ยงด้วย AI ไม่สำเร็จ');
+    } finally {
+      this.prescreening.set(false);
+    }
+  }
+
   async approve(id: string, title: string): Promise<void> {
     try {
       await this.admin.approveDocument(id);

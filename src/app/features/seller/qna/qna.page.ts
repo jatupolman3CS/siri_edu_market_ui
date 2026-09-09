@@ -102,6 +102,26 @@ export class SellerQnaPage {
     this.answerText.set('');
   }
 
+  readonly draftingAi = signal<boolean>(false);
+
+  async requestAiDraft(questionId: string): Promise<void> {
+    if (this.draftingAi()) return;
+    this.draftingAi.set(true);
+    try {
+      const draft = await this.seller.draftQnaAnswer(questionId);
+      if (draft?.trim()) {
+        this.answerText.set(draft.trim());
+        this.message.success('AI ช่วยร่างคำตอบเรียบร้อย คุณสามารถแก้ไขเพิ่มเติมได้');
+      } else {
+        this.message.warning('ไม่สามารถสร้างร่างคำตอบได้ในขณะนี้');
+      }
+    } catch (e) {
+      this.apiFail.report('ร่างคำตอบด้วย AI', e);
+    } finally {
+      this.draftingAi.set(false);
+    }
+  }
+
   async submitAnswer(questionId: string): Promise<void> {
     const answer = this.answerText().trim();
     if (!answer) {

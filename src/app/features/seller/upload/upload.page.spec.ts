@@ -656,3 +656,97 @@ describe('SellerUploadPage — competitor pricing hint (seller-pricing-and-store
     expect(messageError).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * ai-listing-autofill v1 §1 test list — "เติมข้อมูลด้วย AI" button (`requestAiAutofill`):
+ *  - success: fills every returned field into the draft form signals
+ *  - AC-4: when `isSuccess=false`, no form field is touched at all (values typed before stay put)
+ *  - AI/network failure shows the generic error toast, again without touching the form
+ */
+describe('SellerUploadPage — requestAiAutofill (ai-listing-autofill v1 §1/AC-4)', () => {
+  function renderForAutofill(getAutofillSuggestion: SellerService['getAutofillSuggestion']) {
+    const fakeSellerForAutofill: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => null,
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      getAutofillSuggestion,
+    };
+    const fakeCatalogForAutofill: Partial<CatalogService> = {
+      loadCategories: () => {},
+      getCategoryById: () => undefined,
+    };
+    const fakePlatformStats = { stats: () => undefined, loadStats: vi.fn() };
+    const messages = { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+        { provide: CatalogService, useValue: fakeCatalogForAutofill },
+        { provide: SellerService, useValue: fakeSellerForAutofill },
+        { provide: NzMessageService, useValue: messages },
+        { provide: PlatformStatsService, useValue: fakePlatformStats },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, messages };
+  }
+
+  it('fills title/shortDescription/description/categoryIds/tags on success', async () => {
+    const { component, messages } = renderForAutofill(async () => ({
+      isSuccess: true,
+      failureReason: null,
+      title: 'แบบฝึกหัดคณิตศาสตร์ ป.4',
+      shortDescription: 'โจทย์เศษส่วนพร้อมเฉลย',
+      description: 'เนื้อหาเต็ม...',
+      categoryIds: ['cat-math'],
+      subcategoryId: null,
+      resourceType: 'worksheet',
+      gradeLevels: ['primary-late'],
+      tags: ['คณิตศาสตร์', 'เศษส่วน'],
+    }));
+
+    await component.requestAiAutofill();
+
+    expect(component.title()).toBe('แบบฝึกหัดคณิตศาสตร์ ป.4');
+    expect(component.shortDescription()).toBe('โจทย์เศษส่วนพร้อมเฉลย');
+    expect(component.longDescription()).toBe('เนื้อหาเต็ม...');
+    expect(component.categoryIds()).toEqual(['cat-math']);
+    expect(component.tags()).toEqual(['คณิตศาสตร์', 'เศษส่วน']);
+    expect(messages.success).toHaveBeenCalledWith(
+      'AI ช่วยเติมข้อมูลให้แล้ว ตรวจสอบและแก้ไขได้เลยครับ',
+    );
+  });
+
+  it('AC-4: does not touch any form field when isSuccess=false, and shows the failureReason as a warning', async () => {
+    const { component, messages } = renderForAutofill(async () => ({
+      isSuccess: false,
+      failureReason: 'ไม่มีข้อความให้วิเคราะห์',
+    }));
+    component.title.set('ชื่อที่ผู้ขายพิมพ์เอง');
+    component.shortDescription.set('คำอธิบายที่ผู้ขายพิมพ์เอง');
+
+    await component.requestAiAutofill();
+
+    expect(component.title()).toBe('ชื่อที่ผู้ขายพิมพ์เอง');
+    expect(component.shortDescription()).toBe('คำอธิบายที่ผู้ขายพิมพ์เอง');
+    expect(component.categoryIds()).toEqual([]);
+    expect(component.tags()).toEqual([]);
+    expect(messages.warning).toHaveBeenCalledWith('ไม่มีข้อความให้วิเคราะห์');
+  });
+
+  it('AC-4: does not touch any form field when the request throws (network/service failure)', async () => {
+    const { component, messages } = renderForAutofill(async () => {
+      throw new Error('network down');
+    });
+    component.title.set('ชื่อที่ผู้ขายพิมพ์เอง');
+
+    await component.requestAiAutofill();
+
+    expect(component.title()).toBe('ชื่อที่ผู้ขายพิมพ์เอง');
+    expect(messages.error).toHaveBeenCalledWith('เกิดข้อผิดพลาดในการขอข้อมูลแนะนำจาก AI');
+  });
+});

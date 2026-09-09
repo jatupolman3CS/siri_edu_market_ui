@@ -282,12 +282,22 @@ import type {
   PostApiAdminDocumentGenerationRunData,
   PostApiAdminDocumentGenerationRunErrors,
   PostApiAdminDocumentGenerationRunResponses,
+  PostApiAdminDocumentsAiPrescreenSweepData,
+  PostApiAdminDocumentsAiPrescreenSweepResponses,
+  PostApiAdminDocumentsAiSummariesSweepData,
+  PostApiAdminDocumentsAiSummariesSweepResponses,
   PostApiAdminDocumentsBulkData,
   PostApiAdminDocumentsBulkErrors,
   PostApiAdminDocumentsBulkResponses,
+  PostApiAdminDocumentsByIdAiPrescreenData,
+  PostApiAdminDocumentsByIdAiPrescreenErrors,
+  PostApiAdminDocumentsByIdAiPrescreenResponses,
   PostApiAdminDocumentsByIdApproveData,
   PostApiAdminDocumentsByIdApproveErrors,
   PostApiAdminDocumentsByIdApproveResponses,
+  PostApiAdminDocumentsByIdGenerateAiSummaryData,
+  PostApiAdminDocumentsByIdGenerateAiSummaryErrors,
+  PostApiAdminDocumentsByIdGenerateAiSummaryResponses,
   PostApiAdminDocumentsByIdRejectData,
   PostApiAdminDocumentsByIdRejectErrors,
   PostApiAdminDocumentsByIdRejectResponses,
@@ -408,6 +418,10 @@ import type {
   PostApiSellerBundlesData,
   PostApiSellerBundlesErrors,
   PostApiSellerBundlesResponses,
+  PostApiSellerDocumentsAutofillSuggestionData,
+  PostApiSellerDocumentsAutofillSuggestionResponses,
+  PostApiSellerDocumentsByIdAutofillSuggestionData,
+  PostApiSellerDocumentsByIdAutofillSuggestionResponses,
   PostApiSellerDocumentsByIdGeneratePreviewData,
   PostApiSellerDocumentsByIdGeneratePreviewErrors,
   PostApiSellerDocumentsByIdGeneratePreviewResponses,
@@ -429,6 +443,8 @@ import type {
   PostApiSellerQnaByQuestionIdAnswerData,
   PostApiSellerQnaByQuestionIdAnswerErrors,
   PostApiSellerQnaByQuestionIdAnswerResponses,
+  PostApiSellerQnaByQuestionIdDraftAnswerData,
+  PostApiSellerQnaByQuestionIdDraftAnswerResponses,
   PostApiSellersBySellerIdFollowData,
   PostApiSellersBySellerIdFollowErrors,
   PostApiSellersBySellerIdFollowResponses,
@@ -745,6 +761,50 @@ export const postApiAdminDocumentsByIdReject = <ThrowOnError extends boolean = f
       ...options.headers,
     },
   });
+
+export const postApiAdminDocumentsByIdGenerateAiSummary = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminDocumentsByIdGenerateAiSummaryData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminDocumentsByIdGenerateAiSummaryResponses,
+  PostApiAdminDocumentsByIdGenerateAiSummaryErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminDocumentsByIdGenerateAiSummaryResponses,
+    PostApiAdminDocumentsByIdGenerateAiSummaryErrors,
+    ThrowOnError
+  >({ url: '/api/admin/documents/{id}/generate-ai-summary', ...options });
+
+export const postApiAdminDocumentsAiSummariesSweep = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiAdminDocumentsAiSummariesSweepData, ThrowOnError>,
+): RequestResult<PostApiAdminDocumentsAiSummariesSweepResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).post<
+    PostApiAdminDocumentsAiSummariesSweepResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/admin/documents/ai-summaries/sweep', ...options });
+
+export const postApiAdminDocumentsByIdAiPrescreen = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminDocumentsByIdAiPrescreenData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminDocumentsByIdAiPrescreenResponses,
+  PostApiAdminDocumentsByIdAiPrescreenErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminDocumentsByIdAiPrescreenResponses,
+    PostApiAdminDocumentsByIdAiPrescreenErrors,
+    ThrowOnError
+  >({ url: '/api/admin/documents/{id}/ai-prescreen', ...options });
+
+export const postApiAdminDocumentsAiPrescreenSweep = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiAdminDocumentsAiPrescreenSweepData, ThrowOnError>,
+): RequestResult<PostApiAdminDocumentsAiPrescreenSweepResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).post<
+    PostApiAdminDocumentsAiPrescreenSweepResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/admin/documents/ai-prescreen/sweep', ...options });
 
 export const getApiAdminSellers = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminSellersData, ThrowOnError>,
@@ -2277,6 +2337,15 @@ export const postApiSellerQnaByQuestionIdAnswer = <ThrowOnError extends boolean 
     },
   });
 
+export const postApiSellerQnaByQuestionIdDraftAnswer = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerQnaByQuestionIdDraftAnswerData, ThrowOnError>,
+): RequestResult<PostApiSellerQnaByQuestionIdDraftAnswerResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiSellerQnaByQuestionIdDraftAnswerResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/seller/qna/{questionId}/draft-answer', ...options });
+
 export const putApiSellerQnaByQuestionIdFaq = <ThrowOnError extends boolean = false>(
   options: Options<PutApiSellerQnaByQuestionIdFaqData, ThrowOnError>,
 ): RequestResult<
@@ -2624,6 +2693,31 @@ export const getApiSellerDocumentsByIdDownloadUrl = <ThrowOnError extends boolea
     GetApiSellerDocumentsByIdDownloadUrlErrors,
     ThrowOnError
   >({ url: '/api/seller/documents/{id}/download-url', ...options });
+
+export const postApiSellerDocumentsByIdAutofillSuggestion = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerDocumentsByIdAutofillSuggestionData, ThrowOnError>,
+): RequestResult<PostApiSellerDocumentsByIdAutofillSuggestionResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiSellerDocumentsByIdAutofillSuggestionResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/seller/documents/{id}/autofill-suggestion', ...options });
+
+export const postApiSellerDocumentsAutofillSuggestion = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerDocumentsAutofillSuggestionData, ThrowOnError>,
+): RequestResult<PostApiSellerDocumentsAutofillSuggestionResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiSellerDocumentsAutofillSuggestionResponses,
+    unknown,
+    ThrowOnError
+  >({
+    url: '/api/seller/documents/autofill-suggestion',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const getApiSellersBySellerIdProfile = <ThrowOnError extends boolean = false>(
   options: Options<GetApiSellersBySellerIdProfileData, ThrowOnError>,

@@ -32,12 +32,18 @@ export class NotificationBellComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** Latest items only — full history lives at /notifications via the same shared `items` signal. */
-  readonly previewItems = computed(() => this.feed.items().slice(0, DROPDOWN_PREVIEW_SIZE));
+  /** Latest preview items only — full history lives at /notifications without being wiped by the bell. */
+  readonly previewItems = computed(() => {
+    const preview = this.feed.previewItems?.() ?? [];
+    if (preview.length > 0) {
+      return preview.slice(0, DROPDOWN_PREVIEW_SIZE);
+    }
+    return this.feed.items().slice(0, DROPDOWN_PREVIEW_SIZE);
+  });
 
   constructor() {
     this.feed.refreshUnreadCount();
-    this.feed.loadFeed(1);
+    this.feed.loadPreview?.();
 
     interval(POLL_INTERVAL_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -47,7 +53,7 @@ export class NotificationBellComponent {
   /** Refresh the preview list whenever the dropdown is opened, so it doesn't go stale. */
   onVisibleChange(open: boolean): void {
     if (open) {
-      this.feed.loadFeed(1);
+      this.feed.loadPreview?.();
     }
   }
 

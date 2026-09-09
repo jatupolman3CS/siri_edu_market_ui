@@ -120,4 +120,40 @@ describe('SellerReviewsPage — review rows', () => {
     expect(text).toContain('สมชาย ใจดี');
     expect(text).toContain('ดีมากเลยค่ะ');
   });
+
+  it('computes reviewStats (positivePct, replyPct, avgHours) accurately from loaded reviews', async () => {
+    const fixture = render({
+      reviews: [
+        {
+          id: 'r1',
+          documentTitle: 'Doc 1',
+          buyerName: 'Buyer 1',
+          buyerAvatarUrl: '',
+          rating: 5,
+          comment: 'Great',
+          createdAt: '2026-01-01T10:00:00Z',
+          sellerReplyText: 'Thank you!',
+          sellerRepliedAt: '2026-01-01T12:00:00Z', // 2 hours
+        },
+        {
+          id: 'r2',
+          documentTitle: 'Doc 2',
+          buyerName: 'Buyer 2',
+          buyerAvatarUrl: '',
+          rating: 3,
+          comment: 'OK',
+          createdAt: '2026-01-02T10:00:00Z',
+          sellerReplyText: null,
+          sellerRepliedAt: null,
+        },
+      ],
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const stats = fixture.componentInstance.reviewStats();
+    expect(stats.positivePct).toBe(50); // 1 out of 2 is >= 4
+    expect(stats.replyPct).toBe(50); // 1 out of 2 replied
+    expect(stats.avgHours).toBeCloseTo(2.0); // 2 hours
+  });
 });

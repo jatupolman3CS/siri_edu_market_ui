@@ -69,17 +69,32 @@ export class NotificationFeedService {
   private readonly apiFail = inject(ApiFailureReporter);
 
   private readonly _items = signal<NotificationFeedItemResponse[]>([]);
+  private readonly _previewItems = signal<NotificationFeedItemResponse[]>([]);
   private readonly _unreadCount = signal<number>(0);
   private readonly _loading = signal<boolean>(false);
   private readonly _totalCount = signal<number>(0);
 
-  /** Accumulated page(s) loaded so far — shared by the bell dropdown (preview slice) and /notifications (full list). */
+  /** Accumulated page(s) loaded so far for /notifications (full list). */
   readonly items = this._items.asReadonly();
+  /** Dedicated preview slice for the bell dropdown, avoiding clobbering items loaded in /notifications. */
+  readonly previewItems = this._previewItems.asReadonly();
   /** Badge count for the header bell. */
   readonly unreadCount = this._unreadCount.asReadonly();
   readonly loading = this._loading.asReadonly();
   /** Total row count from the server — used to decide whether "โหลดเพิ่มเติม" has more to fetch. */
   readonly totalCount = this._totalCount.asReadonly();
+
+  /** Loads preview slice for the notification bell dropdown without altering /notifications accumulated feed. */
+  loadPreview(size: number = 10): void {
+    void (async () => {
+      try {
+        const data = await this.fetchFeedPage(1, size);
+        this._previewItems.set(data.items);
+      } catch (e) {
+        this.apiFail.report('โหลดการแจ้งเตือนพรีวิว', e);
+      }
+    })();
+  }
 
   /** Replaces `items` on page 1, appends on page > 1 — matches /notifications' "โหลดเพิ่มเติม" flow. */
   loadFeed(page: number): void {
@@ -110,10 +125,13 @@ export class NotificationFeedService {
 
   /** Optimistic: flips `isRead` + decrements `unreadCount` locally before the API responds. */
   markRead(id: string): Observable<void> {
-    const target = this._items().find((item) => item.id === id);
+    const target = this._items().find((item) => item.id === id) ?? this._previewItems().find((item) => item.id === id);
     const wasUnread = !!target && !target.isRead;
 
     this._items.update((items) =>
+      items.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
+    );
+    this._previewItems.update((items) =>
       items.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
     );
     if (wasUnread) {
@@ -133,6 +151,7 @@ export class NotificationFeedService {
   /** Optimistic: marks every loaded item read + zeroes `unreadCount` locally before the API responds. */
   markAllRead(): Observable<void> {
     this._items.update((items) => items.map((item) => ({ ...item, isRead: true })));
+    this._previewItems.update((items) => items.map((item) => ({ ...item, isRead: true })));
     this._unreadCount.set(0);
 
     return from(this.postMarkAllRead()).pipe(
@@ -178,6 +197,11 @@ export class NotificationFeedService {
    */
   setItemsForTest(items: NotificationFeedItemResponse[]): void {
     this._items.set(items);
+  }
+
+  /** Test helper — seeds preview items for the bell dropdown. */
+  setPreviewItemsForTest(items: NotificationFeedItemResponse[]): void {
+    this._previewItems.set(items);
   }
 
   /** Test helper — see {@link setItemsForTest}. */

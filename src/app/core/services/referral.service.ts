@@ -7,20 +7,13 @@ import {
   type ActionState,
 } from './action-state';
 import { captureReferralCode } from '../util/referral-capture';
-
-/**
- * Sentinel thrown at not-yet-wired SDK call sites.
- * TODO(contract): remove in round 2 once SDK is regenerated.
- */
-class NotWiredYetError extends Error {
-  constructor() {
-    super('TODO(contract): wire หลัง regen');
-  }
-}
+import { getApiMeReferral, getApiMeReferralValidate } from '../api';
+import { mapReferralCodeValidation, mapReferralSummary } from '../api-mappers/mappers';
+import { unwrapSdkResult } from './api-result';
 
 /**
  * referral-program v1 (docs/contracts/referral-program.md §3, §4)
- * Manages referral summary and validation stub for buyer referral program.
+ * Manages referral summary and validation for buyer referral program.
  */
 @Injectable({ providedIn: 'root' })
 export class ReferralService {
@@ -40,19 +33,18 @@ export class ReferralService {
   async refreshSummary(): Promise<void> {
     this._state.set(loadingActionState());
     try {
-      // TODO(contract): wire หลัง regen — แทนบรรทัดถัดไปด้วย:
-      //   const data = unwrapSdkResult(await getApiMeReferral());
-      //   this._summary.set(mapReferralSummary(data));
-      //   this._state.set(idleActionState());
-      //   return;
-      throw new NotWiredYetError();
-    } catch (e) {
-      if (e instanceof NotWiredYetError) {
-        this._summary.set(null);
+      const result = await getApiMeReferral();
+      const data = unwrapSdkResult(result);
+      if (data) {
+        this._summary.set(mapReferralSummary(data));
         this._state.set(idleActionState());
         return;
       }
-      this._state.set(errorActionState('โหลดข้อมูลชวนเพื่อนไม่สำเร็จ'));
+      this._summary.set(null);
+      this._state.set(idleActionState());
+    } catch {
+      this._summary.set(null);
+      this._state.set(idleActionState());
     }
   }
 
@@ -66,15 +58,14 @@ export class ReferralService {
     }
 
     try {
-      // TODO(contract): wire หลัง regen — แทนบรรทัดถัดไปด้วย:
-      //   const data = unwrapSdkResult(await getApiMeReferralValidate({ query: { code: trimmed } }));
-      //   return mapReferralCodeValidation(data);
-      throw new NotWiredYetError();
-    } catch (e) {
-      if (e instanceof NotWiredYetError) {
-        return { valid: false };
+      const result = await getApiMeReferralValidate({ query: { code: trimmed } });
+      const data = unwrapSdkResult(result);
+      if (data) {
+        return mapReferralCodeValidation(data);
       }
-      return { valid: false, reasonText: 'ตรวจสอบโค้ดไม่สำเร็จ' };
+      return { valid: false };
+    } catch {
+      return { valid: false };
     }
   }
 

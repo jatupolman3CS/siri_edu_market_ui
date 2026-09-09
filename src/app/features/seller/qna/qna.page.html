@@ -55,12 +55,27 @@
 
           @if (answeringId() === q.id) {
             <div class="mt-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-ink-muted">คำตอบของคุณ (ผู้ซื้อจะเห็นข้อความนี้)</span>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
+                  [disabled]="draftingAi()"
+                  (click)="requestAiDraft(q.id)"
+                >
+                  @if (draftingAi()) {
+                    <span>กำลังร่างคำตอบ…</span>
+                  } @else {
+                    <span>✨ ให้ AI ช่วยร่างคำตอบ</span>
+                  }
+                </button>
+              </div>
               <textarea
                 [(ngModel)]="answerText"
                 name="answerText"
                 rows="4"
                 class="input-soft"
-                placeholder="พิมพ์คำตอบของคุณ"
+                placeholder="พิมพ์คำตอบของคุณ หรือกดปุ่มด้านบนให้ AI ช่วยร่าง"
                 maxlength="4000"
               ></textarea>
               <div class="flex gap-2">

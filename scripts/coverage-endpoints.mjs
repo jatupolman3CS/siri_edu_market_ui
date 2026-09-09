@@ -35,6 +35,10 @@ const ROUTE_RE = /\[Route\("([^"]*)"\)\]/;
 
 function combinePath(base, rel) {
   if (!rel) return base;
+  // ASP.NET Core attribute routing: an action route starting with "/" is
+  // absolute and overrides the controller-level [Route] entirely — it must
+  // NOT be combined with base (see ExamHubController's admin PUT route).
+  if (rel.startsWith('/')) return rel;
   if (!base) return rel;
   return `${base.replace(/\/$/, '')}/${rel.replace(/^\//, '')}`;
 }

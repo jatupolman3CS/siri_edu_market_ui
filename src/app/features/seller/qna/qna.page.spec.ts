@@ -37,13 +37,18 @@ async function settle(): Promise<void> {
   }
 }
 
-function render(items: SellerQnaItem[], setQnaFaqImpl?: () => Promise<void>) {
+function render(
+  items: SellerQnaItem[],
+  setQnaFaqImpl?: () => Promise<void>,
+  draftQnaAnswerImpl?: (questionId: string) => Promise<string>,
+) {
   const messages = { success: vi.fn(), warning: vi.fn(), error: vi.fn() };
   const apiFail = { report: vi.fn() };
   const seller = {
     listQuestions: vi.fn(async () => items),
     answerQuestion: vi.fn(async () => {}),
     setQnaFaq: vi.fn(setQnaFaqImpl ?? (async () => {})),
+    draftQnaAnswer: vi.fn(draftQnaAnswerImpl ?? (async () => '')),
   };
 
   TestBed.configureTestingModule({
@@ -150,5 +155,53 @@ describe('SellerQnaPage — FAQ pin/unpin (document-faq-tab v1)', () => {
     await fixture.componentInstance.toggleFaq(q, true);
 
     expect(seller.setQnaFaq).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * ai-qna-draft v1 §1 test list — "AI ช่วยร่างคำตอบ" button (`requestAiDraft`):
+ *  - AC-1: fills `answerText` from the draft but never calls `submitAnswer`/`answerQuestion`
+ *    automatically — the seller must still press "ตอบคำถาม" themselves
+ *  - success/warning toast copy matches the existing UI text
+ *  - AI failure reports through `ApiFailureReporter`, does not touch `answerText`
+ */
+describe('SellerQnaPage — requestAiDraft (ai-qna-draft v1 §1)', () => {
+  it('AC-1: fills answerText with the AI draft and does not call answerQuestion automatically', async () => {
+    const q = buildQuestion();
+    const { fixture, seller, messages } = render([q], undefined, async () => 'สวัสดีครับ นี่คือร่างคำตอบ');
+    await settle();
+
+    await fixture.componentInstance.requestAiDraft(q.id);
+
+    expect(seller.draftQnaAnswer).toHaveBeenCalledWith('q-1');
+    expect(fixture.componentInstance.answerText()).toBe('สวัสดีครับ นี่คือร่างคำตอบ');
+    expect(seller.answerQuestion).not.toHaveBeenCalled();
+    expect(messages.success).toHaveBeenCalledWith(
+      'AI ช่วยร่างคำตอบเรียบร้อย คุณสามารถแก้ไขเพิ่มเติมได้',
+    );
+  });
+
+  it('shows a warning and leaves answerText untouched when the AI draft is empty', async () => {
+    const q = buildQuestion();
+    const { fixture, messages } = render([q], undefined, async () => '');
+    await settle();
+
+    await fixture.componentInstance.requestAiDraft(q.id);
+
+    expect(fixture.componentInstance.answerText()).toBe('');
+    expect(messages.warning).toHaveBeenCalledWith('ไม่สามารถสร้างร่างคำตอบได้ในขณะนี้');
+  });
+
+  it('reports the failure via ApiFailureReporter when draftQnaAnswer rejects', async () => {
+    const q = buildQuestion();
+    const { fixture, apiFail } = render([q], undefined, async () => {
+      throw new Error('AI unavailable');
+    });
+    await settle();
+
+    await fixture.componentInstance.requestAiDraft(q.id);
+
+    expect(apiFail.report).toHaveBeenCalledWith('ร่างคำตอบด้วย AI', expect.any(Error));
+    expect(fixture.componentInstance.draftingAi()).toBe(false);
   });
 });

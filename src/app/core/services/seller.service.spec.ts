@@ -298,3 +298,97 @@ describe('SellerService — seller_profile_required (QA fix: friendly 403, not a
     expect(service.sellerProfileRequired()).toBe(false);
   });
 });
+
+/**
+ * ai-qna-draft v1 §0.2 Fix-1 / §1: `draftQnaAnswer` used to call `(client.post as any)` directly
+ * — these specs pin it down to the generated SDK function after the regen against a live backend.
+ */
+describe('SellerService — draftQnaAnswer (ai-qna-draft v1 §0.2/§1)', () => {
+  it('AC-4: calls the draft-answer endpoint through the generated SDK and returns the draft', async () => {
+    stubRoute('POST', '/api/seller/qna/q-1/draft-answer', {
+      isSuccess: true,
+      failureReason: null,
+      draftAnswer: 'สวัสดีครับ เอกสารนี้ครอบคลุมเนื้อหาบทที่ 1-3 ครับ',
+    });
+    const service = buildService();
+
+    const draft = await service.draftQnaAnswer('q-1');
+
+    expect(draft).toBe('สวัสดีครับ เอกสารนี้ครอบคลุมเนื้อหาบทที่ 1-3 ครับ');
+  });
+
+  it('returns an empty string when the response has no draftAnswer', async () => {
+    stubRoute('POST', '/api/seller/qna/q-2/draft-answer', {
+      isSuccess: false,
+      failureReason: 'AI completion client not configured',
+      draftAnswer: null,
+    });
+    const service = buildService();
+
+    const draft = await service.draftQnaAnswer('q-2');
+
+    expect(draft).toBe('');
+  });
+});
+
+/**
+ * ai-listing-autofill v1 §0.2 Fix-1 / §1: `getAutofillSuggestion` used to call
+ * `(client.post as any)` for both branches — these specs pin both down to the generated SDK
+ * functions after the regen against a live backend.
+ */
+describe('SellerService — getAutofillSuggestion (ai-listing-autofill v1 §0.2/§1)', () => {
+  it('AC-7 (documentId branch): calls the by-id autofill-suggestion endpoint', async () => {
+    stubRoute('POST', '/api/seller/documents/doc-1/autofill-suggestion', {
+      isSuccess: true,
+      failureReason: null,
+      title: 'แบบฝึกหัดคณิตศาสตร์ ป.4',
+      shortDescription: 'โจทย์เศษส่วนพร้อมเฉลย',
+      description: 'เนื้อหาเต็ม...',
+      categoryIds: ['cat-math'],
+      subcategoryId: null,
+      resourceType: 'worksheet',
+      gradeLevels: ['primary-late'],
+      tags: ['คณิตศาสตร์', 'เศษส่วน'],
+    });
+    const service = buildService();
+
+    const res = await service.getAutofillSuggestion({ documentId: 'doc-1' });
+
+    expect(res.isSuccess).toBe(true);
+    expect(res.title).toBe('แบบฝึกหัดคณิตศาสตร์ ป.4');
+    expect(res.categoryIds).toEqual(['cat-math']);
+  });
+
+  it('AC-7 (storageKey branch): calls the standalone autofill-suggestion endpoint', async () => {
+    stubRoute('POST', '/api/seller/documents/autofill-suggestion', {
+      isSuccess: true,
+      failureReason: null,
+      title: 'ข้อสอบวิทยาศาสตร์ ม.1',
+      shortDescription: 'ข้อสอบเก็บคะแนนกลางภาค',
+      description: null,
+      categoryIds: ['cat-science'],
+      subcategoryId: null,
+      resourceType: 'exam',
+      gradeLevels: ['secondary-early'],
+      tags: ['วิทยาศาสตร์'],
+    });
+    const service = buildService();
+
+    const res = await service.getAutofillSuggestion({
+      storageKey: 'uploads/tmp-1.pdf',
+      fileName: 'tmp-1.pdf',
+    });
+
+    expect(res.isSuccess).toBe(true);
+    expect(res.title).toBe('ข้อสอบวิทยาศาสตร์ ม.1');
+  });
+
+  it('AC-4: returns a failure shape (without throwing) when the request errors out', async () => {
+    stubRoute('POST', '/api/seller/documents/autofill-suggestion', { title: 'boom', status: 500 }, 500);
+    const service = buildService();
+
+    const res = await service.getAutofillSuggestion({ sampleText: 'เนื้อหาไฟล์...' });
+
+    expect(res.isSuccess).toBe(false);
+  });
+});

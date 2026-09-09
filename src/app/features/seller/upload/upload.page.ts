@@ -113,6 +113,7 @@ export class SellerUploadPage {
   readonly language = signal<'th' | 'en'>('th');
   readonly tags = signal<string[]>([]);
   readonly newTag = signal<string>('');
+  readonly aiAutofillLoading = signal<boolean>(false);
 
   readonly price = signal<number>(199);
   readonly originalPrice = signal<number>(0);
@@ -454,6 +455,33 @@ export class SellerUploadPage {
   }
   removeTag(t: string): void {
     this.tags.update((list) => list.filter((x) => x !== t));
+  }
+
+  // ===== AI-01: Listing Autofill =====
+  async requestAiAutofill(): Promise<void> {
+    this.aiAutofillLoading.set(true);
+    try {
+      const res = await this.seller.getAutofillSuggestion({
+        documentId: this.editId() || undefined,
+        storageKey: this.upload()?.key || undefined,
+        fileName: this.file()?.name || undefined,
+      });
+
+      if (res.isSuccess) {
+        if (res.title) this.title.set(res.title);
+        if (res.shortDescription) this.shortDescription.set(res.shortDescription);
+        if (res.description) this.longDescription.set(res.description);
+        if (res.categoryIds?.length) this.categoryIds.set(res.categoryIds);
+        if (res.tags?.length) this.tags.set(res.tags);
+        this.message.success('AI ช่วยเติมข้อมูลให้แล้ว ตรวจสอบและแก้ไขได้เลยครับ');
+      } else {
+        this.message.warning(res.failureReason || 'ไม่สามารถสร้างข้อมูลแนะนำจาก AI ได้ในขณะนี้');
+      }
+    } catch {
+      this.message.error('เกิดข้อผิดพลาดในการขอข้อมูลแนะนำจาก AI');
+    } finally {
+      this.aiAutofillLoading.set(false);
+    }
   }
 
   toggleCategory(id: string): void {

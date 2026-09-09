@@ -28,6 +28,7 @@ import {
   postApiAdminCategoriesByCategoryIdSubcategories,
   postApiAdminDocumentGenerationRun,
   postApiAdminDocumentsPendingSearch,
+  postApiAdminDocumentsByIdAiPrescreen,
   postApiAdminDocumentsByIdApprove,
   postApiAdminDocumentsByIdReject,
   postApiAdminDocumentsByIdReportsByReportIdResolve,
@@ -427,6 +428,18 @@ export class AdminService {
     } catch (e) {
       this.apiFail.report('โหลดรายละเอียดเอกสาร', e);
       return null;
+    }
+  }
+
+  /** AI-09: Run AI prescreen check on a pending document. */
+  async prescreenDocument(id: string): Promise<void> {
+    try {
+      const result = await postApiAdminDocumentsByIdAiPrescreen({ path: { id } });
+      unwrapSdkResult(result);
+      await this.refreshPendingDocuments();
+    } catch (e) {
+      this.apiFail.report('ประเมินความเสี่ยงด้วย AI', e);
+      throw e;
     }
   }
 

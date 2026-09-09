@@ -4,6 +4,7 @@ import {
   Component,
   NgZone,
   OnDestroy,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -109,6 +110,24 @@ export class BuyerCheckoutPage implements OnDestroy {
   readonly validatingReferral = signal(false);
   readonly useReferralCredit = signal(false);
   private referralDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  readonly referralDiscount = computed(() => {
+    let discount = 0;
+    const v = this.referralValidation();
+    if (v?.valid) {
+      discount += v.discountAmount ?? 20;
+    }
+    if (this.useReferralCredit() && (this.referral.summary()?.unusedCreditCount ?? 0) > 0) {
+      const creditTotal = this.referral.summary()?.unusedCreditTotal ?? 0;
+      discount += Math.min(creditTotal, 20);
+    }
+    return discount;
+  });
+
+  readonly payableTotal = computed(() => {
+    const rawTotal = this.cart.total();
+    return Math.max(0, rawTotal - this.referralDiscount());
+  });
 
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;

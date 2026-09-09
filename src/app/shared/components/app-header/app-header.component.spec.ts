@@ -49,10 +49,12 @@ function render(loggedIn = false) {
         provide: NotificationFeedService,
         useValue: {
           items: () => [],
+          previewItems: () => [],
           unreadCount: () => 0,
           loading: () => false,
           totalCount: () => 0,
           loadFeed: vi.fn(),
+          loadPreview: vi.fn(),
           refreshUnreadCount: vi.fn(),
           markRead: vi.fn(() => ({ subscribe: () => {} })),
           markAllRead: vi.fn(() => ({ subscribe: () => {} })),

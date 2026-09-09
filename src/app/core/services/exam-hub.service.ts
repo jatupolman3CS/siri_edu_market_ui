@@ -8,24 +8,21 @@ import {
   type ActionState,
 } from './action-state';
 import { createInfinitePager } from './infinite-pager';
-
-/**
- * Sentinel thrown at not-yet-wired SDK call sites.
- * TODO(contract): remove in round 2 once SDK is regenerated.
- */
-class NotWiredYetError extends Error {
-  constructor() {
-    super('TODO(contract): wire หลัง regen');
-  }
-}
+import {
+  getApiExamHubByExamType,
+  getApiExamHubByExamTypeDocuments,
+  putApiAdminExamHubByExamType,
+} from '../api';
+import { mapDocument, mapExamHubPage } from '../api-mappers/mappers';
+import { unwrapSdkResult } from './api-result';
 
 export interface UpdateExamHubPageInput {
-  title?: string;
-  metaDescription?: string;
-  introText?: string;
-  examDateInfo?: string;
-  scoreCriteriaInfo?: string;
-  trendInfo?: string;
+  title?: string | null;
+  metaDescription?: string | null;
+  introText?: string | null;
+  examDateInfo?: string | null;
+  scoreCriteriaInfo?: string | null;
+  trendInfo?: string | null;
 }
 
 /**
@@ -47,24 +44,20 @@ export class ExamHubService {
     pageSize: 20,
     fetch: async (page, pageSize) => {
       try {
-        // TODO(contract): wire หลัง regen — แทนบรรทัดถัดไปด้วย:
-        //   const data = unwrapSdkResult(await getApiExamHubByExamTypeDocuments({
-        //     path: { examType: this.currentExamType },
-        //     query: { page, pageSize },
-        //   }));
-        //   return {
-        //     items: (data.items ?? []).map(mapDocument),
-        //     page: data.page,
-        //     pageSize: data.pageSize,
-        //     totalCount: data.totalCount,
-        //     totalPages: data.totalPages,
-        //   };
-        throw new NotWiredYetError();
-      } catch (e) {
-        if (e instanceof NotWiredYetError) {
-          return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
-        }
-        throw e;
+        const result = await getApiExamHubByExamTypeDocuments({
+          path: { examType: this.currentExamType },
+          query: { Page: page, PageSize: pageSize },
+        });
+        const data = unwrapSdkResult(result);
+        return {
+          items: (data.items ?? []).map(mapDocument),
+          page: data.page ?? page,
+          pageSize: data.pageSize ?? pageSize,
+          totalCount: data.totalCount ?? 0,
+          totalPages: data.totalPages ?? 0,
+        };
+      } catch {
+        return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
       }
     },
     errorMessage: 'โหลดข้อมูลไม่สำเร็จ',
@@ -80,18 +73,16 @@ export class ExamHubService {
   async loadPage(examType: ExamHubType): Promise<void> {
     this._state.set(loadingActionState());
     try {
-      // TODO(contract): wire หลัง regen — แทนบรรทัดถัดไปด้วย:
-      //   const data = unwrapSdkResult(await getApiExamHubByExamType({ path: { examType } }));
-      //   this._page.set(mapExamHubPage(data));
-      //   this._state.set(idleActionState());
-      //   return;
-      throw new NotWiredYetError();
-    } catch (e) {
-      if (e instanceof NotWiredYetError) {
-        this._page.set(this.getStubDefaultPage(examType));
+      const result = await getApiExamHubByExamType({ path: { examType } });
+      const data = unwrapSdkResult(result);
+      if (data) {
+        this._page.set(mapExamHubPage(data));
         this._state.set(idleActionState());
         return;
       }
+      this._page.set(this.getStubDefaultPage(examType));
+      this._state.set(idleActionState());
+    } catch {
       this._page.set(null);
       this._state.set(errorActionState('โหลดข้อมูลไม่สำเร็จ'));
     }
@@ -110,6 +101,9 @@ export class ExamHubService {
     }
   }
 
+  /**
+   * Loads more documents for the current exam hub.
+   */
   async loadMore(): Promise<void> {
     await this.pager.loadMore();
   }
@@ -120,34 +114,20 @@ export class ExamHubService {
   async updatePage(examType: ExamHubType, input: UpdateExamHubPageInput): Promise<void> {
     this._updateState.set(loadingActionState());
     try {
-      // TODO(contract): wire หลัง regen — แทนบรรทัดถัดไปด้วย:
-      //   const data = unwrapSdkResult(await putApiAdminExamHubByExamType({
-      //     path: { examType },
-      //     body: input,
-      //   }));
-      //   this._page.set(mapExamHubPage(data));
-      //   this._updateState.set(successActionState('บันทึกเนื้อหาเรียบร้อย'));
-      //   return;
-      throw new NotWiredYetError();
-    } catch (e) {
-      if (e instanceof NotWiredYetError) {
-        const current = this._page() ?? this.getStubDefaultPage(examType);
-        this._page.set({
-          ...current,
-          ...input,
-          title: input.title ?? current.title,
-          metaDescription: input.metaDescription ?? current.metaDescription,
-          introText: input.introText ?? current.introText,
-          examDateInfo: input.examDateInfo !== undefined ? input.examDateInfo : current.examDateInfo,
-          scoreCriteriaInfo: input.scoreCriteriaInfo !== undefined ? input.scoreCriteriaInfo : current.scoreCriteriaInfo,
-          trendInfo: input.trendInfo !== undefined ? input.trendInfo : current.trendInfo,
-          updatedAt: new Date().toISOString(),
-        });
+      const result = await putApiAdminExamHubByExamType({
+        path: { examType },
+        body: input,
+      });
+      const data = unwrapSdkResult(result);
+      if (data) {
+        this._page.set(mapExamHubPage(data));
         this._updateState.set(successActionState('บันทึกเนื้อหาเรียบร้อย'));
         return;
       }
+      throw new Error('No response data');
+    } catch (error) {
       this._updateState.set(errorActionState('บันทึกไม่สำเร็จ'));
-      throw e;
+      throw error;
     }
   }
 

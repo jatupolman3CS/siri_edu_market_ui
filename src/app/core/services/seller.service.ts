@@ -26,8 +26,11 @@ import {
   getApiSellerStoreSections,
   postApiFilesUpload,
   postApiSellerDocuments,
+  postApiSellerDocumentsAutofillSuggestion,
+  postApiSellerDocumentsByIdAutofillSuggestion,
   postApiSellerPayouts,
   postApiSellerQnaByQuestionIdAnswer,
+  postApiSellerQnaByQuestionIdDraftAnswer,
   postApiSellerStoreSections,
   putApiSellerQnaByQuestionIdFaq,
   putApiSellerStoreSectionsBySectionId,
@@ -36,6 +39,7 @@ import type {
   CreateDocumentRequest,
   GetApiSellerReviewsResponse,
   SaveStoreSectionRequest,
+  SellerAutofillResponse,
   SellerDocumentResponse,
   StoreSectionResponse,
   SellerEarningsResponse,
@@ -541,6 +545,13 @@ export class SellerService {
     });
   }
 
+  /** AI-03: Generates an AI draft answer for a buyer question on this seller's listing. */
+  async draftQnaAnswer(questionId: string): Promise<string> {
+    const result = await postApiSellerQnaByQuestionIdDraftAnswer({ path: { questionId } });
+    const data = unwrapSdkResult(result);
+    return data?.draftAnswer ?? '';
+  }
+
   /**
    * document-faq-tab v1.1 §3.1: `PUT /api/seller/qna/{questionId}/faq` pins/unpins an answered
    * question as FAQ (`sortOrder` controls its position within the FAQ tab).
@@ -577,5 +588,34 @@ export class SellerService {
       path: { sectionId },
       throwOnError: true,
     });
+  }
+
+  // ===== AI-01: Listing Autofill =====
+  async getAutofillSuggestion(params: {
+    documentId?: string;
+    storageKey?: string;
+    fileName?: string;
+    sampleText?: string;
+  }): Promise<SellerAutofillResponse> {
+    try {
+      if (params.documentId) {
+        const result = await postApiSellerDocumentsByIdAutofillSuggestion({
+          path: { id: params.documentId },
+        });
+        return unwrapSdkResult(result) ?? { isSuccess: false };
+      } else {
+        const result = await postApiSellerDocumentsAutofillSuggestion({
+          body: {
+            documentId: params.documentId ?? null,
+            storageKey: params.storageKey ?? null,
+            fileName: params.fileName ?? null,
+            sampleText: params.sampleText ?? null,
+          },
+        });
+        return unwrapSdkResult(result) ?? { isSuccess: false };
+      }
+    } catch {
+      return { isSuccess: false, failureReason: 'Network error or service unavailable' };
+    }
   }
 }
