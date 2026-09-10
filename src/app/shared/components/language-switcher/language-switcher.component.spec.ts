@@ -26,45 +26,56 @@ describe('LanguageSwitcherComponent', () => {
     try { window?.localStorage?.clear?.(); } catch {}
   });
 
-  it('renders language switch buttons in compact mode', () => {
+  it('renders language dropdown trigger button showing ไทย when current language is th', () => {
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll('button');
-    expect(buttons.length).toBe(2);
-    expect(buttons[0].textContent).toContain('TH');
-    expect(buttons[1].textContent).toContain('EN');
+    const button = el.querySelector('button');
+    expect(button).toBeTruthy();
+    expect(button?.textContent).toContain('ไทย');
+    expect(button?.textContent).toContain('🇹🇭');
   });
 
-  it('switches language to en when EN button is clicked', () => {
-    const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll('button');
-    buttons[1].click();
-    fixture.detectChanges();
-
-    expect(translation.currentLang()).toBe('en');
-  });
-
-  it('switches back to th when TH button is clicked', () => {
+  it('displays English when language is switched to en', () => {
     translation.setLanguage('en');
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll('button');
-    buttons[0].click();
-    fixture.detectChanges();
+    const button = el.querySelector('button');
+    expect(button?.textContent).toContain('English');
+    expect(button?.textContent).toContain('🇬🇧');
+  });
 
+  it('switches language when setLanguage is called', () => {
+    component.setLanguage('en');
+    fixture.detectChanges();
+    expect(translation.currentLang()).toBe('en');
+
+    component.setLanguage('th');
+    fixture.detectChanges();
     expect(translation.currentLang()).toBe('th');
   });
 
-  it('toggles language in minimal mode', () => {
-    fixture.componentRef.setInput('variant', 'minimal');
-    fixture.detectChanges();
-
-    const el: HTMLElement = fixture.nativeElement;
-    const button = el.querySelector('button');
-    expect(button?.textContent).toContain('TH');
-
-    button?.click();
+  it('toggles language between th and en', () => {
+    translation.setLanguage('th');
+    component.toggle();
     fixture.detectChanges();
     expect(translation.currentLang()).toBe('en');
+
+    component.toggle();
+    fixture.detectChanges();
+    expect(translation.currentLang()).toBe('th');
+  });
+
+  it('supports switching directly between th and en', () => {
+    component.setLanguage('en');
+    fixture.detectChanges();
+    expect(translation.currentLang()).toBe('en');
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button');
+    expect(button?.textContent).toContain('English');
+
+    component.setLanguage('th');
+    fixture.detectChanges();
+    expect(translation.currentLang()).toBe('th');
+    expect(button?.textContent).toContain('ไทย');
   });
 });

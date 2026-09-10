@@ -1,115 +1,56 @@
-@if (variant() === 'dropdown') {
-  <button
-    nz-dropdown
-    [nzDropdownMenu]="langMenu"
-    nzTrigger="click"
-    nzPlacement="bottomRight"
-    type="button"
-    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all border"
-    [class.bg-white]="theme() === 'light'"
-    [class.text-ink-soft]="theme() === 'light'"
-    [class.border-line]="theme() === 'light'"
-    [class.hover:border-pink-300]="theme() === 'light'"
-    [class.bg-white/10]="theme() === 'dark'"
-    [class.text-pink-100]="theme() === 'dark'"
-    [class.border-white/10]="theme() === 'dark'"
-    [class.hover:bg-white/20]="theme() === 'dark'"
-    [attr.aria-label]="translation.t('header.switchLanguage')"
-  >
-    <span class="text-sm leading-none">{{ translation.currentLang() === 'th' ? '🇹🇭' : '🇬🇧' }}</span>
-    <span class="uppercase tracking-wider font-bold">{{ translation.currentLang() }}</span>
-    <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-    </svg>
-  </button>
+<button
+  nz-dropdown
+  [nzDropdownMenu]="langMenu"
+  nzTrigger="click"
+  [nzPlacement]="placement()"
+  type="button"
+  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer"
+  [class.bg-white]="theme() === 'light'"
+  [class.text-ink-soft]="theme() === 'light'"
+  [class.border-line]="theme() === 'light'"
+  [class.hover:border-pink-300]="theme() === 'light'"
+  [class.bg-white/10]="theme() === 'dark'"
+  [class.text-pink-100]="theme() === 'dark'"
+  [class.border-white/10]="theme() === 'dark'"
+  [class.hover:bg-white/20]="theme() === 'dark'"
+  [attr.aria-label]="translation.t('header.switchLanguage')"
+>
+  <span class="text-sm leading-none">{{ translation.currentLang() === 'th' ? '🇹🇭' : '🇬🇧' }}</span>
+  <span class="font-bold">{{ translation.currentLang() === 'th' ? 'ไทย' : 'English' }}</span>
+  <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+  </svg>
+</button>
 
-  <nz-dropdown-menu #langMenu="nzDropdownMenu">
-    <ul nz-menu class="!rounded-2xl !p-1.5 !shadow-popover !border !border-line min-w-[140px]">
-      <li
-        nz-menu-item
-        (click)="setLanguage('th')"
-        class="!flex !items-center !gap-2.5 !px-3 !py-2 !rounded-xl !text-xs !font-medium hover:!bg-pink-50"
-        [class.!bg-pink-50]="translation.currentLang() === 'th'"
-        [class.!text-pink-600]="translation.currentLang() === 'th'"
-        [class.!font-bold]="translation.currentLang() === 'th'"
-      >
-        <span class="text-base leading-none">🇹🇭</span>
-        <span>ภาษาไทย</span>
-        @if (translation.currentLang() === 'th') {
-          <span class="ml-auto text-pink-600 font-bold">✓</span>
-        }
-      </li>
-      <li
-        nz-menu-item
-        (click)="setLanguage('en')"
-        class="!flex !items-center !gap-2.5 !px-3 !py-2 !rounded-xl !text-xs !font-medium hover:!bg-pink-50"
-        [class.!bg-pink-50]="translation.currentLang() === 'en'"
-        [class.!text-pink-600]="translation.currentLang() === 'en'"
-        [class.!font-bold]="translation.currentLang() === 'en'"
-      >
-        <span class="text-base leading-none">🇬🇧</span>
-        <span>English</span>
-        @if (translation.currentLang() === 'en') {
-          <span class="ml-auto text-pink-600 font-bold">✓</span>
-        }
-      </li>
-    </ul>
-  </nz-dropdown-menu>
-} @else if (variant() === 'minimal') {
-  <button
-    type="button"
-    (click)="toggle()"
-    class="flex items-center gap-1.5 px-2 py-1 rounded-xl text-xs font-semibold transition-all hover:opacity-80"
-    [class.text-ink-soft]="theme() === 'light'"
-    [class.text-pink-200]="theme() === 'dark'"
-    [attr.aria-label]="translation.t('header.switchLanguage')"
-  >
-    <span>{{ translation.currentLang() === 'th' ? '🇹🇭 TH' : '🇬🇧 EN' }}</span>
-  </button>
-} @else {
-  <!-- Default: Compact / Pill switcher -->
-  <div
-    class="inline-flex items-center p-0.5 rounded-full border transition-all"
-    [class.bg-pink-50/60]="theme() === 'light'"
-    [class.border-pink-200/60]="theme() === 'light'"
-    [class.bg-white/10]="theme() === 'dark'"
-    [class.border-white/10]="theme() === 'dark'"
-    role="group"
-    [attr.aria-label]="translation.t('header.switchLanguage')"
-  >
-    <button
-      type="button"
+<nz-dropdown-menu #langMenu="nzDropdownMenu">
+  <ul nz-menu class="!rounded-2xl !p-1.5 !shadow-popover !border !border-line min-w-[140px]">
+    <li
+      nz-menu-item
       (click)="setLanguage('th')"
-      class="px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-      [class.bg-white]="translation.currentLang() === 'th' && theme() === 'light'"
-      [class.text-pink-600]="translation.currentLang() === 'th' && theme() === 'light'"
-      [class.shadow-sm]="translation.currentLang() === 'th'"
-      [class.text-ink-muted]="translation.currentLang() !== 'th' && theme() === 'light'"
-      [class.hover:text-ink]="translation.currentLang() !== 'th' && theme() === 'light'"
-      [class.bg-pink-500]="translation.currentLang() === 'th' && theme() === 'dark'"
-      [class.text-white]="translation.currentLang() === 'th' && theme() === 'dark'"
-      [class.text-pink-100/60]="translation.currentLang() !== 'th' && theme() === 'dark'"
-      [class.hover:text-white]="translation.currentLang() !== 'th' && theme() === 'dark'"
+      class="!flex !items-center !gap-2.5 !px-3 !py-2 !rounded-xl !text-xs !font-medium hover:!bg-pink-50 cursor-pointer"
+      [class.!bg-pink-50]="translation.currentLang() === 'th'"
+      [class.!text-pink-600]="translation.currentLang() === 'th'"
+      [class.!font-bold]="translation.currentLang() === 'th'"
     >
-      <span class="text-[11px] leading-none">🇹🇭</span>
-      <span>TH</span>
-    </button>
-    <button
-      type="button"
+      <span class="text-base leading-none">🇹🇭</span>
+      <span>ไทย</span>
+      @if (translation.currentLang() === 'th') {
+        <span class="ml-auto text-pink-600 font-bold">✓</span>
+      }
+    </li>
+    <li
+      nz-menu-item
       (click)="setLanguage('en')"
-      class="px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-      [class.bg-white]="translation.currentLang() === 'en' && theme() === 'light'"
-      [class.text-pink-600]="translation.currentLang() === 'en' && theme() === 'light'"
-      [class.shadow-sm]="translation.currentLang() === 'en'"
-      [class.text-ink-muted]="translation.currentLang() !== 'en' && theme() === 'light'"
-      [class.hover:text-ink]="translation.currentLang() !== 'en' && theme() === 'light'"
-      [class.bg-pink-500]="translation.currentLang() === 'en' && theme() === 'dark'"
-      [class.text-white]="translation.currentLang() === 'en' && theme() === 'dark'"
-      [class.text-pink-100/60]="translation.currentLang() !== 'en' && theme() === 'dark'"
-      [class.hover:text-white]="translation.currentLang() !== 'en' && theme() === 'dark'"
+      class="!flex !items-center !gap-2.5 !px-3 !py-2 !rounded-xl !text-xs !font-medium hover:!bg-pink-50 cursor-pointer"
+      [class.!bg-pink-50]="translation.currentLang() === 'en'"
+      [class.!text-pink-600]="translation.currentLang() === 'en'"
+      [class.!font-bold]="translation.currentLang() === 'en'"
     >
-      <span class="text-[11px] leading-none">🇬🇧</span>
-      <span>EN</span>
-    </button>
-  </div>
-}
+      <span class="text-base leading-none">🇬🇧</span>
+      <span>English</span>
+      @if (translation.currentLang() === 'en') {
+        <span class="ml-auto text-pink-600 font-bold">✓</span>
+      }
+    </li>
+  </ul>
+</nz-dropdown-menu>

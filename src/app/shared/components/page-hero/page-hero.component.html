@@ -1,28 +1,19 @@
 <section
-      class="relative overflow-hidden rounded-3xl bg-gradient-pink border border-line p-8 md:p-12 mb-8"
-    >
-      <!-- decorative blobs -->
-      <div
-        class="absolute -top-24 -right-16 w-72 h-72 rounded-full opacity-70 glass-blob"
-      ></div>
-      <div
-        class="absolute -bottom-24 -left-16 w-72 h-72 rounded-full opacity-50 glass-blob"
-      ></div>
-      <div class="relative">
-        @if (eyebrow()) {
-          <span class="pill-pink mb-4">
-            <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-            {{ eyebrow() }}
-          </span>
-        }
-        <h1
-          class="text-3xl md:text-4xl font-extrabold tracking-tight text-ink mb-3"
-        >
-          {{ title() }}
-        </h1>
-        @if (description()) {
-          <p class="text-base text-ink-soft max-w-2xl">{{ description() }}</p>
-        }
-        <ng-content />
+  class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line relative overflow-hidden"
+>
+  <div class="relative">
+    @if (eyebrow()) {
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+        <span>{{ eyebrow() }}</span>
       </div>
-    </section>
+    }
+    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink mb-1.5">
+      {{ title() }}
+    </h1>
+    @if (description()) {
+      <p class="text-sm sm:text-base text-ink-soft max-w-2xl">{{ description() }}</p>
+    }
+    <ng-content />
+  </div>
+</section>

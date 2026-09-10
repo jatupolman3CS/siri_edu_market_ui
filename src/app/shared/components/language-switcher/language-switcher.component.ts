@@ -14,8 +14,11 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 export class LanguageSwitcherComponent {
   readonly translation = inject(TranslationService);
 
-  /** Presentation variant: 'compact' (pill buttons), 'dropdown', or 'minimal' */
-  readonly variant = input<'compact' | 'pill' | 'dropdown' | 'minimal'>('compact');
+  /** Presentation variant: defaults to 'dropdown' across all roles */
+  readonly variant = input<'compact' | 'pill' | 'dropdown' | 'minimal'>('dropdown');
+
+  /** Dropdown menu placement: defaults to 'bottomRight' */
+  readonly placement = input<'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft'>('bottomRight');
 
   /** Theme: 'light' (default) or 'dark' (e.g. for admin sidebar) */
   readonly theme = input<'light' | 'dark'>('light');

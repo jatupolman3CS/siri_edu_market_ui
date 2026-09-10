@@ -185,6 +185,14 @@ describe('AppHeaderComponent search submission', () => {
     expect(hrefs).toContain('/marketplace');
     expect(hrefs).toContain('/bundles');
   });
+
+  it('does not render a dead help center / faq link in the topbar', () => {
+    const fixture = render();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[routerLink="/faq"]')).toBeNull();
+    expect(el.querySelector('a[href="/faq"]')).toBeNull();
+  });
 });
+
 
 

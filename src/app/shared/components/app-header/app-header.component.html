@@ -29,16 +29,12 @@
         </span>
       </div>
 
-      <!-- Right side: Notifications, Language & Support -->
+      <!-- Right side: Notifications & Language -->
       <div class="flex items-center gap-3.5">
         @if (auth.isAuthenticated()) {
           <app-notification-bell variant="topbar" />
           <span class="text-pink-200">|</span>
         }
-        <a routerLink="/faq" class="hover:text-pink-600 transition-colors">
-          {{ 'footer.helpCenter' | trans }}
-        </a>
-        <span class="text-pink-200">|</span>
         <app-language-switcher variant="dropdown" />
       </div>
     </div>
@@ -383,7 +379,7 @@
       >
         <div class="px-3.5 py-2 flex items-center justify-between border-b border-line mb-1">
           <span class="text-xs font-semibold text-ink-muted">{{ 'header.switchLanguage' | trans }}</span>
-          <app-language-switcher variant="compact" />
+          <app-language-switcher variant="dropdown" />
         </div>
 
         @for (item of navItems(); track item.href) {
