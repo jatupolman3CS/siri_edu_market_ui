@@ -150,12 +150,16 @@ export class BuyerStorefrontPage {
       return;
     }
 
-    const isNowFollowing = await this.follow.toggle(this.sellerId());
-    this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, this.sellerId());
-    if (isNowFollowing) {
-      this.message.success(`เริ่มติดตาม ${seller.studioName} แล้ว 💗`);
-    } else {
-      this.message.info(`เลิกติดตาม ${seller.studioName}`);
+    const sellerId = this.sellerId();
+    const wasFollowing = this.follow.isFollowing(sellerId);
+    const isNowFollowing = await this.follow.toggle(sellerId);
+    if (wasFollowing !== isNowFollowing) {
+      this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);
+      if (isNowFollowing) {
+        this.message.success(`เริ่มติดตาม ${seller.studioName} แล้ว 💗`);
+      } else {
+        this.message.info(`เลิกติดตาม ${seller.studioName}`);
+      }
     }
   }
 }

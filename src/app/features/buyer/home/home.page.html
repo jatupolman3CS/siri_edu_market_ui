@@ -81,7 +81,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <div class="flex">
-                  @for (s of featuredSellers.slice(0, 4); track s.id) {
+                  @for (s of featuredSellers().slice(0, 4); track s.id) {
                     <img
                       appImgFallback
                       [src]="s.avatar"
@@ -408,7 +408,7 @@
         title="ครีเอเตอร์ตัวจริง ที่ได้รับความไว้วางใจ"
       />
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        @for (s of featuredSellers; track s.id) {
+        @for (s of featuredSellers(); track s.id) {
           <a [routerLink]="['/store', s.id]" class="card-soft p-5 flex items-center gap-4 hover:-translate-y-1 transition-transform">
             <img
               appImgFallback

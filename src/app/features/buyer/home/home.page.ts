@@ -187,7 +187,7 @@ export class BuyerHomePage {
     });
   }
 
-  get featuredSellers() {
+  readonly featuredSellers = computed(() => {
     const rawSellers = this.catalog
       .documents()
       .map((d) => d.seller)
@@ -197,7 +197,7 @@ export class BuyerHomePage {
     const profiles = this.catalog.sellerProfiles?.();
     if (!profiles) return rawSellers;
     return rawSellers.map((s) => profiles.get(s.id) ?? s);
-  }
+  });
 
   goSearch(event: Event): void {
     event.preventDefault();

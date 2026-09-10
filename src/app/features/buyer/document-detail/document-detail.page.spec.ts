@@ -104,6 +104,8 @@ function buildCatalog(doc: DocumentItem | undefined) {
     loadDocumentDetail: vi.fn(),
     askDocumentQuestion: vi.fn(async () => {}),
     loadDocumentPreview: vi.fn(async () => ({})),
+    updateSellerFollowerCount: vi.fn(),
+    fetchSellerProfile: vi.fn(async () => null),
   };
 }
 
@@ -884,3 +886,128 @@ describe('BuyerDocumentDetailPage — three-state buy button (subscription-membe
     expect(libraryFake.download).not.toHaveBeenCalled();
   });
 });
+
+describe('BuyerDocumentDetailPage — seller profile enrichment & toggleFollow', () => {
+  it('calls fetchSellerProfile and hydrateFromApi when document is loaded with seller id', async () => {
+    const doc = buildDoc();
+    const fakeCatalog = buildCatalog(doc);
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const followFake = {
+      isFollowing: vi.fn(() => false),
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => true),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: followFake },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    await settle();
+
+    expect(followFake.hydrateFromApi).toHaveBeenCalledWith('seller-1');
+    expect(fakeCatalog.fetchSellerProfile).toHaveBeenCalledWith('seller-1');
+  });
+
+  it('updates seller follower count on toggleFollow when follow state changed', async () => {
+    const doc = buildDoc();
+    const fakeCatalog = buildCatalog(doc);
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    let following = false;
+    const followFake = {
+      isFollowing: vi.fn(() => following),
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => {
+        following = !following;
+        return following;
+      }),
+    };
+    const authFake = {
+      isAuthenticated: () => true,
+      accessToken: () => 'token',
+      user: () => ({ id: 'other-user' }),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: authFake },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: followFake },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    await settle();
+
+    await fixture.componentInstance.toggleFollow();
+    expect(fakeCatalog.updateSellerFollowerCount).toHaveBeenCalledWith(1, 'seller-1');
+
+    await fixture.componentInstance.toggleFollow();
+    expect(fakeCatalog.updateSellerFollowerCount).toHaveBeenCalledWith(-1, 'seller-1');
+  });
+
+  it('does not update follower count if toggleFollow network call failed / state unchanged', async () => {
+    const doc = buildDoc();
+    const fakeCatalog = buildCatalog(doc);
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const followFake = {
+      isFollowing: vi.fn(() => false),
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => false), // failed
+    };
+    const authFake = {
+      isAuthenticated: () => true,
+      accessToken: () => 'token',
+      user: () => ({ id: 'other-user' }),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: authFake },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: followFake },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    await settle();
+
+    await fixture.componentInstance.toggleFollow();
+    expect(fakeCatalog.updateSellerFollowerCount).not.toHaveBeenCalled();
+  });
+});
+

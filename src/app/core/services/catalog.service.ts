@@ -703,9 +703,23 @@ export class CatalogService {
         });
         const doc = unwrapSdkResult(result);
         const item = mapDocumentDetail(doc);
+        const cachedProfile = item.seller?.id ? this._sellerProfiles().get(item.seller.id) : undefined;
+        if (cachedProfile) {
+          item.seller = {
+            ...item.seller,
+            followerCount: cachedProfile.followerCount,
+            rating: cachedProfile.rating,
+            totalDocuments: cachedProfile.totalDocuments,
+            totalSales: cachedProfile.totalSales,
+            badges: cachedProfile.badges?.length ? cachedProfile.badges : item.seller.badges,
+          };
+        }
         this._documentDetails.update((map) => new Map(map).set(id, item));
         this._documentDetailState.set(idleActionState());
         this.logDocumentView(id, entrySource);
+        if (item.seller?.id) {
+          void this.fetchSellerProfile(item.seller.id);
+        }
       } catch (e) {
         if (extractHttpStatus(e) === 404) {
           // Bug #8: a real 404 — don't spam the "โหลด...ไม่สำเร็จ" toast for something that
@@ -1006,7 +1020,9 @@ export class CatalogService {
       const data = unwrapSdkResult(result);
       this._sellerProfile.set(data);
       this._failedSellerProfileIds.delete(sellerId);
-      this._sellerProfiles.update((map) => new Map(map).set(sellerId, mapSellerProfile(data)));
+      const seller = mapSellerProfile(data);
+      this._sellerProfiles.update((map) => new Map(map).set(sellerId, seller));
+      this.syncSellerToDocuments(seller);
       this._sellerSalesByMonth.set(
         (data.salesByMonth ?? []).map((m) => ({
           month: m.month ?? '',
@@ -1040,6 +1056,7 @@ export class CatalogService {
         const data = unwrapSdkResult(result);
         const seller = mapSellerProfile(data);
         this._sellerProfiles.update((map) => new Map(map).set(sellerId, seller));
+        this.syncSellerToDocuments(seller);
         return seller;
       } catch {
         this._failedSellerProfileIds.add(sellerId);
@@ -1070,6 +1087,161 @@ export class CatalogService {
     }
   }
 
+  private syncSellerToDocuments(seller: Seller): void {
+    const sellerId = seller.id;
+    if (!sellerId) return;
+
+    this._documentDetails.update((map) => {
+      let changed = false;
+      const newMap = new Map(map);
+      for (const [docId, doc] of newMap.entries()) {
+        if (doc.seller && doc.seller.id === sellerId) {
+          newMap.set(docId, {
+            ...doc,
+            seller: {
+              ...doc.seller,
+              followerCount: seller.followerCount,
+              rating: seller.rating,
+              totalDocuments: seller.totalDocuments,
+              totalSales: seller.totalSales,
+              studioName: seller.studioName || doc.seller.studioName,
+              ownerName: seller.ownerName || doc.seller.ownerName,
+              avatar: seller.avatar || doc.seller.avatar,
+              bio: seller.bio || doc.seller.bio,
+              badges: seller.badges?.length ? seller.badges : doc.seller.badges,
+              specialties: seller.specialties ?? doc.seller.specialties,
+            },
+          });
+          changed = true;
+        }
+      }
+      return changed ? newMap : map;
+    });
+
+    this._documents.update((docs) =>
+      docs.map((doc) =>
+        doc.seller && doc.seller.id === sellerId
+          ? {
+              ...doc,
+              seller: {
+                ...doc.seller,
+                followerCount: seller.followerCount,
+                rating: seller.rating,
+                totalDocuments: seller.totalDocuments,
+                totalSales: seller.totalSales,
+                studioName: seller.studioName || doc.seller.studioName,
+                ownerName: seller.ownerName || doc.seller.ownerName,
+                avatar: seller.avatar || doc.seller.avatar,
+                bio: seller.bio || doc.seller.bio,
+                badges: seller.badges?.length ? seller.badges : doc.seller.badges,
+                specialties: seller.specialties ?? doc.seller.specialties,
+              },
+            }
+          : doc,
+      ),
+    );
+
+    this._sellerDocuments.update((docs) =>
+      docs.map((doc) =>
+        doc.seller && doc.seller.id === sellerId
+          ? {
+              ...doc,
+              seller: {
+                ...doc.seller,
+                followerCount: seller.followerCount,
+                rating: seller.rating,
+                totalDocuments: seller.totalDocuments,
+                totalSales: seller.totalSales,
+                studioName: seller.studioName || doc.seller.studioName,
+                ownerName: seller.ownerName || doc.seller.ownerName,
+                avatar: seller.avatar || doc.seller.avatar,
+                bio: seller.bio || doc.seller.bio,
+                badges: seller.badges?.length ? seller.badges : doc.seller.badges,
+                specialties: seller.specialties ?? doc.seller.specialties,
+              },
+            }
+          : doc,
+      ),
+    );
+  }
+
+  setSellerFollowerCount(sellerId: string, followerCount: number): void {
+    if (!sellerId) return;
+    const clamped = Math.max(0, followerCount);
+    const current = this._sellerProfile();
+    if (current && current.id === sellerId) {
+      this._sellerProfile.set({
+        ...current,
+        followerCount: clamped,
+      });
+    }
+
+    this._sellerProfiles.update((map) => {
+      let s = map.get(sellerId);
+      if (!s) {
+        const matchingDoc =
+          Array.from(this._documentDetails().values()).find((d) => d.seller?.id === sellerId) ??
+          this._documents().find((d) => d.seller?.id === sellerId);
+        if (matchingDoc?.seller) {
+          s = matchingDoc.seller;
+        }
+      }
+      if (!s) return map;
+      const copy = new Map(map);
+      copy.set(sellerId, {
+        ...s,
+        followerCount: clamped,
+      });
+      return copy;
+    });
+
+    this._documentDetails.update((map) => {
+      let changed = false;
+      const newMap = new Map(map);
+      for (const [docId, doc] of newMap.entries()) {
+        if (doc.seller && doc.seller.id === sellerId && doc.seller.followerCount !== clamped) {
+          newMap.set(docId, {
+            ...doc,
+            seller: {
+              ...doc.seller,
+              followerCount: clamped,
+            },
+          });
+          changed = true;
+        }
+      }
+      return changed ? newMap : map;
+    });
+
+    this._documents.update((docs) =>
+      docs.map((doc) =>
+        doc.seller && doc.seller.id === sellerId && doc.seller.followerCount !== clamped
+          ? {
+              ...doc,
+              seller: {
+                ...doc.seller,
+                followerCount: clamped,
+              },
+            }
+          : doc,
+      ),
+    );
+
+    this._sellerDocuments.update((docs) =>
+      docs.map((doc) =>
+        doc.seller && doc.seller.id === sellerId && doc.seller.followerCount !== clamped
+          ? {
+              ...doc,
+              seller: {
+                ...doc.seller,
+                followerCount: clamped,
+              },
+            }
+          : doc,
+      ),
+    );
+  }
+
   updateSellerFollowerCount(delta: number, sellerId?: string): void {
     const current = this._sellerProfile();
     if (current && (!sellerId || current.id === sellerId)) {
@@ -1082,7 +1254,15 @@ export class CatalogService {
     const targetSellerId = sellerId ?? current?.id;
     if (targetSellerId) {
       this._sellerProfiles.update((map) => {
-        const s = map.get(targetSellerId);
+        let s = map.get(targetSellerId);
+        if (!s) {
+          const matchingDoc =
+            Array.from(this._documentDetails().values()).find((d) => d.seller?.id === targetSellerId) ??
+            this._documents().find((d) => d.seller?.id === targetSellerId);
+          if (matchingDoc?.seller) {
+            s = matchingDoc.seller;
+          }
+        }
         if (!s) return map;
         const copy = new Map(map);
         copy.set(targetSellerId, {

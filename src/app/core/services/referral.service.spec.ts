@@ -3,12 +3,26 @@ import { ReferralService } from './referral.service';
 
 describe('ReferralService', () => {
   let service: ReferralService;
+  let realFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
+    realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => {
+      return new Response(JSON.stringify(null), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as typeof globalThis.fetch;
+
     TestBed.configureTestingModule({
       providers: [ReferralService],
     });
     service = TestBed.inject(ReferralService);
+  });
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    TestBed.resetTestingModule();
   });
 
   it('initializes with null summary and idle state', () => {
@@ -16,7 +30,7 @@ describe('ReferralService', () => {
     expect(service.state().status).toBe('idle');
   });
 
-  it('refreshSummary completes with null in stub mode', async () => {
+  it('refreshSummary completes with null when API returns null', async () => {
     await service.refreshSummary();
     expect(service.summary()).toBeNull();
     expect(service.state().status).toBe('idle');

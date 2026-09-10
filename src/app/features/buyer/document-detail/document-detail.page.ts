@@ -243,12 +243,15 @@ export class BuyerDocumentDetailPage {
     }
 
     const sellerId = d.seller.id;
+    const wasFollowing = this.follow.isFollowing(sellerId);
     const isNowFollowing = await this.follow.toggle(sellerId);
-    this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);
-    if (isNowFollowing) {
-      this.message.success(`เริ่มติดตาม ${d.seller.studioName} แล้ว 💗`);
-    } else {
-      this.message.info(`เลิกติดตาม ${d.seller.studioName}`);
+    if (wasFollowing !== isNowFollowing) {
+      this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);
+      if (isNowFollowing) {
+        this.message.success(`เริ่มติดตาม ${d.seller.studioName} แล้ว 💗`);
+      } else {
+        this.message.info(`เลิกติดตาม ${d.seller.studioName}`);
+      }
     }
   }
 
@@ -298,6 +301,7 @@ export class BuyerDocumentDetailPage {
         this.recent.push(d);
         if (d.seller?.id) {
           void this.follow.hydrateFromApi?.(d.seller.id);
+          void this.catalog.fetchSellerProfile?.(d.seller.id);
         }
       }
     });

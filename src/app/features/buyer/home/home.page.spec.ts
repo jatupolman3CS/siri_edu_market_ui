@@ -538,7 +538,7 @@ describe('BuyerHomePage — featured creators follower count', () => {
     const fixture = render({ documents: [doc], sellerProfiles });
 
     const page = fixture.componentInstance;
-    const sellers = page.featuredSellers;
+    const sellers = page.featuredSellers();
     expect(sellers.length).toBe(1);
     expect(sellers[0].id).toBe('seller-abc');
     expect(sellers[0].followerCount).toBe(42);

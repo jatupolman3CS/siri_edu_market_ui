@@ -4,7 +4,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerStorefrontPage } from './storefront.page';
-import { BundleService, CatalogService, FollowService } from '../../../core/services';
+import { AuthService, BundleService, CatalogService, FollowService } from '../../../core/services';
 import { idleActionState } from '../../../core/services/action-state';
 import type { SellerProfileResponse } from '../../../core/api/types.gen';
 import type { DocumentItem, SellerSalesByMonthPoint } from '../../../core/models';
@@ -142,3 +142,104 @@ describe('BuyerStorefrontPage — sales-by-month chart (seller-pricing-and-store
     expect(component.totalUnitsSoldInWindow()).toBe(1);
   });
 });
+
+describe('BuyerStorefrontPage — toggleFollow', () => {
+  it('updates follower count when follow state changes', async () => {
+    let following = false;
+    const fakeCatalog: Partial<CatalogService> = {
+      sellerProfile: signal<SellerProfileResponse | null>(sellerProfile()).asReadonly(),
+      sellerProfileState: signal(idleActionState()).asReadonly(),
+      sellerDocuments: signal<DocumentItem[]>([]),
+      sellerDocumentsState: signal(idleActionState()).asReadonly(),
+      sellerSalesByMonth: signal([]).asReadonly(),
+      loadSellerProfile: vi.fn(async () => sellerProfile()),
+      loadSellerDocuments: vi.fn(),
+      updateSellerFollowerCount: vi.fn(),
+    };
+    const fakeFollow: Partial<FollowService> = {
+      isFollowing: vi.fn(() => following),
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => {
+        following = !following;
+        return following;
+      }),
+    };
+    const fakeAuth = {
+      isAuthenticated: () => true,
+      user: signal({ id: 'buyer-user' }),
+    };
+    const fakeMessage = { success: vi.fn(), info: vi.fn(), warning: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerStorefrontPage],
+      providers: [
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'seller-1' })) } },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: BundleService, useValue: { getBySellerId: () => [] } },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: NzMessageService, useValue: fakeMessage },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerStorefrontPage);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    await component.toggleFollow();
+    expect(fakeCatalog.updateSellerFollowerCount).toHaveBeenCalledWith(1, 'seller-1');
+    expect(fakeMessage.success).toHaveBeenCalled();
+
+    // Toggle again (unfollow)
+    await component.toggleFollow();
+    expect(fakeCatalog.updateSellerFollowerCount).toHaveBeenCalledWith(-1, 'seller-1');
+    expect(fakeMessage.info).toHaveBeenCalled();
+  });
+
+  it('does not update follower count if toggle follow fails / state unchanged', async () => {
+    const fakeCatalog: Partial<CatalogService> = {
+      sellerProfile: signal<SellerProfileResponse | null>(sellerProfile()).asReadonly(),
+      sellerProfileState: signal(idleActionState()).asReadonly(),
+      sellerDocuments: signal<DocumentItem[]>([]),
+      sellerDocumentsState: signal(idleActionState()).asReadonly(),
+      sellerSalesByMonth: signal([]).asReadonly(),
+      loadSellerProfile: vi.fn(async () => sellerProfile()),
+      loadSellerDocuments: vi.fn(),
+      updateSellerFollowerCount: vi.fn(),
+    };
+    const fakeFollow: Partial<FollowService> = {
+      isFollowing: vi.fn(() => false), // stays false
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => false), // fails and returns false
+    };
+    const fakeAuth = {
+      isAuthenticated: () => true,
+      user: signal({ id: 'buyer-user' }),
+    };
+    const fakeMessage = { success: vi.fn(), info: vi.fn(), warning: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerStorefrontPage],
+      providers: [
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'seller-1' })) } },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: BundleService, useValue: { getBySellerId: () => [] } },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: NzMessageService, useValue: fakeMessage },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerStorefrontPage);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    await component.toggleFollow();
+    expect(fakeCatalog.updateSellerFollowerCount).not.toHaveBeenCalled();
+    expect(fakeMessage.success).not.toHaveBeenCalled();
+    expect(fakeMessage.info).not.toHaveBeenCalled();
+  });
+});
+

@@ -840,4 +840,29 @@ describe('CatalogService — seller follower count & profile cache', () => {
     expect(sFailCalls.length).toBe(1);
     expect(sOkCalls.length).toBe(1);
   });
+
+  it('updateSellerFollowerCount updates seller profile and syncs to document details', async () => {
+    stubRoute('GET', '/api/sellers/s-follow/profile', {
+      id: 's-follow',
+      studioName: 'Follow Studio',
+      followerCount: 10,
+    });
+    const catalog = buildService();
+
+    await catalog.fetchSellerProfile('s-follow');
+    expect(catalog.sellerProfiles().get('s-follow')?.followerCount).toBe(10);
+
+    // Follower added
+    catalog.updateSellerFollowerCount(1, 's-follow');
+    expect(catalog.sellerProfiles().get('s-follow')?.followerCount).toBe(11);
+
+    // Follower removed
+    catalog.updateSellerFollowerCount(-1, 's-follow');
+    expect(catalog.sellerProfiles().get('s-follow')?.followerCount).toBe(10);
+
+    // Explicit follower count set
+    catalog.setSellerFollowerCount('s-follow', 25);
+    expect(catalog.sellerProfiles().get('s-follow')?.followerCount).toBe(25);
+  });
 });
+
