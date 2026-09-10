@@ -294,9 +294,7 @@ export class CatalogService {
     // called `loadCategories()` — only `initForMarketplace()` did — so the section rendered
     // empty on every visit that started at "/".
     this.loadCategories();
-    void this.syncListWithBackend().then(() => {
-      this.loadSellerProfilesForDocuments(this._documents());
-    });
+    void this.syncListWithBackend();
   }
 
   /** Call from Marketplace page. Loads categories and the list. */
@@ -981,6 +979,8 @@ export class CatalogService {
   private readonly _sellerDocuments = signal<DocumentItem[]>([]);
   private readonly _sellerDocumentsState = signal<ActionState>(idleActionState());
   private readonly _sellerProfiles = signal<Map<string, Seller>>(new Map());
+  private readonly _inFlightSellerProfiles = new Map<string, Promise<Seller | null>>();
+  private readonly _failedSellerProfileIds = new Set<string>();
 
   readonly sellerProfile = this._sellerProfile.asReadonly();
   readonly sellerProfileState = this._sellerProfileState.asReadonly();
@@ -1005,6 +1005,7 @@ export class CatalogService {
       const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
       const data = unwrapSdkResult(result);
       this._sellerProfile.set(data);
+      this._failedSellerProfileIds.delete(sellerId);
       this._sellerProfiles.update((map) => new Map(map).set(sellerId, mapSellerProfile(data)));
       this._sellerSalesByMonth.set(
         (data.salesByMonth ?? []).map((m) => ({
@@ -1015,6 +1016,7 @@ export class CatalogService {
       this._sellerProfileState.set(idleActionState());
       return data;
     } catch (e) {
+      this._failedSellerProfileIds.add(sellerId);
       this.apiFail.report('โหลดข้อมูลผู้ขาย', e);
       this._sellerProfileState.set(errorActionState('โหลดข้อมูลผู้ขายไม่สำเร็จ'));
       this._sellerProfile.set(null);
@@ -1027,25 +1029,42 @@ export class CatalogService {
     if (!sellerId) return null;
     const cached = this._sellerProfiles().get(sellerId);
     if (cached) return cached;
-    try {
-      const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
-      const data = unwrapSdkResult(result);
-      const seller = mapSellerProfile(data);
-      this._sellerProfiles.update((map) => new Map(map).set(sellerId, seller));
-      return seller;
-    } catch {
-      return null;
-    }
+    if (this._failedSellerProfileIds.has(sellerId)) return null;
+
+    const inFlight = this._inFlightSellerProfiles.get(sellerId);
+    if (inFlight) return inFlight;
+
+    const promise = (async () => {
+      try {
+        const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
+        const data = unwrapSdkResult(result);
+        const seller = mapSellerProfile(data);
+        this._sellerProfiles.update((map) => new Map(map).set(sellerId, seller));
+        return seller;
+      } catch {
+        this._failedSellerProfileIds.add(sellerId);
+        return null;
+      } finally {
+        this._inFlightSellerProfiles.delete(sellerId);
+      }
+    })();
+
+    this._inFlightSellerProfiles.set(sellerId, promise);
+    return promise;
   }
 
   loadSellerProfilesForDocuments(docs: DocumentItem[]): void {
     const ids = docs
       .map((d) => d.seller?.id)
       .filter((id, idx, arr): id is string => Boolean(id) && arr.indexOf(id) === idx)
-      .slice(0, 8);
+      .slice(0, 6);
 
     for (const id of ids) {
-      if (!this._sellerProfiles().has(id)) {
+      if (
+        !this._sellerProfiles().has(id) &&
+        !this._failedSellerProfileIds.has(id) &&
+        !this._inFlightSellerProfiles.has(id)
+      ) {
         void this.fetchSellerProfile(id);
       }
     }

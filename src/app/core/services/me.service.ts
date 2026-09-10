@@ -1,6 +1,6 @@
 import { Injectable, Injector, inject, signal } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { getApiMeProfile, postApiFilesUpload, putApiMeProfile } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
@@ -21,11 +21,16 @@ export class MeService {
   private readonly injector = inject(Injector);
 
   private readonly _profile = signal<UserProfileResponse | null>(null);
+  private _inFlightProfile$: Observable<UserProfileResponse> | null = null;
 
   readonly profile = this._profile.asReadonly();
 
   loadProfile(): Observable<UserProfileResponse> {
-    return from(getApiMeProfile()).pipe(
+    if (this._inFlightProfile$) {
+      return this._inFlightProfile$;
+    }
+
+    const req$ = from(getApiMeProfile()).pipe(
       map(unwrapSdkResult),
       tap((p) => {
         this._profile.set(p);
@@ -38,13 +43,21 @@ export class MeService {
         this.apiFail.report('โหลดโปรไฟล์', e);
         return throwError(() => e);
       }),
+      finalize(() => {
+        this._inFlightProfile$ = null;
+      }),
+      shareReplay(1),
     );
+
+    this._inFlightProfile$ = req$;
+    return req$;
   }
 
   /**
    * storage-key-persistence v2 §4: `avatarStorageKey` (not `avatarUrl`) is what gets persisted.
    */
   updateProfile(request: UpdateProfileRequest): Observable<UserProfileResponse> {
+    this._inFlightProfile$ = null;
     return from(putApiMeProfile({ body: request })).pipe(
       map(unwrapSdkResult),
       tap((p) => {

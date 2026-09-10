@@ -114,4 +114,19 @@ describe('MeService reconciles AuthService session identity', () => {
       expect.objectContaining({ roles: ['buyer', 'seller'] }),
     );
   });
+
+  it('deduplicates concurrent in-flight loadProfile calls into a single HTTP request', async () => {
+    const profile = { id: 'u-1', name: 'User 1', email: 'u1@example.com', role: 'Buyer' };
+    stubRoute('GET', '/api/me/profile', profile);
+    const { meService } = render();
+
+    const [res1, res2] = await Promise.all([
+      firstValueFrom(meService.loadProfile()),
+      firstValueFrom(meService.loadProfile()),
+    ]);
+
+    expect(res1.name).toBe('User 1');
+    expect(res2.name).toBe('User 1');
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
 });

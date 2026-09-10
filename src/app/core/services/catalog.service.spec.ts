@@ -784,4 +784,60 @@ describe('CatalogService — seller follower count & profile cache', () => {
     catalog.updateSellerFollowerCount(1, 'seller-1');
     expect(catalog.sellerProfiles().get('seller-1')?.followerCount).toBe(6);
   });
+
+  it('fetchSellerProfile deduplicates concurrent in-flight requests for the same seller', async () => {
+    stubRouteDelayed('GET', '/api/sellers/seller-race/profile', {
+      id: 'seller-race',
+      studioName: 'Race Studio',
+      followerCount: 3,
+    }, 50);
+    const catalog = buildService();
+
+    const p1 = catalog.fetchSellerProfile('seller-race');
+    const p2 = catalog.fetchSellerProfile('seller-race');
+    const [res1, res2] = await Promise.all([p1, p2]);
+
+    expect(res1?.studioName).toBe('Race Studio');
+    expect(res2?.studioName).toBe('Race Studio');
+    const profileCalls = requests.filter((r) => r.path === '/api/sellers/seller-race/profile');
+    expect(profileCalls.length).toBe(1);
+  });
+
+  it('fetchSellerProfile negative-caches 404 so subsequent calls do not re-request', async () => {
+    stubRoute('GET', '/api/sellers/seller-404/profile', { status: 404, message: 'Not found' }, 404);
+    const catalog = buildService();
+
+    const first = await catalog.fetchSellerProfile('seller-404');
+    expect(first).toBeNull();
+
+    const second = await catalog.fetchSellerProfile('seller-404');
+    expect(second).toBeNull();
+
+    const profileCalls = requests.filter((r) => r.path === '/api/sellers/seller-404/profile');
+    expect(profileCalls.length).toBe(1);
+  });
+
+  it('loadSellerProfilesForDocuments deduplicates and skips failed or cached sellers', async () => {
+    stubRoute('GET', '/api/sellers/s-fail/profile', { status: 404 }, 404);
+    stubRoute('GET', '/api/sellers/s-ok/profile', { id: 's-ok', studioName: 'OK Studio' });
+    const catalog = buildService();
+
+    const docs = [
+      { id: 'd1', seller: { id: 's-fail' } } as any,
+      { id: 'd2', seller: { id: 's-ok' } } as any,
+      { id: 'd3', seller: { id: 's-ok' } } as any, // duplicate in same batch
+    ];
+
+    catalog.loadSellerProfilesForDocuments(docs);
+    await settle();
+
+    // Re-trigger loadSellerProfilesForDocuments (e.g. from reactive effect or re-render)
+    catalog.loadSellerProfilesForDocuments(docs);
+    await settle();
+
+    const sFailCalls = requests.filter((r) => r.path === '/api/sellers/s-fail/profile');
+    const sOkCalls = requests.filter((r) => r.path === '/api/sellers/s-ok/profile');
+    expect(sFailCalls.length).toBe(1);
+    expect(sOkCalls.length).toBe(1);
+  });
 });
