@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -177,14 +177,26 @@ export class BuyerHomePage {
     if (this.auth.isAuthenticated()) {
       this.examCountdown.loadSetting();
     }
+
+    // Ensure featured sellers' follower count & stats are enriched from profiles
+    effect(() => {
+      const docs = this.catalog.documents();
+      if (docs.length > 0) {
+        this.catalog.loadSellerProfilesForDocuments?.(docs);
+      }
+    });
   }
 
   get featuredSellers() {
-    return this.catalog
+    const rawSellers = this.catalog
       .documents()
       .map((d) => d.seller)
-      .filter((s, idx, arr) => arr.findIndex((x) => x.id === s.id) === idx)
+      .filter((s, idx, arr) => s.id && arr.findIndex((x) => x.id === s.id) === idx)
       .slice(0, 6);
+
+    const profiles = this.catalog.sellerProfiles?.();
+    if (!profiles) return rawSellers;
+    return rawSellers.map((s) => profiles.get(s.id) ?? s);
   }
 
   goSearch(event: Event): void {

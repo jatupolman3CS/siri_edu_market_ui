@@ -4,12 +4,14 @@ import { of } from 'rxjs';
 import { BuyerMarketplacePage } from './marketplace.page';
 import {
   BundleService,
+  CartService,
   CatalogService,
   PlatformStatsService,
   RecentlyViewedService,
+  WishlistService,
 } from '../../../core/services';
 import { idleActionState } from '../../../core/services/action-state';
-import type { Category, PlatformStats } from '../../../core/models';
+import type { Category, DocumentItem, PlatformStats } from '../../../core/models';
 
 /**
  * real-data-stats v1 §4 (project-owner instruction, round 2 dispatch notes) — marketplace hero
@@ -55,14 +57,18 @@ function buildCatalogFake(categories: Category[] = []) {
     getSubcategoryBySlug: () => undefined,
     getCategoryById: () => undefined,
     getSubcategoryById: () => undefined,
-    marketplaceResults: () => [],
+    marketplaceResults: (): DocumentItem[] => [],
     marketplaceResultsState: () => idleActionState(),
     marketplaceResultsPage: () => 1,
     marketplaceResultsPageSize: () => 24,
     marketplaceResultsTotalCount: () => 0,
     marketplaceResultsTotalPages: () => 1,
+    marketplaceHasMore: () => false,
     marketplacePageSizeOptions: [12, 24, 48],
     loadMarketplaceResultsPage: vi.fn(),
+    loadMoreMarketplaceResults: vi.fn(function (this: any) {
+      this.loadMarketplaceResultsPage(this.marketplaceResultsPage() + 1);
+    }),
     setMarketplacePageSize: vi.fn(),
     retryMarketplaceResults: vi.fn(),
   };
@@ -94,6 +100,8 @@ function render(catalog: ReturnType<typeof buildCatalogFake>, platformStats: Ret
       { provide: BundleService, useValue: buildBundleFake() },
       { provide: RecentlyViewedService, useValue: { count: () => 0, items: () => [], clear: vi.fn() } },
       { provide: PlatformStatsService, useValue: platformStats },
+      { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
+      { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -217,19 +225,35 @@ describe('Marketplace results panel (marketplace-paged-results v1)', () => {
     expect(getComputedStyle(button).position).not.toBe('absolute');
   });
 
-  it('clicking a page number in <app-pagination> calls catalog.loadMarketplaceResultsPage with the target page', () => {
+  it('clicking the "โหลดเพิ่มเติม" button calls catalog.loadMarketplaceResultsPage with the next page', () => {
     const catalog = buildCatalogFake();
     catalog.marketplaceResultsTotalPages = () => 3;
     catalog.marketplaceResultsPage = () => 1;
+    catalog.marketplaceHasMore = () => true;
+    catalog.marketplaceResultsTotalCount = () => 50;
+    catalog.marketplaceResults = () => [
+      {
+        id: 'doc-1',
+        title: 'สรุปชีวะ ม.ปลาย',
+        price: 99,
+        originalPrice: 150,
+        cover: 'https://placehold.co/400x300',
+        coverUrl: 'https://placehold.co/400x300',
+        gallery: [],
+        pageCount: 35,
+        rating: 4.8,
+        ratingCount: 12,
+        seller: { id: 's1', displayName: 'ครูสมชาย', isVerified: true },
+      } as any,
+    ];
     const fixture = render(catalog, buildPlatformStatsFake(undefined));
 
-    const pageButtons = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('app-pagination nav button'),
-    ) as HTMLButtonElement[];
-    const page2Button = pageButtons.find((b) => b.textContent?.trim() === '2');
-    expect(page2Button).toBeDefined();
+    const loadMoreBtn = (fixture.nativeElement as HTMLElement).querySelector(
+      'button.btn-load-more',
+    ) as HTMLButtonElement;
+    expect(loadMoreBtn).not.toBeNull();
 
-    page2Button!.click();
+    loadMoreBtn.click();
     fixture.detectChanges();
 
     expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);

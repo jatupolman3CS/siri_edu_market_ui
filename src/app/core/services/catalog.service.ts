@@ -4,10 +4,11 @@ import {
   DocumentItem,
   GradeLevel,
   ResourceType,
+  Seller,
   SellerSalesByMonthPoint,
   Subcategory,
 } from '../models';
-import { mapCategory, mapCategoryDetail, mapDocument, mapDocumentDetail } from '../api-mappers/mappers';
+import { mapCategory, mapCategoryDetail, mapDocument, mapDocumentDetail, mapSellerProfile } from '../api-mappers/mappers';
 import type { DocumentEntrySource } from './navigation-source.service';
 import type { MarketplaceSearchResponse } from '../api/types.gen';
 import {
@@ -219,6 +220,15 @@ export class CatalogService {
     void this.safeMarketplaceFetch(() => this.marketplacePager.onPageChange(page));
   }
 
+  readonly marketplaceHasMore = computed(() => {
+    return this.marketplacePager.page() < this.marketplacePager.totalPages();
+  });
+
+  loadMoreMarketplaceResults(): void {
+    if (!this.marketplaceHasMore()) return;
+    this.loadMarketplaceResultsPage(this.marketplacePager.page() + 1);
+  }
+
   setMarketplacePageSize(size: number): void {
     void this.safeMarketplaceFetch(() => this.marketplacePager.onPageSizeChange(size));
   }
@@ -284,7 +294,9 @@ export class CatalogService {
     // called `loadCategories()` — only `initForMarketplace()` did — so the section rendered
     // empty on every visit that started at "/".
     this.loadCategories();
-    void this.syncListWithBackend();
+    void this.syncListWithBackend().then(() => {
+      this.loadSellerProfilesForDocuments(this._documents());
+    });
   }
 
   /** Call from Marketplace page. Loads categories and the list. */
@@ -968,11 +980,13 @@ export class CatalogService {
   private readonly _sellerProfileState = signal<ActionState>(idleActionState());
   private readonly _sellerDocuments = signal<DocumentItem[]>([]);
   private readonly _sellerDocumentsState = signal<ActionState>(idleActionState());
+  private readonly _sellerProfiles = signal<Map<string, Seller>>(new Map());
 
   readonly sellerProfile = this._sellerProfile.asReadonly();
   readonly sellerProfileState = this._sellerProfileState.asReadonly();
   readonly sellerDocuments = this._sellerDocuments.asReadonly();
   readonly sellerDocumentsState = this._sellerDocumentsState.asReadonly();
+  readonly sellerProfiles = this._sellerProfiles.asReadonly();
 
   /**
    * seller-pricing-and-storefront-stats v1 §3.3/§4: 6-month units-sold history for the public
@@ -991,6 +1005,7 @@ export class CatalogService {
       const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
       const data = unwrapSdkResult(result);
       this._sellerProfile.set(data);
+      this._sellerProfiles.update((map) => new Map(map).set(sellerId, mapSellerProfile(data)));
       this._sellerSalesByMonth.set(
         (data.salesByMonth ?? []).map((m) => ({
           month: m.month ?? '',
@@ -1008,9 +1023,37 @@ export class CatalogService {
     }
   }
 
+  async fetchSellerProfile(sellerId: string): Promise<Seller | null> {
+    if (!sellerId) return null;
+    const cached = this._sellerProfiles().get(sellerId);
+    if (cached) return cached;
+    try {
+      const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
+      const data = unwrapSdkResult(result);
+      const seller = mapSellerProfile(data);
+      this._sellerProfiles.update((map) => new Map(map).set(sellerId, seller));
+      return seller;
+    } catch {
+      return null;
+    }
+  }
+
+  loadSellerProfilesForDocuments(docs: DocumentItem[]): void {
+    const ids = docs
+      .map((d) => d.seller?.id)
+      .filter((id, idx, arr): id is string => Boolean(id) && arr.indexOf(id) === idx)
+      .slice(0, 8);
+
+    for (const id of ids) {
+      if (!this._sellerProfiles().has(id)) {
+        void this.fetchSellerProfile(id);
+      }
+    }
+  }
+
   updateSellerFollowerCount(delta: number, sellerId?: string): void {
     const current = this._sellerProfile();
-    if (current) {
+    if (current && (!sellerId || current.id === sellerId)) {
       this._sellerProfile.set({
         ...current,
         followerCount: Math.max(0, (current.followerCount ?? 0) + delta),
@@ -1019,6 +1062,17 @@ export class CatalogService {
 
     const targetSellerId = sellerId ?? current?.id;
     if (targetSellerId) {
+      this._sellerProfiles.update((map) => {
+        const s = map.get(targetSellerId);
+        if (!s) return map;
+        const copy = new Map(map);
+        copy.set(targetSellerId, {
+          ...s,
+          followerCount: Math.max(0, (s.followerCount ?? 0) + delta),
+        });
+        return copy;
+      });
+
       this._documentDetails.update((map) => {
         let changed = false;
         const newMap = new Map(map);
@@ -1036,6 +1090,34 @@ export class CatalogService {
         }
         return changed ? newMap : map;
       });
+
+      this._documents.update((docs) =>
+        docs.map((doc) =>
+          doc.seller && doc.seller.id === targetSellerId
+            ? {
+                ...doc,
+                seller: {
+                  ...doc.seller,
+                  followerCount: Math.max(0, (doc.seller.followerCount ?? 0) + delta),
+                },
+              }
+            : doc,
+        ),
+      );
+
+      this._sellerDocuments.update((docs) =>
+        docs.map((doc) =>
+          doc.seller && doc.seller.id === targetSellerId
+            ? {
+                ...doc,
+                seller: {
+                  ...doc.seller,
+                  followerCount: Math.max(0, (doc.seller.followerCount ?? 0) + delta),
+                },
+              }
+            : doc,
+        ),
+      );
     }
   }
 

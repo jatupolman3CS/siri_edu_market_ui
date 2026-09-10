@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -22,6 +24,7 @@ import {
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
   Category,
+  DocumentItem,
   GRADE_LEVEL_LABELS,
   GradeLevel,
   RESOURCE_TYPE_ICONS,
@@ -35,7 +38,6 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
 @Component({
@@ -52,7 +54,6 @@ import { TranslationService, TranslatePipe } from '../../../core/i18n';
     EmptyStateComponent,
     PageHeroComponent,
     ImgFallbackDirective,
-    PaginationComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -145,6 +146,18 @@ export class BuyerMarketplacePage {
 
   /** marketplace-paged-results v1 §4.3: results panel's own scroll container (AC-12). */
   readonly resultsPanel = viewChild<ElementRef<HTMLDivElement>>('resultsPanel');
+  private readonly sentinel = viewChild<ElementRef<HTMLDivElement>>('sentinel');
+  private observer: IntersectionObserver | null = null;
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Accumulated documents for lazy load / "โหลดเพิ่มเติม" */
+  readonly accumulatedDocs = signal<DocumentItem[]>([]);
+
+  readonly hasMore = computed(() => {
+    const total = this.catalog.marketplaceResultsTotalCount();
+    if (total === 0) return false;
+    return this.accumulatedDocs().length < total;
+  });
 
   gradeLabel(g: GradeLevel): string {
     return this.i18n.t(`gradeLevels.${g}` as any) || GRADE_LEVEL_LABELS[g];
@@ -154,6 +167,17 @@ export class BuyerMarketplacePage {
   }
   resourceIcon(t: ResourceType): string {
     return RESOURCE_TYPE_ICONS[t];
+  }
+
+  loadMore(): void {
+    if (this.catalog.marketplaceResultsState().status === 'loading') return;
+    if (!this.hasMore()) return;
+    const nextPage = this.catalog.marketplaceResultsPage() + 1;
+    this.catalog.loadMarketplaceResultsPage(nextPage);
+  }
+
+  retryLoadMore(): void {
+    this.catalog.retryMarketplaceResults();
   }
 
   constructor() {
@@ -199,13 +223,59 @@ export class BuyerMarketplacePage {
         }
       });
 
-    // marketplace-paged-results v1 §4.3 (AC-12): reset the results panel's own scroll position
-    // to the top the moment a new page/filter fetch starts — never touch window scroll.
+    // Accumulate documents on page progression, reset on page 1
     effect(() => {
-      if (this.catalog.marketplaceResultsState().status === 'loading') {
+      const page = this.catalog.marketplaceResultsPage();
+      const state = this.catalog.marketplaceResultsState();
+      const newResults = this.catalog.marketplaceResults();
+
+      if (state.status === 'idle') {
+        if (page <= 1) {
+          this.accumulatedDocs.set(newResults);
+        } else {
+          this.accumulatedDocs.update((prev) => {
+            const existingIds = new Set(prev.map((d) => d.id));
+            const fresh = newResults.filter((d) => !existingIds.has(d.id));
+            return [...prev, ...fresh];
+          });
+        }
+      }
+    });
+
+    // Reset resultsPanel scroll to top ONLY on page 1 / filter change (not when loading more)
+    effect(() => {
+      if (
+        this.catalog.marketplaceResultsState().status === 'loading' &&
+        this.catalog.marketplaceResultsPage() <= 1
+      ) {
         const el = this.resultsPanel()?.nativeElement;
         if (el) el.scrollTop = 0;
       }
+    });
+
+    afterNextRender(() => {
+      if (typeof IntersectionObserver !== 'undefined') {
+        this.observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0]?.isIntersecting) {
+              this.loadMore();
+            }
+          },
+          { root: this.resultsPanel()?.nativeElement ?? null, rootMargin: '120px' },
+        );
+      }
+    });
+
+    effect(() => {
+      const el = this.sentinel()?.nativeElement;
+      if (el && this.observer) {
+        this.observer.disconnect();
+        this.observer.observe(el);
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.observer?.disconnect();
     });
   }
 

@@ -151,7 +151,7 @@ export class BuyerStorefrontPage {
     }
 
     const isNowFollowing = await this.follow.toggle(this.sellerId());
-    this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1);
+    this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, this.sellerId());
     if (isNowFollowing) {
       this.message.success(`เริ่มติดตาม ${seller.studioName} แล้ว 💗`);
     } else {

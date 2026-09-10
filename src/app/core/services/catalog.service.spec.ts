@@ -744,3 +744,44 @@ describe('CatalogService — loadRecommended (personalized-recommendations v1, r
     expect(catalog.recommendedStrategy()).toBeNull();
   });
 });
+
+describe('CatalogService — seller follower count & profile cache', () => {
+  it('updateSellerFollowerCount only mutates sellerProfile if sellerId matches', async () => {
+    stubRoute('GET', '/api/sellers/seller-1/profile', {
+      id: 'seller-1',
+      studioName: 'Studio 1',
+      followerCount: 10,
+    });
+    const catalog = buildService();
+
+    await catalog.loadSellerProfile('seller-1');
+    expect(catalog.sellerProfile()?.followerCount).toBe(10);
+
+    // Call updateSellerFollowerCount for a DIFFERENT seller
+    catalog.updateSellerFollowerCount(1, 'seller-2');
+    expect(catalog.sellerProfile()?.followerCount).toBe(10); // unaffected!
+
+    // Call updateSellerFollowerCount for matching seller
+    catalog.updateSellerFollowerCount(1, 'seller-1');
+    expect(catalog.sellerProfile()?.followerCount).toBe(11); // incremented!
+
+    // Call updateSellerFollowerCount without sellerId (targets current profile)
+    catalog.updateSellerFollowerCount(-1);
+    expect(catalog.sellerProfile()?.followerCount).toBe(10); // decremented!
+  });
+
+  it('updateSellerFollowerCount updates sellerProfiles cache', async () => {
+    stubRoute('GET', '/api/sellers/seller-1/profile', {
+      id: 'seller-1',
+      studioName: 'Studio 1',
+      followerCount: 5,
+    });
+    const catalog = buildService();
+
+    await catalog.fetchSellerProfile('seller-1');
+    expect(catalog.sellerProfiles().get('seller-1')?.followerCount).toBe(5);
+
+    catalog.updateSellerFollowerCount(1, 'seller-1');
+    expect(catalog.sellerProfiles().get('seller-1')?.followerCount).toBe(6);
+  });
+});

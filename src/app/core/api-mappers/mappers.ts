@@ -29,6 +29,7 @@ import type {
   SellerDocumentSummaryResponse,
   SellerInfoResponse,
   SellerInsightsResponse,
+  SellerProfileResponse,
   SellerQnaResponse,
   StoreReadinessItemResponse,
   StoreReadinessResponse,
@@ -173,6 +174,25 @@ export function mapSeller(s: SellerInfoResponse | undefined): Seller {
     responseHours: s.responseHours ?? 0,
     badges: s.badges ?? [],
     specialties: s.specialties ?? undefined,
+  };
+}
+
+export function mapSellerProfile(p: SellerProfileResponse): Seller {
+  return {
+    id: p.id ?? '',
+    studioName: p.studioName ?? '',
+    ownerName: p.ownerName ?? '',
+    avatar: resolveAvatarUrl(p.avatarUrl),
+    bio: p.bio ?? '',
+    banner: p.bannerUrl ? resolvePublicUrl(p.bannerUrl) : undefined,
+    joinedAt: p.joinedAt ?? new Date().toISOString(),
+    rating: p.rating ?? 0,
+    totalSales: p.totalSales ?? 0,
+    totalDocuments: p.totalDocuments ?? 0,
+    followerCount: p.followerCount ?? 0,
+    responseHours: p.responseHours ?? 0,
+    badges: p.badges ?? [],
+    specialties: p.specialties ?? undefined,
   };
 }
 

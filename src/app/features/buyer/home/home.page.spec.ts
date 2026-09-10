@@ -15,7 +15,7 @@ import {
 import { idleActionState, loadingActionState, type ActionState } from '../../../core/services/action-state';
 import { mapDocument } from '../../../core/api-mappers/mappers';
 import type { MarketplaceDocumentResponse } from '../../../core/api';
-import type { Bundle, Category, DocumentItem, ExamCountdownSetting, PlatformStats } from '../../../core/models';
+import type { Bundle, Category, DocumentItem, ExamCountdownSetting, PlatformStats, Seller } from '../../../core/models';
 
 /**
  * real-data-stats v1 §4.2 — Home page:
@@ -75,21 +75,25 @@ function buildCatalog(
   categories: Category[],
   recommended: DocumentItem[] = [],
   recommendedStrategy: 'purchase-history' | 'popular-fallback' | null = null,
+  documents: DocumentItem[] = [],
+  sellerProfiles: Map<string, Seller> = new Map(),
 ) {
   return {
     initForHome: vi.fn(),
     loadFreeResources: vi.fn(),
     loadRecommended: vi.fn(),
+    loadSellerProfilesForDocuments: vi.fn(),
     newArrivals: () => [],
     featured: () => [],
     editorsPicks: () => [],
     trending: () => [],
     freeResources: () => [],
-    documents: () => [],
+    documents: () => documents,
     categories: () => categories,
     catalogState: () => idleActionState(),
     recommended: () => recommended,
     recommendedStrategy: () => recommendedStrategy,
+    sellerProfiles: () => sellerProfiles,
   };
 }
 
@@ -136,6 +140,8 @@ function render(opts: {
   recommendedStrategy?: 'purchase-history' | 'popular-fallback' | null;
   isAuthenticated?: boolean;
   examCountdown?: ReturnType<typeof fakeExamCountdownService>;
+  documents?: DocumentItem[];
+  sellerProfiles?: Map<string, Seller>;
 }) {
   const fakeStats = {
     stats: () => opts.stats,
@@ -146,6 +152,8 @@ function render(opts: {
     opts.categories ?? [],
     opts.recommended ?? [],
     opts.recommendedStrategy ?? null,
+    opts.documents ?? [],
+    opts.sellerProfiles ?? new Map(),
   );
   const examCountdown = opts.examCountdown ?? fakeExamCountdownService();
 
@@ -497,5 +505,48 @@ describe('BuyerHomePage — exam countdown (exam-countdown-mode v1)', () => {
 
     expect(link).toBeTruthy();
     expect(link.getAttribute('href')).toBe('/marketplace');
+  });
+});
+
+describe('BuyerHomePage — featured creators follower count', () => {
+  it('enriches featured sellers with follower count and profile stats from catalog.sellerProfiles()', () => {
+    const doc = mapDocument({
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารตัวอย่าง',
+      price: 50,
+      sellerId: 'seller-abc',
+      sellerName: 'ครูสมศรี',
+    } as unknown as MarketplaceDocumentResponse);
+
+    const enrichedProfile: Seller = {
+      id: 'seller-abc',
+      studioName: 'ครูสมศรีติวเตอร์',
+      ownerName: 'สมศรี',
+      avatar: '',
+      bio: 'ครูสอนภาษาไทย 10 ปี',
+      joinedAt: '2026-01-01T00:00:00Z',
+      rating: 4.8,
+      totalSales: 150,
+      totalDocuments: 25,
+      followerCount: 42,
+      responseHours: 1,
+      badges: ['Verified'],
+    };
+
+    const sellerProfiles = new Map<string, Seller>([['seller-abc', enrichedProfile]]);
+    const fixture = render({ documents: [doc], sellerProfiles });
+
+    const page = fixture.componentInstance;
+    const sellers = page.featuredSellers;
+    expect(sellers.length).toBe(1);
+    expect(sellers[0].id).toBe('seller-abc');
+    expect(sellers[0].followerCount).toBe(42);
+    expect(sellers[0].totalDocuments).toBe(25);
+    expect(sellers[0].rating).toBe(4.8);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('42 ฟอลโลเวอร์');
+    expect(text).toContain('25 เอกสาร');
   });
 });
