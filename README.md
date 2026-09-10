@@ -1,172 +1,145 @@
-# SIRIEDUMARKET 🌸
+# SIRIEDUMARKET — Frontend 🌸
 
-> แพลตฟอร์มตลาดกลางออนไลน์ (Marketplace) สำหรับการซื้อขายเอกสารวิชาการ สรุปบทเรียน และเทมเพลตคุณภาพสูง
+![Angular](https://img.shields.io/badge/Angular-21-DD0031?logo=angular&logoColor=white)
+![Signals](https://img.shields.io/badge/state-Signals%20%2B%20Zoneless-informational)
+![NG--ZORRO](https://img.shields.io/badge/UI-NG--ZORRO%20(Ant%20Design)-1890FF)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwindcss&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Drift](https://img.shields.io/badge/API%20drift-0-brightgreen)
 
-แรงบันดาลใจจาก [Teachers Pay Teachers](https://www.teacherspayteachers.com/) ปรับให้เหมาะกับตลาดไทย — โทน **Minimal Light Pink**, รองรับการซื้อขายในประเทศ (Stripe — บัตรเครดิต / PromptPay / wallet)
+Angular frontend for **SIRIEDUMARKET**, an online marketplace for academic documents, study
+summaries and templates — a Thai-market take on [Teachers Pay
+Teachers](https://www.teacherspayteachers.com/), styled around a minimal light-pink design
+system and priced for local checkout (Stripe: card / PromptPay / wallet).
 
----
-
-## ⚡ Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev server (http://localhost:4200)
-npm start
-
-# Production build
-npm run build
-```
-
-> ต้องใช้ **Node.js ≥ 20.x** และ **npm ≥ 10.x**
-
-### รันคู่กับ backend จริง (dev)
-
-หน้าเว็บทุกหน้าดึงข้อมูลจาก API จริง เปิดแค่ `npm start` อย่างเดียวจะได้หน้าเปล่า
-ต้องเปิด **สองเทอร์มินัล**:
-
-```bash
-# เทอร์มินัลที่ 1 — API ที่ http://localhost:5282
-cd ../siri_edu_market_backend
-dotnet run --project src/SIRIEDUMARKET.Api/SIRIEDUMARKET.Api.csproj
-```
-
-```bash
-# เทอร์มินัลที่ 2 — UI ที่ http://localhost:4200
-npm start
-```
-
-**`dotnet run` เปล่าๆ บูตไม่ขึ้น** — `StartupConfigurationValidator` ตั้งใจให้ล้มตั้งแต่ตอน start
-ถ้า secret ไม่ครบ (SEC-01 / SEC-03) · **เก็บ credential ไว้ใน `.env` ที่ root ไฟล์เดียว**
-(ไฟล์เดียวกับที่ `docker compose` ใช้ · gitignored · API โหลดเองก่อน start):
-
-```bash
-cd ..            # c:\ProjectEduMarget — ที่เดียวกับ docker-compose.yml
-cp .env.example .env
-# เปิดแก้แล้วใส่ค่าจริง อย่างน้อย 6 ตัวนี้ถึงจะ start ขึ้น
-```
-
-| ตัวแปรใน `.env` | ใช้ทำอะไร |
-|---|---|
-| `ASPNETCORE_ENVIRONMENT=Development` | ถ้าเป็น `Production` จะบังคับขอ Stripe + Email เพิ่มด้วย |
-| `ConnectionStrings__DefaultConnection` | SQL Server — ยังไม่มีเครื่องก็ยัง start ได้ แต่ทุกหน้าจะได้ 500 (ENV-01) |
-| `Jwt__Key` | เซ็น access token — ไม่มีค่า default และสั้นกว่า 32 ตัวอักษรไม่ได้ |
-| `R2__AccessKeyId` · `R2__SecretAccessKey` · `R2__BucketName` · `R2__Endpoint` | Cloudflare R2 — `R2ObjectStorage` โยน exception ตอน start ถ้าไม่ครบ |
-
-ตัวแปรที่ export ไว้ใน shell อยู่แล้ว**ชนะ** ค่าใน `.env` เสมอ · รายการเต็ม + ทางเลือกอื่น
-(`appsettings.Local.json`, user secrets) อยู่ที่
-[`CONFIGURATION.md`](../siri_edu_market_backend/src/SIRIEDUMARKET.Api/CONFIGURATION.md)
-
-**UI ยิงตรงไปที่ API ไม่ผ่าน dev-server proxy** — ปลายทางอยู่ที่ `apiUrl` ใน
-[`src/environments/environment.development.ts`](src/environments/environment.development.ts)
-ที่เดียว (`core/api-runtime.ts` อ่านค่านี้) และ CORS ฝั่ง API เปิดให้ `http://localhost:4200`
-อยู่แล้ว · ถ้าจะชี้ไป backend เครื่องอื่น แก้ที่ไฟล์นั้น หรือเซ็ต `window.__SIRIEDU_API_BASE_URL__`
-ก่อน bundle ทำงาน (ใช้กับ build ที่ compile แล้วได้โดยไม่ต้อง build ใหม่)
+Every screen is wired to the real [.NET backend](https://github.com/jatupolman3CS/siri_edu_market_backend)
+— there is no mock data path left. API calls go exclusively through a TypeScript SDK generated
+from the backend's OpenAPI document, and a CI-enforced drift check keeps the two in sync
+(**190 backend endpoints ↔ 189 SDK functions, 0 orphaned on either side**).
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Layer | Tech | เวอร์ชัน |
-|---|---|---|
-| Framework | **Angular** (Standalone + Signals + Zoneless) | `21.2.x` |
-| UI Library | **NG-ZORRO** (Ant Design Angular) | `21.2.x` |
-| Styling | **Tailwind CSS** + custom theme | `3.4.x` |
-| State | **Angular Signals** (no Redux/NgRx) | built-in |
-| Routing | **Angular Router** + lazy loading + guards | built-in |
-| Storage (mock) | `localStorage` (auth, wishlist, recently-viewed) | browser |
+| Layer | Technology | Version |
+| --- | --- | --- |
+| Framework | Angular — standalone components, Signals, zoneless change detection | `21.2.x` |
+| UI library | NG-ZORRO (Ant Design for Angular) | `21.2.x` |
+| Styling | Tailwind CSS + a custom pink-tinted theme | `3.4.x` |
+| State | Angular Signals (no NgRx/Redux) | built-in |
+| Routing | Angular Router, fully lazy-loaded, with guards | built-in |
+| API layer | `@hey-api/openapi-ts`-generated SDK over `@hey-api/client-fetch` | — |
+| Testing | Vitest (unit) + Playwright (e2e) | `4.x` / `1.62.x` |
 
-> ต่อ backend จริงแล้ว (ASP.NET Core + EF Core + SQL Server ที่ `../siri_edu_market_backend`) —
-> ไม่มี mock data เหลือแล้ว ทุก service เรียก API ผ่าน SDK ที่ generate จาก OpenAPI
+## Architecture
 
----
+```mermaid
+graph LR
+    Page["Feature page<br/>(signals, OnPush)"] --> Service["core/services/*.service.ts<br/>signal-based store"]
+    Service --> SDK["core/api/sdk.gen.ts<br/>(generated — never edited by hand)"]
+    SDK --> Runtime["core/api-runtime.ts<br/>base URL · auth header · 401 refresh+replay"]
+    Runtime -->|HTTPS/JSON| Api[("ASP.NET Core API")]
+```
 
-## 📁 Folder Structure
+`features/**` never imports the generated SDK directly — every call is routed through
+`core/services/`, and a lint-time guard (`npm run audit:guard`) fails the build if that rule is
+broken. Regenerating the SDK (`npm run generate:api`) after a backend contract change is the
+only way generated files are ever touched.
+
+## Key Features
+
+- **Marketplace & discovery** — home feed (trending, bundles, free resources, editor's picks),
+  filterable marketplace search, category drill-down, seller storefronts.
+- **Document experience** — detail pages with Q&A and reviews, related bundles, wishlist,
+  purchase library.
+- **Checkout & subscriptions** — cart → Stripe Payment Element checkout (card / PromptPay /
+  wallet), order history, monthly subscription membership management.
+- **Seller studio** — 4-step upload flow, AI-assisted listing autofill, dashboard, earnings,
+  reviews, Q&A, storefront section builder.
+- **Admin console** — approval queue, transactions, sellers, categories, subscriptions, exam
+  hub content, audit log.
+- **Auth** — email/password with a strength meter, Google/Facebook/LINE social login, 6-digit
+  email OTP verification, forgot/reset password — backed by real JWT + refresh tokens (401s
+  transparently refresh and replay the original request).
+
+## Folder Structure
 
 ```
 src/app/
 ├── core/                          # Singletons & app-wide concerns
 │   ├── models/                    # TypeScript interfaces & enums
-│   ├── mock/                      # Mock data (15 docs, 6 sellers, 5 bundles, …)
-│   ├── services/                  # Signal-based stores
-│   └── guards/                    # Route guards (authGuard, guestGuard)
+│   ├── api/                       # Generated OpenAPI SDK (never hand-edited)
+│   ├── api-mappers/                # DTO → domain-model mapping
+│   ├── services/                  # Signal-based stores, the only callers of core/api
+│   └── guards/                    # Route guards (authGuard, guestGuard, …)
 ├── shared/                        # Reusable across features
 │   ├── components/                # Logo, Icon, DocumentCard, BundleCard, …
 │   └── pipes/                     # thb, compact, timeAgo
 ├── layouts/                       # Page shells
-│   ├── buyer/                     # Public + protected buyer routes
-│   ├── seller/                    # Siri Studio (sidebar + studio mode)
-│   ├── admin/                     # Admin panel (dark sidebar)
-│   └── auth/                      # Auth split-screen
-└── features/                      # Route components
+│   ├── buyer/ · seller/ · admin/ · auth/
+└── features/                      # Route components (58 feature areas), each lazy-loaded
     ├── buyer/                     # Home, Marketplace, Document, Cart, Library, …
-    ├── seller/                    # Dashboard, Upload (4-step), AI Assistant, …
-    ├── admin/                     # Approval, Transactions, Sellers, …
-    └── auth/                      # Login, Register, Verify Email, Forgot
+    ├── seller/                    # Dashboard, Upload, AI Assistant, Earnings, …
+    ├── admin/                     # Approval, Transactions, Sellers, Subscriptions, …
+    └── auth/                      # Login, Register, Verify Email, Forgot Password
 ```
 
----
+## Getting Started
 
-## 🛣️ Routes Overview
+Requires **Node.js ≥ 20** and **npm ≥ 10**.
 
-### Public (no login)
-- `/` — Home (Hero + Trending + Bundles + Free + Categories + Editor's Picks)
-- `/marketplace` — Filter by category/sub-category/grade/resource type/standards
-- `/categories` · `/category/:slug` — Drill-down with sub-categories
-- `/document/:id` — Detail + Q&A + Reviews + Related bundles
-- `/bundles` · `/bundle/:id` — Multi-doc packages
-- `/free` — Free resources
-- `/store/:id` — Seller storefront
+```bash
+npm install
+npm start          # http://localhost:4200
+```
 
-### Protected (auth required)
-- `/wishlist` · `/library` · `/orders` · `/checkout`
-- `/seller/*` — Dashboard, Documents, Upload, AI Assistant, Earnings, Reviews, Settings
-- `/admin/*` — Dashboard, Approval, Transactions, Sellers, Categories, Settings
+The UI talks to a real backend — there is no mock mode — so `npm start` on its own renders an
+empty app. Run the [backend](https://github.com/jatupolman3CS/siri_edu_market_backend) alongside
+it:
 
-### Auth (guest-only)
-- `/auth/login` — Email/Password + Google + Facebook + LINE
-- `/auth/register` — With strength meter + terms
-- `/auth/verify-email` — 6-digit OTP
-- `/auth/forgot-password`
+```bash
+# terminal 1 — API on http://localhost:5282
+cd ../siri_edu_market_backend
+dotnet run --project src/SIRIEDUMARKET.Api/SIRIEDUMARKET.Api.csproj
 
----
+# terminal 2 — UI on http://localhost:4200
+npm start
+```
 
-## 🎨 Design System
+`dotnet run` refuses to boot without its required secrets. Copy `.env.example` to `.env` at the
+monorepo root and fill in at minimum `ConnectionStrings__DefaultConnection`, `Jwt__Key`, and the
+`R2__*` values — see the backend's
+[`CONFIGURATION.md`](../siri_edu_market_backend/src/SIRIEDUMARKET.Api/CONFIGURATION.md) for the
+full list. The API target is configured once, in
+[`src/environments/environment.development.ts`](src/environments/environment.development.ts).
 
-- **Signature radius**: `2.5rem` (`rounded-3xl`)
-- **Palette**: 9-shade pink (`pink-50` → `pink-900`) + ink/cream/canvas neutrals
-- **Font**: Plus Jakarta Sans + Noto Sans Thai
-- **Shadow**: `shadow-soft`, `shadow-pop`, `shadow-float` (all pink-tinted)
-- **Animations**: `fade-in`, `slide-up`, `pulse-soft` (custom Tailwind keyframes)
+### Verification
 
-ทุกอย่างกำหนดใน `tailwind.config.js` + CSS variables ใน `src/styles.scss`
+```bash
+npm run build
+npm run audit:guard        # forbids features/** from importing the SDK directly
+npm run audit:coverage     # backend-endpoint ↔ SDK-function drift report
+npx ng test --watch=false
+```
 
----
+## Design System
 
-## 📚 More Docs
+- Signature radius: `2.5rem` (`rounded-3xl`)
+- Palette: a 9-shade pink scale (`pink-50` → `pink-900`) plus ink/cream/canvas neutrals
+- Typeface: Plus Jakarta Sans + Noto Sans Thai
+- Custom shadow tokens (`shadow-soft`, `shadow-pop`, `shadow-float`) and Tailwind keyframe
+  animations (`fade-in`, `slide-up`, `pulse-soft`)
 
-- **[AGENTS.md](AGENTS.md)** — สำหรับ AI agents / dev ใหม่ (briefing สั้น)
-- **[INSTRUCTION.md](INSTRUCTION.md)** — How-to guide (เพิ่ม feature, page, service)
-- **[SKILL.md](SKILL.md)** — Code conventions & patterns
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Technical deep-dive
-- **[CHANGELOG.md](CHANGELOG.md)** — บันทึกที่สร้างมาทั้งหมด
+Defined in `tailwind.config.js` and CSS variables in `src/styles.scss`.
 
----
+## More Docs
 
-## 🗺️ Roadmap
+- [`AGENTS.md`](AGENTS.md) — 60-second briefing for AI agents / new contributors
+- [`INSTRUCTION.md`](INSTRUCTION.md) — how-to guide (adding a feature, page, service)
+- [`SKILL.md`](SKILL.md) — code conventions & patterns
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — technical deep-dive
+- [`coverage.md`](coverage.md) — generated endpoint-coverage report
 
-| Phase | สถานะ | ขอบเขต |
-|---|---|---|
-| 1. UI/UX foundation | ✅ Done | Theme + Layouts + Mock data + Buyer/Seller/Admin pages |
-| 2. Sub-categories + TpT features | ✅ Done | Sub-categories, Bundles, Wishlist, Storefront, Q&A, Quick View |
-| 3. Authentication | ✅ Done | Login (email + social), Register, Verify, Guards |
-| 4. Backend (.NET 10) | ⏳ Pending | Clean Architecture + EF Core + MSSQL + Cloudflare R2 |
-| 5. Payment integration | ✅ Done | Stripe PaymentIntent + Payment Element (บัตรเครดิต / PromptPay / wallet) |
-| 6. Real AI integration | ⏳ Pending | Gemini API for summaries |
+## License
 
----
-
-## 📄 License
-
-Internal project — ITONE / Siriedu team. ห้ามเผยแพร่โดยไม่ได้รับอนุญาต
+Private / portfolio project — not licensed for reuse.
