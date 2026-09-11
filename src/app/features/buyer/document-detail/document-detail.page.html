@@ -57,15 +57,10 @@
                   appImgFallback
                   [src]="d.gallery[selectedImage()] || d.cover"
                   [alt]="d.title"
-                  class="absolute inset-0 w-full h-full object-cover"
+                  class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+                  draggable="false"
+                  (contextmenu)="$event.preventDefault()"
                 />
-                @if (d.watermarkEnabled && d.format !== 'pdf') {
-                  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="text-white/30 text-6xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
-                      preview
-                    </div>
-                  </div>
-                }
                 <span class="absolute top-4 left-4 pill bg-white/90 backdrop-blur uppercase text-[11px] font-bold text-ink">
                   <app-icon name="doc" [size]="12" /> {{ d.format }}
                 </span>
@@ -813,14 +808,16 @@
               </header>
               <div class="gallery-container">
                 @for (path of previewRasterUrls(); track $index) {
-                  <figure class="preview-image-card">
+                  <figure class="preview-image-card select-none" (contextmenu)="$event.preventDefault()">
                     <img
                       appImgFallback
                       [src]="previewImgSrc(path)"
-                      alt="พรีวิวหน้าเอกสาร"
+                      alt="พรีวิวหน้าเอกสาร (ลายน้ำจากระบบ)"
                       class="preview-image-item block h-auto max-h-none w-full max-w-full object-contain select-none"
                       loading="lazy"
                       decoding="async"
+                      draggable="false"
+                      (contextmenu)="$event.preventDefault()"
                     />
                   </figure>
                 }

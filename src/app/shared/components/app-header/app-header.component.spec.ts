@@ -176,14 +176,17 @@ describe('AppHeaderComponent search submission', () => {
     expect(fixture.componentInstance.query()).toBe('');
   });
 
-  it('subnavItems excludes /free and /categories for the desktop left nav', () => {
+  it('subnavItems groups /marketplace, /bundles, and /free together next to each other', () => {
     const fixture = render();
     const hrefs = fixture.componentInstance.subnavItems().map((i) => i.href);
-    expect(hrefs).not.toContain('/free');
     expect(hrefs).not.toContain('/categories');
     expect(hrefs).toContain('/');
     expect(hrefs).toContain('/marketplace');
     expect(hrefs).toContain('/bundles');
+    expect(hrefs).toContain('/free');
+    const marketIndex = hrefs.indexOf('/marketplace');
+    expect(hrefs[marketIndex + 1]).toBe('/bundles');
+    expect(hrefs[marketIndex + 2]).toBe('/free');
   });
 
   it('does not render a dead help center / faq link in the topbar', () => {

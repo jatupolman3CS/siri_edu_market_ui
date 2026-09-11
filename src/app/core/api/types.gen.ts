@@ -37,6 +37,7 @@ export type AdminAuditLogResponse = {
   action?: string;
   entityType?: string;
   entityId?: string;
+  entityTitle?: string | null;
   detailsJson?: string | null;
   createdAt?: string;
 };

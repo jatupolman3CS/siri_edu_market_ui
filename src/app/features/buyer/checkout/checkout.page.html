@@ -77,45 +77,39 @@
                   </p>
                 </div>
               } @else {
-                @if (!paymentReady()) {
-                  <!-- saved-credit-cards v1 §4: only shows a picker at all when the buyer has
-                       ≥1 saved card — "ใช้บัตรใหม่" is always one of the options once it does. -->
-                  <app-saved-cards mode="select" [(selected)]="selectedSavedCardId" />
+                <!-- saved-credit-cards v1 §4: only shows a picker at all when the buyer has
+                     ≥1 saved card — "ใช้บัตรใหม่" is always one of the options once it does. -->
+                <app-saved-cards mode="select" [(selected)]="selectedSavedCardId" (selectedChange)="onSavedCardSelect($event)" />
 
-                  @if (selectedSavedCardId() === 'new') {
-                    <label class="flex items-center gap-2 text-sm text-ink-soft mb-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        [checked]="saveNewCard()"
-                        (change)="saveNewCard.set($any($event.target).checked)"
-                        class="w-4 h-4 accent-pink-500"
-                      />
-                      บันทึกบัตรนี้ไว้สำหรับชำระเงินครั้งถัดไป
-                    </label>
-                    <p class="text-sm text-ink-soft leading-relaxed">
-                      กด «ดำเนินการชำระเงิน» เพื่อสร้างคำสั่งซื้อ จากนั้นเลือกวิธีชำระเงินได้ในกล่องของ Stripe
-                      — บัตรเครดิต, PromptPay หรือ wallet ที่เปิดให้บริการอยู่
-                    </p>
-                    <p class="text-xs text-ink-muted mt-3">
-                      ข้อมูลบัตรของคุณถูกกรอกและส่งให้ Stripe โดยตรง ไม่ผ่านเซิร์ฟเวอร์ของเรา
-                    </p>
-                  } @else {
-                    <p class="text-sm text-ink-soft leading-relaxed">
-                      กด «ดำเนินการชำระเงิน» เพื่อชำระด้วยบัตรที่เลือกไว้ทันที
-                    </p>
-                  }
-                } @else {
+                @if (selectedSavedCardId() === 'new') {
+                  <label class="flex items-center gap-2 text-sm text-ink-soft mb-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      [checked]="saveNewCard()"
+                      (change)="saveNewCard.set($any($event.target).checked)"
+                      class="w-4 h-4 accent-pink-500"
+                    />
+                    บันทึกบัตรนี้ไว้สำหรับชำระเงินครั้งถัดไป
+                  </label>
                   <p class="text-xs text-ink-muted mb-4">
                     เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»
                   </p>
+                } @else {
+                  <p class="text-sm text-ink-soft leading-relaxed mb-4">
+                    ชำระด้วยบัตรที่เลือกไว้ทันทีเมื่อกด «ยืนยันการชำระเงิน»
+                  </p>
                 }
+
+                @if (busy() && !paymentReady() && selectedSavedCardId() === 'new') {
+                  <div class="py-10 flex flex-col items-center justify-center text-center gap-2 text-ink-muted">
+                    <div class="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sm font-medium text-ink">กำลังเปิดช่องทางการชำระเงิน…</p>
+                  </div>
+                }
+
                 <!-- Stripe mounts the Payment Element here; the methods shown come from the
-                     Stripe Dashboard, so adding a wallet needs no change in this repository.
-                     Kept in the DOM (only hidden via CSS) whenever payments are configured,
-                     because paymentReady() flips true only after mount() resolves — gating this
-                     element on paymentReady() would remove it from the DOM until after Stripe
-                     already tried to find it, throwing "applies to no DOM elements". -->
-                <div id="stripe-payment-element" class="min-h-[220px]" [class.hidden]="!paymentReady()"></div>
+                     Stripe Dashboard, so adding a wallet needs no change in this repository. -->
+                <div id="stripe-payment-element" class="min-h-[220px]" [class.hidden]="!paymentReady() || selectedSavedCardId() !== 'new'"></div>
               }
             </section>
           </div>
@@ -201,29 +195,20 @@
                 }
               </div>
 
-              @if (!paymentReady()) {
-                <button
-                  class="btn-pink w-full !py-3.5 mt-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                  [disabled]="paymentUnderReview() || busy() || paymentsUnavailable()"
-                  (click)="startPayment()"
-                >
-                  <app-icon name="lock" [size]="16" />
-                  @if (paymentsUnavailable()) {
-                    ยังชำระเงินไม่ได้
-                  } @else {
-                    {{ busy() ? 'กำลังเปิดการชำระเงิน…' : 'ดำเนินการชำระเงิน' }}
-                  }
-                </button>
-              } @else {
-                <button
-                  class="btn-pink w-full !py-3.5 mt-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                  [disabled]="paymentUnderReview() || busy()"
-                  (click)="confirmPayment()"
-                >
-                  <app-icon name="lock" [size]="16" />
-                  {{ busy() ? 'กำลังยืนยัน…' : 'ยืนยันการชำระเงิน' }}
-                </button>
-              }
+              <button
+                class="btn-pink w-full !py-3.5 mt-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="paymentUnderReview() || busy() || paymentsUnavailable()"
+                (click)="submitPayment()"
+              >
+                <app-icon name="lock" [size]="16" />
+                @if (paymentsUnavailable()) {
+                  ยังชำระเงินไม่ได้
+                } @else if (busy()) {
+                  {{ paymentReady() ? 'กำลังยืนยัน…' : 'กำลังเปิดการชำระเงิน…' }}
+                } @else {
+                  ยืนยันการชำระเงิน
+                }
+              </button>
 
               <!-- T-13: the charge already went through; clicking again would charge twice. -->
               @if (paymentUnderReview()) {

@@ -22,6 +22,7 @@ import { IconComponent } from '../icon/icon.component';
   imports: [FormsModule, NzSwitchModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-settings.component.html',
+  styles: [':host { display: block; }'],
 })
 export class NotificationSettingsComponent {
   readonly notifications = inject(NotificationService);

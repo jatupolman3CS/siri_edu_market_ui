@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import type { AdminDocumentDetail } from '../../../core/api/admin-documents.api';
 import { resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
 import { AdminService, AuthService } from '../../../core/services';
@@ -14,6 +16,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
   selector: 'app-admin-approval',
   standalone: true,
   imports: [
+    FormsModule,
+    NzModalModule,
     IconComponent,
     EmptyStateComponent,
     TimeAgoPipe,
@@ -266,18 +270,42 @@ export class AdminApprovalPage {
     }
   }
 
-  async reject(id: string, title: string): Promise<void> {
-    const reason =
-      prompt('เหตุผลในการปฏิเสธ', 'ไม่ผ่านเกณฑ์คุณภาพ')?.trim() ||
-      'ไม่ผ่านเกณฑ์คุณภาพ';
+  readonly rejectModalVisible = signal(false);
+  readonly rejectTarget = signal<{ id: string; title: string } | null>(null);
+  readonly rejectReason = signal('ไม่ผ่านเกณฑ์คุณภาพ');
+  readonly rejectSubmitting = signal(false);
+
+  openRejectModal(id: string, title: string): void {
+    this.rejectTarget.set({ id, title });
+    this.rejectReason.set('ไม่ผ่านเกณฑ์คุณภาพ');
+    this.rejectModalVisible.set(true);
+  }
+
+  closeRejectModal(): void {
+    this.rejectModalVisible.set(false);
+    this.rejectTarget.set(null);
+  }
+
+  async confirmReject(): Promise<void> {
+    const target = this.rejectTarget();
+    if (!target) return;
+    const reason = this.rejectReason().trim() || 'ไม่ผ่านเกณฑ์คุณภาพ';
+    this.rejectSubmitting.set(true);
     try {
-      await this.admin.rejectDocument(id, reason);
-      this.message.warning(`ปฏิเสธ "${title}" แล้ว`);
+      await this.admin.rejectDocument(target.id, reason);
+      this.message.warning(`ปฏิเสธ "${target.title}" แล้ว`);
       this.previewDetail.set(null);
       this.selectedId.set('');
-      if (this.lockedId() === id) this.lockedId.set('');
+      if (this.lockedId() === target.id) this.lockedId.set('');
+      this.closeRejectModal();
     } catch {
       /* ApiFailureReporter ใน AdminService แจ้งแล้ว */
+    } finally {
+      this.rejectSubmitting.set(false);
     }
+  }
+
+  reject(id: string, title: string): void {
+    this.openRejectModal(id, title);
   }
 }

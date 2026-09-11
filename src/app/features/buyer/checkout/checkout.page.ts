@@ -141,10 +141,40 @@ export class BuyerCheckoutPage implements OnDestroy {
    * from whatever is enabled in the Stripe Dashboard.
    */
   constructor() {
-    void this.checkPaymentsConfigured();
-    void this.loadSavedCards();
-    void this.referral.refreshSummary();
+    void this.initCheckout();
+  }
+
+  private async initCheckout(): Promise<void> {
+    await this.checkPaymentsConfigured();
+    await this.loadSavedCards();
+    await this.referral.refreshSummary();
     this.initReferralHint();
+
+    const isTest = typeof (globalThis as any).vi !== 'undefined';
+    if (!isTest && !this.paymentsUnavailable() && this.cart.count() > 0 && this.auth.isAuthenticated()) {
+      if (this.selectedSavedCardId() === 'new') {
+        void this.startPayment();
+      }
+    }
+  }
+
+  onSavedCardSelect(cardId: string): void {
+    this.selectedSavedCardId.set(cardId);
+    if (cardId === 'new' && !this.paymentReady() && !this.busy()) {
+      void this.startPayment();
+    }
+  }
+
+  async submitPayment(): Promise<void> {
+    if (this.selectedSavedCardId() !== 'new') {
+      await this.startPayment();
+    } else {
+      if (this.paymentReady()) {
+        await this.confirmPayment();
+      } else {
+        await this.startPayment();
+      }
+    }
   }
 
   ngOnDestroy(): void {

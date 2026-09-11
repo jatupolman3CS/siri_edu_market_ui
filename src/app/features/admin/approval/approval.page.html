@@ -158,12 +158,14 @@
                 @if (previewDetailLoading()) {
                   <p class="text-sm text-ink-muted z-10 px-4 text-center">กำลังโหลดรายละเอียดเต็ม…</p>
                 }
-                <img appImgFallback [src]="heroCoverUrl()" class="w-full h-full object-cover" alt="" />
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div class="text-white/40 text-7xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
-                    review
-                  </div>
-                </div>
+                <img
+                  appImgFallback
+                  [src]="heroCoverUrl()"
+                  class="w-full h-full object-cover select-none pointer-events-none"
+                  draggable="false"
+                  (contextmenu)="$event.preventDefault()"
+                  alt=""
+                />
               </div>
 
               <div class="p-6">
@@ -458,3 +460,57 @@
         </div>
       </div>
     </div>
+
+    <!-- Angular Modal for Rejection Reason (Replacing Chrome prompt) -->
+    <nz-modal
+      [nzVisible]="rejectModalVisible()"
+      nzTitle="ปฏิเสธเอกสาร"
+      [nzCentered]="true"
+      [nzClosable]="true"
+      (nzOnCancel)="closeRejectModal()"
+      [nzFooter]="null"
+    >
+      <ng-container *nzModalContent>
+        <div class="space-y-4 py-2">
+          <div class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200/60 flex items-start gap-3">
+            <span class="text-rose-500 text-lg leading-none">⚠️</span>
+            <div class="text-xs text-rose-700 leading-relaxed">
+              คุณกำลังจะปฏิเสธเอกสาร <strong>"{{ rejectTarget()?.title }}"</strong> เอกสารนี้จะไม่ถูกเผยแพร่ในตลาด และผู้ขายจะได้รับแจ้งเตือนพร้อมเหตุผลด้านล่าง
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-1.5 block">
+              เหตุผลในการปฏิเสธ <span class="text-rose-500">*</span>
+            </label>
+            <textarea
+              rows="3"
+              class="input-soft w-full resize-none"
+              [ngModel]="rejectReason()"
+              (ngModelChange)="rejectReason.set($event)"
+              placeholder="ระบุเหตุผลในการปฏิเสธ เช่น ไม่ผ่านเกณฑ์คุณภาพ, ข้อมูลไม่ครบถ้วน..."
+            ></textarea>
+          </div>
+
+          <div class="flex items-center justify-end gap-2.5 pt-2">
+            <button
+              type="button"
+              class="btn-ghost !py-2 !px-4 text-sm"
+              (click)="closeRejectModal()"
+              [disabled]="rejectSubmitting()"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-soft flex items-center gap-1.5 disabled:opacity-50"
+              (click)="confirmReject()"
+              [disabled]="rejectSubmitting() || !rejectReason().trim()"
+            >
+              <app-icon name="x" [size]="14" />
+              {{ rejectSubmitting() ? 'กำลังบันทึก…' : 'ยืนยันการปฏิเสธ' }}
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </nz-modal>

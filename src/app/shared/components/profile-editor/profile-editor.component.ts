@@ -22,6 +22,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
   imports: [FormsModule, IconComponent, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-editor.component.html',
+  styles: [':host { display: block; }'],
 })
 export class ProfileEditorComponent {
   private readonly me = inject(MeService);
