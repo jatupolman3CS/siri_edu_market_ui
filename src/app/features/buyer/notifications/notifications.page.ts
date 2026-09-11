@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { NotificationFeedService, type NotificationFeedItemResponse } from '../../../core/services';
+import {
+  NotificationFeedService,
+  getNotificationStyle,
+  type NotificationFeedItemResponse,
+  type NotificationStyleInfo,
+} from '../../../core/services';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -31,6 +36,10 @@ export class NotificationsPage {
   constructor() {
     this.currentPage.set(1);
     this.feed.loadFeed(1);
+  }
+
+  getStyle(key: string, title = ''): NotificationStyleInfo {
+    return getNotificationStyle(key, title);
   }
 
   loadMore(): void {

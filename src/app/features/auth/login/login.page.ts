@@ -56,7 +56,7 @@ export class AuthLoginPage {
       return;
     }
     this.message.success('ยินดีต้อนรับกลับมา 🌸');
-    this.router.navigateByUrl(this.returnUrl());
+    this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
   }
 
   onSocial(provider: AuthProvider): void {
@@ -70,7 +70,7 @@ export class AuthLoginPage {
         return;
       }
       this.message.success(`เข้าสู่ระบบด้วย ${provider.toUpperCase()} สำเร็จ`);
-      this.router.navigateByUrl(this.returnUrl());
+      this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
     })();
   }
 }

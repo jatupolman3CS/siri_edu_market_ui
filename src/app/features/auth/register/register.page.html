@@ -153,7 +153,7 @@
       <button
         type="submit"
         class="btn-pink w-full !py-3.5 mt-2 text-base"
-        [disabled]="loading()"
+        [disabled]="loading() || !acceptTerms()"
       >
         @if (loading()) {
           <span class="inline-block animate-spin">✦</span>

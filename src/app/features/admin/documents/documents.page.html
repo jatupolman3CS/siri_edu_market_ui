@@ -112,6 +112,8 @@
           <th class="px-3 py-3 font-semibold">เอกสาร</th>
           <th class="px-3 py-3 font-semibold">ผู้ขาย</th>
           <th class="px-3 py-3 font-semibold">สถานะ</th>
+          <th class="px-3 py-3 font-semibold text-center">คะแนนดาว</th>
+          <th class="px-3 py-3 font-semibold text-center">ดาวน์โหลด</th>
           <th class="px-3 py-3 font-semibold text-right">ราคา</th>
           <th class="px-3 py-3 font-semibold">อัปเดต</th>
           <th class="px-3 py-3"></th>
@@ -141,6 +143,23 @@
             <td class="px-3 py-3">
               <span class="pill text-[10px] font-bold" [class]="statusClass(d.status)">{{ statusLabel(d.status) }}</span>
             </td>
+            <td class="px-3 py-3 text-center whitespace-nowrap">
+              @if (d.reviewCount > 0) {
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  <app-icon name="star" [size]="12" class="text-amber-500" />
+                  {{ d.rating | number:'1.1-1' }}
+                  <span class="text-[10px] text-ink-muted font-normal">({{ d.reviewCount }})</span>
+                </span>
+              } @else {
+                <span class="text-xs text-ink-muted">-</span>
+              }
+            </td>
+            <td class="px-3 py-3 text-center whitespace-nowrap">
+              <span class="inline-flex items-center gap-1 text-xs font-medium text-ink-soft">
+                <app-icon name="download" [size]="12" class="text-ink-muted" />
+                {{ d.downloadCount | number }}
+              </span>
+            </td>
             <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ d.price | thb }}</td>
             <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ d.updatedAt | timeAgo }}</td>
             <td class="px-3 py-3 text-right">
@@ -151,7 +170,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="px-5 py-10 text-center text-ink-muted text-sm">ไม่พบเอกสาร</td>
+            <td colspan="9" class="px-5 py-10 text-center text-ink-muted text-sm">ไม่พบเอกสาร</td>
           </tr>
         }
       </tbody>

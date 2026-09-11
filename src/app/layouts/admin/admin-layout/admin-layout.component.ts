@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@a
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 import { AdminService, AuthService, MeService } from '../../../core/services';
 import { resolvePublicUrl } from '../../../core/api-runtime';
@@ -18,6 +19,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     RouterLink,
     RouterLinkActive,
     IconComponent,
+    NotificationBellComponent,
     GlobalLoaderComponent,
     ImgFallbackDirective,
     TranslatePipe,
@@ -83,6 +85,7 @@ export class AdminLayoutComponent {
       { label: isTh ? 'หมวดหมู่' : 'Categories', href: '/admin/categories', icon: 'tag' as const },
       // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
       { label: isTh ? 'ประกาศข่าวสาร' : 'Announcements', href: '/admin/announcements', icon: 'bell' as const },
+      { label: isTh ? 'การแจ้งเตือน' : 'Notifications', href: '/notifications', icon: 'bell' as const },
       { label: isTh ? 'ตั้งค่าแพลตฟอร์ม' : 'Settings', href: '/admin/settings', icon: 'gear' as const },
       { label: isTh ? 'ประวัติการทำงาน' : 'Audit Logs', href: '/admin/audit', icon: 'doc' as const },
       // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.

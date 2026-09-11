@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import { NotificationFeedService, type NotificationFeedItemResponse } from '../../../core/services';
+import { NotificationFeedService, getNotificationStyle, type NotificationFeedItemResponse, type NotificationStyleInfo } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 
@@ -35,6 +35,9 @@ export class NotificationBellComponent {
   /** Presentation variant: 'icon' (default standalone bell button) or 'topbar' (inline text link with badge) */
   readonly variant = input<'icon' | 'topbar'>('icon');
 
+  /** Theme variant: 'light' (default) or 'dark' (for dark headers/sidebars like admin) */
+  readonly theme = input<'light' | 'dark'>('light');
+
   /** Latest preview items only — full history lives at /notifications without being wiped by the bell. */
   readonly previewItems = computed(() => {
     const preview = this.feed.previewItems?.() ?? [];
@@ -51,6 +54,10 @@ export class NotificationBellComponent {
     interval(POLL_INTERVAL_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.feed.refreshUnreadCount());
+  }
+
+  getStyle(key: string, title = ''): NotificationStyleInfo {
+    return getNotificationStyle(key, title);
   }
 
   /** Refresh the preview list whenever the dropdown is opened, so it doesn't go stale. */

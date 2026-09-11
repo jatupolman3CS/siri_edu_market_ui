@@ -168,6 +168,9 @@ import type {
   GetApiMeLoyaltyEntriesResponses,
   GetApiMeLoyaltyErrors,
   GetApiMeLoyaltyResponses,
+  GetApiMeOnboardingData,
+  GetApiMeOnboardingErrors,
+  GetApiMeOnboardingResponses,
   GetApiMePaymentMethodsData,
   GetApiMePaymentMethodsErrors,
   GetApiMePaymentMethodsResponses,
@@ -250,7 +253,6 @@ import type {
   GetApiSellerReviewsData,
   GetApiSellerReviewsResponses,
   GetApiSellersBySellerIdFollowData,
-  GetApiSellersBySellerIdFollowErrors,
   GetApiSellersBySellerIdFollowResponses,
   GetApiSellersBySellerIdProfileData,
   GetApiSellersBySellerIdProfileErrors,
@@ -343,6 +345,9 @@ import type {
   PostApiAuthRefreshData,
   PostApiAuthRefreshErrors,
   PostApiAuthRefreshResponses,
+  PostApiAuthRefreshTokenData,
+  PostApiAuthRefreshTokenErrors,
+  PostApiAuthRefreshTokenResponses,
   PostApiAuthRegisterData,
   PostApiAuthRegisterErrors,
   PostApiAuthRegisterResponses,
@@ -351,9 +356,15 @@ import type {
   PostApiAuthResetPasswordData,
   PostApiAuthResetPasswordErrors,
   PostApiAuthResetPasswordResponses,
+  PostApiAuthSendOtpData,
+  PostApiAuthSendOtpErrors,
+  PostApiAuthSendOtpResponses,
   PostApiAuthVerifyEmailData,
   PostApiAuthVerifyEmailErrors,
   PostApiAuthVerifyEmailResponses,
+  PostApiAuthVerifyOtpData,
+  PostApiAuthVerifyOtpErrors,
+  PostApiAuthVerifyOtpResponses,
   PostApiCartBundlesByBundleIdData,
   PostApiCartBundlesByBundleIdErrors,
   PostApiCartBundlesByBundleIdResponses,
@@ -382,6 +393,9 @@ import type {
   PostApiMarketplaceDocumentsByIdViewData,
   PostApiMarketplaceDocumentsByIdViewErrors,
   PostApiMarketplaceDocumentsByIdViewResponses,
+  PostApiMeOnboardingSkipData,
+  PostApiMeOnboardingSkipErrors,
+  PostApiMeOnboardingSkipResponses,
   PostApiMePaymentMethodsByIdDefaultData,
   PostApiMePaymentMethodsByIdDefaultErrors,
   PostApiMePaymentMethodsByIdDefaultResponses,
@@ -445,6 +459,9 @@ import type {
   PostApiSellerQnaByQuestionIdAnswerResponses,
   PostApiSellerQnaByQuestionIdDraftAnswerData,
   PostApiSellerQnaByQuestionIdDraftAnswerResponses,
+  PostApiSellerReviewsByReviewIdReplyData,
+  PostApiSellerReviewsByReviewIdReplyErrors,
+  PostApiSellerReviewsByReviewIdReplyResponses,
   PostApiSellersBySellerIdFollowData,
   PostApiSellersBySellerIdFollowErrors,
   PostApiSellersBySellerIdFollowResponses,
@@ -492,6 +509,9 @@ import type {
   PutApiMeExamCountdownData,
   PutApiMeExamCountdownErrors,
   PutApiMeExamCountdownResponses,
+  PutApiMeOnboardingInterestsData,
+  PutApiMeOnboardingInterestsErrors,
+  PutApiMeOnboardingInterestsResponses,
   PutApiMeProfileData,
   PutApiMeProfileErrors,
   PutApiMeProfileResponses,
@@ -1132,9 +1152,9 @@ export const postApiAuthLogin = <ThrowOnError extends boolean = false>(
   });
 
 export const postApiAuthRefresh = <ThrowOnError extends boolean = false>(
-  options: Options<PostApiAuthRefreshData, ThrowOnError>,
+  options?: Options<PostApiAuthRefreshData, ThrowOnError>,
 ): RequestResult<PostApiAuthRefreshResponses, PostApiAuthRefreshErrors, ThrowOnError> =>
-  (options.client ?? client).post<
+  (options?.client ?? client).post<
     PostApiAuthRefreshResponses,
     PostApiAuthRefreshErrors,
     ThrowOnError
@@ -1143,19 +1163,35 @@ export const postApiAuthRefresh = <ThrowOnError extends boolean = false>(
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...options?.headers,
+    },
+  });
+
+export const postApiAuthRefreshToken = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiAuthRefreshTokenData, ThrowOnError>,
+): RequestResult<PostApiAuthRefreshTokenResponses, PostApiAuthRefreshTokenErrors, ThrowOnError> =>
+  (options?.client ?? client).post<
+    PostApiAuthRefreshTokenResponses,
+    PostApiAuthRefreshTokenErrors,
+    ThrowOnError
+  >({
+    url: '/api/auth/refresh-token',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
     },
   });
 
 export const postApiAuthLogout = <ThrowOnError extends boolean = false>(
-  options: Options<PostApiAuthLogoutData, ThrowOnError>,
+  options?: Options<PostApiAuthLogoutData, ThrowOnError>,
 ): RequestResult<PostApiAuthLogoutResponses, unknown, ThrowOnError> =>
-  (options.client ?? client).post<PostApiAuthLogoutResponses, unknown, ThrowOnError>({
+  (options?.client ?? client).post<PostApiAuthLogoutResponses, unknown, ThrowOnError>({
     url: '/api/auth/logout',
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...options?.headers,
     },
   });
 
@@ -1168,6 +1204,38 @@ export const postApiAuthVerifyEmail = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: '/api/auth/verify-email',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAuthSendOtp = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAuthSendOtpData, ThrowOnError>,
+): RequestResult<PostApiAuthSendOtpResponses, PostApiAuthSendOtpErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiAuthSendOtpResponses,
+    PostApiAuthSendOtpErrors,
+    ThrowOnError
+  >({
+    url: '/api/auth/send-otp',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAuthVerifyOtp = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAuthVerifyOtpData, ThrowOnError>,
+): RequestResult<PostApiAuthVerifyOtpResponses, PostApiAuthVerifyOtpErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiAuthVerifyOtpResponses,
+    PostApiAuthVerifyOtpErrors,
+    ThrowOnError
+  >({
+    url: '/api/auth/verify-otp',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -2017,6 +2085,44 @@ export const getApiMeSubscriptionAccessHistory = <ThrowOnError extends boolean =
     ThrowOnError
   >({ url: '/api/me/subscription/access-history', ...options });
 
+export const getApiMeOnboarding = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeOnboardingData, ThrowOnError>,
+): RequestResult<GetApiMeOnboardingResponses, GetApiMeOnboardingErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeOnboardingResponses,
+    GetApiMeOnboardingErrors,
+    ThrowOnError
+  >({ url: '/api/me/onboarding', ...options });
+
+export const putApiMeOnboardingInterests = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiMeOnboardingInterestsData, ThrowOnError>,
+): RequestResult<
+  PutApiMeOnboardingInterestsResponses,
+  PutApiMeOnboardingInterestsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiMeOnboardingInterestsResponses,
+    PutApiMeOnboardingInterestsErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/onboarding/interests',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiMeOnboardingSkip = <ThrowOnError extends boolean = false>(
+  options?: Options<PostApiMeOnboardingSkipData, ThrowOnError>,
+): RequestResult<PostApiMeOnboardingSkipResponses, PostApiMeOnboardingSkipErrors, ThrowOnError> =>
+  (options?.client ?? client).post<
+    PostApiMeOnboardingSkipResponses,
+    PostApiMeOnboardingSkipErrors,
+    ThrowOnError
+  >({ url: '/api/me/onboarding/skip', ...options });
+
 export const getApiNotificationsSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiNotificationsSettingsData, ThrowOnError>,
 ): RequestResult<
@@ -2463,6 +2569,26 @@ export const getApiSellerReviews = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
+export const postApiSellerReviewsByReviewIdReply = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerReviewsByReviewIdReplyData, ThrowOnError>,
+): RequestResult<
+  PostApiSellerReviewsByReviewIdReplyResponses,
+  PostApiSellerReviewsByReviewIdReplyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiSellerReviewsByReviewIdReplyResponses,
+    PostApiSellerReviewsByReviewIdReplyErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/reviews/{reviewId}/reply',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
 export const getApiSellerPayoutAccount = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiSellerPayoutAccountData, ThrowOnError>,
 ): RequestResult<GetApiSellerPayoutAccountResponses, unknown, ThrowOnError> =>
@@ -2747,16 +2873,11 @@ export const deleteApiSellersBySellerIdFollow = <ThrowOnError extends boolean = 
 
 export const getApiSellersBySellerIdFollow = <ThrowOnError extends boolean = false>(
   options: Options<GetApiSellersBySellerIdFollowData, ThrowOnError>,
-): RequestResult<
-  GetApiSellersBySellerIdFollowResponses,
-  GetApiSellersBySellerIdFollowErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).get<
-    GetApiSellersBySellerIdFollowResponses,
-    GetApiSellersBySellerIdFollowErrors,
-    ThrowOnError
-  >({ url: '/api/sellers/{sellerId}/follow', ...options });
+): RequestResult<GetApiSellersBySellerIdFollowResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).get<GetApiSellersBySellerIdFollowResponses, unknown, ThrowOnError>({
+    url: '/api/sellers/{sellerId}/follow',
+    ...options,
+  });
 
 export const postApiSellersBySellerIdFollow = <ThrowOnError extends boolean = false>(
   options: Options<PostApiSellersBySellerIdFollowData, ThrowOnError>,

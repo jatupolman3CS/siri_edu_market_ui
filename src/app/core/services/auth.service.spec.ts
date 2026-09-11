@@ -50,7 +50,14 @@ function loginBody(
   over: Partial<{
     accessToken: string;
     refreshToken: string;
-    user: { id: string; displayName: string; email: string; role: string; roles?: string[] };
+    user: {
+      id: string;
+      displayName: string;
+      email: string;
+      role: string;
+      roles?: string[];
+      onboardingCompletedAt?: string | null;
+    };
   }> = {},
 ) {
   return {
@@ -379,6 +386,41 @@ describe('AuthService verifyEmail Q07', () => {
     expect(result.ok).toBe(false);
     expect(apiFail.report).not.toHaveBeenCalled();
   });
+
+  it('verifyOtp sends otp and email and completes sign-in on success', async () => {
+    stubRoute('POST', '/api/auth/verify-email', loginBody());
+    const { auth } = buildServiceWithApiFail();
+
+    const result = await auth.verifyOtp('123456', 'user@example.com');
+
+    expect(result.ok).toBe(true);
+    expect(auth.isAuthenticated()).toBe(true);
+    const verifyCall = requests.find((r) => r.path === '/api/auth/verify-email');
+    expect(verifyCall?.body).toContain('123456');
+    expect(verifyCall?.body).toContain('user@example.com');
+  });
+
+  it('verifyOtp rejects non-6-digit otp without calling the API', async () => {
+    const { auth } = buildServiceWithApiFail();
+
+    const result = await auth.verifyOtp('123', 'user@example.com');
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('6 หลัก');
+    expect(requests.filter((r) => r.path === '/api/auth/verify-email')).toHaveLength(0);
+  });
+
+  it('sendOtp calls resend-verification endpoint and returns message', async () => {
+    stubRoute('POST', '/api/auth/resend-verification', { message: 'ส่งรหัส OTP แล้ว' });
+    const { auth } = buildServiceWithApiFail();
+
+    const result = await auth.sendOtp('user@example.com');
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toBe('ส่งรหัส OTP แล้ว');
+    const resendCall = requests.find((r) => r.path === '/api/auth/resend-verification');
+    expect(resendCall?.body).toContain('user@example.com');
+  });
 });
 
 describe('AuthService reloads cart wishlist after sign-in AC17', () => {
@@ -636,5 +678,155 @@ describe('AuthService multi-role permissions (multi-role-permissions v1 AC-14/AC
     expect(auth.roles()).toEqual(['buyer', 'seller']);
     expect(auth.isSeller()).toBe(true);
     expect(auth.isAdmin()).toBe(false);
+  });
+
+  describe('registration-onboarding v1 (AC-14, AC-18)', () => {
+    it('resolvePostAuthRedirect returns /auth/login when no session exists', () => {
+      const auth = buildService();
+      expect(auth.resolvePostAuthRedirect('/marketplace')).toBe('/auth/login');
+    });
+
+    it('resolvePostAuthRedirect returns /onboarding/role when user has not completed onboarding, ignoring returnUrl and roles', async () => {
+      stubRoute(
+        'POST',
+        '/api/auth/login',
+        loginBody({
+          user: {
+            id: 'u-1',
+            displayName: 'Admin User',
+            email: 'admin@example.com',
+            role: 'admin',
+            roles: ['buyer', 'admin'],
+            onboardingCompletedAt: null,
+          },
+        }),
+      );
+      const auth = buildService();
+      await auth.signIn('admin@example.com', 'secret123');
+
+      expect(auth.resolvePostAuthRedirect('/cart')).toBe('/onboarding/role');
+      expect(auth.resolvePostAuthRedirect('/')).toBe('/onboarding/role');
+    });
+
+    it('resolvePostAuthRedirect respects returnUrl when onboarding is completed', async () => {
+      stubRoute(
+        'POST',
+        '/api/auth/login',
+        loginBody({
+          user: {
+            id: 'u-1',
+            displayName: 'Buyer',
+            email: 'b@example.com',
+            role: 'buyer',
+            roles: ['buyer'],
+            onboardingCompletedAt: '2026-09-11T10:00:00Z',
+          },
+        }),
+      );
+      const auth = buildService();
+      await auth.signIn('b@example.com', 'secret123');
+
+      expect(auth.resolvePostAuthRedirect('/cart')).toBe('/cart');
+    });
+
+    it('resolvePostAuthRedirect routes completed admin to /admin/dashboard when returnUrl is /', async () => {
+      stubRoute(
+        'POST',
+        '/api/auth/login',
+        loginBody({
+          user: {
+            id: 'u-1',
+            displayName: 'Admin',
+            email: 'a@example.com',
+            role: 'admin',
+            roles: ['buyer', 'admin'],
+            onboardingCompletedAt: '2026-09-11T10:00:00Z',
+          },
+        }),
+      );
+      const auth = buildService();
+      await auth.signIn('a@example.com', 'secret123');
+
+      expect(auth.resolvePostAuthRedirect('/')).toBe('/admin/dashboard');
+    });
+
+    it('resolvePostAuthRedirect routes completed seller to /seller/dashboard when returnUrl is /', async () => {
+      stubRoute(
+        'POST',
+        '/api/auth/login',
+        loginBody({
+          user: {
+            id: 'u-1',
+            displayName: 'Seller',
+            email: 's@example.com',
+            role: 'seller',
+            roles: ['buyer', 'seller'],
+            onboardingCompletedAt: '2026-09-11T10:00:00Z',
+          },
+        }),
+      );
+      const auth = buildService();
+      await auth.signIn('s@example.com', 'secret123');
+
+      expect(auth.resolvePostAuthRedirect('/')).toBe('/seller/dashboard');
+    });
+
+    it('resolvePostAuthRedirect routes completed buyer to / when returnUrl is /', async () => {
+      stubRoute(
+        'POST',
+        '/api/auth/login',
+        loginBody({
+          user: {
+            id: 'u-1',
+            displayName: 'Buyer',
+            email: 'b@example.com',
+            role: 'buyer',
+            roles: ['buyer'],
+            onboardingCompletedAt: '2026-09-11T10:00:00Z',
+          },
+        }),
+      );
+      const auth = buildService();
+      await auth.signIn('b@example.com', 'secret123');
+
+      expect(auth.resolvePostAuthRedirect('/')).toBe('/');
+    });
+
+    it('register enforces 8+ chars and uppercase/lowercase/digit password policy', async () => {
+      const auth = buildService();
+
+      // < 8 chars
+      let r = await auth.register({
+        name: 'Test',
+        email: 'test@example.com',
+        password: 'Pass1',
+        confirmPassword: 'Pass1',
+        acceptTerms: true,
+      });
+      expect(r.ok).toBe(false);
+      expect(r.error).toContain('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+
+      // missing uppercase
+      r = await auth.register({
+        name: 'Test',
+        email: 'test@example.com',
+        password: 'password123',
+        confirmPassword: 'password123',
+        acceptTerms: true,
+      });
+      expect(r.ok).toBe(false);
+      expect(r.error).toContain('ประกอบด้วยตัวพิมพ์ใหญ่');
+
+      // missing digit
+      r = await auth.register({
+        name: 'Test',
+        email: 'test@example.com',
+        password: 'PasswordXYZ',
+        confirmPassword: 'PasswordXYZ',
+        acceptTerms: true,
+      });
+      expect(r.ok).toBe(false);
+      expect(r.error).toContain('และตัวเลขอย่างน้อยอย่างละ 1 ตัว');
+    });
   });
 });

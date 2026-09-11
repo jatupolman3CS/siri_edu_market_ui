@@ -525,6 +525,7 @@ export interface User {
    * A seller keeps buying rights; an admin does not automatically gain seller rights.
    */
   roles: UserRole[];
+  onboardingCompletedAt: string | null;
   joinedAt: string;
 }
 

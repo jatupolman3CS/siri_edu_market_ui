@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { resolveAvatarUrl } from '../../../core/brand-assets';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { resolveAvatarUrl, resolveCoverUrl } from '../../../core/brand-assets';
 import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -11,7 +12,10 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 
 type ReviewRow = {
   id: string;
+  documentId?: string;
   docTitle: string;
+  documentCoverUrl?: string | null;
+  documentSlug?: string | null;
   buyerName: string;
   buyerAvatar: string;
   rating: number;
@@ -39,6 +43,7 @@ type ReviewRow = {
 })
 export class SellerReviewsPage {
   readonly seller = inject(SellerService);
+  private readonly message = inject(NzMessageService);
 
   readonly items = signal<ReviewRow[]>([]);
   readonly statsRows = signal<ReviewRow[] | null>(null);
@@ -46,6 +51,10 @@ export class SellerReviewsPage {
   readonly page = signal<number>(1);
   readonly pageSize = signal<number>(20);
   readonly totalCount = signal<number>(0);
+
+  readonly replyingReviewId = signal<string | null>(null);
+  readonly replyDraft = signal<string>('');
+  readonly replySubmitting = signal<boolean>(false);
 
   /** Aggregates from all reviews (up to 100), avoiding pagination-based statistical fluctuations. */
   readonly reviewStats = computed(() => {
@@ -88,7 +97,10 @@ export class SellerReviewsPage {
       const paged = await this.seller.loadReviewsPaged(this.page(), this.pageSize());
       const list: ReviewRow[] = paged.items.map((r) => ({
         id: r.id,
+        documentId: r.documentId,
         docTitle: r.documentTitle,
+        documentCoverUrl: resolveCoverUrl(r.documentCoverUrl),
+        documentSlug: r.documentSlug,
         buyerName: r.buyerName,
         buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
         rating: r.rating,
@@ -112,7 +124,10 @@ export class SellerReviewsPage {
       const all = await this.seller.loadReviews(1, 100);
       const list: ReviewRow[] = all.map((r) => ({
         id: r.id,
+        documentId: r.documentId,
         docTitle: r.documentTitle,
+        documentCoverUrl: resolveCoverUrl(r.documentCoverUrl),
+        documentSlug: r.documentSlug,
         buyerName: r.buyerName,
         buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
         rating: r.rating,
@@ -124,6 +139,53 @@ export class SellerReviewsPage {
       this.statsRows.set(list);
     } catch {
       // Best-effort; falls back to current page items
+    }
+  }
+
+  startReply(r: ReviewRow): void {
+    this.replyingReviewId.set(r.id);
+    this.replyDraft.set(r.sellerReplyText ?? '');
+  }
+
+  cancelReply(): void {
+    this.replyingReviewId.set(null);
+    this.replyDraft.set('');
+  }
+
+  async submitReply(reviewId: string): Promise<void> {
+    const text = this.replyDraft().trim();
+    if (!text) {
+      this.message.warning('กรุณาระบุข้อความตอบกลับ');
+      return;
+    }
+    this.replySubmitting.set(true);
+    try {
+      const updated = await this.seller.replyToReview(reviewId, text);
+      if (updated) {
+        this.items.update((list) =>
+          list.map((row) =>
+            row.id === reviewId
+              ? { ...row, sellerReplyText: updated.sellerReplyText, sellerRepliedAt: updated.sellerRepliedAt }
+              : row
+          )
+        );
+        this.statsRows.update((list) =>
+          list
+            ? list.map((row) =>
+                row.id === reviewId
+                  ? { ...row, sellerReplyText: updated.sellerReplyText, sellerRepliedAt: updated.sellerRepliedAt }
+                  : row
+              )
+            : null
+        );
+        this.message.success('ตอบกลับรีวิวสำเร็จ');
+        this.replyingReviewId.set(null);
+        this.replyDraft.set('');
+      }
+    } catch {
+      this.message.error('ไม่สามารถตอบกลับรีวิวได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      this.replySubmitting.set(false);
     }
   }
 

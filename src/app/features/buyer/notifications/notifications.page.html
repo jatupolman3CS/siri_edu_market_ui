@@ -18,6 +18,7 @@
   } @else {
     <ul class="flex flex-col gap-3">
       @for (item of feed.items(); track item.id) {
+        @let style = getStyle(item.key, item.title);
         <li>
           <button
             type="button"
@@ -30,16 +31,21 @@
           >
             <div
               class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
-              [class]="!item.isRead ? 'bg-pink-500 text-white shadow-soft' : 'bg-pink-100 text-pink-500'"
+              [class]="!item.isRead ? style.iconUnreadBgClass : style.iconBgClass"
             >
-              <app-icon name="bell" [size]="18" />
+              <app-icon [name]="style.icon" [size]="18" />
             </div>
 
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <p class="text-sm md:text-base text-ink leading-snug" [class.font-bold]="!item.isRead" [class.font-semibold]="item.isRead">
-                  {{ item.title }}
-                </p>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-xs font-bold px-2 py-0.5 rounded leading-none shrink-0" [class]="style.badgeClass">
+                    {{ style.label }}
+                  </span>
+                  <p class="text-sm md:text-base text-ink leading-snug truncate" [class.font-bold]="!item.isRead" [class.font-semibold]="item.isRead">
+                    {{ item.title }}
+                  </p>
+                </div>
                 @if (!item.isRead) {
                   <span class="pill-pink text-[10px] !py-0.5 !px-2 flex-shrink-0">
                     ใหม่
@@ -47,7 +53,7 @@
                 }
               </div>
 
-              <p class="text-xs md:text-sm text-ink-soft mt-1 leading-relaxed">{{ item.body }}</p>
+              <p class="text-xs md:text-sm text-ink-soft mt-1.5 leading-relaxed whitespace-pre-wrap">{{ item.body }}</p>
 
               <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-line/50">
                 <span class="text-xs text-ink-muted flex items-center gap-1">

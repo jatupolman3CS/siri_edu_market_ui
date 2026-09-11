@@ -21,9 +21,13 @@ type AdminDocumentRow = AdminDocumentListItem & {
   id: string;
   status: string;
   openReportCount: number;
+  rating: number;
+  reviewCount: number;
+  downloadCount: number;
 };
 import { unwrapSdkResult } from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { DecimalPipe } from '@angular/common';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -35,6 +39,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   imports: [
     FormsModule,
     RouterLink,
+    DecimalPipe,
     NzCheckboxModule,
     IconComponent,
     PaginationComponent,
@@ -136,6 +141,9 @@ export class AdminDocumentsPage {
             id: i.id ?? '',
             status: i.status ?? '',
             openReportCount: i.openReportCount ?? 0,
+            rating: i.rating ?? 0,
+            reviewCount: i.reviewCount ?? 0,
+            downloadCount: i.downloadCount ?? 0,
           }),
         ),
       );

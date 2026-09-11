@@ -184,9 +184,12 @@ export function resolveDownloadUrl(
   url: string | null | undefined,
   token?: string | null,
   filename?: string | null,
+  inline?: boolean,
 ): string {
   const resolved = resolvePublicUrl(url);
   if (!resolved) return '';
+
+  const devRole = _devRoleGetter?.();
 
   try {
     const parsed = new URL(resolved, typeof window !== 'undefined' ? window.location?.origin : undefined);
@@ -195,6 +198,12 @@ export function resolveDownloadUrl(
     }
     if (filename && !parsed.searchParams.has('filename')) {
       parsed.searchParams.set('filename', filename);
+    }
+    if (inline && !parsed.searchParams.has('inline')) {
+      parsed.searchParams.set('inline', 'true');
+    }
+    if (devRole && !parsed.searchParams.has('devRole')) {
+      parsed.searchParams.set('devRole', devRole);
     }
     return parsed.toString();
   } catch {
@@ -205,6 +214,12 @@ export function resolveDownloadUrl(
     }
     if (filename && !result.includes('filename=')) {
       params.push(`filename=${encodeURIComponent(filename)}`);
+    }
+    if (inline && !result.includes('inline=')) {
+      params.push('inline=true');
+    }
+    if (devRole && !result.includes('devRole=')) {
+      params.push(`devRole=${encodeURIComponent(devRole)}`);
     }
     if (params.length > 0) {
       result += (result.includes('?') ? '&' : '?') + params.join('&');

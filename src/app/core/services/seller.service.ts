@@ -29,6 +29,7 @@ import {
   postApiSellerDocumentsAutofillSuggestion,
   postApiSellerDocumentsByIdAutofillSuggestion,
   postApiSellerPayouts,
+  postApiSellerReviewsByReviewIdReply,
   postApiSellerQnaByQuestionIdAnswer,
   postApiSellerQnaByQuestionIdDraftAnswer,
   postApiSellerStoreSections,
@@ -41,6 +42,7 @@ import type {
   SaveStoreSectionRequest,
   SellerAutofillResponse,
   SellerDocumentResponse,
+  SellerReviewResponse,
   StoreSectionResponse,
   SellerEarningsResponse,
   UploadResponse,
@@ -70,7 +72,10 @@ export interface SellerPayoutRow {
 
 export type SellerReviewRow = {
   id: string;
+  documentId?: string;
   documentTitle: string;
+  documentCoverUrl?: string | null;
+  documentSlug?: string | null;
   buyerName: string;
   buyerAvatarUrl: string;
   rating: number;
@@ -501,7 +506,10 @@ export class SellerService {
       return {
         items: (data.items ?? []).map((r) => ({
           id: r.id ?? '',
+          documentId: r.documentId,
           documentTitle: r.documentTitle ?? '',
+          documentCoverUrl: r.documentCoverUrl,
+          documentSlug: r.documentSlug,
           buyerName: r.buyerName ?? '',
           buyerAvatarUrl: r.buyerAvatarUrl ?? '',
           rating: r.rating ?? 0,
@@ -518,6 +526,33 @@ export class SellerService {
     } catch (e) {
       this.handleSellerScopedError('โหลดรีวิวลูกค้า', e);
       return { items: [], totalCount: 0, page, pageSize, totalPages: 0 };
+    }
+  }
+
+  async replyToReview(reviewId: string, replyText: string): Promise<SellerReviewRow | null> {
+    try {
+      const result = await postApiSellerReviewsByReviewIdReply({
+        path: { reviewId },
+        body: { replyText: replyText.trim() },
+      });
+      const r = unwrapSdkResult(result as SdkResult<SellerReviewResponse>);
+      return {
+        id: r.id ?? '',
+        documentId: r.documentId,
+        documentTitle: r.documentTitle ?? '',
+        documentCoverUrl: r.documentCoverUrl,
+        documentSlug: r.documentSlug,
+        buyerName: r.buyerName ?? '',
+        buyerAvatarUrl: r.buyerAvatarUrl ?? '',
+        rating: r.rating ?? 0,
+        comment: r.comment ?? '',
+        createdAt: r.createdAt ?? '',
+        sellerReplyText: r.sellerReplyText,
+        sellerRepliedAt: r.sellerRepliedAt,
+      };
+    } catch (e) {
+      this.handleSellerScopedError('ตอบกลับรีวิวลูกค้า', e);
+      throw e;
     }
   }
 

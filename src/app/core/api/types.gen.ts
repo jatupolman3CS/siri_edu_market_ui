@@ -125,6 +125,9 @@ export type AdminDocumentListItemResponse = {
   isFeatured?: boolean;
   isFree?: boolean;
   openReportCount?: number;
+  rating?: number;
+  reviewCount?: number;
+  downloadCount?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -323,6 +326,7 @@ export type AuthUserResponse = {
   isEmailVerified: boolean;
   role: string;
   roles: Array<string>;
+  onboardingCompletedAt?: string | null;
 };
 
 export type BundleDetailResponse = {
@@ -560,6 +564,7 @@ export type ExamHubPageResponse = {
 export type ExternalLoginRequest = {
   authorizationCode: string;
   redirectUri?: string | null;
+  acceptTerms?: boolean;
 };
 
 export type ForgotPasswordRequest = {
@@ -618,7 +623,7 @@ export type LoginRequest = {
 };
 
 export type LogoutRequest = {
-  refreshToken: string;
+  refreshToken?: string;
 };
 
 export type LoyaltyEntryResponse = {
@@ -710,6 +715,7 @@ export type MarketplaceDocumentResponse = {
   slug?: string;
   title?: string;
   shortDescription?: string;
+  sellerId?: string;
   sellerName?: string;
   price?: number;
   originalPrice?: number | null;
@@ -762,6 +768,11 @@ export type NotificationSettingResponse = {
   key?: string;
   label?: string;
   isEnabled?: boolean;
+};
+
+export type OnboardingStatusResponse = {
+  isCompleted: boolean;
+  interestCategoryIds: Array<string>;
 };
 
 export type OrderItemResponse = {
@@ -1079,7 +1090,7 @@ export type ReferralSummaryResponse = {
 };
 
 export type RefreshTokenRequest = {
-  refreshToken: string;
+  refreshToken?: string;
 };
 
 export type RefundOrderResponse = {
@@ -1095,6 +1106,7 @@ export type RegisterRequest = {
   password: string;
   confirmPassword: string;
   displayName: string;
+  acceptTerms?: boolean;
 };
 
 export type RejectDocumentRequest = {
@@ -1103,6 +1115,10 @@ export type RejectDocumentRequest = {
 
 export type RejectSellerApplicationRequest = {
   reason: string;
+};
+
+export type ReplyReviewRequest = {
+  replyText?: string;
 };
 
 export type RequestPayoutRequest = {
@@ -1401,6 +1417,8 @@ export type SellerReviewResponse = {
   id?: string;
   documentId?: string;
   documentTitle?: string;
+  documentCoverUrl?: string | null;
+  documentSlug?: string | null;
   buyerName?: string;
   buyerAvatarUrl?: string | null;
   rating?: number;
@@ -1430,6 +1448,10 @@ export type SellerTrafficBreakdownResponse = {
   searchPercent?: number;
   categoryPercent?: number;
   directPercent?: number;
+};
+
+export type SendOtpRequest = {
+  email: string;
 };
 
 export type ServiceStatusItem = {
@@ -1654,6 +1676,10 @@ export type UpdateExamHubPageRequest = {
   trendInfo?: string | null;
 };
 
+export type UpdateInterestsRequest = {
+  categoryIds: Array<string>;
+};
+
 export type UpdateLibraryReadStatusRequest = {
   isRead?: boolean;
 };
@@ -1721,11 +1747,19 @@ export type UserProfileResponse = {
   roles?: Array<string>;
   joinedAt?: string;
   isEmailVerified?: boolean;
+  onboardingCompletedAt?: string | null;
   sellerProfile?: SellerProfileSummary | null;
 };
 
 export type VerifyEmailRequest = {
-  token: string;
+  token?: string;
+  email?: string | null;
+  otp?: string | null;
+};
+
+export type VerifyOtpRequest = {
+  email: string;
+  otp: string;
 };
 
 export type WishlistItemResponse = {
@@ -2936,7 +2970,7 @@ export type PostApiAuthLoginResponses = {
 export type PostApiAuthLoginResponse = PostApiAuthLoginResponses[keyof PostApiAuthLoginResponses];
 
 export type PostApiAuthRefreshData = {
-  body: RefreshTokenRequest;
+  body?: RefreshTokenRequest | null;
   path?: never;
   query?: never;
   url: '/api/auth/refresh';
@@ -2965,8 +2999,39 @@ export type PostApiAuthRefreshResponses = {
 export type PostApiAuthRefreshResponse =
   PostApiAuthRefreshResponses[keyof PostApiAuthRefreshResponses];
 
+export type PostApiAuthRefreshTokenData = {
+  body?: RefreshTokenRequest | null;
+  path?: never;
+  query?: never;
+  url: '/api/auth/refresh-token';
+};
+
+export type PostApiAuthRefreshTokenErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PostApiAuthRefreshTokenError =
+  PostApiAuthRefreshTokenErrors[keyof PostApiAuthRefreshTokenErrors];
+
+export type PostApiAuthRefreshTokenResponses = {
+  /**
+   * OK
+   */
+  200: AuthSessionResponse;
+};
+
+export type PostApiAuthRefreshTokenResponse =
+  PostApiAuthRefreshTokenResponses[keyof PostApiAuthRefreshTokenResponses];
+
 export type PostApiAuthLogoutData = {
-  body: LogoutRequest;
+  body?: LogoutRequest | null;
   path?: never;
   query?: never;
   url: '/api/auth/logout';
@@ -3008,6 +3073,59 @@ export type PostApiAuthVerifyEmailResponses = {
 
 export type PostApiAuthVerifyEmailResponse =
   PostApiAuthVerifyEmailResponses[keyof PostApiAuthVerifyEmailResponses];
+
+export type PostApiAuthSendOtpData = {
+  body: SendOtpRequest;
+  path?: never;
+  query?: never;
+  url: '/api/auth/send-otp';
+};
+
+export type PostApiAuthSendOtpErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type PostApiAuthSendOtpError = PostApiAuthSendOtpErrors[keyof PostApiAuthSendOtpErrors];
+
+export type PostApiAuthSendOtpResponses = {
+  /**
+   * OK
+   */
+  200: AuthActionResponse;
+};
+
+export type PostApiAuthSendOtpResponse =
+  PostApiAuthSendOtpResponses[keyof PostApiAuthSendOtpResponses];
+
+export type PostApiAuthVerifyOtpData = {
+  body: VerifyOtpRequest;
+  path?: never;
+  query?: never;
+  url: '/api/auth/verify-otp';
+};
+
+export type PostApiAuthVerifyOtpErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type PostApiAuthVerifyOtpError =
+  PostApiAuthVerifyOtpErrors[keyof PostApiAuthVerifyOtpErrors];
+
+export type PostApiAuthVerifyOtpResponses = {
+  /**
+   * OK
+   */
+  200: AuthSessionResponse;
+};
+
+export type PostApiAuthVerifyOtpResponse =
+  PostApiAuthVerifyOtpResponses[keyof PostApiAuthVerifyOtpResponses];
 
 export type PostApiAuthResendVerificationData = {
   body: ResendVerificationEmailRequest;
@@ -3652,7 +3770,11 @@ export type GetApiFilesDownloadByKeyData = {
   path: {
     key: string;
   };
-  query?: never;
+  query?: {
+    token?: string;
+    filename?: string;
+    inline?: boolean;
+  };
   url: '/api/files/download/{key}';
 };
 
@@ -3673,6 +3795,7 @@ export type GetApiFilesPresignedByKeyData = {
   };
   query?: {
     expiresSeconds?: number;
+    inline?: boolean;
   };
   url: '/api/files/presigned/{key}';
 };
@@ -4861,6 +4984,90 @@ export type GetApiMeSubscriptionAccessHistoryResponses = {
 export type GetApiMeSubscriptionAccessHistoryResponse =
   GetApiMeSubscriptionAccessHistoryResponses[keyof GetApiMeSubscriptionAccessHistoryResponses];
 
+export type GetApiMeOnboardingData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/onboarding';
+};
+
+export type GetApiMeOnboardingErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeOnboardingError = GetApiMeOnboardingErrors[keyof GetApiMeOnboardingErrors];
+
+export type GetApiMeOnboardingResponses = {
+  /**
+   * OK
+   */
+  200: OnboardingStatusResponse;
+};
+
+export type GetApiMeOnboardingResponse =
+  GetApiMeOnboardingResponses[keyof GetApiMeOnboardingResponses];
+
+export type PutApiMeOnboardingInterestsData = {
+  body: UpdateInterestsRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/onboarding/interests';
+};
+
+export type PutApiMeOnboardingInterestsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PutApiMeOnboardingInterestsError =
+  PutApiMeOnboardingInterestsErrors[keyof PutApiMeOnboardingInterestsErrors];
+
+export type PutApiMeOnboardingInterestsResponses = {
+  /**
+   * OK
+   */
+  200: OnboardingStatusResponse;
+};
+
+export type PutApiMeOnboardingInterestsResponse =
+  PutApiMeOnboardingInterestsResponses[keyof PutApiMeOnboardingInterestsResponses];
+
+export type PostApiMeOnboardingSkipData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/onboarding/skip';
+};
+
+export type PostApiMeOnboardingSkipErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PostApiMeOnboardingSkipError =
+  PostApiMeOnboardingSkipErrors[keyof PostApiMeOnboardingSkipErrors];
+
+export type PostApiMeOnboardingSkipResponses = {
+  /**
+   * OK
+   */
+  200: OnboardingStatusResponse;
+};
+
+export type PostApiMeOnboardingSkipResponse =
+  PostApiMeOnboardingSkipResponses[keyof PostApiMeOnboardingSkipResponses];
+
 export type GetApiNotificationsSettingsData = {
   body?: never;
   path?: never;
@@ -5796,6 +6003,39 @@ export type GetApiSellerReviewsResponses = {
 export type GetApiSellerReviewsResponse =
   GetApiSellerReviewsResponses[keyof GetApiSellerReviewsResponses];
 
+export type PostApiSellerReviewsByReviewIdReplyData = {
+  body: ReplyReviewRequest;
+  path: {
+    reviewId: string;
+  };
+  query?: never;
+  url: '/api/seller/reviews/{reviewId}/reply';
+};
+
+export type PostApiSellerReviewsByReviewIdReplyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiSellerReviewsByReviewIdReplyError =
+  PostApiSellerReviewsByReviewIdReplyErrors[keyof PostApiSellerReviewsByReviewIdReplyErrors];
+
+export type PostApiSellerReviewsByReviewIdReplyResponses = {
+  /**
+   * OK
+   */
+  200: SellerReviewResponse;
+};
+
+export type PostApiSellerReviewsByReviewIdReplyResponse =
+  PostApiSellerReviewsByReviewIdReplyResponses[keyof PostApiSellerReviewsByReviewIdReplyResponses];
+
 export type GetApiSellerPayoutAccountData = {
   body?: never;
   path?: never;
@@ -6382,16 +6622,6 @@ export type GetApiSellersBySellerIdFollowData = {
   url: '/api/sellers/{sellerId}/follow';
 };
 
-export type GetApiSellersBySellerIdFollowErrors = {
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails;
-};
-
-export type GetApiSellersBySellerIdFollowError =
-  GetApiSellersBySellerIdFollowErrors[keyof GetApiSellersBySellerIdFollowErrors];
-
 export type GetApiSellersBySellerIdFollowResponses = {
   /**
    * OK
@@ -6412,6 +6642,10 @@ export type PostApiSellersBySellerIdFollowData = {
 };
 
 export type PostApiSellersBySellerIdFollowErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
   /**
    * Unauthorized
    */

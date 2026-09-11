@@ -65,14 +65,51 @@
         <ul class="flex flex-col gap-4">
           @for (rv of items(); track rv.id) {
             <li class="card-soft p-5">
+              <!-- Document Context Header -->
+              <div class="mb-3.5 pb-3 border-b border-line flex items-center justify-between gap-3">
+                <a
+                  [routerLink]="['/document', rv.documentSlug || rv.documentId || rv.id]"
+                  class="flex items-center gap-2.5 min-w-0 group"
+                >
+                  @if (rv.documentCoverUrl) {
+                    <img
+                      appImgFallback
+                      [src]="rv.documentCoverUrl"
+                      [alt]="rv.docTitle"
+                      class="w-8 h-10 rounded object-cover border border-line flex-shrink-0 group-hover:opacity-90 transition-opacity"
+                    />
+                  } @else {
+                    <div class="w-8 h-10 rounded bg-pink-50 border border-pink-100 flex items-center justify-center flex-shrink-0 text-pink-600">
+                      <app-icon name="doc" [size]="16" />
+                    </div>
+                  }
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-medium text-ink-muted flex items-center gap-1">
+                      <span>เอกสารที่รีวิว:</span>
+                    </div>
+                    <div class="text-xs font-bold text-ink group-hover:text-pink-600 transition-colors truncate">
+                      {{ rv.docTitle }}
+                    </div>
+                  </div>
+                </a>
+                <a
+                  [routerLink]="['/document', rv.documentSlug || rv.documentId || rv.id]"
+                  class="text-[11px] font-semibold text-pink-600 hover:text-pink-700 flex items-center gap-1 flex-shrink-0"
+                >
+                  <span>ดูเอกสาร</span>
+                  <app-icon name="arrow-right" [size]="12" />
+                </a>
+              </div>
+
+              <!-- Buyer Review Body -->
               <div class="flex items-start gap-4">
                 <img
                   appImgFallback
                   [src]="rv.buyerAvatar"
                   [alt]="rv.buyerName"
-                  class="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                  class="w-11 h-11 rounded-full object-cover flex-shrink-0 border border-line"
                 />
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between mb-2 gap-3">
                     <div>
                       <div class="text-sm font-bold text-ink">{{ rv.buyerName }}</div>
@@ -81,15 +118,86 @@
                         <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
                       </div>
                     </div>
-                    <span class="pill-soft text-[10px]">
-                      <app-icon name="doc" [size]="10" />
-                      {{ rv.docTitle }}
-                    </span>
                   </div>
-                  <p class="text-sm text-ink-soft leading-relaxed mb-3">{{ rv.comment }}</p>
-                  <button type="button" class="text-xs text-pink-600 font-bold hover:underline">
-                    ตอบกลับรีวิว →
-                  </button>
+                  <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-wrap">{{ rv.comment }}</p>
+
+                  <!-- Existing Seller Reply -->
+                  @if (rv.sellerReplyText && replyingReviewId() !== rv.id) {
+                    <div class="mt-3.5 p-3.5 rounded-xl bg-pink-50/70 border border-pink-100 flex flex-col gap-1.5">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                          <span class="text-[11px] font-bold text-pink-700 bg-pink-100 px-2 py-0.5 rounded-md">คำตอบจากผู้ขาย</span>
+                          @if (rv.sellerRepliedAt) {
+                            <span class="text-[11px] text-ink-muted">{{ rv.sellerRepliedAt | timeAgo }}</span>
+                          }
+                        </div>
+                        <button
+                          type="button"
+                          (click)="startReply(rv)"
+                          class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1"
+                        >
+                          <app-icon name="edit" [size]="12" />
+                          <span>แก้ไข</span>
+                        </button>
+                      </div>
+                      <p class="text-xs sm:text-sm text-ink-soft whitespace-pre-wrap leading-relaxed">{{ rv.sellerReplyText }}</p>
+                    </div>
+                  }
+
+                  <!-- Reply Editor Box -->
+                  @if (replyingReviewId() === rv.id) {
+                    <div class="mt-3.5 p-4 rounded-xl bg-slate-50 border border-line flex flex-col gap-2.5">
+                      <div class="text-xs font-bold text-ink flex items-center justify-between">
+                        <span>{{ rv.sellerReplyText ? 'แก้ไขคำตอบกลับของคุณ' : 'ตอบกลับรีวิวลูกค้า' }}</span>
+                        <span class="text-[11px] font-normal text-ink-muted">ผู้ซื้อจะได้รับการแจ้งเตือน</span>
+                      </div>
+                      <textarea
+                        rows="3"
+                        class="w-full text-sm p-3 rounded-xl border border-line focus:ring-2 focus:ring-pink-500 focus:outline-none bg-white resize-none"
+                        placeholder="พิมพ์คำตอบกลับของคุณถึงลูกค้า (เช่น ขอบคุณสำหรับคำติชมและรีวิวนะครับ...)"
+                        [value]="replyDraft()"
+                        (input)="replyDraft.set($any($event.target).value)"
+                        [disabled]="replySubmitting()"
+                      ></textarea>
+                      <div class="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          (click)="cancelReply()"
+                          class="px-3 py-1.5 rounded-lg text-xs font-semibold text-ink-soft hover:bg-slate-200 transition-colors"
+                          [disabled]="replySubmitting()"
+                        >
+                          ยกเลิก
+                        </button>
+                        <button
+                          type="button"
+                          (click)="submitReply(rv.id)"
+                          class="btn-pink text-xs px-4 py-1.5 flex items-center gap-1.5"
+                          [disabled]="replySubmitting() || !replyDraft().trim()"
+                        >
+                          @if (replySubmitting()) {
+                            <span>กำลังส่ง...</span>
+                          } @else {
+                            <app-icon name="check" [size]="14" />
+                            <span>{{ rv.sellerReplyText ? 'บันทึกการแก้ไข' : 'ส่งคำตอบกลับ' }}</span>
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Not Replied Yet -->
+                  @if (!rv.sellerReplyText && replyingReviewId() !== rv.id) {
+                    <div class="mt-3">
+                      <button
+                        type="button"
+                        (click)="startReply(rv)"
+                        class="text-xs text-pink-600 font-bold hover:underline flex items-center gap-1"
+                      >
+                        <app-icon name="mail" [size]="13" />
+                        <span>ตอบกลับรีวิวลูกค้า →</span>
+                      </button>
+                    </div>
+                  }
                 </div>
               </div>
             </li>

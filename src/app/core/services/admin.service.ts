@@ -859,9 +859,12 @@ export class AdminService {
    * Bearer token via the interceptor, and the resulting URL is presigned so opening it
    * afterwards needs no auth header at all.
    */
-  async getFileDownloadUrl(key: string): Promise<string | null> {
+  async getFileDownloadUrl(key: string, inline: boolean = false): Promise<string | null> {
     try {
-      const result = await getApiFilesPresignedByKey({ path: { key } });
+      const result = await getApiFilesPresignedByKey({
+        path: { key },
+        query: inline ? { inline } : undefined,
+      });
       const data = unwrapSdkResult(result) as { url?: string } | undefined;
       return data?.url ?? null;
     } catch (e) {

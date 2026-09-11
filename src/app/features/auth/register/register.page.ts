@@ -105,7 +105,7 @@ export class AuthRegisterPage {
         this.error.set(r.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
         return;
       }
-      this.router.navigateByUrl(this.returnUrl());
+      this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
     })();
   }
 }

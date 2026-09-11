@@ -203,19 +203,39 @@ export class AdminApprovalPage {
     return !!storageKey?.trim();
   }
 
+  async openSaleFile(): Promise<void> {
+    const key = this.previewDetail()?.fileStorageKey?.trim();
+    if (!key) return;
+    const rawUrl = await this.admin.getFileDownloadUrl(key, true);
+    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}?inline=true`;
+    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
+    if (url) window.open(url, '_blank', 'noopener');
+  }
+
   async downloadSaleFile(): Promise<void> {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key);
-    const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
+    const rawUrl = await this.admin.getFileDownloadUrl(key, false);
+    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}`;
+    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
+    if (url) window.open(url, '_blank', 'noopener');
+  }
+
+  async openMainFile(storageKey: string | null | undefined): Promise<void> {
+    const key = storageKey?.trim();
+    if (!key) return;
+    const rawUrl = await this.admin.getFileDownloadUrl(key, true);
+    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}?inline=true`;
+    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
     if (url) window.open(url, '_blank', 'noopener');
   }
 
   async downloadMainFile(storageKey: string | null | undefined): Promise<void> {
     const key = storageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key);
-    const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
+    const rawUrl = await this.admin.getFileDownloadUrl(key, false);
+    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}`;
+    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
     if (url) window.open(url, '_blank', 'noopener');
   }
 

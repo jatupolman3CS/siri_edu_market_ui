@@ -121,6 +121,20 @@ export class AuthService {
    */
   readonly isSeller = computed(() => this.roles().includes('seller'));
 
+  /**
+   * registration-onboarding v1 §4.3: decides post-authentication destination based on
+   * onboarding status and roles.
+   */
+  resolvePostAuthRedirect(returnUrl: string): string {
+    const user = this._session()?.user;
+    if (!user) return '/auth/login';
+    if (!user.onboardingCompletedAt) return '/onboarding/role';
+    if (returnUrl && returnUrl !== '/') return returnUrl;
+    if (user.roles.includes('admin')) return '/admin/dashboard';
+    if (user.roles.includes('seller')) return '/seller/dashboard';
+    return '/';
+  }
+
   constructor() {
     if (typeof localStorage === 'undefined') return;
     
@@ -236,14 +250,15 @@ export class AuthService {
       const res = unwrapSdkResult(result);
       this.setAccessToken(res.accessToken);
       this.setRefreshToken(res.refreshToken ?? null);
-      const role = this.normalizeRole((res.user as { role?: string }).role);
+      const role = this.normalizeRole(res.user.role);
       const user: User = {
         id: res.user.id,
         name: res.user.displayName,
         email: res.user.email,
         avatar: '',
         role,
-        roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+        roles: this.normalizeRoles(res.user.roles, role),
+        onboardingCompletedAt: res.user.onboardingCompletedAt ?? null,
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -272,8 +287,13 @@ export class AuthService {
     if (!this.isValidEmail(input.email)) {
       return { ok: false, error: 'อีเมลไม่ถูกต้อง' };
     }
-    if (input.password.length < 6) {
-      return { ok: false, error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
+    const passwordPolicyPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    if (input.password.length < 8 || !passwordPolicyPattern.test(input.password)) {
+      return {
+        ok: false,
+        error:
+          'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลขอย่างน้อยอย่างละ 1 ตัว',
+      };
     }
     if (input.password !== input.confirmPassword) {
       return { ok: false, error: 'รหัสผ่านยืนยันไม่ตรงกัน' };
@@ -285,6 +305,7 @@ export class AuthService {
           password: input.password,
           confirmPassword: input.confirmPassword,
           displayName: input.name,
+          acceptTerms: input.acceptTerms,
         },
       });
       // D-06: the backend now says whether the verification email actually went out. Registering
@@ -307,27 +328,36 @@ export class AuthService {
   }
 
   /**
-   * Verify email with opaque token from the verification email link, or the dev 6-digit code
-   * if the backend accepts it. On success stores JWT + session (same shape as login).
+   * Verify email with opaque token from the verification email link, or the 6-digit OTP code.
+   * On success stores JWT + session (same shape as login).
    */
-  async verifyEmail(tokenOrCode: string): Promise<{ ok: boolean; error?: string }> {
+  async verifyEmail(tokenOrCode: string, email?: string): Promise<{ ok: boolean; error?: string }> {
     const trimmed = (tokenOrCode ?? '').trim();
     if (!trimmed) {
       return { ok: false, error: 'กรุณากรอกรหัสยืนยัน' };
     }
+    const targetEmail = email?.trim() || this._pending()?.email;
     try {
-      const result = await postApiAuthVerifyEmail({ body: { token: trimmed } });
+      const bodyPayload: { token: string; email?: string; otp?: string } = { token: trimmed };
+      if (targetEmail) {
+        bodyPayload.email = targetEmail;
+        if (trimmed.length === 6 && /^\d{6}$/.test(trimmed)) {
+          bodyPayload.otp = trimmed;
+        }
+      }
+      const result = await postApiAuthVerifyEmail({ body: bodyPayload });
       const res = unwrapSdkResult(result);
       this.setAccessToken(res.accessToken);
       this.setRefreshToken(res.refreshToken ?? null);
-      const role = this.normalizeRole((res.user as { role?: string }).role);
+      const role = this.normalizeRole(res.user.role);
       const user: User = {
         id: res.user.id ?? '',
         name: res.user.displayName ?? '',
         email: res.user.email ?? '',
         avatar: '',
         role,
-        roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+        roles: this.normalizeRoles(res.user.roles, role),
+        onboardingCompletedAt: res.user.onboardingCompletedAt ?? null,
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -336,33 +366,51 @@ export class AuthService {
       this.clearPending();
       return { ok: true };
     } catch {
-      // Q-07 item 4: no `apiFail.report()` here on purpose — that call formats the raw
-      // ProblemDetails `detail`/`title` the backend sends (e.g. the English
-      // "Verification token is invalid or expired."), and verify-email.page.ts already renders
-      // the friendly Thai `error` below inline, so the toast was pure duplicate noise mixing
-      // untranslated English into an otherwise-Thai screen.
       return {
         ok: false,
-        error: 'ยืนยันอีเมลไม่สำเร็จ — ใช้ลิงก์ในอีเมลหรือรหัสที่ถูกต้อง',
+        error: 'รหัส OTP หรือลิงก์ยืนยันไม่ถูกต้อง หรือหมดอายุแล้ว',
       };
     }
   }
 
-  /** Resend verification email — calls API to re-send the real email link */
-  async resendCode(): Promise<{ ok: boolean; message?: string }> {
-    const p = this._pending();
-    if (!p) return { ok: false };
+  /**
+   * Verify email directly via 6-digit OTP code.
+   */
+  async verifyOtp(otp: string, email?: string): Promise<{ ok: boolean; error?: string }> {
+    const trimmedOtp = (otp ?? '').trim();
+    const targetEmail = email?.trim() || this._pending()?.email;
+    if (!trimmedOtp || !/^\d{6}$/.test(trimmedOtp)) {
+      return { ok: false, error: 'กรุณากรอกรหัส OTP 6 หลัก' };
+    }
+    if (!targetEmail) {
+      return { ok: false, error: 'ไม่พบอีเมลสำหรับยืนยัน กรุณากรอกอีเมล' };
+    }
+    return this.verifyEmail(trimmedOtp, targetEmail);
+  }
+
+  /**
+   * Request a new 6-digit OTP code sent to the email address.
+   */
+  async sendOtp(email?: string): Promise<{ ok: boolean; message?: string }> {
+    const targetEmail = email?.trim() || this._pending()?.email;
+    if (!targetEmail || !this.isValidEmail(targetEmail)) {
+      return { ok: false, message: 'กรุณาระบุอีเมลที่ถูกต้อง' };
+    }
     let message = '';
     try {
-      const result = await postApiAuthResendVerification({ body: { email: p.email } });
-      // D-06: same reason as register() — the request can succeed while the email does not.
+      const result = await postApiAuthResendVerification({ body: { email: targetEmail } });
       message = unwrapSdkResult(result).message ?? '';
       this._verificationNotice.set(message);
     } catch (e) {
-      this.apiFail.report('ส่งอีเมลยืนยันอีกครั้ง', e);
+      this.apiFail.report('ขอรหัส OTP อีกครั้ง', e);
       return { ok: false };
     }
     return { ok: true, message };
+  }
+
+  /** Resend verification email — calls API to re-send the real email link / OTP */
+  async resendCode(email?: string): Promise<{ ok: boolean; message?: string }> {
+    return this.sendOtp(email);
   }
 
   // ========== Social ==========
@@ -381,20 +429,21 @@ export class AuthService {
         const { code, redirectUri } = await this.googleOauth.requestAuthorizationCode();
         const result = await postApiAuthExternalByProvider({
           path: { provider: 'google' },
-          body: { authorizationCode: code, redirectUri },
+          body: { authorizationCode: code, redirectUri, acceptTerms: true },
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
         const res = unwrapSdkResult(result);
         this.setAccessToken(res.accessToken);
         this.setRefreshToken(res.refreshToken ?? null);
-        const role = this.normalizeRole((res.user as { role?: string }).role);
+        const role = this.normalizeRole(res.user.role);
         const user: User = {
           id: res.user.id,
           name: res.user.displayName,
           email: res.user.email,
           avatar: '',
           role,
-          roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+          roles: this.normalizeRoles(res.user.roles, role),
+          onboardingCompletedAt: res.user.onboardingCompletedAt ?? null,
           joinedAt: new Date().toISOString(),
         };
         this.completeSignIn(user, 'google');
@@ -510,6 +559,7 @@ export class AuthService {
     email?: string | null;
     role?: string | null;
     roles?: string[] | null;
+    onboardingCompletedAt?: string | null;
   }): void {
     const current = this._session();
     if (!current) return;
@@ -522,6 +572,10 @@ export class AuthService {
       email: profile.email || current.user.email,
       role,
       roles: this.normalizeRoles(profile.roles, role),
+      onboardingCompletedAt:
+        profile.onboardingCompletedAt !== undefined
+          ? profile.onboardingCompletedAt
+          : current.user.onboardingCompletedAt,
     };
 
     if (
@@ -530,7 +584,8 @@ export class AuthService {
       nextUser.email === current.user.email &&
       nextUser.role === current.user.role &&
       nextUser.roles.length === current.user.roles.length &&
-      nextUser.roles.every((r) => current.user.roles.includes(r))
+      nextUser.roles.every((r) => current.user.roles.includes(r)) &&
+      nextUser.onboardingCompletedAt === current.user.onboardingCompletedAt
     ) {
       return;
     }
@@ -623,11 +678,12 @@ export class AuthService {
 
   /**
    * multi-role-permissions v1 §4: parses `AuthUserResponse.roles`/`UserProfileResponse.roles`
-   * (`string[]`, not yet on the generated SDK types — see the `unknown`-typed callers). Falls
-   * back to `[fallbackRole]` — the already-normalized single `role` as a one-element array — so
-   * a response that hasn't shipped `roles` yet (older backend build, or a session restored from
-   * `localStorage` before this rollout) still resolves to something sane instead of an empty
-   * array or silently dropping back to `'buyer'` for a known seller/admin.
+   * (`string[]` on the generated SDK types). Accepts `unknown` (not just `string[]`) because
+   * `syncUserFromProfile()` also feeds it a loosely-typed inline profile shape. Falls back to
+   * `[fallbackRole]` — the already-normalized single `role` as a one-element array — so a response
+   * missing `roles` (older backend build, or a session restored from `localStorage` before this
+   * rollout) still resolves to something sane instead of an empty array or silently dropping back
+   * to `'buyer'` for a known seller/admin.
    */
   private normalizeRoles(raw: unknown, fallbackRole: UserRole): UserRole[] {
     if (Array.isArray(raw)) {

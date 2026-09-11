@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../../../shared/components/logo/logo.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { AuthService, MeService } from '../../../core/services';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 import { resolvePublicUrl } from '../../../core/api-runtime';
@@ -20,6 +21,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     RouterLinkActive,
     LogoComponent,
     IconComponent,
+    NotificationBellComponent,
     GlobalLoaderComponent,
     ImgFallbackDirective,
     TranslatePipe,
@@ -67,6 +69,7 @@ export class SellerLayoutComponent {
     { label: this.translation.currentLang() === 'th' ? 'หมวดหน้าร้าน' : 'Storefront Sections', href: '/seller/store-sections', icon: 'package' as const },
     { label: this.translation.currentLang() === 'th' ? 'แพ็กเกจของฉัน' : 'My Bundles', href: '/seller/bundles', icon: 'package' as const },
     { label: this.translation.currentLang() === 'th' ? 'รีวิวลูกค้า' : 'Customer Reviews', href: '/seller/reviews', icon: 'star' as const },
+    { label: this.translation.currentLang() === 'th' ? 'การแจ้งเตือน' : 'Notifications', href: '/notifications', icon: 'bell' as const },
     { label: this.translation.t('seller.settings'), href: '/seller/settings', icon: 'gear' as const },
   ]);
 }

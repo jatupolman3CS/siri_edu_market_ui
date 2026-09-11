@@ -83,6 +83,9 @@ export class DevAuthBypassService {
         avatar: profile.avatarUrl ?? '',
         role,
         roles: this.normalizeRoles((profile as { roles?: string[] }).roles, role),
+        onboardingCompletedAt:
+          (profile as { onboardingCompletedAt?: string | null }).onboardingCompletedAt ??
+          new Date().toISOString(),
         joinedAt: profile.joinedAt ?? new Date().toISOString(),
       });
     } catch {
@@ -108,6 +111,7 @@ export class DevAuthBypassService {
       avatar: '',
       role,
       roles: [role],
+      onboardingCompletedAt: new Date().toISOString(),
       joinedAt: new Date().toISOString(),
     };
   }

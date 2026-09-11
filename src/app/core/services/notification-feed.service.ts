@@ -38,6 +38,106 @@ export interface NotificationFeedItemResponse
 
 export type { NotificationFeedUnreadCountResponse };
 
+export interface NotificationStyleInfo {
+  icon: 'star' | 'mail' | 'check' | 'x' | 'doc' | 'sparkle' | 'bell' | 'shield';
+  label: string;
+  badgeClass: string;
+  iconBgClass: string;
+  iconUnreadBgClass: string;
+  borderClass: string;
+}
+
+export function getNotificationStyle(key: string, title = ''): NotificationStyleInfo {
+  const normKey = (key || '').trim().toLowerCase();
+  const normTitle = (title || '').trim().toLowerCase();
+
+  if (normKey === 'review' || normTitle.includes('รีวิว')) {
+    return {
+      icon: 'star',
+      label: 'รีวิวใหม่',
+      badgeClass: 'bg-amber-100 text-amber-800 border border-amber-200',
+      iconBgClass: 'bg-amber-100 text-amber-600',
+      iconUnreadBgClass: 'bg-amber-500 text-white shadow-soft',
+      borderClass: 'border-amber-200',
+    };
+  }
+
+  if (normKey === 'reviewreply' || normTitle.includes('ตอบกลับ')) {
+    return {
+      icon: 'mail',
+      label: 'ตอบกลับรีวิว',
+      badgeClass: 'bg-sky-100 text-sky-800 border border-sky-200',
+      iconBgClass: 'bg-sky-100 text-sky-600',
+      iconUnreadBgClass: 'bg-sky-500 text-white shadow-soft',
+      borderClass: 'border-sky-200',
+    };
+  }
+
+  if (normKey === 'documentapproved' || normTitle.includes('อนุมัติแล้ว')) {
+    return {
+      icon: 'check',
+      label: 'อนุมัติแล้ว',
+      badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+      iconBgClass: 'bg-emerald-100 text-emerald-600',
+      iconUnreadBgClass: 'bg-emerald-500 text-white shadow-soft',
+      borderClass: 'border-emerald-200',
+    };
+  }
+
+  if (normKey === 'documentrejected' || normTitle.includes('ไม่ผ่านการอนุมัติ') || normTitle.includes('ไม่อนุมัติ')) {
+    return {
+      icon: 'x',
+      label: 'ไม่อนุมัติ',
+      badgeClass: 'bg-rose-100 text-rose-800 border border-rose-200',
+      iconBgClass: 'bg-rose-100 text-rose-600',
+      iconUnreadBgClass: 'bg-rose-500 text-white shadow-soft',
+      borderClass: 'border-rose-200',
+    };
+  }
+
+  if (normKey === 'documentpendingapproval' || normTitle.includes('รอการตรวจสอบ') || normTitle.includes('รออนุมัติ')) {
+    return {
+      icon: 'doc',
+      label: 'รออนุมัติ',
+      badgeClass: 'bg-purple-100 text-purple-800 border border-purple-200',
+      iconBgClass: 'bg-purple-100 text-purple-600',
+      iconUnreadBgClass: 'bg-purple-500 text-white shadow-soft',
+      borderClass: 'border-purple-200',
+    };
+  }
+
+  if (normKey === 'announcement' || normTitle.includes('ประกาศ') || normTitle.includes('ข่าวสาร')) {
+    return {
+      icon: 'sparkle',
+      label: 'ข่าวประกาศ',
+      badgeClass: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+      iconBgClass: 'bg-indigo-100 text-indigo-600',
+      iconUnreadBgClass: 'bg-indigo-500 text-white shadow-soft',
+      borderClass: 'border-indigo-200',
+    };
+  }
+
+  if (normKey === 'newdocumentalert' || normKey === 'documentpublished' || normTitle.includes('ผลงานใหม่')) {
+    return {
+      icon: 'doc',
+      label: 'ผลงานใหม่',
+      badgeClass: 'bg-pink-100 text-pink-800 border border-pink-200',
+      iconBgClass: 'bg-pink-100 text-pink-600',
+      iconUnreadBgClass: 'bg-pink-500 text-white shadow-soft',
+      borderClass: 'border-pink-200',
+    };
+  }
+
+  return {
+    icon: 'bell',
+    label: 'การแจ้งเตือน',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
+    iconBgClass: 'bg-slate-100 text-slate-600',
+    iconUnreadBgClass: 'bg-slate-600 text-white shadow-soft',
+    borderClass: 'border-slate-200',
+  };
+}
+
 /** Matches the backend default in spec §3.3 (clamp [1,50], default 20). */
 const PAGE_SIZE = 20;
 
