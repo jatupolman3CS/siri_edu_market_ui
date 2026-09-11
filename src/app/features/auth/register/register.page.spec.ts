@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { AuthRegisterPage } from './register.page';
 import { AuthService, PlatformStatsService } from '../../../core/services';
 import { GoogleOauthConfigService } from '../../../core/services/google-oauth-config.service';
@@ -49,5 +49,36 @@ describe('AuthRegisterPage — Terms/Privacy checkbox (bug #3/#4)', () => {
     const text = el.textContent ?? '';
     expect(text).toContain('เงื่อนไขการใช้งาน');
     expect(text).toContain('นโยบายความเป็นส่วนตัว');
+  });
+
+  it('redirects via resolvePostAuthRedirect when onSocial succeeds', async () => {
+    const resolvePostAuthRedirect = vi.fn().mockReturnValue('/onboarding/role');
+    const signInWithProvider = vi.fn().mockResolvedValue({ ok: true });
+    TestBed.configureTestingModule({
+      imports: [AuthRegisterPage],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: { register: vi.fn(), signInWithProvider, resolvePostAuthRedirect },
+        },
+        {
+          provide: GoogleOauthConfigService,
+          useValue: { ensureLoaded: () => Promise.resolve(), getClientId: () => 'client-id' },
+        },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AuthRegisterPage);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const component = fixture.componentInstance;
+
+    component.onSocial('google');
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(signInWithProvider).toHaveBeenCalledWith('google');
+    expect(resolvePostAuthRedirect).toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalledWith('/onboarding/role');
   });
 });

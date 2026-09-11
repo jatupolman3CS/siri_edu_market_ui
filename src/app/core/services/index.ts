@@ -27,3 +27,4 @@ export * from './exam-hub.service';
 export * from './exam-countdown.service';
 export * from './navigation-source.service';
 export * from './subscription.service';
+export * from './onboarding.service';

@@ -1,3 +1,3 @@
-// saved-credit-cards v1 — no bespoke styling needed; layout is Tailwind utility classes plus the
-// shared `.card-soft` / `.pill-pink` / `.pill-soft` / `.btn-pink` / `.btn-ghost` classes from
-// `src/styles.scss`.
+:host {
+  display: block;
+}

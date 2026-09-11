@@ -36,7 +36,6 @@ import { DocumentCardComponent } from '../../../shared/components/document-card/
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
@@ -52,7 +51,6 @@ import { TranslationService, TranslatePipe } from '../../../core/i18n';
     BundleCardComponent,
     IconComponent,
     EmptyStateComponent,
-    PageHeroComponent,
     ImgFallbackDirective,
     TranslatePipe,
   ],

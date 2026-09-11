@@ -16,15 +16,10 @@
                 appImgFallback
                 [src]="d.cover"
                 [alt]="d.title"
-                class="absolute inset-0 w-full h-full object-cover"
+                class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+                draggable="false"
+                (contextmenu)="$event.preventDefault()"
               />
-              @if (d.watermarkEnabled) {
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div class="text-white/30 text-5xl font-extrabold tracking-[0.3em] uppercase rotate-[-30deg] select-none">
-                    preview
-                  </div>
-                </div>
-              }
               <div class="absolute top-4 left-4 flex flex-col gap-2">
                 @if (d.isFree) {
                   <span class="pill bg-emerald-500 text-white">🆓 ฟรี</span>

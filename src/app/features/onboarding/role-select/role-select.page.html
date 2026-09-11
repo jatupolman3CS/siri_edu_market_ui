@@ -1,0 +1,64 @@
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-2xl w-full text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold mb-4">
+      <span>🌸</span>
+      <span>ยินดีต้อนรับสู่ SIRIEDUMARKET</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-ink mb-3">
+      คุณอยากใช้ SIRIEDUMARKET เพื่ออะไร?
+    </h1>
+    <p class="text-base text-ink-soft mb-10 max-w-lg mx-auto">
+      เลือกเป้าหมายการใช้งานของคุณเพื่อเริ่มต้นประสบการณ์การเรียนรู้ที่ดีที่สุด
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+      <!-- Buyer Card -->
+      <button
+        type="button"
+        (click)="onSelectBuyer()"
+        class="role-card group p-6 sm:p-8 rounded-2xl bg-white border-2 border-line hover:border-pink-500 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-100 flex flex-col justify-between"
+      >
+        <div>
+          <div class="w-14 h-14 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+            📚
+          </div>
+          <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors">
+            หาซื้อเอกสาร
+          </h2>
+          <p class="text-sm text-ink-soft leading-relaxed">
+            ค้นหาข้อสอบ ใบงาน สรุปบทเรียน และเอกสารการเรียนคุณภาพจากคุณครูและครีเอเตอร์ทั่วประเทศ
+          </p>
+        </div>
+        <div class="mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform">
+          <span>เริ่มต้นเลือกความสนใจ</span>
+          <span class="ml-1">→</span>
+        </div>
+      </button>
+
+      <!-- Seller Card -->
+      <button
+        type="button"
+        (click)="onSelectSeller()"
+        [disabled]="loading()"
+        class="role-card group p-6 sm:p-8 rounded-2xl bg-white border-2 border-line hover:border-pink-500 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-100 flex flex-col justify-between disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <div>
+          <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+            💼
+          </div>
+          <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors">
+            ลงขายผลงาน
+          </h2>
+          <p class="text-sm text-ink-soft leading-relaxed">
+            สร้างรายได้จากเอกสารการสอน ข้อสอบ และผลงานของคุณ เปิดร้านค้าและเข้าถึงผู้เรียนได้ง่ายๆ
+          </p>
+        </div>
+        <div class="mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform">
+          <span>สมัครเป็นผู้ขาย</span>
+          <span class="ml-1">→</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>

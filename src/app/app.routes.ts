@@ -212,6 +212,25 @@ export const routes: Routes = [
           ),
         title: 'การแจ้งเตือน — SIRIEDUMARKET',
       },
+      // registration-onboarding v1 §4: onboarding flow for new accounts.
+      {
+        path: 'onboarding/role',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/onboarding/role-select/role-select.page').then(
+            (m) => m.RoleSelectPage,
+          ),
+        title: 'เริ่มต้นการใช้งาน — SIRIEDUMARKET',
+      },
+      {
+        path: 'onboarding/interests',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/onboarding/interest-select/interest-select.page').then(
+            (m) => m.InterestSelectPage,
+          ),
+        title: 'เลือกความสนใจ — SIRIEDUMARKET',
+      },
     ],
   },
 

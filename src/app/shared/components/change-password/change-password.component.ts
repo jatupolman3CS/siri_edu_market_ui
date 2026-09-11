@@ -19,6 +19,7 @@ import { IconComponent } from '../icon/icon.component';
   imports: [FormsModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './change-password.component.html',
+  styles: [':host { display: block; }'],
 })
 export class ChangePasswordComponent {
   private readonly auth = inject(AuthService);

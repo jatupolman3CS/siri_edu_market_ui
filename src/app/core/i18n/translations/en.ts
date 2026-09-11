@@ -262,7 +262,7 @@ export const en: TranslationKeys = {
     artTitleRegister: 'Join Free\nStart Your Journey 🌸',
     artDescRegister: 'One account for everything — download free materials, follow creators, and open your own store',
     newMember: 'New Member',
-    atLeast6Chars: '(at least 6 characters)',
+    atLeast6Chars: '(at least 8 chars, with uppercase, lowercase, and digit)',
     termsAccept: 'I accept the',
     pdpaNotice: '🛡️ Your data is encrypted and kept confidential under PDPA regulations',
     strengthVeryWeak: 'Very Weak',

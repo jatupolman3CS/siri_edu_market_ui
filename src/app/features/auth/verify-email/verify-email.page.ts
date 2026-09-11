@@ -54,7 +54,7 @@ export class AuthVerifyEmailPage {
       return;
     }
     this.message.success('ยินดีต้อนรับสู่ SIRIEDUMARKET 🎉');
-    await this.router.navigateByUrl(this.returnUrl());
+    await this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
   }
 
   async resend(): Promise<void> {

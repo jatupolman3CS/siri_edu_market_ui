@@ -121,6 +121,20 @@ export class AuthService {
    */
   readonly isSeller = computed(() => this.roles().includes('seller'));
 
+  /**
+   * registration-onboarding v1 §4.3: decides post-authentication destination based on
+   * onboarding status and roles.
+   */
+  resolvePostAuthRedirect(returnUrl: string): string {
+    const user = this._session()?.user;
+    if (!user) return '/auth/login';
+    if (!user.onboardingCompletedAt) return '/onboarding/role';
+    if (returnUrl && returnUrl !== '/') return returnUrl;
+    if (user.roles.includes('admin')) return '/admin/dashboard';
+    if (user.roles.includes('seller')) return '/seller/dashboard';
+    return '/';
+  }
+
   constructor() {
     if (typeof localStorage === 'undefined') return;
     
@@ -244,6 +258,8 @@ export class AuthService {
         avatar: '',
         role,
         roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+        onboardingCompletedAt:
+          (res.user as { onboardingCompletedAt?: string | null }).onboardingCompletedAt ?? null,
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -272,8 +288,13 @@ export class AuthService {
     if (!this.isValidEmail(input.email)) {
       return { ok: false, error: 'อีเมลไม่ถูกต้อง' };
     }
-    if (input.password.length < 6) {
-      return { ok: false, error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
+    const passwordPolicyPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    if (input.password.length < 8 || !passwordPolicyPattern.test(input.password)) {
+      return {
+        ok: false,
+        error:
+          'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลขอย่างน้อยอย่างละ 1 ตัว',
+      };
     }
     if (input.password !== input.confirmPassword) {
       return { ok: false, error: 'รหัสผ่านยืนยันไม่ตรงกัน' };
@@ -285,7 +306,8 @@ export class AuthService {
           password: input.password,
           confirmPassword: input.confirmPassword,
           displayName: input.name,
-        },
+          acceptTerms: input.acceptTerms,
+        } as any,
       });
       // D-06: the backend now says whether the verification email actually went out. Registering
       // succeeds either way, so the page that comes next has to repeat what the server said
@@ -328,6 +350,8 @@ export class AuthService {
         avatar: '',
         role,
         roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+        onboardingCompletedAt:
+          (res.user as { onboardingCompletedAt?: string | null }).onboardingCompletedAt ?? null,
         joinedAt: new Date().toISOString(),
       };
       this.completeSignIn(user, 'email');
@@ -381,7 +405,7 @@ export class AuthService {
         const { code, redirectUri } = await this.googleOauth.requestAuthorizationCode();
         const result = await postApiAuthExternalByProvider({
           path: { provider: 'google' },
-          body: { authorizationCode: code, redirectUri },
+          body: { authorizationCode: code, redirectUri, acceptTerms: true } as any,
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
         const res = unwrapSdkResult(result);
@@ -395,6 +419,8 @@ export class AuthService {
           avatar: '',
           role,
           roles: this.normalizeRoles((res.user as { roles?: string[] }).roles, role),
+          onboardingCompletedAt:
+            (res.user as { onboardingCompletedAt?: string | null }).onboardingCompletedAt ?? null,
           joinedAt: new Date().toISOString(),
         };
         this.completeSignIn(user, 'google');
@@ -510,6 +536,7 @@ export class AuthService {
     email?: string | null;
     role?: string | null;
     roles?: string[] | null;
+    onboardingCompletedAt?: string | null;
   }): void {
     const current = this._session();
     if (!current) return;
@@ -522,6 +549,10 @@ export class AuthService {
       email: profile.email || current.user.email,
       role,
       roles: this.normalizeRoles(profile.roles, role),
+      onboardingCompletedAt:
+        profile.onboardingCompletedAt !== undefined
+          ? profile.onboardingCompletedAt
+          : current.user.onboardingCompletedAt,
     };
 
     if (
@@ -530,7 +561,8 @@ export class AuthService {
       nextUser.email === current.user.email &&
       nextUser.role === current.user.role &&
       nextUser.roles.length === current.user.roles.length &&
-      nextUser.roles.every((r) => current.user.roles.includes(r))
+      nextUser.roles.every((r) => current.user.roles.includes(r)) &&
+      nextUser.onboardingCompletedAt === current.user.onboardingCompletedAt
     ) {
       return;
     }

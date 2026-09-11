@@ -43,22 +43,22 @@
     </aside>
 
     <!-- Sections -->
-    <div class="space-y-6 min-w-0">
-      <app-profile-editor />
+    <div class="flex flex-col gap-6 sm:gap-8 min-w-0">
+      <app-profile-editor class="block" />
 
       <!-- F-08: reachable only now that POST /api/auth/change-password exists. -->
-      <app-change-password />
+      <app-change-password class="block" />
 
-      <app-notification-settings />
+      <app-notification-settings class="block" />
 
       <!-- saved-credit-cards v1 §4: manage mode — list / add / delete / set-default. -->
-      <app-saved-cards mode="manage" />
+      <app-saved-cards mode="manage" class="block" />
 
       <!-- referral-program v1 §4: referral card -->
-      <app-referral-card />
+      <app-referral-card class="block" />
 
       <!-- exam-countdown-mode v1 §4: set/edit/clear form + current status -->
-      <app-exam-countdown-form />
+      <app-exam-countdown-form class="block" />
 
       <section class="card-soft p-6" id="shortcuts">
         <h2 class="text-lg font-bold text-ink mb-1">ทางลัด</h2>

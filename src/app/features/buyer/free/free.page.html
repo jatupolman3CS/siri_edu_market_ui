@@ -1,32 +1,26 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-      <app-page-hero
-        eyebrow="ฟรี · 100%"
-        title="เอกสารดีๆ ที่ดาวน์โหลดได้ฟรี 🎁"
-        description="ครีเอเตอร์ของเราแชร์เอกสารคุณภาพให้ใช้ฟรี — ลองใช้ก่อนตัดสินใจซื้อเล่มเต็ม"
-      >
-        <div class="flex flex-wrap items-center gap-4 mt-6">
-          <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
-            <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-              <app-icon name="download" [size]="18" />
-            </span>
-            <div>
-              <div class="text-xs text-ink-muted">ดาวน์โหลดรวม</div>
-              <div class="text-base font-bold text-ink">
-                {{ totalDownloads() | compact }} ครั้ง
-              </div>
-            </div>
-          </div>
-          <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
-            <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
-              <app-icon name="package" [size]="18" />
-            </span>
-            <div>
-              <div class="text-xs text-ink-muted">เอกสารฟรีทั้งหมด</div>
-              <div class="text-base font-bold text-ink">{{ catalog.freeResources().length }} ชิ้น</div>
+      <div class="flex flex-wrap items-center gap-4 mb-6">
+        <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
+          <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <app-icon name="download" [size]="18" />
+          </span>
+          <div>
+            <div class="text-xs text-ink-muted">ดาวน์โหลดรวม</div>
+            <div class="text-base font-bold text-ink">
+              {{ totalDownloads() | compact }} ครั้ง
             </div>
           </div>
         </div>
-      </app-page-hero>
+        <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
+          <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+            <app-icon name="package" [size]="18" />
+          </span>
+          <div>
+            <div class="text-xs text-ink-muted">เอกสารฟรีทั้งหมด</div>
+            <div class="text-base font-bold text-ink">{{ catalog.freeResources().length }} ชิ้น</div>
+          </div>
+        </div>
+      </div>
 
       @if (catalog.freeState().status === 'loading') {
         <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
