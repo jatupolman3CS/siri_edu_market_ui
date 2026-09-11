@@ -134,8 +134,8 @@ export class DevAuthBypassService {
   /**
    * multi-role-permissions v1 §4: this file does not inject `AuthService` to reuse its
    * `normalizeRoles`, so it mirrors the same parsing logic locally (same reasoning as
-   * `normalizeRole` above). Parses `UserProfileResponse.roles` (`string[]`, not yet on the
-   * generated SDK types), falling back to `[fallbackRole]` when missing/unparseable.
+   * `normalizeRole` above). Parses `UserProfileResponse.roles` (`string[]`), falling back to
+   * `[fallbackRole]` when missing/unparseable.
    */
   private normalizeRoles(raw: unknown, fallbackRole: UserRole): UserRole[] {
     if (Array.isArray(raw)) {
