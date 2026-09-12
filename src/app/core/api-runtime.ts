@@ -1,12 +1,23 @@
 import type { CreateClientConfig } from './api/client.gen';
 import { environment } from '../../environments/environment';
 import { finishLoading, startLoading } from './services/loading';
+// Pure helper, no DI — importing it here cannot create a cycle back into Angular's injector.
+import { extractErrorCode } from './services/api-result';
 
 /** Set by `provideSdkAuthBridge` at app init — returns current access token per-request. */
 let _tokenGetter: (() => string | null) | null = null;
 
 /** Set by `provideSdkAuthBridge` — called when a 401 could not be recovered by refreshing. */
 let _unauthorizedHandler: (() => void) | null = null;
+
+/** admin-user-management §4.6: the ProblemDetails codes that mean "this account may not act". */
+const ACCOUNT_RESTRICTED_CODES: readonly string[] = ['account_suspended', 'account_banned'];
+
+/**
+ * Set by `provideSdkAuthBridge` — called when the API rejects a call because the account was
+ * suspended/banned while the session was still live.
+ */
+let _accountRestrictedHandler: ((payload: unknown) => void) | null = null;
 
 /**
  * Set by `provideSdkAuthBridge` — exchanges the refresh token for a new access token.
@@ -22,6 +33,14 @@ export function setAuthTokenGetter(getter: () => string | null): void {
 /** Called once by `sdk-auth-bridge` to register the 401 → redirect callback. */
 export function setUnauthorizedHandler(handler: () => void): void {
   _unauthorizedHandler = handler;
+}
+
+/**
+ * Called once by `sdk-auth-bridge` to register the account-restricted callback.
+ * Nothing registers one in unit tests / SSR, where the check is then a silent no-op.
+ */
+export function setAccountRestrictedHandler(handler: (payload: unknown) => void): void {
+  _accountRestrictedHandler = handler;
 }
 
 /** Called once by `sdk-auth-bridge` to register the silent-refresh callback. */
@@ -249,6 +268,35 @@ function isAuthEndpoint(input: RequestInfo | URL): boolean {
   );
 }
 
+/**
+ * admin-user-management §4.6 (ข): a 403 whose ProblemDetails `code` says the account was
+ * suspended/banned ends the session with the server's own Thai explanation.
+ *
+ * Deliberately narrow, because the cost of a false positive is throwing a perfectly valid user
+ * out of the app: only JSON bodies are read, only on non-auth endpoints, and only these two
+ * codes act. Any other 403 — a buyer hitting an admin route, an HTML 403 page from a proxy —
+ * is left untouched for the caller to handle as before.
+ *
+ * `clone()` is not an optimisation: the very same response is returned to the caller afterwards,
+ * and reading its body here would leave the service with a stream that is already consumed.
+ */
+async function notifyIfAccountRestricted(response: Response, input: RequestInfo | URL): Promise<void> {
+  if (response.status !== 403 || !_accountRestrictedHandler) return;
+  // login / refresh / register report their own failures on the page the user is already on.
+  if (isAuthEndpoint(input)) return;
+  if (!(response.headers.get('content-type') ?? '').includes('json')) return;
+
+  let payload: unknown;
+  try {
+    payload = await response.clone().json();
+  } catch {
+    return;
+  }
+
+  const code = extractErrorCode(payload);
+  if (code && ACCOUNT_RESTRICTED_CODES.includes(code)) _accountRestrictedHandler(payload);
+}
+
 export const createClientConfig: CreateClientConfig = (config) => ({
   ...config,
   baseUrl: API_BASE_URL,
@@ -295,6 +343,12 @@ export const createClientConfig: CreateClientConfig = (config) => ({
 
       const tokenSent = _tokenGetter?.() ?? null;
       const response = await send(tokenSent);
+      // Before the 401 branch: a restricted account is a verdict, not a stale token, so there is
+      // nothing to refresh — a refresh by a banned user is refused by the API anyway.
+      if (response.status === 403) {
+        await notifyIfAccountRestricted(response, input);
+        return response;
+      }
       if (response.status !== 401) return response;
 
       // D-11: a visitor who never signed in has no session to lose. The app asks for /api/cart
@@ -325,6 +379,9 @@ export const createClientConfig: CreateClientConfig = (config) => ({
       const retried = await send(refreshedToken);
       if (retried.status === 401) {
         _unauthorizedHandler?.();
+      } else if (retried.status === 403) {
+        // Banned between the first call and the replay: same verdict, same handler.
+        await notifyIfAccountRestricted(retried, input);
       }
       return retried;
     } finally {

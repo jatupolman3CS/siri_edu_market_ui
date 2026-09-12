@@ -20,7 +20,7 @@ function isAuthUrl(url: string): boolean {
  * BUG-04: a 401 used to sign the user out on the spot, which ended every session the
  * moment the 15-minute access token expired. Refresh once and replay the request; only a
  * failed refresh sends the user to login.
- * admin-user-management v1 §4.6: a 403 with account_suspended / account_banned terminates
+ * admin-user-management §4.6 (ค): a 403 with account_suspended / account_banned terminates
  * the restricted session immediately without attempting refresh.
  */
 export const unauthorizedInterceptor: HttpInterceptorFn = (req, next) => {
@@ -31,9 +31,14 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((err: unknown) => {
       if (err instanceof HttpErrorResponse && err.status === 403) {
-        const code = extractErrorCode(err);
+        // v2: the ProblemDetails body is `err.error`, not `err` itself. Reading the code off the
+        // wrapper made this branch dead, and handing the wrapper to `formatDetail` would have
+        // shown Angular's English "Http failure response for …" over the server's Thai reason.
+        const payload: unknown = err.error;
+        const code = extractErrorCode(payload);
         if (code === 'account_suspended' || code === 'account_banned') {
-          auth.redirectToLoginAfterAccountRestricted(apiFail.formatDetail(err));
+          auth.redirectToLoginAfterAccountRestricted(apiFail.formatDetail(payload));
+          // No refresh: the verdict is the answer. The caller still sees the original error.
           return throwError(() => err);
         }
       }

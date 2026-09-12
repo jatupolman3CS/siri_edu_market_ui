@@ -1007,3 +1007,84 @@ describe('AuthService LINE sign-in', () => {
   });
 });
 
+
+/**
+ * admin-user-management §4.6 (ก)(จ) / AC-8c: the account-restricted redirect is the single owner
+ * of "you were banned mid-session". It has to fire exactly once however many calls were in
+ * flight, and its reason must survive the generic 401 handling that follows the same signOut.
+ */
+describe('AuthService account restricted (AC-8c)', () => {
+  function restrictedFixture() {
+    const auth = buildService();
+    const router = TestBed.inject(Router);
+    const message = TestBed.inject(NzMessageService);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const warning = vi.spyOn(message, 'warning');
+    const signOut = vi.spyOn(auth, 'signOut');
+    return { auth, navigate, warning, signOut };
+  }
+
+  it('does nothing on a second call — one ban, one sign-out, one toast', async () => {
+    const { auth, navigate, warning, signOut } = restrictedFixture();
+
+    auth.redirectToLoginAfterAccountRestricted('บัญชีถูกแบน');
+    await settle();
+    auth.redirectToLoginAfterAccountRestricted('บัญชีถูกแบน');
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('makes redirectToLoginAfterUnauthorized a no-op so the 401 wording cannot bury the reason', async () => {
+    const { auth, navigate, warning } = restrictedFixture();
+
+    auth.redirectToLoginAfterAccountRestricted('บัญชีถูกระงับการใช้งาน');
+    await settle();
+    // A parallel call that was already in the air comes back 401 right after the ban.
+    auth.redirectToLoginAfterUnauthorized('/cart');
+
+    expect(warning).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledWith('บัญชีถูกระงับการใช้งาน');
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
+  });
+
+  it('signing back in clears the guard so a later 401 redirects normally again', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const { auth, navigate, warning } = restrictedFixture();
+
+    auth.redirectToLoginAfterAccountRestricted('บัญชีถูกระงับการใช้งาน');
+    await settle();
+    await auth.signIn('teacher@example.com', 'secret123');
+
+    auth.redirectToLoginAfterUnauthorized('/cart');
+
+    expect(warning).toHaveBeenCalledWith('กรุณาเข้าสู่ระบบเพื่อทำรายการต่อ');
+    expect(navigate).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshSession that fails with account_banned shows the server reason and returns null', async () => {
+    stubRoute('POST', '/api/auth/login', loginBody());
+    const { auth, navigate, warning } = restrictedFixture();
+    await auth.signIn('teacher@example.com', 'secret123');
+
+    const detail = 'บัญชีนี้ถูกระงับการใช้งานถาวร กรุณาติดต่อผู้ดูแลระบบ';
+    stubRoute(
+      'POST',
+      '/api/auth/refresh',
+      { status: 403, statusCode: 403, code: 'account_banned', detail },
+      403,
+    );
+
+    // The ban landed while the 15-minute access token happened to expire: without this the user
+    // would only be told "กรุณาเข้าสู่ระบบ…" by the 401 path and never learn why.
+    expect(await auth.refreshSession()).toBeNull();
+    await settle();
+
+    expect(warning).toHaveBeenCalledWith(detail);
+    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(auth.accessToken()).toBeNull();
+  });
+});

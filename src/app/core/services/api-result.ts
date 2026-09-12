@@ -51,10 +51,21 @@ export function extractErrorStatus(error: unknown): number | undefined {
 /**
  * Best-effort machine-readable error code out of a ProblemDetails error (e.g.
  * `seller_profile_required`) — ASP.NET Core's ProblemDetails carries this as `code`.
+ *
+ * admin-user-management v2 §4.6 (ง): the SDK throws the ProblemDetails payload itself, but
+ * Angular's `HttpClient` wraps it: the same body arrives as `HttpErrorResponse.error`. Reading
+ * only the top level made every caller on the `HttpClient` side silently dead code (that is
+ * exactly how the interceptor's 403 branch shipped), so fall back one level into `error` —
+ * the same shape-tolerant lookup {@link extractErrorStatus} already does with `response.status`.
  */
 export function extractErrorCode(error: unknown): string | undefined {
   if (error == null || typeof error !== 'object') return undefined;
   const o = error as Record<string, unknown>;
   if (typeof o['code'] === 'string') return o['code'] as string;
+  const inner = o['error'];
+  if (inner && typeof inner === 'object') {
+    const code = (inner as Record<string, unknown>)['code'];
+    if (typeof code === 'string') return code;
+  }
   return undefined;
 }

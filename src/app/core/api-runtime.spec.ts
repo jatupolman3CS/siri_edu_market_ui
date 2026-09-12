@@ -249,3 +249,156 @@ describe('createClientConfig 401 retry (BUG-04)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+
+/**
+ * admin-user-management §4.6 (ข) / AC-8b: this is where the ban actually reaches the user.
+ * Practically every API call in the app goes through this fetch, so a 403 saying the account was
+ * suspended/banned has to end the session here — without refreshing, without eating the response
+ * body the caller still needs, and without touching any other kind of 403.
+ */
+describe('createClientConfig 403 account restricted (AC-8b)', () => {
+  function restrictedResponse(code = 'account_banned'): Response {
+    return new Response(
+      JSON.stringify({
+        status: 403,
+        statusCode: 403,
+        code,
+        detail: 'บัญชีนี้ถูกระงับการใช้งานถาวร กรุณาติดต่อผู้ดูแลระบบ',
+      }),
+      { status: 403, headers: { 'Content-Type': 'application/problem+json' } },
+    );
+  }
+
+  async function armedRuntime(): Promise<{
+    runtime: ApiRuntime;
+    restricted: ReturnType<typeof vi.fn>;
+    unauthorized: ReturnType<typeof vi.fn>;
+    refresher: ReturnType<typeof vi.fn>;
+  }> {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    runtime.setAuthTokenGetter(() => 'live-token');
+    const restricted = vi.fn();
+    const unauthorized = vi.fn();
+    const refresher = vi.fn().mockResolvedValue('fresh-token');
+    runtime.setAccountRestrictedHandler(restricted);
+    runtime.setUnauthorizedHandler(unauthorized);
+    runtime.setTokenRefresher(refresher);
+    return { runtime, restricted, unauthorized, refresher };
+  }
+
+  it('(i)(ii) notifies the account-restricted handler once with the server payload and never refreshes', async () => {
+    const { runtime, restricted, unauthorized, refresher } = await armedRuntime();
+    const fetchMock = vi.fn(() => Promise.resolve(restrictedResponse()));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/cart', { method: 'GET' });
+
+    expect(response.status).toBe(403);
+    expect(restricted).toHaveBeenCalledTimes(1);
+    expect(restricted.mock.calls[0][0]).toMatchObject({
+      code: 'account_banned',
+      detail: 'บัญชีนี้ถูกระงับการใช้งานถาวร กรุณาติดต่อผู้ดูแลระบบ',
+    });
+    // A banned user's refresh is refused too, so trying would only add a round trip and a
+    // second failure; and the 401 path must not claim the session merely expired.
+    expect(refresher).not.toHaveBeenCalled();
+    expect(unauthorized).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('(iii) returns the response with its body still readable (proves response.clone())', async () => {
+    const { runtime, restricted } = await armedRuntime();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(restrictedResponse('account_suspended'))),
+    );
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/cart', { method: 'GET' });
+
+    // Reading the body here would throw "body stream already read" if the runtime had consumed
+    // the original response instead of a clone — every service downstream depends on this.
+    const body = (await response.json()) as { code: string };
+    expect(body.code).toBe('account_suspended');
+    expect(restricted).toHaveBeenCalledTimes(1);
+  });
+
+  it('(iv) leaves an ordinary 403 alone — other code, no code, or a non-JSON body', async () => {
+    const { runtime, restricted } = await armedRuntime();
+    const bodies = [
+      // A buyer poking an admin-only route: forbidden, but the session is perfectly valid.
+      new Response(JSON.stringify({ status: 403, code: 'seller_profile_required' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/problem+json' },
+      }),
+      new Response(JSON.stringify({ status: 403, detail: 'ไม่มีสิทธิ์' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      // A proxy answering 403 with an HTML error page.
+      new Response('<html>403 Forbidden</html>', {
+        status: 403,
+        headers: { 'Content-Type': 'text/html' },
+      }),
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(bodies.shift() as Response)),
+    );
+
+    const config = runtime.createClientConfig();
+    for (let i = 0; i < 3; i++) {
+      const response = await config.fetch!('http://localhost:5282/api/admin/users', { method: 'GET' });
+      expect(response.status).toBe(403);
+    }
+
+    expect(restricted).not.toHaveBeenCalled();
+  });
+
+  it('leaves a 403 from an auth endpoint to the page that made the call', async () => {
+    const { runtime, restricted } = await armedRuntime();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(restrictedResponse())),
+    );
+
+    const config = runtime.createClientConfig();
+    // The login page shows the reason itself; redirecting to /auth/login from /auth/login and
+    // toasting on top of the form is strictly worse.
+    await config.fetch!('http://localhost:5282/api/auth/login', { method: 'POST' });
+
+    expect(restricted).not.toHaveBeenCalled();
+  });
+
+  it('also catches a ban that lands between the first call and the replayed one', async () => {
+    const { runtime, restricted, refresher } = await armedRuntime();
+    const responses = [new Response(null, { status: 401 }), restrictedResponse()];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(responses.shift() as Response)),
+    );
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/cart', { method: 'GET' });
+
+    expect(refresher).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(403);
+    expect(restricted).toHaveBeenCalledTimes(1);
+  });
+
+  it('is a silent no-op when nothing registered a handler (unit tests / SSR)', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    runtime.setAuthTokenGetter(() => 'live-token');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(restrictedResponse())),
+    );
+
+    const config = runtime.createClientConfig();
+    const response = await config.fetch!('http://localhost:5282/api/cart', { method: 'GET' });
+
+    expect(response.status).toBe(403);
+  });
+});

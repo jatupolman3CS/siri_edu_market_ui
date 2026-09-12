@@ -47,7 +47,12 @@ export class FeedbackModalComponent {
   ];
 
   private readonly allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-  private readonly maxFileSize = 5 * 1024 * 1024; // 5 MB
+  /**
+   * F-07 fix: the server rejects anything over 5,000,000 bytes (`system-feedback.md` §“กฎการ
+   * ตรวจ attachmentKeys” ข้อ 6). Checking 5 MiB here let 5.00–5.24 MB files sail past the form and
+   * fail with a 400 only after the upload had already run.
+   */
+  private readonly maxFileSize = 5_000_000; // 5 MB, decimal — same number the API enforces
 
   get isSubmitDisabled(): boolean {
     return !this.subject.trim() || !this.details.trim() || this.sending();

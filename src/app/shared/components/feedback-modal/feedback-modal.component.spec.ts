@@ -111,6 +111,47 @@ describe('FeedbackModalComponent', () => {
     expect(comp.attachments().length).toBe(0);
   });
 
+  /**
+   * F-07 fix: the form used to allow 5 MiB while the API caps attachments at 5,000,000 bytes
+   * (`system-feedback.md`), so anything between the two limits uploaded fine and then failed the
+   * submit with a 400 the user could do nothing about.
+   */
+  it('rejects a file above the API limit of 5,000,000 bytes even though it is under 5 MiB', () => {
+    const fixture = TestBed.createComponent(FeedbackModalComponent);
+    const comp = fixture.componentInstance;
+    comp.show();
+
+    const file = new File(['a'], 'just-over.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: 5 * 1024 * 1024 }); // 5,242,880 bytes
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    comp.onFilesSelected({ target: input } as unknown as Event);
+
+    expect(messageService.warning).toHaveBeenCalledWith('ไฟล์แนบต้องมีขนาดไม่เกิน 5 MB ต่อไฟล์');
+    expect(comp.attachments().length).toBe(0);
+  });
+
+  it('accepts a file of exactly 5,000,000 bytes — the API rejects only what is above it', () => {
+    const fixture = TestBed.createComponent(FeedbackModalComponent);
+    const comp = fixture.componentInstance;
+    comp.show();
+
+    const file = new File(['a'], 'exactly-at-limit.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: 5_000_000 });
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    comp.onFilesSelected({ target: input } as unknown as Event);
+
+    expect(messageService.warning).not.toHaveBeenCalled();
+    expect(comp.attachments().length).toBe(1);
+  });
+
   it('submits successfully, shows success message, emits submitted, and closes modal', async () => {
     const fixture = TestBed.createComponent(FeedbackModalComponent);
     const comp = fixture.componentInstance;

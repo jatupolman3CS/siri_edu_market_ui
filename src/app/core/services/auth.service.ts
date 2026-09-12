@@ -99,6 +99,13 @@ export class AuthService {
   /** Guard: prevent multiple simultaneous 401 redirects from concurrent API calls. */
   private _redirectingToLogin = false;
   /**
+   * admin-user-management v2 §4.6 (ก): sticky until the next successful sign-in — a concurrent
+   * 401 must not overwrite the ban verdict. `_redirectingToLogin` alone cannot do this: it is
+   * cleared once `navigate()` resolves, so the generic "กรุณาเข้าสู่ระบบ…" toast of an in-flight
+   * 401 would land on top of the real reason the session ended.
+   */
+  private _accountRestricted = false;
+  /**
    * DEV-BYPASS: set by `provideDevAuthBypass` while the development sign-in bypass is on.
    * There is no login page to come back through in that mode, so `signOut()` hands control here
    * to re-enter as the seeded account instead of leaving the app with no session at all.
@@ -212,13 +219,20 @@ export class AuthService {
         this.setAccessToken(data.accessToken ?? null);
         this.setRefreshToken(data.refreshToken ?? null);
         return data.accessToken ?? null;
-      } catch {
+      } catch (e) {
         // Drop session — caller decides whether to redirect to /auth/login.
         this.setAccessToken(null);
         this.setRefreshToken(null);
         this._session.set(null);
         if (typeof localStorage !== 'undefined') {
           localStorage.removeItem(STORAGE_KEY);
+        }
+        // admin-user-management v2 §4.6 (จ): banned while the access token happened to expire.
+        // The SDK throws the ProblemDetails payload itself, so `e` is the payload. Say why the
+        // session ended instead of the generic 401 wording the caller would otherwise show.
+        const code = extractErrorCode(e);
+        if (code === 'account_suspended' || code === 'account_banned') {
+          this.redirectToLoginAfterAccountRestricted(this.apiFail.formatDetail(e));
         }
         return null;
       } finally {
@@ -233,6 +247,8 @@ export class AuthService {
    * Skips when already on an /auth/* route to avoid redirect loops.
    */
   redirectToLoginAfterUnauthorized(returnUrl: string): void {
+    // The account was restricted: that verdict (and its message) owns the redirect.
+    if (this._accountRestricted) return;
     if (returnUrl.startsWith('/auth')) return;
     if (this._redirectingToLogin) return;
     this._redirectingToLogin = true;
@@ -246,14 +262,22 @@ export class AuthService {
   }
 
   /**
-   * admin-user-management v1 §4.6: after a 403 account_suspended / account_banned:
+   * admin-user-management §4.6 (ก): after a 403 account_suspended / account_banned:
    * clear session and redirect to /auth/login with the warning message from server.
+   *
+   * This is the **only** owner of that effect in the app — both HTTP stacks (the SDK fetch in
+   * `core/api-runtime.ts` and the `HttpClient` interceptor) funnel here, so the user is signed
+   * out once and told why once, however many calls were in flight when the ban landed.
    */
   redirectToLoginAfterAccountRestricted(message: string): void {
+    if (this._accountRestricted) return;
     if (this._redirectingToLogin) return;
+    // Must be set *before* signOut(): it is what stops the DEV-BYPASS reactivator from walking
+    // straight back in as the seeded account that was just banned (403 → signOut → re-enter …).
+    this._accountRestricted = true;
     this._redirectingToLogin = true;
     this.signOut();
-    this.message.warning(message);
+    this.message.warning(message || 'บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
     void this.router.navigate(['/auth/login']).then(() => {
       this._redirectingToLogin = false;
     });
@@ -572,8 +596,9 @@ export class AuthService {
     }
 
     // DEV-BYPASS: signing out of a build with no working login would strand the user on
-    // /auth/login, so come straight back in as the seeded account.
-    this._devBypassReactivator?.();
+    // /auth/login, so come straight back in as the seeded account — unless the account was just
+    // restricted, where re-entering would loop 403 → signOut → re-enter on a banned seed user.
+    if (!this._accountRestricted) this._devBypassReactivator?.();
   }
 
   // ========== Forgot password ==========
@@ -742,6 +767,9 @@ export class AuthService {
   }
 
   private completeSignIn(user: User, provider: AuthProvider): void {
+    // Every login flow (password, OAuth, verify-email) ends here, so this is the one place a
+    // reinstated account clears the sticky restriction guard.
+    this._accountRestricted = false;
     const session: AuthSession = {
       user,
       provider,
