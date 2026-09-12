@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { LineNotificationService } from './line-notification.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import type { NotificationSettingResponse } from '../api/types.gen';
+import type { NotificationSettingItem } from './notification.service';
 
 /**
  * line-notification-channel v1 (docs/contracts/line-notification-channel.md §1 test list / §3 /
@@ -55,10 +56,64 @@ function connectionBody(over: Record<string, unknown> = {}) {
   };
 }
 
-function settingsBody(): NotificationSettingResponse[] {
+/**
+ * The wire shape of `GET|PUT /api/notifications/line/settings`. notification-master-config v1 §3.6
+ * adds `description`/`audience`/`isLocked`/`lockReason` to it.
+ * TODO(contract): notification-master-config §3.6 — the generated `NotificationSettingResponse`
+ * still only knows the original three fields, so the extra four are declared here. Collapse this
+ * back to `NotificationSettingResponse` in the fe-3 regen round.
+ */
+type RawLineSetting = NotificationSettingResponse & {
+  description?: string;
+  audience?: string;
+  isLocked?: boolean;
+  lockReason?: string | null;
+};
+
+function settingsBody(): RawLineSetting[] {
   return [
-    { key: 'sale', label: 'แจ้งเตือนเมื่อมีการซื้อ', isEnabled: true },
-    { key: 'review', label: 'แจ้งเตือนเมื่อมีรีวิวใหม่', isEnabled: false },
+    {
+      key: 'sale',
+      label: 'แจ้งเตือนเมื่อมีการซื้อ',
+      isEnabled: true,
+      description: 'เมื่อมีคนซื้อเอกสารของคุณ',
+      audience: 'seller',
+      isLocked: false,
+      lockReason: null,
+    },
+    {
+      key: 'review',
+      label: 'แจ้งเตือนเมื่อมีรีวิวใหม่',
+      isEnabled: false,
+      description: 'เมื่อมีผู้ซื้อรีวิวเอกสารของคุณ',
+      audience: 'seller',
+      isLocked: true,
+      lockReason: 'ปิดโดยผู้ดูแลระบบ',
+    },
+  ];
+}
+
+/** What {@link settingsBody} looks like after the service normalises it (§3.6). */
+function normalizedSettings(): NotificationSettingItem[] {
+  return [
+    {
+      key: 'sale',
+      label: 'แจ้งเตือนเมื่อมีการซื้อ',
+      isEnabled: true,
+      description: 'เมื่อมีคนซื้อเอกสารของคุณ',
+      audience: 'seller',
+      isLocked: false,
+      lockReason: null,
+    },
+    {
+      key: 'review',
+      label: 'แจ้งเตือนเมื่อมีรีวิวใหม่',
+      isEnabled: false,
+      description: 'เมื่อมีผู้ซื้อรีวิวเอกสารของคุณ',
+      audience: 'seller',
+      isLocked: true,
+      lockReason: 'ปิดโดยผู้ดูแลระบบ',
+    },
   ];
 }
 
@@ -189,7 +244,7 @@ describe('LineNotificationService', () => {
       service.loadSettings();
       await settle();
 
-      expect(service.settings()).toEqual(settingsBody());
+      expect(service.settings()).toEqual(normalizedSettings());
     });
 
     it('generic failure reports through ApiFailureReporter and leaves settings empty', async () => {
@@ -203,6 +258,41 @@ describe('LineNotificationService', () => {
       expect(service.settings()).toEqual([]);
       expect(apiFail.report).toHaveBeenCalledWith('โหลดการตั้งค่าแจ้งเตือน LINE', expect.anything());
     });
+
+    it('§3.6: normalises isLocked/lockReason so the card can disable a locked switch', async () => {
+      stubRoute('GET', '/api/notifications/line/settings', settingsBody());
+      const service = buildService();
+
+      service.loadSettings();
+      await settle();
+
+      const review = service.settings().find((s) => s.key === 'review');
+      expect(review?.isLocked).toBe(true);
+      expect(review?.lockReason).toBe('ปิดโดยผู้ดูแลระบบ');
+      expect(service.settings().find((s) => s.key === 'sale')?.isLocked).toBe(false);
+    });
+
+    it('§3.6: a row without the new fields falls back to unlocked (no reason), never to a disabled switch', async () => {
+      stubRoute('GET', '/api/notifications/line/settings', [
+        { key: 'payout', label: 'อัปเดตสถานะการถอนเงิน', isEnabled: true },
+      ] satisfies RawLineSetting[]);
+      const service = buildService();
+
+      service.loadSettings();
+      await settle();
+
+      expect(service.settings()).toEqual([
+        {
+          key: 'payout',
+          label: 'อัปเดตสถานะการถอนเงิน',
+          isEnabled: true,
+          description: '',
+          audience: 'buyer',
+          isLocked: false,
+          lockReason: null,
+        },
+      ]);
+    });
   });
 
   describe('updateSettings() — PUT /api/notifications/line/settings (§3.6)', () => {
@@ -213,7 +303,7 @@ describe('LineNotificationService', () => {
       const ok = await service.updateSettings({ settings: { sale: true, review: false } });
 
       expect(ok).toBe(true);
-      expect(service.settings()).toEqual(settingsBody());
+      expect(service.settings()).toEqual(normalizedSettings());
       const call = requests.find((r) => r.method === 'PUT' && r.path === '/api/notifications/line/settings');
       expect(JSON.parse(call?.body ?? '{}')).toEqual({ settings: { sale: true, review: false } });
     });
@@ -318,9 +408,9 @@ describe('LineNotificationService', () => {
       lineDisplayName: null,
       connectedAt: null,
     });
-    service.setSettingsForTest(settingsBody());
+    service.setSettingsForTest(normalizedSettings());
 
     expect(service.status()?.status).toBe('NotConnected');
-    expect(service.settings()).toEqual(settingsBody());
+    expect(service.settings()).toEqual(normalizedSettings());
   });
 });

@@ -30,7 +30,13 @@ export interface NotificationSettingItem {
   lockReason: string | null;
 }
 
-function normalizeSetting(raw: NotificationSettingResponse): NotificationSettingItem {
+/**
+ * Shared by both settings endpoints: `/api/notifications/settings` (email, this service) and
+ * `/api/notifications/line/settings` (LINE, {@link LineNotificationService}). Both answer with the
+ * same `NotificationSettingResponse` shape per §3.6, so they normalise through one function — the
+ * `TODO(contract)` cast below then has a single place to be removed at regen time.
+ */
+export function normalizeSetting(raw: NotificationSettingResponse): NotificationSettingItem {
   // TODO(contract): notification-master-config §3.6 — `description`, `audience`, `isLocked` and
   // `lockReason` are not in the generated SDK yet (backend be-1 built them in parallel).
   // Remove this cast in the fe-3 regen round.

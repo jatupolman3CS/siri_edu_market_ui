@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { LineNotificationService } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
 
@@ -26,11 +27,17 @@ import { IconComponent } from '../icon/icon.component';
  *    `notification-settings.component.html`, §5).
  *  - `status()!.status === 'Disconnected'` → warning banner + "เชื่อมต่อใหม่" button (calls the
  *    same `connect()` as NotConnected — no separate endpoint, §5), no toggles.
+ *
+ * notification-master-config v1 §3.6 / AC-20: a key the master config locks (`isLocked`) renders
+ * disabled with its Thai `lockReason`, and never travels in the `PUT` — identical treatment to
+ * `notification-settings.component.ts`, which owns the email half of the same catalog. Without it
+ * a seller would see a live LINE switch for an event an admin already switched off platform-wide,
+ * flip it, and get nothing.
  */
 @Component({
   selector: 'app-line-notification',
   standalone: true,
-  imports: [FormsModule, NzModalModule, NzSwitchModule, IconComponent],
+  imports: [FormsModule, NzModalModule, NzSwitchModule, NzTooltipModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './line-notification.component.html',
   styleUrl: './line-notification.component.scss',
@@ -128,16 +135,23 @@ export class LineNotificationComponent {
 
   /**
    * §5: the endpoint replaces the whole set, so every key has to go up on every toggle — mirrors
-   * `notification-settings.component.ts.toggle()` exactly.
+   * `notification-settings.component.ts.toggle()` exactly, its locked-key rule included: §3.6 says
+   * the API drops a locked key silently, so sending one would make the request claim something
+   * the seller never asked for (and cannot ask for).
    */
   toggle(key: string | undefined, enabled: boolean): void {
     if (!key) return;
 
+    const settings = this.settings();
+    const target = settings.find((setting) => setting.key === key);
+    // §3.6: a locked key is not the seller's to change.
+    if (!target || target.isLocked) return;
+
     const map: Record<string, boolean> = {};
-    for (const setting of this.settings()) {
-      const k = setting.key ?? '';
-      if (!k) continue;
-      map[k] = k === key ? enabled : !!setting.isEnabled;
+    for (const setting of settings) {
+      const k = setting.key;
+      if (!k || setting.isLocked) continue;
+      map[k] = k === key ? enabled : setting.isEnabled;
     }
 
     void this.lineNotification.updateSettings({ settings: map }).then((ok) => {

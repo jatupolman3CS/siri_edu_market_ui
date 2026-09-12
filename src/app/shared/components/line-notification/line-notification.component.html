@@ -57,7 +57,7 @@
         } @else {
           <div class="space-y-2.5">
             @for (n of settings(); track n.key) {
-              <div class="flex items-center gap-3 p-3 rounded-2xl border border-line hover:border-pink-200 transition-colors">
+              <div class="flex items-start gap-3 p-3 rounded-2xl border border-line hover:border-pink-200 transition-colors">
                 <div class="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
                   @switch (n.key) {
                     @case ('sale') { <app-icon name="cart" [size]="16" /> }
@@ -69,13 +69,26 @@
                   }
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="text-sm font-semibold text-ink">{{ n.label ?? n.key }}</div>
+                  <div class="text-sm font-semibold text-ink break-words">{{ n.label || n.key }}</div>
+                  @if (n.isLocked && n.lockReason) {
+                    <p class="text-xs text-amber-700 mt-1 flex items-start gap-1">
+                      <app-icon name="lock" [size]="12" />
+                      <span class="break-words">{{ n.lockReason }}</span>
+                    </p>
+                  }
                 </div>
-                <nz-switch
-                  [attr.name]="'line-notif-switch-' + n.key"
-                  [ngModel]="n.isEnabled"
-                  (ngModelChange)="toggle(n.key, $event)"
-                />
+                <span
+                  class="flex-shrink-0"
+                  nz-tooltip
+                  [nzTooltipTitle]="n.isLocked ? (n.lockReason ?? '') : ''"
+                >
+                  <nz-switch
+                    [attr.name]="'line-notif-switch-' + n.key"
+                    [ngModel]="n.isEnabled"
+                    [nzDisabled]="n.isLocked"
+                    (ngModelChange)="toggle(n.key, $event)"
+                  />
+                </span>
               </div>
             }
           </div>

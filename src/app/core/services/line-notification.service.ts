@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import type { LineConnectionStatus } from '../models';
 import { mapLineConnectionStatus } from '../api-mappers/mappers';
-import type { NotificationSettingResponse, UpdateNotificationSettingsRequest } from '../api/types.gen';
+import type { UpdateNotificationSettingsRequest } from '../api/types.gen';
+import { normalizeSetting, type NotificationSettingItem } from './notification.service';
 import {
   deleteApiNotificationsLineConnection,
   getApiNotificationsLineConnection,
@@ -48,7 +49,7 @@ export class LineNotificationService {
 
   private readonly _status = signal<LineConnectionStatus | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
-  private readonly _settings = signal<NotificationSettingResponse[]>([]);
+  private readonly _settings = signal<NotificationSettingItem[]>([]);
 
   readonly status = this._status.asReadonly();
   readonly state = this._state.asReadonly();
@@ -69,12 +70,21 @@ export class LineNotificationService {
     })();
   }
 
-  /** `GET /api/notifications/line/settings` (§3.5) — reuses `NotificationSettingResponse[]`, no new schema. */
+  /**
+   * `GET /api/notifications/line/settings` (§3.5) — reuses `NotificationSettingResponse[]`, no new
+   * schema.
+   *
+   * notification-master-config v1 §3.6: that response now also carries `description`/`audience`/
+   * `isLocked`/`lockReason`, and the LINE card has to honour `isLocked` exactly like the email card
+   * does (a key an admin switched off, or one nobody may opt out of, is dropped by the API anyway —
+   * showing a live switch for it would only lie to the seller). Rows are therefore normalised
+   * through the same {@link normalizeSetting} the email settings use.
+   */
   loadSettings(): void {
     void (async () => {
       try {
         const data = unwrapSdkResult(await getApiNotificationsLineSettings());
-        this._settings.set(data);
+        this._settings.set(data.map(normalizeSetting));
       } catch (e) {
         this.apiFail.report('โหลดการตั้งค่าแจ้งเตือน LINE', e);
       }
@@ -84,11 +94,12 @@ export class LineNotificationService {
   /**
    * `PUT /api/notifications/line/settings` (§3.6) — caller must always send the full key→boolean
    * map (endpoint replaces the whole set), same as `notification-settings.component.ts.toggle()`.
+   * §3.6: locked keys are excluded from that map by the caller — the API filters them out silently.
    */
   async updateSettings(request: UpdateNotificationSettingsRequest): Promise<boolean> {
     try {
       const data = unwrapSdkResult(await putApiNotificationsLineSettings({ body: request }));
-      this._settings.set(data);
+      this._settings.set(data.map(normalizeSetting));
       return true;
     } catch {
       // component owns the toast for this failure — see class doc comment.
@@ -156,7 +167,7 @@ export class LineNotificationService {
   }
 
   /** Test helper — see {@link setStatusForTest}. */
-  setSettingsForTest(settings: NotificationSettingResponse[]): void {
+  setSettingsForTest(settings: NotificationSettingItem[]): void {
     this._settings.set(settings);
   }
 }

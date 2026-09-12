@@ -5,10 +5,9 @@ import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { LineNotificationComponent } from './line-notification.component';
-import { LineNotificationService } from '../../../core/services';
+import { LineNotificationService, type NotificationSettingItem } from '../../../core/services';
 import { idleActionState, loadingActionState, errorActionState, type ActionState } from '../../../core/services/action-state';
 import type { LineConnectionStatus } from '../../../core/models';
-import type { NotificationSettingResponse } from '../../../core/api/types.gen';
 
 /**
  * line-notification-channel v1 (docs/contracts/line-notification-channel.md §1 test list / §5).
@@ -30,21 +29,40 @@ function statusFixture(overrides: Partial<LineConnectionStatus> = {}): LineConne
   };
 }
 
-function settingsFixture(): NotificationSettingResponse[] {
+/**
+ * notification-master-config v1 §3.6: `/api/notifications/line/settings` answers with the same
+ * enriched `NotificationSettingResponse` the email settings use, normalised by the service into
+ * {@link NotificationSettingItem} — so the fixtures carry `description`/`audience`/`isLocked`/
+ * `lockReason` too.
+ */
+function setting(overrides: Partial<NotificationSettingItem> = {}): NotificationSettingItem {
+  return {
+    key: 'sale',
+    label: 'ขายได้',
+    description: 'เมื่อมีคนซื้อเอกสารของคุณ',
+    isEnabled: true,
+    audience: 'seller',
+    isLocked: false,
+    lockReason: null,
+    ...overrides,
+  };
+}
+
+function settingsFixture(): NotificationSettingItem[] {
   return [
-    { key: 'sale', label: 'ขายได้', isEnabled: true },
-    { key: 'review', label: 'รีวิวใหม่', isEnabled: false },
+    setting({ key: 'sale', label: 'ขายได้', isEnabled: true }),
+    setting({ key: 'review', label: 'รีวิวใหม่', isEnabled: false }),
   ];
 }
 
 function fakeLineNotification(
   initialStatus: LineConnectionStatus | null = null,
   initialState: ActionState = idleActionState(),
-  initialSettings: NotificationSettingResponse[] = [],
+  initialSettings: NotificationSettingItem[] = [],
 ) {
   const status = signal<LineConnectionStatus | null>(initialStatus);
   const state = signal<ActionState>(initialState);
-  const settingsSig = signal<NotificationSettingResponse[]>(initialSettings);
+  const settingsSig = signal<NotificationSettingItem[]>(initialSettings);
   return {
     status: status.asReadonly(),
     state: state.asReadonly(),
@@ -273,6 +291,78 @@ describe('LineNotificationComponent — toggle() (§5)', () => {
     fixture.componentInstance.toggle(undefined, true);
 
     expect(fake.updateSettings).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * notification-master-config v1 §3.6 / AC-20 — the LINE card has to honour the master config the
+ * same way `notification-settings.component.spec.ts` proves the email card does. `fe-2`'s spec left
+ * this component out of scope, so a locked event still rendered a live switch here.
+ */
+describe('LineNotificationComponent — master config lock (§3.6 / AC-20)', () => {
+  it('AC-20: a locked toggle renders disabled and shows its Thai reason', () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), [
+      setting({
+        key: 'payout',
+        label: 'อัปเดตสถานะการถอนเงิน',
+        isLocked: true,
+        lockReason: 'การแจ้งเตือนนี้จำเป็นต่อระบบ จึงปิดไม่ได้',
+      }),
+    ]);
+    const { fixture } = render(fake);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const button = el.querySelector<HTMLButtonElement>(
+      'nz-switch[name="line-notif-switch-payout"] button',
+    );
+    expect(button?.disabled).toBe(true);
+    expect(el.textContent).toContain('การแจ้งเตือนนี้จำเป็นต่อระบบ จึงปิดไม่ได้');
+  });
+
+  it('§3.6: a toggle sends every unlocked key and leaves the locked ones out', async () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), [
+      setting({ key: 'sale', isEnabled: true }),
+      setting({ key: 'review', isEnabled: false }),
+      setting({ key: 'payout', isEnabled: true, isLocked: true, lockReason: 'ปิดโดยผู้ดูแลระบบ' }),
+    ]);
+    const { fixture } = render(fake);
+
+    fixture.componentInstance.toggle('review', true);
+    await settle();
+
+    expect(fake.updateSettings).toHaveBeenCalledWith({ settings: { sale: true, review: true } });
+  });
+
+  it('§3.6: toggling a locked key is a no-op — nothing is sent', async () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), [
+      setting({ key: 'payout', isLocked: true, lockReason: 'ปิดโดยผู้ดูแลระบบ' }),
+    ]);
+    const messages: Messages = { success: [], info: [], warning: [], error: [] };
+    const { fixture } = render(fake, messages);
+
+    fixture.componentInstance.toggle('payout', false);
+    await settle();
+
+    expect(fake.updateSettings).not.toHaveBeenCalled();
+    expect(messages.success).toEqual([]);
+  });
+
+  it('an unlocked key keeps working exactly as before — enabled switch, full map, success toast', async () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), settingsFixture());
+    const messages: Messages = { success: [], info: [], warning: [], error: [] };
+    const { fixture } = render(fake, messages);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const button = el.querySelector<HTMLButtonElement>(
+      'nz-switch[name="line-notif-switch-sale"] button',
+    );
+    expect(button?.disabled).toBe(false);
+
+    fixture.componentInstance.toggle('sale', false);
+    await settle();
+
+    expect(fake.updateSettings).toHaveBeenCalledWith({ settings: { sale: false, review: false } });
+    expect(messages.success).toContain('อัปเดตการแจ้งเตือน LINE แล้ว');
   });
 });
 
