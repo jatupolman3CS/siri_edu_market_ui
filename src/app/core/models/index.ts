@@ -958,18 +958,28 @@ export interface AdminUsersQuery {
   sort?: AdminUsersSort;
 }
 
+/**
+ * §3.1 `AdminUserListItemResponse`, mirrored 1:1 (§4.5: "ห้ามมี field ที่ backend ไม่มี").
+ *
+ * The round-1 stub carried `createdDate` and `lastLoginDate`; neither exists on the contract —
+ * the registration timestamp is `joinedAt` (the same name `AdminSellerRow` uses) and there is no
+ * last-login column at all.
+ */
 export interface AdminUserRow {
   id: string;
-  email: string;
   displayName: string;
+  email: string;
+  avatarUrl: string | null;
   roles: string[];
+  studioName: string | null;
+  isEmailVerified: boolean;
   accountStatus: AdminUserAccountStatus;
   suspendedUntil: string | null;
-  createdDate: string;
-  lastLoginDate: string | null;
-  avatarUrl: string | null;
   totalPurchaseAmount: number;
+  totalOrderCount: number;
   totalSalesAmount: number;
+  totalSalesCount: number;
+  joinedAt: string;
 }
 
 export interface AdminUserPurchaseStats {

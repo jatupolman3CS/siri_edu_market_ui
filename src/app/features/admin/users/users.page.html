@@ -106,7 +106,7 @@
             </td>
             <td class="px-3 py-3 text-sm text-right whitespace-nowrap">{{ u.totalPurchaseAmount | thb }}</td>
             <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ u.totalSalesAmount | thb }}</td>
-            <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ u.createdDate | date: 'dd MMM yyyy' }}</td>
+            <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ u.joinedAt | date: 'dd MMM yyyy' }}</td>
             <td class="px-3 py-3 text-right">
               <a [routerLink]="['/admin/users', u.id]" class="btn-icon !w-8 !h-8 inline-flex" title="ดูรายละเอียด">
                 <app-icon name="eye" [size]="14" />

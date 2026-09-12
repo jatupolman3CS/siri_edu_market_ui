@@ -513,3 +513,310 @@ describe('AdminService — prescreenDocument (ai-approval-prescreen v1 §0.2/§1
     expect(report).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * admin-user-management v2 §3.1-§3.5 / §1 — the five moderation endpoints wired to the generated
+ * SDK after gate 1. These drive `AdminService` against the stubbed `fetch` above, so they pin the
+ * three things the round-1 stub got wrong and that only show up at the wire:
+ *
+ *  1. the registration timestamp is `joinedAt` (the stub model called it `createdDate`),
+ *  2. `Sort` travels as the numeric `AdminUsersSort` enum, not the readable string the page binds,
+ *  3. nullable fields stay `null` after mapping instead of collapsing to `undefined`.
+ */
+describe('AdminService — admin user management (admin-user-management v2 §3.1-§3.5)', () => {
+  let requestedUrls: string[];
+
+  beforeEach(() => {
+    requestedUrls = [];
+    const stubbed = globalThis.fetch;
+    globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      requestedUrls.push(request.url);
+      return stubbed(input as RequestInfo, init);
+    }) as typeof globalThis.fetch;
+  });
+
+  function listItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      id: 'user-1',
+      displayName: 'สมชาย ใจดี',
+      email: 'somchai@example.com',
+      avatarUrl: null,
+      roles: ['buyer', 'seller'],
+      studioName: null,
+      isEmailVerified: true,
+      accountStatus: 'active',
+      suspendedUntil: null,
+      totalPurchaseAmount: 1500.5,
+      totalOrderCount: 4,
+      totalSalesAmount: 8500,
+      totalSalesCount: 12,
+      joinedAt: '2026-01-15T00:00:00.0000000Z',
+      ...overrides,
+    };
+  }
+
+  function detail(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      id: 'user-1',
+      displayName: 'สมชาย ใจดี',
+      email: 'somchai@example.com',
+      avatarUrl: null,
+      roles: ['buyer'],
+      studioName: null,
+      isEmailVerified: true,
+      accountStatus: 'active',
+      suspendedUntil: null,
+      totalPurchaseAmount: 1500,
+      totalOrderCount: 4,
+      accountStatusReason: null,
+      accountStatusMessage: null,
+      accountStatusChangedAt: null,
+      accountStatusChangedBy: null,
+      accountStatusChangedByName: null,
+      isSeller: false,
+      sellerApplicationStatus: null,
+      purchaseStats: {
+        totalPurchaseAmount: 1500,
+        totalOrderCount: 4,
+        refundedAmount: 200,
+        refundedOrderCount: 1,
+        lastOrderAt: null,
+      },
+      sellerStats: null,
+      moderationHistory: [],
+      joinedAt: '2026-01-15T00:00:00.0000000Z',
+      ...overrides,
+    };
+  }
+
+  it('§3.1: maps every list field and keeps nullable ones as null', async () => {
+    stubRoute('GET', '/api/admin/users', {
+      body: { items: [listItem()], page: 2, pageSize: 20, totalCount: 31, totalPages: 2 },
+    });
+    const admin = buildService();
+
+    const result = await admin.searchUsers({ page: 2, pageSize: 20 });
+
+    expect(result).toEqual({
+      items: [
+        {
+          id: 'user-1',
+          displayName: 'สมชาย ใจดี',
+          email: 'somchai@example.com',
+          avatarUrl: null,
+          roles: ['buyer', 'seller'],
+          studioName: null,
+          isEmailVerified: true,
+          accountStatus: 'active',
+          suspendedUntil: null,
+          totalPurchaseAmount: 1500.5,
+          totalOrderCount: 4,
+          totalSalesAmount: 8500,
+          totalSalesCount: 12,
+          joinedAt: '2026-01-15T00:00:00.0000000Z',
+        },
+      ],
+      page: 2,
+      pageSize: 20,
+      totalCount: 31,
+      totalPages: 2,
+    });
+    // `null` must survive the mapper rather than collapsing to `undefined`.
+    const row = result.items![0];
+    expect(Object.keys(row)).toContain('suspendedUntil');
+    expect(row.suspendedUntil).toBeNull();
+    expect(row.studioName).toBeNull();
+  });
+
+  it('§3.1: sends the filters as PascalCase query params and Sort as the numeric enum', async () => {
+    stubRoute('GET', '/api/admin/users', {
+      body: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+    });
+    const admin = buildService();
+
+    await admin.searchUsers({
+      page: 1,
+      pageSize: 20,
+      q: 'สมชาย',
+      role: 'seller',
+      status: 'suspended',
+      joinedFrom: '2026-01-01',
+      joinedTo: '2026-02-01',
+      sort: 'most_earned',
+    });
+
+    const query = new URL(requestedUrls.at(-1)!).searchParams;
+    expect(query.get('Q')).toBe('สมชาย');
+    expect(query.get('Role')).toBe('seller');
+    expect(query.get('Status')).toBe('suspended');
+    expect(query.get('JoinedFrom')).toBe('2026-01-01');
+    expect(query.get('JoinedTo')).toBe('2026-02-01');
+    expect(query.get('Page')).toBe('1');
+    expect(query.get('PageSize')).toBe('20');
+    // MostEarned = 3 (Newest=0, Oldest=1, MostSpent=2, MostEarned=3, NameAsc=4)
+    expect(query.get('Sort')).toBe('3');
+  });
+
+  it('§3.1: reports and returns an empty page when the list call fails', async () => {
+    stubRoute('GET', '/api/admin/users', { status: 403, body: { title: 'Forbidden', status: 403 } });
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [AdminService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const admin = TestBed.inject(AdminService);
+
+    const result = await admin.searchUsers({ page: 1, pageSize: 20 });
+
+    expect(result).toEqual({ items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 });
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  it('§3.2: maps a buyer detail with sellerStats null and an empty history', async () => {
+    stubRoute('GET', '/api/admin/users/user-1', { body: detail() });
+    const admin = buildService();
+
+    const result = await admin.getUser('user-1');
+
+    expect(result.sellerStats).toBeNull();
+    expect(result.isSeller).toBe(false);
+    expect(result.moderationHistory).toEqual([]);
+    expect(result.purchaseStats).toEqual({
+      totalPurchaseAmount: 1500,
+      totalOrderCount: 4,
+      refundedAmount: 200,
+      refundedOrderCount: 1,
+      lastOrderAt: null,
+    });
+    expect(result.joinedAt).toBe('2026-01-15T00:00:00.0000000Z');
+  });
+
+  it('§3.2: maps sellerStats and the moderation history for a restricted seller', async () => {
+    stubRoute('GET', '/api/admin/users/user-2', {
+      body: detail({
+        id: 'user-2',
+        roles: ['buyer', 'seller'],
+        studioName: 'ร้านครูสมชาย',
+        accountStatus: 'suspended',
+        suspendedUntil: '2026-10-01T00:00:00.0000000Z',
+        accountStatusReason: 'ละเมิดกฎการขาย',
+        accountStatusMessage: 'กรุณาติดต่อผู้ดูแลระบบ',
+        accountStatusChangedAt: '2026-09-10T03:00:00.0000000Z',
+        accountStatusChangedBy: 'admin-1',
+        accountStatusChangedByName: 'แอดมินเอ',
+        isSeller: true,
+        sellerApplicationStatus: 'approved',
+        sellerStats: {
+          studioName: 'ร้านครูสมชาย',
+          isVerified: true,
+          rating: 4.5,
+          totalDocuments: 20,
+          totalSalesCount: 12,
+          grossRevenue: 8500,
+          lifetimeNetEarnings: 6800,
+          pendingBalance: 1200,
+        },
+        moderationHistory: [
+          {
+            id: 'mod-1',
+            action: 'suspend',
+            reason: 'ละเมิดกฎการขาย',
+            messageToUser: null,
+            suspendedUntil: '2026-10-01T00:00:00.0000000Z',
+            previousStatus: 'active',
+            performedByUserId: 'admin-1',
+            performedByName: 'แอดมินเอ',
+            createdAt: '2026-09-10T03:00:00.0000000Z',
+          },
+        ],
+      }),
+    });
+    const admin = buildService();
+
+    const result = await admin.getUser('user-2');
+
+    expect(result.accountStatus).toBe('suspended');
+    expect(result.accountStatusChangedByName).toBe('แอดมินเอ');
+    expect(result.sellerStats).toEqual({
+      studioName: 'ร้านครูสมชาย',
+      isVerified: true,
+      rating: 4.5,
+      totalDocuments: 20,
+      totalSalesCount: 12,
+      grossRevenue: 8500,
+      lifetimeNetEarnings: 6800,
+      pendingBalance: 1200,
+    });
+    expect(result.moderationHistory).toHaveLength(1);
+    expect(result.moderationHistory[0]).toEqual({
+      id: 'mod-1',
+      action: 'suspend',
+      reason: 'ละเมิดกฎการขาย',
+      messageToUser: null,
+      suspendedUntil: '2026-10-01T00:00:00.0000000Z',
+      previousStatus: 'active',
+      performedByUserId: 'admin-1',
+      performedByName: 'แอดมินเอ',
+      createdAt: '2026-09-10T03:00:00.0000000Z',
+    });
+  });
+
+  it('§3.3: POSTs to /suspend and answers with the detail that replaces page state', async () => {
+    stubRoute('POST', '/api/admin/users/user-1/suspend', {
+      body: detail({
+        accountStatus: 'suspended',
+        suspendedUntil: '2026-10-01T00:00:00.0000000Z',
+        accountStatusReason: 'สแปม',
+      }),
+    });
+    const admin = buildService();
+
+    const result = await admin.suspendUser('user-1', {
+      reason: 'สแปม',
+      until: '2026-10-01T00:00:00.000Z',
+      messageToUser: null,
+    });
+
+    expect(result.accountStatus).toBe('suspended');
+    expect(result.accountStatusReason).toBe('สแปม');
+    expect(requestedUrls.at(-1)).toContain('/api/admin/users/user-1/suspend');
+  });
+
+  it('§3.4: POSTs to /ban', async () => {
+    stubRoute('POST', '/api/admin/users/user-1/ban', {
+      body: detail({ accountStatus: 'banned', accountStatusReason: 'ฉ้อโกง' }),
+    });
+    const admin = buildService();
+
+    const result = await admin.banUser('user-1', { reason: 'ฉ้อโกง', messageToUser: null });
+
+    expect(result.accountStatus).toBe('banned');
+    expect(result.suspendedUntil).toBeNull();
+    expect(requestedUrls.at(-1)).toContain('/api/admin/users/user-1/ban');
+  });
+
+  it('§3.5: POSTs to /reinstate', async () => {
+    stubRoute('POST', '/api/admin/users/user-1/reinstate', { body: detail() });
+    const admin = buildService();
+
+    const result = await admin.reinstateUser('user-1', { reason: 'ตรวจสอบแล้วไม่ผิด' });
+
+    expect(result.accountStatus).toBe('active');
+    expect(requestedUrls.at(-1)).toContain('/api/admin/users/user-1/reinstate');
+  });
+
+  it('§4.5: reports and rethrows a 409 so the page can surface the server message', async () => {
+    stubRoute('POST', '/api/admin/users/user-1/ban', {
+      status: 409,
+      body: { message: 'บัญชีนี้ถูกแบนอยู่แล้ว' },
+    });
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [AdminService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const admin = TestBed.inject(AdminService);
+
+    await expect(admin.banUser('user-1', { reason: 'ซ้ำ' })).rejects.toBeTruthy();
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+});

@@ -196,9 +196,6 @@ function normalizeFeedItem(
   raw: GeneratedNotificationFeedItemResponse,
   fallbackAudience: NotificationAudience,
 ): NotificationFeedItemResponse {
-  // TODO(contract): notification-master-config §3.3 — `audience` is not in the generated SDK
-  // yet (backend be-2 is building in parallel). Remove this cast in the fe-3 regen round.
-  const rawAudience = (raw as { audience?: unknown }).audience;
   return {
     id: raw.id ?? '',
     key: raw.key ?? '',
@@ -207,7 +204,9 @@ function normalizeFeedItem(
     linkUrl: raw.linkUrl ?? '',
     isRead: raw.isRead ?? false,
     createdAt: raw.createdAt ?? '',
-    audience: toNotificationAudience(rawAudience) ?? fallbackAudience,
+    // §3.3: the server always scopes a row to one audience; the fallback only covers the
+    // (contract-breaking) case of an empty string arriving on the wire.
+    audience: toNotificationAudience(raw.audience) ?? fallbackAudience,
   };
 }
 
@@ -284,17 +283,22 @@ export class NotificationFeedService {
       try {
         const data = await this.fetchUnreadCount();
         const total = data.count ?? 0;
-        // TODO(contract): notification-master-config §3.4 — buyerCount/sellerCount/adminCount
-        // are not in the generated SDK yet. Remove this cast in the fe-3 regen round.
-        const raw = data as { buyerCount?: number; sellerCount?: number; adminCount?: number };
+        // §3.4: the per-audience breakdown is optional on the DTO, so a server that only sends
+        // `count` still drives the bell — every audience then shows the same total.
         const hasBreakdown =
-          raw.buyerCount !== undefined || raw.sellerCount !== undefined || raw.adminCount !== undefined;
+          data.buyerCount !== undefined ||
+          data.sellerCount !== undefined ||
+          data.adminCount !== undefined;
 
         this._unreadCount.set(total);
         this._hasAudienceBreakdown.set(hasBreakdown);
         this._unreadByAudience.set(
           hasBreakdown
-            ? { buyer: raw.buyerCount ?? 0, seller: raw.sellerCount ?? 0, admin: raw.adminCount ?? 0 }
+            ? {
+                buyer: data.buyerCount ?? 0,
+                seller: data.sellerCount ?? 0,
+                admin: data.adminCount ?? 0,
+              }
             : { buyer: total, seller: total, admin: total },
         );
       } catch (e) {
@@ -369,13 +373,9 @@ export class NotificationFeedService {
     pageSize: number,
     audience?: NotificationAudience,
   ): Promise<{ items: NotificationFeedItemResponse[]; totalCount: number }> {
-    // TODO(contract): notification-master-config §3.3 — the `audience` query param is not in
-    // the generated SDK yet. Remove this cast in the fe-3 regen round.
-    const queryPayload: Record<string, unknown> = { Page: page, PageSize: pageSize };
-    if (audience) queryPayload['audience'] = audience;
-
+    // §3.3: `audience` is omitted (not sent empty) when the caller wants every audience.
     const result = await getApiNotificationsFeed({
-      query: queryPayload as unknown as NonNullable<Parameters<typeof getApiNotificationsFeed>[0]>['query'],
+      query: { Page: page, PageSize: pageSize, ...(audience ? { audience } : {}) },
     });
     const data = unwrapSdkResult(result);
     return {
@@ -396,12 +396,8 @@ export class NotificationFeedService {
 
   /** 204 No Content on success — `throwOnError` (api-runtime.ts) already rejects on non-2xx. */
   private async postMarkAllRead(audience?: NotificationAudience): Promise<void> {
-    // TODO(contract): notification-master-config §3.5 — the `audience` query param is not in
-    // the generated SDK yet. Remove this cast in the fe-3 regen round.
-    const options = (audience ? { query: { audience } } : {}) as unknown as Parameters<
-      typeof postApiNotificationsFeedReadAll
-    >[0];
-    await postApiNotificationsFeedReadAll(options);
+    // §3.5: no `audience` = mark every audience read (the bell's own "อ่านทั้งหมด" always scopes).
+    await postApiNotificationsFeedReadAll(audience ? { query: { audience } } : {});
   }
 
   /**

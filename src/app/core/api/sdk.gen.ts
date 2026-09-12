@@ -120,6 +120,12 @@ import type {
   GetApiAdminSystemConfigJobTogglesResponses,
   GetApiAdminTransactionsData,
   GetApiAdminTransactionsResponses,
+  GetApiAdminUsersByUserIdData,
+  GetApiAdminUsersByUserIdErrors,
+  GetApiAdminUsersByUserIdResponses,
+  GetApiAdminUsersData,
+  GetApiAdminUsersErrors,
+  GetApiAdminUsersResponses,
   GetApiAdminWatermarkCopiesData,
   GetApiAdminWatermarkCopiesResponses,
   GetApiAnnouncementsActiveData,
@@ -354,6 +360,15 @@ import type {
   PostApiAdminSellersBySellerIdPayoutAccountRevealData,
   PostApiAdminSellersBySellerIdPayoutAccountRevealErrors,
   PostApiAdminSellersBySellerIdPayoutAccountRevealResponses,
+  PostApiAdminUsersByUserIdBanData,
+  PostApiAdminUsersByUserIdBanErrors,
+  PostApiAdminUsersByUserIdBanResponses,
+  PostApiAdminUsersByUserIdReinstateData,
+  PostApiAdminUsersByUserIdReinstateErrors,
+  PostApiAdminUsersByUserIdReinstateResponses,
+  PostApiAdminUsersByUserIdSuspendData,
+  PostApiAdminUsersByUserIdSuspendErrors,
+  PostApiAdminUsersByUserIdSuspendResponses,
   PostApiAuthChangePasswordData,
   PostApiAuthChangePasswordErrors,
   PostApiAuthChangePasswordResponses,
@@ -863,6 +878,83 @@ export const getApiAdminSellers = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).get<GetApiAdminSellersResponses, unknown, ThrowOnError>({
     url: '/api/admin/sellers',
     ...options,
+  });
+
+export const getApiAdminUsers = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminUsersData, ThrowOnError>,
+): RequestResult<GetApiAdminUsersResponses, GetApiAdminUsersErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminUsersResponses, GetApiAdminUsersErrors, ThrowOnError>({
+    url: '/api/admin/users',
+    ...options,
+  });
+
+export const getApiAdminUsersByUserId = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminUsersByUserIdData, ThrowOnError>,
+): RequestResult<GetApiAdminUsersByUserIdResponses, GetApiAdminUsersByUserIdErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiAdminUsersByUserIdResponses,
+    GetApiAdminUsersByUserIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/users/{userId}', ...options });
+
+export const postApiAdminUsersByUserIdSuspend = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminUsersByUserIdSuspendData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminUsersByUserIdSuspendResponses,
+  PostApiAdminUsersByUserIdSuspendErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminUsersByUserIdSuspendResponses,
+    PostApiAdminUsersByUserIdSuspendErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/users/{userId}/suspend',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAdminUsersByUserIdBan = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminUsersByUserIdBanData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminUsersByUserIdBanResponses,
+  PostApiAdminUsersByUserIdBanErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminUsersByUserIdBanResponses,
+    PostApiAdminUsersByUserIdBanErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/users/{userId}/ban',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAdminUsersByUserIdReinstate = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminUsersByUserIdReinstateData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminUsersByUserIdReinstateResponses,
+  PostApiAdminUsersByUserIdReinstateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminUsersByUserIdReinstateResponses,
+    PostApiAdminUsersByUserIdReinstateErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/users/{userId}/reinstate',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const getApiAdminSellerApplications = <ThrowOnError extends boolean = false>(

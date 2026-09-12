@@ -12,6 +12,12 @@ import type {
   AdminUserRow,
   AdminUserDetail,
   AdminUsersQuery,
+  AdminUsersSort,
+  AdminUserAccountStatus,
+  AdminUserModerationActionType,
+  AdminUserModerationEntry,
+  AdminUserPurchaseStats,
+  AdminUserSellerStats,
   SuspendUserRequest,
   BanUserRequest,
   ReinstateUserRequest,
@@ -41,6 +47,8 @@ import {
   getApiAdminStorageUsage,
   getApiAdminSystemConfigJobToggles,
   getApiAdminTransactions,
+  getApiAdminUsers,
+  getApiAdminUsersByUserId,
   getApiAdminWatermarkCopies,
   getApiAnnouncementsActive,
   postApiAdminAnnouncements,
@@ -55,6 +63,9 @@ import {
   postApiAdminOrdersByOrderIdRefund,
   postApiAdminPayoutsByPayoutIdStatus,
   postApiAdminFeedbackByIdStatus,
+  postApiAdminUsersByUserIdBan,
+  postApiAdminUsersByUserIdReinstate,
+  postApiAdminUsersByUserIdSuspend,
   putApiAdminAnnouncementsById,
   putApiAdminCategoriesById,
   putApiAdminCategoriesByCategoryIdSubcategoriesById,
@@ -68,6 +79,11 @@ import type {
   AdminOpenReportResponse,
   AdminPayoutResponse,
   AdminSellersSort,
+  AdminUserDetailResponse,
+  AdminUserListItemResponse,
+  AdminUserModerationEntryResponse,
+  AdminUserPurchaseStatsResponse,
+  AdminUserSellerStatsResponse,
   AdminWatermarkCopyResponse,
   DocumentGenerationCategoryStatusResponse,
   DocumentGenerationRunResponse,
@@ -347,6 +363,126 @@ function toDocumentGenerationEligibleCategory(
     categoryId: res.categoryId,
     name: res.name,
     hasGeneratedDocument: res.hasGeneratedDocument ?? false,
+  };
+}
+
+// ====== Admin user management mappers (admin-user-management v2 §3.1-§3.5) ======
+
+/**
+ * §3.0: `accountStatus` is always one of three lowercase literals, but the generated DTO types it
+ * as a bare `string`. Anything else would be a backend contract break — fall back to `active`
+ * rather than letting an unknown literal leak into the union the templates switch on.
+ */
+function toAdminUserAccountStatus(value: string | undefined): AdminUserAccountStatus {
+  return value === 'suspended' || value === 'banned' || value === 'active' ? value : 'active';
+}
+
+/** §3.2 `AdminUserModerationEntry.action` — same reasoning as {@link toAdminUserAccountStatus}. */
+function toAdminUserModerationAction(value: string | undefined): AdminUserModerationActionType {
+  return value === 'ban' || value === 'reinstate' || value === 'suspend' ? value : 'suspend';
+}
+
+/**
+ * §3.1 `AdminUsersSort` travels as the numeric enum `Newest=0, Oldest=1, MostSpent=2,
+ * MostEarned=3, NameAsc=4` (same as `AdminSellersSort`), so the readable string the page binds to
+ * its `<select>` is translated here, in the one place that touches the SDK.
+ */
+const ADMIN_USERS_SORT_TO_API: Record<AdminUsersSort, number> = {
+  newest: 0,
+  oldest: 1,
+  most_spent: 2,
+  most_earned: 3,
+  name_asc: 4,
+};
+
+function toAdminUserRow(res: AdminUserListItemResponse): AdminUserRow {
+  return {
+    id: res.id,
+    displayName: res.displayName,
+    email: res.email,
+    avatarUrl: res.avatarUrl ?? null,
+    roles: res.roles ?? [],
+    studioName: res.studioName ?? null,
+    isEmailVerified: res.isEmailVerified,
+    accountStatus: toAdminUserAccountStatus(res.accountStatus),
+    suspendedUntil: res.suspendedUntil ?? null,
+    totalPurchaseAmount: res.totalPurchaseAmount,
+    totalOrderCount: res.totalOrderCount,
+    totalSalesAmount: res.totalSalesAmount,
+    totalSalesCount: res.totalSalesCount,
+    joinedAt: res.joinedAt,
+  };
+}
+
+function toAdminUserPurchaseStats(
+  res: AdminUserPurchaseStatsResponse | undefined,
+): AdminUserPurchaseStats {
+  return {
+    totalPurchaseAmount: res?.totalPurchaseAmount ?? 0,
+    totalOrderCount: res?.totalOrderCount ?? 0,
+    refundedAmount: res?.refundedAmount ?? 0,
+    refundedOrderCount: res?.refundedOrderCount ?? 0,
+    lastOrderAt: res?.lastOrderAt ?? null,
+  };
+}
+
+/** §3.2: `sellerStats` is `null` — not an empty object — for a user with no `SELLER_PROFILE`. */
+function toAdminUserSellerStats(
+  res: AdminUserSellerStatsResponse | null | undefined,
+): AdminUserSellerStats | null {
+  if (!res) return null;
+  return {
+    studioName: res.studioName,
+    isVerified: res.isVerified,
+    rating: res.rating,
+    totalDocuments: res.totalDocuments,
+    totalSalesCount: res.totalSalesCount,
+    grossRevenue: res.grossRevenue,
+    lifetimeNetEarnings: res.lifetimeNetEarnings,
+    pendingBalance: res.pendingBalance,
+  };
+}
+
+function toAdminUserModerationEntry(
+  res: AdminUserModerationEntryResponse,
+): AdminUserModerationEntry {
+  return {
+    id: res.id,
+    action: toAdminUserModerationAction(res.action),
+    reason: res.reason,
+    messageToUser: res.messageToUser ?? null,
+    suspendedUntil: res.suspendedUntil ?? null,
+    previousStatus: toAdminUserAccountStatus(res.previousStatus),
+    performedByUserId: res.performedByUserId ?? null,
+    performedByName: res.performedByName ?? null,
+    createdAt: res.createdAt,
+  };
+}
+
+function toAdminUserDetail(res: AdminUserDetailResponse): AdminUserDetail {
+  return {
+    id: res.id,
+    displayName: res.displayName,
+    email: res.email,
+    avatarUrl: res.avatarUrl ?? null,
+    roles: res.roles ?? [],
+    studioName: res.studioName ?? null,
+    isEmailVerified: res.isEmailVerified,
+    accountStatus: toAdminUserAccountStatus(res.accountStatus),
+    suspendedUntil: res.suspendedUntil ?? null,
+    totalPurchaseAmount: res.totalPurchaseAmount,
+    totalOrderCount: res.totalOrderCount,
+    accountStatusReason: res.accountStatusReason ?? null,
+    accountStatusMessage: res.accountStatusMessage ?? null,
+    accountStatusChangedAt: res.accountStatusChangedAt ?? null,
+    accountStatusChangedBy: res.accountStatusChangedBy ?? null,
+    accountStatusChangedByName: res.accountStatusChangedByName ?? null,
+    isSeller: res.isSeller,
+    sellerApplicationStatus: res.sellerApplicationStatus ?? null,
+    purchaseStats: toAdminUserPurchaseStats(res.purchaseStats),
+    sellerStats: toAdminUserSellerStats(res.sellerStats),
+    moderationHistory: (res.moderationHistory ?? []).map(toAdminUserModerationEntry),
+    joinedAt: res.joinedAt,
   };
 }
 import {
@@ -1137,34 +1273,86 @@ export class AdminService {
 
   // ====== Admin User Management (admin-user-management v1 §3, §4.5) ======
 
+  /**
+   * §3.1 `GET /api/admin/users`. Swallows the failure like {@link searchSellers} — the table is a
+   * read-only view, so an empty page plus the `ApiFailureReporter` toast is the whole story.
+   */
   async searchUsers(query: AdminUsersQuery): Promise<PagedResult<AdminUserRow>> {
-    // TODO(contract): admin-user-management v1 §3.1 — wire after generate:api
-    return {
-      items: [],
-      page: query.page ?? 1,
-      pageSize: query.pageSize ?? 20,
-      totalCount: 0,
-      totalPages: 0,
-    };
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    try {
+      const result = unwrapSdkResult(
+        await getApiAdminUsers({
+          query: {
+            Page: page,
+            PageSize: pageSize,
+            Q: query.q || undefined,
+            Role: query.role || undefined,
+            Status: query.status || undefined,
+            JoinedFrom: query.joinedFrom || undefined,
+            JoinedTo: query.joinedTo || undefined,
+            Sort: query.sort ? ADMIN_USERS_SORT_TO_API[query.sort] : undefined,
+          },
+        }),
+      );
+      return {
+        items: (result.items ?? []).map(toAdminUserRow),
+        page: result.page ?? page,
+        pageSize: result.pageSize ?? pageSize,
+        totalCount: result.totalCount ?? 0,
+        totalPages: result.totalPages ?? 0,
+      };
+    } catch (e) {
+      this.apiFail.report('ค้นหาผู้ใช้', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
+    }
   }
 
+  /**
+   * §3.2 `GET /api/admin/users/{userId}`. Rethrows after reporting (§4.5) so the page can show the
+   * server's own Thai sentence with `apiFail.formatDetail(e)` — the same applies to the three
+   * moderation commands below, whose 403/409 messages are the point of the interaction.
+   */
   async getUser(userId: string): Promise<AdminUserDetail> {
-    // TODO(contract): admin-user-management v1 §3.2 — wire after generate:api
-    throw new Error(`getUser not wired for ${userId}`);
+    try {
+      const result = await getApiAdminUsersByUserId({ path: { userId } });
+      return toAdminUserDetail(unwrapSdkResult(result));
+    } catch (e) {
+      this.apiFail.report('โหลดข้อมูลผู้ใช้', e);
+      throw e;
+    }
   }
 
+  /** §3.3 `POST /api/admin/users/{userId}/suspend` — answers with the detail that replaces state. */
   async suspendUser(userId: string, body: SuspendUserRequest): Promise<AdminUserDetail> {
-    // TODO(contract): admin-user-management v1 §3.3 — wire after generate:api
-    throw new Error(`suspendUser not wired for ${userId}`);
+    try {
+      const result = await postApiAdminUsersByUserIdSuspend({ path: { userId }, body });
+      return toAdminUserDetail(unwrapSdkResult(result));
+    } catch (e) {
+      this.apiFail.report('ระงับบัญชีผู้ใช้', e);
+      throw e;
+    }
   }
 
+  /** §3.4 `POST /api/admin/users/{userId}/ban`. */
   async banUser(userId: string, body: BanUserRequest): Promise<AdminUserDetail> {
-    // TODO(contract): admin-user-management v1 §3.4 — wire after generate:api
-    throw new Error(`banUser not wired for ${userId}`);
+    try {
+      const result = await postApiAdminUsersByUserIdBan({ path: { userId }, body });
+      return toAdminUserDetail(unwrapSdkResult(result));
+    } catch (e) {
+      this.apiFail.report('แบนบัญชีผู้ใช้', e);
+      throw e;
+    }
   }
 
+  /** §3.5 `POST /api/admin/users/{userId}/reinstate`. */
   async reinstateUser(userId: string, body: ReinstateUserRequest): Promise<AdminUserDetail> {
-    // TODO(contract): admin-user-management v1 §3.5 — wire after generate:api
-    throw new Error(`reinstateUser not wired for ${userId}`);
+    try {
+      const result = await postApiAdminUsersByUserIdReinstate({ path: { userId }, body });
+      return toAdminUserDetail(unwrapSdkResult(result));
+    } catch (e) {
+      this.apiFail.report('ปลดระงับบัญชีผู้ใช้', e);
+      throw e;
+    }
   }
 }

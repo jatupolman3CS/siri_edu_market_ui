@@ -300,6 +300,81 @@ export type AdminTransactionResponse = {
   createdAt?: string;
 };
 
+export type AdminUserDetailResponse = {
+  id: string;
+  displayName: string;
+  email: string;
+  avatarUrl?: string | null;
+  roles: Array<string>;
+  studioName?: string | null;
+  isEmailVerified: boolean;
+  accountStatus: string;
+  suspendedUntil?: string | null;
+  totalPurchaseAmount: number;
+  totalOrderCount: number;
+  accountStatusReason?: string | null;
+  accountStatusMessage?: string | null;
+  accountStatusChangedAt?: string | null;
+  accountStatusChangedBy?: string | null;
+  accountStatusChangedByName?: string | null;
+  isSeller: boolean;
+  sellerApplicationStatus?: string | null;
+  purchaseStats: AdminUserPurchaseStatsResponse;
+  sellerStats?: AdminUserSellerStatsResponse | null;
+  moderationHistory: Array<AdminUserModerationEntryResponse>;
+  joinedAt: string;
+};
+
+export type AdminUserListItemResponse = {
+  id: string;
+  displayName: string;
+  email: string;
+  avatarUrl?: string | null;
+  roles: Array<string>;
+  studioName?: string | null;
+  isEmailVerified: boolean;
+  accountStatus: string;
+  suspendedUntil?: string | null;
+  totalPurchaseAmount: number;
+  totalOrderCount: number;
+  totalSalesAmount: number;
+  totalSalesCount: number;
+  joinedAt: string;
+};
+
+export type AdminUserModerationEntryResponse = {
+  id: string;
+  action: string;
+  reason: string;
+  messageToUser?: string | null;
+  suspendedUntil?: string | null;
+  previousStatus: string;
+  performedByUserId?: string | null;
+  performedByName?: string | null;
+  createdAt: string;
+};
+
+export type AdminUserPurchaseStatsResponse = {
+  totalPurchaseAmount: number;
+  totalOrderCount: number;
+  refundedAmount: number;
+  refundedOrderCount: number;
+  lastOrderAt?: string | null;
+};
+
+export type AdminUserSellerStatsResponse = {
+  studioName: string;
+  isVerified: boolean;
+  rating: number;
+  totalDocuments: number;
+  totalSalesCount: number;
+  grossRevenue: number;
+  lifetimeNetEarnings: number;
+  pendingBalance: number;
+};
+
+export type AdminUsersSort = number;
+
 export type AdminWatermarkCopyResponse = {
   id?: string;
   watermarkToken?: string;
@@ -390,6 +465,11 @@ export type AuthUserResponse = {
   role: string;
   roles: Array<string>;
   onboardingCompletedAt?: string | null;
+};
+
+export type BanUserRequest = {
+  reason: string;
+  messageToUser?: string | null;
 };
 
 export type BundleDetailResponse = {
@@ -1018,6 +1098,14 @@ export type PagedResponseOfAdminTransactionResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfAdminUserListItemResponse = {
+  items?: Array<AdminUserListItemResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfAdminWatermarkCopyResponse = {
   items?: Array<AdminWatermarkCopyResponse>;
   page?: number;
@@ -1269,6 +1357,11 @@ export type RegisterRequest = {
   confirmPassword: string;
   displayName: string;
   acceptTerms?: boolean;
+};
+
+export type ReinstateUserRequest = {
+  reason: string;
+  messageToUser?: string | null;
 };
 
 export type RejectDocumentRequest = {
@@ -1765,6 +1858,12 @@ export type SubscriptionResponse = {
   cancelAtPeriodEnd?: boolean;
   canceledAt?: string | null;
   paymentHints?: SubscriptionPaymentHintsResponse | null;
+};
+
+export type SuspendUserRequest = {
+  reason: string;
+  until: string;
+  messageToUser?: string | null;
 };
 
 export type SystemConfigJobToggleItem = {
@@ -2563,6 +2662,192 @@ export type GetApiAdminSellersResponses = {
 
 export type GetApiAdminSellersResponse =
   GetApiAdminSellersResponses[keyof GetApiAdminSellersResponses];
+
+export type GetApiAdminUsersData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Q?: string;
+    Role?: string;
+    Status?: string;
+    JoinedFrom?: string;
+    JoinedTo?: string;
+    Sort?: AdminUsersSort;
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/users';
+};
+
+export type GetApiAdminUsersErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiAdminUsersError = GetApiAdminUsersErrors[keyof GetApiAdminUsersErrors];
+
+export type GetApiAdminUsersResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminUserListItemResponse;
+};
+
+export type GetApiAdminUsersResponse = GetApiAdminUsersResponses[keyof GetApiAdminUsersResponses];
+
+export type GetApiAdminUsersByUserIdData = {
+  body?: never;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/users/{userId}';
+};
+
+export type GetApiAdminUsersByUserIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminUsersByUserIdError =
+  GetApiAdminUsersByUserIdErrors[keyof GetApiAdminUsersByUserIdErrors];
+
+export type GetApiAdminUsersByUserIdResponses = {
+  /**
+   * OK
+   */
+  200: AdminUserDetailResponse;
+};
+
+export type GetApiAdminUsersByUserIdResponse =
+  GetApiAdminUsersByUserIdResponses[keyof GetApiAdminUsersByUserIdResponses];
+
+export type PostApiAdminUsersByUserIdSuspendData = {
+  body: SuspendUserRequest;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/users/{userId}/suspend';
+};
+
+export type PostApiAdminUsersByUserIdSuspendErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminUsersByUserIdSuspendError =
+  PostApiAdminUsersByUserIdSuspendErrors[keyof PostApiAdminUsersByUserIdSuspendErrors];
+
+export type PostApiAdminUsersByUserIdSuspendResponses = {
+  /**
+   * OK
+   */
+  200: AdminUserDetailResponse;
+};
+
+export type PostApiAdminUsersByUserIdSuspendResponse =
+  PostApiAdminUsersByUserIdSuspendResponses[keyof PostApiAdminUsersByUserIdSuspendResponses];
+
+export type PostApiAdminUsersByUserIdBanData = {
+  body: BanUserRequest;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/users/{userId}/ban';
+};
+
+export type PostApiAdminUsersByUserIdBanErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminUsersByUserIdBanError =
+  PostApiAdminUsersByUserIdBanErrors[keyof PostApiAdminUsersByUserIdBanErrors];
+
+export type PostApiAdminUsersByUserIdBanResponses = {
+  /**
+   * OK
+   */
+  200: AdminUserDetailResponse;
+};
+
+export type PostApiAdminUsersByUserIdBanResponse =
+  PostApiAdminUsersByUserIdBanResponses[keyof PostApiAdminUsersByUserIdBanResponses];
+
+export type PostApiAdminUsersByUserIdReinstateData = {
+  body: ReinstateUserRequest;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/users/{userId}/reinstate';
+};
+
+export type PostApiAdminUsersByUserIdReinstateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminUsersByUserIdReinstateError =
+  PostApiAdminUsersByUserIdReinstateErrors[keyof PostApiAdminUsersByUserIdReinstateErrors];
+
+export type PostApiAdminUsersByUserIdReinstateResponses = {
+  /**
+   * OK
+   */
+  200: AdminUserDetailResponse;
+};
+
+export type PostApiAdminUsersByUserIdReinstateResponse =
+  PostApiAdminUsersByUserIdReinstateResponses[keyof PostApiAdminUsersByUserIdReinstateResponses];
 
 export type GetApiAdminSellerApplicationsData = {
   body?: never;

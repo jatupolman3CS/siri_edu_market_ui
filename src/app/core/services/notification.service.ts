@@ -33,28 +33,19 @@ export interface NotificationSettingItem {
 /**
  * Shared by both settings endpoints: `/api/notifications/settings` (email, this service) and
  * `/api/notifications/line/settings` (LINE, {@link LineNotificationService}). Both answer with the
- * same `NotificationSettingResponse` shape per §3.6, so they normalise through one function — the
- * `TODO(contract)` cast below then has a single place to be removed at regen time.
+ * same `NotificationSettingResponse` shape per §3.6, so they normalise through one function.
  */
 export function normalizeSetting(raw: NotificationSettingResponse): NotificationSettingItem {
-  // TODO(contract): notification-master-config §3.6 — `description`, `audience`, `isLocked` and
-  // `lockReason` are not in the generated SDK yet (backend be-1 built them in parallel).
-  // Remove this cast in the fe-3 regen round.
-  const extra = raw as {
-    description?: unknown;
-    audience?: unknown;
-    isLocked?: unknown;
-    lockReason?: unknown;
-  };
-
   return {
     key: raw.key ?? '',
     label: raw.label ?? '',
     isEnabled: raw.isEnabled ?? false,
-    description: typeof extra.description === 'string' ? extra.description : '',
-    audience: toNotificationAudience(extra.audience) ?? 'buyer',
-    isLocked: extra.isLocked === true,
-    lockReason: typeof extra.lockReason === 'string' && extra.lockReason.trim() ? extra.lockReason : null,
+    description: raw.description ?? '',
+    audience: toNotificationAudience(raw.audience) ?? 'buyer',
+    isLocked: raw.isLocked === true,
+    // §3.6: `lockReason` only means anything next to `isLocked`; a blank string normalises to
+    // `null` so the template's `@if (n.isLocked && n.lockReason)` never renders an empty bubble.
+    lockReason: raw.lockReason?.trim() ? raw.lockReason : null,
   };
 }
 

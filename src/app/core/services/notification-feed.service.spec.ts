@@ -294,10 +294,10 @@ describe('NotificationFeedService', () => {
   });
 
   /**
-   * notification-master-config v1 §3.3-§3.5. The `audience` query param and the
-   * `buyerCount/sellerCount/adminCount` response fields are still `TODO(contract)` casts in
-   * the service (backend `be-2` is building in parallel) — these specs pin the request shape
-   * and the graceful fallback so the regen round has something to break loudly against.
+   * notification-master-config v2 §3.3-§3.5. The `audience` query param and the
+   * `buyerCount/sellerCount/adminCount` response fields are part of the generated SDK since the
+   * fe-3 regen round — these specs pin the request shape and the graceful fallback for a
+   * response that carries only `count`.
    */
   describe('audience scoping', () => {
     it('sends ?audience= on the feed request when given one, and omits it otherwise', async () => {

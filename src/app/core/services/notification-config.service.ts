@@ -1,21 +1,22 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { client } from '../api/client.gen';
+import {
+  getApiAdminNotificationConfig,
+  postApiAdminNotificationConfigByEventKeyReset,
+  putApiAdminNotificationConfigByEventKey,
+} from '../api';
+import type { NotificationEventConfigItem as GeneratedNotificationEventConfigItem } from '../api/types.gen';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { toNotificationAudience, type NotificationAudience } from './notification-context.service';
 
 /**
- * notification-master-config v1 §3.7 (`docs/contracts/notification-master-config.md`) — the admin
+ * notification-master-config v2 §3.7 (`docs/contracts/notification-master-config.md`) — the admin
  * master switchboard behind `/admin/notification-config`: which of the 18 catalog events the
  * platform sends at all, and over which channels (อีเมล / LINE / ในระบบ).
  *
- * TODO(contract): round-1 transport. `api/admin/notification-config*` exists on the backend
- * (be-1) but has not been through `npm run generate:api` yet — gate 1 has to land first — so the
- * three calls below go through the generated *client* (same base URL, bearer token, 401 refresh +
- * replay and loading indicator as every other call) instead of generated *SDK helpers*.
- * In the fe-3 regen round replace each `send(...)` with the generated helper named in the comment
- * above it and delete `send`/`parseItem` — the shapes are identical, they are hand-parsed here
- * only because `types.gen.ts` does not know about them yet. Nothing here is mocked: every method
- * talks to the real endpoint.
+ * All three calls go through generated SDK helpers (fe-3 regen round). Each passes
+ * `throwOnError: false` even though `api-runtime.ts` configures the client the other way round:
+ * this contract answers 400/403/404 with a Thai sentence in the body and the thrown form loses the
+ * status code that tells them apart (§4.2 / AC-21–AC-23).
  */
 export type NotificationEventGroup =
   | 'commerce'
@@ -88,44 +89,31 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
-function asString(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback;
-}
-
-function asBoolean(value: unknown): boolean {
-  return value === true;
-}
-
-function asInteger(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : 0;
-}
-
 /**
- * The API always sends every field; this is defensive parsing of an `unknown` JSON body, not a
- * tolerance for missing data — `unknown` is the honest type until the SDK is regenerated.
+ * Narrows the generated DTO (every flag optional, `audience` a bare `string`) to the complete shape
+ * the admin table binds to — the same "normalise once, in the service" pattern as
+ * `normalizeSetting` in `notification.service.ts`.
  */
-function parseItem(raw: unknown): NotificationEventConfigItem {
-  const o = asRecord(raw);
-  const updatedAt = o['updatedAt'];
+function parseItem(raw: GeneratedNotificationEventConfigItem): NotificationEventConfigItem {
   return {
-    eventKey: asString(o['eventKey']),
-    label: asString(o['label']),
-    description: asString(o['description']),
-    audience: toNotificationAudience(o['audience']) ?? 'buyer',
-    group: asString(o['group'], 'system'),
-    isEnabled: asBoolean(o['isEnabled']),
-    emailEnabled: asBoolean(o['emailEnabled']),
-    lineEnabled: asBoolean(o['lineEnabled']),
-    inAppEnabled: asBoolean(o['inAppEnabled']),
-    userOverridable: asBoolean(o['userOverridable']),
-    throttleWindowMinutes: asInteger(o['throttleWindowMinutes']),
-    dailyCapPerRecipient: asInteger(o['dailyCapPerRecipient']),
-    supportsEmail: asBoolean(o['supportsEmail']),
-    supportsLine: asBoolean(o['supportsLine']),
-    supportsInApp: asBoolean(o['supportsInApp']),
-    hasTrigger: asBoolean(o['hasTrigger']),
-    isCustomized: asBoolean(o['isCustomized']),
-    updatedAt: typeof updatedAt === 'string' ? updatedAt : null,
+    eventKey: raw.eventKey,
+    label: raw.label,
+    description: raw.description,
+    audience: toNotificationAudience(raw.audience) ?? 'buyer',
+    group: raw.group || 'system',
+    isEnabled: raw.isEnabled === true,
+    emailEnabled: raw.emailEnabled === true,
+    lineEnabled: raw.lineEnabled === true,
+    inAppEnabled: raw.inAppEnabled === true,
+    userOverridable: raw.userOverridable === true,
+    throttleWindowMinutes: Math.trunc(raw.throttleWindowMinutes ?? 0),
+    dailyCapPerRecipient: Math.trunc(raw.dailyCapPerRecipient ?? 0),
+    supportsEmail: raw.supportsEmail === true,
+    supportsLine: raw.supportsLine === true,
+    supportsInApp: raw.supportsInApp === true,
+    hasTrigger: raw.hasTrigger === true,
+    isCustomized: raw.isCustomized === true,
+    updatedAt: raw.updatedAt ?? null,
   };
 }
 
@@ -153,9 +141,8 @@ export class NotificationConfigService {
   async load(): Promise<NotificationEventConfigItem[]> {
     this._loading.set(true);
     try {
-      // TODO(contract): fe-3 → `unwrapSdkResult(await getApiAdminNotificationConfig())`.
-      const raw = await this.send('GET', '/api/admin/notification-config');
-      const items = (Array.isArray(raw) ? raw : []).map(parseItem);
+      const raw = this.take(await getApiAdminNotificationConfig({ throwOnError: false }));
+      const items = (raw ?? []).map(parseItem);
       this._items.set(items);
       return items;
     } catch (e) {
@@ -177,23 +164,25 @@ export class NotificationConfigService {
     eventKey: string,
     request: UpdateNotificationEventConfigRequest,
   ): Promise<NotificationEventConfigItem> {
-    // TODO(contract): fe-3 → `unwrapSdkResult(await putApiAdminNotificationConfigByEventKey({
-    //   path: { eventKey }, body: request }))`.
-    const raw = await this.send('PUT', '/api/admin/notification-config/{eventKey}', {
-      eventKey,
-      body: request,
-    });
-    return this.replaceItem(parseItem(raw));
+    const raw = this.take(
+      await putApiAdminNotificationConfigByEventKey({
+        path: { eventKey },
+        body: request,
+        throwOnError: false,
+      }),
+    );
+    return this.replaceItem(parseItem(this.requireItem(raw)));
   }
 
   /** §3.7 `POST /api/admin/notification-config/{eventKey}/reset` — drops the override. */
   async reset(eventKey: string): Promise<NotificationEventConfigItem> {
-    // TODO(contract): fe-3 → `unwrapSdkResult(await postApiAdminNotificationConfigByEventKeyReset({
-    //   path: { eventKey } }))`.
-    const raw = await this.send('POST', '/api/admin/notification-config/{eventKey}/reset', {
-      eventKey,
-    });
-    return this.replaceItem(parseItem(raw));
+    const raw = this.take(
+      await postApiAdminNotificationConfigByEventKeyReset({
+        path: { eventKey },
+        throwOnError: false,
+      }),
+    );
+    return this.replaceItem(parseItem(this.requireItem(raw)));
   }
 
   /**
@@ -213,30 +202,24 @@ export class NotificationConfigService {
   }
 
   /**
-   * TODO(contract): delete in the fe-3 regen round together with its three call sites.
-   *
-   * `throwOnError: false` is deliberate even though the client is configured the other way
-   * round: this contract answers 400/403/404 with a Thai sentence in the body, and the thrown
-   * form loses the status code that tells them apart.
+   * The status-aware counterpart of `unwrapSdkResult`: the three helpers above run with
+   * `throwOnError: false`, so a non-2xx arrives as data rather than an exception and the HTTP
+   * status — the thing that separates "ไม่มีสิทธิ์" (403) from the body's own sentence (400/404) — is
+   * still on the response.
    */
-  private async send(
-    method: 'GET' | 'PUT' | 'POST',
-    url: string,
-    options: { eventKey?: string; body?: UpdateNotificationEventConfigRequest } = {},
-  ): Promise<unknown> {
-    const result = await client.request<unknown, unknown>({
-      method,
-      url,
-      throwOnError: false,
-      ...(options.eventKey ? { path: { eventKey: options.eventKey } } : {}),
-      ...(options.body ? { body: options.body } : {}),
-      headers: { 'Content-Type': 'application/json' },
-    });
-
+  private take<T>(result: { data?: T; error?: unknown; response?: Response }): T | undefined {
     const status = result.response?.status;
     if (status !== undefined && status >= 200 && status < 300) return result.data;
 
     throw new NotificationConfigError(this.failureMessage(status, result.error), status);
+  }
+
+  /** A 200 on `PUT`/`POST …/reset` always carries the row it just wrote (§3.7). */
+  private requireItem(
+    raw: GeneratedNotificationEventConfigItem | undefined,
+  ): GeneratedNotificationEventConfigItem {
+    if (raw) return raw;
+    throw new NotificationConfigError(GENERIC_FAILURE_MESSAGE, undefined);
   }
 
   private failureMessage(status: number | undefined, error: unknown): string {

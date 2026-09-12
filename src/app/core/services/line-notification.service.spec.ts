@@ -57,18 +57,11 @@ function connectionBody(over: Record<string, unknown> = {}) {
 }
 
 /**
- * The wire shape of `GET|PUT /api/notifications/line/settings`. notification-master-config v1 §3.6
- * adds `description`/`audience`/`isLocked`/`lockReason` to it.
- * TODO(contract): notification-master-config §3.6 — the generated `NotificationSettingResponse`
- * still only knows the original three fields, so the extra four are declared here. Collapse this
- * back to `NotificationSettingResponse` in the fe-3 regen round.
+ * The wire shape of `GET|PUT /api/notifications/line/settings` — `NotificationSettingResponse`
+ * itself since the fe-3 regen round, which is when notification-master-config v2 §3.6's
+ * `description`/`audience`/`isLocked`/`lockReason` joined the generated DTO.
  */
-type RawLineSetting = NotificationSettingResponse & {
-  description?: string;
-  audience?: string;
-  isLocked?: boolean;
-  lockReason?: string | null;
-};
+type RawLineSetting = NotificationSettingResponse;
 
 function settingsBody(): RawLineSetting[] {
   return [
