@@ -131,6 +131,17 @@
           <app-icon name="search" [size]="18" />
         </a>
 
+        <!--
+          notification-master-config v1 §0.3 / AC-9: the only bell in the buyer layout lives in
+          the utility micro-bar above, which is `hidden md:block` — so buyers on a phone had no
+          bell at all. This one is the mobile-only counterpart.
+        -->
+        @if (auth.isAuthenticated()) {
+          <div class="md:hidden">
+            <app-notification-bell />
+          </div>
+        }
+
         <!-- Wishlist -->
         <a
           routerLink="/wishlist"

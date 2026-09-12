@@ -1,0 +1,247 @@
+import { Injectable, inject, signal } from '@angular/core';
+import { client } from '../api/client.gen';
+import { ApiFailureReporter } from './api-failure-reporter.service';
+import { toNotificationAudience, type NotificationAudience } from './notification-context.service';
+
+/**
+ * notification-master-config v1 §3.7 (`docs/contracts/notification-master-config.md`) — the admin
+ * master switchboard behind `/admin/notification-config`: which of the 18 catalog events the
+ * platform sends at all, and over which channels (อีเมล / LINE / ในระบบ).
+ *
+ * TODO(contract): round-1 transport. `api/admin/notification-config*` exists on the backend
+ * (be-1) but has not been through `npm run generate:api` yet — gate 1 has to land first — so the
+ * three calls below go through the generated *client* (same base URL, bearer token, 401 refresh +
+ * replay and loading indicator as every other call) instead of generated *SDK helpers*.
+ * In the fe-3 regen round replace each `send(...)` with the generated helper named in the comment
+ * above it and delete `send`/`parseItem` — the shapes are identical, they are hand-parsed here
+ * only because `types.gen.ts` does not know about them yet. Nothing here is mocked: every method
+ * talks to the real endpoint.
+ */
+export type NotificationEventGroup =
+  | 'commerce'
+  | 'engagement'
+  | 'content'
+  | 'moderation'
+  | 'payout'
+  | 'system';
+
+/** §3.7 `NotificationEventConfigItem`. `supports*`/`hasTrigger` are read-only catalog facts. */
+export interface NotificationEventConfigItem {
+  eventKey: string;
+  label: string;
+  description: string;
+  audience: NotificationAudience;
+  /** One of {@link NotificationEventGroup}; kept as `string` so an event added by a later wave still renders. */
+  group: string;
+  isEnabled: boolean;
+  emailEnabled: boolean;
+  lineEnabled: boolean;
+  inAppEnabled: boolean;
+  userOverridable: boolean;
+  throttleWindowMinutes: number;
+  dailyCapPerRecipient: number;
+  supportsEmail: boolean;
+  supportsLine: boolean;
+  supportsInApp: boolean;
+  hasTrigger: boolean;
+  isCustomized: boolean;
+  updatedAt: string | null;
+}
+
+/** §3.7: a PUT replaces the whole row — every field is required, there is no patch semantic. */
+export interface UpdateNotificationEventConfigRequest {
+  isEnabled: boolean;
+  emailEnabled: boolean;
+  lineEnabled: boolean;
+  inAppEnabled: boolean;
+  userOverridable: boolean;
+  throttleWindowMinutes: number;
+  dailyCapPerRecipient: number;
+}
+
+/** §3.7 validation bounds — mirrored client-side so an obvious typo never costs a round trip. */
+export const THROTTLE_WINDOW_MIN_MINUTES = 0;
+export const THROTTLE_WINDOW_MAX_MINUTES = 10080;
+export const DAILY_CAP_MIN = 0;
+export const DAILY_CAP_MAX = 1000;
+
+/**
+ * Carries the Thai sentence the caller should show. `status` is kept so a page can tell an
+ * expected 400/404 (ข้อความจาก body) from a 403 (`ไม่มีสิทธิ์เข้าถึง`) — see §4.2 and the fe-3
+ * error-handling requirement.
+ */
+export class NotificationConfigError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | undefined,
+  ) {
+    super(message);
+    this.name = 'NotificationConfigError';
+  }
+}
+
+const FORBIDDEN_MESSAGE = 'ไม่มีสิทธิ์เข้าถึง';
+const UNAUTHORIZED_MESSAGE = 'กรุณาเข้าสู่ระบบอีกครั้ง';
+const GENERIC_FAILURE_MESSAGE = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function asBoolean(value: unknown): boolean {
+  return value === true;
+}
+
+function asInteger(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : 0;
+}
+
+/**
+ * The API always sends every field; this is defensive parsing of an `unknown` JSON body, not a
+ * tolerance for missing data — `unknown` is the honest type until the SDK is regenerated.
+ */
+function parseItem(raw: unknown): NotificationEventConfigItem {
+  const o = asRecord(raw);
+  const updatedAt = o['updatedAt'];
+  return {
+    eventKey: asString(o['eventKey']),
+    label: asString(o['label']),
+    description: asString(o['description']),
+    audience: toNotificationAudience(o['audience']) ?? 'buyer',
+    group: asString(o['group'], 'system'),
+    isEnabled: asBoolean(o['isEnabled']),
+    emailEnabled: asBoolean(o['emailEnabled']),
+    lineEnabled: asBoolean(o['lineEnabled']),
+    inAppEnabled: asBoolean(o['inAppEnabled']),
+    userOverridable: asBoolean(o['userOverridable']),
+    throttleWindowMinutes: asInteger(o['throttleWindowMinutes']),
+    dailyCapPerRecipient: asInteger(o['dailyCapPerRecipient']),
+    supportsEmail: asBoolean(o['supportsEmail']),
+    supportsLine: asBoolean(o['supportsLine']),
+    supportsInApp: asBoolean(o['supportsInApp']),
+    hasTrigger: asBoolean(o['hasTrigger']),
+    isCustomized: asBoolean(o['isCustomized']),
+    updatedAt: typeof updatedAt === 'string' ? updatedAt : null,
+  };
+}
+
+/** §3.7 error bodies are `{ "message": "<ไทย>" }` for every non-2xx this contract defines. */
+function messageFromBody(body: unknown): string | null {
+  const message = asRecord(body)['message'];
+  return typeof message === 'string' && message.trim() ? message.trim() : null;
+}
+
+@Injectable({ providedIn: 'root' })
+export class NotificationConfigService {
+  private readonly apiFail = inject(ApiFailureReporter);
+
+  private readonly _items = signal<NotificationEventConfigItem[]>([]);
+  private readonly _loading = signal(false);
+  /** `true` once a request has come back (success or not), so "empty" and "not loaded yet" stay distinct. */
+  private readonly _loaded = signal(false);
+
+  /** Server-confirmed state only — the page never keeps an optimistic copy (same as job toggles). */
+  readonly items = this._items.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly loaded = this._loaded.asReadonly();
+
+  /** §3.7 `GET /api/admin/notification-config` — all 18 catalog events, ordered by group then key. */
+  async load(): Promise<NotificationEventConfigItem[]> {
+    this._loading.set(true);
+    try {
+      // TODO(contract): fe-3 → `unwrapSdkResult(await getApiAdminNotificationConfig())`.
+      const raw = await this.send('GET', '/api/admin/notification-config');
+      const items = (Array.isArray(raw) ? raw : []).map(parseItem);
+      this._items.set(items);
+      return items;
+    } catch (e) {
+      this.apiFail.report('โหลดการตั้งค่าการแจ้งเตือนของระบบ', e);
+      this._items.set([]);
+      return [];
+    } finally {
+      this._loaded.set(true);
+      this._loading.set(false);
+    }
+  }
+
+  /**
+   * §3.7 `PUT /api/admin/notification-config/{eventKey}` — replaces the whole row. Throws
+   * {@link NotificationConfigError} so the page can toast the exact Thai sentence the API chose
+   * (e.g. "การแจ้งเตือนนี้ไม่รองรับช่องทาง LINE").
+   */
+  async update(
+    eventKey: string,
+    request: UpdateNotificationEventConfigRequest,
+  ): Promise<NotificationEventConfigItem> {
+    // TODO(contract): fe-3 → `unwrapSdkResult(await putApiAdminNotificationConfigByEventKey({
+    //   path: { eventKey }, body: request }))`.
+    const raw = await this.send('PUT', '/api/admin/notification-config/{eventKey}', {
+      eventKey,
+      body: request,
+    });
+    return this.replaceItem(parseItem(raw));
+  }
+
+  /** §3.7 `POST /api/admin/notification-config/{eventKey}/reset` — drops the override. */
+  async reset(eventKey: string): Promise<NotificationEventConfigItem> {
+    // TODO(contract): fe-3 → `unwrapSdkResult(await postApiAdminNotificationConfigByEventKeyReset({
+    //   path: { eventKey } }))`.
+    const raw = await this.send('POST', '/api/admin/notification-config/{eventKey}/reset', {
+      eventKey,
+    });
+    return this.replaceItem(parseItem(raw));
+  }
+
+  /**
+   * Test helper — the admin page's specs drive rendering/validation without a network layer.
+   * Mirrors `setItemsForTest` on `NotificationFeedService`.
+   */
+  setItemsForTest(items: NotificationEventConfigItem[]): void {
+    this._items.set(items);
+    this._loaded.set(true);
+  }
+
+  private replaceItem(item: NotificationEventConfigItem): NotificationEventConfigItem {
+    this._items.update((items) =>
+      items.map((existing) => (existing.eventKey === item.eventKey ? item : existing)),
+    );
+    return item;
+  }
+
+  /**
+   * TODO(contract): delete in the fe-3 regen round together with its three call sites.
+   *
+   * `throwOnError: false` is deliberate even though the client is configured the other way
+   * round: this contract answers 400/403/404 with a Thai sentence in the body, and the thrown
+   * form loses the status code that tells them apart.
+   */
+  private async send(
+    method: 'GET' | 'PUT' | 'POST',
+    url: string,
+    options: { eventKey?: string; body?: UpdateNotificationEventConfigRequest } = {},
+  ): Promise<unknown> {
+    const result = await client.request<unknown, unknown>({
+      method,
+      url,
+      throwOnError: false,
+      ...(options.eventKey ? { path: { eventKey: options.eventKey } } : {}),
+      ...(options.body ? { body: options.body } : {}),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const status = result.response?.status;
+    if (status !== undefined && status >= 200 && status < 300) return result.data;
+
+    throw new NotificationConfigError(this.failureMessage(status, result.error), status);
+  }
+
+  private failureMessage(status: number | undefined, error: unknown): string {
+    if (status === 403) return FORBIDDEN_MESSAGE;
+    if (status === 401) return UNAUTHORIZED_MESSAGE;
+    return messageFromBody(error) ?? GENERIC_FAILURE_MESSAGE;
+  }
+}

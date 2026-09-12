@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NotificationFeedService } from './notification-feed.service';
+import { NotificationFeedService, getNotificationStyle } from './notification-feed.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 
 /**
@@ -133,7 +133,7 @@ describe('NotificationFeedService', () => {
       await settle();
 
       expect(service.items()).toEqual([
-        { id: '', key: '', title: '', body: '', linkUrl: '', isRead: false, createdAt: '' },
+        { id: '', key: '', title: '', body: '', linkUrl: '', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
     });
 
@@ -180,8 +180,8 @@ describe('NotificationFeedService', () => {
       stubRoute('GET', '/api/notifications/feed/unread-count', { count: 1 });
       const { service } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '' },
-        { id: 'b', key: 'k', title: 't', body: 'b', linkUrl: '/y', isRead: false, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
+        { id: 'b', key: 'k', title: 't', body: 'b', linkUrl: '/y', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
       service.setUnreadCountForTest(2);
 
@@ -198,7 +198,7 @@ describe('NotificationFeedService', () => {
       stubRoute('GET', '/api/notifications/feed/unread-count', { count: 5 });
       const { service } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
       service.setUnreadCountForTest(1);
 
@@ -216,7 +216,7 @@ describe('NotificationFeedService', () => {
       stubRoute('GET', '/api/notifications/feed/unread-count', { count: 0 });
       const { service } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: true, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: true, createdAt: '', audience: 'buyer' },
       ]);
       service.setUnreadCountForTest(0);
 
@@ -229,7 +229,7 @@ describe('NotificationFeedService', () => {
       stubRoute('POST', '/api/notifications/feed/a/read', { title: 'Not Found', status: 404 }, 404);
       const { service, apiFail } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
       service.setUnreadCountForTest(1);
 
@@ -248,8 +248,8 @@ describe('NotificationFeedService', () => {
       stubRoute('GET', '/api/notifications/feed/unread-count', { count: 0 });
       const { service } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '' },
-        { id: 'b', key: 'k', title: 't', body: 'b', linkUrl: '/y', isRead: false, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
+        { id: 'b', key: 'k', title: 't', body: 'b', linkUrl: '/y', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
       service.setUnreadCountForTest(2);
 
@@ -264,7 +264,7 @@ describe('NotificationFeedService', () => {
       stubRoute('GET', '/api/notifications/feed/unread-count', { count: 0 });
       const { service } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
       service.setUnreadCountForTest(1);
 
@@ -281,7 +281,7 @@ describe('NotificationFeedService', () => {
       stubRoute('POST', '/api/notifications/feed/read-all', { title: 'Server Error', status: 500 }, 500);
       const { service, apiFail } = buildService();
       service.setItemsForTest([
-        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '' },
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
       ]);
 
       let caught: unknown;
@@ -290,6 +290,167 @@ describe('NotificationFeedService', () => {
 
       expect(caught).toBeDefined();
       expect(apiFail.report).toHaveBeenCalledWith('ทำเครื่องหมายว่าอ่านแล้วทั้งหมด', expect.anything());
+    });
+  });
+
+  /**
+   * notification-master-config v1 §3.3-§3.5. The `audience` query param and the
+   * `buyerCount/sellerCount/adminCount` response fields are still `TODO(contract)` casts in
+   * the service (backend `be-2` is building in parallel) — these specs pin the request shape
+   * and the graceful fallback so the regen round has something to break loudly against.
+   */
+  describe('audience scoping', () => {
+    it('sends ?audience= on the feed request when given one, and omits it otherwise', async () => {
+      stubRoute('GET', '/api/notifications/feed', pagedResponse([]));
+      const { service } = buildService();
+
+      service.loadFeed(1, 'seller');
+      await settle();
+      expect(requests.at(-1)?.query.get('audience')).toBe('seller');
+
+      service.loadFeed(1);
+      await settle();
+      expect(requests.at(-1)?.query.get('audience')).toBeNull();
+    });
+
+    it('sends ?audience= on the preview request too', async () => {
+      stubRoute('GET', '/api/notifications/feed', pagedResponse([]));
+      const { service } = buildService();
+
+      service.loadPreview(10, 'admin');
+      await settle();
+
+      expect(requests.at(-1)?.query.get('audience')).toBe('admin');
+      expect(requests.at(-1)?.query.get('PageSize')).toBe('10');
+    });
+
+    it('sends ?audience= on read-all when scoped (AC-4)', async () => {
+      stubRoute('POST', '/api/notifications/feed/read-all', null, 204);
+      stubRoute('GET', '/api/notifications/feed/unread-count', { count: 0 });
+      const { service } = buildService();
+
+      service.markAllRead('seller').subscribe();
+      await settle();
+
+      const readAll = requests.find((r) => r.path === '/api/notifications/feed/read-all');
+      expect(readAll?.query.get('audience')).toBe('seller');
+    });
+
+    it('tags each item with the requested audience when the API has not started sending it yet', async () => {
+      stubRoute('GET', '/api/notifications/feed', pagedResponse([feedItemBody({ id: 'a' })]));
+      const { service } = buildService();
+
+      service.loadFeed(1, 'seller');
+      await settle();
+
+      expect(service.items()[0].audience).toBe('seller');
+    });
+
+    it('prefers the audience the API sends over the requested one', async () => {
+      stubRoute('GET', '/api/notifications/feed', pagedResponse([feedItemBody({ id: 'a', audience: 'admin' })]));
+      const { service } = buildService();
+
+      service.loadFeed(1, 'seller');
+      await settle();
+
+      expect(service.items()[0].audience).toBe('admin');
+    });
+
+    it('splits the unread count per audience when the API returns the §3.4 fields', async () => {
+      stubRoute('GET', '/api/notifications/feed/unread-count', {
+        count: 9,
+        buyerCount: 2,
+        sellerCount: 3,
+        adminCount: 4,
+      });
+      const { service } = buildService();
+
+      service.refreshUnreadCount();
+      await settle();
+
+      expect(service.unreadCount()).toBe(9);
+      expect(service.unreadByAudience()).toEqual({ buyer: 2, seller: 3, admin: 4 });
+      expect(service.hasAudienceBreakdown()).toBe(true);
+    });
+
+    it('mirrors the total into every bucket while the API still returns count only (pre-be-2 backend)', async () => {
+      stubRoute('GET', '/api/notifications/feed/unread-count', { count: 4 });
+      const { service } = buildService();
+
+      service.refreshUnreadCount();
+      await settle();
+
+      expect(service.unreadByAudience()).toEqual({ buyer: 4, seller: 4, admin: 4 });
+      // False keeps the bell from rendering three copies of the same number as cross-context links.
+      expect(service.hasAudienceBreakdown()).toBe(false);
+    });
+
+    it('markAllRead(audience) leaves the other audiences untouched, locally and in the total', async () => {
+      stubRoute('POST', '/api/notifications/feed/read-all', null, 204);
+      stubRoute('GET', '/api/notifications/feed/unread-count', { count: 5, buyerCount: 5, sellerCount: 0, adminCount: 0 });
+      const { service } = buildService();
+      service.setUnreadByAudienceForTest({ buyer: 5, seller: 3, admin: 0 });
+      service.setItemsForTest([
+        { id: 'a', key: 'k', title: 't', body: 'b', linkUrl: '/x', isRead: false, createdAt: '', audience: 'buyer' },
+        { id: 'b', key: 'k', title: 't', body: 'b', linkUrl: '/seller/reviews', isRead: false, createdAt: '', audience: 'seller' },
+      ]);
+
+      service.markAllRead('seller').subscribe();
+
+      expect(service.items().find((i) => i.id === 'a')?.isRead).toBe(false);
+      expect(service.items().find((i) => i.id === 'b')?.isRead).toBe(true);
+      expect(service.unreadByAudience()).toEqual({ buyer: 5, seller: 0, admin: 0 });
+      expect(service.unreadCount()).toBe(5);
+      await settle();
+    });
+
+    it('markRead decrements the bucket the item belongs to', () => {
+      stubRoute('POST', '/api/notifications/feed/b/read', null, 204);
+      stubRoute('GET', '/api/notifications/feed/unread-count', { count: 7, buyerCount: 5, sellerCount: 2, adminCount: 0 });
+      const { service } = buildService();
+      service.setUnreadByAudienceForTest({ buyer: 5, seller: 3, admin: 0 });
+      service.setItemsForTest([
+        { id: 'b', key: 'k', title: 't', body: 'b', linkUrl: '/seller/reviews', isRead: false, createdAt: '', audience: 'seller' },
+      ]);
+
+      service.markRead('b').subscribe({ error: () => { /* resync handled below */ } });
+
+      expect(service.unreadByAudience()).toEqual({ buyer: 5, seller: 2, admin: 0 });
+      expect(service.unreadCount()).toBe(7);
+    });
+  });
+
+  /** notification-master-config v1 §3.1 / §4.1 — the 18-key catalog style map. */
+  describe('getNotificationStyle', () => {
+    it('resolves every one of the 18 catalog keys to a distinct label', () => {
+      const keys = [
+        'sale', 'review', 'qna_question', 'seller_follow', 'store_visit_digest',
+        'cart_add_digest', 'wishlist_add_digest', 'review_reply', 'qna_answer',
+        'document_submitted', 'document_approved', 'document_rejected',
+        'admin_document_submitted', 'admin_payout_requested', 'payout',
+        'new_document_from_followed_seller', 'announcement', 'tips',
+      ];
+      expect(keys.length).toBe(18);
+      for (const key of keys) {
+        expect(getNotificationStyle(key).label).not.toBe('การแจ้งเตือน');
+      }
+    });
+
+    it('matches the exact key before the Thai-title heuristics', () => {
+      // "ผู้ขายตอบกลับรีวิวของคุณ" contains "รีวิว", which used to be swallowed by the `review` arm.
+      expect(getNotificationStyle('review_reply', 'ผู้ขายตอบกลับรีวิวของคุณ').label).toBe('ตอบกลับรีวิว');
+      expect(getNotificationStyle('review', 'มีรีวิวใหม่สำหรับ "สรุปฟิสิกส์"').label).toBe('รีวิวใหม่');
+    });
+
+    it('still resolves the legacy PascalCase keys written before the §2.4 migration', () => {
+      expect(getNotificationStyle('DocumentApproved').label).toBe('อนุมัติแล้ว');
+      expect(getNotificationStyle('DocumentRejected').label).toBe('ไม่อนุมัติ');
+      expect(getNotificationStyle('DocumentPendingApproval').label).toBe('รออนุมัติ');
+      expect(getNotificationStyle('ReviewReply').label).toBe('ตอบกลับรีวิว');
+    });
+
+    it('falls back to the neutral style for an unknown key', () => {
+      expect(getNotificationStyle('something_new_from_f07').label).toBe('การแจ้งเตือน');
     });
   });
 });

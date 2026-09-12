@@ -1203,6 +1203,26 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2030,6 +2050,76 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/watermark-copies": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminWatermarkCopyResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminWatermarkCopyResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminWatermarkCopyResponse"
                 }
               }
             }
@@ -13024,6 +13114,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "entityTitle": {
+            "type": "string",
+            "nullable": true
+          },
           "detailsJson": {
             "type": "string",
             "nullable": true
@@ -13761,6 +13855,87 @@
           }
         }
       },
+      "AdminWatermarkCopyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "watermarkToken": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentTitle": {
+            "type": "string"
+          },
+          "documentFormat": {
+            "type": "string"
+          },
+          "sellerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sellerName": {
+            "type": "string"
+          },
+          "recipientUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recipientName": {
+            "type": "string"
+          },
+          "recipientEmail": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "accessSource": {
+            "type": "string"
+          },
+          "watermarkApplied": {
+            "type": "boolean"
+          },
+          "watermarkMode": {
+            "type": "string"
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "storageKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "renderDurationMs": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "lastAccessedAt": {
+            "type": "string"
+          },
+          "purgedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "AiPrescreenResult": {
         "type": "object",
         "properties": {
@@ -14416,7 +14591,8 @@
             }
           },
           "watermarkEnabled": {
-            "type": "boolean"
+            "type": "boolean",
+            "nullable": true
           },
           "previewWatermarkSubtitle": {
             "maxLength": 256,
@@ -14718,6 +14894,20 @@
           },
           "expiresAt": {
             "type": "string"
+          },
+          "watermarkApplied": {
+            "type": "boolean"
+          },
+          "watermarkMode": {
+            "type": "string"
+          },
+          "watermarkToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "watermarkNotice": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -15817,6 +16007,33 @@
           }
         }
       },
+      "PagedResponseOfAdminWatermarkCopyResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminWatermarkCopyResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PagedResponseOfBundleResponse": {
         "type": "object",
         "properties": {
@@ -16408,6 +16625,23 @@
           },
           "payoutSchedule": {
             "type": "string"
+          },
+          "watermarkPolicy": {
+            "type": "string"
+          },
+          "watermarkDefaultEnabled": {
+            "type": "boolean"
+          },
+          "watermarkForensicEnabled": {
+            "type": "boolean"
+          },
+          "watermarkCopyRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "watermarkDefaultSubtitle": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -16492,6 +16726,9 @@
         "type": "object",
         "properties": {
           "googleClientId": {
+            "type": "string"
+          },
+          "lineLoginChannelId": {
             "type": "string"
           }
         }
@@ -17293,6 +17530,19 @@
           "discountExpiresAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "watermarkCapability": {
+            "type": "string"
+          },
+          "watermarkEffective": {
+            "type": "boolean"
+          },
+          "watermarkPolicyLocked": {
+            "type": "boolean"
+          },
+          "watermarkWarning": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -18564,6 +18814,30 @@
           "payoutSchedule": {
             "maxLength": 50,
             "type": "string"
+          },
+          "watermarkPolicy": {
+            "type": "string",
+            "nullable": true
+          },
+          "watermarkDefaultEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "watermarkForensicEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "watermarkCopyRetentionDays": {
+            "maximum": 3650,
+            "minimum": 7,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "watermarkDefaultSubtitle": {
+            "maxLength": 256,
+            "type": "string",
+            "nullable": true
           }
         }
       },

@@ -14,11 +14,13 @@ import {
   postApiAuthResetPassword,
   postApiAuthVerifyEmail,
 } from '../api';
-import type { ChangePasswordRequest } from '../api/types.gen';
-import { unwrapSdkResult } from './api-result';
+import type { AuthSessionResponse, ChangePasswordRequest } from '../api/types.gen';
+import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { GoogleOauthService } from './google-oauth.service';
 import { GoogleOauthConfigService } from './google-oauth-config.service';
+import { LineOauthService } from './line-oauth.service';
+import { OauthClientsService } from './oauth-clients.service';
 import { CartService } from './cart.service';
 import { WishlistService } from './wishlist.service';
 
@@ -51,6 +53,14 @@ export class AuthService {
   private readonly message = inject(NzMessageService);
   private readonly googleOauth = inject(GoogleOauthService);
   private readonly googleOauthConfig = inject(GoogleOauthConfigService);
+  /**
+   * external-login-and-mail-config v1 §4.1 — LINE sign-in availability comes from the server
+   * (`GET /api/auth/oauth-clients`), and the redirect/state handling lives in `LineOauthService`.
+   * Both are inert until called, so injecting them eagerly has no request side effect (unlike
+   * `CartService`/`WishlistService` below).
+   */
+  private readonly oauthClients = inject(OauthClientsService);
+  private readonly lineOauth = inject(LineOauthService);
   /**
    * anonymous-cart-wishlist-scoping: the backend merges an anonymous visitor's cart/wishlist
    * into their account transparently on sign-in, but `CartService`/`WishlistService` are
@@ -416,10 +426,19 @@ export class AuthService {
   // ========== Social ==========
 
   /**
-   * Google: GIS authorization code + backend token exchange.
-   * Facebook and LINE are not implemented yet and are rejected here (GAP-04).
+   * Google: GIS authorization code + backend token exchange (popup, resolves in place).
+   * LINE: full-page redirect to LINE's consent page — see {@link completeLineSignIn} for the
+   * other half (external-login-and-mail-config v1 §4.1).
+   * Facebook is still not implemented and is rejected here (GAP-04).
+   *
+   * `options.returnUrl` is only meaningful for redirect-based providers: the page that started
+   * the flow is gone by the time the user comes back, so the destination travels with the
+   * pending request instead of living in component state.
    */
-  async signInWithProvider(provider: Exclude<AuthProvider, 'email'>): Promise<{ ok: boolean; error?: string }> {
+  async signInWithProvider(
+    provider: Exclude<AuthProvider, 'email'>,
+    options?: { returnUrl?: string },
+  ): Promise<{ ok: boolean; error?: string }> {
     if (provider === 'google') {
       try {
         await this.googleOauthConfig.ensureLoaded();
@@ -432,22 +451,7 @@ export class AuthService {
           body: { authorizationCode: code, redirectUri, acceptTerms: true },
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
-        const res = unwrapSdkResult(result);
-        this.setAccessToken(res.accessToken);
-        this.setRefreshToken(res.refreshToken ?? null);
-        const role = this.normalizeRole(res.user.role);
-        const user: User = {
-          id: res.user.id,
-          name: res.user.displayName,
-          email: res.user.email,
-          avatar: '',
-          role,
-          roles: this.normalizeRoles(res.user.roles, role),
-          onboardingCompletedAt: res.user.onboardingCompletedAt ?? null,
-          joinedAt: new Date().toISOString(),
-        };
-        this.completeSignIn(user, 'google');
-        this.reloadCartAndWishlistAfterSignIn();
+        this.applyExternalSession(unwrapSdkResult(result), 'google');
         return { ok: true };
       } catch (e) {
         this.apiFail.report('เข้าสู่ระบบด้วย Google', e);
@@ -456,14 +460,77 @@ export class AuthService {
       }
     }
 
-    // GAP-04: Facebook and LINE are not wired up — the backend providers are stubs that
-    // return 501, and this used to send a fabricated `email:name` code with a hardcoded
-    // profile so the failure looked like a real login attempt. The buttons stay hidden
-    // until the OAuth apps exist.
+    if (provider === 'line') {
+      await this.oauthClients.ensureLoaded();
+      // AC-7: the server decides. An empty channel id means it cannot finish the exchange, so
+      // the flow stops here instead of sending the user to a consent screen that leads nowhere.
+      if (!this.oauthClients.lineLoginChannelId()) {
+        return { ok: false, error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE' };
+      }
+      const started = this.lineOauth.startSignIn(options?.returnUrl ?? '/');
+      if (!started) {
+        return { ok: false, error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE' };
+      }
+      // §4.1: the browser is on its way to access.line.me. Resolving here would let the caller
+      // flash a "สำเร็จ" toast (or drop its loading state) over a page that is already leaving.
+      return new Promise<{ ok: boolean; error?: string }>(() => {
+        /* intentionally never settles — the navigation replaces this document */
+      });
+    }
+
+    // GAP-04: Facebook is not wired up — the backend provider is a stub that returns 501, and
+    // this used to send a fabricated `email:name` code with a hardcoded profile so the failure
+    // looked like a real login attempt. The button stays hidden until the OAuth app exists.
     return {
       ok: false,
       error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วยช่องทางนี้',
     };
+  }
+
+  /**
+   * Second half of the LINE redirect flow, called by `/auth/line/callback` with the `code` and
+   * `state` LINE appended to the callback URL (§3.2/§4.1).
+   *
+   * The pending request stored at redirect time is consumed here, which is what validates
+   * `state` *and* yields the exact `redirect_uri` string the token exchange has to replay — LINE
+   * compares it byte-for-byte. `returnUrl` travels back to the caller because the page that
+   * started the flow no longer exists.
+   *
+   * No {@link ApiFailureReporter} call: every failure below is rendered by the callback page
+   * itself, so reporting would stack a red toast on top of the message the user is already
+   * reading (same split as `LineNotificationService`'s user-initiated actions).
+   */
+  async completeLineSignIn(input: {
+    code: string;
+    state: string;
+  }): Promise<{ ok: boolean; error?: string; returnUrl?: string }> {
+    if (!input.code) {
+      return { ok: false, error: 'ไม่พบรหัสยืนยันจาก LINE กรุณาลองใหม่อีกครั้ง' };
+    }
+    const pending = this.lineOauth.consumeState(input.state);
+    if (!pending) {
+      return { ok: false, error: 'คำขอเข้าสู่ระบบไม่ถูกต้องหรือหมดอายุ กรุณาลองใหม่อีกครั้ง' };
+    }
+    try {
+      const result = await postApiAuthExternalByProvider({
+        path: { provider: 'line' },
+        body: {
+          authorizationCode: input.code,
+          redirectUri: pending.redirectUri,
+          acceptTerms: true,
+        },
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      this.applyExternalSession(unwrapSdkResult(result), 'line');
+      return { ok: true, returnUrl: pending.returnUrl };
+    } catch (e) {
+      return {
+        ok: false,
+        // §4.3: a 4xx from this endpoint is already a Thai sentence written for the end user
+        // (§3.2's table), so it is shown verbatim rather than replaced by a generic line.
+        error: AuthService.userFacingProblemDetail(e) ?? 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+      };
+    }
   }
 
   /** Sign out — calls API to revoke the refresh token (AUD-007). */
@@ -612,6 +679,48 @@ export class AuthService {
   private reloadCartAndWishlistAfterSignIn(): void {
     this.injector.get(CartService).loadCart();
     void this.injector.get(WishlistService).refresh();
+  }
+
+  /**
+   * external-login-and-mail-config v1 §4.1: the tokens/user/cart-merge tail shared by every
+   * external provider. Google and LINE differ only in how they obtain the authorization code —
+   * what happens with `AuthSessionResponse` afterwards is identical, and duplicating it is how
+   * the two flows would silently drift apart.
+   */
+  private applyExternalSession(res: AuthSessionResponse, provider: AuthProvider): void {
+    this.setAccessToken(res.accessToken);
+    this.setRefreshToken(res.refreshToken ?? null);
+    const role = this.normalizeRole(res.user.role);
+    const user: User = {
+      id: res.user.id,
+      name: res.user.displayName,
+      email: res.user.email,
+      avatar: '',
+      role,
+      roles: this.normalizeRoles(res.user.roles, role),
+      onboardingCompletedAt: res.user.onboardingCompletedAt ?? null,
+      joinedAt: new Date().toISOString(),
+    };
+    this.completeSignIn(user, provider);
+    this.reloadCartAndWishlistAfterSignIn();
+  }
+
+  /**
+   * The `detail` of a 4xx ProblemDetails — the backend writes those in Thai for the end user
+   * (§3.2), so they are worth more than any generic sentence we could substitute. Deliberately
+   * limited to 4xx: a 500 body is an internal message, and a native `Error` is a network failure
+   * whose "Failed to fetch" must never be shown as if the server had said it.
+   */
+  private static userFacingProblemDetail(error: unknown): string | null {
+    if (error == null || typeof error !== 'object' || error instanceof Error) return null;
+    const status = extractErrorStatus(error);
+    if (status === undefined || status < 400 || status >= 500) return null;
+    const o = error as Record<string, unknown>;
+    const detail = o['detail'];
+    if (typeof detail === 'string' && detail.trim()) return detail;
+    const message = o['message'];
+    if (typeof message === 'string' && message.trim()) return message;
+    return null;
   }
 
   private completeSignIn(user: User, provider: AuthProvider): void {

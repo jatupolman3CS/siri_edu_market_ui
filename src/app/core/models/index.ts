@@ -4,6 +4,13 @@
 
 export type DocumentStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 export type FileFormat = 'pdf' | 'docx' | 'pptx' | 'xlsx' | 'zip';
+/**
+ * watermark-completion v1 §0.2/§3.4: how deeply a stamp can be embedded in this file format —
+ * `raster` (PDF), `ooxml` (docx/pptx/xlsx), `repack` (zip, forensic only) or `none`.
+ */
+export type WatermarkCapability = 'raster' | 'ooxml' | 'repack' | 'none';
+/** watermark-completion v1 §3.1: what the delivery pipeline actually did for one download. */
+export type WatermarkMode = WatermarkCapability;
 export type OrderStatus =
   | 'awaiting_payment'
   | 'paid'
@@ -247,6 +254,18 @@ export interface DocumentItem {
   previewWatermarkFontFamily?: string | null;
   /** R2/local key for watermarked preview PDF — use with /api/files/download. */
   previewStorageKey?: string | null;
+  /**
+   * watermark-completion v1 §3.4: seller-facing watermark status, only ever populated by
+   * `mapSellerDocument` (`SellerDocumentResponse`). Buyer-facing mappers leave them `undefined`
+   * — the platform policy is not public information.
+   */
+  watermarkCapability?: WatermarkCapability;
+  /** What will really happen on a buyer download (policy + capability + the seller toggle). */
+  watermarkEffective?: boolean;
+  /** `true` = the platform policy decides, so the seller's checkbox must be disabled (§4.3). */
+  watermarkPolicyLocked?: boolean;
+  /** Thai warning composed by the backend — never re-worded or re-derived in the UI (§4.3). */
+  watermarkWarning?: string | null;
   /** Main binaries for this listing (seller GET by id / listed-main-file PUT). */
   mainFiles?: {
     id: string;

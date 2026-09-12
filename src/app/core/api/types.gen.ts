@@ -262,6 +262,30 @@ export type AdminTransactionResponse = {
   createdAt?: string;
 };
 
+export type AdminWatermarkCopyResponse = {
+  id?: string;
+  watermarkToken?: string;
+  documentId?: string;
+  documentTitle?: string;
+  documentFormat?: string;
+  sellerId?: string;
+  sellerName?: string;
+  recipientUserId?: string;
+  recipientName?: string;
+  recipientEmail?: string;
+  orderId?: string | null;
+  accessSource?: string;
+  watermarkApplied?: boolean;
+  watermarkMode?: string;
+  failureReason?: string | null;
+  storageKey?: string | null;
+  sizeBytes?: number | null;
+  renderDurationMs?: number | null;
+  createdAt?: string;
+  lastAccessedAt?: string;
+  purgedAt?: string | null;
+};
+
 export type AiPrescreenResult = {
   isSuccess?: boolean;
   riskLevel?: string | null;
@@ -450,7 +474,7 @@ export type CreateDocumentRequest = {
   gradeLevels?: Array<string>;
   resourceType?: string;
   standards?: Array<string>;
-  watermarkEnabled?: boolean;
+  watermarkEnabled?: boolean | null;
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
   language?: string;
@@ -543,6 +567,10 @@ export type DocumentUploadResponse = {
 export type DownloadTokenResponse = {
   downloadUrl?: string;
   expiresAt?: string;
+  watermarkApplied?: boolean;
+  watermarkMode?: string;
+  watermarkToken?: string | null;
+  watermarkNotice?: string | null;
 };
 
 export type ExamCountdownSettingResponse = {
@@ -879,6 +907,14 @@ export type PagedResponseOfAdminTransactionResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfAdminWatermarkCopyResponse = {
+  items?: Array<AdminWatermarkCopyResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfBundleResponse = {
   items?: Array<BundleResponse>;
   page?: number;
@@ -1042,6 +1078,11 @@ export type PlatformSettingsResponse = {
   vatPercent?: number;
   payoutMinTHB?: number;
   payoutSchedule?: string;
+  watermarkPolicy?: string;
+  watermarkDefaultEnabled?: boolean;
+  watermarkForensicEnabled?: boolean;
+  watermarkCopyRetentionDays?: number;
+  watermarkDefaultSubtitle?: string | null;
 };
 
 export type PlatformStatsResponse = {
@@ -1069,6 +1110,7 @@ export type ProblemDetails = {
 
 export type PublicOAuthClientsResponse = {
   googleClientId?: string;
+  lineLoginChannelId?: string;
 };
 
 export type RecommendedDocumentsResponse = {
@@ -1314,6 +1356,10 @@ export type SellerDocumentResponse = {
   listedMainFileId?: string | null;
   originalPrice?: number | null;
   discountExpiresAt?: string | null;
+  watermarkCapability?: string;
+  watermarkEffective?: boolean;
+  watermarkPolicyLocked?: boolean;
+  watermarkWarning?: string | null;
 };
 
 export type SellerDocumentSummaryResponse = {
@@ -1700,6 +1746,11 @@ export type UpdatePlatformSettingsRequest = {
   vatPercent?: number;
   payoutMinTHB?: number;
   payoutSchedule: string;
+  watermarkPolicy?: string | null;
+  watermarkDefaultEnabled?: boolean | null;
+  watermarkForensicEnabled?: boolean | null;
+  watermarkCopyRetentionDays?: number | null;
+  watermarkDefaultSubtitle?: string | null;
 };
 
 export type UpdateProfileRequest = {
@@ -2205,6 +2256,10 @@ export type PostApiAdminDocumentsByIdApproveErrors = {
    * Not Found
    */
   404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
 };
 
 export type PostApiAdminDocumentsByIdApproveError =
@@ -2556,6 +2611,29 @@ export type PutApiAdminSettingsResponses = {
 
 export type PutApiAdminSettingsResponse =
   PutApiAdminSettingsResponses[keyof PutApiAdminSettingsResponses];
+
+export type GetApiAdminWatermarkCopiesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    token?: string;
+    documentId?: string;
+    userId?: string;
+    page?: number;
+    pageSize?: number;
+  };
+  url: '/api/admin/watermark-copies';
+};
+
+export type GetApiAdminWatermarkCopiesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminWatermarkCopyResponse;
+};
+
+export type GetApiAdminWatermarkCopiesResponse =
+  GetApiAdminWatermarkCopiesResponses[keyof GetApiAdminWatermarkCopiesResponses];
 
 export type GetApiAdminStorageUsageData = {
   body?: never;

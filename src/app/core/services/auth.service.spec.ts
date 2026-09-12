@@ -5,6 +5,8 @@ import { AuthService } from './auth.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { GoogleOauthService } from './google-oauth.service';
 import { GoogleOauthConfigService } from './google-oauth-config.service';
+import { LineOauthService } from './line-oauth.service';
+import { OauthClientsService } from './oauth-clients.service';
 import { CartService } from './cart.service';
 import { WishlistService } from './wishlist.service';
 
@@ -828,5 +830,145 @@ describe('AuthService multi-role permissions (multi-role-permissions v1 AC-14/AC
       expect(r.ok).toBe(false);
       expect(r.error).toContain('และตัวเลขอย่างน้อยอย่างละ 1 ตัว');
     });
+  });
+});
+
+
+/**
+ * external-login-and-mail-config v1 §1.3/§4.1 — LINE sign-in. Availability is the server's call
+ * (AC-7), and the redirect half must never start a navigation the server cannot finish.
+ */
+describe('AuthService LINE sign-in', () => {
+  function buildLineService(over: {
+    lineLoginChannelId?: string;
+    consumeState?: ReturnType<typeof vi.fn>;
+    startSignIn?: ReturnType<typeof vi.fn>;
+  } = {}): {
+    auth: AuthService;
+    lineOauth: { startSignIn: ReturnType<typeof vi.fn>; consumeState: ReturnType<typeof vi.fn> };
+    cart: { loadCart: ReturnType<typeof vi.fn> };
+  } {
+    const cart = { loadCart: vi.fn() };
+    const wishlist = { refresh: vi.fn().mockResolvedValue(undefined) };
+    const lineOauth = {
+      startSignIn: over.startSignIn ?? vi.fn().mockReturnValue(true),
+      consumeState:
+        over.consumeState ??
+        vi.fn().mockReturnValue({
+          state: 'state-1',
+          returnUrl: '/library',
+          redirectUri: 'https://x.test/auth/line/callback',
+          createdAt: Date.now(),
+        }),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+        { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } },
+        { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
+        { provide: GoogleOauthService, useValue: {} },
+        { provide: GoogleOauthConfigService, useValue: { ensureLoaded: vi.fn().mockResolvedValue(undefined), getClientId: () => '' } },
+        {
+          provide: OauthClientsService,
+          useValue: {
+            ensureLoaded: vi.fn().mockResolvedValue(undefined),
+            lineLoginChannelId: () => over.lineLoginChannelId ?? '2001234567',
+          },
+        },
+        { provide: LineOauthService, useValue: lineOauth },
+        { provide: CartService, useValue: cart },
+        { provide: WishlistService, useValue: wishlist },
+      ],
+    });
+
+    return { auth: TestBed.inject(AuthService), lineOauth, cart };
+  }
+
+  it('refuses to start the flow — and navigates nowhere — when the server reports no LINE channel', async () => {
+    const { auth, lineOauth } = buildLineService({ lineLoginChannelId: '' });
+
+    const res = await auth.signInWithProvider('line', { returnUrl: '/library' });
+
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe('ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE');
+    expect(lineOauth.startSignIn).not.toHaveBeenCalled();
+  });
+
+  it('hands the returnUrl to the redirect and never settles once the browser is leaving', async () => {
+    const { auth, lineOauth } = buildLineService();
+    let settled = false;
+
+    void auth.signInWithProvider('line', { returnUrl: '/orders/abc' }).then(() => {
+      settled = true;
+    });
+    await settle();
+
+    expect(lineOauth.startSignIn).toHaveBeenCalledWith('/orders/abc');
+    // §4.1: resolving here would let the caller flash a success toast over a page already leaving.
+    expect(settled).toBe(false);
+  });
+
+  it('completeLineSignIn exchanges the code with the stored redirect_uri and returns the returnUrl', async () => {
+    stubRoute('POST', '/api/auth/external/line', loginBody());
+    const { auth, cart } = buildLineService();
+
+    const res = await auth.completeLineSignIn({ code: 'line-code', state: 'state-1' });
+
+    expect(res.ok).toBe(true);
+    expect(res.returnUrl).toBe('/library');
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(auth.session()?.provider).toBe('line');
+    expect(cart.loadCart).toHaveBeenCalledTimes(1);
+    const sent = requests.find((r) => r.path === '/api/auth/external/line');
+    expect(JSON.parse(sent?.body ?? '{}')).toEqual({
+      authorizationCode: 'line-code',
+      redirectUri: 'https://x.test/auth/line/callback',
+      acceptTerms: true,
+    });
+  });
+
+  it('completeLineSignIn rejects an unknown state without calling the API', async () => {
+    const { auth } = buildLineService({ consumeState: vi.fn().mockReturnValue(null) });
+
+    const res = await auth.completeLineSignIn({ code: 'line-code', state: 'stale' });
+
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe('คำขอเข้าสู่ระบบไม่ถูกต้องหรือหมดอายุ กรุณาลองใหม่อีกครั้ง');
+    expect(requests.some((r) => r.path === '/api/auth/external/line')).toBe(false);
+  });
+
+  it('completeLineSignIn surfaces the Thai detail of a 400 verbatim', async () => {
+    const detail =
+      'บัญชี LINE นี้ไม่ได้ให้สิทธิ์เข้าถึงอีเมล จึงยังเข้าสู่ระบบด้วย LINE ไม่ได้ กรุณาเข้าสู่ระบบด้วยอีเมลแทน';
+    stubRoute(
+      'POST',
+      '/api/auth/external/line',
+      { title: 'Bad Request', status: 400, statusCode: 400, code: 'validation_failed', detail },
+      400,
+    );
+    const { auth } = buildLineService();
+
+    const res = await auth.completeLineSignIn({ code: 'line-code', state: 'state-1' });
+
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe(detail);
+    expect(auth.isAuthenticated()).toBe(false);
+  });
+
+  it('completeLineSignIn falls back to the generic Thai message when the failure is not a 4xx', async () => {
+    stubRoute(
+      'POST',
+      '/api/auth/external/line',
+      { title: 'Server Error', status: 500, statusCode: 500, detail: 'boom' },
+      500,
+    );
+    const { auth } = buildLineService();
+
+    const res = await auth.completeLineSignIn({ code: 'line-code', state: 'state-1' });
+
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe('เข้าสู่ระบบด้วย LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
   });
 });

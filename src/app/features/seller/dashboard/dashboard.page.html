@@ -1,12 +1,14 @@
 <div class="max-w-6xl">
       @if (seller.sellerProfileRequired()) {
-        <app-empty-state
-          emoji="🏪"
-          title="บัญชีนี้ยังไม่มีร้านค้า"
-          description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
-        >
-          <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
-        </app-empty-state>
+        <div class="card-soft">
+          <app-empty-state
+            emoji="🏪"
+            title="บัญชีนี้ยังไม่มีร้านค้า"
+            description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
+          >
+            <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+          </app-empty-state>
+        </div>
       } @else {
       <!-- Greeting -->
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -36,7 +38,7 @@
       />
 
       <!-- Stats -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <section class="grid grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 mb-8">
         <app-stat-card
           label="รายได้เดือนนี้"
           [value]="seller.stats().monthlyRevenue | thb"
@@ -66,7 +68,7 @@
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Revenue chart -->
-        <section class="lg:col-span-2 card-soft p-6">
+        <section class="lg:col-span-2 min-w-0 card-tile">
           <header class="flex items-end justify-between mb-6">
             <div>
               <h2 class="text-lg font-bold text-ink">รายได้ 6 เดือนล่าสุด</h2>
@@ -97,7 +99,7 @@
         </section>
 
         <!-- Top categories -->
-        <section class="card-soft p-6">
+        <section class="card-tile">
           <h2 class="text-lg font-bold text-ink mb-1">หมวดที่ขายดี</h2>
           <p class="text-xs text-ink-muted mb-5">จัดอันดับตามจำนวนยอดขายในเดือนนี้</p>
           @if (seller.stats().topCategories.length === 0) {
@@ -107,13 +109,13 @@
               description="เมื่อมีเอกสารขายได้ หมวดที่ขายดีจะแสดงที่นี่"
             />
           } @else {
-            <ul class="space-y-3">
+            <ul class="card-tile-body space-y-3">
               @for (c of seller.stats().topCategories; track c.category; let i = $index) {
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
                       <span
-                        class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center"
+                        class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0"
                         [class]="
                           i === 0 ? 'bg-pink-500 text-white' :
                           i === 1 ? 'bg-pink-300 text-pink-700' :
@@ -122,7 +124,7 @@
                       >
                         {{ i + 1 }}
                       </span>
-                      <span class="font-medium text-ink">{{ c.category }}</span>
+                      <span class="font-medium text-ink line-clamp-1">{{ c.category }}</span>
                     </div>
                     <span class="font-bold text-ink">{{ c.sales | compact }}</span>
                   </div>
@@ -142,7 +144,7 @@
       <!-- Seller insights (seller-analytics-insights v1 §4) -->
       <div class="grid lg:grid-cols-2 gap-6 mt-6">
         <!-- Conversion rate ต่อเอกสาร -->
-        <section class="card-soft p-6">
+        <section class="min-w-0 card-tile">
           <h2 class="text-lg font-bold text-ink mb-1">Conversion rate ต่อเอกสาร</h2>
           <p class="text-xs text-ink-muted mb-5">คนดูกี่ครั้งแล้วซื้อกี่ครั้ง</p>
           @if (seller.stats().insights.documentConversions.length === 0) {
@@ -152,7 +154,7 @@
               description="เมื่อมีคนเปิดดูเอกสารของคุณ ข้อมูล conversion จะแสดงที่นี่"
             />
           } @else {
-            <div class="overflow-x-auto -mx-2">
+            <div class="card-tile-body overflow-x-auto -mx-2">
               <table class="w-full text-sm min-w-[380px]">
                 <thead>
                   <tr class="text-left text-xs text-ink-muted border-b border-line">
@@ -165,7 +167,9 @@
                 <tbody class="divide-y divide-line">
                   @for (row of seller.stats().insights.documentConversions; track row.documentId) {
                     <tr>
-                      <td class="py-2.5 px-2 font-medium text-ink line-clamp-1">{{ row.title }}</td>
+                      <td class="py-2.5 px-2 font-medium text-ink">
+                        <span class="block line-clamp-1">{{ row.title }}</span>
+                      </td>
                       <td class="py-2.5 px-2 text-right text-ink-soft">{{ row.viewCount | compact }}</td>
                       <td class="py-2.5 px-2 text-right text-ink-soft">{{ row.salesCount | compact }}</td>
                       <td class="py-2.5 px-2 text-right font-bold text-pink-600">{{ row.conversionRatePercent.toFixed(1) }}%</td>
@@ -179,7 +183,7 @@
 
         <div class="flex flex-col gap-6">
           <!-- คำค้นหายอดนิยมที่พาคนมาเจอร้าน -->
-          <section class="card-soft p-6">
+          <section class="card-tile">
             <h2 class="text-lg font-bold text-ink mb-1">คำค้นหาที่พาคนมาเจอร้านคุณ</h2>
             <p class="text-xs text-ink-muted mb-5">คำค้นหายอดนิยมที่คนใช้แล้วเจอเอกสารของคุณ</p>
             @if (seller.stats().insights.topSearchTerms.length === 0) {
@@ -189,7 +193,7 @@
                 description="เมื่อมีคนค้นหาแล้วเจอเอกสารของคุณ คำค้นหาจะแสดงที่นี่"
               />
             } @else {
-              <ul class="flex flex-wrap gap-2">
+              <ul class="card-tile-body flex flex-wrap gap-2 content-start">
                 @for (t of seller.stats().insights.topSearchTerms; track t.term) {
                   <li class="pill-soft">
                     {{ t.term }}
@@ -201,13 +205,13 @@
           </section>
 
           <!-- Breakdown ต้นทาง traffic ของร้าน -->
-          <section class="card-soft p-6">
+          <section class="card-tile flex-1">
             <h2 class="text-lg font-bold text-ink mb-1">ต้นทาง traffic ของร้านคุณ</h2>
             <p class="text-xs text-ink-muted mb-5">สัดส่วนที่มาของคนที่เปิดดูเอกสารในร้าน</p>
             @if (seller.stats().insights.trafficBreakdown.totalViews === 0) {
               <app-empty-state emoji="🧭" title="ยังไม่มีข้อมูล traffic" />
             } @else {
-              <ul class="space-y-3">
+              <ul class="card-tile-body space-y-3">
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
                     <span class="font-medium text-ink">ค้นหา</span>
@@ -253,7 +257,7 @@
       <!-- Earnings Calculator + Recent docs + Payout -->
       <div class="grid lg:grid-cols-3 gap-6 mt-6">
         <!-- Recent docs -->
-        <section class="lg:col-span-2 card-soft p-6">
+        <section class="lg:col-span-2 min-w-0 card-tile">
           <header class="flex items-end justify-between mb-5">
             <h2 class="text-lg font-bold text-ink">เอกสารล่าสุดของคุณ</h2>
             <a routerLink="/seller/documents" class="text-sm text-pink-600 hover:underline font-semibold">ดูทั้งหมด →</a>
@@ -265,10 +269,10 @@
               description="อัปโหลดเอกสารแรกของคุณเพื่อเริ่มขาย"
             />
           } @else {
-            <ul class="divide-y divide-line">
+            <ul class="card-tile-body divide-y divide-line">
               @for (d of seller.myDocuments().slice(0, 5); track d.id) {
                 <li class="py-3 flex items-center gap-4">
-                  <img appImgFallback [src]="d.cover" [alt]="d.title" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" />
+                  <img appImgFallback [src]="d.cover" [alt]="d.title" class="w-10 h-14 rounded-xl object-cover flex-shrink-0" />
                   <div class="flex-1 min-w-0">
                     <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
                     <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">
@@ -290,7 +294,7 @@
         </section>
 
         <!-- Payout -->
-        <section class="card-soft p-6 bg-gradient-pink !border-pink-200">
+        <section class="card-tile bg-gradient-pink !border-pink-200">
           <h2 class="text-lg font-bold text-ink mb-1">รอจ่ายคุณ</h2>
           <p class="text-xs text-ink-muted mb-4">เงินที่พร้อมโอนเข้าบัญชีของคุณ</p>
           <div class="text-4xl font-extrabold text-pink-700 leading-none">
@@ -326,7 +330,7 @@
       </div>
 
       <!-- Earnings Calculator -->
-      <section class="card-soft p-6 md:p-8 mt-6 bg-gradient-to-br from-emerald-50 to-pink-50">
+      <section class="card-tile mt-6 bg-gradient-to-br from-emerald-50 to-pink-50">
         <header class="flex items-start justify-between gap-4 mb-6">
           <div>
             <span class="pill bg-emerald-100 text-emerald-700 mb-2">
@@ -380,7 +384,7 @@
           </div>
 
           <!-- Output -->
-          <div class="card-soft p-6 bg-white">
+          <div class="card-tile bg-white">
             <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">รายได้ที่คุณจะได้รับ ({{ sellerSharePercent() }}%)</div>
             <div class="text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
             <div class="text-sm text-ink-muted mb-5">ต่อเดือน (หลังหักค่าธรรมเนียม)</div>

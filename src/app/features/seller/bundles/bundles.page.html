@@ -1,12 +1,14 @@
-<div class="max-w-4xl space-y-6">
+<div class="max-w-6xl space-y-6">
   @if (sellerProfileRequired()) {
-    <app-empty-state
-      emoji="🏪"
-      title="บัญชีนี้ยังไม่มีร้านค้า"
-      description="สมัครเป็นผู้ขายก่อนถึงจะสร้างแพ็กเกจได้"
-    >
-      <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
-    </app-empty-state>
+    <div class="card-soft">
+      <app-empty-state
+        emoji="🏪"
+        title="บัญชีนี้ยังไม่มีร้านค้า"
+        description="สมัครเป็นผู้ขายก่อนถึงจะสร้างแพ็กเกจได้"
+      >
+        <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+      </app-empty-state>
+    </div>
   } @else {
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
@@ -21,7 +23,7 @@
   </header>
 
   @if (formOpen()) {
-    <section class="card-soft p-6 space-y-5">
+    <section class="card-tile space-y-5">
       <h2 class="text-lg font-bold text-ink">
         {{ editingId() ? 'แก้ไขแพ็กเกจ' : 'สร้างแพ็กเกจใหม่' }}
       </h2>
@@ -148,20 +150,22 @@
   }
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-tile text-center text-sm text-ink-soft">กำลังโหลด…</div>
   } @else if (bundles().length === 0) {
-    <app-empty-state
-      emoji="📦"
-      title="ยังไม่มีแพ็กเกจ"
-      description="รวมเอกสารที่ขายดีเป็นชุด แล้วตั้งราคาให้คุ้มกว่าซื้อแยก"
-    />
+    <div class="card-soft">
+      <app-empty-state
+        emoji="📦"
+        title="ยังไม่มีแพ็กเกจ"
+        description="รวมเอกสารที่ขายดีเป็นชุด แล้วตั้งราคาให้คุ้มกว่าซื้อแยก"
+      />
+    </div>
   } @else {
     <ul class="flex flex-col gap-4">
       @for (bundle of bundles(); track bundle.id) {
-        <li class="card-soft p-5">
+        <li class="card-tile">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h3 class="text-base font-bold text-ink">{{ bundle.title }}</h3>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-base font-bold text-ink line-clamp-2">{{ bundle.title }}</h3>
               <p class="text-xs text-ink-muted">
                 {{ bundle.items?.length ?? 0 }} เอกสาร ·
                 <span class="font-semibold text-ink">{{ bundle.price ?? 0 | thb }}</span>

@@ -4,7 +4,7 @@
           <h1 class="text-3xl font-extrabold text-ink mb-1">หมวดหมู่</h1>
           <p class="text-sm text-ink-soft">จัดการหมวดหมู่เอกสารบนแพลตฟอร์ม</p>
         </div>
-        <button type="button" class="btn-pink" (click)="addCategory()">
+        <button type="button" class="btn-pink" (click)="openCreateCategory()">
           <app-icon name="plus" [size]="16" />
           เพิ่มหมวดหมู่
         </button>
@@ -55,7 +55,7 @@
                 </td>
                 <td class="px-5 py-3">
                   <div class="flex items-center gap-1 justify-end">
-                    <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="editCategory(c)">
+                    <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="openEditCategory(c)">
                       <app-icon name="edit" [size]="14" />
                     </button>
                     <button type="button" class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500" title="ลบ" (click)="removeCategory(c)">
@@ -141,6 +141,53 @@
         (pageSizeChange)="onPageSizeChange($event)"
       />
     </div>
+
+<nz-modal
+  [nzVisible]="categoryFormOpen()"
+  [nzTitle]="editingCategory() ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่'"
+  [nzOkText]="editingCategory() ? 'บันทึก' : 'เพิ่ม'"
+  nzCancelText="ยกเลิก"
+  [nzOkLoading]="catSaving()"
+  [nzOkDisabled]="!categoryFormValid() || catSaving()"
+  (nzOnOk)="saveCategory()"
+  (nzOnCancel)="closeCategoryForm()"
+>
+  <ng-container *nzModalContent>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">ชื่อหมวดหมู่</label>
+        <input type="text" [(ngModel)]="catName" name="catName" class="input-soft" />
+        @if (catNameError()) {
+          <p class="text-[11px] text-rose-500 mt-1">{{ catNameError() }}</p>
+        }
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">Slug</label>
+        <input type="text" [(ngModel)]="catSlug" name="catSlug" class="input-soft" />
+        <p class="text-[11px] text-ink-muted mt-1">เว้นว่างได้ — ระบบจะสร้างจากชื่อหมวดหมู่</p>
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">
+          ราคาสมาชิกรายเดือน (บาท, รวม VAT)
+        </label>
+        <input
+          type="text"
+          inputmode="decimal"
+          [(ngModel)]="catPrice"
+          name="catPrice"
+          class="input-soft"
+        />
+        @if (catPriceError()) {
+          <p class="text-[11px] text-rose-500 mt-1">{{ catPriceError() }}</p>
+        } @else {
+          <p class="text-[11px] text-ink-muted mt-1">เว้นว่าง = ยังไม่เปิดให้สมัครสมาชิกหมวดนี้</p>
+        }
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
 
 <nz-modal
   [nzVisible]="subcategoryFormOpen()"

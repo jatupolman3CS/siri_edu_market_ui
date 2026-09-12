@@ -69,7 +69,9 @@ export class SellerLayoutComponent {
     { label: this.translation.currentLang() === 'th' ? 'หมวดหน้าร้าน' : 'Storefront Sections', href: '/seller/store-sections', icon: 'package' as const },
     { label: this.translation.currentLang() === 'th' ? 'แพ็กเกจของฉัน' : 'My Bundles', href: '/seller/bundles', icon: 'package' as const },
     { label: this.translation.currentLang() === 'th' ? 'รีวิวลูกค้า' : 'Customer Reviews', href: '/seller/reviews', icon: 'star' as const },
-    { label: this.translation.currentLang() === 'th' ? 'การแจ้งเตือน' : 'Notifications', href: '/notifications', icon: 'bell' as const },
+    // notification-master-config v1 §0.4 root cause #4: this used to link to the buyer
+    // route `/notifications`, which threw the seller out of the seller layout.
+    { label: this.translation.currentLang() === 'th' ? 'การแจ้งเตือน' : 'Notifications', href: '/seller/notifications', icon: 'bell' as const },
     { label: this.translation.t('seller.settings'), href: '/seller/settings', icon: 'gear' as const },
   ]);
 }

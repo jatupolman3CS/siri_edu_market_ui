@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { AuthRegisterPage } from './register.page';
 import { AuthService, PlatformStatsService } from '../../../core/services';
 import { GoogleOauthConfigService } from '../../../core/services/google-oauth-config.service';
+import { OauthClientsService } from '../../../core/services/oauth-clients.service';
 
 /**
  * QA bugs #3/#4 on the register form:
@@ -20,6 +21,12 @@ function render() {
       {
         provide: GoogleOauthConfigService,
         useValue: { ensureLoaded: () => Promise.resolve(), getClientId: () => '' },
+      },
+      {
+        // external-login-and-mail-config v1 §4.1: `social-buttons` now also asks the shared
+        // OAuth-clients service about LINE — stubbed so this page spec makes no HTTP call.
+        provide: OauthClientsService,
+        useValue: { ensureLoaded: () => Promise.resolve(), lineLoginChannelId: () => '' },
       },
       // AuthLayoutComponent reads this — stub so no real network call fires in this spec.
       { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
@@ -86,6 +93,11 @@ describe('AuthRegisterPage — Terms/Privacy checkbox (bug #3/#4)', () => {
           provide: GoogleOauthConfigService,
           useValue: { ensureLoaded: () => Promise.resolve(), getClientId: () => 'client-id' },
         },
+        {
+          // external-login-and-mail-config v1 §4.1 — see the note in render() above.
+          provide: OauthClientsService,
+          useValue: { ensureLoaded: () => Promise.resolve(), lineLoginChannelId: () => '' },
+        },
         { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
       ],
     });
@@ -97,7 +109,9 @@ describe('AuthRegisterPage — Terms/Privacy checkbox (bug #3/#4)', () => {
     component.onSocial('google');
     await new Promise((r) => setTimeout(r, 20));
 
-    expect(signInWithProvider).toHaveBeenCalledWith('google');
+    // external-login-and-mail-config v1 §4.1: the page now forwards where the user wanted to
+    // go, because a redirect-based provider (LINE) loses this component before it comes back.
+    expect(signInWithProvider).toHaveBeenCalledWith('google', { returnUrl: '/' });
     expect(resolvePostAuthRedirect).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith('/onboarding/role');
   });

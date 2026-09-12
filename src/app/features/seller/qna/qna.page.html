@@ -1,4 +1,4 @@
-<div class="max-w-4xl space-y-6">
+<div class="max-w-6xl space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
       <h1 class="text-3xl font-extrabold text-ink mb-1">คำถามจากผู้ซื้อ</h1>
@@ -15,20 +15,22 @@
   </header>
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-tile text-center text-sm text-ink-soft">กำลังโหลด…</div>
   } @else if (items().length === 0) {
-    <app-empty-state
-      emoji="💬"
-      title="ยังไม่มีคำถาม"
-      description="เมื่อผู้ซื้อถามเกี่ยวกับเอกสารของคุณ คำถามจะแสดงที่นี่"
-    />
+    <div class="card-soft">
+      <app-empty-state
+        emoji="💬"
+        title="ยังไม่มีคำถาม"
+        description="เมื่อผู้ซื้อถามเกี่ยวกับเอกสารของคุณ คำถามจะแสดงที่นี่"
+      />
+    </div>
   } @else {
     <ul class="flex flex-col gap-4">
       @for (q of items(); track q.id) {
-        <li class="card-soft p-5">
+        <li class="card-tile">
           <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
-            <div class="min-w-0">
-              <div class="text-sm font-bold text-ink">{{ q.documentTitle }}</div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-bold text-ink line-clamp-2">{{ q.documentTitle }}</div>
               <div class="text-xs text-ink-muted">
                 {{ q.buyerName }} · {{ q.askedAt | date: 'dd MMM yyyy' }}
               </div>

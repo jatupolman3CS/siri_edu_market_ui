@@ -51,6 +51,10 @@ function render(loggedIn = false) {
           items: () => [],
           previewItems: () => [],
           unreadCount: () => 0,
+          // notification-master-config v1 §3.4: the bell reads its badge from the
+          // per-audience breakdown, not the cross-layout total.
+          unreadByAudience: () => ({ buyer: 0, seller: 0, admin: 0 }),
+          hasAudienceBreakdown: () => false,
           loading: () => false,
           totalCount: () => 0,
           loadFeed: vi.fn(),

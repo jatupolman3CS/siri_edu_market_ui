@@ -1,4 +1,4 @@
-<div class="max-w-5xl">
+<div class="max-w-6xl">
       <header class="mb-6">
         <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">
           {{ isEditMode() ? 'แก้ไขเอกสาร' : 'อัปโหลดเอกสารใหม่' }}
@@ -64,7 +64,7 @@
         <div class="lg:col-span-2">
           <!-- Step 1: File -->
           @if (step() === 1) {
-            <section class="card-soft p-6">
+            <section class="card-tile">
               <h2 class="text-lg font-bold text-ink mb-1">อัปโหลดไฟล์เอกสาร</h2>
               <p class="text-sm text-ink-muted mb-6">
                 รองรับ PDF, DOCX, PPTX, XLSX, ZIP — ขนาดสูงสุด 200MB
@@ -244,11 +244,20 @@
 
               <!-- Watermark + preview options -->
               <div class="grid sm:grid-cols-2 gap-3 mt-6">
-                <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
+                <!-- watermark-completion v1 §4.3: the platform policy, not the seller, has the
+                     final say — when it is locked the checkbox is disabled and stays ticked, and
+                     any warning shown here is the backend's text verbatim. -->
+                <label
+                  class="flex items-start gap-3 p-4 rounded-2xl border border-line hover:border-pink-300"
+                  [class.cursor-pointer]="!watermarkPolicyLocked()"
+                  [class.opacity-80]="watermarkPolicyLocked()"
+                >
                   <input
                     type="checkbox"
+                    name="watermark-enabled"
                     [ngModel]="watermark()"
                     (ngModelChange)="watermark.set($event)"
+                    [disabled]="watermarkPolicyLocked()"
                     class="w-5 h-5 accent-pink-500 mt-0.5"
                   />
                   <div>
@@ -259,6 +268,18 @@
                     <div class="text-xs text-ink-muted mt-1">
                       เพิ่ม Watermark ของผู้ซื้อในทุกหน้าของไฟล์
                     </div>
+                    @if (watermarkPolicyLocked()) {
+                      <div class="text-xs font-semibold text-pink-600 mt-2">
+                        ระบบกำหนดให้เอกสารทุกฉบับต้องมีลายน้ำ
+                      </div>
+                    }
+                    @if (watermarkWarning(); as warning) {
+                      <div
+                        class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2"
+                      >
+                        {{ warning }}
+                      </div>
+                    }
                   </div>
                 </label>
                 <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
@@ -339,7 +360,7 @@
 
           <!-- Step 2: Detail -->
           @if (step() === 2) {
-            <section class="card-soft p-6">
+            <section class="card-tile">
               <h2 class="text-lg font-bold text-ink mb-1">รายละเอียดเอกสาร</h2>
               <p class="text-sm text-ink-muted mb-6">
                 ใส่ข้อมูลให้ครบเพื่อเพิ่มโอกาสในการขาย
@@ -535,7 +556,7 @@
 
           <!-- Step 3: Pricing -->
           @if (step() === 3) {
-            <section class="card-soft p-6">
+            <section class="card-tile">
               <h2 class="text-lg font-bold text-ink mb-1">ตั้งราคา</h2>
               <p class="text-sm text-ink-muted mb-6">
                 เลือกราคาที่เหมาะกับเนื้อหา — เราเก็บค่าธรรมเนียม {{ feeRatePercent() }}% ที่เหลือเป็นของคุณ
@@ -676,7 +697,7 @@
 
           <!-- Step 4: Review -->
           @if (step() === 4) {
-            <section class="card-soft p-6">
+            <section class="card-tile">
               <h2 class="text-lg font-bold text-ink mb-1">ตรวจสอบและส่งเข้าพิจารณา</h2>
               <p class="text-sm text-ink-muted mb-6">
                 ทีมงานจะตรวจสอบและแจ้งผลโดยเร็วที่สุด
@@ -765,7 +786,7 @@
 
         <!-- Right tip -->
         <aside class="lg:col-span-1">
-          <div class="card-soft p-5 sticky top-6">
+          <div class="card-tile sticky top-6">
             <h3 class="text-sm font-bold text-ink mb-3 flex items-center gap-2">
               <app-icon name="sparkle" [size]="16" className="text-pink-500" />
               เคล็ดลับการขาย

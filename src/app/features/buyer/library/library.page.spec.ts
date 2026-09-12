@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerLibraryPage } from './library.page';
 import { AuthService, LibraryService, LoyaltyService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
@@ -11,6 +12,7 @@ import {
 } from '../../../core/services/action-state';
 import { mapLibraryItem } from '../../../core/api-mappers/mappers';
 import type { LibraryItem, LoyaltyEntry, LoyaltySummary } from '../../../core/models';
+import type { DocumentDownloadResult } from '../../../core/services/library.service';
 
 /**
  * library-is-reviewed v1 — spec section 4 + AC-9/AC-10:
@@ -58,12 +60,19 @@ function buildItem(documentId: string, over: Partial<LibraryItem> = {}): Library
   return { ...base, ...over };
 }
 
+/** watermark-completion v1 §4.4: every notice this page pushed through NG-ZORRO's message. */
+let infoMessages: string[] = [];
+
 function renderWithItems(
   items: LibraryItem[],
   filter: 'all' | 'unreviewed' | 'unread' = 'all',
   loyalty = fakeLoyalty(),
   toggleReadSpy = vi.fn(async () => {}),
+  downloadSpy: (documentId: string) => Promise<DocumentDownloadResult | null> = vi.fn(
+    async () => null,
+  ),
 ) {
+  infoMessages = [];
   const fakeLibrary = {
     state: () => idleActionState(),
     library: () => items,
@@ -76,7 +85,7 @@ function renderWithItems(
     refreshLibrary: vi.fn(async () => {}),
     refreshOrders: vi.fn(async () => {}),
     loadMoreLibrary: vi.fn(async () => {}),
-    download: vi.fn(),
+    download: downloadSpy,
     toggleRead: toggleReadSpy,
     reviewState: () => idleActionState(),
     resetReviewState: vi.fn(),
@@ -91,6 +100,15 @@ function renderWithItems(
       { provide: LibraryService, useValue: fakeLibrary },
       { provide: LoyaltyService, useValue: loyalty },
       { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+      {
+        provide: NzMessageService,
+        useValue: {
+          info: (m: string) => infoMessages.push(m),
+          success: vi.fn(),
+          warning: vi.fn(),
+          error: vi.fn(),
+        },
+      },
     ],
   });
 
@@ -417,5 +435,87 @@ describe('BuyerLibraryPage — tab switch (AC-9)', () => {
     expect(text).toContain('ทั้งหมด');
     expect(text).toContain('ยังไม่ได้รีวิว');
     expect(text).toContain('ยังไม่อ่าน');
+  });
+});
+
+/**
+ * watermark-completion v1 §3.1/§4.4 — `POST /api/library/{id}/download` now answers with a Thai
+ * `watermarkNotice` naming the buyer's own `WMK-XXXXXXXX` copy code. The page must show it with
+ * the message mechanism it already uses, and must stay silent when the backend sent none.
+ */
+describe('BuyerLibraryPage — watermark notice on download (watermark-completion v1 §4.4)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  function downloadButton(fixture: { nativeElement: unknown }): HTMLButtonElement {
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.trim() === 'ดาวน์โหลด');
+    expect(button).toBeDefined();
+    return button as HTMLButtonElement;
+  }
+
+  it('shows the backend notice verbatim after a download', async () => {
+    const notice = 'ไฟล์นี้ฝังรหัสสำเนา WMK-ABC12345 ไว้สำหรับบัญชีของคุณ กรุณาอย่าเผยแพร่ต่อ';
+    const download = vi.fn(async () => ({
+      downloadUrl: 'https://cdn.example/doc.pdf',
+      watermarkApplied: true,
+      watermarkMode: 'raster' as const,
+      watermarkToken: 'WMK-ABC12345',
+      watermarkNotice: notice,
+    }));
+    const fixture = renderWithItems(
+      [buildItem('doc-1')],
+      'all',
+      fakeLoyalty(),
+      vi.fn(async () => {}),
+      download,
+    );
+
+    downloadButton(fixture).click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(download).toHaveBeenCalledWith('doc-1');
+    expect(infoMessages).toContain(notice);
+  });
+
+  it('stays silent when the backend sent no notice (§3.1: null = nothing to say)', async () => {
+    const download = vi.fn(async () => ({
+      downloadUrl: 'https://cdn.example/doc.pdf',
+      watermarkApplied: false,
+      watermarkMode: 'none' as const,
+      watermarkToken: null,
+      watermarkNotice: null,
+    }));
+    const fixture = renderWithItems(
+      [buildItem('doc-1')],
+      'all',
+      fakeLoyalty(),
+      vi.fn(async () => {}),
+      download,
+    );
+
+    downloadButton(fixture).click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(infoMessages).toEqual([]);
+  });
+
+  it('says nothing when the download itself failed', async () => {
+    const download = vi.fn(async () => null);
+    const fixture = renderWithItems(
+      [buildItem('doc-1')],
+      'all',
+      fakeLoyalty(),
+      vi.fn(async () => {}),
+      download,
+    );
+
+    downloadButton(fixture).click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(infoMessages).toEqual([]);
   });
 });

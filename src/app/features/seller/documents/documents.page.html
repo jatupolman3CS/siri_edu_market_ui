@@ -1,8 +1,10 @@
-<div>
+<div class="max-w-6xl">
   @if (seller.sellerProfileRequired()) {
-  <app-empty-state emoji="🏪" title="บัญชีนี้ยังไม่มีร้านค้า" description="สมัครเป็นผู้ขายก่อนถึงจะจัดการเอกสารได้">
-    <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
-  </app-empty-state>
+  <div class="card-soft">
+    <app-empty-state emoji="🏪" title="บัญชีนี้ยังไม่มีร้านค้า" description="สมัครเป็นผู้ขายก่อนถึงจะจัดการเอกสารได้">
+      <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+    </app-empty-state>
+  </div>
   } @else {
   <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
@@ -18,7 +20,7 @@
   </header>
 
   <!-- Filter bar -->
-  <div class="card-soft p-4 mb-5 flex flex-col md:flex-row gap-3">
+  <div class="card-tile md:flex-row gap-3 mb-5">
     <form class="relative flex-1" (ngSubmit)="applySearch()">
       <button type="submit" aria-label="ค้นหา"
         class="absolute left-3.5 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
@@ -29,7 +31,7 @@
         placeholder="ค้นหาเอกสารในร้านของคุณ…"
         class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm" />
     </form>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2">
       @for (s of statuses; track s.value) {
       <button type="button" class="px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors"
         [class.bg-pink-500]="status() === s.value" [class.text-white]="status() === s.value"
@@ -68,7 +70,7 @@
           <td class="px-5 py-4">
             <div class="flex items-center gap-3">
               <img appImgFallback [src]="d.cover || coverFallback" (error)="onCoverError($event)"
-                class="w-10 h-12 rounded-lg object-cover" alt="" />
+                class="w-10 h-14 rounded-xl object-cover" alt="" />
               <div class="min-w-0">
                 <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
                 <div class="text-xs text-ink-muted uppercase">{{ d.format }} · {{ d.pages }} หน้า</div>
@@ -117,7 +119,7 @@
     </table>
   </div>
 
-  <div class="mt-4 pt-3 border-t border-line">
+  <div class="mt-6 pt-3 border-t border-line">
     <app-pagination [page]="page()" [pageSize]="pageSize()" [total]="total()" (pageChange)="onPageChange($event)"
       (pageSizeChange)="onPageSizeChange($event)" />
   </div>

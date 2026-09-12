@@ -10,7 +10,7 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
-import { DocumentItem, DocumentPricingHint } from '../../../core/models';
+import { DocumentItem, DocumentPricingHint, WatermarkCapability } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { AuthService, CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import {
@@ -94,6 +94,18 @@ export class SellerUploadPage {
   readonly galleryItems = signal<GalleryItem[]>([]);
   readonly galleryUploading = signal<boolean>(false);
   readonly watermark = signal<boolean>(true);
+  /**
+   * watermark-completion v1 §3.4/§4.3: watermark state as the backend resolved it for this
+   * listing (policy + file capability + the seller toggle). Only a saved document has it — a
+   * brand-new upload has no format-specific answer yet, so the fields stay at their neutral
+   * defaults until the create call comes back.
+   */
+  readonly watermarkCapability = signal<WatermarkCapability>('none');
+  readonly watermarkEffective = signal<boolean>(false);
+  /** `true` = the platform policy decides; the checkbox must be disabled and stay ticked. */
+  readonly watermarkPolicyLocked = signal<boolean>(false);
+  /** Thai warning straight from the backend — never composed or re-worded here (§4.3). */
+  readonly watermarkWarning = signal<string | null>(null);
   readonly previewPages = signal<number>(5);
   readonly previewWatermarkSubtitle = signal('');
   readonly previewWatermarkFontFamily = signal('Noto Sans Thai');
@@ -187,6 +199,26 @@ export class SellerUploadPage {
     });
   }
 
+  /**
+   * watermark-completion v1 §4.3: mirrors the backend's answer into the form. When the policy
+   * locks the choice the checkbox is forced on as well, so what the seller sees matches what the
+   * buyer will actually get (the server would override a `false` anyway — AC-08).
+   */
+  private applyWatermarkPolicy(doc: {
+    watermarkCapability?: WatermarkCapability;
+    watermarkEffective?: boolean;
+    watermarkPolicyLocked?: boolean;
+    watermarkWarning?: string | null;
+  }): void {
+    this.watermarkCapability.set(doc.watermarkCapability ?? 'none');
+    this.watermarkEffective.set(doc.watermarkEffective ?? false);
+    this.watermarkPolicyLocked.set(doc.watermarkPolicyLocked ?? false);
+    this.watermarkWarning.set((doc.watermarkWarning ?? '').trim() || null);
+    if (doc.watermarkPolicyLocked) {
+      this.watermark.set(true);
+    }
+  }
+
   private applyEditDocument(doc: DocumentItem): void {
     this.title.set(doc.title);
     this.shortDescription.set(doc.shortDescription);
@@ -198,6 +230,7 @@ export class SellerUploadPage {
     this.originalPrice.set(doc.originalPrice ?? 0);
     this.discountExpiresAt.set(doc.discountExpiresAt ? doc.discountExpiresAt.slice(0, 10) : '');
     this.watermark.set(doc.watermarkEnabled ?? true);
+    this.applyWatermarkPolicy(doc);
     this.previewPages.set(doc.previewPages ?? 5);
     this.previewWatermarkSubtitle.set((doc.previewWatermarkSubtitle ?? '').trim());
     this.previewWatermarkFontFamily.set(
@@ -623,6 +656,17 @@ export class SellerUploadPage {
               this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
           };
           const doc = await this.seller.createDocument(createBody);
+
+          // watermark-completion v1 §4.3: the create response is the first moment the backend
+          // can judge this file's format against the platform policy. Surface its warning as-is
+          // (never re-worded here) so the seller learns about it before leaving the page.
+          if (doc) {
+            this.applyWatermarkPolicy(mapSellerDocument(doc));
+            const warning = this.watermarkWarning();
+            if (warning) {
+              this.message.warning(warning);
+            }
+          }
 
           if (doc?.id) {
             await putApiSellerDocumentsById({

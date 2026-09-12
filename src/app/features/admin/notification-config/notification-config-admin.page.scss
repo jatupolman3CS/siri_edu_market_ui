@@ -1,0 +1,67 @@
+:host {
+  display: block;
+}
+
+/**
+ * notification-master-config v1 §4.2/§6 fe-2: 18 events × (5 switches + 2 numbers + reset) does
+ * not fit a 360px screen as a table, so the row is a stack by default — each control keeps its
+ * §4.2 column word as a visible label (`2xl:hidden` in the template) — and only turns into
+ * aligned columns from `2xl` up (below that a 1280px laptop, minus the 288px admin sidebar, would
+ * squeeze the ten tracks hard enough to make every row taller than the stacked version), where the header strip above the list appears instead.
+ *
+ * `minmax(0, …)` on the first track is what stops a long event label from pushing the switches
+ * off-screen; every other track is a fixed width so the header and the rows share one grid.
+ *
+ * The header strip deliberately has **no** `display` of its own: it is `hidden 2xl:grid` in the
+ * template, and a component style would win over those utilities (same specificity, injected
+ * later) and leave the strip visible on a phone.
+ */
+.config-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.config-head {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .config-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The name/description cell keeps the full width above its own controls. */
+  .config-row > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1536px) {
+  .config-head,
+  .config-row {
+    grid-template-columns:
+      minmax(0, 1fr) 5rem repeat(5, 4.25rem) 5.75rem 5.75rem 6.75rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .config-row > :first-child {
+    grid-column: auto;
+  }
+
+  .cell {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+}

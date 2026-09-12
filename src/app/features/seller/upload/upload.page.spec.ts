@@ -750,3 +750,145 @@ describe('SellerUploadPage — requestAiAutofill (ai-listing-autofill v1 §1/AC-
     expect(messages.error).toHaveBeenCalledWith('เกิดข้อผิดพลาดในการขอข้อมูลแนะนำจาก AI');
   });
 });
+
+/**
+ * watermark-completion v1 §3.4/§4.3 — the seller's watermark checkbox must obey the platform
+ * policy: locked = disabled and ticked, and the warning under it is the backend's own Thai text
+ * (`watermarkWarning`), never something this page composes from `format`.
+ */
+describe('SellerUploadPage — watermark policy (watermark-completion v1 §4.3)', () => {
+  function renderForWatermark(rawDocOverrides: Record<string, unknown> = {}) {
+    const rawDoc = {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      price: 300,
+      watermarkEnabled: false,
+      ...rawDocOverrides,
+    };
+    const doc = mapSellerDocument(rawDoc as SellerDocumentResponse);
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async () => {},
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) },
+        },
+        {
+          provide: CatalogService,
+          useValue: { loadCategories: () => {}, getCategoryById: () => undefined },
+        },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance };
+  }
+
+  async function settleLoad(fixture: { detectChanges: () => void }): Promise<void> {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+  }
+
+  function watermarkCheckbox(fixture: { nativeElement: unknown }): HTMLInputElement {
+    const el = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      'input[name="watermark-enabled"]',
+    );
+    expect(el).not.toBeNull();
+    return el as HTMLInputElement;
+  }
+
+  it('AC-08: watermarkPolicyLocked disables the checkbox and forces it on', async () => {
+    const { fixture, component } = renderForWatermark({
+      watermarkEnabled: false,
+      watermarkCapability: 'raster',
+      watermarkEffective: true,
+      watermarkPolicyLocked: true,
+    });
+    await settleLoad(fixture);
+    // The watermark checkbox lives in step 1 (upload + gallery + watermark options).
+    component.step.set(1);
+    fixture.detectChanges();
+
+    expect(component.watermarkPolicyLocked()).toBe(true);
+    // The server would override a `false` anyway (AC-08) — the form must not pretend otherwise.
+    expect(component.watermark()).toBe(true);
+    expect(watermarkCheckbox(fixture).disabled).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'ระบบกำหนดให้เอกสารทุกฉบับต้องมีลายน้ำ',
+    );
+  });
+
+  it('leaves the checkbox editable when the policy is seller_choice', async () => {
+    const { fixture, component } = renderForWatermark({
+      watermarkEnabled: false,
+      watermarkCapability: 'raster',
+      watermarkEffective: false,
+      watermarkPolicyLocked: false,
+    });
+    await settleLoad(fixture);
+    // The watermark checkbox lives in step 1 (upload + gallery + watermark options).
+    component.step.set(1);
+    fixture.detectChanges();
+
+    expect(component.watermark()).toBe(false);
+    expect(watermarkCheckbox(fixture).disabled).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'ระบบกำหนดให้เอกสารทุกฉบับต้องมีลายน้ำ',
+    );
+  });
+
+  it('renders watermarkWarning exactly as the backend worded it', async () => {
+    const warning =
+      'ไฟล์ ZIP ฝังลายน้ำลงในเนื้อไฟล์ไม่ได้ ระบบจะแนบไฟล์ระบุรหัสสำเนาไว้ในแพ็กเกจแทน หากต้องการลายน้ำที่มองเห็นได้ กรุณาอัปโหลดเป็น PDF';
+    const { fixture, component } = renderForWatermark({
+      format: 'zip',
+      watermarkEnabled: true,
+      watermarkCapability: 'none',
+      watermarkEffective: false,
+      watermarkPolicyLocked: false,
+      watermarkWarning: warning,
+    });
+    await settleLoad(fixture);
+    // The watermark checkbox lives in step 1 (upload + gallery + watermark options).
+    component.step.set(1);
+    fixture.detectChanges();
+
+    expect(component.watermarkWarning()).toBe(warning);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(warning);
+  });
+
+  it('shows nothing when the backend sent no warning', async () => {
+    const { fixture, component } = renderForWatermark({
+      watermarkCapability: 'raster',
+      watermarkWarning: null,
+    });
+    await settleLoad(fixture);
+    // The watermark checkbox lives in step 1 (upload + gallery + watermark options).
+    component.step.set(1);
+    fixture.detectChanges();
+
+    expect(component.watermarkWarning()).toBeNull();
+  });
+});

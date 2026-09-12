@@ -85,7 +85,11 @@ export class AdminLayoutComponent {
       { label: isTh ? 'หมวดหมู่' : 'Categories', href: '/admin/categories', icon: 'tag' as const },
       // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
       { label: isTh ? 'ประกาศข่าวสาร' : 'Announcements', href: '/admin/announcements', icon: 'bell' as const },
-      { label: isTh ? 'การแจ้งเตือน' : 'Notifications', href: '/notifications', icon: 'bell' as const },
+      // notification-master-config v1 §0.4 root cause #4: this used to link to the buyer
+      // route `/notifications`, which threw the admin out of the admin layout.
+      { label: isTh ? 'การแจ้งเตือน' : 'Notifications', href: '/admin/notifications', icon: 'bell' as const },
+      // notification-master-config v1 §4.1: master config for every notification event.
+      { label: isTh ? 'ตั้งค่าการแจ้งเตือน' : 'Notification Config', href: '/admin/notification-config', icon: 'gear' as const },
       { label: isTh ? 'ตั้งค่าแพลตฟอร์ม' : 'Settings', href: '/admin/settings', icon: 'gear' as const },
       { label: isTh ? 'ประวัติการทำงาน' : 'Audit Logs', href: '/admin/audit', icon: 'doc' as const },
       // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.

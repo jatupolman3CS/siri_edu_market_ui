@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import {
   AuthService,
@@ -45,6 +46,21 @@ export class BuyerLibraryPage {
   readonly loyalty = inject(LoyaltyService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly message = inject(NzMessageService);
+
+  /**
+   * watermark-completion v1 §4.4: the download itself is unchanged — this wrapper only surfaces
+   * the backend's `watermarkNotice` (which carries the buyer's own `WMK-XXXXXXXX` code) through
+   * the same NG-ZORRO message service the rest of the app uses. Shown a little longer than the
+   * default because the code in it is worth reading.
+   */
+  async download(documentId: string): Promise<void> {
+    const result = await this.library.download(documentId);
+    const notice = result?.watermarkNotice;
+    if (notice) {
+      this.message.info(notice, { nzDuration: 8000 });
+    }
+  }
 
   /**
    * library-is-reviewed v1: AC-9 — switching tabs re-queries the API through

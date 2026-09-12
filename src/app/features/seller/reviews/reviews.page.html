@@ -1,12 +1,14 @@
-<div class="max-w-5xl">
+<div class="max-w-6xl">
       @if (seller.sellerProfileRequired()) {
-        <app-empty-state
-          emoji="🏪"
-          title="ร้านนี้ยังไม่มีร้านค้า"
-          description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
-        >
-          <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
-        </app-empty-state>
+        <div class="card-soft">
+          <app-empty-state
+            emoji="🏪"
+            title="ร้านนี้ยังไม่มีร้านค้า"
+            description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
+          >
+            <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+          </app-empty-state>
+        </div>
       } @else {
       <header class="mb-8">
         <h1 class="text-3xl font-extrabold text-ink mb-1">รีวิวลูกค้า</h1>
@@ -16,7 +18,7 @@
       </header>
 
       <!-- Summary -->
-      <section class="card-soft p-6 mb-6">
+      <section class="card-tile mb-6">
         <div class="flex flex-col md:flex-row gap-8 items-start">
           <div class="text-center md:text-left">
             <div class="text-5xl font-extrabold text-ink leading-none mb-2">
@@ -32,11 +34,11 @@
             </div>
           </div>
           <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-            <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
+            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-emerald-600">{{ reviewStats().positivePct }}%</div>
               <div class="text-xs text-ink-muted mt-1">รีวิวบวก (4★+)</div>
             </div>
-            <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
+            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-pink-600">
                 @if (reviewStats().avgHours != null) {
                   {{ reviewStats().avgHours!.toFixed(1) }} ชม.
@@ -46,7 +48,7 @@
               </div>
               <div class="text-xs text-ink-muted mt-1">เวลาตอบกลับเฉลี่ย</div>
             </div>
-            <div class="p-4 rounded-2xl bg-pink-50 border border-line text-center">
+            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-ink">{{ reviewStats().replyPct }}%</div>
               <div class="text-xs text-ink-muted mt-1">ตอบรีวิวแล้ว</div>
             </div>
@@ -56,15 +58,17 @@
 
       <!-- Reviews -->
       @if (!items().length) {
-        <app-empty-state
-          emoji="⭐"
-          title="ยังไม่มีรีวิวในรายการนี้"
-          description="รีวิวจากลูกค้าจะแสดงที่นี่หลังมีคนซื้อและให้คะแนนเอกสารของคุณ"
-        />
+        <div class="card-soft">
+          <app-empty-state
+            emoji="⭐"
+            title="ยังไม่มีรีวิวในรายการนี้"
+            description="รีวิวจากลูกค้าจะแสดงที่นี่หลังมีคนซื้อและให้คะแนนเอกสารของคุณ"
+          />
+        </div>
       } @else {
         <ul class="flex flex-col gap-4">
           @for (rv of items(); track rv.id) {
-            <li class="card-soft p-5">
+            <li class="card-tile">
               <!-- Document Context Header -->
               <div class="mb-3.5 pb-3 border-b border-line flex items-center justify-between gap-3">
                 <a
@@ -76,10 +80,10 @@
                       appImgFallback
                       [src]="rv.documentCoverUrl"
                       [alt]="rv.docTitle"
-                      class="w-8 h-10 rounded object-cover border border-line flex-shrink-0 group-hover:opacity-90 transition-opacity"
+                      class="w-8 h-11 rounded-lg object-cover border border-line flex-shrink-0 group-hover:opacity-90 transition-opacity"
                     />
                   } @else {
-                    <div class="w-8 h-10 rounded bg-pink-50 border border-pink-100 flex items-center justify-center flex-shrink-0 text-pink-600">
+                    <div class="w-8 h-11 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center flex-shrink-0 text-pink-600">
                       <app-icon name="doc" [size]="16" />
                     </div>
                   }

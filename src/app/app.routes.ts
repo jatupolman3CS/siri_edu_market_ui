@@ -203,6 +203,8 @@ export const routes: Routes = [
         title: 'รายละเอียดคำสั่งซื้อ — SIRIEDUMARKET',
       },
       // follow-store-notifications v1 §4: in-app notification history for follow-store alerts.
+      // notification-master-config v1 §4.1: scoped to the buyer audience — seller/admin have
+      // their own route inside their own layout (AC-7).
       {
         path: 'notifications',
         canActivate: [authGuard],
@@ -210,6 +212,7 @@ export const routes: Routes = [
           import('./features/buyer/notifications/notifications.page').then(
             (m) => m.NotificationsPage,
           ),
+        data: { audience: 'buyer' },
         title: 'การแจ้งเตือน — SIRIEDUMARKET',
       },
       // registration-onboarding v1 §4: onboarding flow for new accounts.
@@ -315,6 +318,17 @@ export const routes: Routes = [
           import('./features/seller/settings/settings.page').then(
             (m) => m.SellerSettingsPage,
           ),
+      },
+      // notification-master-config v1 §4.1 (AC-7): seller notification history, inside the
+      // seller layout — previously the seller bell/sidebar linked to the buyer `/notifications`.
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/seller/notifications/notifications.page').then(
+            (m) => m.SellerNotificationsPage,
+          ),
+        data: { audience: 'seller' },
+        title: 'การแจ้งเตือนของร้าน — Siri Studio',
       },
     ],
   },
@@ -450,6 +464,27 @@ export const routes: Routes = [
           ),
         title: 'จัดการเนื้อหาหน้า Exam Hub — Admin',
       },
+      // notification-master-config v1 §4.1 (AC-7): admin notification history, inside the
+      // admin layout — the sidebar entry used to link to the buyer `/notifications` route.
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/admin/notifications/notifications.page').then(
+            (m) => m.AdminNotificationsPage,
+          ),
+        data: { audience: 'admin' },
+        title: 'การแจ้งเตือนของผู้ดูแลระบบ — Admin',
+      },
+      // notification-master-config v1 §3.7/§4.1: the master switchboard — which of the 18 catalog
+      // events the platform sends, and over which channels (อีเมล / LINE / ในระบบ).
+      {
+        path: 'notification-config',
+        loadComponent: () =>
+          import('./features/admin/notification-config/notification-config-admin.page').then(
+            (m) => m.NotificationConfigAdminPage,
+          ),
+        title: 'ตั้งค่าการแจ้งเตือนของระบบ — Admin',
+      },
     ],
   },
 
@@ -475,6 +510,17 @@ export const routes: Routes = [
         (m) => m.AuthVerifyEmailPage,
       ),
     title: 'ยืนยันอีเมล — SIRIEDUMARKET',
+  },
+  {
+    // external-login-and-mail-config v1 §4.1: LINE Login redirects the whole page back here with
+    // `code`/`state` (or `error`), so it must be reachable while signed out — like verify-email
+    // and reset-password, and unlike the guest-only login/register pages.
+    path: 'auth/line/callback',
+    loadComponent: () =>
+      import('./features/auth/line-callback/line-callback.page').then(
+        (m) => m.AuthLineCallbackPage,
+      ),
+    title: 'เข้าสู่ระบบด้วย LINE — SIRIEDUMARKET',
   },
   {
     path: 'auth/forgot-password',

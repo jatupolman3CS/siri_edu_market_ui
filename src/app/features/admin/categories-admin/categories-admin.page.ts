@@ -23,6 +23,28 @@ interface DeleteConflict {
   subcategory: SubcategoryAdmin;
 }
 
+/**
+ * subscription-membership v2 §3.1: the monthly price is optional — an empty box means "this
+ * category is not open for subscription yet" and is sent as an explicit `null`; anything else must
+ * parse to a non-negative number.
+ *
+ * F-01 note: the previous `prompt()` flow had a third state — Cancel returned `null` and the field
+ * was dropped from the request entirely, intended to read as "leave the current price alone". The
+ * modal has no per-field cancel (cancelling closes the whole form without sending anything), so
+ * the price is now always sent explicitly. That also matches what the API really does: the update
+ * endpoint assigns `SubscriptionMonthlyPrice` unconditionally, so an omitted field used to *clear*
+ * the price rather than preserve it.
+ */
+function parseSubscriptionPriceInput(
+  raw: string,
+): { ok: true; value: number | null } | { ok: false } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { ok: true, value: null };
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0) return { ok: false };
+  return { ok: true, value: parsed };
+}
+
 @Component({
   selector: 'app-admin-categories',
   standalone: true,
@@ -68,84 +90,111 @@ export class AdminCategoriesPage {
     void this.admin.refreshAdminCategories();
   }
 
-  async addCategory(): Promise<void> {
-    const name = prompt('ชื่อหมวดหมู่')?.trim();
-    if (!name) return;
-    const slug = prompt('Slug (เว้นว่างได้ — จะใช้จากชื่อ)', '')?.trim();
-    const priceInput = this.parseSubscriptionPriceInput(
-      prompt(
-        'ราคาสมาชิกรายเดือน (บาท, รวม VAT) — เว้นว่างถ้ายังไม่เปิดให้สมัครสมาชิก',
-        '',
-      ),
-    );
-    if (!priceInput.ok) {
-      this.message.warning('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
-      return;
-    }
-    try {
-      await this.admin.createCategory({
-        id: crypto.randomUUID(),
-        name,
-        slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
-        icon: '📚',
-        description: '',
-        isActive: true,
-        sortOrder: 0,
-        subscriptionMonthlyPrice: priceInput.value,
-      });
-      this.catalog.loadCategories();
-      this.message.success('เพิ่มหมวดหมู่แล้ว');
-    } catch {
-      /* ApiFailureReporter ใน AdminService */
-    }
+  // ========== Category create/edit form (F-01) ==========
+  // One `nz-modal` form drives both create and edit, mirroring the subcategory form further down
+  // this file and the announcements admin page. It replaces the old `window.prompt()` chain — the
+  // request payloads built below are exactly the ones that flow produced, only the input surface
+  // changed.
+
+  readonly categoryFormOpen = signal<boolean>(false);
+  /**
+   * Category being edited, or `null` for create mode. Also the source of the fields the form does
+   * not expose (icon / color / description), which the update payload has always echoed back.
+   */
+  readonly editingCategory = signal<Category | null>(null);
+  readonly catSaving = signal<boolean>(false);
+  readonly catName = signal<string>('');
+  readonly catSlug = signal<string>('');
+  /** Raw text, so an empty box ("close for subscription") stays distinguishable from "0". */
+  readonly catPrice = signal<string>('');
+
+  readonly catNameError = computed(() => (this.catName().trim() ? '' : 'กรุณากรอกชื่อหมวดหมู่'));
+  readonly catPriceError = computed(() =>
+    parseSubscriptionPriceInput(this.catPrice()).ok
+      ? ''
+      : 'ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ',
+  );
+  readonly categoryFormValid = computed(() => !this.catNameError() && !this.catPriceError());
+
+  openCreateCategory(): void {
+    this.editingCategory.set(null);
+    this.catName.set('');
+    this.catSlug.set('');
+    this.catPrice.set('');
+    this.categoryFormOpen.set(true);
   }
 
-  async editCategory(c: Category): Promise<void> {
-    const name = prompt('ชื่อหมวดหมู่', c.name)?.trim();
-    if (!name) return;
-    const slug = prompt('Slug', c.slug)?.trim();
-    const priceInput = this.parseSubscriptionPriceInput(
-      prompt(
-        'ราคาสมาชิกรายเดือน (บาท, รวม VAT) — เว้นว่างถ้ายังไม่เปิดให้สมัครสมาชิก',
-        c.subscriptionMonthlyPrice != null ? String(c.subscriptionMonthlyPrice) : '',
-      ),
-    );
-    if (!priceInput.ok) {
-      this.message.warning('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
-      return;
-    }
-    try {
-      await this.admin.updateCategory(c.id, {
-        name,
-        slug: slug || undefined,
-        icon: c.icon,
-        color: c.color,
-        description: c.description,
-        isActive: true,
-        sortOrder: 0,
-        subscriptionMonthlyPrice: priceInput.value,
-      });
-      this.catalog.loadCategories();
-      this.message.success('อัปเดตหมวดหมู่แล้ว');
-    } catch {
-      this.message.error('อัปเดตไม่สำเร็จ');
-    }
+  openEditCategory(c: Category): void {
+    this.editingCategory.set(c);
+    this.catName.set(c.name);
+    this.catSlug.set(c.slug);
+    this.catPrice.set(c.subscriptionMonthlyPrice != null ? String(c.subscriptionMonthlyPrice) : '');
+    this.categoryFormOpen.set(true);
   }
 
   /**
-   * subscription-membership v2 §3.1: `prompt()` returns `null` on Cancel — treated as "no
-   * change" (`value: undefined`, field omitted from the request entirely), an empty string as an
-   * explicit clear (`value: null`), and anything else must parse to a non-negative number.
+   * Cancel / dismiss — closes the form and does nothing else: no request, no toast, no reload.
+   * This is the `prompt()`-returned-`null` behaviour the old flow had on Cancel, now applied to
+   * the form as a whole (a modal has no per-field cancel).
    */
-  private parseSubscriptionPriceInput(
-    raw: string | null,
-  ): { ok: true; value?: number | null } | { ok: false } {
-    if (raw === null) return { ok: true, value: undefined };
-    const trimmed = raw.trim();
-    if (!trimmed) return { ok: true, value: null };
-    const parsed = Number(trimmed);
-    if (!Number.isFinite(parsed) || parsed < 0) return { ok: false };
-    return { ok: true, value: parsed };
+  closeCategoryForm(): void {
+    this.categoryFormOpen.set(false);
+    this.editingCategory.set(null);
+  }
+
+  async saveCategory(): Promise<void> {
+    if (this.catSaving()) return;
+
+    const name = this.catName().trim();
+    if (!name) {
+      this.message.warning('กรุณากรอกชื่อหมวดหมู่');
+      return;
+    }
+    const priceInput = parseSubscriptionPriceInput(this.catPrice());
+    if (!priceInput.ok) {
+      this.message.warning('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
+      return;
+    }
+
+    const slug = this.catSlug().trim();
+    const editing = this.editingCategory();
+    this.catSaving.set(true);
+    try {
+      if (editing) {
+        await this.admin.updateCategory(editing.id, {
+          name,
+          slug: slug || undefined,
+          icon: editing.icon,
+          color: editing.color,
+          description: editing.description,
+          isActive: true,
+          sortOrder: 0,
+          subscriptionMonthlyPrice: priceInput.value,
+        });
+        this.catalog.loadCategories();
+        this.message.success('อัปเดตหมวดหมู่แล้ว');
+      } else {
+        await this.admin.createCategory({
+          id: crypto.randomUUID(),
+          name,
+          slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
+          icon: '📚',
+          description: '',
+          isActive: true,
+          sortOrder: 0,
+          subscriptionMonthlyPrice: priceInput.value,
+        });
+        this.catalog.loadCategories();
+        this.message.success('เพิ่มหมวดหมู่แล้ว');
+      }
+      this.closeCategoryForm();
+    } catch {
+      // Create failures are already reported by AdminService's ApiFailureReporter; the edit path
+      // has always added its own toast on top of that. The form stays open so the admin can retry.
+      if (editing) this.message.error('อัปเดตไม่สำเร็จ');
+    } finally {
+      this.catSaving.set(false);
+    }
   }
 
   removeCategory(c: Category): void {

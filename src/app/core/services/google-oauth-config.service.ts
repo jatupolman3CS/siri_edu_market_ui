@@ -1,49 +1,26 @@
-import { Injectable } from '@angular/core';
-import { getApiAuthOauthClients } from '../api/sdk.gen';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { unwrapSdkResult } from './api-result';
+import { OauthClientsService } from './oauth-clients.service';
 
 /**
- * Loads public Google Web Client ID from the API (`GET /api/auth/oauth-clients`),
- * with fallback to `environment.googleOAuthClientId` (e.g. local dev without API).
+ * Resolves the public Google Web Client ID, with a fallback to
+ * `environment.googleOAuthClientId` (e.g. local dev without API).
+ *
+ * external-login-and-mail-config v1 §4.1: the HTTP call itself moved to
+ * {@link OauthClientsService} so Google and LINE share one `GET /api/auth/oauth-clients`
+ * request. The public API here (`ensureLoaded()`, `getClientId()`) is unchanged on purpose —
+ * `AuthService`, `GoogleOauthService` and `social-buttons` all depend on it — and so is the
+ * D-08b fallback rule below, which stays Google-only.
  */
 @Injectable({ providedIn: 'root' })
 export class GoogleOauthConfigService {
-  private loaded = false;
-  private inflight: Promise<void> | null = null;
-  /** Trimmed client id returned by the API (may be empty). */
-  private fromApi = '';
-  /**
-   * D-08b: did the API actually answer? An empty client id from a server that replied is an
-   * answer — "Google is not configured here" — and must not be papered over by the environment
-   * fallback. Only a failed call falls back.
-   */
-  private apiAnswered = false;
+  private readonly oauthClients = inject(OauthClientsService);
 
   /**
    * Fetches OAuth client metadata once (deduped). Safe to call multiple times.
    */
   ensureLoaded(): Promise<void> {
-    if (this.loaded) {
-      return Promise.resolve();
-    }
-    if (this.inflight) {
-      return this.inflight;
-    }
-    this.inflight = (async () => {
-      try {
-        const result = await getApiAuthOauthClients();
-        const data = unwrapSdkResult(result);
-        this.fromApi = (data.googleClientId ?? '').trim();
-        this.apiAnswered = true;
-      } catch {
-        /* the API could not be reached — only then is the environment fallback meaningful */
-      } finally {
-        this.loaded = true;
-        this.inflight = null;
-      }
-    })();
-    return this.inflight;
+    return this.oauthClients.ensureLoaded();
   }
 
   /**
@@ -58,8 +35,8 @@ export class GoogleOauthConfigService {
    * can succeed, so its answer wins, including when that answer is "nothing configured".
    */
   getClientId(): string {
-    if (this.apiAnswered) {
-      return this.fromApi;
+    if (this.oauthClients.apiAnswered()) {
+      return this.oauthClients.googleClientId();
     }
     return (environment.googleOAuthClientId ?? '').trim();
   }

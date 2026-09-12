@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { LibraryItem, Order } from '../models';
+import { LibraryItem, Order, WatermarkMode } from '../models';
 import { mapLibraryItem, mapOrder } from '../api-mappers/mappers';
 import { resolvePublicUrl, resolveApiUrl, resolveDownloadUrl } from '../api-runtime';
 import {
@@ -28,6 +28,33 @@ export type LibraryFilter = 'all' | 'unreviewed' | 'unread';
  * the `tab` query param.
  */
 export type OrderTabFilter = 'all' | 'awaiting_payment' | 'successful' | 'cancelled_refunded';
+
+/**
+ * watermark-completion v1 §3.1 — the answer of `POST /api/library/{documentId}/download`.
+ * `watermarkNotice` is Thai copy written by the backend (it embeds the `WMK-XXXXXXXX` code of
+ * this buyer's own copy); the UI shows it verbatim and never composes its own version.
+ */
+export interface DocumentDownloadResult {
+  downloadUrl: string;
+  watermarkApplied: boolean;
+  watermarkMode: WatermarkMode;
+  /** `null` only while `WatermarkForensicEnabled` is off (§3.1). */
+  watermarkToken: string | null;
+  /** `null` = nothing to tell the buyer. */
+  watermarkNotice: string | null;
+}
+
+/** watermark-completion v1 §3.1: the 4 modes the delivery pipeline may report. */
+function toWatermarkMode(value: string | null | undefined): WatermarkMode {
+  switch ((value ?? '').trim()) {
+    case 'raster':
+    case 'ooxml':
+    case 'repack':
+      return (value ?? '').trim() as WatermarkMode;
+    default:
+      return 'none';
+  }
+}
 
 export interface SubmitReviewRequest {
   rating: number;
@@ -205,22 +232,34 @@ export class LibraryService {
     return this.ordersPager.loadMore();
   }
 
-  download(documentId: string): void {
-    void (async () => {
-      this._state.set(loadingActionState());
-      try {
-        const result = await postApiLibraryByDocumentIdDownload({ path: { documentId } });
-        const data = unwrapSdkResult(result);
-        this._state.set(successActionState('ดาวน์โหลดเรียบร้อย'));
-        const url = resolveDownloadUrl(data?.downloadUrl, this.auth.accessToken());
-        if (url) {
-          window.open(url, '_blank', 'noopener');
-        }
-      } catch (e) {
-        this.apiFail.report('ขอดาวน์โหลดเอกสาร', e);
-        this._state.set(errorActionState('ดาวน์โหลดไม่สำเร็จ'));
+  /**
+   * watermark-completion v1 §3.1/§4.4: still opens the file exactly as before, but now also
+   * hands the caller what the delivery pipeline did with it, so the page can show
+   * `watermarkNotice` with the message mechanism it already uses. Returns `null` when the
+   * request failed (the failure is reported centrally, as before).
+   */
+  async download(documentId: string): Promise<DocumentDownloadResult | null> {
+    this._state.set(loadingActionState());
+    try {
+      const result = await postApiLibraryByDocumentIdDownload({ path: { documentId } });
+      const data = unwrapSdkResult(result);
+      this._state.set(successActionState('ดาวน์โหลดเรียบร้อย'));
+      const url = resolveDownloadUrl(data?.downloadUrl, this.auth.accessToken());
+      if (url) {
+        window.open(url, '_blank', 'noopener');
       }
-    })();
+      return {
+        downloadUrl: url ?? '',
+        watermarkApplied: data?.watermarkApplied ?? false,
+        watermarkMode: toWatermarkMode(data?.watermarkMode),
+        watermarkToken: (data?.watermarkToken ?? '').trim() || null,
+        watermarkNotice: (data?.watermarkNotice ?? '').trim() || null,
+      };
+    } catch (e) {
+      this.apiFail.report('ขอดาวน์โหลดเอกสาร', e);
+      this._state.set(errorActionState('ดาวน์โหลดไม่สำเร็จ'));
+      return null;
+    }
   }
 
   private readonly _reviewState = signal<ActionState>(idleActionState());

@@ -9,6 +9,11 @@ import {
 } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import {
+  NOTIFICATION_AUDIENCES,
+  toNotificationAudience,
+  type NotificationAudience,
+} from './notification-context.service';
 import type {
   NotificationFeedItemResponse as GeneratedNotificationFeedItemResponse,
   NotificationFeedUnreadCountResponse,
@@ -16,6 +21,7 @@ import type {
 
 /**
  * follow-store-notifications v1 (docs/contracts/follow-store-notifications.md §3.3-3.4)
+ * · notification-master-config v1 §3.3 (adds `audience`).
  *
  * The generated `NotificationFeedItemResponse` (`core/api/types.gen.ts`) marks every field
  * optional — the OpenAPI schema this project's backend emits never populates `required`
@@ -34,12 +40,19 @@ export interface NotificationFeedItemResponse
   linkUrl: string;
   isRead: boolean;
   createdAt: string;
+  /** notification-master-config §3.3 — which layout this row belongs to. */
+  audience: NotificationAudience;
 }
 
 export type { NotificationFeedUnreadCountResponse };
 
+/** notification-master-config §3.4 — per-audience split of the unread badge count. */
+export type NotificationUnreadByAudience = Readonly<Record<NotificationAudience, number>>;
+
+const ZERO_BY_AUDIENCE: NotificationUnreadByAudience = { buyer: 0, seller: 0, admin: 0 };
+
 export interface NotificationStyleInfo {
-  icon: 'star' | 'mail' | 'check' | 'x' | 'doc' | 'sparkle' | 'bell' | 'shield';
+  icon: 'star' | 'mail' | 'check' | 'x' | 'doc' | 'sparkle' | 'bell' | 'shield' | 'wallet' | 'cart' | 'heart' | 'eye';
   label: string;
   badgeClass: string;
   iconBgClass: string;
@@ -47,101 +60,145 @@ export interface NotificationStyleInfo {
   borderClass: string;
 }
 
-export function getNotificationStyle(key: string, title = ''): NotificationStyleInfo {
-  const normKey = (key || '').trim().toLowerCase();
-  const normTitle = (title || '').trim().toLowerCase();
+type StyleTone = 'amber' | 'sky' | 'emerald' | 'rose' | 'purple' | 'indigo' | 'pink' | 'slate';
 
-  if (normKey === 'review' || normTitle.includes('รีวิว')) {
-    return {
-      icon: 'star',
-      label: 'รีวิวใหม่',
-      badgeClass: 'bg-amber-100 text-amber-800 border border-amber-200',
-      iconBgClass: 'bg-amber-100 text-amber-600',
-      iconUnreadBgClass: 'bg-amber-500 text-white shadow-soft',
-      borderClass: 'border-amber-200',
-    };
-  }
-
-  if (normKey === 'reviewreply' || normTitle.includes('ตอบกลับ')) {
-    return {
-      icon: 'mail',
-      label: 'ตอบกลับรีวิว',
-      badgeClass: 'bg-sky-100 text-sky-800 border border-sky-200',
-      iconBgClass: 'bg-sky-100 text-sky-600',
-      iconUnreadBgClass: 'bg-sky-500 text-white shadow-soft',
-      borderClass: 'border-sky-200',
-    };
-  }
-
-  if (normKey === 'documentapproved' || normTitle.includes('อนุมัติแล้ว')) {
-    return {
-      icon: 'check',
-      label: 'อนุมัติแล้ว',
-      badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-      iconBgClass: 'bg-emerald-100 text-emerald-600',
-      iconUnreadBgClass: 'bg-emerald-500 text-white shadow-soft',
-      borderClass: 'border-emerald-200',
-    };
-  }
-
-  if (normKey === 'documentrejected' || normTitle.includes('ไม่ผ่านการอนุมัติ') || normTitle.includes('ไม่อนุมัติ')) {
-    return {
-      icon: 'x',
-      label: 'ไม่อนุมัติ',
-      badgeClass: 'bg-rose-100 text-rose-800 border border-rose-200',
-      iconBgClass: 'bg-rose-100 text-rose-600',
-      iconUnreadBgClass: 'bg-rose-500 text-white shadow-soft',
-      borderClass: 'border-rose-200',
-    };
-  }
-
-  if (normKey === 'documentpendingapproval' || normTitle.includes('รอการตรวจสอบ') || normTitle.includes('รออนุมัติ')) {
-    return {
-      icon: 'doc',
-      label: 'รออนุมัติ',
-      badgeClass: 'bg-purple-100 text-purple-800 border border-purple-200',
-      iconBgClass: 'bg-purple-100 text-purple-600',
-      iconUnreadBgClass: 'bg-purple-500 text-white shadow-soft',
-      borderClass: 'border-purple-200',
-    };
-  }
-
-  if (normKey === 'announcement' || normTitle.includes('ประกาศ') || normTitle.includes('ข่าวสาร')) {
-    return {
-      icon: 'sparkle',
-      label: 'ข่าวประกาศ',
-      badgeClass: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-      iconBgClass: 'bg-indigo-100 text-indigo-600',
-      iconUnreadBgClass: 'bg-indigo-500 text-white shadow-soft',
-      borderClass: 'border-indigo-200',
-    };
-  }
-
-  if (normKey === 'newdocumentalert' || normKey === 'documentpublished' || normTitle.includes('ผลงานใหม่')) {
-    return {
-      icon: 'doc',
-      label: 'ผลงานใหม่',
-      badgeClass: 'bg-pink-100 text-pink-800 border border-pink-200',
-      iconBgClass: 'bg-pink-100 text-pink-600',
-      iconUnreadBgClass: 'bg-pink-500 text-white shadow-soft',
-      borderClass: 'border-pink-200',
-    };
-  }
-
-  return {
-    icon: 'bell',
-    label: 'การแจ้งเตือน',
+/**
+ * Tailwind class sets are written out as complete literals (never built by string
+ * concatenation) so the scanner keeps them in the produced stylesheet.
+ */
+const TONES: Readonly<Record<StyleTone, Omit<NotificationStyleInfo, 'icon' | 'label'>>> = {
+  amber: {
+    badgeClass: 'bg-amber-100 text-amber-800 border border-amber-200',
+    iconBgClass: 'bg-amber-100 text-amber-600',
+    iconUnreadBgClass: 'bg-amber-500 text-white shadow-soft',
+    borderClass: 'border-amber-200',
+  },
+  sky: {
+    badgeClass: 'bg-sky-100 text-sky-800 border border-sky-200',
+    iconBgClass: 'bg-sky-100 text-sky-600',
+    iconUnreadBgClass: 'bg-sky-500 text-white shadow-soft',
+    borderClass: 'border-sky-200',
+  },
+  emerald: {
+    badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    iconBgClass: 'bg-emerald-100 text-emerald-600',
+    iconUnreadBgClass: 'bg-emerald-500 text-white shadow-soft',
+    borderClass: 'border-emerald-200',
+  },
+  rose: {
+    badgeClass: 'bg-rose-100 text-rose-800 border border-rose-200',
+    iconBgClass: 'bg-rose-100 text-rose-600',
+    iconUnreadBgClass: 'bg-rose-500 text-white shadow-soft',
+    borderClass: 'border-rose-200',
+  },
+  purple: {
+    badgeClass: 'bg-purple-100 text-purple-800 border border-purple-200',
+    iconBgClass: 'bg-purple-100 text-purple-600',
+    iconUnreadBgClass: 'bg-purple-500 text-white shadow-soft',
+    borderClass: 'border-purple-200',
+  },
+  indigo: {
+    badgeClass: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+    iconBgClass: 'bg-indigo-100 text-indigo-600',
+    iconUnreadBgClass: 'bg-indigo-500 text-white shadow-soft',
+    borderClass: 'border-indigo-200',
+  },
+  pink: {
+    badgeClass: 'bg-pink-100 text-pink-800 border border-pink-200',
+    iconBgClass: 'bg-pink-100 text-pink-600',
+    iconUnreadBgClass: 'bg-pink-500 text-white shadow-soft',
+    borderClass: 'border-pink-200',
+  },
+  slate: {
     badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
     iconBgClass: 'bg-slate-100 text-slate-600',
     iconUnreadBgClass: 'bg-slate-600 text-white shadow-soft',
     borderClass: 'border-slate-200',
-  };
+  },
+};
+
+function toneStyle(icon: NotificationStyleInfo['icon'], label: string, tone: StyleTone): NotificationStyleInfo {
+  return { icon, label, ...TONES[tone] };
+}
+
+/**
+ * notification-master-config v1 §3.1 — the 18 catalog keys, matched by exact key first.
+ *
+ * Exact-key matching has to come before the legacy title heuristics below: `review_reply`'s
+ * Thai title contains "รีวิว", which the old `normKey === 'review' || title.includes('รีวิว')`
+ * arm would otherwise have swallowed.
+ */
+const STYLE_BY_KEY: Readonly<Record<string, NotificationStyleInfo>> = {
+  sale: toneStyle('wallet', 'มีการขาย', 'emerald'),
+  review: toneStyle('star', 'รีวิวใหม่', 'amber'),
+  qna_question: toneStyle('mail', 'คำถามใหม่', 'sky'),
+  seller_follow: toneStyle('heart', 'ผู้ติดตามใหม่', 'pink'),
+  store_visit_digest: toneStyle('eye', 'สรุปการเข้าชม', 'indigo'),
+  cart_add_digest: toneStyle('cart', 'สรุปตะกร้า', 'indigo'),
+  wishlist_add_digest: toneStyle('heart', 'สรุปรายการโปรด', 'pink'),
+  review_reply: toneStyle('mail', 'ตอบกลับรีวิว', 'sky'),
+  qna_answer: toneStyle('mail', 'ตอบคำถามแล้ว', 'sky'),
+  document_submitted: toneStyle('doc', 'ส่งตรวจแล้ว', 'purple'),
+  document_approved: toneStyle('check', 'อนุมัติแล้ว', 'emerald'),
+  document_rejected: toneStyle('x', 'ไม่อนุมัติ', 'rose'),
+  admin_document_submitted: toneStyle('shield', 'รออนุมัติ', 'purple'),
+  admin_payout_requested: toneStyle('wallet', 'คำขอถอนเงิน', 'amber'),
+  payout: toneStyle('wallet', 'ถอนเงิน', 'emerald'),
+  new_document_from_followed_seller: toneStyle('doc', 'ผลงานใหม่', 'pink'),
+  announcement: toneStyle('sparkle', 'ข่าวประกาศ', 'indigo'),
+  tips: toneStyle('sparkle', 'เคล็ดลับ', 'slate'),
+};
+
+export function getNotificationStyle(key: string, title = ''): NotificationStyleInfo {
+  const normKey = (key || '').trim().toLowerCase();
+  const normTitle = (title || '').trim().toLowerCase();
+
+  const catalogStyle = STYLE_BY_KEY[normKey];
+  if (catalogStyle) return catalogStyle;
+
+  // Legacy arms below: PascalCase keys written before the §2.4 key-normalisation migration
+  // (and rows seeded by older builds) still have to render sensibly. Kept as fallback per §4.1.
+  if (normKey === 'review' || normTitle.includes('รีวิว')) {
+    return toneStyle('star', 'รีวิวใหม่', 'amber');
+  }
+
+  if (normKey === 'reviewreply' || normTitle.includes('ตอบกลับ')) {
+    return toneStyle('mail', 'ตอบกลับรีวิว', 'sky');
+  }
+
+  if (normKey === 'documentapproved' || normTitle.includes('อนุมัติแล้ว')) {
+    return toneStyle('check', 'อนุมัติแล้ว', 'emerald');
+  }
+
+  if (normKey === 'documentrejected' || normTitle.includes('ไม่ผ่านการอนุมัติ') || normTitle.includes('ไม่อนุมัติ')) {
+    return toneStyle('x', 'ไม่อนุมัติ', 'rose');
+  }
+
+  if (normKey === 'documentpendingapproval' || normTitle.includes('รอการตรวจสอบ') || normTitle.includes('รออนุมัติ')) {
+    return toneStyle('doc', 'รออนุมัติ', 'purple');
+  }
+
+  if (normKey === 'announcement' || normTitle.includes('ประกาศ') || normTitle.includes('ข่าวสาร')) {
+    return toneStyle('sparkle', 'ข่าวประกาศ', 'indigo');
+  }
+
+  if (normKey === 'newdocumentalert' || normKey === 'documentpublished' || normTitle.includes('ผลงานใหม่')) {
+    return toneStyle('doc', 'ผลงานใหม่', 'pink');
+  }
+
+  return toneStyle('bell', 'การแจ้งเตือน', 'slate');
 }
 
 /** Matches the backend default in spec §3.3 (clamp [1,50], default 20). */
 const PAGE_SIZE = 20;
 
-function normalizeFeedItem(raw: GeneratedNotificationFeedItemResponse): NotificationFeedItemResponse {
+function normalizeFeedItem(
+  raw: GeneratedNotificationFeedItemResponse,
+  fallbackAudience: NotificationAudience,
+): NotificationFeedItemResponse {
+  // TODO(contract): notification-master-config §3.3 — `audience` is not in the generated SDK
+  // yet (backend be-2 is building in parallel). Remove this cast in the fe-3 regen round.
+  const rawAudience = (raw as { audience?: unknown }).audience;
   return {
     id: raw.id ?? '',
     key: raw.key ?? '',
@@ -150,6 +207,7 @@ function normalizeFeedItem(raw: GeneratedNotificationFeedItemResponse): Notifica
     linkUrl: raw.linkUrl ?? '',
     isRead: raw.isRead ?? false,
     createdAt: raw.createdAt ?? '',
+    audience: toNotificationAudience(rawAudience) ?? fallbackAudience,
   };
 }
 
@@ -159,10 +217,9 @@ function normalizeFeedItem(raw: GeneratedNotificationFeedItemResponse): Notifica
  * count and the paginated history list. Kept as its own service per the codebase's
  * "1 concern per service" convention (see e.g. `WishlistService`/`CartService`).
  *
- * Round 2 (docs/contracts/follow-store-notifications.md §4 "Staged rollout"): the private
- * `fetch*`/`post*` methods call the real generated SDK (`core/api/sdk.gen`) — see the
- * `NotificationFeedItemResponse` doc comment above for why `fetchFeedPage` normalises
- * the raw generated item shape before it reaches these signals.
+ * notification-master-config v1 §3.3-§3.5: every read/write is now scoped by `audience`, so
+ * the bell on a buyer page never surfaces a seller row (and vice versa) — root cause #1 of
+ * the "กระโดดข้าม layout" bug.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationFeedService {
@@ -171,24 +228,34 @@ export class NotificationFeedService {
   private readonly _items = signal<NotificationFeedItemResponse[]>([]);
   private readonly _previewItems = signal<NotificationFeedItemResponse[]>([]);
   private readonly _unreadCount = signal<number>(0);
+  private readonly _unreadByAudience = signal<NotificationUnreadByAudience>(ZERO_BY_AUDIENCE);
+  private readonly _hasAudienceBreakdown = signal<boolean>(false);
   private readonly _loading = signal<boolean>(false);
   private readonly _totalCount = signal<number>(0);
 
-  /** Accumulated page(s) loaded so far for /notifications (full list). */
+  /** Accumulated page(s) loaded so far for the notifications history page. */
   readonly items = this._items.asReadonly();
-  /** Dedicated preview slice for the bell dropdown, avoiding clobbering items loaded in /notifications. */
+  /** Dedicated preview slice for the bell dropdown, avoiding clobbering items loaded in the history page. */
   readonly previewItems = this._previewItems.asReadonly();
-  /** Badge count for the header bell. */
+  /** Total unread across every audience — unchanged meaning (spec §3.4). */
   readonly unreadCount = this._unreadCount.asReadonly();
+  /** Badge source per layout (spec §4.4: badge = unreadByAudience()[context()]). */
+  readonly unreadByAudience = this._unreadByAudience.asReadonly();
+  /**
+   * False until the API actually returns the §3.4 per-audience fields. While false the
+   * buckets mirror the total (so the badge keeps working against a pre-`be-2` backend) and
+   * the bell hides its cross-context links instead of showing three copies of the same number.
+   */
+  readonly hasAudienceBreakdown = this._hasAudienceBreakdown.asReadonly();
   readonly loading = this._loading.asReadonly();
   /** Total row count from the server — used to decide whether "โหลดเพิ่มเติม" has more to fetch. */
   readonly totalCount = this._totalCount.asReadonly();
 
-  /** Loads preview slice for the notification bell dropdown without altering /notifications accumulated feed. */
-  loadPreview(size: number = 10): void {
+  /** Loads preview slice for the notification bell dropdown without altering the history page's feed. */
+  loadPreview(size: number = 10, audience?: NotificationAudience): void {
     void (async () => {
       try {
-        const data = await this.fetchFeedPage(1, size);
+        const data = await this.fetchFeedPage(1, size, audience);
         this._previewItems.set(data.items);
       } catch (e) {
         this.apiFail.report('โหลดการแจ้งเตือนพรีวิว', e);
@@ -196,12 +263,12 @@ export class NotificationFeedService {
     })();
   }
 
-  /** Replaces `items` on page 1, appends on page > 1 — matches /notifications' "โหลดเพิ่มเติม" flow. */
-  loadFeed(page: number): void {
+  /** Replaces `items` on page 1, appends on page > 1 — matches the history page's "โหลดเพิ่มเติม" flow. */
+  loadFeed(page: number, audience?: NotificationAudience): void {
     this._loading.set(true);
     void (async () => {
       try {
-        const data = await this.fetchFeedPage(page, PAGE_SIZE);
+        const data = await this.fetchFeedPage(page, PAGE_SIZE, audience);
         this._items.update((items) => (page > 1 ? [...items, ...data.items] : data.items));
         this._totalCount.set(data.totalCount);
       } catch (e) {
@@ -216,14 +283,27 @@ export class NotificationFeedService {
     void (async () => {
       try {
         const data = await this.fetchUnreadCount();
-        this._unreadCount.set(data.count ?? 0);
+        const total = data.count ?? 0;
+        // TODO(contract): notification-master-config §3.4 — buyerCount/sellerCount/adminCount
+        // are not in the generated SDK yet. Remove this cast in the fe-3 regen round.
+        const raw = data as { buyerCount?: number; sellerCount?: number; adminCount?: number };
+        const hasBreakdown =
+          raw.buyerCount !== undefined || raw.sellerCount !== undefined || raw.adminCount !== undefined;
+
+        this._unreadCount.set(total);
+        this._hasAudienceBreakdown.set(hasBreakdown);
+        this._unreadByAudience.set(
+          hasBreakdown
+            ? { buyer: raw.buyerCount ?? 0, seller: raw.sellerCount ?? 0, admin: raw.adminCount ?? 0 }
+            : { buyer: total, seller: total, admin: total },
+        );
       } catch (e) {
         this.apiFail.report('โหลดจำนวนแจ้งเตือนที่ยังไม่อ่าน', e);
       }
     })();
   }
 
-  /** Optimistic: flips `isRead` + decrements `unreadCount` locally before the API responds. */
+  /** Optimistic: flips `isRead` + decrements the badge locally before the API responds. */
   markRead(id: string): Observable<void> {
     const target = this._items().find((item) => item.id === id) ?? this._previewItems().find((item) => item.id === id);
     const wasUnread = !!target && !target.isRead;
@@ -234,8 +314,9 @@ export class NotificationFeedService {
     this._previewItems.update((items) =>
       items.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
     );
-    if (wasUnread) {
+    if (wasUnread && target) {
       this._unreadCount.update((count) => Math.max(0, count - 1));
+      this.decrementAudience(target.audience);
     }
 
     return from(this.postMarkRead(id)).pipe(
@@ -248,13 +329,26 @@ export class NotificationFeedService {
     );
   }
 
-  /** Optimistic: marks every loaded item read + zeroes `unreadCount` locally before the API responds. */
-  markAllRead(): Observable<void> {
-    this._items.update((items) => items.map((item) => ({ ...item, isRead: true })));
-    this._previewItems.update((items) => items.map((item) => ({ ...item, isRead: true })));
-    this._unreadCount.set(0);
+  /**
+   * Optimistic: marks every loaded item of `audience` read + zeroes that bucket locally.
+   * Passing no audience keeps the original "mark everything" behaviour (spec §3.5).
+   */
+  markAllRead(audience?: NotificationAudience): Observable<void> {
+    const inScope = (item: NotificationFeedItemResponse) => !audience || item.audience === audience;
 
-    return from(this.postMarkAllRead()).pipe(
+    this._items.update((items) => items.map((item) => (inScope(item) ? { ...item, isRead: true } : item)));
+    this._previewItems.update((items) => items.map((item) => (inScope(item) ? { ...item, isRead: true } : item)));
+
+    if (audience) {
+      const cleared = this._unreadByAudience()[audience];
+      this._unreadByAudience.update((counts) => ({ ...counts, [audience]: 0 }));
+      this._unreadCount.update((count) => Math.max(0, count - cleared));
+    } else {
+      this._unreadByAudience.set(ZERO_BY_AUDIENCE);
+      this._unreadCount.set(0);
+    }
+
+    return from(this.postMarkAllRead(audience)).pipe(
       tap(() => this.refreshUnreadCount()),
       catchError((e) => {
         this.apiFail.report('ทำเครื่องหมายว่าอ่านแล้วทั้งหมด', e);
@@ -263,14 +357,29 @@ export class NotificationFeedService {
     );
   }
 
+  private decrementAudience(audience: NotificationAudience): void {
+    this._unreadByAudience.update((counts) => ({
+      ...counts,
+      [audience]: Math.max(0, counts[audience] - 1),
+    }));
+  }
+
   private async fetchFeedPage(
     page: number,
     pageSize: number,
+    audience?: NotificationAudience,
   ): Promise<{ items: NotificationFeedItemResponse[]; totalCount: number }> {
-    const result = await getApiNotificationsFeed({ query: { Page: page, PageSize: pageSize } });
+    // TODO(contract): notification-master-config §3.3 — the `audience` query param is not in
+    // the generated SDK yet. Remove this cast in the fe-3 regen round.
+    const queryPayload: Record<string, unknown> = { Page: page, PageSize: pageSize };
+    if (audience) queryPayload['audience'] = audience;
+
+    const result = await getApiNotificationsFeed({
+      query: queryPayload as unknown as NonNullable<Parameters<typeof getApiNotificationsFeed>[0]>['query'],
+    });
     const data = unwrapSdkResult(result);
     return {
-      items: (data.items ?? []).map(normalizeFeedItem),
+      items: (data.items ?? []).map((item) => normalizeFeedItem(item, audience ?? 'buyer')),
       totalCount: data.totalCount ?? 0,
     };
   }
@@ -286,8 +395,13 @@ export class NotificationFeedService {
   }
 
   /** 204 No Content on success — `throwOnError` (api-runtime.ts) already rejects on non-2xx. */
-  private async postMarkAllRead(): Promise<void> {
-    await postApiNotificationsFeedReadAll();
+  private async postMarkAllRead(audience?: NotificationAudience): Promise<void> {
+    // TODO(contract): notification-master-config §3.5 — the `audience` query param is not in
+    // the generated SDK yet. Remove this cast in the fe-3 regen round.
+    const options = (audience ? { query: { audience } } : {}) as unknown as Parameters<
+      typeof postApiNotificationsFeedReadAll
+    >[0];
+    await postApiNotificationsFeedReadAll(options);
   }
 
   /**
@@ -304,12 +418,29 @@ export class NotificationFeedService {
     this._previewItems.set(items);
   }
 
-  /** Test helper — see {@link setItemsForTest}. */
+  /**
+   * Test helper — see {@link setItemsForTest}. Mirrors the total into every audience bucket,
+   * matching the pre-`be-2` fallback in {@link refreshUnreadCount}.
+   */
   setUnreadCountForTest(count: number): void {
     this._unreadCount.set(count);
+    this._unreadByAudience.set({ buyer: count, seller: count, admin: count });
+    this._hasAudienceBreakdown.set(false);
   }
 
-  /** Test helper — see {@link setItemsForTest}. Drives `/notifications`' "โหลดเพิ่มเติม" visibility. */
+  /** Test helper — seeds the §3.4 per-audience breakdown (AC-10 cross-context links). */
+  setUnreadByAudienceForTest(counts: Partial<Record<NotificationAudience, number>>): void {
+    const resolved = {
+      buyer: counts.buyer ?? 0,
+      seller: counts.seller ?? 0,
+      admin: counts.admin ?? 0,
+    };
+    this._unreadByAudience.set(resolved);
+    this._unreadCount.set(NOTIFICATION_AUDIENCES.reduce((sum, key) => sum + resolved[key], 0));
+    this._hasAudienceBreakdown.set(true);
+  }
+
+  /** Test helper — see {@link setItemsForTest}. Drives the history page's "โหลดเพิ่มเติม" visibility. */
   setTotalCountForTest(count: number): void {
     this._totalCount.set(count);
   }

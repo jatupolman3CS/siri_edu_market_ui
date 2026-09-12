@@ -82,6 +82,7 @@ import type {
   SubscriptionAccessHistoryItem,
   SubscriptionPaymentHints,
   SubscriptionStatus,
+  WatermarkCapability,
 } from '../models';
 import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS, EXAM_COUNTDOWN_EXAM_TYPES } from '../models';
 import { resolvePublicUrl } from '../api-runtime';
@@ -768,6 +769,22 @@ export function mapAdminTransaction(t: AdminTransactionResponse): AdminTransacti
   };
 }
 
+/**
+ * watermark-completion v1 §0.2/§3.4: narrows the generated bare `string` to the closed
+ * capability set. An unknown value means the UI cannot promise a visible stamp, so it maps to
+ * `'none'` — the most conservative of the four.
+ */
+function toWatermarkCapability(value: string | null | undefined): WatermarkCapability {
+  switch ((value ?? '').trim()) {
+    case 'raster':
+    case 'ooxml':
+    case 'repack':
+      return (value ?? '').trim() as WatermarkCapability;
+    default:
+      return 'none';
+  }
+}
+
 export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
   const previews = (d.galleryPreviewUrls ?? []).map((u) =>
     resolvePublicUrl((u ?? '').replaceAll('%2F', '/')),
@@ -850,6 +867,13 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     conversionRatePercent: d.conversionRatePercent ?? 0,
     status: (d.status ?? 'pending') as DocumentItem['status'],
     watermarkEnabled: d.watermarkEnabled ?? false,
+    // watermark-completion v1 §3.4: platform policy result for this listing. `capability` is
+    // generated as a bare `string`, so it is narrowed here to the closed set §0.2 defines;
+    // anything unexpected degrades to 'none' rather than leaking an unknown value into the UI.
+    watermarkCapability: toWatermarkCapability(d.watermarkCapability),
+    watermarkEffective: d.watermarkEffective ?? false,
+    watermarkPolicyLocked: d.watermarkPolicyLocked ?? false,
+    watermarkWarning: (d.watermarkWarning ?? '').trim() || null,
     previewPages: d.previewPages ?? 0,
     previewWatermarkSubtitle: d.previewWatermarkSubtitle ?? undefined,
     previewWatermarkFontFamily: d.previewWatermarkFontFamily ?? undefined,

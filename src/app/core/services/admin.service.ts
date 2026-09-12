@@ -22,6 +22,7 @@ import {
   getApiAdminStorageUsage,
   getApiAdminSystemConfigJobToggles,
   getApiAdminTransactions,
+  getApiAdminWatermarkCopies,
   getApiAnnouncementsActive,
   postApiAdminAnnouncements,
   postApiAdminCategories,
@@ -46,6 +47,7 @@ import type {
   AdminOpenReportResponse,
   AdminPayoutResponse,
   AdminSellersSort,
+  AdminWatermarkCopyResponse,
   DocumentGenerationCategoryStatusResponse,
   DocumentGenerationRunResponse,
   PagedResponseOfAdminAuditLogResponse,
@@ -71,6 +73,73 @@ export interface PlatformSettings {
   vatPercent: number;
   payoutMinTHB: number;
   payoutSchedule: string;
+  /** watermark-completion v1 §3.2 — platform-wide watermark policy (always sent by backend). */
+  watermarkPolicy: WatermarkPolicy;
+  watermarkDefaultEnabled: boolean;
+  watermarkForensicEnabled: boolean;
+  watermarkCopyRetentionDays: number;
+  watermarkDefaultSubtitle: string | null;
+}
+
+/** watermark-completion v1 §2.2/§3.2 — the 3 values `watermarkPolicy` may hold. */
+export type WatermarkPolicy = 'seller_choice' | 'required_when_supported' | 'required_always';
+
+/**
+ * watermark-completion v1 §3.2/§4.1 — body of `PUT /api/admin/settings`.
+ *
+ * Deliberately *not* the same shape as `PlatformSettings`: the 4 original fields are
+ * full-replace, while the 5 watermark fields are nullable with "omitted = leave the stored value
+ * alone" semantics, so the admin page may only send the ones the operator actually touched.
+ * Sending them unconditionally would let a stale form overwrite a policy changed elsewhere.
+ */
+export interface PlatformSettingsUpdate {
+  feeRatePercent: number;
+  vatPercent: number;
+  payoutMinTHB: number;
+  payoutSchedule: string;
+  watermarkPolicy?: WatermarkPolicy;
+  watermarkDefaultEnabled?: boolean;
+  watermarkForensicEnabled?: boolean;
+  watermarkCopyRetentionDays?: number;
+  /** `''` clears the stored subtitle back to null (§3.2). */
+  watermarkDefaultSubtitle?: string;
+}
+
+/**
+ * watermark-completion v1 §3.3 — one row of `GET /api/admin/watermark-copies`. Kept as the
+ * service's own contract (same reasoning as `PlatformSettings` above): every field on the
+ * generated `AdminWatermarkCopyResponse` is optional, and the lookup table needs complete rows.
+ */
+export interface AdminWatermarkCopy {
+  id: string;
+  watermarkToken: string;
+  documentId: string;
+  documentTitle: string;
+  documentFormat: string;
+  sellerId: string;
+  sellerName: string;
+  recipientUserId: string;
+  recipientName: string;
+  recipientEmail: string;
+  orderId: string | null;
+  accessSource: string;
+  watermarkApplied: boolean;
+  watermarkMode: string;
+  failureReason: string | null;
+  storageKey: string | null;
+  sizeBytes: number | null;
+  renderDurationMs: number | null;
+  createdAt: string;
+  lastAccessedAt: string;
+  purgedAt: string | null;
+}
+
+export interface AdminWatermarkCopyQuery {
+  token?: string;
+  documentId?: string;
+  userId?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface StorageUsage {
@@ -154,12 +223,58 @@ export interface AnnouncementRequest {
   images: AnnouncementImageRequest[];
 }
 
+function toWatermarkPolicy(value: string | null | undefined): WatermarkPolicy {
+  switch ((value ?? '').trim()) {
+    case 'seller_choice':
+    case 'required_always':
+      return (value ?? '').trim() as WatermarkPolicy;
+    default:
+      // watermark-completion v1 §2.2: `required_when_supported` is the platform default, so it
+      // is also the safest reading of a value this build does not recognise.
+      return 'required_when_supported';
+  }
+}
+
 function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
   return {
     feeRatePercent: res.feeRatePercent ?? 0,
     vatPercent: res.vatPercent ?? 0,
     payoutMinTHB: res.payoutMinTHB ?? 0,
     payoutSchedule: res.payoutSchedule ?? '',
+    // watermark-completion v1 §3.2 — always present on the wire; defaults mirror §2.2 so a
+    // partially-populated response can never render an empty policy card.
+    watermarkPolicy: toWatermarkPolicy(res.watermarkPolicy),
+    watermarkDefaultEnabled: res.watermarkDefaultEnabled ?? true,
+    watermarkForensicEnabled: res.watermarkForensicEnabled ?? true,
+    watermarkCopyRetentionDays: res.watermarkCopyRetentionDays ?? 90,
+    watermarkDefaultSubtitle: res.watermarkDefaultSubtitle ?? null,
+  };
+}
+
+/** watermark-completion v1 §3.3 — fills in every field the lookup table binds to. */
+function toAdminWatermarkCopy(res: AdminWatermarkCopyResponse): AdminWatermarkCopy {
+  return {
+    id: res.id ?? '',
+    watermarkToken: res.watermarkToken ?? '',
+    documentId: res.documentId ?? '',
+    documentTitle: res.documentTitle ?? '',
+    documentFormat: res.documentFormat ?? '',
+    sellerId: res.sellerId ?? '',
+    sellerName: res.sellerName ?? '',
+    recipientUserId: res.recipientUserId ?? '',
+    recipientName: res.recipientName ?? '',
+    recipientEmail: res.recipientEmail ?? '',
+    orderId: res.orderId ?? null,
+    accessSource: res.accessSource ?? '',
+    watermarkApplied: res.watermarkApplied ?? false,
+    watermarkMode: res.watermarkMode ?? 'none',
+    failureReason: res.failureReason ?? null,
+    storageKey: res.storageKey ?? null,
+    sizeBytes: res.sizeBytes ?? null,
+    renderDurationMs: res.renderDurationMs ?? null,
+    createdAt: res.createdAt ?? '',
+    lastAccessedAt: res.lastAccessedAt ?? '',
+    purgedAt: res.purgedAt ?? null,
   };
 }
 
@@ -559,7 +674,12 @@ export class AdminService {
     }
   }
 
-  async saveSettings(req: PlatformSettings): Promise<PlatformSettings | null> {
+  /**
+   * watermark-completion v1 §3.2/§4.1: takes `PlatformSettingsUpdate`, not `PlatformSettings` —
+   * the caller decides which watermark fields to include, and an omitted one keeps its stored
+   * value instead of being overwritten by whatever the form happened to be showing.
+   */
+  async saveSettings(req: PlatformSettingsUpdate): Promise<PlatformSettings | null> {
     try {
       const settings = toPlatformSettings(
         unwrapSdkResult(await putApiAdminSettings({ body: req })),
@@ -581,6 +701,35 @@ export class AdminService {
       this.apiFail.report('โหลดสถิติพื้นที่จัดเก็บ', e);
       this._storageUsage.set(null);
       return null;
+    }
+  }
+
+  // ========== Watermark copy lookup (watermark-completion v1 §3.3/§4.2) ==========
+
+  /**
+   * watermark-completion v1 §3.3: forensic lookup of a `WMK-XXXXXXXX` code an admin found in a
+   * leaked file. Returns the rows as they came — "not found" is an empty list (the endpoint
+   * answers 200 with `items: []`, never 404), and the caller decides how to phrase that.
+   *
+   * Failures are reported centrally and rethrown so the card can tell "nothing matched" apart
+   * from "the lookup itself failed".
+   */
+  async searchWatermarkCopies(query: AdminWatermarkCopyQuery = {}): Promise<AdminWatermarkCopy[]> {
+    const token = query.token?.trim();
+    try {
+      const result = await getApiAdminWatermarkCopies({
+        query: {
+          ...(token ? { token } : {}),
+          ...(query.documentId ? { documentId: query.documentId } : {}),
+          ...(query.userId ? { userId: query.userId } : {}),
+          page: query.page ?? 1,
+          pageSize: query.pageSize ?? 20,
+        },
+      });
+      return (unwrapSdkResult(result).items ?? []).map(toAdminWatermarkCopy);
+    } catch (e) {
+      this.apiFail.report('ค้นหารหัสสำเนาเอกสาร', e);
+      throw e;
     }
   }
 

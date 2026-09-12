@@ -99,7 +99,10 @@ export class AuthRegisterPage {
     if (provider === 'email') return;
     this.loading.set(true);
     void (async () => {
-      const r = await this.auth.signInWithProvider(provider);
+      // external-login-and-mail-config v1 §4.1: redirect-based providers (LINE) leave this page
+      // behind, so where the user wanted to go has to travel with the request. For LINE this
+      // promise never settles — the browser is already navigating to the consent page.
+      const r = await this.auth.signInWithProvider(provider, { returnUrl: this.returnUrl() });
       this.loading.set(false);
       if (!r.ok) {
         this.error.set(r.error ?? 'เข้าสู่ระบบไม่สำเร็จ');

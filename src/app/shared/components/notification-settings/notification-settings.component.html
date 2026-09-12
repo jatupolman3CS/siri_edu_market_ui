@@ -1,4 +1,4 @@
-<section class="card-soft p-6" id="notifications">
+<section class="card-tile" id="notifications">
   <div class="flex items-start gap-3 mb-5">
     <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
       <app-icon name="bell" [size]="18" />
@@ -12,27 +12,50 @@
   @if (notifications.settings().length === 0) {
     <p class="text-sm text-ink-soft">ยังไม่มีรายการตั้งค่าจากเซิร์ฟเวอร์</p>
   } @else {
-    <div class="space-y-2.5">
-      @for (n of notifications.settings(); track n.key) {
-        <div class="flex items-center gap-3 p-3 rounded-2xl border border-line hover:border-pink-200 transition-colors">
-          <div class="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
-            @switch (n.key) {
-              @case ('sale') { <app-icon name="cart" [size]="16" /> }
-              @case ('review') { <app-icon name="star" [size]="16" /> }
-              @case ('payout') { <app-icon name="wallet" [size]="16" /> }
-              @case ('tips') { <app-icon name="sparkle" [size]="16" /> }
-              @case ('new_document_from_followed_seller') { <app-icon name="doc" [size]="16" /> }
-              @default { <app-icon name="mail" [size]="16" /> }
+    <div class="card-tile-body space-y-5">
+      @for (group of groups(); track group.audience) {
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-2">{{ group.label }}</h3>
+          <div class="space-y-2.5">
+            @for (n of group.items; track n.key) {
+              <div class="flex items-start gap-3 p-3 rounded-2xl border border-line hover:border-pink-200 transition-colors">
+                <div class="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+                  @switch (n.key) {
+                    @case ('sale') { <app-icon name="cart" [size]="16" /> }
+                    @case ('review') { <app-icon name="star" [size]="16" /> }
+                    @case ('payout') { <app-icon name="wallet" [size]="16" /> }
+                    @case ('tips') { <app-icon name="sparkle" [size]="16" /> }
+                    @case ('new_document_from_followed_seller') { <app-icon name="doc" [size]="16" /> }
+                    @default { <app-icon name="mail" [size]="16" /> }
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-ink break-words">{{ n.label || n.key }}</div>
+                  @if (n.description) {
+                    <p class="text-xs text-ink-muted mt-0.5 break-words">{{ n.description }}</p>
+                  }
+                  @if (n.isLocked && n.lockReason) {
+                    <p class="text-xs text-amber-700 mt-1 flex items-start gap-1">
+                      <app-icon name="lock" [size]="12" />
+                      <span class="break-words">{{ n.lockReason }}</span>
+                    </p>
+                  }
+                </div>
+                <span
+                  class="flex-shrink-0"
+                  nz-tooltip
+                  [nzTooltipTitle]="n.isLocked ? (n.lockReason ?? '') : ''"
+                >
+                  <nz-switch
+                    [attr.name]="'notif-switch-' + n.key"
+                    [ngModel]="n.isEnabled"
+                    [nzDisabled]="n.isLocked"
+                    (ngModelChange)="toggle(n.key, $event)"
+                  />
+                </span>
+              </div>
             }
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-semibold text-ink">{{ n.label ?? n.key }}</div>
-          </div>
-          <nz-switch
-            [attr.name]="'notif-switch-' + n.key"
-            [ngModel]="n.isEnabled"
-            (ngModelChange)="toggle(n.key, $event)"
-          />
         </div>
       }
     </div>

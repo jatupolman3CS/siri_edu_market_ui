@@ -109,6 +109,8 @@ import type {
   GetApiAdminSystemConfigJobTogglesResponses,
   GetApiAdminTransactionsData,
   GetApiAdminTransactionsResponses,
+  GetApiAdminWatermarkCopiesData,
+  GetApiAdminWatermarkCopiesResponses,
   GetApiAnnouncementsActiveData,
   GetApiAnnouncementsActiveResponses,
   GetApiAuthOauthClientsData,
@@ -926,6 +928,14 @@ export const putApiAdminSettings = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+export const getApiAdminWatermarkCopies = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminWatermarkCopiesData, ThrowOnError>,
+): RequestResult<GetApiAdminWatermarkCopiesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminWatermarkCopiesResponses, unknown, ThrowOnError>({
+    url: '/api/admin/watermark-copies',
+    ...options,
   });
 
 export const getApiAdminStorageUsage = <ThrowOnError extends boolean = false>(

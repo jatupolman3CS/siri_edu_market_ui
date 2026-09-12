@@ -538,6 +538,19 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
     @apply bg-cream rounded-3xl border border-line;
   }
 
+  /* One card spec for every dashboard surface (F-02): same radius and padding on every
+     page, laid out as a flex column so cards sitting in the same grid row keep the same
+     height and the pieces inside them line up. Put `card-tile-body` on the part that is
+     allowed to absorb the leftover height (list, table, copy) so whatever follows it
+     — a footer, a CTA, a trend line — stays glued to the bottom edge of every card. */
+  .card-tile {
+    @apply card-soft flex flex-col p-5 md:p-6;
+  }
+
+  .card-tile-body {
+    @apply flex-1;
+  }
+
   .pill {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium;
   }

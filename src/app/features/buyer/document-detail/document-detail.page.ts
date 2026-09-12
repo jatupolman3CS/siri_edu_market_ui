@@ -352,7 +352,7 @@ export class BuyerDocumentDetailPage {
     }
     const d = this.doc();
     if (d) {
-      this.library.download(d.id);
+      void this.downloadWithNotice(d.id);
     }
   }
 
@@ -372,7 +372,20 @@ export class BuyerDocumentDetailPage {
     }
     const d = this.doc();
     if (d) {
-      this.library.download(d.id);
+      void this.downloadWithNotice(d.id);
+    }
+  }
+
+  /**
+   * watermark-completion v1 §4.4: shows the backend's `watermarkNotice` (it names the buyer's
+   * own `WMK-XXXXXXXX` copy code) through this page's existing message service. The download
+   * itself is started by `LibraryService` exactly as before.
+   */
+  private async downloadWithNotice(documentId: string): Promise<void> {
+    const result = await this.library.download(documentId);
+    const notice = result?.watermarkNotice;
+    if (notice) {
+      this.message.info(notice, { nzDuration: 8000 });
     }
   }
 

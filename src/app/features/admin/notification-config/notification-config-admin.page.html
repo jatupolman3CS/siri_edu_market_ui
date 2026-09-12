@@ -1,0 +1,218 @@
+<div class="max-w-7xl">
+  <header class="mb-6">
+    <h1 class="text-3xl font-extrabold text-ink mb-1">ตั้งค่าการแจ้งเตือนของระบบ</h1>
+    <p class="text-sm text-ink-soft">
+      กำหนดว่าการแจ้งเตือนแต่ละประเภทจะส่งผ่านช่องทางใดบ้าง — ปิดที่นี่แล้วผู้ใช้จะเปิดเองไม่ได้
+    </p>
+  </header>
+
+  @if (!loaded() && loading()) {
+    <div class="card-tile">
+      <p class="text-sm text-ink-muted">กำลังโหลด…</p>
+    </div>
+  } @else if (items().length === 0) {
+    <div class="card-tile">
+      <p class="text-sm text-ink-soft">ยังไม่มีรายการแจ้งเตือนจากเซิร์ฟเวอร์</p>
+    </div>
+  } @else {
+    @for (group of groups(); track group.key) {
+      <section class="card-tile mb-6">
+        <div class="mb-4">
+          <h2 class="text-lg font-bold text-ink">{{ group.label }}</h2>
+          <p class="text-xs text-ink-muted mt-0.5">{{ group.items.length }} ประเภทการแจ้งเตือน</p>
+        </div>
+
+        <!-- Column header strip: only on very wide screens (2xl and up), where the rows line up with it.
+             Below that each control carries its own visible label instead. -->
+        <div class="config-head hidden 2xl:grid text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2 px-3">
+          <span>ประเภทการแจ้งเตือน</span>
+          <span class="text-center">ผู้รับ</span>
+          <span class="text-center">เปิดใช้งาน</span>
+          <span class="text-center">อีเมล</span>
+          <span class="text-center">LINE</span>
+          <span class="text-center">ในระบบ</span>
+          <span class="text-center">ผู้ใช้ปิดเองได้</span>
+          <span class="text-center">หน่วงเวลา (นาที)</span>
+          <span class="text-center">จำกัดต่อวัน</span>
+          <span class="text-center">คืนค่า</span>
+        </div>
+
+        <ul class="card-tile-body space-y-3">
+          @for (item of group.items; track item.eventKey) {
+            <li class="rounded-2xl border border-line p-4 2xl:px-3 2xl:py-2.5">
+              <div class="config-row">
+                <!-- ประเภทการแจ้งเตือน -->
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-bold text-ink break-words">{{ item.label }}</span>
+                    @if (item.isCustomized) {
+                      <span class="pill-soft text-[10px]">ปรับแต่งแล้ว</span>
+                    }
+                    @if (!item.hasTrigger) {
+                      <span class="pill-soft text-[10px]">ยังไม่มีการใช้งาน</span>
+                    }
+                  </div>
+                  <p class="text-xs text-ink-muted mt-1 break-words">{{ item.description }}</p>
+                  <p class="text-[11px] text-ink-muted mt-1 font-mono break-all">{{ item.eventKey }}</p>
+                  @if (item.updatedAt) {
+                    <p class="text-[11px] text-ink-muted mt-1">
+                      แก้ไขล่าสุด {{ item.updatedAt | date: 'dd MMM yyyy HH:mm' }}
+                    </p>
+                  }
+                </div>
+
+                <!-- ผู้รับ -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">ผู้รับ</span>
+                  <span class="pill-soft text-[11px]">{{ audienceLabel(item.audience) }}</span>
+                </div>
+
+                <!-- เปิดใช้งาน -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">เปิดใช้งาน</span>
+                  <nz-switch
+                    [attr.name]="'notif-config-enabled-' + item.eventKey"
+                    [ngModel]="item.isEnabled"
+                    [nzDisabled]="switchDisabled(item, 'isEnabled')"
+                    (ngModelChange)="toggle(item, 'isEnabled', $event)"
+                  />
+                </div>
+
+                <!-- อีเมล -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">อีเมล</span>
+                  <span
+                    nz-tooltip
+                    [nzTooltipTitle]="item.supportsEmail ? '' : 'การแจ้งเตือนนี้ไม่รองรับช่องทางนี้'"
+                  >
+                    <nz-switch
+                      [attr.name]="'notif-config-email-' + item.eventKey"
+                      [ngModel]="item.emailEnabled"
+                      [nzDisabled]="switchDisabled(item, 'emailEnabled')"
+                      (ngModelChange)="toggle(item, 'emailEnabled', $event)"
+                    />
+                  </span>
+                </div>
+
+                <!-- LINE -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">LINE</span>
+                  <span
+                    nz-tooltip
+                    [nzTooltipTitle]="item.supportsLine ? '' : 'การแจ้งเตือนนี้ไม่รองรับช่องทางนี้'"
+                  >
+                    <nz-switch
+                      [attr.name]="'notif-config-line-' + item.eventKey"
+                      [ngModel]="item.lineEnabled"
+                      [nzDisabled]="switchDisabled(item, 'lineEnabled')"
+                      (ngModelChange)="toggle(item, 'lineEnabled', $event)"
+                    />
+                  </span>
+                </div>
+
+                <!-- ในระบบ -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">ในระบบ</span>
+                  <span
+                    nz-tooltip
+                    [nzTooltipTitle]="item.supportsInApp ? '' : 'การแจ้งเตือนนี้ไม่รองรับช่องทางนี้'"
+                  >
+                    <nz-switch
+                      [attr.name]="'notif-config-inapp-' + item.eventKey"
+                      [ngModel]="item.inAppEnabled"
+                      [nzDisabled]="switchDisabled(item, 'inAppEnabled')"
+                      (ngModelChange)="toggle(item, 'inAppEnabled', $event)"
+                    />
+                  </span>
+                </div>
+
+                <!-- ผู้ใช้ปิดเองได้ -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">ผู้ใช้ปิดเองได้</span>
+                  <nz-switch
+                    [attr.name]="'notif-config-overridable-' + item.eventKey"
+                    [ngModel]="item.userOverridable"
+                    [nzDisabled]="switchDisabled(item, 'userOverridable')"
+                    (ngModelChange)="toggle(item, 'userOverridable', $event)"
+                  />
+                </div>
+
+                <!-- หน่วงเวลา (นาที) -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">หน่วงเวลา (นาที)</span>
+                  <input
+                    class="input-soft w-24 2xl:w-full text-center"
+                    type="number"
+                    inputmode="numeric"
+                    [attr.name]="'notif-config-throttle-' + item.eventKey"
+                    [attr.aria-label]="'หน่วงเวลา (นาที) ของ ' + item.label"
+                    [min]="throttleMin"
+                    [max]="throttleMax"
+                    [disabled]="isRowBusy(item)"
+                    [ngModel]="throttleDraft(item)"
+                    (ngModelChange)="setThrottle(item, $event)"
+                    (blur)="commitNumbers(item)"
+                    (keydown.enter)="commitNumbers(item)"
+                  />
+                </div>
+
+                <!-- จำกัดต่อวัน -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">จำกัดต่อวัน</span>
+                  <input
+                    class="input-soft w-24 2xl:w-full text-center"
+                    type="number"
+                    inputmode="numeric"
+                    [attr.name]="'notif-config-cap-' + item.eventKey"
+                    [attr.aria-label]="'จำกัดต่อวันของ ' + item.label"
+                    [min]="dailyCapMin"
+                    [max]="dailyCapMax"
+                    [disabled]="isRowBusy(item)"
+                    [ngModel]="dailyCapDraft(item)"
+                    (ngModelChange)="setDailyCap(item, $event)"
+                    (blur)="commitNumbers(item)"
+                    (keydown.enter)="commitNumbers(item)"
+                  />
+                </div>
+
+                <!-- คืนค่าเริ่มต้น -->
+                <div class="cell">
+                  <span class="text-xs font-semibold text-ink-muted 2xl:hidden">การจัดการ</span>
+                  <button
+                    type="button"
+                    class="btn-ghost text-xs px-3 py-1.5 whitespace-normal"
+                    [disabled]="isRowBusy(item)"
+                    (click)="confirmReset(item)"
+                  >
+                    คืนค่าเริ่มต้น
+                  </button>
+                </div>
+              </div>
+
+              @if (isNumbersDirty(item)) {
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    class="btn-pink text-xs px-3 py-1.5"
+                    [disabled]="isRowBusy(item)"
+                    (click)="commitNumbers(item)"
+                  >
+                    <app-icon name="check" [size]="14" />
+                    บันทึกค่าตัวเลข
+                  </button>
+                  <span class="text-[11px] text-ink-muted">ยังไม่ได้บันทึกค่าที่แก้ไข</span>
+                </div>
+              }
+
+              @if (showsCapWarning(item)) {
+                <p class="mt-3 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                  การจำกัดจำนวนต่อวันทำงานเมื่อเปิดช่องทาง "ในระบบ" เท่านั้น
+                </p>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>

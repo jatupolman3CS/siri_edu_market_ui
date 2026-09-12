@@ -183,8 +183,17 @@ Component อ่านโดย call signal as function: `service.items()`
 <button class="btn-icon">⚙</button>
 
 <!-- Cards -->
-<div class="card-soft">…</div>
+<div class="card-soft">…</div>      <!-- bare surface: radius + border + shadow -->
 <div class="card-cream">…</div>
+
+<!-- Card ที่อยู่ใน grid/list ของหน้า dashboard: ใช้ card-tile เสมอ
+     (= card-soft + padding มาตรฐาน p-5 md:p-6 + flex column)
+     ใส่ card-tile-body ให้ส่วนเนื้อหาที่ยืดได้ เพื่อให้ footer/CTA ของทุกใบอยู่ระดับเดียวกัน -->
+<section class="card-tile">
+  <h2>…</h2>
+  <ul class="card-tile-body">…</ul>
+  <button class="btn-pink">…</button>
+</section>
 
 <!-- Pills -->
 <span class="pill-pink">Active</span>
