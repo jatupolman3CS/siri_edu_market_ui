@@ -1,12 +1,31 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { AdminSellerRow, AnnouncementAdmin, Category, DocumentItem, SubcategoryAdmin } from '../models';
+import type {
+  AdminFeedbackListItemResponse,
+  AdminFeedbackDetailResponse,
+  UpdateFeedbackStatusRequest,
+  PagedResponse,
+  AdminSellerRow,
+  AnnouncementAdmin,
+  Category,
+  DocumentItem,
+  SubcategoryAdmin,
+  AdminUserRow,
+  AdminUserDetail,
+  AdminUsersQuery,
+  SuspendUserRequest,
+  BanUserRequest,
+  ReinstateUserRequest,
+} from '../models';
 import { AdminTransaction } from '../models';
 import {
   deleteApiAdminAnnouncementsById,
   deleteApiAdminCategoriesById,
   deleteApiAdminCategoriesByCategoryIdSubcategoriesById,
+  deleteApiAdminFeedbackById,
   getApiAdminAnnouncements,
   getApiAdminAnnouncementsById,
+  getApiAdminFeedback,
+  getApiAdminFeedbackById,
   getApiAdminCategories,
   getApiAdminCategoriesByCategoryIdSubcategories,
   getApiAdminCategoriesByCategoryIdSubcategoriesById,
@@ -35,6 +54,7 @@ import {
   postApiAdminDocumentsByIdReportsByReportIdResolve,
   postApiAdminOrdersByOrderIdRefund,
   postApiAdminPayoutsByPayoutIdStatus,
+  postApiAdminFeedbackByIdStatus,
   putApiAdminAnnouncementsById,
   putApiAdminCategoriesById,
   putApiAdminCategoriesByCategoryIdSubcategoriesById,
@@ -44,6 +64,7 @@ import {
 import type {
   AdminDashboardResponse,
   AdminAuditLogResponse,
+  PagedResponseOfAdminFeedbackListItemResponse,
   AdminOpenReportResponse,
   AdminPayoutResponse,
   AdminSellersSort,
@@ -847,6 +868,60 @@ export class AdminService {
     });
   }
 
+  /** system-feedback v1 §3.4 */
+  async listFeedback(
+    status?: string,
+    type?: string,
+    role?: string,
+    page = 1,
+    pageSize = 50,
+  ): Promise<PagedResponseOfAdminFeedbackListItemResponse> {
+    const result = await getApiAdminFeedback({
+      query: {
+        status: status || undefined,
+        type: type || undefined,
+        role: role || undefined,
+        page,
+        pageSize,
+      },
+    });
+    return unwrapSdkResult(result);
+  }
+
+  /** system-feedback v1 §3.5 */
+  async getFeedback(id: string): Promise<AdminFeedbackDetailResponse> {
+    const result = await getApiAdminFeedbackById({
+      path: { id },
+    });
+    return unwrapSdkResult(result);
+  }
+
+  /** system-feedback v1 §3.6 */
+  async updateFeedbackStatus(
+    id: string,
+    request: UpdateFeedbackStatusRequest,
+  ): Promise<AdminFeedbackDetailResponse> {
+    const result = await postApiAdminFeedbackByIdStatus({
+      path: { id },
+      body: request,
+    });
+    return unwrapSdkResult(result);
+  }
+
+  /** system-feedback v1 §3.7 */
+  async deleteFeedback(id: string): Promise<void> {
+    const result = await deleteApiAdminFeedbackById({
+      path: { id },
+    });
+    if (result.error !== undefined) throw result.error;
+  }
+
+  /** system-feedback v1 §0.3 / §4.1: count of 'new' feedbacks for admin badge */
+  async countNewFeedback(): Promise<number> {
+    const res = await this.listFeedback('new', undefined, undefined, 1, 1);
+    return res.totalCount ?? 0;
+  }
+
   /**
    * F-10: the admin audit log across every entity.
    *
@@ -1058,5 +1133,38 @@ export class AdminService {
   async deleteAnnouncement(id: string): Promise<void> {
     const result = await deleteApiAdminAnnouncementsById({ path: { id } });
     if (result.error !== undefined) throw result.error;
+  }
+
+  // ====== Admin User Management (admin-user-management v1 §3, §4.5) ======
+
+  async searchUsers(query: AdminUsersQuery): Promise<PagedResult<AdminUserRow>> {
+    // TODO(contract): admin-user-management v1 §3.1 — wire after generate:api
+    return {
+      items: [],
+      page: query.page ?? 1,
+      pageSize: query.pageSize ?? 20,
+      totalCount: 0,
+      totalPages: 0,
+    };
+  }
+
+  async getUser(userId: string): Promise<AdminUserDetail> {
+    // TODO(contract): admin-user-management v1 §3.2 — wire after generate:api
+    throw new Error(`getUser not wired for ${userId}`);
+  }
+
+  async suspendUser(userId: string, body: SuspendUserRequest): Promise<AdminUserDetail> {
+    // TODO(contract): admin-user-management v1 §3.3 — wire after generate:api
+    throw new Error(`suspendUser not wired for ${userId}`);
+  }
+
+  async banUser(userId: string, body: BanUserRequest): Promise<AdminUserDetail> {
+    // TODO(contract): admin-user-management v1 §3.4 — wire after generate:api
+    throw new Error(`banUser not wired for ${userId}`);
+  }
+
+  async reinstateUser(userId: string, body: ReinstateUserRequest): Promise<AdminUserDetail> {
+    // TODO(contract): admin-user-management v1 §3.5 — wire after generate:api
+    throw new Error(`reinstateUser not wired for ${userId}`);
   }
 }

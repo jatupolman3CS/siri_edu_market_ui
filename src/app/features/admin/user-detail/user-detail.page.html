@@ -1,0 +1,340 @@
+<div class="max-w-5xl space-y-6">
+  <!-- Back Button & Header -->
+  <div class="flex items-center gap-3">
+    <a routerLink="/admin/users" class="btn-ghost !p-2 inline-flex items-center justify-center">
+      <app-icon name="arrow-left" [size]="18" />
+    </a>
+    <h1 class="text-2xl font-extrabold text-ink">รายละเอียดผู้ใช้</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="card-soft p-8 text-center text-sm text-ink-muted">กำลังโหลดข้อมูลผู้ใช้…</div>
+  } @else if (user(); as u) {
+    <!-- Main User Profile Card -->
+    <div class="card-soft p-6 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <img
+            appImgFallback
+            [src]="u.avatarUrl"
+            class="w-16 h-16 rounded-full object-cover ring-2 ring-pink-100 shrink-0"
+            [alt]="u.displayName"
+          />
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-xl font-bold text-ink">{{ u.displayName }}</h2>
+              <span class="text-xs font-bold" [class]="getStatusClass(u.accountStatus)">
+                {{ getStatusLabel(u.accountStatus) }}
+              </span>
+            </div>
+            <div class="text-sm text-ink-soft">{{ u.email }}</div>
+            <div class="text-xs text-ink-muted mt-1">สมัครเมื่อ: {{ u.joinedAt | date: 'dd MMM yyyy HH:mm' }}</div>
+          </div>
+        </div>
+
+        <!-- Role Pills -->
+        <div class="flex flex-wrap gap-1 items-center">
+          @for (r of u.roles; track r) {
+            <span class="pill-soft text-xs font-semibold">{{ getRoleLabel(r) }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-4 border-t border-line flex flex-wrap items-center gap-3">
+        @if (isTargetAdmin()) {
+          <span class="text-sm text-ink-muted italic">ไม่สามารถระงับบัญชีผู้ดูแลระบบได้</span>
+        } @else if (isTargetSelf()) {
+          <span class="text-sm text-ink-muted italic">ไม่สามารถระงับบัญชีของตัวเองได้</span>
+        } @else {
+          @if (canRestrict()) {
+            <button type="button" class="btn-ghost !border-amber-300 !text-amber-700 hover:!bg-amber-50" (click)="openSuspendModal()">
+              <app-icon name="shield" [size]="16" />
+              ระงับชั่วคราว
+            </button>
+            <button type="button" class="btn-ghost !border-red-300 !text-red-700 hover:!bg-red-50" (click)="openBanModal()">
+              <app-icon name="flag" [size]="16" />
+              แบนถาวร
+            </button>
+          }
+          @if (canReinstate()) {
+            <button type="button" class="btn-primary" (click)="openReinstateModal()">
+              ปลดระงับ
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Active Restriction Box -->
+    @if (u.accountStatus !== 'active') {
+      <div class="card-soft p-5 border-l-4 border-amber-500 bg-amber-50/50 space-y-2">
+        <h3 class="text-base font-bold text-ink flex items-center gap-2">
+          <app-icon name="flag" [size]="16" class="text-amber-600" />
+          สถานะการระงับบัญชีปัจจุบัน
+        </h3>
+        <div class="grid gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <span class="text-ink-muted">เหตุผล (ภายใน):</span>
+            <span class="font-medium text-ink ml-1">{{ u.accountStatusReason || '-' }}</span>
+          </div>
+          <div>
+            <span class="text-ink-muted">หมายเหตุถึงผู้ใช้:</span>
+            <span class="font-medium text-ink ml-1">{{ u.accountStatusMessage || '-' }}</span>
+          </div>
+          @if (u.suspendedUntil) {
+            <div>
+              <span class="text-ink-muted">ระงับถึงวันที่:</span>
+              <span class="font-bold text-amber-700 ml-1">{{ u.suspendedUntil | date: 'dd MMM yyyy HH:mm' }} น.</span>
+            </div>
+          }
+          @if (u.accountStatusChangedAt) {
+            <div>
+              <span class="text-ink-muted">ดำเนินการเมื่อ:</span>
+              <span class="font-medium text-ink ml-1">{{ u.accountStatusChangedAt | date: 'dd MMM yyyy HH:mm' }}</span>
+            </div>
+          }
+          @if (u.accountStatusChangedByName || u.accountStatusChangedBy) {
+            <div>
+              <span class="text-ink-muted">โดย:</span>
+              <span class="font-medium text-ink ml-1">{{ u.accountStatusChangedByName || u.accountStatusChangedBy }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Stat Cards Grid -->
+    <div class="grid gap-6 md:grid-cols-2">
+      <!-- Buyer Purchase Stats -->
+      <div class="card-soft p-5 space-y-3">
+        <h3 class="text-base font-bold text-ink flex items-center gap-2">
+          <app-icon name="wallet" [size]="18" />
+          สถิติการซื้อ (ผู้ซื้อ)
+        </h3>
+        <div class="grid grid-cols-2 gap-3 pt-2 text-sm">
+          <div>
+            <div class="text-xs text-ink-muted">ยอดซื้อรวม</div>
+            <div class="text-lg font-extrabold text-ink">{{ u.purchaseStats.totalPurchaseAmount | thb }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-ink-muted">จำนวนคำสั่งซื้อ</div>
+            <div class="text-lg font-extrabold text-ink">{{ u.purchaseStats.totalOrderCount }} รายการ</div>
+          </div>
+          <div>
+            <div class="text-xs text-ink-muted">ยอดคืนเงิน</div>
+            <div class="text-sm font-semibold text-ink-soft">
+              {{ u.purchaseStats.refundedAmount | thb }}
+              <span class="text-xs text-ink-muted">({{ u.purchaseStats.refundedOrderCount }} รายการ)</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-ink-muted">สั่งซื้อล่าสุด</div>
+            <div class="text-sm font-semibold text-ink-soft">
+              @if (u.purchaseStats.lastOrderAt) {
+                {{ u.purchaseStats.lastOrderAt | date: 'dd MMM yyyy' }}
+              } @else {
+                ไม่เคยสั่งซื้อ
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seller Sales Stats (if seller) -->
+      @if (u.sellerStats; as s) {
+        <div class="card-soft p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-ink flex items-center gap-2">
+              <app-icon name="doc" [size]="18" />
+              สถิติการขาย (ร้าน {{ s.studioName }})
+            </h3>
+            <span class="text-xs font-bold text-amber-600">★ {{ s.rating.toFixed(1) }}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 pt-2 text-sm">
+            <div>
+              <div class="text-xs text-ink-muted">ยอดขายรวม (ก่อนหักค่าธรรมเนียม)</div>
+              <div class="text-lg font-extrabold text-ink">{{ s.grossRevenue | thb }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-ink-muted">จำนวนการขาย</div>
+              <div class="text-lg font-extrabold text-ink">{{ s.totalSalesCount }} รายการ</div>
+            </div>
+            <div>
+              <div class="text-xs text-ink-muted">รายได้สุทธิสะสม</div>
+              <div class="text-sm font-semibold text-emerald-600">{{ s.lifetimeNetEarnings | thb }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-ink-muted">ยอดคงเหลือรอโอน</div>
+              <div class="text-sm font-semibold text-ink">{{ s.pendingBalance | thb }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-ink-muted">จำนวนเอกสารในระบบ</div>
+              <div class="text-sm font-semibold text-ink">{{ s.totalDocuments }} ชิ้น</div>
+            </div>
+          </div>
+          <div class="text-[11px] text-ink-muted pt-2 border-t border-line">
+            * ยอดขายรวมเป็นยอดก่อนหักค่าธรรมเนียมและรวมแพ็กเกจ ส่วนรายได้สุทธิคำนวณจากเอกสารเท่านั้น
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Moderation History -->
+    <div class="card-soft p-5 space-y-3">
+      <h3 class="text-base font-bold text-ink">ประวัติการถูกระงับการใช้งาน</h3>
+      <div class="table-scroll overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-pink-50 text-xs text-ink-muted uppercase">
+            <tr>
+              <th class="px-3 py-2 font-semibold">การกระทำ</th>
+              <th class="px-3 py-2 font-semibold">เหตุผล (ภายใน)</th>
+              <th class="px-3 py-2 font-semibold">หมายเหตุถึงผู้ใช้</th>
+              <th class="px-3 py-2 font-semibold">ถึงวันที่</th>
+              <th class="px-3 py-2 font-semibold">โดย</th>
+              <th class="px-3 py-2 font-semibold">เมื่อไหร่</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of u.moderationHistory; track h.id) {
+              <tr class="border-t border-line hover:bg-slate-50">
+                <td class="px-3 py-2 font-bold">{{ getActionLabel(h.action) }}</td>
+                <td class="px-3 py-2">{{ h.reason }}</td>
+                <td class="px-3 py-2 text-ink-muted">{{ h.messageToUser || '-' }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">
+                  @if (h.suspendedUntil) {
+                    {{ h.suspendedUntil | date: 'dd MMM yyyy HH:mm' }}
+                  } @else {
+                    -
+                  }
+                </td>
+                <td class="px-3 py-2">{{ h.performedByName || h.performedByUserId || '-' }}</td>
+                <td class="px-3 py-2 text-xs text-ink-muted whitespace-nowrap">{{ h.createdAt | date: 'dd MMM yyyy HH:mm' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-3 py-6 text-center text-sm text-ink-muted">
+                  ยังไม่เคยถูกระงับการใช้งาน
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Suspend Modal -->
+<nz-modal
+  [nzVisible]="suspendModalVisible()"
+  nzTitle="ระงับการใช้งานบัญชีชั่วคราว"
+  (nzOnCancel)="closeSuspendModal()"
+  (nzOnOk)="submitSuspend()"
+  [nzOkLoading]="submitting()"
+  [nzOkDisabled]="!suspendReason().trim() || !suspendUntil()"
+  nzOkText="ยืนยันการระงับ"
+  nzCancelText="ยกเลิก"
+>
+  <ng-container *nzModalContent>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">เหตุผล (ภายใน) <span class="text-red-500">*</span></label>
+        <textarea
+          class="input-soft w-full"
+          rows="3"
+          placeholder="ระบุเหตุผลภายในสำหรับทีมแอดมิน (อย่างน้อย 3 ตัวอักษร)"
+          [ngModel]="suspendReason()"
+          (ngModelChange)="suspendReason.set($event)"
+        ></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">ระงับถึงวันที่ <span class="text-red-500">*</span></label>
+        <input
+          class="input-soft w-full"
+          type="datetime-local"
+          [ngModel]="suspendUntil()"
+          (ngModelChange)="suspendUntil.set($event)"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">ข้อความถึงผู้ใช้ (ไม่บังคับ)</label>
+        <textarea
+          class="input-soft w-full"
+          rows="2"
+          placeholder="ข้อความที่ต้องการแจ้งผู้ใช้เมื่อพยายามเข้าสู่ระบบ"
+          [ngModel]="suspendMessage()"
+          (ngModelChange)="suspendMessage.set($event)"
+        ></textarea>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Ban Modal -->
+<nz-modal
+  [nzVisible]="banModalVisible()"
+  nzTitle="แบนบัญชีถาวร"
+  (nzOnCancel)="closeBanModal()"
+  (nzOnOk)="submitBan()"
+  [nzOkLoading]="submitting()"
+  [nzOkDisabled]="!banReason().trim()"
+  nzOkText="ยืนยันการแบนถาวร"
+  [nzOkDanger]="true"
+  nzCancelText="ยกเลิก"
+>
+  <ng-container *nzModalContent>
+    <div class="space-y-4">
+      <div class="p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+        คำเตือน: การแบนถาวรจะทำให้ผู้ใช้เข้าสู่ระบบไม่ได้ทันที และต้องให้ผู้ดูแลระบบปลดเองเท่านั้น
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">เหตุผล (ภายใน) <span class="text-red-500">*</span></label>
+        <textarea
+          class="input-soft w-full"
+          rows="3"
+          placeholder="ระบุเหตุผลภายในสำหรับทีมแอดมิน"
+          [ngModel]="banReason()"
+          (ngModelChange)="banReason.set($event)"
+        ></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">ข้อความถึงผู้ใช้ (ไม่บังคับ)</label>
+        <textarea
+          class="input-soft w-full"
+          rows="2"
+          placeholder="ข้อความที่ต้องการแจ้งผู้ใช้เมื่อพยายามเข้าสู่ระบบ"
+          [ngModel]="banMessage()"
+          (ngModelChange)="banMessage.set($event)"
+        ></textarea>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Reinstate Modal -->
+<nz-modal
+  [nzVisible]="reinstateModalVisible()"
+  nzTitle="ปลดระงับการใช้งานบัญชี"
+  (nzOnCancel)="closeReinstateModal()"
+  (nzOnOk)="submitReinstate()"
+  [nzOkLoading]="submitting()"
+  [nzOkDisabled]="!reinstateReason().trim()"
+  nzOkText="ยืนยันการปลดระงับ"
+  nzCancelText="ยกเลิก"
+>
+  <ng-container *nzModalContent>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">เหตุผล (ภายใน) <span class="text-red-500">*</span></label>
+        <textarea
+          class="input-soft w-full"
+          rows="3"
+          placeholder="ระบุเหตุผลในการปลดระงับบัญชี"
+          [ngModel]="reinstateReason()"
+          (ngModelChange)="reinstateReason.set($event)"
+        ></textarea>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>

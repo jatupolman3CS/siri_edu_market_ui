@@ -32,3 +32,4 @@ export * from './exam-countdown.service';
 export * from './navigation-source.service';
 export * from './subscription.service';
 export * from './onboarding.service';
+export * from './feedback.service';

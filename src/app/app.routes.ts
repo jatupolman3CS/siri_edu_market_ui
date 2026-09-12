@@ -175,6 +175,16 @@ export const routes: Routes = [
           ).then((m) => m.SubscriptionAccessHistoryPage),
         title: 'ประวัติการเข้าถึงเอกสาร — SIRIEDUMARKET',
       },
+      // system-feedback v1 §4.3: buyer-facing feedback & bug report history.
+      {
+        path: 'account/feedback',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/feedback/feedback.page').then(
+            (m) => m.BuyerFeedbackPage,
+          ),
+        title: 'แจ้งปัญหา / ข้อเสนอแนะ — SIRIEDUMARKET',
+      },
       {
         path: 'checkout',
         canActivate: [authGuard],
@@ -381,6 +391,22 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/users.page').then(
+            (m) => m.AdminUsersPage,
+          ),
+        title: 'ผู้ใช้ทั้งหมด — Admin',
+      },
+      {
+        path: 'users/:userId',
+        loadComponent: () =>
+          import('./features/admin/user-detail/user-detail.page').then(
+            (m) => m.AdminUserDetailPage,
+          ),
+        title: 'รายละเอียดผู้ใช้ — Admin',
+      },
+      {
         path: 'sellers',
         loadComponent: () =>
           import('./features/admin/sellers/sellers.page').then(
@@ -398,6 +424,15 @@ export const routes: Routes = [
         path: 'reports',
         loadComponent: () =>
           import('./features/admin/reports/reports.page').then((m) => m.AdminReportsPage),
+      },
+      // system-feedback v1 §4.4: admin queue for feedback & bug reports.
+      {
+        path: 'feedback',
+        loadComponent: () =>
+          import('./features/admin/feedback/feedback-admin.page').then(
+            (m) => m.AdminFeedbackPage,
+          ),
+        title: 'แจ้งปัญหา / ข้อเสนอแนะ — Admin',
       },
       {
         path: 'payouts',

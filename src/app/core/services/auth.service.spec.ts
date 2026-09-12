@@ -81,7 +81,13 @@ function buildService(): AuthService {
   TestBed.configureTestingModule({
     providers: [
       AuthService,
-      { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+      {
+        provide: ApiFailureReporter,
+        useValue: {
+          report: vi.fn(),
+          formatDetail: vi.fn((err: any) => err?.detail ?? err?.error?.detail ?? 'error'),
+        },
+      },
       { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } },
       { provide: Router, useValue: { navigate: vi.fn(), url: '/' } },
       { provide: GoogleOauthService, useValue: {} },
@@ -971,4 +977,33 @@ describe('AuthService LINE sign-in', () => {
     expect(res.ok).toBe(false);
     expect(res.error).toBe('เข้าสู่ระบบด้วย LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
   });
+
+  it('signIn surfaces the server detail when response is 403 account_banned or account_suspended', async () => {
+    const detail = 'บัญชีนี้ถูกระงับการใช้งานถาวร กรุณาติดต่อผู้ดูแลระบบหากต้องการสอบถามเพิ่มเติม';
+    stubRoute(
+      'POST',
+      '/api/auth/login',
+      { status: 403, statusCode: 403, code: 'account_banned', detail },
+      403,
+    );
+    const auth = buildService();
+    const res = await auth.signIn('banned@example.com', 'Password123');
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe(detail);
+  });
+
+  it('redirectToLoginAfterAccountRestricted signs out, warns with message, and redirects to /auth/login', async () => {
+    const auth = buildService();
+    const router = TestBed.inject(Router);
+    const message = TestBed.inject(NzMessageService);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true as any);
+    const warnSpy = vi.spyOn(message, 'warning');
+    const signOutSpy = vi.spyOn(auth, 'signOut');
+
+    auth.redirectToLoginAfterAccountRestricted('บัญชีถูกระงับการใช้งาน');
+    expect(signOutSpy).toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('บัญชีถูกระงับการใช้งาน');
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth/login']);
+  });
 });
+

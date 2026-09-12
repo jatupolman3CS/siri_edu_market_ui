@@ -1,0 +1,137 @@
+<div class="max-w-6xl">
+  <header class="mb-6">
+    <h1 class="text-3xl font-extrabold text-ink mb-1">ผู้ใช้ทั้งหมด</h1>
+    <p class="text-sm text-ink-soft">ค้นหา จัดการ และระงับการใช้งานบัญชีผู้ซื้อและผู้ขายในระบบ</p>
+  </header>
+
+  <div class="card-soft p-4 mb-4 space-y-3">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider">ค้นหา</label>
+      <input
+        class="input-soft sm:col-span-3 !py-2"
+        type="search"
+        placeholder="ชื่อผู้ใช้ / อีเมล / ชื่อร้าน"
+        [ngModel]="q()"
+        (ngModelChange)="q.set($event)"
+      />
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">บทบาท</label>
+        <select class="input-soft w-full !py-2" [ngModel]="role()" (ngModelChange)="role.set($event)">
+          @for (r of roles; track r.value) {
+            <option [value]="r.value">{{ r.label }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">สถานะบัญชี</label>
+        <select class="input-soft w-full !py-2" [ngModel]="status()" (ngModelChange)="status.set($event)">
+          @for (s of statuses; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">วันที่สมัคร (จาก)</label>
+        <input class="input-soft w-full !py-2" type="date" [ngModel]="joinedFrom()" (ngModelChange)="joinedFrom.set($event)" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">วันที่สมัคร (ถึง)</label>
+        <input class="input-soft w-full !py-2" type="date" [ngModel]="joinedTo()" (ngModelChange)="joinedTo.set($event)" />
+      </div>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">เรียงลำดับ</label>
+        <select class="input-soft w-full !py-2" [ngModel]="sort()" (ngModelChange)="sort.set($event)">
+          @for (o of sorts; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="flex items-end gap-2 sm:col-span-3">
+        <button type="button" class="btn-ghost" (click)="applyFilters()">
+          <app-icon name="filter" [size]="16" />
+          ค้นหา
+        </button>
+        @if (loading()) {
+          <span class="text-xs text-ink-muted self-center">กำลังโหลด…</span>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="card-soft table-scroll overflow-x-auto pb-2">
+    <table class="w-full min-w-[840px]">
+      <thead class="bg-pink-50">
+        <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+          <th class="px-3 py-3 font-semibold">ผู้ใช้</th>
+          <th class="px-3 py-3 font-semibold">บทบาท</th>
+          <th class="px-3 py-3 font-semibold">สถานะ</th>
+          <th class="px-3 py-3 font-semibold text-right">ยอดซื้อ</th>
+          <th class="px-3 py-3 font-semibold text-right">ยอดขาย</th>
+          <th class="px-3 py-3 font-semibold">สมัครเมื่อ</th>
+          <th class="px-3 py-3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of items(); track u.id) {
+          <tr class="border-t border-line hover:bg-pink-50/40">
+            <td class="px-3 py-3">
+              <div class="flex items-center gap-3">
+                <img
+                  appImgFallback
+                  [src]="u.avatarUrl"
+                  class="w-9 h-9 rounded-full object-cover ring-2 ring-pink-100 shrink-0"
+                  [alt]="u.displayName"
+                />
+                <div class="min-w-0">
+                  <div class="font-bold text-ink text-sm line-clamp-1">{{ u.displayName }}</div>
+                  <div class="text-xs text-ink-muted line-clamp-1">{{ u.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-3 py-3">
+              <div class="flex flex-wrap gap-1">
+                @for (r of u.roles; track r) {
+                  <span class="pill-soft text-[10px] font-bold">{{ getRoleLabel(r) }}</span>
+                }
+              </div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="text-[10px] font-bold" [class]="getStatusClass(u.accountStatus)">
+                {{ getStatusLabel(u.accountStatus) }}
+              </span>
+            </td>
+            <td class="px-3 py-3 text-sm text-right whitespace-nowrap">{{ u.totalPurchaseAmount | thb }}</td>
+            <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ u.totalSalesAmount | thb }}</td>
+            <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ u.createdDate | date: 'dd MMM yyyy' }}</td>
+            <td class="px-3 py-3 text-right">
+              <a [routerLink]="['/admin/users', u.id]" class="btn-icon !w-8 !h-8 inline-flex" title="ดูรายละเอียด">
+                <app-icon name="eye" [size]="14" />
+              </a>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-sm text-ink-muted">
+              ไม่พบผู้ใช้ที่ตรงกับเงื่อนไข
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4">
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPagesSafe()"
+      [total]="totalCount()"
+      [pageSize]="pageSize()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+  </div>
+</div>

@@ -15,7 +15,7 @@ import {
   postApiAuthVerifyEmail,
 } from '../api';
 import type { AuthSessionResponse, ChangePasswordRequest } from '../api/types.gen';
-import { extractErrorStatus, unwrapSdkResult } from './api-result';
+import { extractErrorCode, extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { GoogleOauthService } from './google-oauth.service';
 import { GoogleOauthConfigService } from './google-oauth-config.service';
@@ -245,6 +245,20 @@ export class AuthService {
     });
   }
 
+  /**
+   * admin-user-management v1 §4.6: after a 403 account_suspended / account_banned:
+   * clear session and redirect to /auth/login with the warning message from server.
+   */
+  redirectToLoginAfterAccountRestricted(message: string): void {
+    if (this._redirectingToLogin) return;
+    this._redirectingToLogin = true;
+    this.signOut();
+    this.message.warning(message);
+    void this.router.navigate(['/auth/login']).then(() => {
+      this._redirectingToLogin = false;
+    });
+  }
+
   // ========== Email / Password ==========
 
   /** Sign in with email + password — calls API, falls back to mock on failure */
@@ -276,6 +290,10 @@ export class AuthService {
       return { ok: true };
     } catch (e) {
       this.apiFail.report('เข้าสู่ระบบ', e);
+      const code = extractErrorCode(e);
+      if (code === 'account_suspended' || code === 'account_banned') {
+        return { ok: false, error: this.apiFail.formatDetail(e) };
+      }
       return { ok: false, error: 'เข้าสู่ระบบไม่สำเร็จ' };
     }
   }

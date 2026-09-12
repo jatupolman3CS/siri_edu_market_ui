@@ -914,3 +914,135 @@ export interface ExamCountdownSetting {
   examDate: string; // 'yyyy-MM-dd'
   isEnabled: boolean;
 }
+
+// ====== System Feedback (system-feedback v1 §3.0, §3.9) ======
+export interface PagedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export type FeedbackType = 'bug' | 'suggestion' | 'usability' | 'other';
+export type FeedbackStatus = 'new' | 'in_progress' | 'resolved' | 'closed';
+export type FeedbackRole = 'buyer' | 'seller';
+
+export const FEEDBACK_TYPES: FeedbackType[] = ['bug', 'suggestion', 'usability', 'other'];
+export const FEEDBACK_STATUSES: FeedbackStatus[] = ['new', 'in_progress', 'resolved', 'closed'];
+export const FEEDBACK_ROLES: FeedbackRole[] = ['buyer', 'seller'];
+
+export type {
+  FeedbackAttachmentResponse,
+  SubmitFeedbackRequest,
+  MyFeedbackListItemResponse,
+  MyFeedbackResponse,
+  AdminFeedbackListItemResponse,
+  AdminFeedbackDetailResponse,
+  UpdateFeedbackStatusRequest,
+} from '../api';
+
+// ====== Admin User Management (admin-user-management v1 §3, §4.5) ======
+export type AdminUserAccountStatus = 'active' | 'suspended' | 'banned';
+export type AdminUserModerationActionType = 'suspend' | 'ban' | 'reinstate';
+export type AdminUsersSort = 'newest' | 'oldest' | 'most_spent' | 'most_earned' | 'name_asc';
+
+export interface AdminUsersQuery {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  role?: string;
+  status?: string;
+  joinedFrom?: string;
+  joinedTo?: string;
+  sort?: AdminUsersSort;
+}
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  displayName: string;
+  roles: string[];
+  accountStatus: AdminUserAccountStatus;
+  suspendedUntil: string | null;
+  createdDate: string;
+  lastLoginDate: string | null;
+  avatarUrl: string | null;
+  totalPurchaseAmount: number;
+  totalSalesAmount: number;
+}
+
+export interface AdminUserPurchaseStats {
+  totalPurchaseAmount: number;
+  totalOrderCount: number;
+  refundedAmount: number;
+  refundedOrderCount: number;
+  lastOrderAt: string | null;
+}
+
+export interface AdminUserSellerStats {
+  studioName: string;
+  isVerified: boolean;
+  rating: number;
+  totalDocuments: number;
+  totalSalesCount: number;
+  grossRevenue: number;
+  lifetimeNetEarnings: number;
+  pendingBalance: number;
+}
+
+export interface AdminUserModerationEntry {
+  id: string;
+  action: AdminUserModerationActionType;
+  reason: string;
+  messageToUser: string | null;
+  suspendedUntil: string | null;
+  previousStatus: AdminUserAccountStatus;
+  performedByUserId: string | null;
+  performedByName: string | null;
+  createdAt: string;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+  roles: string[];
+  studioName: string | null;
+  isEmailVerified: boolean;
+  accountStatus: AdminUserAccountStatus;
+  suspendedUntil: string | null;
+  totalPurchaseAmount: number;
+  totalOrderCount: number;
+  accountStatusReason: string | null;
+  accountStatusMessage: string | null;
+  accountStatusChangedAt: string | null;
+  accountStatusChangedBy: string | null;
+  accountStatusChangedByName: string | null;
+  isSeller: boolean;
+  sellerApplicationStatus: string | null;
+  purchaseStats: AdminUserPurchaseStats;
+  sellerStats: AdminUserSellerStats | null;
+  moderationHistory: AdminUserModerationEntry[];
+  joinedAt: string;
+}
+
+export interface SuspendUserRequest {
+  reason: string;
+  until: string;
+  messageToUser?: string | null;
+}
+
+export interface BanUserRequest {
+  reason: string;
+  messageToUser?: string | null;
+}
+
+export interface ReinstateUserRequest {
+  reason: string;
+  messageToUser?: string | null;
+}
+
+
+
