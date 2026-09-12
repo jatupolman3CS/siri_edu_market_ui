@@ -234,6 +234,12 @@
                   {{ 'seller.orders' | trans }}
                 </span>
               </li>
+              <li nz-menu-item (click)="go('/account/feedback')" class="!rounded-xl">
+                <span class="flex items-center gap-2 text-ink">
+                  <app-icon name="flag" [size]="16" />
+                  แจ้งปัญหา / ข้อเสนอแนะ
+                </span>
+              </li>
               @if (auth.isSeller() || auth.isAdmin()) {
                 <li nz-menu-item (click)="go('/seller')" class="!rounded-xl">
                   <span class="flex items-center gap-2 text-ink">
@@ -426,6 +432,13 @@
                 {{ feed.unreadCount() }}
               </span>
             }
+          </a>
+          <a
+            routerLink="/account/feedback"
+            class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+            (click)="closeMobileMenu()"
+          >
+            แจ้งปัญหา / ข้อเสนอแนะ
           </a>
           @if (auth.isSeller() || auth.isAdmin()) {
             <a

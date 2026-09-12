@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LogoComponent } from '../logo/logo.component';
 import { IconComponent } from '../icon/icon.component';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+
+import { AuthService } from '../../../core/services';
 
 @Component({
   selector: 'app-footer',
@@ -14,4 +16,6 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
   templateUrl: './app-footer.component.html',
   styleUrl: './app-footer.component.scss',
 })
-export class AppFooterComponent {}
+export class AppFooterComponent {
+  readonly auth = inject(AuthService);
+}

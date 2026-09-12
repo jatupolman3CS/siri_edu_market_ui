@@ -73,6 +73,7 @@ export const en: TranslationKeys = {
     helpCenter: 'Help Center',
     faq: 'FAQ',
     contactUs: 'Contact Us',
+    feedback: 'Report a problem',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
     allRightsReserved: 'All rights reserved.',

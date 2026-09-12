@@ -143,6 +143,44 @@ export type AdminDocumentReportResponse = {
 
 export type AdminDocumentsSort = number;
 
+export type AdminFeedbackDetailResponse = {
+  id?: string;
+  type?: string;
+  submittedAsRole?: string;
+  subject?: string;
+  status?: string;
+  submitterUserId?: string;
+  submitterName?: string;
+  attachmentCount?: number;
+  createdAt?: string;
+  statusChangedAt?: string | null;
+  handledByUserId?: string | null;
+  handledByName?: string | null;
+  details?: string;
+  pageUrl?: string | null;
+  userAgent?: string | null;
+  submitterEmail?: string;
+  adminNote?: string | null;
+  replyToUser?: string | null;
+  closedAt?: string | null;
+  attachments?: Array<FeedbackAttachmentResponse>;
+};
+
+export type AdminFeedbackListItemResponse = {
+  id?: string;
+  type?: string;
+  submittedAsRole?: string;
+  subject?: string;
+  status?: string;
+  submitterUserId?: string;
+  submitterName?: string;
+  attachmentCount?: number;
+  createdAt?: string;
+  statusChangedAt?: string | null;
+  handledByUserId?: string | null;
+  handledByName?: string | null;
+};
+
 export type AdminOpenReportResponse = {
   id?: string;
   documentId?: string;
@@ -596,6 +634,13 @@ export type ExternalLoginRequest = {
   acceptTerms?: boolean;
 };
 
+export type FeedbackAttachmentResponse = {
+  id?: string;
+  url?: string;
+  contentType?: string;
+  sizeBytes?: number;
+};
+
 export type ForgotPasswordRequest = {
   email: string;
 };
@@ -779,9 +824,60 @@ export type MarketplaceSearchResponse = {
   totalPages?: number;
 };
 
+export type MyFeedbackListItemResponse = {
+  id?: string;
+  type?: string;
+  submittedAsRole?: string;
+  subject?: string;
+  status?: string;
+  attachmentCount?: number;
+  hasReply?: boolean;
+  createdAt?: string;
+  statusChangedAt?: string | null;
+};
+
+export type MyFeedbackResponse = {
+  id?: string;
+  type?: string;
+  submittedAsRole?: string;
+  subject?: string;
+  status?: string;
+  attachmentCount?: number;
+  hasReply?: boolean;
+  createdAt?: string;
+  statusChangedAt?: string | null;
+  details?: string;
+  pageUrl?: string | null;
+  replyToUser?: string | null;
+  closedAt?: string | null;
+  attachments?: Array<FeedbackAttachmentResponse>;
+};
+
+export type NotificationEventConfigItem = {
+  eventKey: string;
+  label: string;
+  description: string;
+  audience: string;
+  group: string;
+  isEnabled?: boolean;
+  emailEnabled?: boolean;
+  lineEnabled?: boolean;
+  inAppEnabled?: boolean;
+  userOverridable?: boolean;
+  throttleWindowMinutes?: number;
+  dailyCapPerRecipient?: number;
+  supportsEmail?: boolean;
+  supportsLine?: boolean;
+  supportsInApp?: boolean;
+  hasTrigger?: boolean;
+  isCustomized?: boolean;
+  updatedAt?: string | null;
+};
+
 export type NotificationFeedItemResponse = {
   id?: string;
   key?: string;
+  audience?: string;
   title?: string;
   body?: string;
   linkUrl?: string;
@@ -791,12 +887,19 @@ export type NotificationFeedItemResponse = {
 
 export type NotificationFeedUnreadCountResponse = {
   count?: number;
+  buyerCount?: number;
+  sellerCount?: number;
+  adminCount?: number;
 };
 
 export type NotificationSettingResponse = {
   key?: string;
   label?: string;
   isEnabled?: boolean;
+  description?: string;
+  audience?: string;
+  isLocked?: boolean;
+  lockReason?: string | null;
 };
 
 export type OnboardingStatusResponse = {
@@ -845,6 +948,14 @@ export type PagedResponseOfAdminAuditLogResponse = {
 
 export type PagedResponseOfAdminDocumentListItemResponse = {
   items?: Array<AdminDocumentListItemResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfAdminFeedbackListItemResponse = {
+  items?: Array<AdminFeedbackListItemResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -949,6 +1060,14 @@ export type PagedResponseOfLoyaltyEntryResponse = {
 
 export type PagedResponseOfMarketplaceDocumentResponse = {
   items?: Array<MarketplaceDocumentResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfMyFeedbackListItemResponse = {
+  items?: Array<MyFeedbackListItemResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -1603,6 +1722,15 @@ export type SubmitDocumentReviewRequest = {
   comment: string;
 };
 
+export type SubmitFeedbackRequest = {
+  type: string;
+  submittedAsRole: string;
+  subject: string;
+  details: string;
+  pageUrl?: string | null;
+  attachmentKeys?: Array<string> | null;
+};
+
 export type SubmitSellerApplicationRequest = {
   studioName: string;
   bio?: string;
@@ -1723,12 +1851,28 @@ export type UpdateExamHubPageRequest = {
   trendInfo?: string | null;
 };
 
+export type UpdateFeedbackStatusRequest = {
+  status: string;
+  adminNote?: string | null;
+  replyToUser?: string | null;
+};
+
 export type UpdateInterestsRequest = {
   categoryIds: Array<string>;
 };
 
 export type UpdateLibraryReadStatusRequest = {
   isRead?: boolean;
+};
+
+export type UpdateNotificationEventConfigRequest = {
+  isEnabled?: boolean;
+  emailEnabled?: boolean;
+  lineEnabled?: boolean;
+  inAppEnabled?: boolean;
+  userOverridable?: boolean;
+  throttleWindowMinutes?: number;
+  dailyCapPerRecipient?: number;
 };
 
 export type UpdateNotificationSettingsRequest = {
@@ -2792,6 +2936,120 @@ export type PostApiAdminSellersBySellerIdPayoutAccountRevealResponses = {
 
 export type PostApiAdminSellersBySellerIdPayoutAccountRevealResponse =
   PostApiAdminSellersBySellerIdPayoutAccountRevealResponses[keyof PostApiAdminSellersBySellerIdPayoutAccountRevealResponses];
+
+export type GetApiAdminFeedbackData = {
+  body?: never;
+  path?: never;
+  query?: {
+    status?: string;
+    type?: string;
+    role?: string;
+    page?: number;
+    pageSize?: number;
+  };
+  url: '/api/admin/feedback';
+};
+
+export type GetApiAdminFeedbackResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminFeedbackListItemResponse;
+};
+
+export type GetApiAdminFeedbackResponse =
+  GetApiAdminFeedbackResponses[keyof GetApiAdminFeedbackResponses];
+
+export type DeleteApiAdminFeedbackByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/feedback/{id}';
+};
+
+export type DeleteApiAdminFeedbackByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type DeleteApiAdminFeedbackByIdError =
+  DeleteApiAdminFeedbackByIdErrors[keyof DeleteApiAdminFeedbackByIdErrors];
+
+export type DeleteApiAdminFeedbackByIdResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiAdminFeedbackByIdResponse =
+  DeleteApiAdminFeedbackByIdResponses[keyof DeleteApiAdminFeedbackByIdResponses];
+
+export type GetApiAdminFeedbackByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/feedback/{id}';
+};
+
+export type GetApiAdminFeedbackByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminFeedbackByIdError =
+  GetApiAdminFeedbackByIdErrors[keyof GetApiAdminFeedbackByIdErrors];
+
+export type GetApiAdminFeedbackByIdResponses = {
+  /**
+   * OK
+   */
+  200: AdminFeedbackDetailResponse;
+};
+
+export type GetApiAdminFeedbackByIdResponse =
+  GetApiAdminFeedbackByIdResponses[keyof GetApiAdminFeedbackByIdResponses];
+
+export type PostApiAdminFeedbackByIdStatusData = {
+  body: UpdateFeedbackStatusRequest;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/feedback/{id}/status';
+};
+
+export type PostApiAdminFeedbackByIdStatusErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiAdminFeedbackByIdStatusError =
+  PostApiAdminFeedbackByIdStatusErrors[keyof PostApiAdminFeedbackByIdStatusErrors];
+
+export type PostApiAdminFeedbackByIdStatusResponses = {
+  /**
+   * OK
+   */
+  200: AdminFeedbackDetailResponse;
+};
+
+export type PostApiAdminFeedbackByIdStatusResponse =
+  PostApiAdminFeedbackByIdStatusResponses[keyof PostApiAdminFeedbackByIdStatusResponses];
 
 export type GetApiAdminAnnouncementsData = {
   body?: never;
@@ -5147,6 +5405,215 @@ export type PostApiMeOnboardingSkipResponses = {
 export type PostApiMeOnboardingSkipResponse =
   PostApiMeOnboardingSkipResponses[keyof PostApiMeOnboardingSkipResponses];
 
+export type GetApiMeFeedbackData = {
+  body?: never;
+  path?: never;
+  query?: {
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  };
+  url: '/api/me/feedback';
+};
+
+export type GetApiMeFeedbackErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeFeedbackError = GetApiMeFeedbackErrors[keyof GetApiMeFeedbackErrors];
+
+export type GetApiMeFeedbackResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfMyFeedbackListItemResponse;
+};
+
+export type GetApiMeFeedbackResponse = GetApiMeFeedbackResponses[keyof GetApiMeFeedbackResponses];
+
+export type PostApiMeFeedbackData = {
+  body: SubmitFeedbackRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/feedback';
+};
+
+export type PostApiMeFeedbackErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails;
+};
+
+export type PostApiMeFeedbackError = PostApiMeFeedbackErrors[keyof PostApiMeFeedbackErrors];
+
+export type PostApiMeFeedbackResponses = {
+  /**
+   * Created
+   */
+  201: MyFeedbackResponse;
+};
+
+export type PostApiMeFeedbackResponse =
+  PostApiMeFeedbackResponses[keyof PostApiMeFeedbackResponses];
+
+export type GetApiMeFeedbackByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/me/feedback/{id}';
+};
+
+export type GetApiMeFeedbackByIdErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiMeFeedbackByIdError =
+  GetApiMeFeedbackByIdErrors[keyof GetApiMeFeedbackByIdErrors];
+
+export type GetApiMeFeedbackByIdResponses = {
+  /**
+   * OK
+   */
+  200: MyFeedbackResponse;
+};
+
+export type GetApiMeFeedbackByIdResponse =
+  GetApiMeFeedbackByIdResponses[keyof GetApiMeFeedbackByIdResponses];
+
+export type GetApiAdminNotificationConfigData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/notification-config';
+};
+
+export type GetApiAdminNotificationConfigErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type GetApiAdminNotificationConfigError =
+  GetApiAdminNotificationConfigErrors[keyof GetApiAdminNotificationConfigErrors];
+
+export type GetApiAdminNotificationConfigResponses = {
+  /**
+   * OK
+   */
+  200: Array<NotificationEventConfigItem>;
+};
+
+export type GetApiAdminNotificationConfigResponse =
+  GetApiAdminNotificationConfigResponses[keyof GetApiAdminNotificationConfigResponses];
+
+export type PutApiAdminNotificationConfigByEventKeyData = {
+  body: UpdateNotificationEventConfigRequest;
+  path: {
+    eventKey: string;
+  };
+  query?: never;
+  url: '/api/admin/notification-config/{eventKey}';
+};
+
+export type PutApiAdminNotificationConfigByEventKeyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiAdminNotificationConfigByEventKeyError =
+  PutApiAdminNotificationConfigByEventKeyErrors[keyof PutApiAdminNotificationConfigByEventKeyErrors];
+
+export type PutApiAdminNotificationConfigByEventKeyResponses = {
+  /**
+   * OK
+   */
+  200: NotificationEventConfigItem;
+};
+
+export type PutApiAdminNotificationConfigByEventKeyResponse =
+  PutApiAdminNotificationConfigByEventKeyResponses[keyof PutApiAdminNotificationConfigByEventKeyResponses];
+
+export type PostApiAdminNotificationConfigByEventKeyResetData = {
+  body?: never;
+  path: {
+    eventKey: string;
+  };
+  query?: never;
+  url: '/api/admin/notification-config/{eventKey}/reset';
+};
+
+export type PostApiAdminNotificationConfigByEventKeyResetErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiAdminNotificationConfigByEventKeyResetError =
+  PostApiAdminNotificationConfigByEventKeyResetErrors[keyof PostApiAdminNotificationConfigByEventKeyResetErrors];
+
+export type PostApiAdminNotificationConfigByEventKeyResetResponses = {
+  /**
+   * OK
+   */
+  200: NotificationEventConfigItem;
+};
+
+export type PostApiAdminNotificationConfigByEventKeyResetResponse =
+  PostApiAdminNotificationConfigByEventKeyResetResponses[keyof PostApiAdminNotificationConfigByEventKeyResetResponses];
+
 export type GetApiNotificationsSettingsData = {
   body?: never;
   path?: never;
@@ -5207,11 +5674,16 @@ export type GetApiNotificationsFeedData = {
   query?: {
     Page?: number;
     PageSize?: number;
+    audience?: string;
   };
   url: '/api/notifications/feed';
 };
 
 export type GetApiNotificationsFeedErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
   /**
    * Unauthorized
    */
@@ -5294,11 +5766,17 @@ export type PostApiNotificationsFeedByIdReadResponse =
 export type PostApiNotificationsFeedReadAllData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    audience?: string;
+  };
   url: '/api/notifications/feed/read-all';
 };
 
 export type PostApiNotificationsFeedReadAllErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
   /**
    * Unauthorized
    */

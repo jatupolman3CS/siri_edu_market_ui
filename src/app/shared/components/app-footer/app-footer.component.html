@@ -32,6 +32,13 @@
             <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.support' | trans }}</h4>
             <ul class="space-y-3 text-sm text-ink-soft">
               <li class="text-ink-muted">{{ 'footer.helpCenter' | trans }}</li>
+              <li>
+                @if (auth.isAuthenticated()) {
+                  <a routerLink="/account/feedback" class="hover:text-pink-600">{{ 'footer.feedback' | trans }}</a>
+                } @else {
+                  <a routerLink="/auth/login" [queryParams]="{ returnUrl: '/account/feedback' }" class="hover:text-pink-600">{{ 'footer.feedback' | trans }}</a>
+                }
+              </li>
               <li class="text-ink-muted">{{ 'footer.privacy' | trans }}</li>
               <li class="text-ink-muted">{{ 'footer.terms' | trans }}</li>
               <li>

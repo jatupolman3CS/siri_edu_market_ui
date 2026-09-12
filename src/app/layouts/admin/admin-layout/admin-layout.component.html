@@ -105,9 +105,12 @@
               [routerLink]="item.href"
               routerLinkActive="!bg-pink-500"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-              class="px-3 py-1.5 rounded-full bg-white/10 text-pink-100 text-xs whitespace-nowrap"
+              class="px-3 py-1.5 rounded-full bg-white/10 text-pink-100 text-xs whitespace-nowrap inline-flex items-center gap-1.5"
             >
-              {{ item.label }}
+              <span>{{ item.label }}</span>
+              @if (item.badge) {
+                <span class="pill bg-pink-500 text-white !py-0 !px-1.5 !text-[9px]">{{ item.badge }}</span>
+              }
             </a>
           }
         </nav>

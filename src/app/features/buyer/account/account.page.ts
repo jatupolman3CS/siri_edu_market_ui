@@ -64,5 +64,6 @@ export class AccountPage {
     { href: '/wishlist', emoji: '💖', label: 'รายการที่อยากได้', description: 'เก็บไว้ซื้อทีหลัง' },
     // subscription-membership v2 §4: shortcut to the new subscription status page.
     { href: '/account/subscription', emoji: '📦', label: 'สมาชิกรายเดือน', description: 'ดูสถานะและจัดการสมาชิก' },
+    { href: '/account/feedback', emoji: '🛠️', label: 'แจ้งปัญหา / ข้อเสนอแนะ', description: 'ส่งเรื่องถึงทีมงานและติดตามสถานะ' },
   ];
 }

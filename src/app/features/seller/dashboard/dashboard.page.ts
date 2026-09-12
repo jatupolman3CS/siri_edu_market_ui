@@ -18,6 +18,7 @@ import { StoreReadinessBarComponent } from '../../../shared/components/store-rea
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { FeedbackModalComponent } from '../../../shared/components/feedback-modal/feedback-modal.component';
 
 @Component({
   selector: 'app-seller-dashboard',
@@ -33,6 +34,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     CompactPipe,
     DatePipe,
     ImgFallbackDirective,
+    FeedbackModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',
@@ -43,6 +45,11 @@ export class SellerDashboardPage {
   readonly platformStats = inject(PlatformStatsService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  readonly feedbackModalOpen = signal(false);
+
+  openFeedbackModal(): void {
+    this.feedbackModalOpen.set(true);
+  }
 
   readonly maxMonth = computed(() =>
     Math.max(...this.seller.stats().revenueByMonth.map((m) => m.amount), 1),

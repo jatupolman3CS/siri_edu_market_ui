@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -47,12 +47,24 @@ export class AdminLayoutComponent {
     return defaultAvatarUrl();
   });
 
+  readonly newFeedbackCount = signal<number>(0);
+
   constructor() {
     effect(() => {
       if (this.auth.isAuthenticated()) {
         this.me.loadProfile().subscribe({ error: () => { /* silent */ } });
+        void this.loadNewFeedbackCount();
       }
     });
+  }
+
+  private async loadNewFeedbackCount(): Promise<void> {
+    try {
+      const count = await this.admin.countNewFeedback();
+      this.newFeedbackCount.set(count);
+    } catch {
+      // silent
+    }
   }
 
   signOut(): void {
@@ -76,9 +88,16 @@ export class AdminLayoutComponent {
       { label: isTh ? 'จัดการเอกสาร' : 'Documents', href: '/admin/documents', icon: 'doc' as const },
       { label: isTh ? 'อนุมัติเอกสาร' : 'Document Approval', href: '/admin/approval', icon: 'shield' as const },
       { label: isTh ? 'ธุรกรรม' : 'Transactions', href: '/admin/transactions', icon: 'wallet' as const },
+      { label: isTh ? 'ผู้ใช้ทั้งหมด' : 'Users', href: '/admin/users', icon: 'user' as const },
       { label: isTh ? 'ผู้ขาย' : 'Sellers', href: '/admin/sellers', icon: 'user' as const },
       // GAP-02: seller payout queue.
       { label: isTh ? 'รายงานเอกสาร' : 'Reports', href: '/admin/reports', icon: 'flag' as const },
+      {
+        label: isTh ? 'ข้อเสนอแนะผู้ใช้' : 'User Feedback',
+        href: '/admin/feedback',
+        icon: 'flag' as const,
+        badge: this.newFeedbackCount() > 0 ? String(this.newFeedbackCount()) : undefined,
+      },
       { label: isTh ? 'ถอนเงินผู้ขาย' : 'Seller Payouts', href: '/admin/payouts', icon: 'wallet' as const },
       // GAP-01: review queue for buyers applying to sell.
       { label: isTh ? 'ใบสมัครผู้ขาย' : 'Seller Applications', href: '/admin/seller-applications', icon: 'shield' as const },

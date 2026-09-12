@@ -21,6 +21,10 @@
           <p class="text-sm text-ink-soft">สรุปยอดขาย รายได้ และสถิติเอกสารของคุณภายในเดือนนี้</p>
         </div>
         <div class="flex flex-wrap gap-3">
+          <button type="button" class="btn-ghost !px-3.5 !py-2 text-sm flex items-center gap-1.5" (click)="openFeedbackModal()">
+            <app-icon name="flag" [size]="16" />
+            แจ้งปัญหา / ข้อเสนอแนะ
+          </button>
           <a routerLink="/seller/upload" class="btn-pink">
             <app-icon name="upload" [size]="16" />
             อัปโหลดเอกสาร
@@ -415,4 +419,5 @@
         </div>
       </section>
       }
+      <app-feedback-modal context="seller" [(open)]="feedbackModalOpen" />
     </div>

@@ -71,6 +71,7 @@ export const th = {
     helpCenter: 'ศูนย์ช่วยเหลือ',
     faq: 'คำถามที่พบบ่อย',
     contactUs: 'ติดต่อเรา',
+    feedback: 'แจ้งปัญหา / ข้อเสนอแนะ',
     terms: 'เงื่อนไขการใช้งาน',
     privacy: 'นโยบายความเป็นส่วนตัว',
     allRightsReserved: 'สงวนลิขสิทธิ์ทั้งหมด',

@@ -1,0 +1,119 @@
+<nz-modal
+  [nzVisible]="open()"
+  [nzTitle]="modalTitle"
+  [nzFooter]="modalFooter"
+  [nzWidth]="520"
+  [nzCentered]="true"
+  (nzOnCancel)="cancel()"
+>
+  <ng-template #modalTitle>
+    <div class="flex items-center gap-2.5">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary flex-shrink-0">
+        <app-icon name="flag" [size]="18" />
+      </span>
+      <span class="font-bold text-ink text-base md:text-lg">แจ้งปัญหา / ข้อเสนอแนะ</span>
+    </div>
+  </ng-template>
+
+  <ng-container *nzModalContent>
+    <div class="space-y-4 text-sm">
+      <!-- Type -->
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">ประเภท</label>
+        <select class="input-soft" [(ngModel)]="type" name="type">
+          @for (opt of types; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Subject -->
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">หัวข้อ</label>
+        <input
+          type="text"
+          class="input-soft"
+          maxlength="150"
+          [(ngModel)]="subject"
+          name="subject"
+          placeholder="สรุปสั้น ๆ ว่าเรื่องอะไร"
+        />
+        <div class="flex justify-end mt-1">
+          <span class="text-[11px] text-ink-muted">{{ subject.length }}/150</span>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">รายละเอียด</label>
+        <textarea
+          class="input-soft"
+          rows="4"
+          maxlength="4000"
+          [(ngModel)]="details"
+          name="details"
+          placeholder="เล่าให้ละเอียดที่สุดเท่าที่ทำได้ เช่น กดปุ่มไหน แล้วเกิดอะไรขึ้น"
+        ></textarea>
+        <div class="flex justify-end mt-1">
+          <span class="text-[11px] text-ink-muted">{{ details.length }}/4000</span>
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">แนบภาพหน้าจอ (ถ้ามี)</label>
+        <p class="text-[11px] text-ink-muted mb-2">สูงสุด 3 ไฟล์ ไฟล์ละไม่เกิน 5 MB รองรับ PNG, JPG, WEBP, GIF</p>
+
+        <div class="flex flex-wrap gap-2 mb-2">
+          @for (att of attachments(); track $index) {
+            <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-border bg-slate-100 group">
+              <img [src]="att.previewUrl" [alt]="att.file.name" class="w-full h-full object-cover" />
+              <button
+                type="button"
+                class="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center text-xs opacity-80 hover:opacity-100"
+                (click)="removeAttachment($index)"
+              >
+                ✕
+              </button>
+            </div>
+          }
+
+          @if (attachments().length < 3) {
+            <label class="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center text-ink-muted cursor-pointer transition-colors">
+              <app-icon name="plus" [size]="20" />
+              <span class="text-[10px] mt-1">เพิ่มภาพ</span>
+              <input
+                type="file"
+                class="hidden"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                multiple
+                (change)="onFilesSelected($event)"
+              />
+            </label>
+          }
+        </div>
+      </div>
+
+      <!-- PDPA Note -->
+      <div class="p-3 bg-amber-50 rounded-lg border border-amber-200/60 text-amber-800 text-xs leading-relaxed">
+        ระบบจะแนบหน้าที่คุณกำลังใช้งานและข้อมูลเบราว์เซอร์ไปด้วยเพื่อให้ทีมงานตรวจสอบได้เร็วขึ้น กรุณาอย่าใส่รหัสผ่าน เลขบัตร หรือข้อมูลส่วนตัวของผู้อื่นลงในข้อความและภาพ
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #modalFooter>
+    <div class="flex items-center justify-end gap-2">
+      <button type="button" class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">
+        ยกเลิก
+      </button>
+      <button
+        type="button"
+        class="btn-pink !py-2 !px-5 text-sm"
+        [disabled]="isSubmitDisabled"
+        (click)="submit()"
+      >
+        {{ sending() ? 'กำลังส่ง…' : 'ส่งให้ทีมงาน' }}
+      </button>
+    </div>
+  </ng-template>
+</nz-modal>

@@ -19,6 +19,9 @@ import type {
   DeleteApiAdminCategoriesByIdData,
   DeleteApiAdminCategoriesByIdErrors,
   DeleteApiAdminCategoriesByIdResponses,
+  DeleteApiAdminFeedbackByIdData,
+  DeleteApiAdminFeedbackByIdErrors,
+  DeleteApiAdminFeedbackByIdResponses,
   DeleteApiCartData,
   DeleteApiCartErrors,
   DeleteApiCartItemsByDocumentIdData,
@@ -87,6 +90,14 @@ import type {
   GetApiAdminDocumentsPendingData,
   GetApiAdminDocumentsPendingResponses,
   GetApiAdminDocumentsResponses,
+  GetApiAdminFeedbackByIdData,
+  GetApiAdminFeedbackByIdErrors,
+  GetApiAdminFeedbackByIdResponses,
+  GetApiAdminFeedbackData,
+  GetApiAdminFeedbackResponses,
+  GetApiAdminNotificationConfigData,
+  GetApiAdminNotificationConfigErrors,
+  GetApiAdminNotificationConfigResponses,
   GetApiAdminPayoutsData,
   GetApiAdminPayoutsErrors,
   GetApiAdminPayoutsResponses,
@@ -164,6 +175,12 @@ import type {
   GetApiMeExamCountdownData,
   GetApiMeExamCountdownErrors,
   GetApiMeExamCountdownResponses,
+  GetApiMeFeedbackByIdData,
+  GetApiMeFeedbackByIdErrors,
+  GetApiMeFeedbackByIdResponses,
+  GetApiMeFeedbackData,
+  GetApiMeFeedbackErrors,
+  GetApiMeFeedbackResponses,
   GetApiMeLoyaltyData,
   GetApiMeLoyaltyEntriesData,
   GetApiMeLoyaltyEntriesErrors,
@@ -316,6 +333,12 @@ import type {
   PostApiAdminDocumentsPendingSearchData,
   PostApiAdminDocumentsPendingSearchErrors,
   PostApiAdminDocumentsPendingSearchResponses,
+  PostApiAdminFeedbackByIdStatusData,
+  PostApiAdminFeedbackByIdStatusErrors,
+  PostApiAdminFeedbackByIdStatusResponses,
+  PostApiAdminNotificationConfigByEventKeyResetData,
+  PostApiAdminNotificationConfigByEventKeyResetErrors,
+  PostApiAdminNotificationConfigByEventKeyResetResponses,
   PostApiAdminOrdersByOrderIdRefundData,
   PostApiAdminOrdersByOrderIdRefundErrors,
   PostApiAdminOrdersByOrderIdRefundResponses,
@@ -395,6 +418,9 @@ import type {
   PostApiMarketplaceDocumentsByIdViewData,
   PostApiMarketplaceDocumentsByIdViewErrors,
   PostApiMarketplaceDocumentsByIdViewResponses,
+  PostApiMeFeedbackData,
+  PostApiMeFeedbackErrors,
+  PostApiMeFeedbackResponses,
   PostApiMeOnboardingSkipData,
   PostApiMeOnboardingSkipErrors,
   PostApiMeOnboardingSkipResponses,
@@ -496,6 +522,9 @@ import type {
   PutApiAdminExamHubByExamTypeData,
   PutApiAdminExamHubByExamTypeErrors,
   PutApiAdminExamHubByExamTypeResponses,
+  PutApiAdminNotificationConfigByEventKeyData,
+  PutApiAdminNotificationConfigByEventKeyErrors,
+  PutApiAdminNotificationConfigByEventKeyResponses,
   PutApiAdminSellersBySellerIdPayoutAccountData,
   PutApiAdminSellersBySellerIdPayoutAccountErrors,
   PutApiAdminSellersBySellerIdPayoutAccountResponses,
@@ -1022,6 +1051,56 @@ export const postApiAdminSellersBySellerIdPayoutAccountReveal = <
     PostApiAdminSellersBySellerIdPayoutAccountRevealErrors,
     ThrowOnError
   >({ url: '/api/admin/sellers/{sellerId}/payout-account/reveal', ...options });
+
+export const getApiAdminFeedback = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminFeedbackData, ThrowOnError>,
+): RequestResult<GetApiAdminFeedbackResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminFeedbackResponses, unknown, ThrowOnError>({
+    url: '/api/admin/feedback',
+    ...options,
+  });
+
+export const deleteApiAdminFeedbackById = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteApiAdminFeedbackByIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiAdminFeedbackByIdResponses,
+  DeleteApiAdminFeedbackByIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiAdminFeedbackByIdResponses,
+    DeleteApiAdminFeedbackByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/feedback/{id}', ...options });
+
+export const getApiAdminFeedbackById = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminFeedbackByIdData, ThrowOnError>,
+): RequestResult<GetApiAdminFeedbackByIdResponses, GetApiAdminFeedbackByIdErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiAdminFeedbackByIdResponses,
+    GetApiAdminFeedbackByIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/feedback/{id}', ...options });
+
+export const postApiAdminFeedbackByIdStatus = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminFeedbackByIdStatusData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminFeedbackByIdStatusResponses,
+  PostApiAdminFeedbackByIdStatusErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminFeedbackByIdStatusResponses,
+    PostApiAdminFeedbackByIdStatusErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/feedback/{id}/status',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,
@@ -2132,6 +2211,85 @@ export const postApiMeOnboardingSkip = <ThrowOnError extends boolean = false>(
     PostApiMeOnboardingSkipErrors,
     ThrowOnError
   >({ url: '/api/me/onboarding/skip', ...options });
+
+export const getApiMeFeedback = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeFeedbackData, ThrowOnError>,
+): RequestResult<GetApiMeFeedbackResponses, GetApiMeFeedbackErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMeFeedbackResponses, GetApiMeFeedbackErrors, ThrowOnError>({
+    url: '/api/me/feedback',
+    ...options,
+  });
+
+export const postApiMeFeedback = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMeFeedbackData, ThrowOnError>,
+): RequestResult<PostApiMeFeedbackResponses, PostApiMeFeedbackErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiMeFeedbackResponses,
+    PostApiMeFeedbackErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/feedback',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiMeFeedbackById = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiMeFeedbackByIdData, ThrowOnError>,
+): RequestResult<GetApiMeFeedbackByIdResponses, GetApiMeFeedbackByIdErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiMeFeedbackByIdResponses,
+    GetApiMeFeedbackByIdErrors,
+    ThrowOnError
+  >({ url: '/api/me/feedback/{id}', ...options });
+
+export const getApiAdminNotificationConfig = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminNotificationConfigData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminNotificationConfigResponses,
+  GetApiAdminNotificationConfigErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiAdminNotificationConfigResponses,
+    GetApiAdminNotificationConfigErrors,
+    ThrowOnError
+  >({ url: '/api/admin/notification-config', ...options });
+
+export const putApiAdminNotificationConfigByEventKey = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminNotificationConfigByEventKeyData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminNotificationConfigByEventKeyResponses,
+  PutApiAdminNotificationConfigByEventKeyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminNotificationConfigByEventKeyResponses,
+    PutApiAdminNotificationConfigByEventKeyErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/notification-config/{eventKey}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAdminNotificationConfigByEventKeyReset = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminNotificationConfigByEventKeyResetData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminNotificationConfigByEventKeyResetResponses,
+  PostApiAdminNotificationConfigByEventKeyResetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminNotificationConfigByEventKeyResetResponses,
+    PostApiAdminNotificationConfigByEventKeyResetErrors,
+    ThrowOnError
+  >({ url: '/api/admin/notification-config/{eventKey}/reset', ...options });
 
 export const getApiNotificationsSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiNotificationsSettingsData, ThrowOnError>,
