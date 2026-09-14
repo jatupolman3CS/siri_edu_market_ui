@@ -125,6 +125,45 @@
         </ul>
       </div>
 
+      <!-- Similar documents (order-similar-documents v1 §4) — paid/fulfilled only, hidden
+           entirely while loading is idle/errored/empty (§1.6: no empty state, no error banner). -->
+      @if (o.status === 'paid' || o.status === 'fulfilled') {
+        @if (similarState().status === 'loading') {
+          <section class="mt-8">
+            <h3 class="section-title mb-1">เอกสารที่คล้ายกับคำสั่งซื้อนี้</h3>
+            <p class="text-sm text-ink-muted mb-4">
+              คัดจากเอกสารในคำสั่งซื้อของคุณ และยังไม่มีในคลังของคุณ
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5" aria-hidden="true">
+              @for (i of [1, 2, 3, 4]; track i) {
+                <div class="rounded-2xl border border-line overflow-hidden">
+                  <div class="h-40 bg-line/70 animate-pulse"></div>
+                  <div class="p-3 space-y-2">
+                    <div class="h-3 w-3/4 rounded bg-line/70 animate-pulse"></div>
+                    <div class="h-3 w-1/2 rounded bg-line/70 animate-pulse"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+        } @else if (similar().length) {
+          <section class="mt-8">
+            <h3 class="section-title mb-1">เอกสารที่คล้ายกับคำสั่งซื้อนี้</h3>
+            <p class="text-sm text-ink-muted mb-4">
+              คัดจากเอกสารในคำสั่งซื้อของคุณ และยังไม่มีในคลังของคุณ
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              @for (s of similar(); track s.document.id) {
+                <div>
+                  <app-document-card [doc]="s.document" />
+                  <p class="text-xs text-ink-muted mt-2 line-clamp-2">{{ s.reason }}</p>
+                </div>
+              }
+            </div>
+          </section>
+        }
+      }
+
       <!-- Actions -->
       <div class="flex flex-wrap gap-3 mt-6">
         <a routerLink="/library" class="btn-pink">

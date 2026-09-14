@@ -9,13 +9,14 @@ import {
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import {
   getApiOrdersById,
+  getApiOrdersByIdSimilarDocuments,
   getApiPaymentsStripeConfig,
   postApiOrders,
   postApiOrdersByIdCancel,
 } from '../api';
 import { unwrapSdkResult } from './api-result';
-import { mapOrder } from '../api-mappers/mappers';
-import type { Order } from '../models';
+import { mapOrder, mapOrderSimilarDocument } from '../api-mappers/mappers';
+import type { Order, OrderSimilarDocument } from '../models';
 
 /**
  * saved-credit-cards v1 §4: `POST /api/orders` (`CreateOrderRequest`, §3.1) grew two optional
@@ -65,6 +66,12 @@ export class OrderService {
 
   private readonly _detail = signal<Order | null>(null);
   readonly detail = this._detail.asReadonly();
+
+  // order-similar-documents v1 §4: "เอกสารที่คล้ายกับคำสั่งซื้อนี้" block on `/orders/:id`.
+  private readonly _similar = signal<OrderSimilarDocument[]>([]);
+  readonly similar = this._similar.asReadonly();
+  private readonly _similarState = signal<ActionState>(idleActionState());
+  readonly similarState = this._similarState.asReadonly();
 
   async create(input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
     this._checkoutState.set(loadingActionState());
@@ -119,6 +126,11 @@ export class OrderService {
   }
 
   async loadDetail(id: string): Promise<Order | null> {
+    // order-similar-documents v1 §4: clear stale results from a previous order before the new
+    // one resolves, so a slow/failed similar-documents call never leaves the last order's cards
+    // showing under this one.
+    this._similar.set([]);
+    this._similarState.set(idleActionState());
     try {
       const result = await getApiOrdersById({ path: { id } });
       const data = unwrapSdkResult(result);
@@ -129,6 +141,28 @@ export class OrderService {
       this.apiFail.report('โหลดรายละเอียดคำสั่งซื้อ', e);
       this._detail.set(null);
       return null;
+    }
+  }
+
+  /**
+   * order-similar-documents v1 §3.1/§4: `GET /api/orders/{id}/similar-documents`. Caller
+   * (`order-detail.page.ts`) only invokes this once per order, and only while its status is
+   * `paid`/`fulfilled` — this method itself does not gate on status.
+   *
+   * Never rejects: an empty result or a failed call both just leave `similar` as `[]`, which the
+   * page reads as "hide the section entirely" (§1.6 — no empty state, no error banner).
+   */
+  async loadSimilar(orderId: string, take = 4): Promise<void> {
+    this._similarState.set(loadingActionState());
+    try {
+      const result = await getApiOrdersByIdSimilarDocuments({ path: { id: orderId }, query: { take } });
+      const data = unwrapSdkResult(result);
+      this._similar.set((data.items ?? []).map(mapOrderSimilarDocument));
+      this._similarState.set(successActionState());
+    } catch (e) {
+      this.apiFail.report('โหลดเอกสารที่คล้ายกัน', e);
+      this._similar.set([]);
+      this._similarState.set(errorActionState('โหลดเอกสารที่คล้ายกันไม่สำเร็จ'));
     }
   }
 

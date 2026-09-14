@@ -251,6 +251,9 @@ import type {
   GetApiOrdersByIdData,
   GetApiOrdersByIdErrors,
   GetApiOrdersByIdResponses,
+  GetApiOrdersByIdSimilarDocumentsData,
+  GetApiOrdersByIdSimilarDocumentsErrors,
+  GetApiOrdersByIdSimilarDocumentsResponses,
   GetApiOrdersData,
   GetApiOrdersResponses,
   GetApiPaymentsStripeConfigData,
@@ -2663,6 +2666,19 @@ export const getApiOrdersById = <ThrowOnError extends boolean = false>(
     url: '/api/orders/{id}',
     ...options,
   });
+
+export const getApiOrdersByIdSimilarDocuments = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiOrdersByIdSimilarDocumentsData, ThrowOnError>,
+): RequestResult<
+  GetApiOrdersByIdSimilarDocumentsResponses,
+  GetApiOrdersByIdSimilarDocumentsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiOrdersByIdSimilarDocumentsResponses,
+    GetApiOrdersByIdSimilarDocumentsErrors,
+    ThrowOnError
+  >({ url: '/api/orders/{id}/similar-documents', ...options });
 
 export const getApiPaymentsStripeConfig = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiPaymentsStripeConfigData, ThrowOnError>,

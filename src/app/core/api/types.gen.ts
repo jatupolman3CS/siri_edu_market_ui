@@ -1143,6 +1143,17 @@ export type OrderResponse = {
   discountAmount?: number;
 };
 
+export type OrderSimilarDocumentResponse = {
+  document?: MarketplaceDocumentResponse;
+  reason?: string;
+  matchedDocumentId?: string;
+  matchedDocumentTitle?: string;
+};
+
+export type OrderSimilarDocumentsResponse = {
+  items?: Array<OrderSimilarDocumentResponse>;
+};
+
 export type PagedResponseOfAdminAuditLogResponse = {
   items?: Array<AdminAuditLogResponse>;
   page?: number;
@@ -6661,6 +6672,37 @@ export type GetApiOrdersByIdResponses = {
 };
 
 export type GetApiOrdersByIdResponse = GetApiOrdersByIdResponses[keyof GetApiOrdersByIdResponses];
+
+export type GetApiOrdersByIdSimilarDocumentsData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: {
+    take?: number;
+  };
+  url: '/api/orders/{id}/similar-documents';
+};
+
+export type GetApiOrdersByIdSimilarDocumentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiOrdersByIdSimilarDocumentsError =
+  GetApiOrdersByIdSimilarDocumentsErrors[keyof GetApiOrdersByIdSimilarDocumentsErrors];
+
+export type GetApiOrdersByIdSimilarDocumentsResponses = {
+  /**
+   * OK
+   */
+  200: OrderSimilarDocumentsResponse;
+};
+
+export type GetApiOrdersByIdSimilarDocumentsResponse =
+  GetApiOrdersByIdSimilarDocumentsResponses[keyof GetApiOrdersByIdSimilarDocumentsResponses];
 
 export type GetApiPaymentsStripeConfigData = {
   body?: never;

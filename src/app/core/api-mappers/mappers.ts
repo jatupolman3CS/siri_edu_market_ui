@@ -21,6 +21,7 @@ import type {
   MarketplaceDocumentDetailResponse,
   MarketplaceDocumentResponse,
   OrderResponse,
+  OrderSimilarDocumentResponse,
   PayoutAccountResponse,
   PlatformStatsResponse,
   SavedPaymentMethodResponse,
@@ -59,6 +60,7 @@ import type {
   LoyaltyEntry,
   LoyaltySummary,
   Order,
+  OrderSimilarDocument,
   OrderStatus,
   PaymentMethod,
   PayoutAccount,
@@ -629,6 +631,20 @@ export function mapOrder(o: OrderResponse): Order {
         }
       : undefined,
     discountAmount: Number((o as unknown as { discountAmount?: number | null; discount_amount?: number | null }).discountAmount ?? (o as unknown as { discount_amount?: number | null }).discount_amount ?? 0),
+  };
+}
+
+/**
+ * order-similar-documents v1 §3.1/§4: `OrderSimilarDocumentResponse` → `OrderSimilarDocument`.
+ * `document` reuses {@link mapDocument} (same `MarketplaceDocumentResponse` shape the endpoint's
+ * DTO carries) — no second mapper for that part, per §1.2 of the contract.
+ */
+export function mapOrderSimilarDocument(d: OrderSimilarDocumentResponse): OrderSimilarDocument {
+  return {
+    document: mapDocument(d.document ?? {}),
+    reason: d.reason ?? '',
+    matchedDocumentId: d.matchedDocumentId ?? '',
+    matchedDocumentTitle: d.matchedDocumentTitle ?? '',
   };
 }
 

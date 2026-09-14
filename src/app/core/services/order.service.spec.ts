@@ -130,3 +130,94 @@ describe('OrderService.create — 409 branches', () => {
     expect(outcome.paymentNeedsReview).toBeFalsy();
   });
 });
+
+/**
+ * order-similar-documents v1 §3.1/§4 round 2 (post-regen wiring): `GET
+ * /api/orders/{id}/similar-documents` → `OrderSimilarDocument[]`.
+ */
+describe('OrderService.loadSimilar — order-similar-documents v1', () => {
+  function stubSimilar(orderId: string, body: unknown, status = 200): void {
+    routes.set(`GET /api/orders/${orderId}/similar-documents`, { body, status });
+  }
+
+  it('maps items into OrderSimilarDocument[] via mapDocument for `document`', async () => {
+    stubSimilar('order-1', {
+      items: [
+        {
+          document: {
+            id: 'doc-2',
+            slug: 'doc-2',
+            title: 'สรุปฟิสิกส์ ม.6',
+            shortDescription: 'สรุปเข้ม',
+            price: 39,
+            format: 'pdf',
+            pages: 20,
+            averageRating: 4.2,
+            reviewCount: 5,
+            downloads: 100,
+            sellerId: 'seller-9',
+            sellerName: 'ครูบี',
+            categoryIds: ['cat-1'],
+          },
+          reason: 'คล้ายกับ «สรุปคณิต ม.6» — อยู่ในหมวดเดียวกัน',
+          matchedDocumentId: 'doc-1',
+          matchedDocumentTitle: 'สรุปคณิต ม.6',
+        },
+      ],
+    });
+
+    const service = buildService();
+    await service.loadSimilar('order-1');
+
+    expect(service.similar()).toEqual([
+      expect.objectContaining({
+        reason: 'คล้ายกับ «สรุปคณิต ม.6» — อยู่ในหมวดเดียวกัน',
+        matchedDocumentId: 'doc-1',
+        matchedDocumentTitle: 'สรุปคณิต ม.6',
+        document: expect.objectContaining({
+          id: 'doc-2',
+          title: 'สรุปฟิสิกส์ ม.6',
+          price: 39,
+        }),
+      }),
+    ]);
+    expect(service.similarState()).toEqual({ status: 'success', message: undefined });
+  });
+
+  it('defaults `take` to 4 when the caller does not pass one', async () => {
+    let sentUrl = '';
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      sentUrl = request.url;
+      return jsonResponse({ items: [] }, 200);
+    }) as typeof globalThis.fetch;
+
+    await buildService().loadSimilar('order-1');
+
+    expect(new URL(sentUrl).searchParams.get('take')).toBe('4');
+  });
+
+  it('an empty result leaves `similar` as []', async () => {
+    stubSimilar('order-1', { items: [] });
+
+    const service = buildService();
+    await service.loadSimilar('order-1');
+
+    expect(service.similar()).toEqual([]);
+  });
+
+  it('a failed call clears `similar` to [] and reports through ApiFailureReporter', async () => {
+    stubSimilar('order-1', { title: 'Server error', status: 500 }, 500);
+    const apiFail = { report: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [OrderService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    const service = TestBed.inject(OrderService);
+
+    await service.loadSimilar('order-1');
+
+    expect(service.similar()).toEqual([]);
+    expect(service.similarState().status).toBe('error');
+    expect(apiFail.report).toHaveBeenCalledWith('โหลดเอกสารที่คล้ายกัน', expect.anything());
+  });
+});

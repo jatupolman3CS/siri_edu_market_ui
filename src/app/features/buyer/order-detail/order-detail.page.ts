@@ -10,10 +10,10 @@ import { AuthService, OrderService } from '../../../core/services';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
-import type { Order } from '../../../core/models';
 
 @Component({
   selector: 'app-buyer-order-detail',
@@ -23,6 +23,7 @@ import type { Order } from '../../../core/models';
     PageHeroComponent,
     IconComponent,
     EmptyStateComponent,
+    DocumentCardComponent,
     ImgFallbackDirective,
     ThbPipe,
     TimeAgoPipe,
@@ -39,6 +40,13 @@ export class BuyerOrderDetailPage {
 
   readonly loading = signal(true);
   readonly order = this.orderService.detail;
+  // order-similar-documents v1 §4: "เอกสารที่คล้ายกับคำสั่งซื้อนี้" — hidden entirely when empty
+  // or errored (§1.6), never rendered for anything but paid/fulfilled orders (§4 AC-16).
+  readonly similar = this.orderService.similar;
+  readonly similarState = this.orderService.similarState;
+
+  /** Guards `loadSimilar()` to a single call per order (§4: "เรียก loadSimilar() ครั้งเดียว"). */
+  private similarRequested = false;
 
   constructor() {
     if (!this.auth.isAuthenticated()) {
@@ -63,6 +71,16 @@ export class BuyerOrderDetailPage {
         void this.orderService.loadDetail(orderId);
       }, 3000);
       onCleanup(() => window.clearInterval(handle));
+    });
+
+    // order-similar-documents v1 §4: load once the order is paid/fulfilled — never for
+    // awaiting_payment/cancelled/refunded, and never repeated by the polling loop above.
+    effect(() => {
+      const o = this.order();
+      if (!o?.id || (o.status !== 'paid' && o.status !== 'fulfilled')) return;
+      if (this.similarRequested) return;
+      this.similarRequested = true;
+      void this.orderService.loadSimilar(o.id);
     });
   }
 
