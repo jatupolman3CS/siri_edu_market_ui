@@ -5,6 +5,8 @@ import type {
   AdminTraceCandidate,
   AdminTraceFacet,
   AdminTraceMatch,
+  CrmDocumentAlertDocument,
+  CrmDocumentAlertOverview,
   CrmFacetType,
   CrmInterest,
   CrmLabeledValue,
@@ -23,6 +25,7 @@ import type {
 import {
   deleteApiMeCrm,
   getApiAdminCrmDemandGaps,
+  getApiAdminCrmDocumentAlerts,
   getApiAdminCrmOverview,
   getApiAdminCrmSegmentsByCodeUsers,
   getApiAdminCrmUsersByUserId,
@@ -31,6 +34,8 @@ import {
   putApiMeCrmTracking,
 } from '../api';
 import type {
+  AdminCrmDocumentAlertDocumentResponse,
+  AdminCrmDocumentAlertOverviewResponse,
   AdminCrmFacetResponse,
   AdminCrmFacetSummaryResponse,
   AdminCrmLabeledValueResponse,
@@ -289,6 +294,38 @@ function toAdminRecommendationTrace(res: AdminRecommendationTraceResponse): Admi
   };
 }
 
+// ====== crm-targeted-document-alerts v2 (docs/contracts/crm-targeted-document-alerts.md) §3.3 mapper ======
+
+/** §3.3 `AdminCrmDocumentAlertDocumentResponse` — one row of the document-alerts admin table. */
+function toCrmDocumentAlertDocument(res: AdminCrmDocumentAlertDocumentResponse): CrmDocumentAlertDocument {
+  return {
+    documentId: res.documentId,
+    documentTitle: res.documentTitle,
+    studioName: res.studioName,
+    queuedAt: res.queuedAt,
+    matchedCount: res.matchedCount,
+    sentCount: res.sentCount,
+    averageMatchScore: res.averageMatchScore,
+  };
+}
+
+/** §3.3 `AdminCrmDocumentAlertOverviewResponse` — `GET /api/admin/crm/document-alerts`. */
+function toCrmDocumentAlertOverview(res: AdminCrmDocumentAlertOverviewResponse): CrmDocumentAlertOverview {
+  return {
+    days: res.days,
+    pendingCount: res.pendingCount,
+    sentCount: res.sentCount,
+    suppressedCount: res.suppressedCount,
+    digestCount: res.digestCount,
+    recipientCount: res.recipientCount,
+    documentCount: res.documentCount,
+    averageMatchScore: res.averageMatchScore,
+    lastQueuedAt: res.lastQueuedAt,
+    lastSentAt: res.lastSentAt,
+    documents: (res.documents ?? []).map(toCrmDocumentAlertDocument),
+  };
+}
+
 /**
  * crm-core v1 (`docs/contracts/crm-core.md`) §3, §4.2 — buyer privacy self-service
  * (`/account/privacy`, §3.1–§3.3) and admin CRM inspection (`/admin/crm/**`, §3.4–§3.6).
@@ -516,5 +553,31 @@ export class CrmService {
   /** Test helper — mirrors `setUserDetailForTest`. */
   setRecommendationTraceForTest(trace: AdminRecommendationTrace | null): void {
     this._recommendationTrace.set(trace);
+  }
+
+  // ====== Admin: crm-targeted-document-alerts v2 §3.3 (F-12, ข้อ 11) ======
+
+  private readonly _documentAlerts = signal<CrmDocumentAlertOverview | null>(null);
+  private readonly _loadingDocumentAlerts = signal(false);
+
+  readonly documentAlerts = this._documentAlerts.asReadonly();
+  readonly loadingDocumentAlerts = this._loadingDocumentAlerts.asReadonly();
+
+  /** §3.3 `GET /api/admin/crm/document-alerts` — `days` is clamped server-side to `[1, 30]`. */
+  async loadDocumentAlerts(days: number): Promise<void> {
+    this._loadingDocumentAlerts.set(true);
+    try {
+      const overview = toCrmDocumentAlertOverview(
+        unwrapSdkResult(await getApiAdminCrmDocumentAlerts({ query: { days } })),
+      );
+      this._documentAlerts.set(overview);
+    } finally {
+      this._loadingDocumentAlerts.set(false);
+    }
+  }
+
+  /** Test helper — mirrors `setUserDetailForTest`. */
+  setDocumentAlertsForTest(overview: CrmDocumentAlertOverview | null): void {
+    this._documentAlerts.set(overview);
   }
 }

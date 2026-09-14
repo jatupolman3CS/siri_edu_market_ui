@@ -420,20 +420,30 @@ describe('NotificationFeedService', () => {
     });
   });
 
-  /** notification-master-config v1 §3.1 / §4.1 — the 18-key catalog style map. */
+  /**
+   * notification-master-config v1 §3.1 / §4.1 — the 18-key catalog style map, extended to 19
+   * keys by crm-targeted-document-alerts v2 §3.1/AC-1 (`new_document_for_interest`).
+   */
   describe('getNotificationStyle', () => {
-    it('resolves every one of the 18 catalog keys to a distinct label', () => {
+    it('resolves every one of the 19 catalog keys to a distinct label', () => {
       const keys = [
         'sale', 'review', 'qna_question', 'seller_follow', 'store_visit_digest',
         'cart_add_digest', 'wishlist_add_digest', 'review_reply', 'qna_answer',
         'document_submitted', 'document_approved', 'document_rejected',
         'admin_document_submitted', 'admin_payout_requested', 'payout',
-        'new_document_from_followed_seller', 'announcement', 'tips',
+        'new_document_from_followed_seller', 'new_document_for_interest', 'announcement', 'tips',
       ];
-      expect(keys.length).toBe(18);
+      expect(keys.length).toBe(19);
       for (const key of keys) {
         expect(getNotificationStyle(key).label).not.toBe('การแจ้งเตือน');
       }
+    });
+
+    it('AC-28: "new_document_for_interest" resolves to its own label, distinct from the followed-seller arm', () => {
+      const forInterest = getNotificationStyle('new_document_for_interest');
+      const followedSeller = getNotificationStyle('new_document_from_followed_seller');
+      expect(forInterest.label).toBe('ตรงกับความสนใจของคุณ');
+      expect(forInterest.label).not.toBe(followedSeller.label);
     });
 
     it('matches the exact key before the Thai-title heuristics', () => {

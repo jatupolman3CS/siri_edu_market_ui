@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { CrmService } from './crm.service';
-import type { CrmOverview, CrmUserDetail, MyCrmProfile } from '../models';
+import type { CrmDocumentAlertOverview, CrmOverview, CrmUserDetail, MyCrmProfile } from '../models';
 
 /**
  * crm-core v1 (docs/contracts/crm-core.md) §1.3 — `crm.service.spec.ts` (round 2, after regen).
@@ -713,5 +713,95 @@ describe('CrmService — admin recommendation trace (crm-driven-discovery v1 §3
     });
 
     expect(service.recommendationTrace()).not.toBeNull();
+  });
+});
+
+/**
+ * crm-targeted-document-alerts v2 §3.3, §1.3 (`docs/contracts/crm-targeted-document-alerts.md`,
+ * F-12, ข้อ 11) — wired directly to the real SDK (backend gate 1 already passed and the snapshot
+ * was updated before this page/service change was built), same "unwrap+rethrow, caller reports"
+ * convention as every other method above.
+ */
+function documentAlertDocRow(documentId: string, over: Record<string, unknown> = {}) {
+  return {
+    documentId,
+    documentTitle: 'แบบฝึกหัดคณิตศาสตร์ ป.4 ชุดที่ 2',
+    studioName: 'ร้านครูใจดี',
+    queuedAt: '2026-09-15T02:00:00Z',
+    matchedCount: 8,
+    sentCount: 6,
+    averageMatchScore: 0.72,
+    ...over,
+  };
+}
+
+function documentAlertsOverviewBody(over: Record<string, unknown> = {}) {
+  return {
+    days: 7,
+    pendingCount: 12,
+    sentCount: 34,
+    suppressedCount: 3,
+    digestCount: 9,
+    recipientCount: 21,
+    documentCount: 5,
+    averageMatchScore: 0.68,
+    lastQueuedAt: '2026-09-15T03:00:00Z',
+    lastSentAt: '2026-09-15T04:00:00Z',
+    documents: [documentAlertDocRow('doc-1')],
+    ...over,
+  };
+}
+
+describe('CrmService — loadDocumentAlerts() (crm-targeted-document-alerts v2 §3.3)', () => {
+  it('starts with documentAlerts() null and not loading', () => {
+    const service = buildService();
+
+    expect(service.documentAlerts()).toBeNull();
+    expect(service.loadingDocumentAlerts()).toBe(false);
+  });
+
+  it('maps every field including a null lastQueuedAt/lastSentAt and sends days in the query', async () => {
+    stubRoute(
+      'GET',
+      '/api/admin/crm/document-alerts',
+      documentAlertsOverviewBody({ lastQueuedAt: null, lastSentAt: null }),
+    );
+    const service = buildService();
+
+    await service.loadDocumentAlerts(14);
+
+    expect(service.documentAlerts()).toEqual(
+      documentAlertsOverviewBody({ lastQueuedAt: null, lastSentAt: null }),
+    );
+    expect(service.loadingDocumentAlerts()).toBe(false);
+    const call = requests.find((r) => r.method === 'GET' && r.path === '/api/admin/crm/document-alerts');
+    expect(call?.search).toContain('days=14');
+  });
+
+  it('maps an empty documents array to the empty-state shape', async () => {
+    stubRoute('GET', '/api/admin/crm/document-alerts', documentAlertsOverviewBody({ documents: [] }));
+    const service = buildService();
+
+    await service.loadDocumentAlerts(7);
+
+    expect(service.documentAlerts()?.documents).toEqual([]);
+  });
+
+  it('rejects on 403 (not Admin) and leaves documentAlerts() unset — CrmService never reports it itself', async () => {
+    stubRoute('GET', '/api/admin/crm/document-alerts', problemDetails(403, 'Forbidden'), 403);
+    const service = buildService();
+
+    await expect(service.loadDocumentAlerts(7)).rejects.toBeTruthy();
+
+    expect(service.documentAlerts()).toBeNull();
+    expect(service.loadingDocumentAlerts()).toBe(false);
+  });
+
+  it('setDocumentAlertsForTest() sets the signal directly', () => {
+    const service = buildService();
+
+    service.setDocumentAlertsForTest(documentAlertsOverviewBody() as unknown as CrmDocumentAlertOverview);
+
+    expect(service.documentAlerts()).not.toBeNull();
   });
 });

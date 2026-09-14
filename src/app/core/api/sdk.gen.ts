@@ -77,6 +77,8 @@ import type {
   GetApiAdminCategoriesResponses,
   GetApiAdminCrmDemandGapsData,
   GetApiAdminCrmDemandGapsResponses,
+  GetApiAdminCrmDocumentAlertsData,
+  GetApiAdminCrmDocumentAlertsResponses,
   GetApiAdminCrmOverviewData,
   GetApiAdminCrmOverviewResponses,
   GetApiAdminCrmSegmentsByCodeUsersData,
@@ -1279,6 +1281,14 @@ export const getApiAdminCrmUsersByUserIdRecommendationTrace = <
     GetApiAdminCrmUsersByUserIdRecommendationTraceErrors,
     ThrowOnError
   >({ url: '/api/admin/crm/users/{userId}/recommendation-trace', ...options });
+
+export const getApiAdminCrmDocumentAlerts = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminCrmDocumentAlertsData, ThrowOnError>,
+): RequestResult<GetApiAdminCrmDocumentAlertsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminCrmDocumentAlertsResponses, unknown, ThrowOnError>({
+    url: '/api/admin/crm/document-alerts',
+    ...options,
+  });
 
 export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,

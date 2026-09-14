@@ -106,6 +106,26 @@ describe('CrmAdminPage', () => {
 });
 
 /**
+ * crm-targeted-document-alerts v2 §4.1/§4.3 (`docs/contracts/crm-targeted-document-alerts.md`,
+ * F-12, ข้อ 11) — the one card this page gains: a link into the new admin-only page.
+ */
+describe('CrmAdminPage — การ์ดลิงก์ไปหน้าการแจ้งเตือนเอกสารตรงความสนใจ', () => {
+  it('renders the card with its Thai copy and a link to /admin/crm/document-alerts', () => {
+    const fixture = render(buildCrmFake(buildOverview()));
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.textContent).toContain('การแจ้งเตือนเอกสารตรงความสนใจ');
+    expect(el.textContent).toContain('ดูว่าเอกสารใหม่ถูกดันเข้าหาลูกค้ากลุ่มไหนบ้าง');
+
+    const link = Array.from(el.querySelectorAll('a')).find(
+      (a) => a.getAttribute('href') === '/admin/crm/document-alerts',
+    );
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('ดูรายละเอียด');
+  });
+});
+
+/**
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.4/§4.3/§1.4 (F-10, ข้อ 13)
  * — "ตาราง 'คำค้นที่หาแล้วไม่เจอ' render ครบ และ empty state เป็น 'ยังไม่มีข้อมูล'".
  */

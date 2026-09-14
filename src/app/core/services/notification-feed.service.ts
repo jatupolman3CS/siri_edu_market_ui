@@ -145,6 +145,9 @@ const STYLE_BY_KEY: Readonly<Record<string, NotificationStyleInfo>> = {
   admin_payout_requested: toneStyle('wallet', 'คำขอถอนเงิน', 'amber'),
   payout: toneStyle('wallet', 'ถอนเงิน', 'emerald'),
   new_document_from_followed_seller: toneStyle('doc', 'ผลงานใหม่', 'pink'),
+  // crm-targeted-document-alerts v2 §3.1/§4.1 (F-12, AC-28) — 19th catalog key, same `doc` icon
+  // as the followed-seller arm above but its own label so the two never read as one event.
+  new_document_for_interest: toneStyle('doc', 'ตรงกับความสนใจของคุณ', 'purple'),
   announcement: toneStyle('sparkle', 'ข่าวประกาศ', 'indigo'),
   tips: toneStyle('sparkle', 'เคล็ดลับ', 'slate'),
 };

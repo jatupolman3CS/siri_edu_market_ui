@@ -53,6 +53,30 @@ export type AdminBulkDocumentsResponse = {
   failedIds?: Array<string>;
 };
 
+export type AdminCrmDocumentAlertDocumentResponse = {
+  documentId: string;
+  documentTitle: string;
+  studioName: string;
+  queuedAt: string;
+  matchedCount: number;
+  sentCount: number;
+  averageMatchScore: number;
+};
+
+export type AdminCrmDocumentAlertOverviewResponse = {
+  days: number;
+  pendingCount: number;
+  sentCount: number;
+  suppressedCount: number;
+  digestCount: number;
+  recipientCount: number;
+  documentCount: number;
+  averageMatchScore: number;
+  lastQueuedAt: string | null;
+  lastSentAt: string | null;
+  documents: Array<AdminCrmDocumentAlertDocumentResponse>;
+};
+
 export type AdminCrmFacetResponse = {
   facetType: string;
   value: string;
@@ -3724,6 +3748,25 @@ export type GetApiAdminCrmUsersByUserIdRecommendationTraceResponses = {
 
 export type GetApiAdminCrmUsersByUserIdRecommendationTraceResponse =
   GetApiAdminCrmUsersByUserIdRecommendationTraceResponses[keyof GetApiAdminCrmUsersByUserIdRecommendationTraceResponses];
+
+export type GetApiAdminCrmDocumentAlertsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    days?: number;
+  };
+  url: '/api/admin/crm/document-alerts';
+};
+
+export type GetApiAdminCrmDocumentAlertsResponses = {
+  /**
+   * OK
+   */
+  200: AdminCrmDocumentAlertOverviewResponse;
+};
+
+export type GetApiAdminCrmDocumentAlertsResponse =
+  GetApiAdminCrmDocumentAlertsResponses[keyof GetApiAdminCrmDocumentAlertsResponses];
 
 export type GetApiAdminAnnouncementsData = {
   body?: never;

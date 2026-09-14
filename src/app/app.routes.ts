@@ -497,6 +497,16 @@ export const routes: Routes = [
           import('./features/admin/crm-admin/crm-user.page').then((m) => m.CrmUserPage),
         title: 'โปรไฟล์ CRM ผู้ใช้ — Admin',
       },
+      // crm-targeted-document-alerts v2 §4.1 (F-12, ข้อ 11): overview of the CRM-targeted
+      // document alert queue — admin-only, no seller/buyer surface (§0.5 decision 7).
+      {
+        path: 'crm/document-alerts',
+        loadComponent: () =>
+          import('./features/admin/crm-admin/crm-document-alerts-admin.page').then(
+            (m) => m.CrmDocumentAlertsAdminPage,
+          ),
+        title: 'การแจ้งเตือนเอกสารตรงความสนใจ — Admin',
+      },
       {
         path: 'settings',
         loadComponent: () =>

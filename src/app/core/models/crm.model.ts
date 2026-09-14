@@ -155,3 +155,37 @@ export interface CrmUserDetail {
   segments: CrmSegment[];
   signalBreakdown: CrmSignalCounts;
 }
+
+// ============================================================
+// crm-targeted-document-alerts v2 (docs/contracts/crm-targeted-document-alerts.md) §3.3 — admin-only
+// document alert queue overview. No seller/buyer surface per §0.5 decision 7 — see §4.
+// ============================================================
+
+/**
+ * §3.3 `AdminCrmDocumentAlertDocumentResponse` — one row of the "เอกสารล่าสุดที่ถูกดันเข้าหาผู้ที่สนใจ"
+ * table. Deliberately carries no recipient-identifying field (AC-22).
+ */
+export interface CrmDocumentAlertDocument {
+  documentId: string;
+  documentTitle: string;
+  studioName: string;
+  queuedAt: string;
+  matchedCount: number;
+  sentCount: number;
+  averageMatchScore: number;
+}
+
+/** §3.3 `AdminCrmDocumentAlertOverviewResponse` — `GET /api/admin/crm/document-alerts`. */
+export interface CrmDocumentAlertOverview {
+  days: number;
+  pendingCount: number;
+  sentCount: number;
+  suppressedCount: number;
+  digestCount: number;
+  recipientCount: number;
+  documentCount: number;
+  averageMatchScore: number;
+  lastQueuedAt: string | null;
+  lastSentAt: string | null;
+  documents: CrmDocumentAlertDocument[];
+}
