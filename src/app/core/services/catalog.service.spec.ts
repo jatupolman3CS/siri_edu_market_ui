@@ -775,22 +775,68 @@ describe('CatalogService — loadRecommended strategy widening (crm-driven-disco
     expect(catalog.recommendedStrategy()).toBe('popular-fallback');
   });
 
-  it('round 1: resets recommendedReason/recommendedGatePassed/recommendedExplanations to their "not known yet" defaults on every successful load (SDK does not carry them yet)', async () => {
+  it('§3.3 maps strategyReason/gatePassed and builds the explanations Map keyed by documentId', async () => {
     stubRoute('GET', '/api/marketplace/recommended', {
-      items: [documentRow('doc-1')],
+      items: [documentRow('doc-1'), documentRow('doc-2')],
       strategy: 'crm-personalized',
+      strategyReason: 'เพราะคุณสนใจคณิตศาสตร์',
+      gatePassed: true,
+      explanations: [
+        {
+          documentId: 'doc-1',
+          reason: 'เพราะคุณสนใจคณิตศาสตร์',
+          relevanceScore: 0.72,
+          matchedFacetType: 'category',
+          matchedFacetValue: 'cat-1',
+          matchedFacetLabel: 'คณิตศาสตร์',
+        },
+      ],
     });
     const catalog = buildService();
 
     catalog.loadRecommended();
     await settle();
 
-    expect(catalog.recommendedReason()).toBe('');
+    expect(catalog.recommendedReason()).toBe('เพราะคุณสนใจคณิตศาสตร์');
+    expect(catalog.recommendedGatePassed()).toBe(true);
+    expect(catalog.recommendedExplanations()).toEqual(
+      new Map([
+        [
+          'doc-1',
+          {
+            documentId: 'doc-1',
+            reason: 'เพราะคุณสนใจคณิตศาสตร์',
+            relevanceScore: 0.72,
+            matchedFacetType: 'category',
+            matchedFacetValue: 'cat-1',
+            matchedFacetLabel: 'คณิตศาสตร์',
+          },
+        ],
+      ]),
+    );
+    // §3.3 "ต้องทนกรณีหาไม่เจอ": doc-2 has no explanation row — lookup must not throw.
+    expect(catalog.recommendedExplanations().get('doc-2')).toBeUndefined();
+  });
+
+  it('§3.3 "popular-fallback" branch: strategyReason/gatePassed=false and explanations stays empty', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [documentRow('doc-9')],
+      strategy: 'popular-fallback',
+      strategyReason: 'เอกสารยอดนิยมที่ผู้ซื้อคนอื่นเลือกกัน',
+      gatePassed: false,
+      explanations: [],
+    });
+    const catalog = buildService();
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommendedReason()).toBe('เอกสารยอดนิยมที่ผู้ซื้อคนอื่นเลือกกัน');
     expect(catalog.recommendedGatePassed()).toBe(false);
     expect(catalog.recommendedExplanations()).toEqual(new Map());
   });
 
-  it('round 1: also resets recommendedReason/recommendedGatePassed/recommendedExplanations on failure', async () => {
+  it('resets recommendedReason/recommendedGatePassed/recommendedExplanations to their empty defaults on failure', async () => {
     stubRoute('GET', '/api/marketplace/recommended', { title: 'Server Error', status: 500 }, 500);
     const catalog = buildService();
 

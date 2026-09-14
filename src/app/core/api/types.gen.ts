@@ -156,6 +156,16 @@ export type AdminDashboardResponse = {
   refundTrendPercent?: number | null;
 };
 
+export type AdminDemandGapResponse = {
+  term?: string;
+  searchCount?: number;
+  zeroResultCount?: number;
+  zeroResultRate?: number;
+  userCount?: number;
+  lastSeenDate?: string;
+  matchedFacetLabel?: string | null;
+};
+
 export type AdminDocumentActionResponse = {
   documentId?: string;
   status?: string;
@@ -334,6 +344,27 @@ export type AdminPendingDocumentsSearchRequest = {
 
 export type AdminPendingDocumentsSort = number;
 
+export type AdminRecommendationTraceResponse = {
+  userId?: string;
+  displayName?: string;
+  trackingEnabled?: boolean;
+  computedAt?: string | null;
+  interestConfidence?: number;
+  minConfidence?: number;
+  topFacetScore?: number;
+  minTopFacetScore?: number;
+  profileAgeDays?: number | null;
+  gatePassed?: boolean;
+  gateFailReason?: string | null;
+  strategy?: string;
+  strategyReason?: string;
+  candidateCount?: number;
+  qualifiedCount?: number;
+  minQualifiedItems?: number;
+  userFacets?: Array<AdminTraceFacetResponse>;
+  candidates?: Array<AdminTraceCandidateResponse>;
+};
+
 export type AdminSellerApplicationResponse = {
   userId?: string;
   studioName?: string;
@@ -372,6 +403,35 @@ export type AdminSubscriptionListItemResponse = {
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
   createdAt?: string;
+};
+
+export type AdminTraceCandidateResponse = {
+  documentId?: string;
+  title?: string;
+  relevanceScore?: number;
+  rawScore?: number;
+  passed?: boolean;
+  excludedReason?: string | null;
+  matchedFacets?: Array<AdminTraceMatchResponse>;
+};
+
+export type AdminTraceFacetResponse = {
+  facetType?: string;
+  facetValue?: string;
+  facetLabel?: string;
+  normalizedScore?: number;
+  topSignal?: string;
+  signalCount?: number;
+  isDeclared?: boolean;
+};
+
+export type AdminTraceMatchResponse = {
+  facetType?: string;
+  facetValue?: string;
+  facetLabel?: string;
+  userScore?: number;
+  weight?: number;
+  contribution?: number;
 };
 
 export type AdminTransactionResponse = {
@@ -706,6 +766,25 @@ export type CreateSubcategoryRequest = {
 
 export type CreateSubscriptionMembershipRequest = {
   categoryIds: Array<string>;
+};
+
+export type DiscoveryResponse = {
+  strategy?: string;
+  strategyReason?: string;
+  gatePassed?: boolean;
+  sections?: Array<DiscoverySectionResponse>;
+  popularTerms?: Array<PopularSearchTermResponse>;
+  generatedAt?: string;
+};
+
+export type DiscoverySectionResponse = {
+  key?: string;
+  title?: string;
+  reason?: string;
+  facetType?: string | null;
+  facetValue?: string | null;
+  facetLabel?: string | null;
+  items?: Array<MarketplaceDocumentResponse>;
 };
 
 export type DocumentGalleryItemRequest = {
@@ -1170,6 +1249,14 @@ export type PagedResponseOfAdminCrmSegmentUserResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfAdminDemandGapResponse = {
+  items?: Array<AdminDemandGapResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfAdminDocumentListItemResponse = {
   items?: Array<AdminDocumentListItemResponse>;
   page?: number;
@@ -1446,6 +1533,19 @@ export type PlatformStatsResponse = {
   feeRatePercent?: number;
 };
 
+export type PopularSearchesResponse = {
+  items?: Array<PopularSearchTermResponse>;
+  personalized?: boolean;
+  windowDays?: number;
+  generatedAt?: string;
+};
+
+export type PopularSearchTermResponse = {
+  term?: string;
+  rank?: number;
+  isRising?: boolean;
+};
+
 export type PresignedUrlResponse = {
   url: string;
   expiresSeconds: number;
@@ -1464,9 +1564,21 @@ export type PublicOAuthClientsResponse = {
   lineLoginChannelId?: string;
 };
 
+export type RecommendationExplanationResponse = {
+  documentId?: string;
+  reason?: string;
+  relevanceScore?: number;
+  matchedFacetType?: string | null;
+  matchedFacetValue?: string | null;
+  matchedFacetLabel?: string | null;
+};
+
 export type RecommendedDocumentsResponse = {
   items?: Array<MarketplaceDocumentResponse>;
   strategy?: string;
+  strategyReason?: string;
+  gatePassed?: boolean;
+  explanations?: Array<RecommendationExplanationResponse>;
 };
 
 export type ReferralCodeValidationResponse = {
@@ -3562,6 +3674,57 @@ export type GetApiAdminCrmUsersByUserIdResponses = {
 export type GetApiAdminCrmUsersByUserIdResponse =
   GetApiAdminCrmUsersByUserIdResponses[keyof GetApiAdminCrmUsersByUserIdResponses];
 
+export type GetApiAdminCrmDemandGapsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/crm/demand-gaps';
+};
+
+export type GetApiAdminCrmDemandGapsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminDemandGapResponse;
+};
+
+export type GetApiAdminCrmDemandGapsResponse =
+  GetApiAdminCrmDemandGapsResponses[keyof GetApiAdminCrmDemandGapsResponses];
+
+export type GetApiAdminCrmUsersByUserIdRecommendationTraceData = {
+  body?: never;
+  path: {
+    userId: string;
+  };
+  query?: {
+    take?: number;
+  };
+  url: '/api/admin/crm/users/{userId}/recommendation-trace';
+};
+
+export type GetApiAdminCrmUsersByUserIdRecommendationTraceErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminCrmUsersByUserIdRecommendationTraceError =
+  GetApiAdminCrmUsersByUserIdRecommendationTraceErrors[keyof GetApiAdminCrmUsersByUserIdRecommendationTraceErrors];
+
+export type GetApiAdminCrmUsersByUserIdRecommendationTraceResponses = {
+  /**
+   * OK
+   */
+  200: AdminRecommendationTraceResponse;
+};
+
+export type GetApiAdminCrmUsersByUserIdRecommendationTraceResponse =
+  GetApiAdminCrmUsersByUserIdRecommendationTraceResponses[keyof GetApiAdminCrmUsersByUserIdRecommendationTraceResponses];
+
 export type GetApiAdminAnnouncementsData = {
   body?: never;
   path?: never;
@@ -4934,6 +5097,25 @@ export type GetApiMarketplaceSearchResponses = {
 export type GetApiMarketplaceSearchResponse =
   GetApiMarketplaceSearchResponses[keyof GetApiMarketplaceSearchResponses];
 
+export type GetApiMarketplacePopularSearchesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Take?: number;
+  };
+  url: '/api/marketplace/popular-searches';
+};
+
+export type GetApiMarketplacePopularSearchesResponses = {
+  /**
+   * OK
+   */
+  200: PopularSearchesResponse;
+};
+
+export type GetApiMarketplacePopularSearchesResponse =
+  GetApiMarketplacePopularSearchesResponses[keyof GetApiMarketplacePopularSearchesResponses];
+
 export type GetApiMarketplaceDocumentsByIdData = {
   body?: never;
   path: {
@@ -5110,6 +5292,23 @@ export type GetApiMarketplaceRecommendedResponses = {
 
 export type GetApiMarketplaceRecommendedResponse =
   GetApiMarketplaceRecommendedResponses[keyof GetApiMarketplaceRecommendedResponses];
+
+export type GetApiMarketplaceDiscoveryData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/marketplace/discovery';
+};
+
+export type GetApiMarketplaceDiscoveryResponses = {
+  /**
+   * OK
+   */
+  200: DiscoveryResponse;
+};
+
+export type GetApiMarketplaceDiscoveryResponse =
+  GetApiMarketplaceDiscoveryResponses[keyof GetApiMarketplaceDiscoveryResponses];
 
 export type GetApiMarketplaceFreeData = {
   body?: never;

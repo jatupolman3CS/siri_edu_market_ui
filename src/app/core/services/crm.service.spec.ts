@@ -484,13 +484,29 @@ describe('CrmService — test helpers', () => {
 /**
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.4/§3.5 (F-10, ข้อ 13/16).
  *
- * Round 1: both endpoints are brand new (`GET /api/admin/crm/demand-gaps`,
- * `GET /api/admin/crm/users/{userId}/recommendation-trace`) — neither exists in the generated SDK
- * yet, so `loadDemandGaps()`/`loadRecommendationTrace()` reject with `TODO(contract)` (same
- * "unwrap+rethrow, caller reports" convention as `loadUserDetail` above — no `ApiFailureReporter`
- * call inside `CrmService` itself).
+ * Round 2 (crm-driven-discovery-fe-wire): both endpoints are wired to the generated SDK now
+ * (gate 1 confirmed backend matches this contract, snapshot updated) — same "unwrap+rethrow,
+ * caller reports" convention as `loadUserDetail` above (no `ApiFailureReporter` call inside
+ * `CrmService` itself).
  */
-describe('CrmService — admin demand gaps (crm-driven-discovery v1 §3.4, round 1)', () => {
+function demandGapRow(term: string, over: Record<string, unknown> = {}) {
+  return {
+    term,
+    searchCount: 120,
+    zeroResultCount: 90,
+    zeroResultRate: 0.75,
+    userCount: 8,
+    lastSeenDate: '2026-09-14',
+    matchedFacetLabel: 'คณิตศาสตร์',
+    ...over,
+  };
+}
+
+function demandGapsPageBody(items: ReturnType<typeof demandGapRow>[], over: Record<string, unknown> = {}) {
+  return { items, page: 1, pageSize: 20, totalCount: items.length, totalPages: 1, ...over };
+}
+
+describe('CrmService — admin demand gaps pager (crm-driven-discovery v1 §3.4)', () => {
   it('starts with an empty list and not loading', () => {
     const service = buildService();
 
@@ -498,24 +514,110 @@ describe('CrmService — admin demand gaps (crm-driven-discovery v1 §3.4, round
     expect(service.demandGapsLoading()).toBe(false);
   });
 
-  it('loadDemandGaps() rejects with TODO(contract) and leaves the list empty', async () => {
+  it('loadDemandGaps() maps items and sends Page/PageSize in the query', async () => {
+    stubRoute('GET', '/api/admin/crm/demand-gaps', demandGapsPageBody([demandGapRow('pitch deck')]));
     const service = buildService();
 
-    await expect(service.loadDemandGaps()).rejects.toThrow('TODO(contract)');
+    await service.loadDemandGaps();
+
+    expect(service.demandGaps()).toEqual([demandGapRow('pitch deck')]);
+    expect(service.demandGapsTotalCount()).toBe(1);
+    expect(service.demandGapsLoading()).toBe(false);
+    const call = requests.find((r) => r.method === 'GET' && r.path === '/api/admin/crm/demand-gaps');
+    expect(call?.search).toContain('Page=1');
+    expect(call?.search).toContain('PageSize=20');
+  });
+
+  it('a row with matchedFacetLabel: null maps through as-is (§3.4 "หมวดที่เกี่ยวข้อง" = "—")', async () => {
+    stubRoute(
+      'GET',
+      '/api/admin/crm/demand-gaps',
+      demandGapsPageBody([demandGapRow('resume', { matchedFacetLabel: null })]),
+    );
+    const service = buildService();
+
+    await service.loadDemandGaps();
+
+    expect(service.demandGaps()[0].matchedFacetLabel).toBeNull();
+  });
+
+  it('onDemandGapsPageChange()/onDemandGapsPageSizeChange() re-fetch with the new page/size', async () => {
+    stubRoute('GET', '/api/admin/crm/demand-gaps', demandGapsPageBody([demandGapRow('toeic')]));
+    const service = buildService();
+    await service.loadDemandGaps();
+
+    await service.onDemandGapsPageChange(2);
+    expect(requests[requests.length - 1].search).toContain('Page=2');
+
+    await service.onDemandGapsPageSizeChange(50);
+    expect(requests[requests.length - 1].search).toContain('PageSize=50');
+  });
+
+  it('rejects on 403 (not Admin) and leaves the list empty', async () => {
+    stubRoute('GET', '/api/admin/crm/demand-gaps', problemDetails(403, 'Forbidden'), 403);
+    const service = buildService();
+
+    await expect(service.loadDemandGaps()).rejects.toBeTruthy();
 
     expect(service.demandGaps()).toEqual([]);
     expect(service.demandGapsLoading()).toBe(false);
   });
-
-  it('onDemandGapsPageChange()/onDemandGapsPageSizeChange() also reject with TODO(contract)', async () => {
-    const service = buildService();
-
-    await expect(service.onDemandGapsPageChange(2)).rejects.toThrow('TODO(contract)');
-    await expect(service.onDemandGapsPageSizeChange(50)).rejects.toThrow('TODO(contract)');
-  });
 });
 
-describe('CrmService — admin recommendation trace (crm-driven-discovery v1 §3.5, round 1)', () => {
+function traceBody(over: Record<string, unknown> = {}) {
+  return {
+    userId: 'user-1',
+    displayName: 'สมชาย ใจดี',
+    trackingEnabled: true,
+    computedAt: '2026-09-14T00:00:00Z',
+    interestConfidence: 0.62,
+    minConfidence: 0.3,
+    topFacetScore: 0.8,
+    minTopFacetScore: 0.5,
+    profileAgeDays: 3,
+    gatePassed: true,
+    gateFailReason: null,
+    strategy: 'crm-personalized',
+    strategyReason: 'เพราะคุณสนใจคณิตศาสตร์',
+    candidateCount: 10,
+    qualifiedCount: 4,
+    minQualifiedItems: 3,
+    userFacets: [
+      {
+        facetType: 'category',
+        facetValue: 'cat-1',
+        facetLabel: 'คณิตศาสตร์',
+        normalizedScore: 0.9,
+        topSignal: 'purchase',
+        signalCount: 5,
+        isDeclared: false,
+      },
+    ],
+    candidates: [
+      {
+        documentId: 'doc-1',
+        title: 'แบบฝึกหัดคณิตศาสตร์ ม.1',
+        relevanceScore: 0.72,
+        rawScore: 1.44,
+        passed: true,
+        excludedReason: null,
+        matchedFacets: [
+          {
+            facetType: 'category',
+            facetValue: 'cat-1',
+            facetLabel: 'คณิตศาสตร์',
+            userScore: 0.9,
+            weight: 0.8,
+            contribution: 0.72,
+          },
+        ],
+      },
+    ],
+    ...over,
+  };
+}
+
+describe('CrmService — admin recommendation trace (crm-driven-discovery v1 §3.5)', () => {
   it('starts with recommendationTrace() null and not loading', () => {
     const service = buildService();
 
@@ -523,10 +625,64 @@ describe('CrmService — admin recommendation trace (crm-driven-discovery v1 §3
     expect(service.loadingRecommendationTrace()).toBe(false);
   });
 
-  it('loadRecommendationTrace() rejects with TODO(contract) and resets loading back to false', async () => {
+  it('loadRecommendationTrace() maps gate/facets/candidates in full and sends take in the query', async () => {
+    stubRoute('GET', '/api/admin/crm/users/user-1/recommendation-trace', traceBody());
     const service = buildService();
 
-    await expect(service.loadRecommendationTrace('user-1')).rejects.toThrow('TODO(contract)');
+    await service.loadRecommendationTrace('user-1');
+
+    expect(service.recommendationTrace()).toEqual(traceBody());
+    expect(service.loadingRecommendationTrace()).toBe(false);
+    const call = requests.find(
+      (r) => r.method === 'GET' && r.path === '/api/admin/crm/users/user-1/recommendation-trace',
+    );
+    expect(call?.search).toContain('take=8');
+  });
+
+  it('AC-21: an unknown value from the backend widens strategy to \'popular-fallback\' defensively', async () => {
+    stubRoute(
+      'GET',
+      '/api/admin/crm/users/user-1/recommendation-trace',
+      traceBody({ strategy: 'some-future-strategy' }),
+    );
+    const service = buildService();
+
+    await service.loadRecommendationTrace('user-1');
+
+    expect(service.recommendationTrace()?.strategy).toBe('popular-fallback');
+  });
+
+  it('AC-21: a user who has not passed the gate maps gatePassed=false with a non-null gateFailReason', async () => {
+    stubRoute(
+      'GET',
+      '/api/admin/crm/users/user-2/recommendation-trace',
+      traceBody({
+        userId: 'user-2',
+        gatePassed: false,
+        gateFailReason: 'ความมั่นใจ 0.10 ต่ำกว่าเกณฑ์ 0.30',
+        strategy: 'popular-fallback',
+      }),
+    );
+    const service = buildService();
+
+    await service.loadRecommendationTrace('user-2');
+
+    expect(service.recommendationTrace()).toMatchObject({
+      gatePassed: false,
+      gateFailReason: 'ความมั่นใจ 0.10 ต่ำกว่าเกณฑ์ 0.30',
+    });
+  });
+
+  it('AC-21: 404 (no such userId) rejects and leaves recommendationTrace() unset', async () => {
+    stubRoute(
+      'GET',
+      '/api/admin/crm/users/does-not-exist/recommendation-trace',
+      problemDetails(404, 'Not Found'),
+      404,
+    );
+    const service = buildService();
+
+    await expect(service.loadRecommendationTrace('does-not-exist')).rejects.toBeTruthy();
 
     expect(service.loadingRecommendationTrace()).toBe(false);
     expect(service.recommendationTrace()).toBeNull();

@@ -7,8 +7,9 @@ import type { AdminRecommendationTrace } from '../../../core/models';
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.5/§4.3/§1.4 — "render gate
  * ผ่าน/ไม่ผ่าน + เหตุผล + ตาราง candidate".
  *
- * Round 1: `CrmService.loadRecommendationTrace()` is a `TODO(contract)` stub — drives the
- * component against a stubbed `CrmService`, same style as `CrmUserPanelComponent`'s spec.
+ * Drives the component against a stubbed `CrmService` (same style as `CrmUserPanelComponent`'s
+ * spec) rather than the network layer — `CrmService.loadRecommendationTrace()`'s own SDK wiring
+ * is covered separately in `crm.service.spec.ts` (round 2, after regen).
  */
 function buildTrace(overrides: Partial<AdminRecommendationTrace> = {}): AdminRecommendationTrace {
   return {

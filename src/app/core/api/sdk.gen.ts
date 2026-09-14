@@ -75,6 +75,8 @@ import type {
   GetApiAdminCategoriesByIdResponses,
   GetApiAdminCategoriesData,
   GetApiAdminCategoriesResponses,
+  GetApiAdminCrmDemandGapsData,
+  GetApiAdminCrmDemandGapsResponses,
   GetApiAdminCrmOverviewData,
   GetApiAdminCrmOverviewResponses,
   GetApiAdminCrmSegmentsByCodeUsersData,
@@ -82,6 +84,9 @@ import type {
   GetApiAdminCrmSegmentsByCodeUsersResponses,
   GetApiAdminCrmUsersByUserIdData,
   GetApiAdminCrmUsersByUserIdErrors,
+  GetApiAdminCrmUsersByUserIdRecommendationTraceData,
+  GetApiAdminCrmUsersByUserIdRecommendationTraceErrors,
+  GetApiAdminCrmUsersByUserIdRecommendationTraceResponses,
   GetApiAdminCrmUsersByUserIdResponses,
   GetApiAdminDashboardData,
   GetApiAdminDashboardResponses,
@@ -170,6 +175,8 @@ import type {
   GetApiMarketplaceCategoriesBySlugResponses,
   GetApiMarketplaceCategoriesData,
   GetApiMarketplaceCategoriesResponses,
+  GetApiMarketplaceDiscoveryData,
+  GetApiMarketplaceDiscoveryResponses,
   GetApiMarketplaceDocumentsByIdBundlesData,
   GetApiMarketplaceDocumentsByIdBundlesErrors,
   GetApiMarketplaceDocumentsByIdBundlesResponses,
@@ -183,6 +190,8 @@ import type {
   GetApiMarketplaceDocumentsByIdResponses,
   GetApiMarketplaceFreeData,
   GetApiMarketplaceFreeResponses,
+  GetApiMarketplacePopularSearchesData,
+  GetApiMarketplacePopularSearchesResponses,
   GetApiMarketplaceRecommendedData,
   GetApiMarketplaceRecommendedResponses,
   GetApiMarketplaceSearchData,
@@ -1248,6 +1257,29 @@ export const getApiAdminCrmUsersByUserId = <ThrowOnError extends boolean = false
     ThrowOnError
   >({ url: '/api/admin/crm/users/{userId}', ...options });
 
+export const getApiAdminCrmDemandGaps = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminCrmDemandGapsData, ThrowOnError>,
+): RequestResult<GetApiAdminCrmDemandGapsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminCrmDemandGapsResponses, unknown, ThrowOnError>({
+    url: '/api/admin/crm/demand-gaps',
+    ...options,
+  });
+
+export const getApiAdminCrmUsersByUserIdRecommendationTrace = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetApiAdminCrmUsersByUserIdRecommendationTraceData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminCrmUsersByUserIdRecommendationTraceResponses,
+  GetApiAdminCrmUsersByUserIdRecommendationTraceErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminCrmUsersByUserIdRecommendationTraceResponses,
+    GetApiAdminCrmUsersByUserIdRecommendationTraceErrors,
+    ThrowOnError
+  >({ url: '/api/admin/crm/users/{userId}/recommendation-trace', ...options });
+
 export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,
 ): RequestResult<GetApiAdminAnnouncementsResponses, unknown, ThrowOnError> =>
@@ -1950,6 +1982,13 @@ export const getApiMarketplaceSearch = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
+export const getApiMarketplacePopularSearches = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMarketplacePopularSearchesData, ThrowOnError>,
+): RequestResult<GetApiMarketplacePopularSearchesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMarketplacePopularSearchesResponses, unknown, ThrowOnError>(
+    { url: '/api/marketplace/popular-searches', ...options },
+  );
+
 export const getApiMarketplaceDocumentsById = <ThrowOnError extends boolean = false>(
   options: Options<GetApiMarketplaceDocumentsByIdData, ThrowOnError>,
 ): RequestResult<
@@ -2024,6 +2063,14 @@ export const getApiMarketplaceRecommended = <ThrowOnError extends boolean = fals
 ): RequestResult<GetApiMarketplaceRecommendedResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<GetApiMarketplaceRecommendedResponses, unknown, ThrowOnError>({
     url: '/api/marketplace/recommended',
+    ...options,
+  });
+
+export const getApiMarketplaceDiscovery = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMarketplaceDiscoveryData, ThrowOnError>,
+): RequestResult<GetApiMarketplaceDiscoveryResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMarketplaceDiscoveryResponses, unknown, ThrowOnError>({
+    url: '/api/marketplace/discovery',
     ...options,
   });
 

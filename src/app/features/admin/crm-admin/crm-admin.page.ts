@@ -23,8 +23,8 @@ const SEGMENT_KIND_LABELS: Record<CrmSegmentKind, string> = {
  * real `GET /api/admin/crm/overview` call.
  *
  * crm-driven-discovery v1 §3.4/§4.1/§4.3 (F-10, ข้อ 13): also loads+renders the "คำค้นที่หาแล้ว
- * ไม่เจอ (30 วันล่าสุด)" table (`CrmService.demandGaps*`) — same read-only, same round-1
- * `TODO(contract)` pattern as the overview above.
+ * ไม่เจอ (30 วันล่าสุด)" table (`CrmService.demandGaps*`) — wired to the real `GET
+ * /api/admin/crm/demand-gaps` (round 2 — crm-driven-discovery-fe-wire).
  */
 @Component({
   selector: 'app-crm-admin',

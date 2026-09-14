@@ -2,6 +2,9 @@ import { Injectable, inject, signal } from '@angular/core';
 import type {
   AdminDemandGap,
   AdminRecommendationTrace,
+  AdminTraceCandidate,
+  AdminTraceFacet,
+  AdminTraceMatch,
   CrmFacetType,
   CrmInterest,
   CrmLabeledValue,
@@ -19,9 +22,11 @@ import type {
 } from '../models';
 import {
   deleteApiMeCrm,
+  getApiAdminCrmDemandGaps,
   getApiAdminCrmOverview,
   getApiAdminCrmSegmentsByCodeUsers,
   getApiAdminCrmUsersByUserId,
+  getApiAdminCrmUsersByUserIdRecommendationTrace,
   getApiMeCrm,
   putApiMeCrmTracking,
 } from '../api';
@@ -35,12 +40,18 @@ import type {
   AdminCrmSegmentSummaryResponse,
   AdminCrmSegmentUserResponse,
   AdminCrmUserDetailResponse,
+  AdminDemandGapResponse,
+  AdminRecommendationTraceResponse,
+  AdminTraceCandidateResponse,
+  AdminTraceFacetResponse,
+  AdminTraceMatchResponse,
   MyCrmInterestResponse,
   MyCrmProfileResponse,
   MyCrmSegmentResponse,
   MyCrmSignalCountsResponse,
 } from '../api/types.gen';
 import { unwrapSdkResult } from './api-result';
+import { toRecommendationStrategy } from './catalog.service';
 import { createServerPager, type ServerPager } from './server-pager';
 
 // ====== crm-core v1 §3 response mappers ======
@@ -201,6 +212,83 @@ function toCrmUserDetail(res: AdminCrmUserDetailResponse): CrmUserDetail {
   };
 }
 
+// ====== crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.4/§3.5 mappers ======
+
+/** §3.4 `AdminDemandGapResponse` — one row of `GET /api/admin/crm/demand-gaps`. */
+function toAdminDemandGap(res: AdminDemandGapResponse): AdminDemandGap {
+  return {
+    term: res.term ?? '',
+    searchCount: res.searchCount ?? 0,
+    zeroResultCount: res.zeroResultCount ?? 0,
+    zeroResultRate: res.zeroResultRate ?? 0,
+    userCount: res.userCount ?? 0,
+    lastSeenDate: res.lastSeenDate ?? '',
+    matchedFacetLabel: res.matchedFacetLabel ?? null,
+  };
+}
+
+/** §3.5 `AdminTraceFacetResponse` — one facet of `AdminRecommendationTraceResponse.userFacets`. */
+function toAdminTraceFacet(res: AdminTraceFacetResponse): AdminTraceFacet {
+  return {
+    facetType: res.facetType ?? '',
+    facetValue: res.facetValue ?? '',
+    facetLabel: res.facetLabel ?? '',
+    normalizedScore: res.normalizedScore ?? 0,
+    topSignal: res.topSignal ?? '',
+    signalCount: res.signalCount ?? 0,
+    isDeclared: res.isDeclared ?? false,
+  };
+}
+
+/** §3.5 `AdminTraceMatchResponse` — one facet's contribution to a candidate's `rawScore`. */
+function toAdminTraceMatch(res: AdminTraceMatchResponse): AdminTraceMatch {
+  return {
+    facetType: res.facetType ?? '',
+    facetValue: res.facetValue ?? '',
+    facetLabel: res.facetLabel ?? '',
+    userScore: res.userScore ?? 0,
+    weight: res.weight ?? 0,
+    contribution: res.contribution ?? 0,
+  };
+}
+
+/** §3.5 `AdminTraceCandidateResponse` — one candidate document of `AdminRecommendationTraceResponse.candidates`. */
+function toAdminTraceCandidate(res: AdminTraceCandidateResponse): AdminTraceCandidate {
+  return {
+    documentId: res.documentId ?? '',
+    title: res.title ?? '',
+    relevanceScore: res.relevanceScore ?? 0,
+    rawScore: res.rawScore ?? 0,
+    passed: res.passed ?? false,
+    excludedReason: res.excludedReason ?? null,
+    matchedFacets: (res.matchedFacets ?? []).map(toAdminTraceMatch),
+  };
+}
+
+/** §3.5 `AdminRecommendationTraceResponse` — `GET /api/admin/crm/users/{userId}/recommendation-trace`. */
+function toAdminRecommendationTrace(res: AdminRecommendationTraceResponse): AdminRecommendationTrace {
+  return {
+    userId: res.userId ?? '',
+    displayName: res.displayName ?? '',
+    trackingEnabled: res.trackingEnabled ?? false,
+    computedAt: res.computedAt ?? null,
+    interestConfidence: res.interestConfidence ?? 0,
+    minConfidence: res.minConfidence ?? 0,
+    topFacetScore: res.topFacetScore ?? 0,
+    minTopFacetScore: res.minTopFacetScore ?? 0,
+    profileAgeDays: res.profileAgeDays ?? null,
+    gatePassed: res.gatePassed ?? false,
+    gateFailReason: res.gateFailReason ?? null,
+    strategy: toRecommendationStrategy(res.strategy),
+    strategyReason: res.strategyReason ?? '',
+    candidateCount: res.candidateCount ?? 0,
+    qualifiedCount: res.qualifiedCount ?? 0,
+    minQualifiedItems: res.minQualifiedItems ?? 0,
+    userFacets: (res.userFacets ?? []).map(toAdminTraceFacet),
+    candidates: (res.candidates ?? []).map(toAdminTraceCandidate),
+  };
+}
+
 /**
  * crm-core v1 (`docs/contracts/crm-core.md`) §3, §4.2 — buyer privacy self-service
  * (`/account/privacy`, §3.1–§3.3) and admin CRM inspection (`/admin/crm/**`, §3.4–§3.6).
@@ -354,10 +442,10 @@ export class CrmService {
 
   // ====== Admin: crm-driven-discovery v1 §3.4/§3.5 (F-10, ข้อ 13/16) ======
   //
-  // Round 1: both endpoints are brand new (`GET /api/admin/crm/demand-gaps`,
-  // `GET /api/admin/crm/users/{userId}/recommendation-trace`) — neither exists in the generated
-  // SDK yet, so their fetches throw `TODO(contract)` uncaught (same convention `loadUserDetail`
-  // above already uses: unwrap+rethrow, caller reports via `ApiFailureReporter`).
+  // Round 2 (crm-driven-discovery-fe-wire): wired to the generated SDK after backend gate 1
+  // passed and `npm run generate:api` was re-run against the live backend — same
+  // "unwrap+rethrow, caller reports via `ApiFailureReporter`" convention `loadUserDetail` above
+  // already uses.
 
   /**
    * §3.4 `GET /api/admin/crm/demand-gaps` — "คำค้นที่หาแล้วไม่เจอ (30 วันล่าสุด)" table on
@@ -367,9 +455,17 @@ export class CrmService {
     createServerPager<AdminDemandGap>({
       pageSize: 20,
       errorMessage: 'โหลดคำค้นที่หาแล้วไม่เจอไม่สำเร็จ',
-      fetch: async () => {
-        // TODO(contract): awaiting SDK regen — GET /api/admin/crm/demand-gaps (§3.4)
-        throw new Error('TODO(contract): awaiting SDK regen');
+      fetch: async (page, pageSize) => {
+        const data = unwrapSdkResult(
+          await getApiAdminCrmDemandGaps({ query: { Page: page, PageSize: pageSize } }),
+        );
+        return {
+          items: (data.items ?? []).map(toAdminDemandGap),
+          page: data.page ?? page,
+          pageSize: data.pageSize ?? pageSize,
+          totalCount: data.totalCount ?? 0,
+          totalPages: data.totalPages ?? 1,
+        };
       },
     });
 
@@ -406,9 +502,12 @@ export class CrmService {
   async loadRecommendationTrace(userId: string, take = 8): Promise<void> {
     this._loadingRecommendationTrace.set(true);
     try {
-      // TODO(contract): awaiting SDK regen — GET /api/admin/crm/users/{userId}/recommendation-trace (§3.5)
-      // path: { userId }, query: { take }
-      throw new Error('TODO(contract): awaiting SDK regen');
+      const trace = toAdminRecommendationTrace(
+        unwrapSdkResult(
+          await getApiAdminCrmUsersByUserIdRecommendationTrace({ path: { userId }, query: { take } }),
+        ),
+      );
+      this._recommendationTrace.set(trace);
     } finally {
       this._loadingRecommendationTrace.set(false);
     }

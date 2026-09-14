@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
   Category,
+  CrmFacetType,
   DocumentItem,
   GradeLevel,
   RecommendationExplanation,
@@ -30,6 +31,7 @@ import {
 } from '../api';
 import type {
   MarketplaceDocumentPreviewResponse,
+  RecommendationExplanationResponse,
   SellerProfileResponse,
 } from '../api/types.gen';
 import { unwrapSdkResult, type SdkResult } from './api-result';
@@ -568,15 +570,13 @@ export class CatalogService {
         const data = unwrapSdkResult(result);
         this._recommended.set((data.items ?? []).map(mapDocument));
         this._recommendedStrategy.set(toRecommendationStrategy(data.strategy));
-        // crm-driven-discovery v1 §3.3/§4.4: strategyReason/gatePassed/explanations are 3 new
-        // fields the backend adds to this *same* response (§3.3 "ประกาศ supersede") — `data`
-        // here is still the pre-regen generated type (2 fields only: items, strategy), so there
-        // is nothing to read off it yet. Reset to the same "not known" defaults every round-1
-        // caller falls back to (never a fabricated reason/score) — round 2 (after
-        // `npm run generate:api`) reads the 3 real fields instead.
-        this._recommendedReason.set('');
-        this._recommendedGatePassed.set(false);
-        this._recommendedExplanations.set(new Map());
+        // crm-driven-discovery v1 §3.3: 3 new fields on this *same* response (§3.3 "ประกาศ
+        // supersede") — strategyReason is the §4.3 subtitle, gatePassed is true only on the
+        // `crm-personalized` branch, explanations is a parallel array to `items` joined
+        // client-side on `documentId` (§3.3 "ทำไมถึงใช้ parallel array").
+        this._recommendedReason.set(data.strategyReason ?? '');
+        this._recommendedGatePassed.set(data.gatePassed ?? false);
+        this._recommendedExplanations.set(mapRecommendationExplanations(data.explanations));
       } catch (e) {
         this._recommended.set([]);
         this._recommendedStrategy.set(null);
@@ -808,18 +808,17 @@ export class CatalogService {
   /**
    * crm-driven-discovery v1 §3.3/§4.2/§4.4: widened from the 2-value union
    * `personalized-recommendations v1 §3.1` used to `RecommendationStrategy` (4 values) — a
-   * UI-side type only (not sourced from the SDK), so this widening is safe to do in round 1
-   * ahead of the SDK regen (§4.4 "ข้อยกเว้นเดียว"). Unknown/future values from the backend map
-   * to `'popular-fallback'` defensively (see `toRecommendationStrategy` below).
+   * UI-side type only (not sourced from the SDK). Unknown/future values from the backend map to
+   * `'popular-fallback'` defensively (see `toRecommendationStrategy` below).
    */
   private readonly _recommendedStrategy = signal<RecommendationStrategy | null>(null);
   readonly recommendedStrategy = this._recommendedStrategy.asReadonly();
 
-  /** crm-driven-discovery v1 §3.3/§4.2 — Thai subtitle sentence for the "แนะนำสำหรับคุณ" section (§4.3). Round 1: always `''` (see `loadRecommended` comment). */
+  /** crm-driven-discovery v1 §3.3/§4.2 — Thai subtitle sentence for the "แนะนำสำหรับคุณ" section (§4.3), read straight from `strategyReason` (see `loadRecommended` below). */
   private readonly _recommendedReason = signal<string>('');
   readonly recommendedReason = this._recommendedReason.asReadonly();
 
-  /** crm-driven-discovery v1 §3.3 — `true` only when `strategy === 'crm-personalized'`. Round 1: always `false`. */
+  /** crm-driven-discovery v1 §3.3 — `true` only when `strategy === 'crm-personalized'`. */
   private readonly _recommendedGatePassed = signal<boolean>(false);
   readonly recommendedGatePassed = this._recommendedGatePassed.asReadonly();
 
@@ -1450,8 +1449,31 @@ const KNOWN_RECOMMENDATION_STRATEGIES: ReadonlySet<string> = new Set<Recommendat
  * a 5th value added to the backend's `RecommendationStrategy` static class later from crashing the
  * §4.3 strategy→title map instead of failing loudly.
  */
-function toRecommendationStrategy(raw: string | undefined): RecommendationStrategy {
+export function toRecommendationStrategy(raw: string | undefined): RecommendationStrategy {
   return raw != null && KNOWN_RECOMMENDATION_STRATEGIES.has(raw) ? (raw as RecommendationStrategy) : 'popular-fallback';
+}
+
+/**
+ * crm-driven-discovery v1 §3.3/§4.2: `RecommendationExplanationResponse[]` → `Map<documentId,
+ * RecommendationExplanation>`, built once per `loadRecommended()` call (never re-derived per
+ * card in a template — §3.3 "สร้าง Map ครั้งเดียวตอน map response ห้าม find() ใน template").
+ */
+export function mapRecommendationExplanations(
+  explanations: Array<RecommendationExplanationResponse> | undefined,
+): Map<string, RecommendationExplanation> {
+  const map = new Map<string, RecommendationExplanation>();
+  for (const e of explanations ?? []) {
+    if (!e.documentId) continue;
+    map.set(e.documentId, {
+      documentId: e.documentId,
+      reason: e.reason ?? '',
+      relevanceScore: e.relevanceScore ?? 0,
+      matchedFacetType: (e.matchedFacetType as CrmFacetType | null) ?? null,
+      matchedFacetValue: e.matchedFacetValue ?? null,
+      matchedFacetLabel: e.matchedFacetLabel ?? null,
+    });
+  }
+  return map;
 }
 
 /** Same shape `unwrapSdkResult` throws (`{ status }`) — mirrors `order.service.ts`'s `extractStatus`. */

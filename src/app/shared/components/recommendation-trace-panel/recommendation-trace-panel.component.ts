@@ -10,8 +10,10 @@ import { EmptyStateComponent } from '../empty-state/empty-state.component';
  * §4.1 table). Read-only, no action of any kind — same §8.4 rule `CrmUserPanelComponent` already
  * follows (admin only *reads*, never edits a score by hand).
  *
- * Round 1: `CrmService.loadRecommendationTrace()` throws `TODO(contract)` — renders the empty
- * state until round 2 wires the real `GET /api/admin/crm/users/{userId}/recommendation-trace`.
+ * `CrmService.loadRecommendationTrace()` calls the real `GET
+ * /api/admin/crm/users/{userId}/recommendation-trace` (round 2 — crm-driven-discovery-fe-wire);
+ * a 404 (unknown `userId`) or any other failure is reported here and the panel renders its
+ * empty state (`EmptyStateComponent`) since there is nothing useful to fall back to.
  */
 @Component({
   selector: 'app-recommendation-trace-panel',
