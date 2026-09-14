@@ -53,6 +53,94 @@ export type AdminBulkDocumentsResponse = {
   failedIds?: Array<string>;
 };
 
+export type AdminCrmFacetResponse = {
+  facetType: string;
+  value: string;
+  label: string;
+  score: number;
+  normalizedScore: number;
+  signalCount: number;
+  topSignal: string;
+  isDeclared: boolean;
+  lastSignalAt: string | null;
+};
+
+export type AdminCrmFacetSummaryResponse = {
+  facetType: string;
+  value: string;
+  label: string;
+  userCount: number;
+  averageScore: number;
+};
+
+export type AdminCrmLabeledValueResponse = {
+  value: string;
+  label: string;
+};
+
+export type AdminCrmOverviewResponse = {
+  profileCount: number;
+  computedProfileCount: number;
+  trackingOptOutCount: number;
+  lastComputedAt: string | null;
+  averageConfidence: number;
+  signalRowCount: number;
+  segments: Array<AdminCrmSegmentSummaryResponse>;
+  topSearchTerms: Array<AdminCrmSearchTermResponse>;
+  topFacets: Array<AdminCrmFacetSummaryResponse>;
+};
+
+export type AdminCrmSearchTermResponse = {
+  term: string;
+  searchCount: number;
+  zeroResultCount: number;
+  userCount: number;
+};
+
+export type AdminCrmSegmentResponse = {
+  code: string;
+  label: string;
+  kind: string;
+  reason: string;
+  assignedAt: string;
+};
+
+export type AdminCrmSegmentSummaryResponse = {
+  code: string;
+  label: string;
+  kind: string;
+  description: string;
+  userCount: number;
+};
+
+export type AdminCrmSegmentUserResponse = {
+  userId: string;
+  displayName: string;
+  email: string;
+  interestConfidence: number;
+  topCategoryLabel: string | null;
+  lastActivityAt: string | null;
+  assignedAt: string;
+};
+
+export type AdminCrmUserDetailResponse = {
+  userId: string;
+  displayName: string;
+  email: string;
+  trackingEnabled: boolean;
+  computedAt: string | null;
+  interestConfidence: number;
+  engagementScore: number;
+  signalCount: number;
+  lastActivityAt: string | null;
+  lastPurchaseAt: string | null;
+  purchaseCount: number;
+  declaredCategories: Array<AdminCrmLabeledValueResponse>;
+  facets: Array<AdminCrmFacetResponse>;
+  segments: Array<AdminCrmSegmentResponse>;
+  signalBreakdown: MyCrmSignalCountsResponse;
+};
+
 export type AdminDashboardResponse = {
   totalRevenue?: number;
   totalFees?: number;
@@ -904,6 +992,43 @@ export type MarketplaceSearchResponse = {
   totalPages?: number;
 };
 
+export type MyCrmInterestResponse = {
+  facetType: string;
+  value: string;
+  label: string;
+  score: number;
+  reason: string;
+};
+
+export type MyCrmProfileResponse = {
+  trackingEnabled: boolean;
+  computedAt: string | null;
+  interestConfidence: number;
+  topInterests: Array<MyCrmInterestResponse>;
+  segments: Array<MyCrmSegmentResponse>;
+  signalCounts: MyCrmSignalCountsResponse;
+  dataRetentionDays: number;
+};
+
+export type MyCrmSegmentResponse = {
+  code: string;
+  label: string;
+  kind: string;
+  reason: string;
+};
+
+export type MyCrmSignalCountsResponse = {
+  documentViews: number;
+  searches: number;
+  purchases: number;
+  subscriptionAccesses: number;
+  wishlistItems: number;
+  cartItems: number;
+  sellerFollows: number;
+  reviews: number;
+  declaredInterests: number;
+};
+
 export type MyFeedbackListItemResponse = {
   id?: string;
   type?: string;
@@ -1020,6 +1145,14 @@ export type OrderResponse = {
 
 export type PagedResponseOfAdminAuditLogResponse = {
   items?: Array<AdminAuditLogResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfAdminCrmSegmentUserResponse = {
+  items?: Array<AdminCrmSegmentUserResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -1911,6 +2044,10 @@ export type UpdateCategoryRequest = {
   isActive?: boolean;
   sortOrder?: number;
   subscriptionMonthlyPrice?: number | null;
+};
+
+export type UpdateCrmTrackingRequest = {
+  enabled?: boolean | null;
 };
 
 export type UpdateDocumentRequest = {
@@ -3335,6 +3472,84 @@ export type PostApiAdminFeedbackByIdStatusResponses = {
 
 export type PostApiAdminFeedbackByIdStatusResponse =
   PostApiAdminFeedbackByIdStatusResponses[keyof PostApiAdminFeedbackByIdStatusResponses];
+
+export type GetApiAdminCrmOverviewData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/crm/overview';
+};
+
+export type GetApiAdminCrmOverviewResponses = {
+  /**
+   * OK
+   */
+  200: AdminCrmOverviewResponse;
+};
+
+export type GetApiAdminCrmOverviewResponse =
+  GetApiAdminCrmOverviewResponses[keyof GetApiAdminCrmOverviewResponses];
+
+export type GetApiAdminCrmSegmentsByCodeUsersData = {
+  body?: never;
+  path: {
+    code: string;
+  };
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/crm/segments/{code}/users';
+};
+
+export type GetApiAdminCrmSegmentsByCodeUsersErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiAdminCrmSegmentsByCodeUsersError =
+  GetApiAdminCrmSegmentsByCodeUsersErrors[keyof GetApiAdminCrmSegmentsByCodeUsersErrors];
+
+export type GetApiAdminCrmSegmentsByCodeUsersResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminCrmSegmentUserResponse;
+};
+
+export type GetApiAdminCrmSegmentsByCodeUsersResponse =
+  GetApiAdminCrmSegmentsByCodeUsersResponses[keyof GetApiAdminCrmSegmentsByCodeUsersResponses];
+
+export type GetApiAdminCrmUsersByUserIdData = {
+  body?: never;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/crm/users/{userId}';
+};
+
+export type GetApiAdminCrmUsersByUserIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminCrmUsersByUserIdError =
+  GetApiAdminCrmUsersByUserIdErrors[keyof GetApiAdminCrmUsersByUserIdErrors];
+
+export type GetApiAdminCrmUsersByUserIdResponses = {
+  /**
+   * OK
+   */
+  200: AdminCrmUserDetailResponse;
+};
+
+export type GetApiAdminCrmUsersByUserIdResponse =
+  GetApiAdminCrmUsersByUserIdResponses[keyof GetApiAdminCrmUsersByUserIdResponses];
 
 export type GetApiAdminAnnouncementsData = {
   body?: never;
@@ -5789,6 +6004,86 @@ export type GetApiMeFeedbackByIdResponses = {
 
 export type GetApiMeFeedbackByIdResponse =
   GetApiMeFeedbackByIdResponses[keyof GetApiMeFeedbackByIdResponses];
+
+export type DeleteApiMeCrmData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/crm';
+};
+
+export type DeleteApiMeCrmErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type DeleteApiMeCrmError = DeleteApiMeCrmErrors[keyof DeleteApiMeCrmErrors];
+
+export type DeleteApiMeCrmResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type DeleteApiMeCrmResponse = DeleteApiMeCrmResponses[keyof DeleteApiMeCrmResponses];
+
+export type GetApiMeCrmData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/crm';
+};
+
+export type GetApiMeCrmErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeCrmError = GetApiMeCrmErrors[keyof GetApiMeCrmErrors];
+
+export type GetApiMeCrmResponses = {
+  /**
+   * OK
+   */
+  200: MyCrmProfileResponse;
+};
+
+export type GetApiMeCrmResponse = GetApiMeCrmResponses[keyof GetApiMeCrmResponses];
+
+export type PutApiMeCrmTrackingData = {
+  body: UpdateCrmTrackingRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/crm/tracking';
+};
+
+export type PutApiMeCrmTrackingErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PutApiMeCrmTrackingError = PutApiMeCrmTrackingErrors[keyof PutApiMeCrmTrackingErrors];
+
+export type PutApiMeCrmTrackingResponses = {
+  /**
+   * OK
+   */
+  200: MyCrmProfileResponse;
+};
+
+export type PutApiMeCrmTrackingResponse =
+  PutApiMeCrmTrackingResponses[keyof PutApiMeCrmTrackingResponses];
 
 export type GetApiAdminNotificationConfigData = {
   body?: never;

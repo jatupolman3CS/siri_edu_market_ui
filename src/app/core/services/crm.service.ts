@@ -1,27 +1,218 @@
 import { Injectable, inject, signal } from '@angular/core';
 import type {
+  CrmFacetType,
+  CrmInterest,
+  CrmLabeledValue,
   CrmOverview,
+  CrmSegment,
+  CrmSegmentKind,
+  CrmSegmentSummary,
+  CrmSearchTermSummary,
+  CrmFacetSummary,
   CrmSegmentUser,
+  CrmSignalCounts,
   CrmUserDetail,
+  CrmUserFacet,
   MyCrmProfile,
 } from '../models';
+import {
+  deleteApiMeCrm,
+  getApiAdminCrmOverview,
+  getApiAdminCrmSegmentsByCodeUsers,
+  getApiAdminCrmUsersByUserId,
+  getApiMeCrm,
+  putApiMeCrmTracking,
+} from '../api';
+import type {
+  AdminCrmFacetResponse,
+  AdminCrmFacetSummaryResponse,
+  AdminCrmLabeledValueResponse,
+  AdminCrmOverviewResponse,
+  AdminCrmSearchTermResponse,
+  AdminCrmSegmentResponse,
+  AdminCrmSegmentSummaryResponse,
+  AdminCrmSegmentUserResponse,
+  AdminCrmUserDetailResponse,
+  MyCrmInterestResponse,
+  MyCrmProfileResponse,
+  MyCrmSegmentResponse,
+  MyCrmSignalCountsResponse,
+} from '../api/types.gen';
+import { unwrapSdkResult } from './api-result';
 import { createServerPager, type ServerPager } from './server-pager';
+
+// ====== crm-core v1 §3 response mappers ======
+// Every field on the generated DTOs below is required per the contract (§3.1-§3.6), so mappers
+// mostly pass values straight through; `?? []` on arrays and the enum-string casts below are
+// defensive in the same spirit as `AdminService`'s mappers (`toAdminUserRow` etc.) rather than a
+// sign the backend is expected to omit anything.
+
+function toCrmInterest(res: MyCrmInterestResponse): CrmInterest {
+  return {
+    facetType: res.facetType as CrmFacetType,
+    value: res.value,
+    label: res.label,
+    score: res.score,
+    reason: res.reason,
+  };
+}
+
+function toCrmSegment(res: MyCrmSegmentResponse): CrmSegment {
+  return {
+    code: res.code,
+    label: res.label,
+    kind: res.kind as CrmSegmentKind,
+    reason: res.reason,
+  };
+}
+
+/** §3.6 `AdminCrmSegmentResponse` carries `assignedAt` too — {@link CrmSegment} doesn't, so this drops it. */
+function toAdminCrmSegment(res: AdminCrmSegmentResponse): CrmSegment {
+  return {
+    code: res.code,
+    label: res.label,
+    kind: res.kind as CrmSegmentKind,
+    reason: res.reason,
+  };
+}
+
+function toCrmSignalCounts(res: MyCrmSignalCountsResponse): CrmSignalCounts {
+  return {
+    documentViews: res.documentViews,
+    searches: res.searches,
+    purchases: res.purchases,
+    subscriptionAccesses: res.subscriptionAccesses,
+    wishlistItems: res.wishlistItems,
+    cartItems: res.cartItems,
+    sellerFollows: res.sellerFollows,
+    reviews: res.reviews,
+    declaredInterests: res.declaredInterests,
+  };
+}
+
+/** §3.1/§3.2 `MyCrmProfileResponse` — body of both `GET /api/me/crm` and `PUT /api/me/crm/tracking`. */
+function toMyCrmProfile(res: MyCrmProfileResponse): MyCrmProfile {
+  return {
+    trackingEnabled: res.trackingEnabled,
+    computedAt: res.computedAt,
+    interestConfidence: res.interestConfidence,
+    topInterests: (res.topInterests ?? []).map(toCrmInterest),
+    segments: (res.segments ?? []).map(toCrmSegment),
+    signalCounts: toCrmSignalCounts(res.signalCounts),
+    dataRetentionDays: res.dataRetentionDays,
+  };
+}
+
+function toCrmSegmentSummary(res: AdminCrmSegmentSummaryResponse): CrmSegmentSummary {
+  return {
+    code: res.code,
+    label: res.label,
+    kind: res.kind as CrmSegmentKind,
+    description: res.description,
+    userCount: res.userCount,
+  };
+}
+
+function toCrmSearchTermSummary(res: AdminCrmSearchTermResponse): CrmSearchTermSummary {
+  return {
+    term: res.term,
+    searchCount: res.searchCount,
+    zeroResultCount: res.zeroResultCount,
+    userCount: res.userCount,
+  };
+}
+
+function toCrmFacetSummary(res: AdminCrmFacetSummaryResponse): CrmFacetSummary {
+  return {
+    facetType: res.facetType as CrmFacetType,
+    value: res.value,
+    label: res.label,
+    userCount: res.userCount,
+    averageScore: res.averageScore,
+  };
+}
+
+/** §3.4 `AdminCrmOverviewResponse` — `GET /api/admin/crm/overview`. */
+function toCrmOverview(res: AdminCrmOverviewResponse): CrmOverview {
+  return {
+    profileCount: res.profileCount,
+    computedProfileCount: res.computedProfileCount,
+    trackingOptOutCount: res.trackingOptOutCount,
+    lastComputedAt: res.lastComputedAt,
+    averageConfidence: res.averageConfidence,
+    signalRowCount: res.signalRowCount,
+    segments: (res.segments ?? []).map(toCrmSegmentSummary),
+    topSearchTerms: (res.topSearchTerms ?? []).map(toCrmSearchTermSummary),
+    topFacets: (res.topFacets ?? []).map(toCrmFacetSummary),
+  };
+}
+
+/** §3.5 `AdminCrmSegmentUserResponse` — one row of `GET /api/admin/crm/segments/{code}/users`. */
+function toCrmSegmentUser(res: AdminCrmSegmentUserResponse): CrmSegmentUser {
+  return {
+    userId: res.userId,
+    displayName: res.displayName,
+    email: res.email,
+    interestConfidence: res.interestConfidence,
+    topCategoryLabel: res.topCategoryLabel,
+    lastActivityAt: res.lastActivityAt,
+    assignedAt: res.assignedAt,
+  };
+}
+
+function toCrmLabeledValue(res: AdminCrmLabeledValueResponse): CrmLabeledValue {
+  return { value: res.value, label: res.label };
+}
+
+function toCrmUserFacet(res: AdminCrmFacetResponse): CrmUserFacet {
+  return {
+    facetType: res.facetType as CrmFacetType,
+    value: res.value,
+    label: res.label,
+    score: res.score,
+    normalizedScore: res.normalizedScore,
+    signalCount: res.signalCount,
+    topSignal: res.topSignal,
+    isDeclared: res.isDeclared,
+    lastSignalAt: res.lastSignalAt,
+  };
+}
+
+/** §3.6 `AdminCrmUserDetailResponse` — `GET /api/admin/crm/users/{userId}`, feeds `CrmUserPanelComponent`. */
+function toCrmUserDetail(res: AdminCrmUserDetailResponse): CrmUserDetail {
+  return {
+    userId: res.userId,
+    displayName: res.displayName,
+    email: res.email,
+    trackingEnabled: res.trackingEnabled,
+    computedAt: res.computedAt,
+    interestConfidence: res.interestConfidence,
+    engagementScore: res.engagementScore,
+    signalCount: res.signalCount,
+    lastActivityAt: res.lastActivityAt,
+    lastPurchaseAt: res.lastPurchaseAt,
+    purchaseCount: res.purchaseCount,
+    declaredCategories: (res.declaredCategories ?? []).map(toCrmLabeledValue),
+    facets: (res.facets ?? []).map(toCrmUserFacet),
+    segments: (res.segments ?? []).map(toAdminCrmSegment),
+    signalBreakdown: toCrmSignalCounts(res.signalBreakdown),
+  };
+}
 
 /**
  * crm-core v1 (`docs/contracts/crm-core.md`) §3, §4.2 — buyer privacy self-service
  * (`/account/privacy`, §3.1–§3.3) and admin CRM inspection (`/admin/crm/**`, §3.4–§3.6).
  *
- * **Round 1 (this file, crm-core-fe-1/fe-2)**: every method that would call one of the 6 new
- * endpoints throws `TODO(contract)` — none of them exist in the generated SDK yet, and this
- * build round is explicitly forbidden from running `npm run generate:api` (§4.5/§6.5/§6.6).
- * The surrounding loading-signal bookkeeping is real and stays as-is; only the throwing line
- * gets replaced by the real SDK call + mapper in round 2 (`crm-core-fe-wire`, §6.7), same as
- * `AdminService`'s F-08 stub round did for `searchUsers`/`getUser`/`suspendUser`/etc.
+ * **Round 2 (crm-core-fe-wire)**: wired to the generated SDK after backend gate 1 passed and
+ * `npm run generate:api` was re-run against the live backend — same pattern as `AdminService`'s
+ * F-08 stub round did for `searchUsers`/`getUser`/`suspendUser`/etc.
  *
  * Pages call these directly and report failures themselves via `ApiFailureReporter` (same
  * pattern as `AdminSubscriptionsPage.reload()` / `AdminFeedbackPage.reload()`) rather than the
  * service swallowing errors internally — there is nothing useful to fall back to here, so a
  * silent empty state would look like "the user really has no data" instead of "not wired yet".
+ * That is why none of the methods below call `ApiFailureReporter` themselves: they only unwrap
+ * and rethrow, letting the caller decide how to report.
  */
 @Injectable({ providedIn: 'root' })
 export class CrmService {
@@ -37,8 +228,8 @@ export class CrmService {
   async loadMine(): Promise<void> {
     this._loadingMine.set(true);
     try {
-      // TODO(contract): crm-core v1 §3.1 — GET /api/me/crm, wire after generate:api (round 2)
-      throw new Error('TODO(contract): GET /api/me/crm ยังไม่ได้ wire SDK');
+      const profile = toMyCrmProfile(unwrapSdkResult(await getApiMeCrm()));
+      this._myProfile.set(profile);
     } finally {
       this._loadingMine.set(false);
     }
@@ -46,14 +237,19 @@ export class CrmService {
 
   /** §3.2 `PUT /api/me/crm/tracking` — idempotent; `enabled=false` also purges existing data server-side. */
   async setTracking(enabled: boolean): Promise<void> {
-    // TODO(contract): crm-core v1 §3.2 — PUT /api/me/crm/tracking, wire after generate:api (round 2)
-    throw new Error(`TODO(contract): PUT /api/me/crm/tracking (enabled=${enabled}) ยังไม่ได้ wire SDK`);
+    const profile = toMyCrmProfile(
+      unwrapSdkResult(await putApiMeCrmTracking({ body: { enabled } })),
+    );
+    this._myProfile.set(profile);
   }
 
   /** §3.3 `DELETE /api/me/crm` — idempotent 204; does not touch `trackingEnabled` (§3.3 note). */
   async deleteMyData(): Promise<void> {
-    // TODO(contract): crm-core v1 §3.3 — DELETE /api/me/crm, wire after generate:api (round 2)
-    throw new Error('TODO(contract): DELETE /api/me/crm ยังไม่ได้ wire SDK');
+    const result = await deleteApiMeCrm();
+    if (result.error !== undefined) throw result.error;
+    // §3.3: deleting purges facets/segments/signals but leaves `trackingEnabled` untouched —
+    // reload from the server rather than guessing the reset shape locally.
+    await this.loadMine();
   }
 
   /** Test helper — mirrors `NotificationConfigService.setItemsForTest`. */
@@ -73,8 +269,8 @@ export class CrmService {
   async loadOverview(): Promise<void> {
     this._loadingOverview.set(true);
     try {
-      // TODO(contract): crm-core v1 §3.4 — GET /api/admin/crm/overview, wire after generate:api (round 2)
-      throw new Error('TODO(contract): GET /api/admin/crm/overview ยังไม่ได้ wire SDK');
+      const overview = toCrmOverview(unwrapSdkResult(await getApiAdminCrmOverview()));
+      this._adminOverview.set(overview);
     } finally {
       this._loadingOverview.set(false);
     }
@@ -94,9 +290,20 @@ export class CrmService {
     createServerPager<CrmSegmentUser, string>({
       pageSize: 20,
       errorMessage: 'โหลดสมาชิกของ segment ไม่สำเร็จ',
-      fetch: async () => {
-        // TODO(contract): crm-core v1 §3.5 — GET /api/admin/crm/segments/{code}/users, wire after generate:api (round 2)
-        throw new Error('TODO(contract): GET /api/admin/crm/segments/{code}/users ยังไม่ได้ wire SDK');
+      fetch: async (page, pageSize, code) => {
+        const data = unwrapSdkResult(
+          await getApiAdminCrmSegmentsByCodeUsers({
+            path: { code: code ?? '' },
+            query: { Page: page, PageSize: pageSize },
+          }),
+        );
+        return {
+          items: (data.items ?? []).map(toCrmSegmentUser),
+          page: data.page ?? page,
+          pageSize: data.pageSize ?? pageSize,
+          totalCount: data.totalCount ?? 0,
+          totalPages: data.totalPages ?? 1,
+        };
       },
     });
 
@@ -129,8 +336,10 @@ export class CrmService {
   async loadUserDetail(userId: string): Promise<void> {
     this._loadingUserDetail.set(true);
     try {
-      // TODO(contract): crm-core v1 §3.6 — GET /api/admin/crm/users/{userId}, wire after generate:api (round 2)
-      throw new Error(`TODO(contract): GET /api/admin/crm/users/${userId} ยังไม่ได้ wire SDK`);
+      const detail = toCrmUserDetail(
+        unwrapSdkResult(await getApiAdminCrmUsersByUserId({ path: { userId } })),
+      );
+      this._userDetail.set(detail);
     } finally {
       this._loadingUserDetail.set(false);
     }

@@ -28,6 +28,9 @@ import type {
   DeleteApiCartItemsByDocumentIdErrors,
   DeleteApiCartItemsByDocumentIdResponses,
   DeleteApiCartResponses,
+  DeleteApiMeCrmData,
+  DeleteApiMeCrmErrors,
+  DeleteApiMeCrmResponses,
   DeleteApiMeExamCountdownData,
   DeleteApiMeExamCountdownErrors,
   DeleteApiMeExamCountdownResponses,
@@ -72,6 +75,14 @@ import type {
   GetApiAdminCategoriesByIdResponses,
   GetApiAdminCategoriesData,
   GetApiAdminCategoriesResponses,
+  GetApiAdminCrmOverviewData,
+  GetApiAdminCrmOverviewResponses,
+  GetApiAdminCrmSegmentsByCodeUsersData,
+  GetApiAdminCrmSegmentsByCodeUsersErrors,
+  GetApiAdminCrmSegmentsByCodeUsersResponses,
+  GetApiAdminCrmUsersByUserIdData,
+  GetApiAdminCrmUsersByUserIdErrors,
+  GetApiAdminCrmUsersByUserIdResponses,
   GetApiAdminDashboardData,
   GetApiAdminDashboardResponses,
   GetApiAdminDocumentGenerationCategoriesData,
@@ -178,6 +189,9 @@ import type {
   GetApiMarketplaceSearchResponses,
   GetApiMarketplaceStatsData,
   GetApiMarketplaceStatsResponses,
+  GetApiMeCrmData,
+  GetApiMeCrmErrors,
+  GetApiMeCrmResponses,
   GetApiMeExamCountdownData,
   GetApiMeExamCountdownErrors,
   GetApiMeExamCountdownResponses,
@@ -552,6 +566,9 @@ import type {
   PutApiLibraryByDocumentIdReadStatusData,
   PutApiLibraryByDocumentIdReadStatusErrors,
   PutApiLibraryByDocumentIdReadStatusResponses,
+  PutApiMeCrmTrackingData,
+  PutApiMeCrmTrackingErrors,
+  PutApiMeCrmTrackingResponses,
   PutApiMeExamCountdownData,
   PutApiMeExamCountdownErrors,
   PutApiMeExamCountdownResponses,
@@ -1193,6 +1210,40 @@ export const postApiAdminFeedbackByIdStatus = <ThrowOnError extends boolean = fa
       ...options.headers,
     },
   });
+
+export const getApiAdminCrmOverview = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminCrmOverviewData, ThrowOnError>,
+): RequestResult<GetApiAdminCrmOverviewResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminCrmOverviewResponses, unknown, ThrowOnError>({
+    url: '/api/admin/crm/overview',
+    ...options,
+  });
+
+export const getApiAdminCrmSegmentsByCodeUsers = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminCrmSegmentsByCodeUsersData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminCrmSegmentsByCodeUsersResponses,
+  GetApiAdminCrmSegmentsByCodeUsersErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminCrmSegmentsByCodeUsersResponses,
+    GetApiAdminCrmSegmentsByCodeUsersErrors,
+    ThrowOnError
+  >({ url: '/api/admin/crm/segments/{code}/users', ...options });
+
+export const getApiAdminCrmUsersByUserId = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminCrmUsersByUserIdData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminCrmUsersByUserIdResponses,
+  GetApiAdminCrmUsersByUserIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminCrmUsersByUserIdResponses,
+    GetApiAdminCrmUsersByUserIdErrors,
+    ThrowOnError
+  >({ url: '/api/admin/crm/users/{userId}', ...options });
 
 export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,
@@ -2336,6 +2387,38 @@ export const getApiMeFeedbackById = <ThrowOnError extends boolean = false>(
     GetApiMeFeedbackByIdErrors,
     ThrowOnError
   >({ url: '/api/me/feedback/{id}', ...options });
+
+export const deleteApiMeCrm = <ThrowOnError extends boolean = false>(
+  options?: Options<DeleteApiMeCrmData, ThrowOnError>,
+): RequestResult<DeleteApiMeCrmResponses, DeleteApiMeCrmErrors, ThrowOnError> =>
+  (options?.client ?? client).delete<DeleteApiMeCrmResponses, DeleteApiMeCrmErrors, ThrowOnError>({
+    url: '/api/me/crm',
+    ...options,
+  });
+
+export const getApiMeCrm = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeCrmData, ThrowOnError>,
+): RequestResult<GetApiMeCrmResponses, GetApiMeCrmErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMeCrmResponses, GetApiMeCrmErrors, ThrowOnError>({
+    url: '/api/me/crm',
+    ...options,
+  });
+
+export const putApiMeCrmTracking = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiMeCrmTrackingData, ThrowOnError>,
+): RequestResult<PutApiMeCrmTrackingResponses, PutApiMeCrmTrackingErrors, ThrowOnError> =>
+  (options.client ?? client).put<
+    PutApiMeCrmTrackingResponses,
+    PutApiMeCrmTrackingErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/crm/tracking',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const getApiAdminNotificationConfig = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminNotificationConfigData, ThrowOnError>,
