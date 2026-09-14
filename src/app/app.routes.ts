@@ -185,6 +185,17 @@ export const routes: Routes = [
           ),
         title: 'แจ้งปัญหา / ข้อเสนอแนะ — SIRIEDUMARKET',
       },
+      // crm-core v1 §4.1: "ความเป็นส่วนตัวของฉัน" — view/opt-out/delete the CRM data the platform
+      // has learned from this buyer's view/search/purchase behaviour (§3.1–§3.3, PDPA §8.5).
+      {
+        path: 'account/privacy',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/account-privacy/account-privacy.page').then(
+            (m) => m.AccountPrivacyPage,
+          ),
+        title: 'ความเป็นส่วนตัวของฉัน — SIRIEDUMARKET',
+      },
       {
         path: 'checkout',
         canActivate: [authGuard],
@@ -463,6 +474,28 @@ export const routes: Routes = [
             (m) => m.AdminSubscriptionsPage,
           ),
         title: 'สมาชิกรายเดือน — Admin',
+      },
+      // crm-core v1 §4.1/§4.4: CRM overview + segment membership + one user's read-only
+      // interest/segment breakdown (`CrmUserPanelComponent` — also the F-08 embed point, §4.4).
+      {
+        path: 'crm',
+        loadComponent: () =>
+          import('./features/admin/crm-admin/crm-admin.page').then((m) => m.CrmAdminPage),
+        title: 'CRM — Admin',
+      },
+      {
+        path: 'crm/segments/:code',
+        loadComponent: () =>
+          import('./features/admin/crm-admin/crm-segment-users.page').then(
+            (m) => m.CrmSegmentUsersPage,
+          ),
+        title: 'สมาชิกของกลุ่ม — CRM Admin',
+      },
+      {
+        path: 'crm/users/:id',
+        loadComponent: () =>
+          import('./features/admin/crm-admin/crm-user.page').then((m) => m.CrmUserPage),
+        title: 'โปรไฟล์ CRM ผู้ใช้ — Admin',
       },
       {
         path: 'settings',

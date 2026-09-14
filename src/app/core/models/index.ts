@@ -1054,5 +1054,9 @@ export interface ReinstateUserRequest {
   messageToUser?: string | null;
 }
 
+// crm-core v1 (docs/contracts/crm-core.md) — kept in its own file per the fe-1 build prompt
+// (§6.5 scope), unlike every other model above.
+export * from './crm.model';
+
 
 

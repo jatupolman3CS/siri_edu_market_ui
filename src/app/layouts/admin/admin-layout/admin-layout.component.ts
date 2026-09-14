@@ -77,7 +77,7 @@ export class AdminLayoutComponent {
     Array<{
       label: string;
       href: string;
-      icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell' | 'flag' | 'sparkle' | 'package';
+      icon: 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell' | 'flag' | 'sparkle' | 'package' | 'chart';
       exact?: boolean;
       badge?: string;
     }>
@@ -102,6 +102,8 @@ export class AdminLayoutComponent {
       // GAP-01: review queue for buyers applying to sell.
       { label: isTh ? 'ใบสมัครผู้ขาย' : 'Seller Applications', href: '/admin/seller-applications', icon: 'shield' as const },
       { label: isTh ? 'หมวดหมู่' : 'Categories', href: '/admin/categories', icon: 'tag' as const },
+      // crm-core v1 §4.1: CRM overview — segments, top search terms, top category facets.
+      { label: isTh ? 'CRM' : 'CRM', href: '/admin/crm', icon: 'chart' as const },
       // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
       { label: isTh ? 'ประกาศข่าวสาร' : 'Announcements', href: '/admin/announcements', icon: 'bell' as const },
       // notification-master-config v1 §0.4 root cause #4: this used to link to the buyer

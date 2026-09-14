@@ -1,0 +1,142 @@
+<div class="card-soft p-6">
+  @if (crm.loadingUserDetail()) {
+    <div class="text-center text-sm text-ink-soft py-8">กำลังโหลด…</div>
+  } @else {
+    @let detail = crm.userDetail();
+
+    @if (!detail) {
+      <app-empty-state emoji="🔍" title="ยังไม่มีข้อมูล" description="ยังไม่พบโปรไฟล์ CRM ของผู้ใช้รายนี้" />
+    } @else {
+      <div class="flex items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-lg font-bold text-ink">{{ detail.displayName }}</h2>
+          <p class="text-xs text-ink-muted">{{ detail.email }}</p>
+        </div>
+        @if (detail.computedAt) {
+          <span class="text-xs text-ink-muted whitespace-nowrap">
+            ประมวลผลล่าสุด {{ detail.computedAt | date: 'd MMM yyyy HH:mm' }}
+          </span>
+        }
+      </div>
+
+      @if (!detail.trackingEnabled) {
+        <div class="card-soft p-4 border border-amber-200 bg-amber-50 text-amber-800 text-sm mb-5">
+          ผู้ใช้รายนี้ปฏิเสธการติดตามพฤติกรรม — ไม่มีข้อมูลให้วิเคราะห์
+        </div>
+      } @else {
+        <!-- Confidence bar -->
+        <div class="mb-6">
+          <div class="text-sm font-semibold text-ink mb-1.5">
+            ความมั่นใจในการวิเคราะห์ {{ detail.interestConfidence * 100 | number: '1.0-0' }}%
+          </div>
+          <div class="h-2 rounded-full bg-pink-50 overflow-hidden">
+            <div
+              class="h-full bg-pink-500 rounded-full"
+              [style.width.%]="detail.interestConfidence * 100"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Facets -->
+        <section class="mb-6">
+          <h3 class="text-sm font-bold text-ink mb-3">ความสนใจที่วิเคราะห์ได้</h3>
+          @if (detail.facets.length === 0) {
+            <app-empty-state title="ยังไม่มีข้อมูล" />
+          } @else {
+            <ul class="space-y-2.5">
+              @for (facet of detail.facets; track facet.facetType + facet.value) {
+                <li class="p-3 rounded-2xl border border-line">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-semibold text-ink">
+                      {{ facetTypeLabel(facet.facetType) }}: {{ facet.label }}
+                      @if (facet.isDeclared) {
+                        <span class="pill-pink !py-0 !px-2 !text-[10px] ml-1">เลือกเอง</span>
+                      }
+                    </span>
+                    <span class="text-xs font-bold text-pink-600">
+                      {{ facet.normalizedScore * 100 | number: '1.0-0' }}%
+                    </span>
+                  </div>
+                  <p class="text-xs text-ink-muted mt-1">
+                    {{ topSignalLabel(facet.topSignal) }} · {{ facet.signalCount }} ครั้ง
+                  </p>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      <!-- Segments -->
+      <section class="mb-6">
+        <h3 class="text-sm font-bold text-ink mb-3">กลุ่มที่อยู่</h3>
+        @if (detail.segments.length === 0) {
+          <app-empty-state title="ยังไม่มีข้อมูล" />
+        } @else {
+          <ul class="flex flex-wrap gap-2">
+            @for (segment of detail.segments; track segment.code) {
+              <li class="pill-soft" [title]="segment.reason">{{ segment.label }}</li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- Declared categories -->
+      <section class="mb-6">
+        <h3 class="text-sm font-bold text-ink mb-3">ความสนใจที่ผู้ใช้เลือกเอง</h3>
+        @if (detail.declaredCategories.length === 0) {
+          <app-empty-state title="ยังไม่มีข้อมูล" />
+        } @else {
+          <ul class="flex flex-wrap gap-2">
+            @for (c of detail.declaredCategories; track c.value) {
+              <li class="pill-pink">{{ c.label }}</li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- Signal breakdown -->
+      <section>
+        <h3 class="text-sm font-bold text-ink mb-3">ข้อมูลที่ใช้วิเคราะห์</h3>
+        <dl class="grid grid-cols-3 sm:grid-cols-5 gap-2.5 text-center">
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">เปิดดู</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.documentViews }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">ค้นหา</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.searches }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">ซื้อ</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.purchases }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">สมาชิกรายเดือน</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.subscriptionAccesses }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">รายการโปรด</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.wishlistItems }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">ตะกร้า</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.cartItems }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">ติดตามร้าน</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.sellerFollows }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">รีวิว</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.reviews }}</dd>
+          </div>
+          <div class="p-2.5 rounded-xl bg-pink-50/50">
+            <dt class="text-[10px] text-ink-muted">เลือกเอง</dt>
+            <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.declaredInterests }}</dd>
+          </div>
+        </dl>
+      </section>
+    }
+  }
+</div>

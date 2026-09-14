@@ -65,5 +65,7 @@ export class AccountPage {
     // subscription-membership v2 §4: shortcut to the new subscription status page.
     { href: '/account/subscription', emoji: '📦', label: 'สมาชิกรายเดือน', description: 'ดูสถานะและจัดการสมาชิก' },
     { href: '/account/feedback', emoji: '🛠️', label: 'แจ้งปัญหา / ข้อเสนอแนะ', description: 'ส่งเรื่องถึงทีมงานและติดตามสถานะ' },
+    // crm-core v1 §4.1: entry point to "ความเป็นส่วนตัวของฉัน" — view/opt-out/delete CRM data.
+    { href: '/account/privacy', emoji: '🔒', label: 'ความเป็นส่วนตัวของฉัน', description: 'ดูและจัดการข้อมูลที่ระบบใช้แนะนำเอกสาร' },
   ];
 }

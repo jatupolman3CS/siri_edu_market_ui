@@ -1,0 +1,134 @@
+<div class="space-y-6">
+  <header>
+    <h1 class="text-2xl font-extrabold text-ink">CRM — ภาพรวมลูกค้า</h1>
+    <p class="text-sm text-ink-soft">ตรวจสอบว่าระบบวิเคราะห์ความสนใจและจัดกลุ่มลูกค้าถูกต้อง (อ่านอย่างเดียว)</p>
+  </header>
+
+  @let overview = crm.adminOverview();
+
+  @if (crm.loadingOverview()) {
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+  } @else {
+    @if (!overview?.lastComputedAt) {
+      <div class="card-soft p-4 border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+        ยังไม่เคยประมวลผล — ตรวจสอบว่างาน job.crm-profile-rebuild เปิดอยู่
+      </div>
+    }
+
+    <!-- Stats -->
+    <section class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <app-stat-card label="โปรไฟล์ทั้งหมด" [value]="(overview?.profileCount ?? 0) + ' คน'" icon="👥" />
+      <app-stat-card label="ประมวลผลแล้ว" [value]="(overview?.computedProfileCount ?? 0) + ' คน'" icon="✅" />
+      <app-stat-card label="ปฏิเสธการติดตาม" [value]="(overview?.trackingOptOutCount ?? 0) + ' คน'" icon="🚫" />
+      <app-stat-card
+        label="ความมั่นใจเฉลี่ย"
+        [value]="((overview?.averageConfidence ?? 0) * 100 | number: '1.0-0') + '%'"
+        icon="📊"
+      />
+      <app-stat-card label="แถวข้อมูลพฤติกรรม" [value]="(overview?.signalRowCount ?? 0) + ' แถว'" icon="🗂️" />
+      <app-stat-card
+        label="ประมวลผลล่าสุด"
+        [value]="overview?.lastComputedAt ? ((overview!.lastComputedAt | date: 'd MMM yyyy HH:mm') ?? '') : 'ยังไม่เคยประมวลผล'"
+        icon="🕒"
+      />
+    </section>
+
+    <!-- Segments -->
+    <section class="card-soft p-6">
+      <h2 class="text-lg font-bold text-ink mb-4">กลุ่มลูกค้า</h2>
+      @if (!overview || overview.segments.length === 0) {
+        <app-empty-state title="ยังไม่มีข้อมูล" />
+      } @else {
+        <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
+          <table class="w-full min-w-[720px]">
+            <thead class="bg-pink-50">
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+                <th class="px-4 py-3 font-semibold">กลุ่ม</th>
+                <th class="px-4 py-3 font-semibold">ประเภท</th>
+                <th class="px-4 py-3 font-semibold">คำอธิบาย</th>
+                <th class="px-4 py-3 font-semibold">จำนวนคน</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (segment of overview.segments; track segment.code) {
+                <tr class="border-t border-line">
+                  <td class="px-4 py-3 text-sm">
+                    <a
+                      [routerLink]="['/admin/crm/segments', segment.code]"
+                      class="font-semibold text-pink-600 hover:underline"
+                    >
+                      {{ segment.label }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 text-xs text-ink-soft whitespace-nowrap">{{ kindLabel(segment.kind) }}</td>
+                  <td class="px-4 py-3 text-xs text-ink-soft">{{ segment.description }}</td>
+                  <td class="px-4 py-3 text-sm font-bold text-ink whitespace-nowrap">{{ segment.userCount }} คน</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- Top search terms -->
+    <section class="card-soft p-6">
+      <h2 class="text-lg font-bold text-ink mb-4">คำค้นยอดนิยม 7 วันล่าสุด</h2>
+      @if (!overview || overview.topSearchTerms.length === 0) {
+        <app-empty-state title="ยังไม่มีข้อมูล" />
+      } @else {
+        <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
+          <table class="w-full min-w-[560px]">
+            <thead class="bg-pink-50">
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+                <th class="px-4 py-3 font-semibold">คำค้น</th>
+                <th class="px-4 py-3 font-semibold">จำนวนครั้ง</th>
+                <th class="px-4 py-3 font-semibold">ไม่พบผลลัพธ์</th>
+                <th class="px-4 py-3 font-semibold">จำนวนผู้ใช้</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (term of overview.topSearchTerms; track term.term) {
+                <tr class="border-t border-line">
+                  <td class="px-4 py-3 text-sm font-semibold text-ink">{{ term.term }}</td>
+                  <td class="px-4 py-3 text-sm text-ink-soft">{{ term.searchCount }}</td>
+                  <td class="px-4 py-3 text-sm text-ink-soft">{{ term.zeroResultCount }}</td>
+                  <td class="px-4 py-3 text-sm text-ink-soft">{{ term.userCount }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- Top facets -->
+    <section class="card-soft p-6">
+      <h2 class="text-lg font-bold text-ink mb-4">หมวดหมู่ที่คนสนใจมากที่สุด</h2>
+      @if (!overview || overview.topFacets.length === 0) {
+        <app-empty-state title="ยังไม่มีข้อมูล" />
+      } @else {
+        <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
+          <table class="w-full min-w-[480px]">
+            <thead class="bg-pink-50">
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+                <th class="px-4 py-3 font-semibold">หมวดหมู่</th>
+                <th class="px-4 py-3 font-semibold">ผู้สนใจ</th>
+                <th class="px-4 py-3 font-semibold">คะแนนเฉลี่ย</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (facet of overview.topFacets; track facet.facetType + facet.value) {
+                <tr class="border-t border-line">
+                  <td class="px-4 py-3 text-sm font-semibold text-ink">{{ facet.label }}</td>
+                  <td class="px-4 py-3 text-sm text-ink-soft">{{ facet.userCount }} คน</td>
+                  <td class="px-4 py-3 text-sm text-ink-soft">{{ facet.averageScore * 100 | number: '1.0-0' }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -1,0 +1,111 @@
+<div class="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+  <header
+    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+  >
+    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
+      <app-icon name="shield" [size]="14" />
+      <span>ความเป็นส่วนตัว</span>
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">ความเป็นส่วนตัวของฉัน</h1>
+    <p class="text-sm sm:text-base text-ink-soft">
+      เราใช้ประวัติการเปิดดู ค้นหา และการซื้อของคุณ เพื่อแนะนำเอกสารที่ตรงกับความสนใจของคุณมากขึ้น
+      ข้อมูลนี้ผู้ขายมองไม่เห็น
+    </p>
+  </header>
+
+  @if (crm.loadingMine()) {
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+  } @else {
+    @let profile = crm.myProfile();
+
+    <div class="flex flex-col gap-6">
+      <!-- Tracking toggle -->
+      <section class="card-tile">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-ink mb-1">ให้ระบบเรียนรู้ความสนใจของฉัน</h2>
+            @if (profile && !profile.trackingEnabled) {
+              <p class="text-xs text-amber-700">
+                ปิดอยู่ — ระบบจะไม่เก็บพฤติกรรมของคุณอีก และข้อมูลเดิมถูกลบไปแล้ว
+              </p>
+            }
+          </div>
+          <nz-switch
+            name="crm-tracking-switch"
+            [ngModel]="profile?.trackingEnabled ?? true"
+            [nzLoading]="togglingTracking()"
+            (ngModelChange)="onToggleTracking($event)"
+          />
+        </div>
+      </section>
+
+      <!-- Interests -->
+      <section class="card-tile">
+        <h2 class="text-lg font-bold text-ink mb-3">ความสนใจที่ระบบวิเคราะห์ได้</h2>
+        @if (!profile || profile.topInterests.length === 0) {
+          <app-empty-state
+            emoji="🔎"
+            title="ยังไม่มีข้อมูลมากพอที่จะวิเคราะห์ความสนใจของคุณ"
+          />
+        } @else {
+          <ul class="card-tile-body space-y-2.5">
+            @for (interest of profile.topInterests; track interest.facetType + interest.value) {
+              <li class="p-3 rounded-2xl border border-line">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-sm font-semibold text-ink">{{ interest.label }}</span>
+                  <span class="text-xs font-bold text-pink-600">{{ interest.score * 100 | number: '1.0-0' }}%</span>
+                </div>
+                <p class="text-xs text-ink-muted mt-1">{{ interest.reason }}</p>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- Segments -->
+      <section class="card-tile">
+        <h2 class="text-lg font-bold text-ink mb-3">กลุ่มของคุณ</h2>
+        @if (!profile || profile.segments.length === 0) {
+          <app-empty-state emoji="🏷️" title="ยังไม่มีข้อมูล" />
+        } @else {
+          <ul class="card-tile-body flex flex-wrap gap-2">
+            @for (segment of profile.segments; track segment.code) {
+              <li
+                class="pill-soft"
+                nz-tooltip
+                [nzTooltipTitle]="segment.reason"
+              >
+                {{ segment.label }}
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- Signal counts -->
+      <section class="card-tile">
+        <h2 class="text-lg font-bold text-ink mb-3">ข้อมูลที่ระบบเก็บไว้</h2>
+        <dl class="card-tile-body grid grid-cols-2 sm:grid-cols-3 gap-3">
+          @for (row of signalCountRows; track row.key) {
+            <div class="p-3 rounded-2xl border border-line text-center">
+              <dt class="text-xs text-ink-muted">{{ row.label }}</dt>
+              <dd class="text-lg font-extrabold text-ink">{{ profile?.signalCounts?.[row.key] ?? 0 }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <!-- Delete -->
+      <section class="card-tile">
+        <button type="button" class="btn-ghost text-rose-600" [disabled]="deleting()" (click)="confirmDelete()">
+          <app-icon name="trash" [size]="16" />
+          {{ deleting() ? 'กำลังลบ…' : 'ลบข้อมูลพฤติกรรมของฉัน' }}
+        </button>
+        <p class="text-xs text-ink-muted mt-3">
+          ระบบเก็บประวัติการเปิดดูและการค้นหาไว้ {{ profile?.dataRetentionDays ?? 90 }} วัน
+          จากนั้นจะลบอัตโนมัติ
+        </p>
+      </section>
+    </div>
+  }
+</div>
