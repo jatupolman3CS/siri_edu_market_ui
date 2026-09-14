@@ -3373,6 +3373,170 @@
         }
       }
     },
+    "/api/admin/crm/overview": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmOverviewResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmOverviewResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmOverviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/crm/segments/{code}/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminCrmSegmentUserResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminCrmSegmentUserResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminCrmSegmentUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/crm/users/{userId}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmUserDetailResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmUserDetailResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmUserDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/announcements": {
       "get": {
         "tags": [
@@ -9457,6 +9621,174 @@
         }
       }
     },
+    "/api/me/crm": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCrmProfileResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCrmProfileResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCrmProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Me"
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/crm/tracking": {
+      "put": {
+        "tags": [
+          "Me"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCrmTrackingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCrmTrackingRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCrmTrackingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCrmProfileResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCrmProfileResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCrmProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/notification-config": {
       "get": {
         "tags": [
@@ -14686,6 +15018,365 @@
           }
         }
       },
+      "AdminCrmFacetResponse": {
+        "required": [
+          "facetType",
+          "value",
+          "label",
+          "score",
+          "normalizedScore",
+          "signalCount",
+          "topSignal",
+          "isDeclared",
+          "lastSignalAt"
+        ],
+        "type": "object",
+        "properties": {
+          "facetType": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "normalizedScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "signalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "topSignal": {
+            "type": "string"
+          },
+          "isDeclared": {
+            "type": "boolean"
+          },
+          "lastSignalAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "AdminCrmFacetSummaryResponse": {
+        "required": [
+          "facetType",
+          "value",
+          "label",
+          "userCount",
+          "averageScore"
+        ],
+        "type": "object",
+        "properties": {
+          "facetType": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "userCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageScore": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AdminCrmLabeledValueResponse": {
+        "required": [
+          "value",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminCrmOverviewResponse": {
+        "required": [
+          "profileCount",
+          "computedProfileCount",
+          "trackingOptOutCount",
+          "lastComputedAt",
+          "averageConfidence",
+          "signalRowCount",
+          "segments",
+          "topSearchTerms",
+          "topFacets"
+        ],
+        "type": "object",
+        "properties": {
+          "profileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "computedProfileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "trackingOptOutCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastComputedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "averageConfidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "signalRowCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmSegmentSummaryResponse"
+            }
+          },
+          "topSearchTerms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmSearchTermResponse"
+            }
+          },
+          "topFacets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmFacetSummaryResponse"
+            }
+          }
+        }
+      },
+      "AdminCrmSearchTermResponse": {
+        "required": [
+          "term",
+          "searchCount",
+          "zeroResultCount",
+          "userCount"
+        ],
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "searchCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "zeroResultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminCrmSegmentResponse": {
+        "required": [
+          "code",
+          "label",
+          "kind",
+          "reason",
+          "assignedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminCrmSegmentSummaryResponse": {
+        "required": [
+          "code",
+          "label",
+          "kind",
+          "description",
+          "userCount"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "userCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminCrmSegmentUserResponse": {
+        "required": [
+          "userId",
+          "displayName",
+          "email",
+          "interestConfidence",
+          "topCategoryLabel",
+          "lastActivityAt",
+          "assignedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "interestConfidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "topCategoryLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastActivityAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminCrmUserDetailResponse": {
+        "required": [
+          "userId",
+          "displayName",
+          "email",
+          "trackingEnabled",
+          "computedAt",
+          "interestConfidence",
+          "engagementScore",
+          "signalCount",
+          "lastActivityAt",
+          "lastPurchaseAt",
+          "purchaseCount",
+          "declaredCategories",
+          "facets",
+          "segments",
+          "signalBreakdown"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "trackingEnabled": {
+            "type": "boolean"
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "interestConfidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "engagementScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "signalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastActivityAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastPurchaseAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "purchaseCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "declaredCategories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmLabeledValueResponse"
+            }
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmFacetResponse"
+            }
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmSegmentResponse"
+            }
+          },
+          "signalBreakdown": {
+            "$ref": "#/components/schemas/MyCrmSignalCountsResponse"
+          }
+        }
+      },
       "AdminDashboardResponse": {
         "type": "object",
         "properties": {
@@ -17576,6 +18267,154 @@
           }
         }
       },
+      "MyCrmInterestResponse": {
+        "required": [
+          "facetType",
+          "value",
+          "label",
+          "score",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "facetType": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "MyCrmProfileResponse": {
+        "required": [
+          "trackingEnabled",
+          "computedAt",
+          "interestConfidence",
+          "topInterests",
+          "segments",
+          "signalCounts",
+          "dataRetentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "trackingEnabled": {
+            "type": "boolean"
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "interestConfidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "topInterests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyCrmInterestResponse"
+            }
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyCrmSegmentResponse"
+            }
+          },
+          "signalCounts": {
+            "$ref": "#/components/schemas/MyCrmSignalCountsResponse"
+          },
+          "dataRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MyCrmSegmentResponse": {
+        "required": [
+          "code",
+          "label",
+          "kind",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "MyCrmSignalCountsResponse": {
+        "required": [
+          "documentViews",
+          "searches",
+          "purchases",
+          "subscriptionAccesses",
+          "wishlistItems",
+          "cartItems",
+          "sellerFollows",
+          "reviews",
+          "declaredInterests"
+        ],
+        "type": "object",
+        "properties": {
+          "documentViews": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "searches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "purchases": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subscriptionAccesses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "wishlistItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cartItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sellerFollows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reviews": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "declaredInterests": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "MyFeedbackListItemResponse": {
         "type": "object",
         "properties": {
@@ -17947,6 +18786,33 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminAuditLogResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfAdminCrmSegmentUserResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmSegmentUserResponse"
             }
           },
           "page": {
@@ -20911,6 +21777,15 @@
           "subscriptionMonthlyPrice": {
             "type": "number",
             "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateCrmTrackingRequest": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
             "nullable": true
           }
         }
