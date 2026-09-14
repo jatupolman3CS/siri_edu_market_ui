@@ -3537,6 +3537,121 @@
         }
       }
     },
+    "/api/admin/crm/demand-gaps": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminDemandGapResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminDemandGapResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAdminDemandGapResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/crm/users/{userId}/recommendation-trace": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecommendationTraceResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecommendationTraceResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecommendationTraceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/announcements": {
       "get": {
         "tags": [
@@ -7098,6 +7213,45 @@
         }
       }
     },
+    "/api/marketplace/popular-searches": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "name": "Take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopularSearchesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopularSearchesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopularSearchesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/marketplace/documents/{id}": {
       "get": {
         "tags": [
@@ -7479,6 +7633,35 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecommendedDocumentsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/marketplace/discovery": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoveryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoveryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoveryResponse"
                 }
               }
             }
@@ -15503,6 +15686,37 @@
           }
         }
       },
+      "AdminDemandGapResponse": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "searchCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "zeroResultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "zeroResultRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "userCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastSeenDate": {
+            "type": "string"
+          },
+          "matchedFacetLabel": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "AdminDocumentActionResponse": {
         "type": "object",
         "properties": {
@@ -16096,6 +16310,84 @@
       "AdminPendingDocumentsSort": {
         "type": "integer"
       },
+      "AdminRecommendationTraceResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "trackingEnabled": {
+            "type": "boolean"
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "interestConfidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "minConfidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "topFacetScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "minTopFacetScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "profileAgeDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gatePassed": {
+            "type": "boolean"
+          },
+          "gateFailReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "strategy": {
+            "type": "string"
+          },
+          "strategyReason": {
+            "type": "string"
+          },
+          "candidateCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "qualifiedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minQualifiedItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userFacets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTraceFacetResponse"
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTraceCandidateResponse"
+            }
+          }
+        }
+      },
       "AdminSellerApplicationResponse": {
         "type": "object",
         "properties": {
@@ -16214,6 +16506,93 @@
           },
           "createdAt": {
             "type": "string"
+          }
+        }
+      },
+      "AdminTraceCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "relevanceScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "rawScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "excludedReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "matchedFacets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTraceMatchResponse"
+            }
+          }
+        }
+      },
+      "AdminTraceFacetResponse": {
+        "type": "object",
+        "properties": {
+          "facetType": {
+            "type": "string"
+          },
+          "facetValue": {
+            "type": "string"
+          },
+          "facetLabel": {
+            "type": "string"
+          },
+          "normalizedScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "topSignal": {
+            "type": "string"
+          },
+          "signalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isDeclared": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminTraceMatchResponse": {
+        "type": "object",
+        "properties": {
+          "facetType": {
+            "type": "string"
+          },
+          "facetValue": {
+            "type": "string"
+          },
+          "facetLabel": {
+            "type": "string"
+          },
+          "userScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "weight": {
+            "type": "number",
+            "format": "double"
+          },
+          "contribution": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -17410,6 +17789,68 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "DiscoveryResponse": {
+        "type": "object",
+        "properties": {
+          "strategy": {
+            "type": "string"
+          },
+          "strategyReason": {
+            "type": "string"
+          },
+          "gatePassed": {
+            "type": "boolean"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscoverySectionResponse"
+            }
+          },
+          "popularTerms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PopularSearchTermResponse"
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DiscoverySectionResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "facetType": {
+            "type": "string",
+            "nullable": true
+          },
+          "facetValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "facetLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketplaceDocumentResponse"
             }
           }
         }
@@ -18930,6 +19371,33 @@
           }
         }
       },
+      "PagedResponseOfAdminDemandGapResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminDemandGapResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PagedResponseOfAdminDocumentListItemResponse": {
         "type": "object",
         "properties": {
@@ -19900,6 +20368,43 @@
           }
         }
       },
+      "PopularSearchesResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PopularSearchTermResponse"
+            }
+          },
+          "personalized": {
+            "type": "boolean"
+          },
+          "windowDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PopularSearchTermResponse": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isRising": {
+            "type": "boolean"
+          }
+        }
+      },
       "PresignedUrlResponse": {
         "required": [
           "url",
@@ -19953,6 +20458,34 @@
           }
         }
       },
+      "RecommendationExplanationResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "relevanceScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "matchedFacetType": {
+            "type": "string",
+            "nullable": true
+          },
+          "matchedFacetValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "matchedFacetLabel": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "RecommendedDocumentsResponse": {
         "type": "object",
         "properties": {
@@ -19964,6 +20497,18 @@
           },
           "strategy": {
             "type": "string"
+          },
+          "strategyReason": {
+            "type": "string"
+          },
+          "gatePassed": {
+            "type": "boolean"
+          },
+          "explanations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationExplanationResponse"
+            }
           }
         }
       },
