@@ -18,6 +18,7 @@ import { NzSliderModule } from 'ng-zorro-antd/slider';
 import {
   BundleService,
   CatalogService,
+  DiscoveryService,
   PlatformStatsService,
   RecentlyViewedService,
 } from '../../../core/services';
@@ -37,7 +38,12 @@ import { BundleCardComponent } from '../../../shared/components/bundle-card/bund
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { PopularSearchChipsComponent } from '../../../shared/components/popular-search-chips/popular-search-chips.component';
+import { DiscoveryRailComponent } from '../../../shared/components/discovery-rail/discovery-rail.component';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
+
+/** crm-driven-discovery v1 §4.3: "ระหว่างโหลด...นานสุด 3 วินาที จากนั้นถ้ายังไม่มีข้อมูลให้ซ่อนบล็อก". */
+const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
 
 @Component({
   selector: 'app-buyer-marketplace',
@@ -52,6 +58,8 @@ import { TranslationService, TranslatePipe } from '../../../core/i18n';
     IconComponent,
     EmptyStateComponent,
     ImgFallbackDirective,
+    PopularSearchChipsComponent,
+    DiscoveryRailComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +71,7 @@ export class BuyerMarketplacePage {
   readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
+  readonly discovery = inject(DiscoveryService);
   readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -142,6 +151,23 @@ export class BuyerMarketplacePage {
     );
   });
 
+  // ===== crm-driven-discovery v1 §3.2/§4.3 (ข้อ 14) =====
+
+  /** `true` while the discovery fetch is loading *and* hasn't yet crossed the §4.3 3-second skeleton cap. */
+  private readonly discoveryTimedOut = signal(false);
+  private discoveryTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+  readonly showDiscoverySkeleton = computed(
+    () => this.discovery.discoveryState().status === 'loading' && !this.discoveryTimedOut(),
+  );
+
+  /** §4.3: "เมื่อ sections.length === 0 && popularTerms.length === 0 → ไม่ render บล็อกเลย". */
+  readonly showDiscoveryBlock = computed(() => {
+    const d = this.discovery.discovery();
+    if (!d) return false;
+    return d.sections.length > 0 || d.popularTerms.length > 0;
+  });
+
   /** marketplace-paged-results v1 §4.3: results panel's own scroll container (AC-12). */
   readonly resultsPanel = viewChild<ElementRef<HTMLDivElement>>('resultsPanel');
   private readonly sentinel = viewChild<ElementRef<HTMLDivElement>>('sentinel');
@@ -184,6 +210,28 @@ export class BuyerMarketplacePage {
     this.catalog.initForMarketplace();
     // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
+    // crm-driven-discovery v1 §3.2/§4.2/§4.3: "ยังไม่ได้ค้นหาอะไรเลย" block — cheap to call
+    // unconditionally, cached 5 นาทีฝั่ง service (§4.2), only ever rendered when !anyActive().
+    void this.discovery.loadDiscovery();
+
+    // §4.3 3-second skeleton cap: starts a timer whenever the fetch is loading, clears it as soon
+    // as it settles either way.
+    effect(() => {
+      const status = this.discovery.discoveryState().status;
+      if (this.discoveryTimeoutHandle != null) {
+        clearTimeout(this.discoveryTimeoutHandle);
+        this.discoveryTimeoutHandle = null;
+      }
+      if (status === 'loading') {
+        this.discoveryTimedOut.set(false);
+        this.discoveryTimeoutHandle = setTimeout(() => this.discoveryTimedOut.set(true), DISCOVERY_SKELETON_TIMEOUT_MS);
+      } else {
+        this.discoveryTimedOut.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => {
+      if (this.discoveryTimeoutHandle != null) clearTimeout(this.discoveryTimeoutHandle);
+    });
 
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())

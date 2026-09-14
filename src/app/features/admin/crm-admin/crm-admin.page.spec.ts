@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CrmAdminPage } from './crm-admin.page';
 import { CrmService } from '../../../core/services';
-import type { CrmOverview } from '../../../core/models';
+import type { AdminDemandGap, CrmOverview } from '../../../core/models';
 
 /**
  * crm-core v1 §1.3/§4.3 (`docs/contracts/crm-core.md`) — AC-23: every segment code the backend
@@ -31,11 +31,33 @@ function buildOverview(overrides: Partial<CrmOverview> = {}): CrmOverview {
   };
 }
 
-function buildCrmFake(overview: CrmOverview | null) {
+function buildDemandGap(overrides: Partial<AdminDemandGap> = {}): AdminDemandGap {
+  return {
+    term: 'ฟิสิกส์ ม.6',
+    searchCount: 40,
+    zeroResultCount: 30,
+    zeroResultRate: 0.75,
+    userCount: 6,
+    lastSeenDate: '2026-09-13',
+    matchedFacetLabel: 'วิทยาศาสตร์',
+    ...overrides,
+  };
+}
+
+function buildCrmFake(overview: CrmOverview | null, demandGaps: AdminDemandGap[] = []) {
   return {
     adminOverview: () => overview,
     loadingOverview: () => false,
     loadOverview: vi.fn(async () => {}),
+    demandGaps: () => demandGaps,
+    demandGapsPage: () => 1,
+    demandGapsPageSize: () => 20,
+    demandGapsTotalCount: () => demandGaps.length,
+    demandGapsTotalPages: () => 1,
+    demandGapsLoading: () => false,
+    loadDemandGaps: vi.fn(async () => {}),
+    onDemandGapsPageChange: vi.fn(async () => {}),
+    onDemandGapsPageSizeChange: vi.fn(async () => {}),
   };
 }
 
@@ -78,6 +100,49 @@ describe('CrmAdminPage', () => {
 
   it('shows the empty state instead of a table when there is no overview yet', () => {
     const fixture = render(buildCrmFake(null));
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ยังไม่มีข้อมูล');
+  });
+});
+
+/**
+ * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.4/§4.3/§1.4 (F-10, ข้อ 13)
+ * — "ตาราง 'คำค้นที่หาแล้วไม่เจอ' render ครบ และ empty state เป็น 'ยังไม่มีข้อมูล'".
+ */
+describe('CrmAdminPage — คำค้นที่หาแล้วไม่เจอ (crm-driven-discovery v1 §3.4)', () => {
+  it('loads the demand gaps once on init', () => {
+    const crmFake = buildCrmFake(buildOverview());
+    render(crmFake);
+    expect(crmFake.loadDemandGaps).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders every row with its term/searchCount/zeroResultCount/percent/userCount/matchedFacetLabel', () => {
+    const fixture = render(
+      buildCrmFake(buildOverview(), [
+        buildDemandGap({ term: 'ฟิสิกส์ ม.6', searchCount: 40, zeroResultCount: 30, zeroResultRate: 0.75, userCount: 6, matchedFacetLabel: 'วิทยาศาสตร์' }),
+      ]),
+    );
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('คำค้นที่หาแล้วไม่เจอ (30 วันล่าสุด)');
+    expect(text).toContain('ฟิสิกส์ ม.6');
+    expect(text).toContain('40');
+    expect(text).toContain('30');
+    expect(text).toContain('75%');
+    expect(text).toContain('6');
+    expect(text).toContain('วิทยาศาสตร์');
+  });
+
+  it('renders "—" for matchedFacetLabel when it is null', () => {
+    const fixture = render(buildCrmFake(buildOverview(), [buildDemandGap({ matchedFacetLabel: null })]));
+
+    const row = (fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr');
+    const lastRow = row[row.length - 1];
+    expect(lastRow.textContent).toContain('—');
+  });
+
+  it('shows the "ยังไม่มีข้อมูล" empty state when there are no demand gaps', () => {
+    const fixture = render(buildCrmFake(buildOverview(), []));
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ยังไม่มีข้อมูล');
   });

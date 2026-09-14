@@ -1,17 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CrmUserPanelComponent } from '../../../shared/components/crm-user-panel/crm-user-panel.component';
+import { RecommendationTracePanelComponent } from '../../../shared/components/recommendation-trace-panel/recommendation-trace-panel.component';
 
 /**
  * crm-core v1 §3.6, §4.1, §4.4 (`docs/contracts/crm-core.md`) — "/admin/crm/users/:id": full-page
  * wrapper around `CrmUserPanelComponent`. Reached either directly or as a deep link from a
  * segment's member table (`CrmSegmentUsersPage`). §4.4: once F-08's `/admin/users/:id` embeds the
  * same panel, this route stays as the deep-link target — not a duplicate.
+ *
+ * crm-driven-discovery v1 §4.1 (F-10): also embeds `RecommendationTracePanelComponent` below the
+ * CRM panel — no new route, this page just grows a second read-only panel.
  */
 @Component({
   selector: 'app-crm-user',
   standalone: true,
-  imports: [RouterLink, CrmUserPanelComponent],
+  imports: [RouterLink, CrmUserPanelComponent, RecommendationTracePanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-user.page.html',
 })

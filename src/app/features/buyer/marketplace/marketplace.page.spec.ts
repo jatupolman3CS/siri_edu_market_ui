@@ -6,12 +6,14 @@ import {
   BundleService,
   CartService,
   CatalogService,
+  DiscoveryService,
   PlatformStatsService,
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
-import { idleActionState } from '../../../core/services/action-state';
-import type { Category, DocumentItem, PlatformStats } from '../../../core/models';
+import { idleActionState, loadingActionState, type ActionState } from '../../../core/services/action-state';
+import { mapDocument } from '../../../core/api-mappers/mappers';
+import type { Category, DiscoveryBlock, DocumentItem, PlatformStats } from '../../../core/models';
 
 /**
  * real-data-stats v1 §4 (project-owner instruction, round 2 dispatch notes) — marketplace hero
@@ -91,7 +93,24 @@ function buildPlatformStatsFake(stats: PlatformStats | undefined) {
   };
 }
 
-function render(catalog: ReturnType<typeof buildCatalogFake>, platformStats: ReturnType<typeof buildPlatformStatsFake>, query: Record<string, string> = {}) {
+function buildDiscoveryFake(discovery: DiscoveryBlock | null = null, state: ActionState = idleActionState()) {
+  return {
+    popularTerms: () => discovery?.popularTerms ?? [],
+    popularPersonalized: () => false,
+    popularTermsState: () => idleActionState(),
+    loadPopularTerms: vi.fn(),
+    discovery: () => discovery,
+    discoveryState: () => state,
+    loadDiscovery: vi.fn(),
+  };
+}
+
+function render(
+  catalog: ReturnType<typeof buildCatalogFake>,
+  platformStats: ReturnType<typeof buildPlatformStatsFake>,
+  query: Record<string, string> = {},
+  discovery: ReturnType<typeof buildDiscoveryFake> = buildDiscoveryFake(),
+) {
   TestBed.configureTestingModule({
     imports: [BuyerMarketplacePage],
     providers: [
@@ -102,6 +121,7 @@ function render(catalog: ReturnType<typeof buildCatalogFake>, platformStats: Ret
       { provide: PlatformStatsService, useValue: platformStats },
       { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
       { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
+      { provide: DiscoveryService, useValue: discovery },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -257,6 +277,92 @@ describe('Marketplace results panel (marketplace-paged-results v1)', () => {
     fixture.detectChanges();
 
     expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);
+  });
+});
+
+/**
+ * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.2/§4.3/§1.4 (F-10, ข้อ 14)
+ * — AC-27: the discovery block shows only when `anyActive() === false`, and disappears the moment
+ * a search term/filter is applied.
+ */
+function buildDoc(id: string): DocumentItem {
+  return mapDocument({ id, slug: id, title: `เอกสาร ${id}`, shortDescription: '', price: 100 });
+}
+
+function buildDiscoverySection() {
+  return {
+    key: 'interest:category:math',
+    title: 'คณิตศาสตร์ที่คุณสนใจ',
+    reason: 'เพราะคุณสนใจคณิตศาสตร์',
+    facetType: 'category' as const,
+    facetValue: 'math',
+    facetLabel: 'คณิตศาสตร์',
+    items: [buildDoc('doc-1'), buildDoc('doc-2'), buildDoc('doc-3')],
+  };
+}
+
+function buildDiscoveryBlock(): DiscoveryBlock {
+  return {
+    strategy: 'declared-interest',
+    strategyReason: 'เพราะคุณสนใจคณิตศาสตร์',
+    gatePassed: false,
+    sections: [buildDiscoverySection()],
+    popularTerms: [{ term: 'toeic', rank: 1, isRising: false }],
+    generatedAt: '2026-09-14T00:00:00Z',
+  };
+}
+
+describe('BuyerMarketplacePage — discovery block (crm-driven-discovery v1 §3.2/§4.3, AC-27)', () => {
+  it('calls discovery.loadDiscovery() on construction', () => {
+    const discovery = buildDiscoveryFake();
+    render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
+
+    expect(discovery.loadDiscovery).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the discovery rail + popular chips when anyActive() === false and data is loaded', () => {
+    const discovery = buildDiscoveryFake(buildDiscoveryBlock());
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('คณิตศาสตร์ที่คุณสนใจ');
+    expect(text).toContain('toeic');
+  });
+
+  it('hides the discovery block entirely when anyActive() === true (a search term is present)', () => {
+    const catalog = buildCatalogFake();
+    const baseFilters = catalog.filters();
+    catalog.filters = () => ({ ...baseFilters, search: 'toeic' });
+    const discovery = buildDiscoveryFake(buildDiscoveryBlock());
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), {}, discovery);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('คณิตศาสตร์ที่คุณสนใจ');
+  });
+
+  it('shows the loading skeleton (not the block) while discoveryState() is loading', () => {
+    const discovery = buildDiscoveryFake(null, loadingActionState());
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
+
+    const page = fixture.componentInstance;
+    expect(page.showDiscoverySkeleton()).toBe(true);
+    expect(page.showDiscoveryBlock()).toBe(false);
+  });
+
+  it('renders nothing when sections and popularTerms are both empty', () => {
+    const discovery = buildDiscoveryFake({
+      strategy: 'popular-fallback',
+      strategyReason: '',
+      gatePassed: false,
+      sections: [],
+      popularTerms: [],
+      generatedAt: '2026-09-14T00:00:00Z',
+    });
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
+
+    const page = fixture.componentInstance;
+    expect(page.showDiscoveryBlock()).toBe(false);
+    expect(page.showDiscoverySkeleton()).toBe(false);
   });
 });
 

@@ -745,6 +745,64 @@ describe('CatalogService — loadRecommended (personalized-recommendations v1, r
   });
 });
 
+describe('CatalogService — loadRecommended strategy widening (crm-driven-discovery v1 §3.3/§4.2/§4.4)', () => {
+  it.each(['crm-personalized', 'declared-interest'] as const)(
+    'passes a known %s strategy straight through (4-value union, round 1)',
+    async (strategy) => {
+      stubRoute('GET', '/api/marketplace/recommended', {
+        items: [documentRow('doc-1')],
+        strategy,
+      });
+      const catalog = buildService();
+
+      catalog.loadRecommended();
+      await settle();
+
+      expect(catalog.recommendedStrategy()).toBe(strategy);
+    },
+  );
+
+  it('maps an unknown/future strategy value to "popular-fallback" defensively', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [documentRow('doc-1')],
+      strategy: 'some-future-strategy',
+    });
+    const catalog = buildService();
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommendedStrategy()).toBe('popular-fallback');
+  });
+
+  it('round 1: resets recommendedReason/recommendedGatePassed/recommendedExplanations to their "not known yet" defaults on every successful load (SDK does not carry them yet)', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', {
+      items: [documentRow('doc-1')],
+      strategy: 'crm-personalized',
+    });
+    const catalog = buildService();
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommendedReason()).toBe('');
+    expect(catalog.recommendedGatePassed()).toBe(false);
+    expect(catalog.recommendedExplanations()).toEqual(new Map());
+  });
+
+  it('round 1: also resets recommendedReason/recommendedGatePassed/recommendedExplanations on failure', async () => {
+    stubRoute('GET', '/api/marketplace/recommended', { title: 'Server Error', status: 500 }, 500);
+    const catalog = buildService();
+
+    catalog.loadRecommended();
+    await settle();
+
+    expect(catalog.recommendedReason()).toBe('');
+    expect(catalog.recommendedGatePassed()).toBe(false);
+    expect(catalog.recommendedExplanations()).toEqual(new Map());
+  });
+});
+
 describe('CatalogService — seller follower count & profile cache', () => {
   it('updateSellerFollowerCount only mutates sellerProfile if sellerId matches', async () => {
     stubRoute('GET', '/api/sellers/seller-1/profile', {

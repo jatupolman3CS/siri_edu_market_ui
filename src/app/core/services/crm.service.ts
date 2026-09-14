@@ -1,5 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import type {
+  AdminDemandGap,
+  AdminRecommendationTrace,
   CrmFacetType,
   CrmInterest,
   CrmLabeledValue,
@@ -348,5 +350,72 @@ export class CrmService {
   /** Test helper — mirrors `NotificationConfigService.setItemsForTest`. */
   setUserDetailForTest(detail: CrmUserDetail | null): void {
     this._userDetail.set(detail);
+  }
+
+  // ====== Admin: crm-driven-discovery v1 §3.4/§3.5 (F-10, ข้อ 13/16) ======
+  //
+  // Round 1: both endpoints are brand new (`GET /api/admin/crm/demand-gaps`,
+  // `GET /api/admin/crm/users/{userId}/recommendation-trace`) — neither exists in the generated
+  // SDK yet, so their fetches throw `TODO(contract)` uncaught (same convention `loadUserDetail`
+  // above already uses: unwrap+rethrow, caller reports via `ApiFailureReporter`).
+
+  /**
+   * §3.4 `GET /api/admin/crm/demand-gaps` — "คำค้นที่หาแล้วไม่เจอ (30 วันล่าสุด)" table on
+   * `/admin/crm`. Same `ServerPager` shape `segmentUsersPagerInstance` above already uses.
+   */
+  private readonly demandGapsPagerInstance: ServerPager<AdminDemandGap> =
+    createServerPager<AdminDemandGap>({
+      pageSize: 20,
+      errorMessage: 'โหลดคำค้นที่หาแล้วไม่เจอไม่สำเร็จ',
+      fetch: async () => {
+        // TODO(contract): awaiting SDK regen — GET /api/admin/crm/demand-gaps (§3.4)
+        throw new Error('TODO(contract): awaiting SDK regen');
+      },
+    });
+
+  readonly demandGaps = this.demandGapsPagerInstance.items;
+  readonly demandGapsPage = this.demandGapsPagerInstance.page;
+  readonly demandGapsPageSize = this.demandGapsPagerInstance.pageSize;
+  readonly demandGapsTotalCount = this.demandGapsPagerInstance.totalCount;
+  readonly demandGapsTotalPages = this.demandGapsPagerInstance.totalPages;
+  readonly demandGapsLoading = this.demandGapsPagerInstance.loading;
+
+  async loadDemandGaps(): Promise<void> {
+    await this.demandGapsPagerInstance.reloadFromPage1();
+  }
+
+  async onDemandGapsPageChange(page: number): Promise<void> {
+    await this.demandGapsPagerInstance.onPageChange(page);
+  }
+
+  async onDemandGapsPageSizeChange(size: number): Promise<void> {
+    await this.demandGapsPagerInstance.onPageSizeChange(size);
+  }
+
+  private readonly _recommendationTrace = signal<AdminRecommendationTrace | null>(null);
+  private readonly _loadingRecommendationTrace = signal(false);
+
+  readonly recommendationTrace = this._recommendationTrace.asReadonly();
+  readonly loadingRecommendationTrace = this._loadingRecommendationTrace.asReadonly();
+
+  /**
+   * §3.5 `GET /api/admin/crm/users/{userId}/recommendation-trace` — feeds
+   * `RecommendationTracePanelComponent`. `404` (unknown user id) propagates to the caller as-is,
+   * same as every other admin lookup in this service.
+   */
+  async loadRecommendationTrace(userId: string, take = 8): Promise<void> {
+    this._loadingRecommendationTrace.set(true);
+    try {
+      // TODO(contract): awaiting SDK regen — GET /api/admin/crm/users/{userId}/recommendation-trace (§3.5)
+      // path: { userId }, query: { take }
+      throw new Error('TODO(contract): awaiting SDK regen');
+    } finally {
+      this._loadingRecommendationTrace.set(false);
+    }
+  }
+
+  /** Test helper — mirrors `setUserDetailForTest`. */
+  setRecommendationTraceForTest(trace: AdminRecommendationTrace | null): void {
+    this._recommendationTrace.set(trace);
   }
 }

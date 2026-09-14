@@ -5,6 +5,7 @@ import {
   AuthService,
   BundleService,
   CatalogService,
+  DiscoveryService,
   ExamCountdownService,
   PlatformStatsService,
   RecentlyViewedService,
@@ -19,7 +20,17 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
+import { PopularSearchChipsComponent } from '../../../shared/components/popular-search-chips/popular-search-chips.component';
 import { TranslatePipe } from '../../../core/i18n';
+import type { RecommendationExplanation, RecommendationStrategy } from '../../../core/models';
+
+/** crm-driven-discovery v1 §3.3/§4.3: strategy → section title map (ห้าม hardcode subtitle ฝั่ง UI อีก — subtitle มาจาก `strategyReason` ของ backend เท่านั้น). */
+const RECOMMENDED_STRATEGY_TITLES: Record<RecommendationStrategy, string> = {
+  'crm-personalized': 'เลือกมาให้คุณโดยเฉพาะ',
+  'purchase-history': 'ต่อยอดจากเอกสารที่คุณเคยซื้อ',
+  'declared-interest': 'จากหมวดที่คุณเลือกไว้',
+  'popular-fallback': 'ยอดนิยมตอนนี้',
+};
 
 @Component({
   selector: 'app-buyer-home',
@@ -35,6 +46,7 @@ import { TranslatePipe } from '../../../core/i18n';
     EmptyStateComponent,
     ImgFallbackDirective,
     ExamCountdownFormComponent,
+    PopularSearchChipsComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +60,7 @@ export class BuyerHomePage {
   readonly platformStats = inject(PlatformStatsService);
   readonly auth = inject(AuthService);
   readonly examCountdown = inject(ExamCountdownService);
+  readonly discovery = inject(DiscoveryService);
   private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
 
@@ -123,15 +136,17 @@ export class BuyerHomePage {
     () => 100 - (this.platformStats.stats()?.feeRatePercent ?? 10),
   );
 
-  // ===== personalized-recommendations v1 §4 =====
+  // ===== crm-driven-discovery v1 §3.3/§4.3 (supersedes personalized-recommendations v1 §4) =====
 
-  /** subtitle ของ section "แนะนำสำหรับคุณ" — คำอธิบายต่างกันตาม strategy ที่ backend เลือก
-   *  (`purchase-history` มีประวัติซื้อจริง vs `popular-fallback` ไม่มีสัญญาณ/ไม่ล็อกอิน) */
-  readonly recommendedSubtitle = computed(() =>
-    this.catalog.recommendedStrategy() === 'purchase-history'
-      ? 'เพราะคุณเคยเลือกเอกสารแนวนี้'
-      : 'เอกสารยอดนิยมที่ผู้ซื้อคนอื่นเลือกกัน',
+  /** หัวข้อของ section "แนะนำสำหรับคุณ" — เปลี่ยนตาม `strategy` ที่ backend เลือก (§4.3 table). */
+  readonly recommendedTitle = computed(
+    () => RECOMMENDED_STRATEGY_TITLES[this.catalog.recommendedStrategy() ?? 'popular-fallback'],
   );
+
+  /** ใต้การ์ดแต่ละใบ: บรรทัดเหตุผลรายชิ้น — `undefined` เมื่อไม่มี explanation ของเอกสารนั้น (ต้องทนกรณีหาไม่เจอ, §3.3). */
+  recommendedExplanationFor(documentId: string): RecommendationExplanation | undefined {
+    return this.catalog.recommendedExplanations().get(documentId);
+  }
 
   readonly quickSearches = [
     'สรุปคณิตม.ปลาย',
@@ -170,6 +185,9 @@ export class BuyerHomePage {
     // personalized-recommendations v1 §4: home-page "แนะนำสำหรับคุณ" module — called once here,
     // not from any computed/effect (AC-14).
     this.catalog.loadRecommended();
+    // crm-driven-discovery v1 §3.1/§4.2/§4.3: "ฮิตตอนนี้:" chips — anonymous-safe, cached 5 นาที
+    // ฝั่ง service เอง (สลับหน้า home ↔ marketplace ไม่ยิงซ้ำ).
+    void this.discovery.loadPopularTerms();
     // real-data-stats v1 §4.2: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
     // exam-countdown-mode v1 §0 ข้อ 11 / AC-14: guard ด้วย isAuthenticated() เสมอ — หน้าแรกเป็น

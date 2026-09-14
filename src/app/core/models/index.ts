@@ -379,6 +379,18 @@ export interface Order {
   discountAmount: number;
 }
 
+// ====== Order similar documents (order-similar-documents v1 §3.1/§4) ======
+// Mirrors `OrderSimilarDocumentResponse` exactly (docs/contracts/order-similar-documents.md §3.1)
+// — feeds the "เอกสารที่คล้ายกับคำสั่งซื้อนี้" section on `/orders/:id` only, and only while the
+// order's status is `paid`/`fulfilled` (§4).
+
+export interface OrderSimilarDocument {
+  document: DocumentItem;
+  reason: string;
+  matchedDocumentId: string;
+  matchedDocumentTitle: string;
+}
+
 export interface LibraryItem {
   document: DocumentItem;
   purchasedAt: string;
@@ -1057,6 +1069,10 @@ export interface ReinstateUserRequest {
 // crm-core v1 (docs/contracts/crm-core.md) — kept in its own file per the fe-1 build prompt
 // (§6.5 scope), unlike every other model above.
 export * from './crm.model';
+
+// crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) — kept in its own file, same
+// reasoning as crm.model.ts above.
+export * from './discovery.model';
 
 
 

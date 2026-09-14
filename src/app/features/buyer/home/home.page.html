@@ -39,19 +39,12 @@
               </button>
             </form>
 
-            <!-- Quick chips -->
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-xs text-ink-muted mr-1">{{ 'home.trendingNow' | trans }}</span>
-              @for (q of quickSearches; track q) {
-                <a
-                  [routerLink]="['/marketplace']"
-                  [queryParams]="{ q }"
-                  class="pill-soft hover:!bg-white hover:!border-pink-300 hover:!text-pink-600"
-                >
-                  {{ q }}
-                </a>
-              }
-            </div>
+            <!-- Quick chips (crm-driven-discovery v1 §3.1/§4.3, ข้อ 13) -->
+            <app-popular-search-chips
+              [terms]="discovery.popularTerms()"
+              [fallbackTerms]="quickSearches"
+              [label]="'home.trendingNow' | trans"
+            />
 
             <!-- Trust stats (real-data-stats v1 §4.2) -->
             <div class="flex flex-wrap gap-x-8 gap-y-3 mt-8 pt-6 border-t border-pink-200/60">
@@ -241,17 +234,22 @@
       </section>
     }
 
-    <!-- ===================== RECOMMENDED FOR YOU ===================== -->
+    <!-- ===================== RECOMMENDED FOR YOU (crm-driven-discovery v1 §3.3/§4.3) ===================== -->
     @if (catalog.recommended().length > 0) {
       <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
         <app-section-header
           eyebrow="สำหรับคุณ"
-          title="แนะนำสำหรับคุณ"
-          [subtitle]="recommendedSubtitle()"
+          [title]="recommendedTitle()"
+          [subtitle]="catalog.recommendedReason()"
         />
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           @for (doc of catalog.recommended(); track doc.id) {
-            <app-document-card [doc]="doc" />
+            <div>
+              <app-document-card [doc]="doc" />
+              @if (recommendedExplanationFor(doc.id); as explanation) {
+                <p class="text-xs text-ink-muted mt-1">{{ explanation.reason }}</p>
+              }
+            </div>
           }
         </div>
       </section>

@@ -417,6 +417,24 @@
               </div>
             }
 
+            <!-- crm-driven-discovery v1 §3.2/§4.3 (ข้อ 14): ยังไม่ได้ค้นหาอะไรเลย -->
+            @if (!anyActive()) {
+              @if (showDiscoverySkeleton()) {
+                <div class="card-soft h-40 animate-pulse mb-8" aria-hidden="true"></div>
+              } @else if (showDiscoveryBlock()) {
+                @let d = discovery.discovery()!;
+                <section class="mb-8">
+                  <app-popular-search-chips
+                    [terms]="d.popularTerms"
+                    label="คนอื่นกำลังค้นหา:"
+                  />
+                </section>
+                @for (section of d.sections; track section.key) {
+                  <app-discovery-rail [section]="section" />
+                }
+              }
+            }
+
             <!-- Result panel — lazy load / โหลดเพิ่มเติม -->
             <div
               #resultsPanel

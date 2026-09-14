@@ -34,3 +34,4 @@ export * from './subscription.service';
 export * from './onboarding.service';
 export * from './feedback.service';
 export * from './crm.service';
+export * from './discovery.service';

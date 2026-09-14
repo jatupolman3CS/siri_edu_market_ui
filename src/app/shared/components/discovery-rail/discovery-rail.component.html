@@ -1,0 +1,24 @@
+@if (section().items.length >= 3) {
+  <section class="mb-10">
+    <div class="flex items-end justify-between gap-4 mb-4">
+      <div>
+        <h3 class="text-lg font-bold text-ink">{{ section().title }}</h3>
+        <p class="text-xs text-ink-soft mt-0.5">{{ section().reason }}</p>
+      </div>
+      @if (viewAllQueryParams(); as qp) {
+        <a
+          [routerLink]="['/marketplace']"
+          [queryParams]="qp"
+          class="hidden sm:inline-flex items-center text-sm font-semibold text-pink-600 hover:text-pink-700 whitespace-nowrap"
+        >
+          ดูทั้งหมด
+        </a>
+      }
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      @for (doc of section().items; track doc.id) {
+        <app-document-card [doc]="doc" density="compact" />
+      }
+    </div>
+  </section>
+}

@@ -480,3 +480,82 @@ describe('CrmService — test helpers', () => {
     expect(service.userDetail()).not.toBeNull();
   });
 });
+
+/**
+ * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.4/§3.5 (F-10, ข้อ 13/16).
+ *
+ * Round 1: both endpoints are brand new (`GET /api/admin/crm/demand-gaps`,
+ * `GET /api/admin/crm/users/{userId}/recommendation-trace`) — neither exists in the generated SDK
+ * yet, so `loadDemandGaps()`/`loadRecommendationTrace()` reject with `TODO(contract)` (same
+ * "unwrap+rethrow, caller reports" convention as `loadUserDetail` above — no `ApiFailureReporter`
+ * call inside `CrmService` itself).
+ */
+describe('CrmService — admin demand gaps (crm-driven-discovery v1 §3.4, round 1)', () => {
+  it('starts with an empty list and not loading', () => {
+    const service = buildService();
+
+    expect(service.demandGaps()).toEqual([]);
+    expect(service.demandGapsLoading()).toBe(false);
+  });
+
+  it('loadDemandGaps() rejects with TODO(contract) and leaves the list empty', async () => {
+    const service = buildService();
+
+    await expect(service.loadDemandGaps()).rejects.toThrow('TODO(contract)');
+
+    expect(service.demandGaps()).toEqual([]);
+    expect(service.demandGapsLoading()).toBe(false);
+  });
+
+  it('onDemandGapsPageChange()/onDemandGapsPageSizeChange() also reject with TODO(contract)', async () => {
+    const service = buildService();
+
+    await expect(service.onDemandGapsPageChange(2)).rejects.toThrow('TODO(contract)');
+    await expect(service.onDemandGapsPageSizeChange(50)).rejects.toThrow('TODO(contract)');
+  });
+});
+
+describe('CrmService — admin recommendation trace (crm-driven-discovery v1 §3.5, round 1)', () => {
+  it('starts with recommendationTrace() null and not loading', () => {
+    const service = buildService();
+
+    expect(service.recommendationTrace()).toBeNull();
+    expect(service.loadingRecommendationTrace()).toBe(false);
+  });
+
+  it('loadRecommendationTrace() rejects with TODO(contract) and resets loading back to false', async () => {
+    const service = buildService();
+
+    await expect(service.loadRecommendationTrace('user-1')).rejects.toThrow('TODO(contract)');
+
+    expect(service.loadingRecommendationTrace()).toBe(false);
+    expect(service.recommendationTrace()).toBeNull();
+  });
+
+  it('setRecommendationTraceForTest() sets the signal directly', () => {
+    const service = buildService();
+
+    service.setRecommendationTraceForTest({
+      userId: 'user-1',
+      displayName: 'สมชาย ใจดี',
+      trackingEnabled: true,
+      computedAt: '2026-09-14T00:00:00Z',
+      interestConfidence: 0.62,
+      minConfidence: 0.3,
+      topFacetScore: 0.8,
+      minTopFacetScore: 0.4,
+      profileAgeDays: 3,
+      gatePassed: true,
+      gateFailReason: null,
+      strategy: 'crm-personalized',
+      strategyReason: 'เพราะคุณสนใจคณิตศาสตร์',
+      candidateCount: 10,
+      qualifiedCount: 4,
+      minQualifiedItems: 3,
+      userFacets: [],
+      candidates: [],
+    });
+
+    expect(service.recommendationTrace()).not.toBeNull();
+  });
+});

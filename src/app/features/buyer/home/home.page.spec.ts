@@ -7,6 +7,7 @@ import {
   BundleService,
   CartService,
   CatalogService,
+  DiscoveryService,
   ExamCountdownService,
   PlatformStatsService,
   RecentlyViewedService,
@@ -15,7 +16,17 @@ import {
 import { idleActionState, loadingActionState, type ActionState } from '../../../core/services/action-state';
 import { mapDocument } from '../../../core/api-mappers/mappers';
 import type { MarketplaceDocumentResponse } from '../../../core/api';
-import type { Bundle, Category, DocumentItem, ExamCountdownSetting, PlatformStats, Seller } from '../../../core/models';
+import type {
+  Bundle,
+  Category,
+  DocumentItem,
+  ExamCountdownSetting,
+  PlatformStats,
+  PopularSearchTerm,
+  RecommendationExplanation,
+  RecommendationStrategy,
+  Seller,
+} from '../../../core/models';
 
 /**
  * real-data-stats v1 §4.2 — Home page:
@@ -74,9 +85,11 @@ function buildBundle(id: string, over: Partial<Bundle> = {}): Bundle {
 function buildCatalog(
   categories: Category[],
   recommended: DocumentItem[] = [],
-  recommendedStrategy: 'purchase-history' | 'popular-fallback' | null = null,
+  recommendedStrategy: RecommendationStrategy | null = null,
   documents: DocumentItem[] = [],
   sellerProfiles: Map<string, Seller> = new Map(),
+  recommendedReason = '',
+  recommendedExplanations: Map<string, RecommendationExplanation> = new Map(),
 ) {
   return {
     initForHome: vi.fn(),
@@ -93,7 +106,22 @@ function buildCatalog(
     catalogState: () => idleActionState(),
     recommended: () => recommended,
     recommendedStrategy: () => recommendedStrategy,
+    recommendedReason: () => recommendedReason,
+    recommendedGatePassed: () => false,
+    recommendedExplanations: () => recommendedExplanations,
     sellerProfiles: () => sellerProfiles,
+  };
+}
+
+function buildDiscoveryFake(popularTerms: PopularSearchTerm[] = []) {
+  return {
+    popularTerms: () => popularTerms,
+    popularPersonalized: () => false,
+    popularTermsState: () => idleActionState(),
+    loadPopularTerms: vi.fn(),
+    discovery: () => null,
+    discoveryState: () => idleActionState(),
+    loadDiscovery: vi.fn(),
   };
 }
 
@@ -137,11 +165,14 @@ function render(opts: {
   bundles?: Bundle[];
   stats?: PlatformStats;
   recommended?: DocumentItem[];
-  recommendedStrategy?: 'purchase-history' | 'popular-fallback' | null;
+  recommendedStrategy?: RecommendationStrategy | null;
+  recommendedReason?: string;
+  recommendedExplanations?: Map<string, RecommendationExplanation>;
   isAuthenticated?: boolean;
   examCountdown?: ReturnType<typeof fakeExamCountdownService>;
   documents?: DocumentItem[];
   sellerProfiles?: Map<string, Seller>;
+  popularTerms?: PopularSearchTerm[];
 }) {
   const fakeStats = {
     stats: () => opts.stats,
@@ -154,8 +185,11 @@ function render(opts: {
     opts.recommendedStrategy ?? null,
     opts.documents ?? [],
     opts.sellerProfiles ?? new Map(),
+    opts.recommendedReason ?? '',
+    opts.recommendedExplanations ?? new Map(),
   );
   const examCountdown = opts.examCountdown ?? fakeExamCountdownService();
+  const discovery = buildDiscoveryFake(opts.popularTerms ?? []);
 
   TestBed.configureTestingModule({
     imports: [BuyerHomePage],
@@ -169,6 +203,7 @@ function render(opts: {
       { provide: WishlistService, useValue: fakeWishlist },
       { provide: AuthService, useValue: { isAuthenticated: () => opts.isAuthenticated ?? false } },
       { provide: ExamCountdownService, useValue: examCountdown },
+      { provide: DiscoveryService, useValue: discovery },
     ],
   });
 
@@ -279,7 +314,7 @@ describe('BuyerHomePage — bundle savings subtitle (Group A, §4.2)', () => {
   });
 });
 
-describe('BuyerHomePage — "แนะนำสำหรับคุณ" (personalized-recommendations v1)', () => {
+describe('BuyerHomePage — "แนะนำสำหรับคุณ" (crm-driven-discovery v1 §3.3/§4.3, supersedes personalized-recommendations v1)', () => {
   function buildRecommendedDoc(over: Partial<MarketplaceDocumentResponse> = {}): DocumentItem {
     return mapDocument({
       id: 'rec-1',
@@ -298,47 +333,72 @@ describe('BuyerHomePage — "แนะนำสำหรับคุณ" (person
     expect(text).not.toContain('แนะนำสำหรับคุณ');
   });
 
-  it('AC-13: uses the purchase-history subtitle copy when strategy is "purchase-history"', () => {
+  it.each([
+    ['crm-personalized', 'เลือกมาให้คุณโดยเฉพาะ'],
+    ['purchase-history', 'ต่อยอดจากเอกสารที่คุณเคยซื้อ'],
+    ['declared-interest', 'จากหมวดที่คุณเลือกไว้'],
+    ['popular-fallback', 'ยอดนิยมตอนนี้'],
+  ] as [RecommendationStrategy, string][])(
+    '§4.3: strategy "%s" renders the title "%s"',
+    (strategy, expectedTitle) => {
+      const fixture = render({
+        recommended: [buildRecommendedDoc()],
+        recommendedStrategy: strategy,
+      });
+
+      const page = fixture.componentInstance;
+      expect(page.recommendedTitle()).toBe(expectedTitle);
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      // eyebrow "สำหรับคุณ" stays fixed; the title itself now varies by strategy (§4.3) —
+      // it no longer literally reads "แนะนำสำหรับคุณ".
+      expect(text).toContain('สำหรับคุณ');
+      expect(text).toContain(expectedTitle);
+    },
+  );
+
+  it('§4.3: subtitle comes from catalog.recommendedReason() only — never a hardcoded string', () => {
     const fixture = render({
       recommended: [buildRecommendedDoc()],
-      recommendedStrategy: 'purchase-history',
+      recommendedStrategy: 'crm-personalized',
+      recommendedReason: 'เพราะคุณสนใจคณิตศาสตร์ ระดับ ป.1-3',
     });
 
-    const page = fixture.componentInstance;
-    expect(page.recommendedSubtitle()).toBe('เพราะคุณเคยเลือกเอกสารแนวนี้');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('แนะนำสำหรับคุณ');
-    expect(text).toContain('เพราะคุณเคยเลือกเอกสารแนวนี้');
+    expect(text).toContain('เพราะคุณสนใจคณิตศาสตร์ ระดับ ป.1-3');
   });
 
-  it('AC-13: uses the popular-fallback subtitle copy when strategy is "popular-fallback"', () => {
+  it('§4.3: renders the per-card explanation line only for a documentId that has one, and tolerates a missing match', () => {
+    const explanations = new Map<string, RecommendationExplanation>([
+      [
+        'rec-1',
+        {
+          documentId: 'rec-1',
+          reason: 'ตรงกับหมวดที่คุณสนใจ',
+          relevanceScore: 0.8,
+          matchedFacetType: 'category',
+          matchedFacetValue: 'math',
+          matchedFacetLabel: 'คณิตศาสตร์',
+        },
+      ],
+    ]);
+    const fixture = render({
+      recommended: [buildRecommendedDoc({ id: 'rec-1' }), buildRecommendedDoc({ id: 'rec-2' })],
+      recommendedStrategy: 'crm-personalized',
+      recommendedExplanations: explanations,
+    });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ตรงกับหมวดที่คุณสนใจ');
+  });
+
+  it('renders no explanation lines when recommendedExplanations() is empty (round 1 default)', () => {
     const fixture = render({
       recommended: [buildRecommendedDoc()],
       recommendedStrategy: 'popular-fallback',
     });
 
     const page = fixture.componentInstance;
-    expect(page.recommendedSubtitle()).toBe('เอกสารยอดนิยมที่ผู้ซื้อคนอื่นเลือกกัน');
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('แนะนำสำหรับคุณ');
-    expect(text).toContain('เอกสารยอดนิยมที่ผู้ซื้อคนอื่นเลือกกัน');
-  });
-
-  it('AC-13: the two strategy copy variants are actually different strings', () => {
-    const purchaseHistoryFixture = render({
-      recommended: [buildRecommendedDoc()],
-      recommendedStrategy: 'purchase-history',
-    });
-    const purchaseHistorySubtitle = purchaseHistoryFixture.componentInstance.recommendedSubtitle();
-
-    TestBed.resetTestingModule();
-    const fallbackFixture = render({
-      recommended: [buildRecommendedDoc()],
-      recommendedStrategy: 'popular-fallback',
-    });
-    const fallbackSubtitle = fallbackFixture.componentInstance.recommendedSubtitle();
-
-    expect(purchaseHistorySubtitle).not.toBe(fallbackSubtitle);
+    expect(page.recommendedExplanationFor('rec-1')).toBeUndefined();
   });
 
   it('AC-14: loadRecommended() is called exactly once on page init', () => {
@@ -346,6 +406,32 @@ describe('BuyerHomePage — "แนะนำสำหรับคุณ" (person
 
     const catalog = TestBed.inject(CatalogService) as unknown as { loadRecommended: ReturnType<typeof vi.fn> };
     expect(catalog.loadRecommended).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('BuyerHomePage — "ฮิตตอนนี้:" chips (crm-driven-discovery v1 §3.1/§4.3, ข้อ 13)', () => {
+  it('calls loadPopularTerms() once on page init', () => {
+    render({});
+
+    const discovery = TestBed.inject(DiscoveryService) as unknown as { loadPopularTerms: ReturnType<typeof vi.fn> };
+    expect(discovery.loadPopularTerms).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-25: renders the real popular terms from the service, not the hardcoded quickSearches', () => {
+    const fixture = render({ popularTerms: [{ term: 'toeic', rank: 1, isRising: false }] });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('toeic');
+  });
+
+  it('AC-26: falls back to the hardcoded quickSearches when popularTerms() is empty', () => {
+    const fixture = render({ popularTerms: [] });
+
+    const page = fixture.componentInstance;
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    for (const q of page.quickSearches) {
+      expect(text).toContain(q);
+    }
   });
 });
 

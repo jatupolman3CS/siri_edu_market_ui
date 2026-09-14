@@ -3,6 +3,8 @@ import {
   Category,
   DocumentItem,
   GradeLevel,
+  RecommendationExplanation,
+  RecommendationStrategy,
   ResourceType,
   Seller,
   SellerSalesByMonthPoint,
@@ -565,12 +567,22 @@ export class CatalogService {
         const result = await getApiMarketplaceRecommended({ query: { Take: take } });
         const data = unwrapSdkResult(result);
         this._recommended.set((data.items ?? []).map(mapDocument));
-        this._recommendedStrategy.set(
-          data.strategy === 'purchase-history' ? 'purchase-history' : 'popular-fallback',
-        );
+        this._recommendedStrategy.set(toRecommendationStrategy(data.strategy));
+        // crm-driven-discovery v1 §3.3/§4.4: strategyReason/gatePassed/explanations are 3 new
+        // fields the backend adds to this *same* response (§3.3 "ประกาศ supersede") — `data`
+        // here is still the pre-regen generated type (2 fields only: items, strategy), so there
+        // is nothing to read off it yet. Reset to the same "not known" defaults every round-1
+        // caller falls back to (never a fabricated reason/score) — round 2 (after
+        // `npm run generate:api`) reads the 3 real fields instead.
+        this._recommendedReason.set('');
+        this._recommendedGatePassed.set(false);
+        this._recommendedExplanations.set(new Map());
       } catch (e) {
         this._recommended.set([]);
         this._recommendedStrategy.set(null);
+        this._recommendedReason.set('');
+        this._recommendedGatePassed.set(false);
+        this._recommendedExplanations.set(new Map());
         this.apiFail.report('โหลดคำแนะนำสำหรับคุณ', e);
       }
     })();
@@ -793,9 +805,32 @@ export class CatalogService {
   private readonly _recommended = signal<DocumentItem[]>([]);
   readonly recommended = this._recommended.asReadonly();
 
-  private readonly _recommendedStrategy =
-    signal<'purchase-history' | 'popular-fallback' | null>(null);
+  /**
+   * crm-driven-discovery v1 §3.3/§4.2/§4.4: widened from the 2-value union
+   * `personalized-recommendations v1 §3.1` used to `RecommendationStrategy` (4 values) — a
+   * UI-side type only (not sourced from the SDK), so this widening is safe to do in round 1
+   * ahead of the SDK regen (§4.4 "ข้อยกเว้นเดียว"). Unknown/future values from the backend map
+   * to `'popular-fallback'` defensively (see `toRecommendationStrategy` below).
+   */
+  private readonly _recommendedStrategy = signal<RecommendationStrategy | null>(null);
   readonly recommendedStrategy = this._recommendedStrategy.asReadonly();
+
+  /** crm-driven-discovery v1 §3.3/§4.2 — Thai subtitle sentence for the "แนะนำสำหรับคุณ" section (§4.3). Round 1: always `''` (see `loadRecommended` comment). */
+  private readonly _recommendedReason = signal<string>('');
+  readonly recommendedReason = this._recommendedReason.asReadonly();
+
+  /** crm-driven-discovery v1 §3.3 — `true` only when `strategy === 'crm-personalized'`. Round 1: always `false`. */
+  private readonly _recommendedGatePassed = signal<boolean>(false);
+  readonly recommendedGatePassed = this._recommendedGatePassed.asReadonly();
+
+  /**
+   * crm-driven-discovery v1 §3.3/§4.2: keyed by `documentId` — built once per `loadRecommended()`
+   * call, never `.find()`-ed per card in a template. A missing key means "no explanation for this
+   * item" (branch other than `crm-personalized`, or backend genuinely has none) — callers must
+   * tolerate that (§3.3 "ต้องทนกรณีหาไม่เจอ"), never treat it as an error.
+   */
+  private readonly _recommendedExplanations = signal<Map<string, RecommendationExplanation>>(new Map());
+  readonly recommendedExplanations = this._recommendedExplanations.asReadonly();
 
   readonly trending = computed(() =>
     [...this._documents()].sort((a, b) => b.downloads - a.downloads).slice(0, 8),
@@ -1401,6 +1436,22 @@ export class CatalogService {
       throwOnError: true,
     });
   }
+}
+
+const KNOWN_RECOMMENDATION_STRATEGIES: ReadonlySet<string> = new Set<RecommendationStrategy>([
+  'crm-personalized',
+  'purchase-history',
+  'declared-interest',
+  'popular-fallback',
+]);
+
+/**
+ * crm-driven-discovery v1 §4.2: "ค่าที่ไม่รู้จักจาก backend → map เป็น 'popular-fallback'" — keeps
+ * a 5th value added to the backend's `RecommendationStrategy` static class later from crashing the
+ * §4.3 strategy→title map instead of failing loudly.
+ */
+function toRecommendationStrategy(raw: string | undefined): RecommendationStrategy {
+  return raw != null && KNOWN_RECOMMENDATION_STRATEGIES.has(raw) ? (raw as RecommendationStrategy) : 'popular-fallback';
 }
 
 /** Same shape `unwrapSdkResult` throws (`{ status }`) — mirrors `order.service.ts`'s `extractStatus`. */
