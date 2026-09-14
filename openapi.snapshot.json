@@ -3652,6 +3652,46 @@
         }
       }
     },
+    "/api/admin/crm/document-alerts": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 7
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmDocumentAlertOverviewResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmDocumentAlertOverviewResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCrmDocumentAlertOverviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/announcements": {
       "get": {
         "tags": [
@@ -15265,6 +15305,112 @@
             "items": {
               "type": "string",
               "format": "uuid"
+            }
+          }
+        }
+      },
+      "AdminCrmDocumentAlertDocumentResponse": {
+        "required": [
+          "documentId",
+          "documentTitle",
+          "studioName",
+          "queuedAt",
+          "matchedCount",
+          "sentCount",
+          "averageMatchScore"
+        ],
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentTitle": {
+            "type": "string"
+          },
+          "studioName": {
+            "type": "string"
+          },
+          "queuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "matchedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageMatchScore": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AdminCrmDocumentAlertOverviewResponse": {
+        "required": [
+          "days",
+          "pendingCount",
+          "sentCount",
+          "suppressedCount",
+          "digestCount",
+          "recipientCount",
+          "documentCount",
+          "averageMatchScore",
+          "lastQueuedAt",
+          "lastSentAt",
+          "documents"
+        ],
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "suppressedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "digestCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recipientCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "documentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageMatchScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "lastQueuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCrmDocumentAlertDocumentResponse"
             }
           }
         }
