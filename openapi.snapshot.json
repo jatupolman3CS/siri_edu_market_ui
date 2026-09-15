@@ -2552,6 +2552,507 @@
         }
       }
     },
+    "/api/admin/sellers/{sellerId}/balance-entries": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "sellerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBalanceEntryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBalanceEntryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBalanceEntryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/payouts/{payoutId}/slip": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutSlipResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutSlipResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutSlipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/payouts/{payoutId}/slips": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayoutSlipResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayoutSlipResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayoutSlipResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/payouts/{payoutId}/slips/{slipId}/file": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "slipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/payouts/{payoutId}/slips/{slipId}/reverify": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "slipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutSlipResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutSlipResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutSlipResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/payouts/{payoutId}/complete-manual": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletePayoutManuallyRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletePayoutManuallyRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletePayoutManuallyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPayoutResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPayoutResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPayoutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/settings": {
       "get": {
         "tags": [
@@ -12576,6 +13077,153 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/seller/payouts/{payoutId}": {
+      "delete": {
+        "tags": [
+          "SellerDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/seller/balance-entries": {
+      "get": {
+        "tags": [
+          "SellerDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBalanceEntryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBalanceEntryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfSellerBalanceEntryResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -16302,6 +16950,10 @@
           "hasAccount": {
             "type": "boolean"
           },
+          "accountType": {
+            "type": "string",
+            "nullable": true
+          },
           "bankCode": {
             "type": "string",
             "nullable": true
@@ -16311,6 +16963,14 @@
             "nullable": true
           },
           "accountNumberMasked": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayType": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayMasked": {
             "type": "string",
             "nullable": true
           },
@@ -16333,8 +16993,30 @@
           "sellerEmail": {
             "type": "string"
           },
-          "requestedAt": {
-            "type": "string"
+          "sellerAvailableBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "payoutAccountMasked": {
+            "type": "string",
+            "nullable": true
+          },
+          "payoutAccountHolderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestSlipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "latestSlipStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "slipCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "id": {
             "type": "string",
@@ -16366,6 +17048,21 @@
             "type": "string"
           },
           "paidAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationType": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestedAt": {
+            "type": "string"
+          },
+          "slipStatus": {
             "type": "string",
             "nullable": true
           }
@@ -17680,6 +18377,17 @@
           },
           "confirmPassword": {
             "maxLength": 128,
+            "type": "string"
+          }
+        }
+      },
+      "CompletePayoutManuallyRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
             "type": "string"
           }
         }
@@ -20084,6 +20792,33 @@
           }
         }
       },
+      "PagedResponseOfSellerBalanceEntryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SellerBalanceEntryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PagedResponseOfSellerBundleResponse": {
         "type": "object",
         "properties": {
@@ -20386,6 +21121,10 @@
           "hasAccount": {
             "type": "boolean"
           },
+          "accountType": {
+            "type": "string",
+            "nullable": true
+          },
           "bankCode": {
             "type": "string",
             "nullable": true
@@ -20395,6 +21134,14 @@
             "nullable": true
           },
           "accountNumberMasked": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayType": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayMasked": {
             "type": "string",
             "nullable": true
           },
@@ -20439,6 +21186,89 @@
           "paidAt": {
             "type": "string",
             "nullable": true
+          },
+          "destinationType": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestedAt": {
+            "type": "string"
+          },
+          "slipStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PayoutSlipResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payoutId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "verificationStatus": {
+            "type": "string"
+          },
+          "providerReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "parsedAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "parsedTransferredAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "parsedReceiverNameMasked": {
+            "type": "string",
+            "nullable": true
+          },
+          "parsedReceiverAccountLast4": {
+            "type": "string",
+            "nullable": true
+          },
+          "parsedSenderBankCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "mismatchReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "providerErrorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerErrorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileUrl": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string"
+          },
+          "uploadedByName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -20459,6 +21289,14 @@
           },
           "payoutSchedule": {
             "type": "string"
+          },
+          "payoutMaxTHB": {
+            "type": "number",
+            "format": "double"
+          },
+          "nextPayoutDate": {
+            "type": "string",
+            "nullable": true
           },
           "watermarkPolicy": {
             "type": "string"
@@ -20815,13 +21653,18 @@
       },
       "RequestPayoutRequest": {
         "required": [
-          "bankAccount"
+          "amount"
         ],
         "type": "object",
         "properties": {
-          "bankAccount": {
-            "maxLength": 200,
-            "type": "string"
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -20864,7 +21707,12 @@
         "type": "object",
         "properties": {
           "accountNumber": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -20944,21 +21792,33 @@
       },
       "SavePayoutAccountRequest": {
         "required": [
-          "bankCode",
-          "accountNumber",
+          "accountType",
           "accountHolderName"
         ],
         "type": "object",
         "properties": {
-          "bankCode": {
-            "type": "string"
-          },
-          "accountNumber": {
+          "accountType": {
             "type": "string"
           },
           "accountHolderName": {
             "maxLength": 200,
             "type": "string"
+          },
+          "bankCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayType": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -21117,6 +21977,41 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SellerBalanceEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "occurredAt": {
+            "type": "string"
           }
         }
       },
@@ -21560,6 +22455,25 @@
           "subscriptionNetLifetime": {
             "type": "number",
             "format": "double"
+          },
+          "availableBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "onHoldAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "minPayoutAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxPayoutAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "hasPayoutAccount": {
+            "type": "boolean"
           }
         }
       },
@@ -22834,6 +23748,11 @@
         "properties": {
           "status": {
             "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -22864,6 +23783,12 @@
           "payoutSchedule": {
             "maxLength": 50,
             "type": "string"
+          },
+          "payoutMaxTHB": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
           },
           "watermarkPolicy": {
             "type": "string",
