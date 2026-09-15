@@ -21,6 +21,7 @@ import type {
   SuspendUserRequest,
   BanUserRequest,
   ReinstateUserRequest,
+  PayoutSlip,
 } from '../models';
 import { AdminTransaction } from '../models';
 import {
@@ -40,6 +41,7 @@ import {
   getApiAdminDocumentGenerationCategories,
   getApiAdminDocumentGenerationRuns,
   getApiAdminPayouts,
+  getApiAdminPayoutsByPayoutIdSlips,
   getApiFilesPresignedByKey,
   getApiAdminReports,
   getApiAdminSellers,
@@ -61,6 +63,9 @@ import {
   postApiAdminDocumentsByIdReject,
   postApiAdminDocumentsByIdReportsByReportIdResolve,
   postApiAdminOrdersByOrderIdRefund,
+  postApiAdminPayoutsByPayoutIdCompleteManual,
+  postApiAdminPayoutsByPayoutIdSlip,
+  postApiAdminPayoutsByPayoutIdSlipsBySlipIdReverify,
   postApiAdminPayoutsByPayoutIdStatus,
   postApiAdminFeedbackByIdStatus,
   postApiAdminUsersByUserIdBan,
@@ -110,6 +115,10 @@ export interface PlatformSettings {
   vatPercent: number;
   payoutMinTHB: number;
   payoutSchedule: string;
+  /** payout-request-slip-verification v1 §3.9 — `0` = ไม่จำกัด. */
+  payoutMaxTHB: number;
+  /** payout-request-slip-verification v1 §3.9/§4.5 — ISO `yyyy-MM-dd`, `null` = parse ไม่ได้/ยังไม่ตั้งค่า. */
+  nextPayoutDate: string | null;
   /** watermark-completion v1 §3.2 — platform-wide watermark policy (always sent by backend). */
   watermarkPolicy: WatermarkPolicy;
   watermarkDefaultEnabled: boolean;
@@ -278,6 +287,8 @@ function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
     vatPercent: res.vatPercent ?? 0,
     payoutMinTHB: res.payoutMinTHB ?? 0,
     payoutSchedule: res.payoutSchedule ?? '',
+    payoutMaxTHB: res.payoutMaxTHB ?? 0,
+    nextPayoutDate: res.nextPayoutDate ?? null,
     // watermark-completion v1 §3.2 — always present on the wire; defaults mirror §2.2 so a
     // partially-populated response can never render an empty policy card.
     watermarkPolicy: toWatermarkPolicy(res.watermarkPolicy),
@@ -490,6 +501,7 @@ import {
   mapAdminTransaction,
   mapAnnouncementAdmin,
   mapCategory,
+  mapPayoutSlip,
   mapSubcategoryAdmin,
 } from '../api-mappers/mappers';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
@@ -969,15 +981,56 @@ export class AdminService {
     }
   }
 
+  /**
+   * payout-request-slip-verification v1 §3.12: `reason` is now required by the backend when
+   * `status === 'failed'` (it becomes `PAYOUT.FailureReason` and reverses the ledger hold) —
+   * ignored for every other status.
+   */
   async setPayoutStatus(
     payoutId: string,
     status: 'processing' | 'paid' | 'failed',
+    reason?: string,
   ): Promise<void> {
     await postApiAdminPayoutsByPayoutIdStatus({
       path: { payoutId },
-      body: { status },
+      body: { status, reason: status === 'failed' ? (reason ?? null) : null },
       throwOnError: true,
     });
+  }
+
+  // ========== Payout e-slip verification (payout-request-slip-verification v1 §3.7) ==========
+  // docs/contracts/payout-request-slip-verification.md §3.7-§3.7.8/§4.5.
+
+  /** `POST /api/admin/payouts/{payoutId}/slip` (§3.7, multipart) — upload + auto-verify an e-Slip. */
+  async uploadPayoutSlip(payoutId: string, file: File): Promise<PayoutSlip> {
+    const result = await postApiAdminPayoutsByPayoutIdSlip({
+      path: { payoutId },
+      body: { file },
+    });
+    return mapPayoutSlip(unwrapSdkResult(result));
+  }
+
+  /** `GET /api/admin/payouts/{payoutId}/slips` (§3.7.7) — every slip uploaded for this payout. */
+  async listPayoutSlips(payoutId: string): Promise<PayoutSlip[]> {
+    const result = await getApiAdminPayoutsByPayoutIdSlips({ path: { payoutId } });
+    return (unwrapSdkResult(result) ?? []).map(mapPayoutSlip);
+  }
+
+  /** `POST /api/admin/payouts/{payoutId}/slips/{slipId}/reverify` (§3.7.5). */
+  async reverifyPayoutSlip(payoutId: string, slipId: string): Promise<PayoutSlip> {
+    const result = await postApiAdminPayoutsByPayoutIdSlipsBySlipIdReverify({
+      path: { payoutId, slipId },
+    });
+    return mapPayoutSlip(unwrapSdkResult(result));
+  }
+
+  /** `POST /api/admin/payouts/{payoutId}/complete-manual` (§3.7.6) — `note` must be >= 10 chars. */
+  async completePayoutManually(payoutId: string, note: string): Promise<AdminPayoutResponse> {
+    const result = await postApiAdminPayoutsByPayoutIdCompleteManual({
+      path: { payoutId },
+      body: { note },
+    });
+    return unwrapSdkResult(result);
   }
 
   /**

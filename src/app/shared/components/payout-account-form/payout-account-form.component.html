@@ -6,7 +6,7 @@
       </div>
       <div>
         <h2 class="text-lg font-bold text-ink mb-1">บัญชีรับเงิน</h2>
-        <p class="text-xs text-ink-muted">บัญชีธนาคารที่ใช้รับเงินจากการขาย — แก้ไขได้เองทุกเมื่อ</p>
+        <p class="text-xs text-ink-muted">บัญชีธนาคารหรือพร้อมเพย์ที่ใช้รับเงินจากการขาย — แก้ไขได้เองทุกเมื่อ</p>
       </div>
     </div>
 
@@ -18,26 +18,21 @@
     } @else if (!account()) {
       <p class="text-sm text-ink-soft">กำลังโหลด…</p>
     } @else if (showForm()) {
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">ธนาคาร</label>
-          <select
-            class="input-soft cursor-pointer"
-            [ngModel]="bankCode()"
-            (ngModelChange)="bankCode.set($event)"
-            name="bankCode"
-          >
-            <option value="">เลือกธนาคาร</option>
-            @for (bank of banks; track bank.code) {
-              <option [value]="bank.code">{{ bank.name }}</option>
-            }
-          </select>
-          @if (fieldErrors().bankCode) {
-            <p class="text-xs text-rose-600 mt-1">{{ fieldErrors().bankCode }}</p>
-          }
-        </div>
+      <div class="flex gap-2 mb-5">
+        <button type="button" class="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+          [class]="accountTypeSelection() === 'bank' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+          (click)="selectAccountType('bank')">
+          โอนเข้าบัญชีธนาคาร
+        </button>
+        <button type="button" class="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+          [class]="accountTypeSelection() === 'promptpay' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+          (click)="selectAccountType('promptpay')">
+          พร้อมเพย์
+        </button>
+      </div>
 
-        <div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="sm:col-span-2">
           <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อบัญชี</label>
           <input
             class="input-soft"
@@ -52,21 +47,78 @@
           }
         </div>
 
-        <div class="sm:col-span-2">
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">เลขบัญชี</label>
-          <input
-            class="input-soft"
-            [ngModel]="accountNumber()"
-            (ngModelChange)="accountNumber.set($event)"
-            name="accountNumber"
-            placeholder="ตัวเลข 10-15 หลัก ไม่ต้องใส่ขีด"
-            maxlength="20"
-            inputmode="numeric"
-          />
-          @if (fieldErrors().accountNumber) {
-            <p class="text-xs text-rose-600 mt-1">{{ fieldErrors().accountNumber }}</p>
-          }
-        </div>
+        @if (accountTypeSelection() === 'bank') {
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">ธนาคาร</label>
+            <select
+              class="input-soft cursor-pointer"
+              [ngModel]="bankCode()"
+              (ngModelChange)="bankCode.set($event)"
+              name="bankCode"
+            >
+              <option value="">เลือกธนาคาร</option>
+              @for (bank of banks; track bank.code) {
+                <option [value]="bank.code">{{ bank.name }}</option>
+              }
+            </select>
+            @if (fieldErrors().bankCode) {
+              <p class="text-xs text-rose-600 mt-1">{{ fieldErrors().bankCode }}</p>
+            }
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">เลขบัญชี</label>
+            <input
+              class="input-soft"
+              [ngModel]="accountNumber()"
+              (ngModelChange)="accountNumber.set($event)"
+              name="accountNumber"
+              placeholder="ตัวเลข 10-15 หลัก ไม่ต้องใส่ขีด"
+              maxlength="20"
+              inputmode="numeric"
+            />
+            @if (fieldErrors().accountNumber) {
+              <p class="text-xs text-rose-600 mt-1">{{ fieldErrors().accountNumber }}</p>
+            }
+          </div>
+        } @else {
+          <div class="sm:col-span-2">
+            <div class="flex gap-2 mb-3">
+              <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                [class]="promptPayTypeSelection() === 'phone' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                (click)="selectPromptPayType('phone')">
+                เบอร์โทรศัพท์
+              </button>
+              <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                [class]="promptPayTypeSelection() === 'national_id' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                (click)="selectPromptPayType('national_id')">
+                เลขบัตรประชาชน
+              </button>
+            </div>
+
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">
+              {{ promptPayTypeSelection() === 'phone' ? 'เบอร์โทรศัพท์' : 'เลขบัตรประชาชน' }}
+            </label>
+            <input
+              class="input-soft"
+              [ngModel]="promptPayId()"
+              (ngModelChange)="promptPayId.set($event)"
+              name="promptPayId"
+              [placeholder]="promptPayTypeSelection() === 'phone' ? 'เช่น 0812345678' : 'เลขบัตรประชาชน 13 หลัก'"
+              [maxlength]="promptPayTypeSelection() === 'phone' ? 10 : 13"
+              inputmode="numeric"
+            />
+            @if (fieldErrors().promptPayId) {
+              <p class="text-xs text-rose-600 mt-1">{{ fieldErrors().promptPayId }}</p>
+            }
+            <p class="text-xs text-ink-muted mt-2">แนะนำพร้อมเพย์เพื่อลดค่าธรรมเนียมโอนต่างธนาคาร</p>
+            @if (promptPayTypeSelection() === 'national_id') {
+              <p class="text-xs text-ink-muted mt-1">
+                ข้อมูลนี้ถูกเข้ารหัสก่อนจัดเก็บ และจะแสดงเฉพาะเมื่อคุณกดแสดงเต็มเท่านั้น
+              </p>
+            }
+          </div>
+        }
       </div>
 
       @if (saveError()) {
@@ -90,17 +142,23 @@
     } @else {
       <div class="grid gap-3 sm:grid-cols-2 text-sm">
         <div>
-          <p class="text-xs text-ink-muted mb-1">ธนาคาร</p>
-          <p class="font-semibold text-ink">{{ bankName() }}</p>
+          <p class="text-xs text-ink-muted mb-1">วิธีรับเงิน</p>
+          @if (account()!.accountType === 'promptpay') {
+            <p class="font-semibold text-ink">พร้อมเพย์ ({{ promptPayTypeLabel() }})</p>
+          } @else {
+            <p class="font-semibold text-ink">{{ bankName() }}</p>
+          }
         </div>
         <div>
           <p class="text-xs text-ink-muted mb-1">ชื่อบัญชี</p>
           <p class="font-semibold text-ink">{{ account()!.accountHolderName }}</p>
         </div>
         <div class="sm:col-span-2">
-          <p class="text-xs text-ink-muted mb-1">เลขบัญชี</p>
+          <p class="text-xs text-ink-muted mb-1">
+            {{ account()!.accountType === 'promptpay' ? promptPayTypeLabel() : 'เลขบัญชี' }}
+          </p>
           <p class="font-semibold text-ink font-mono tracking-wide">
-            {{ revealed() ?? account()!.accountNumberMasked }}
+            {{ revealedValue() ?? (account()!.accountType === 'promptpay' ? account()!.promptPayMasked : account()!.accountNumberMasked) }}
           </p>
         </div>
       </div>
@@ -110,7 +168,7 @@
       </p>
 
       <div class="flex flex-wrap justify-end gap-2 mt-6">
-        @if (revealed()) {
+        @if (revealedValue()) {
           <button type="button" class="btn-ghost !px-6" (click)="onHide()">ซ่อน</button>
         } @else {
           <button type="button" class="btn-ghost !px-6" (click)="onReveal()">

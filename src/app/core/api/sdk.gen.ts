@@ -46,6 +46,9 @@ import type {
   DeleteApiSellerDocumentsByIdData,
   DeleteApiSellerDocumentsByIdErrors,
   DeleteApiSellerDocumentsByIdResponses,
+  DeleteApiSellerPayoutsByPayoutIdData,
+  DeleteApiSellerPayoutsByPayoutIdErrors,
+  DeleteApiSellerPayoutsByPayoutIdResponses,
   DeleteApiSellersBySellerIdFollowData,
   DeleteApiSellersBySellerIdFollowErrors,
   DeleteApiSellersBySellerIdFollowResponses,
@@ -116,6 +119,11 @@ import type {
   GetApiAdminNotificationConfigData,
   GetApiAdminNotificationConfigErrors,
   GetApiAdminNotificationConfigResponses,
+  GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileData,
+  GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileErrors,
+  GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileResponses,
+  GetApiAdminPayoutsByPayoutIdSlipsData,
+  GetApiAdminPayoutsByPayoutIdSlipsResponses,
   GetApiAdminPayoutsData,
   GetApiAdminPayoutsErrors,
   GetApiAdminPayoutsResponses,
@@ -123,6 +131,9 @@ import type {
   GetApiAdminReportsResponses,
   GetApiAdminSellerApplicationsData,
   GetApiAdminSellerApplicationsResponses,
+  GetApiAdminSellersBySellerIdBalanceEntriesData,
+  GetApiAdminSellersBySellerIdBalanceEntriesErrors,
+  GetApiAdminSellersBySellerIdBalanceEntriesResponses,
   GetApiAdminSellersBySellerIdPayoutAccountData,
   GetApiAdminSellersBySellerIdPayoutAccountErrors,
   GetApiAdminSellersBySellerIdPayoutAccountResponses,
@@ -269,6 +280,8 @@ import type {
   GetApiOrdersResponses,
   GetApiPaymentsStripeConfigData,
   GetApiPaymentsStripeConfigResponses,
+  GetApiSellerBalanceEntriesData,
+  GetApiSellerBalanceEntriesResponses,
   GetApiSellerBundlesByBundleIdData,
   GetApiSellerBundlesByBundleIdErrors,
   GetApiSellerBundlesByBundleIdResponses,
@@ -376,6 +389,15 @@ import type {
   PostApiAdminOrdersByOrderIdRefundData,
   PostApiAdminOrdersByOrderIdRefundErrors,
   PostApiAdminOrdersByOrderIdRefundResponses,
+  PostApiAdminPayoutsByPayoutIdCompleteManualData,
+  PostApiAdminPayoutsByPayoutIdCompleteManualErrors,
+  PostApiAdminPayoutsByPayoutIdCompleteManualResponses,
+  PostApiAdminPayoutsByPayoutIdSlipData,
+  PostApiAdminPayoutsByPayoutIdSlipErrors,
+  PostApiAdminPayoutsByPayoutIdSlipResponses,
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyData,
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyErrors,
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponses,
   PostApiAdminPayoutsByPayoutIdStatusData,
   PostApiAdminPayoutsByPayoutIdStatusErrors,
   PostApiAdminPayoutsByPayoutIdStatusResponses,
@@ -1051,6 +1073,95 @@ export const postApiAdminPayoutsByPayoutIdStatus = <ThrowOnError extends boolean
     ThrowOnError
   >({
     url: '/api/admin/payouts/{payoutId}/status',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiAdminSellersBySellerIdBalanceEntries = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminSellersBySellerIdBalanceEntriesData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminSellersBySellerIdBalanceEntriesResponses,
+  GetApiAdminSellersBySellerIdBalanceEntriesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminSellersBySellerIdBalanceEntriesResponses,
+    GetApiAdminSellersBySellerIdBalanceEntriesErrors,
+    ThrowOnError
+  >({ url: '/api/admin/sellers/{sellerId}/balance-entries', ...options });
+
+export const postApiAdminPayoutsByPayoutIdSlip = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminPayoutsByPayoutIdSlipData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminPayoutsByPayoutIdSlipResponses,
+  PostApiAdminPayoutsByPayoutIdSlipErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminPayoutsByPayoutIdSlipResponses,
+    PostApiAdminPayoutsByPayoutIdSlipErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    url: '/api/admin/payouts/{payoutId}/slip',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+
+export const getApiAdminPayoutsByPayoutIdSlips = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminPayoutsByPayoutIdSlipsData, ThrowOnError>,
+): RequestResult<GetApiAdminPayoutsByPayoutIdSlipsResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).get<GetApiAdminPayoutsByPayoutIdSlipsResponses, unknown, ThrowOnError>(
+    { url: '/api/admin/payouts/{payoutId}/slips', ...options },
+  );
+
+export const getApiAdminPayoutsByPayoutIdSlipsBySlipIdFile = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileResponses,
+  GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileResponses,
+    GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileErrors,
+    ThrowOnError
+  >({ url: '/api/admin/payouts/{payoutId}/slips/{slipId}/file', ...options });
+
+export const postApiAdminPayoutsByPayoutIdSlipsBySlipIdReverify = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponses,
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponses,
+    PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyErrors,
+    ThrowOnError
+  >({ url: '/api/admin/payouts/{payoutId}/slips/{slipId}/reverify', ...options });
+
+export const postApiAdminPayoutsByPayoutIdCompleteManual = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminPayoutsByPayoutIdCompleteManualData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminPayoutsByPayoutIdCompleteManualResponses,
+  PostApiAdminPayoutsByPayoutIdCompleteManualErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminPayoutsByPayoutIdCompleteManualResponses,
+    PostApiAdminPayoutsByPayoutIdCompleteManualErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/payouts/{payoutId}/complete-manual',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -2975,6 +3086,27 @@ export const postApiSellerPayouts = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+export const deleteApiSellerPayoutsByPayoutId = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteApiSellerPayoutsByPayoutIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiSellerPayoutsByPayoutIdResponses,
+  DeleteApiSellerPayoutsByPayoutIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiSellerPayoutsByPayoutIdResponses,
+    DeleteApiSellerPayoutsByPayoutIdErrors,
+    ThrowOnError
+  >({ url: '/api/seller/payouts/{payoutId}', ...options });
+
+export const getApiSellerBalanceEntries = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerBalanceEntriesData, ThrowOnError>,
+): RequestResult<GetApiSellerBalanceEntriesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerBalanceEntriesResponses, unknown, ThrowOnError>({
+    url: '/api/seller/balance-entries',
+    ...options,
   });
 
 export const getApiSellerReviews = <ThrowOnError extends boolean = false>(

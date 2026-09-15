@@ -4,10 +4,12 @@ import {
   DEFAULT_STORE_READINESS,
   DocumentItem,
   DocumentPricingHint,
+  SellerBalanceEntry,
   SellerQnaItem,
   SellerStats,
 } from '../models';
 import {
+  mapSellerBalanceEntry,
   mapSellerDocument,
   mapSellerDocumentSummary,
   mapSellerQna,
@@ -15,12 +17,15 @@ import {
 } from '../api-mappers/mappers';
 import {
   deleteApiSellerDocumentsById,
+  deleteApiSellerPayoutsByPayoutId,
   deleteApiSellerStoreSectionsBySectionId,
+  getApiSellerBalanceEntries,
   getApiSellerDashboard,
   getApiSellerDocuments,
   getApiSellerDocumentsById,
   getApiSellerDocumentsPricingHint,
   getApiSellerEarnings,
+  getApiSellerPayouts,
   getApiSellerQna,
   getApiSellerReviews,
   getApiSellerStoreSections,
@@ -39,6 +44,7 @@ import {
 import type {
   CreateDocumentRequest,
   GetApiSellerReviewsResponse,
+  PayoutResponse,
   SaveStoreSectionRequest,
   SellerAutofillResponse,
   SellerDocumentResponse,
@@ -57,7 +63,6 @@ import {
 } from '../api/seller-document-main-files';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager, type PagedResult } from './infinite-pager';
-import { client } from '../api/client.gen';
 
 export interface SellerPayoutRow {
   id: string;
@@ -66,8 +71,29 @@ export interface SellerPayoutRow {
   netAmount: number;
   status: string;
   bankAccount: string;
-  createdAt: string;
-  paidAt?: string | null;
+  /** `payout-request-slip-verification v1 §3.1`: `bank` | `promptpay` | null. */
+  destinationType: string | null;
+  requestedAt: string;
+  paidAt: string | null;
+  cancelledAt: string | null;
+  /** Latest e-slip verification status for this payout, if any (§3.4). */
+  slipStatus: string | null;
+}
+
+function toSellerPayoutRow(p: PayoutResponse): SellerPayoutRow {
+  return {
+    id: p.id ?? '',
+    grossAmount: p.grossAmount ?? 0,
+    fee: p.fee ?? 0,
+    netAmount: p.netAmount ?? 0,
+    status: p.status ?? 'pending',
+    bankAccount: p.bankAccount ?? '',
+    destinationType: p.destinationType ?? null,
+    requestedAt: p.requestedAt ?? '',
+    paidAt: p.paidAt ?? null,
+    cancelledAt: p.cancelledAt ?? null,
+    slipStatus: p.slipStatus ?? null,
+  };
 }
 
 export type SellerReviewRow = {
@@ -205,17 +231,66 @@ export class SellerService {
   }
 
   /**
-   * GAP-02: asks the platform to pay out the available balance. Payouts had no API at
-   * all, so the seller earnings page showed money that could never be withdrawn.
+   * payout-request-slip-verification v1 §3.1 (breaking change from GAP-02's original shape):
+   * the seller now names an `amount` (and optional `note`) instead of always asking for the
+   * entire available balance — the destination account is composed by the server from
+   * `SELLER_PAYOUT_ACCOUNT` and is never sent by the client any more.
+   *
+   * The four disable-reasons in §4.2 (no payout account / below minimum / open request /
+   * submitting) are all pre-checked by the page before this is ever called, so a `400`/`409`
+   * here is a race (balance or account changed between renders) — reported via the same toast
+   * every other write in this service uses, with the backend's own Thai sentence attached by
+   * `ApiFailureReporter.formatDetail`.
    */
-  async requestPayout(bankAccount: string): Promise<{ ok: boolean; error?: string }> {
+  async requestPayout(amount: number, note?: string): Promise<{ ok: boolean }> {
     try {
-      await postApiSellerPayouts({ body: { bankAccount }, throwOnError: true });
+      await postApiSellerPayouts({
+        body: { amount, note: note?.trim() || null },
+        throwOnError: true,
+      });
       await this.loadEarnings();
       return { ok: true };
     } catch (e) {
+      if (extractErrorStatus(e) === 403 && extractErrorCode(e) === 'seller_profile_required') {
+        this._sellerProfileRequired.set(true);
+        return { ok: false };
+      }
       this.apiFail.report('ขอถอนเงิน', e);
-      return { ok: false, error: 'ขอถอนเงินไม่สำเร็จ' };
+      return { ok: false };
+    }
+  }
+
+  /** `DELETE /api/seller/payouts/{payoutId}` (§3.2) — cancels the seller's own `pending` request. */
+  async cancelPayout(payoutId: string): Promise<{ ok: boolean }> {
+    try {
+      await deleteApiSellerPayoutsByPayoutId({ path: { payoutId }, throwOnError: true });
+      await this.loadEarnings();
+      return { ok: true };
+    } catch (e) {
+      this.apiFail.report('ยกเลิกคำขอถอนเงิน', e);
+      return { ok: false };
+    }
+  }
+
+  /** `GET /api/seller/balance-entries` (§3.5) — the "ประวัติยอดเงิน" ledger section on §4.2/§4.4. */
+  async loadBalanceEntriesPaged(
+    page = 1,
+    pageSize = 20,
+  ): Promise<PagedResult<SellerBalanceEntry>> {
+    try {
+      const result = await getApiSellerBalanceEntries({ query: { Page: page, PageSize: pageSize } });
+      const data = unwrapSdkResult(result);
+      this._sellerProfileRequired.set(false);
+      return {
+        items: (data.items ?? []).map(mapSellerBalanceEntry),
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 1,
+      };
+    } catch (e) {
+      this.handleSellerScopedError('โหลดประวัติยอดเงิน', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
 
@@ -279,29 +354,26 @@ export class SellerService {
     }
   }
 
+  /**
+   * payout-request-slip-verification v1 §3.4/round 2: wired to the real generated
+   * `getApiSellerPayouts` now that backend gate 1 passed and `npm run generate:api` re-ran
+   * against the live backend — round 1 (GAP-02) called this through a hand-typed `client.get`
+   * because no SDK helper existed yet.
+   */
   async loadPayoutsPaged(
     page = 1,
     pageSize = 10,
   ): Promise<PagedResult<SellerPayoutRow>> {
     try {
-      const result = await client.get<unknown>({
-        url: '/api/seller/payouts',
-        query: { Page: page, PageSize: pageSize },
-      });
-      const data = unwrapSdkResult(result as SdkResult<{
-        items?: SellerPayoutRow[];
-        page?: number;
-        pageSize?: number;
-        totalCount?: number;
-        totalPages?: number;
-      }>);
+      const result = await getApiSellerPayouts({ query: { Page: page, PageSize: pageSize } });
+      const data = unwrapSdkResult(result);
       this._sellerProfileRequired.set(false);
       return {
-        items: data?.items ?? [],
-        page: data?.page ?? page,
-        pageSize: data?.pageSize ?? pageSize,
-        totalCount: data?.totalCount ?? 0,
-        totalPages: data?.totalPages ?? 1,
+        items: (data.items ?? []).map(toSellerPayoutRow),
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
       this.handleSellerScopedError('โหลดประวัติการถอนเงิน', e);

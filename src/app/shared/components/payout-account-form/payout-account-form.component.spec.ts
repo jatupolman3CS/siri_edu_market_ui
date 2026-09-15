@@ -2,26 +2,30 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { PayoutAccountFormComponent } from './payout-account-form.component';
-import { PayoutAccountService } from '../../../core/services';
+import { PayoutAccountService, type RevealedPayoutAccount } from '../../../core/services';
 import { idleActionState, loadingActionState, errorActionState, type ActionState } from '../../../core/services/action-state';
 import type { PayoutAccount } from '../../../core/models';
 
 /**
  * seller-payout-account-self-service v1 (docs/contracts/seller-payout-account-self-service.md
  * §1 test list / §4) — AC-16/AC-17.
+ * payout-request-slip-verification v1 (docs/contracts/payout-request-slip-verification.md §3.13,
+ * §4.6) — AC-37: PromptPay (phone / national ID) as a second destination type.
  *
  * Drives `PayoutAccountFormComponent` against a stubbed `PayoutAccountService` (a plain object
  * with the same signal/method shape, not the real `providedIn: 'root'` service) — same pattern as
  * `saved-cards.component.spec.ts` — so render/interaction logic is exercised independently of the
- * service's own `TODO(contract)` stub body (that gets its own coverage in
- * `payout-account.service.spec.ts`).
+ * service's own SDK-wiring (that gets its own coverage in `payout-account.service.spec.ts`).
  */
 function accountFixture(overrides: Partial<PayoutAccount> = {}): PayoutAccount {
   return {
     hasAccount: true,
+    accountType: 'bank',
     bankCode: 'KBANK',
     accountHolderName: 'สมชาย ใจดี',
     accountNumberMasked: '••••••••1234',
+    promptPayType: null,
+    promptPayMasked: '',
     updatedAt: '2026-09-01T00:00:00.000Z',
     ...overrides,
   };
@@ -33,7 +37,7 @@ function fakePayoutAccount(
 ) {
   const account = signal<PayoutAccount | null>(initialAccount);
   const state = signal<ActionState>(initialState);
-  const revealed = signal<string | null>(null);
+  const revealed = signal<RevealedPayoutAccount | null>(null);
   const sellerProfileRequired = signal(false);
   return {
     account: account.asReadonly(),
@@ -45,7 +49,12 @@ function fakePayoutAccount(
     _revealed: revealed,
     _sellerProfileRequired: sellerProfileRequired,
     load: vi.fn(async () => {}),
-    save: vi.fn(async (): Promise<{ ok: boolean; error?: string }> => ({ ok: false, error: 'ยังเชื่อมต่อไม่ได้' })),
+    save: vi.fn(
+      async (_input: unknown): Promise<{ ok: boolean; error?: string }> => ({
+        ok: false,
+        error: 'ยังเชื่อมต่อไม่ได้',
+      }),
+    ),
     reveal: vi.fn(async () => {}),
     clearRevealed: vi.fn(() => revealed.set(null)),
   };
@@ -116,8 +125,12 @@ describe('PayoutAccountFormComponent — loading / error / hidden states (AC-16)
 });
 
 describe('PayoutAccountFormComponent — hasAccount:false shows the empty form immediately (AC-16)', () => {
-  it('renders the bank/name/number fields with no click needed', () => {
-    const fixture = render(fakePayoutAccount(accountFixture({ hasAccount: false, bankCode: '', accountHolderName: '', accountNumberMasked: '' })));
+  it('renders the bank/name/number fields with no click needed (bank is the default radio)', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({ hasAccount: false, accountType: null, bankCode: '', accountHolderName: '', accountNumberMasked: '' }),
+      ),
+    );
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('select[name="bankCode"]')).toBeTruthy();
@@ -141,7 +154,7 @@ describe('PayoutAccountFormComponent — hasAccount:true masked view + แก้
     expect(text).toContain('แสดงเลขบัญชีเต็ม');
   });
 
-  it('"แก้ไข" switches to a completely blank form (no prefill) and shows "ยกเลิก"', () => {
+  it('"แก้ไข" switches to a completely blank form (no prefill), pre-selects the saved accountType, and shows "ยกเลิก"', () => {
     const fixture = render(fakePayoutAccount(accountFixture()));
 
     fixture.componentInstance.startEdit();
@@ -150,6 +163,7 @@ describe('PayoutAccountFormComponent — hasAccount:true masked view + แก้
     expect(fixture.componentInstance.bankCode()).toBe('');
     expect(fixture.componentInstance.accountHolderName()).toBe('');
     expect(fixture.componentInstance.accountNumber()).toBe('');
+    expect(fixture.componentInstance.accountTypeSelection()).toBe('bank');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ยกเลิก');
   });
@@ -168,9 +182,9 @@ describe('PayoutAccountFormComponent — hasAccount:true masked view + แก้
   });
 });
 
-describe('PayoutAccountFormComponent — client-side validation before save() (AC-16 §4)', () => {
-  it('blocks submit and shows all three field errors when every field is empty', async () => {
-    const fake = fakePayoutAccount(accountFixture({ hasAccount: false }));
+describe('PayoutAccountFormComponent — bank validation before save() (AC-16 §4)', () => {
+  it('blocks submit and shows all field errors when every field is empty', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
     const fixture = render(fake);
 
     await fixture.componentInstance.submit();
@@ -182,7 +196,7 @@ describe('PayoutAccountFormComponent — client-side validation before save() (A
   });
 
   it('rejects an account number shorter than 10 digits or containing letters', async () => {
-    const fake = fakePayoutAccount(accountFixture({ hasAccount: false }));
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
     const fixture = render(fake);
     fixture.componentInstance.bankCode.set('KBANK');
     fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
@@ -197,7 +211,7 @@ describe('PayoutAccountFormComponent — client-side validation before save() (A
   });
 
   it('strips spaces/dashes from the account number and trims the holder name before calling save()', async () => {
-    const fake = fakePayoutAccount(accountFixture({ hasAccount: false }));
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
     const fixture = render(fake);
     fixture.componentInstance.bankCode.set('KBANK');
     fixture.componentInstance.accountHolderName.set('  สมชาย ใจดี  ');
@@ -206,10 +220,115 @@ describe('PayoutAccountFormComponent — client-side validation before save() (A
     await fixture.componentInstance.submit();
 
     expect(fake.save).toHaveBeenCalledWith({
+      accountType: 'bank',
+      accountHolderName: 'สมชาย ใจดี',
       bankCode: 'KBANK',
       accountNumber: '1234567890',
-      accountHolderName: 'สมชาย ใจดี',
     });
+  });
+});
+
+describe('PayoutAccountFormComponent — PromptPay mode (payout-request-slip-verification v1 §3.13/§4.6, AC-37)', () => {
+  it('selectAccountType("promptpay") switches the radio and clears bank-only field values', () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    const fixture = render(fake);
+    fixture.componentInstance.bankCode.set('KBANK');
+    fixture.componentInstance.accountNumber.set('1234567890');
+
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.accountTypeSelection()).toBe('promptpay');
+    expect(fixture.componentInstance.bankCode()).toBe('');
+    expect(fixture.componentInstance.accountNumber()).toBe('');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('select[name="bankCode"]')).toBeFalsy();
+    expect(el.querySelector('input[name="promptPayId"]')).toBeTruthy();
+  });
+
+  it('defaults the PromptPay sub-type to "เบอร์โทรศัพท์" and rejects a phone number that is not 10 digits starting with 0', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    const fixture = render(fake);
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
+    fixture.componentInstance.promptPayId.set('12345');
+
+    await fixture.componentInstance.submit();
+
+    expect(fake.save).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.fieldErrors().promptPayId).toContain('10 หลัก');
+  });
+
+  it('accepts a valid 10-digit phone number and sends promptPayType/promptPayId (no checksum done client-side)', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    const fixture = render(fake);
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
+    fixture.componentInstance.promptPayId.set('081-234-5678');
+
+    await fixture.componentInstance.submit();
+
+    expect(fake.save).toHaveBeenCalledWith({
+      accountType: 'promptpay',
+      accountHolderName: 'สมชาย ใจดี',
+      promptPayType: 'phone',
+      promptPayId: '0812345678',
+    });
+  });
+
+  it('switching to "เลขบัตรประชาชน" requires 13 digits and shows the encryption hint text', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    const fixture = render(fake);
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.selectPromptPayType('national_id');
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ข้อมูลนี้ถูกเข้ารหัสก่อนจัดเก็บ');
+
+    fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
+    fixture.componentInstance.promptPayId.set('123456789');
+    await fixture.componentInstance.submit();
+
+    expect(fake.save).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.fieldErrors().promptPayId).toContain('13 หลัก');
+  });
+
+  it('a leftover promptPayId is not sent when the user switches back to bank before submitting', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    const fixture = render(fake);
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.promptPayId.set('0812345678');
+    fixture.componentInstance.selectAccountType('bank');
+    fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
+    fixture.componentInstance.bankCode.set('KBANK');
+    fixture.componentInstance.accountNumber.set('1234567890');
+
+    await fixture.componentInstance.submit();
+
+    const payload = fake.save.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload['accountType']).toBe('bank');
+    expect(payload['promptPayId']).toBeUndefined();
+    expect(payload['promptPayType']).toBeUndefined();
+  });
+
+  it('masked view shows "พร้อมเพย์" + the sub-type label + promptPayMasked for a saved PromptPay account', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          accountType: 'promptpay',
+          promptPayType: 'phone',
+          promptPayMasked: '••••••••5678',
+          bankCode: '',
+          accountNumberMasked: '',
+        }),
+      ),
+    );
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('พร้อมเพย์');
+    expect(text).toContain('เบอร์โทรศัพท์');
+    expect(text).toContain('••••••••5678');
   });
 });
 
@@ -230,7 +349,7 @@ describe('PayoutAccountFormComponent — submit() outcomes (AC-16)', () => {
     expect(fixture.componentInstance.editing()).toBe(false);
   });
 
-  it('§4 stub (400-equivalent): shows result.error under the form, no toast', async () => {
+  it('shows result.error under the form on a validation failure from the backend, no toast', async () => {
     const fake = fakePayoutAccount(accountFixture());
     const messages: Messages = { success: [], warning: [], error: [] };
     const fixture = render(fake, messages);
@@ -279,7 +398,7 @@ describe('PayoutAccountFormComponent — reveal/hide (AC-17)', () => {
   it('"แสดงเลขบัญชีเต็ม" calls reveal(), shows the number and "ซ่อน" once revealed() is set', async () => {
     const fake = fakePayoutAccount(accountFixture());
     fake.reveal.mockImplementationOnce(async () => {
-      fake._revealed.set('1112223334');
+      fake._revealed.set({ accountNumber: '1112223334', promptPayId: null });
     });
     const fixture = render(fake);
 
@@ -291,6 +410,21 @@ describe('PayoutAccountFormComponent — reveal/hide (AC-17)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('1112223334');
     expect(text).toContain('ซ่อน');
+  });
+
+  it('reveals promptPayId (not accountNumber) for a PromptPay account', async () => {
+    const fake = fakePayoutAccount(accountFixture({ accountType: 'promptpay', promptPayType: 'phone', promptPayMasked: '••••••••5678' }));
+    fake.reveal.mockImplementationOnce(async () => {
+      fake._revealed.set({ accountNumber: null, promptPayId: '0812345678' });
+    });
+    const fixture = render(fake);
+
+    await fixture.componentInstance.onReveal();
+    fixture.detectChanges();
+    await settle();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('0812345678');
   });
 
   it('toasts "แสดงเลขบัญชีไม่สำเร็จ" when reveal() leaves revealed() as null', async () => {
@@ -305,7 +439,7 @@ describe('PayoutAccountFormComponent — reveal/hide (AC-17)', () => {
 
   it('"ซ่อน" calls clearRevealed()', () => {
     const fake = fakePayoutAccount(accountFixture());
-    fake._revealed.set('1112223334');
+    fake._revealed.set({ accountNumber: '1112223334', promptPayId: null });
     const fixture = render(fake);
 
     fixture.componentInstance.onHide();

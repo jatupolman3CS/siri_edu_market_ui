@@ -1,0 +1,352 @@
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { AdminPayoutsPage } from './payouts.page';
+import { AdminService } from '../../../core/services/admin.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import type { AdminPayoutResponse } from '../../../core/api';
+import type { PayoutSlip } from '../../../core/models';
+
+/**
+ * payout-request-slip-verification v1 (docs/contracts/payout-request-slip-verification.md
+ * §3.7/§3.9/§3.12/§4.5) — AC-38/AC-39.
+ *
+ * Drives `AdminPayoutsPage` against stubbed `AdminService`/`AuthService` (plain objects with the
+ * same signal/method shape, not the real `providedIn: 'root'` services) — same pattern as
+ * `payout-account-form.component.spec.ts` — so render/interaction logic is exercised
+ * independently of the service's own SDK wiring (covered in `admin.service.spec.ts`).
+ */
+function payoutFixture(overrides: Partial<AdminPayoutResponse> = {}): AdminPayoutResponse {
+  return {
+    id: 'payout-1',
+    sellerId: 'seller-1',
+    sellerName: 'สมชาย ใจดี',
+    sellerEmail: 'somchai@example.com',
+    sellerAvailableBalance: 3200,
+    payoutAccountMasked: 'KBANK ••••1234',
+    payoutAccountHolderName: 'สมชาย ใจดี',
+    latestSlipId: null,
+    latestSlipStatus: null,
+    slipCount: 0,
+    grossAmount: 500,
+    fee: 0,
+    netAmount: 500,
+    status: 'pending',
+    bankAccount: 'KBANK ••••1234',
+    periodStart: '2026-08-01T00:00:00.000Z',
+    periodEnd: '2026-09-01T00:00:00.000Z',
+    paidAt: null,
+    destinationType: 'bank',
+    cancelledAt: null,
+    requestedAt: '2026-09-10T00:00:00.000Z',
+    slipStatus: null,
+    ...overrides,
+  };
+}
+
+function slipFixture(overrides: Partial<PayoutSlip> = {}): PayoutSlip {
+  return {
+    id: 'slip-1',
+    payoutId: 'payout-1',
+    provider: 'mock',
+    verificationStatus: 'mismatched',
+    providerReference: 'MOCK-REF-1',
+    parsedAmount: 400,
+    parsedTransferredAt: '2026-09-10T00:00:00.000Z',
+    parsedReceiverNameMasked: 'สมชาย ใจดี',
+    parsedReceiverAccountLast4: '1234',
+    parsedSenderBankCode: 'KBANK',
+    mismatchReasons: ['amount_mismatch'],
+    providerErrorCode: null,
+    providerErrorMessage: null,
+    fileUrl: '/api/admin/payouts/payout-1/slips/slip-1/file',
+    uploadedAt: '2026-09-10T00:05:00.000Z',
+    uploadedByName: 'Admin One',
+    ...overrides,
+  };
+}
+
+type Messages = { success: string[]; warning: string[]; error: string[] };
+
+function render(opts: {
+  items?: AdminPayoutResponse[];
+  nextPayoutDate?: string | null;
+  slips?: PayoutSlip[];
+  uploadPayoutSlip?: ReturnType<typeof vi.fn>;
+  completePayoutManually?: ReturnType<typeof vi.fn>;
+  reverifyPayoutSlip?: ReturnType<typeof vi.fn>;
+  setPayoutStatus?: ReturnType<typeof vi.fn>;
+} = {}) {
+  const items = opts.items ?? [payoutFixture()];
+  const messages: Messages = { success: [], warning: [], error: [] };
+  const fakeAdmin = {
+    listPayoutsPaged: vi.fn(async () => ({
+      items,
+      totalCount: items.length,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    })),
+    loadSettings: vi.fn(async () => ({
+      feeRatePercent: 10,
+      vatPercent: 7,
+      payoutMinTHB: 100,
+      payoutSchedule: 'monthly-15',
+      payoutMaxTHB: 0,
+      nextPayoutDate: opts.nextPayoutDate ?? null,
+      watermarkPolicy: 'required_when_supported' as const,
+      watermarkDefaultEnabled: true,
+      watermarkForensicEnabled: true,
+      watermarkCopyRetentionDays: 90,
+      watermarkDefaultSubtitle: null,
+    })),
+    setPayoutStatus: opts.setPayoutStatus ?? vi.fn(async () => {}),
+    listPayoutSlips: vi.fn(async () => opts.slips ?? []),
+    uploadPayoutSlip: opts.uploadPayoutSlip ?? vi.fn(async () => slipFixture()),
+    reverifyPayoutSlip: opts.reverifyPayoutSlip ?? vi.fn(async () => slipFixture({ verificationStatus: 'matched' })),
+    completePayoutManually: opts.completePayoutManually ?? vi.fn(async () => payoutFixture({ status: 'paid' })),
+  };
+  const fakeAuth = { accessToken: () => 'test-token' };
+  const fakeApiFail = { report: vi.fn() };
+  const fakeMessage = {
+    success: (m: string) => messages.success.push(m),
+    warning: (m: string) => messages.warning.push(m),
+    error: (m: string) => messages.error.push(m),
+  };
+
+  TestBed.configureTestingModule({
+    imports: [AdminPayoutsPage],
+    providers: [
+      provideRouter([]),
+      { provide: AdminService, useValue: fakeAdmin },
+      { provide: AuthService, useValue: fakeAuth },
+      { provide: ApiFailureReporter, useValue: fakeApiFail },
+      { provide: NzMessageService, useValue: fakeMessage },
+    ],
+  });
+
+  const fixture = TestBed.createComponent(AdminPayoutsPage);
+  fixture.detectChanges();
+  return { fixture, fakeAdmin, messages };
+}
+
+async function settle(fixture: ReturnType<typeof render>['fixture']): Promise<void> {
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+afterEach(() => TestBed.resetTestingModule());
+
+describe('AdminPayoutsPage — filter tabs (AC-38: "ยกเลิกแล้ว")', () => {
+  it('includes a "ยกเลิกแล้ว" tab alongside the existing 5', () => {
+    const { fixture } = render();
+
+    expect(fixture.componentInstance.filters.map((f) => f.value)).toEqual([
+      'pending',
+      'processing',
+      'paid',
+      'failed',
+      'cancelled',
+      'all',
+    ]);
+  });
+
+  it('setFilter("cancelled") resets to page 1 and reloads with that status', async () => {
+    const { fixture, fakeAdmin } = render();
+
+    fixture.componentInstance.setFilter('cancelled');
+    await settle(fixture);
+
+    expect(fakeAdmin.listPayoutsPaged).toHaveBeenLastCalledWith('cancelled', 1, 10);
+  });
+});
+
+describe('AdminPayoutsPage — รอบโอนถัดไป banner (AC-39)', () => {
+  it('shows the formatted date when settings has one', async () => {
+    const { fixture } = render({ nextPayoutDate: '2026-09-30' });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('รอบโอนถัดไป');
+    expect(text).toContain('2026');
+  });
+
+  it('shows "ยังไม่ได้ตั้งรอบโอน" with a settings link when null', async () => {
+    const { fixture } = render({ nextPayoutDate: null });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ยังไม่ได้ตั้งรอบโอน');
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/admin/settings"]');
+    expect(link).toBeTruthy();
+  });
+});
+
+describe('AdminPayoutsPage — คอลัมน์ปลายทาง / ยอดคงเหลือผู้ขาย / สถานะสลิป (AC-39)', () => {
+  it('shows the destination badge, masked account, holder name, seller balance, and slip status', async () => {
+    const { fixture } = render({
+      items: [payoutFixture({ destinationType: 'promptpay', payoutAccountMasked: 'พร้อมเพย์ ••••5678', latestSlipStatus: 'mismatched' })],
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('พร้อมเพย์');
+    expect(text).toContain('••••5678');
+    expect(text).toContain('3,200');
+    expect(fixture.componentInstance.slipStatusLabel('mismatched')).toBe('ไม่ตรงกัน');
+  });
+
+  it('shows the orange warning banner when payoutAccountMasked differs from the snapshot bankAccount', async () => {
+    const { fixture } = render({
+      items: [payoutFixture({ payoutAccountMasked: 'KBANK ••••9999', bankAccount: 'KBANK ••••1234' })],
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('บัญชีปลายทางของผู้ขายถูกแก้ไขหลังจากยื่นคำขอ');
+  });
+
+  it('does not show the warning banner when the destination is unchanged', async () => {
+    const { fixture } = render({
+      items: [payoutFixture({ payoutAccountMasked: 'KBANK ••••1234', bankAccount: 'KBANK ••••1234' })],
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('บัญชีปลายทางของผู้ขายถูกแก้ไขหลังจากยื่นคำขอ');
+  });
+});
+
+describe('AdminPayoutsPage — modal อัปโหลดสลิป (AC-38)', () => {
+  it('rejects a file that is not image/* or application/pdf', () => {
+    const { fixture } = render();
+    fixture.componentInstance.openSlipModal(payoutFixture());
+
+    fixture.componentInstance.onFileSelected(new File(['x'], 'note.txt', { type: 'text/plain' }));
+
+    expect(fixture.componentInstance.fileError()).toBe('รองรับเฉพาะไฟล์รูปภาพหรือ PDF');
+    expect(fixture.componentInstance.selectedFile()).toBeNull();
+  });
+
+  it('rejects a file larger than 5MB', () => {
+    const { fixture } = render();
+    fixture.componentInstance.openSlipModal(payoutFixture());
+    const big = new File([new Uint8Array(5_000_001)], 'slip.png', { type: 'image/png' });
+
+    fixture.componentInstance.onFileSelected(big);
+
+    expect(fixture.componentInstance.fileError()).toBe('ไฟล์ต้องไม่เกิน 5MB');
+  });
+
+  it('accepts a valid image under 5MB and builds a preview URL', () => {
+    const { fixture } = render();
+    fixture.componentInstance.openSlipModal(payoutFixture());
+    const file = new File([new Uint8Array(100)], 'slip.png', { type: 'image/png' });
+
+    fixture.componentInstance.onFileSelected(file);
+
+    expect(fixture.componentInstance.fileError()).toBeNull();
+    expect(fixture.componentInstance.selectedFile()).toBe(file);
+    expect(fixture.componentInstance.filePreviewUrl()).toMatch(/^blob:/);
+  });
+
+  it('uploadSlip() calls admin.uploadPayoutSlip and shows the matched result', async () => {
+    const uploadPayoutSlip = vi.fn(async () => slipFixture({ verificationStatus: 'matched', mismatchReasons: [] }));
+    const { fixture, messages } = render({ uploadPayoutSlip });
+    fixture.componentInstance.openSlipModal(payoutFixture());
+    await settle(fixture);
+    fixture.componentInstance.onFileSelected(new File([new Uint8Array(10)], 'slip.png', { type: 'image/png' }));
+
+    await fixture.componentInstance.uploadSlip();
+    await settle(fixture);
+
+    expect(uploadPayoutSlip).toHaveBeenCalledWith('payout-1', expect.any(File));
+    expect(messages.success).toContain('ยืนยันการโอนสำเร็จ รายการถูกปิดแล้ว');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ยืนยันการโอนสำเร็จ');
+  });
+
+  it('translates every documented mismatch reason to Thai (§4.5, 10 reasons)', () => {
+    const { fixture } = render();
+    const c = fixture.componentInstance;
+
+    expect(c.mismatchLabel('amount_mismatch')).toBe('ยอดเงินในสลิปไม่ตรงกับคำขอ');
+    expect(c.mismatchLabel('amount_unverified')).toBe('อ่านยอดเงินจากสลิปไม่ได้');
+    expect(c.mismatchLabel('name_mismatch')).toBe('ชื่อบัญชีปลายทางไม่ตรงกับที่ผู้ขายลงทะเบียน');
+    expect(c.mismatchLabel('name_unverified')).toBe('สลิปไม่ระบุชื่อบัญชีปลายทาง');
+    expect(c.mismatchLabel('receiver_account_mismatch')).toBe('เลขบัญชีปลายทางไม่ตรงกัน');
+    expect(c.mismatchLabel('receiver_account_unverified')).toBe('สลิปไม่ระบุเลขบัญชีปลายทาง');
+    expect(c.mismatchLabel('stale_slip')).toBe('วันที่โอนไม่อยู่ในช่วงของคำขอนี้');
+    expect(c.mismatchLabel('duplicate_slip')).toBe('สลิปนี้ถูกใช้ยืนยันรายการอื่นแล้ว');
+    expect(c.mismatchLabel('reference_missing')).toBe('สลิปไม่มีเลขอ้างอิงรายการ จึงตรวจซ้ำซ้อนไม่ได้');
+    expect(c.mismatchLabel('ledger_inconsistent')).toBe('ยอดกันไว้ของรายการนี้ไม่ตรงกับระบบ กรุณาติดต่อผู้ดูแลระบบ');
+  });
+
+  it('shows a "ตรวจสอบอีกครั้ง" button for a mismatched slip on an open payout, and reverify() calls the service', async () => {
+    const reverifyPayoutSlip = vi.fn(async () => slipFixture({ verificationStatus: 'matched', mismatchReasons: [] }));
+    const { fixture } = render({ slips: [slipFixture()], reverifyPayoutSlip });
+    fixture.componentInstance.openSlipModal(payoutFixture());
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ตรวจสอบอีกครั้ง');
+
+    await fixture.componentInstance.reverify(slipFixture());
+
+    expect(reverifyPayoutSlip).toHaveBeenCalledWith('payout-1', 'slip-1');
+  });
+});
+
+describe('AdminPayoutsPage — "ยืนยันด้วยตนเอง" (AC-38)', () => {
+  it('requires at least 10 characters before submitManual() calls the service', async () => {
+    const completePayoutManually = vi.fn(async () => payoutFixture({ status: 'paid' }));
+    const { fixture, messages } = render({ completePayoutManually });
+    fixture.componentInstance.openSlipModal(payoutFixture());
+    fixture.componentInstance.openManualModal();
+    fixture.componentInstance.manualNote.set('สั้นไป');
+
+    await fixture.componentInstance.submitManual();
+
+    expect(completePayoutManually).not.toHaveBeenCalled();
+    expect(messages.warning.length).toBe(1);
+  });
+
+  it('submits the note once it is 10+ characters and toasts success', async () => {
+    const completePayoutManually = vi.fn(async () => payoutFixture({ status: 'paid' }));
+    const { fixture, messages } = render({ completePayoutManually });
+    fixture.componentInstance.openSlipModal(payoutFixture());
+    fixture.componentInstance.openManualModal();
+    fixture.componentInstance.manualNote.set('ตรวจสอบกับธนาคารแล้วโอนสำเร็จจริง');
+
+    await fixture.componentInstance.submitManual();
+
+    expect(completePayoutManually).toHaveBeenCalledWith('payout-1', 'ตรวจสอบกับธนาคารแล้วโอนสำเร็จจริง');
+    expect(messages.success).toContain('ยืนยันการโอนสำเร็จ รายการถูกปิดแล้ว');
+  });
+});
+
+describe('AdminPayoutsPage — "ไม่สำเร็จ" requires a reason (payout-request-slip-verification v1 §3.12)', () => {
+  it('warns and does not call the service when the reason is empty', async () => {
+    const setPayoutStatus = vi.fn(async () => {});
+    const { fixture, messages } = render({ setPayoutStatus });
+    fixture.componentInstance.openFailModal('payout-1');
+
+    await fixture.componentInstance.confirmFail();
+
+    expect(setPayoutStatus).not.toHaveBeenCalled();
+    expect(messages.warning).toContain('กรุณาระบุเหตุผลที่โอนไม่สำเร็จ');
+  });
+
+  it('calls setPayoutStatus(id, "failed", reason) once a reason is given', async () => {
+    const setPayoutStatus = vi.fn(async () => {});
+    const { fixture, messages } = render({ setPayoutStatus });
+    fixture.componentInstance.openFailModal('payout-1');
+    fixture.componentInstance.failReason.set('เลขบัญชีปลายทางไม่ถูกต้อง');
+
+    await fixture.componentInstance.confirmFail();
+
+    expect(setPayoutStatus).toHaveBeenCalledWith('payout-1', 'failed', 'เลขบัญชีปลายทางไม่ถูกต้อง');
+    expect(messages.success).toContain('อัปเดตสถานะเรียบร้อย');
+  });
+});

@@ -54,6 +54,10 @@ export class AdminSettingsPage {
     vatPercent: 7,
     payoutMinTHB: 500,
     payoutSchedule: 'monthly-15',
+    // payout-request-slip-verification v1 §3.9 defaults — read-only here until `loadSettings()`
+    // answers; this page does not yet expose an editor for either (out of §4 scope for this round).
+    payoutMaxTHB: 0,
+    nextPayoutDate: null,
     // watermark-completion v1 §2.2 defaults — only shown until `loadSettings()` answers.
     watermarkPolicy: 'required_when_supported',
     watermarkDefaultEnabled: true,
@@ -123,6 +127,8 @@ export class AdminSettingsPage {
         vatPercent: Number(s.vatPercent ?? 7),
         payoutMinTHB: Number(s.payoutMinTHB ?? 500),
         payoutSchedule: String(s.payoutSchedule ?? 'monthly-15'),
+        payoutMaxTHB: Number(s.payoutMaxTHB ?? 0),
+        nextPayoutDate: s.nextPayoutDate ?? null,
         watermarkPolicy: s.watermarkPolicy,
         watermarkDefaultEnabled: s.watermarkDefaultEnabled,
         watermarkForensicEnabled: s.watermarkForensicEnabled,

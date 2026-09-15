@@ -77,6 +77,8 @@ function platformSettings(overrides: Partial<PlatformSettings> = {}): PlatformSe
     vatPercent: 7,
     payoutMinTHB: 500,
     payoutSchedule: 'monthly-15',
+    payoutMaxTHB: 0,
+    nextPayoutDate: null,
     watermarkPolicy: 'required_when_supported',
     watermarkDefaultEnabled: true,
     watermarkForensicEnabled: true,

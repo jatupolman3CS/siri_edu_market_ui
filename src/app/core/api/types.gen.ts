@@ -320,9 +320,12 @@ export type AdminPayoutAccountResponse = {
   sellerName?: string;
   sellerEmail?: string;
   hasAccount?: boolean;
+  accountType?: string | null;
   bankCode?: string | null;
   accountHolderName?: string | null;
   accountNumberMasked?: string | null;
+  promptPayType?: string | null;
+  promptPayMasked?: string | null;
   updatedAt?: string | null;
 };
 
@@ -330,7 +333,12 @@ export type AdminPayoutResponse = {
   sellerId?: string;
   sellerName?: string;
   sellerEmail?: string;
-  requestedAt?: string;
+  sellerAvailableBalance?: number;
+  payoutAccountMasked?: string | null;
+  payoutAccountHolderName?: string | null;
+  latestSlipId?: string | null;
+  latestSlipStatus?: string | null;
+  slipCount?: number;
   id?: string;
   grossAmount?: number;
   fee?: number;
@@ -340,6 +348,10 @@ export type AdminPayoutResponse = {
   periodStart?: string;
   periodEnd?: string;
   paidAt?: string | null;
+  destinationType?: string | null;
+  cancelledAt?: string | null;
+  requestedAt?: string;
+  slipStatus?: string | null;
 };
 
 export type AdminPendingDocumentResponse = {
@@ -724,6 +736,10 @@ export type ChangePasswordRequest = {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+};
+
+export type CompletePayoutManuallyRequest = {
+  note: string;
 };
 
 export type CreateAnnouncementRequest = {
@@ -1441,6 +1457,14 @@ export type PagedResponseOfPayoutResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfSellerBalanceEntryResponse = {
+  items?: Array<SellerBalanceEntryResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfSellerBundleResponse = {
   items?: Array<SellerBundleResponse>;
   page?: number;
@@ -1517,9 +1541,12 @@ export type PatchAdminDocumentRequest = {
 
 export type PayoutAccountResponse = {
   hasAccount?: boolean;
+  accountType?: string | null;
   bankCode?: string | null;
   accountHolderName?: string | null;
   accountNumberMasked?: string | null;
+  promptPayType?: string | null;
+  promptPayMasked?: string | null;
   updatedAt?: string | null;
 };
 
@@ -1533,6 +1560,29 @@ export type PayoutResponse = {
   periodStart?: string;
   periodEnd?: string;
   paidAt?: string | null;
+  destinationType?: string | null;
+  cancelledAt?: string | null;
+  requestedAt?: string;
+  slipStatus?: string | null;
+};
+
+export type PayoutSlipResponse = {
+  id?: string;
+  payoutId?: string;
+  provider?: string;
+  verificationStatus?: string;
+  providerReference?: string | null;
+  parsedAmount?: number | null;
+  parsedTransferredAt?: string | null;
+  parsedReceiverNameMasked?: string | null;
+  parsedReceiverAccountLast4?: string | null;
+  parsedSenderBankCode?: string | null;
+  mismatchReasons?: Array<string>;
+  providerErrorCode?: string | null;
+  providerErrorMessage?: string | null;
+  fileUrl?: string;
+  uploadedAt?: string;
+  uploadedByName?: string | null;
 };
 
 export type PlatformSettingsResponse = {
@@ -1540,6 +1590,8 @@ export type PlatformSettingsResponse = {
   vatPercent?: number;
   payoutMinTHB?: number;
   payoutSchedule?: string;
+  payoutMaxTHB?: number;
+  nextPayoutDate?: string | null;
   watermarkPolicy?: string;
   watermarkDefaultEnabled?: boolean;
   watermarkForensicEnabled?: boolean;
@@ -1657,7 +1709,8 @@ export type ReplyReviewRequest = {
 };
 
 export type RequestPayoutRequest = {
-  bankAccount: string;
+  amount: number;
+  note?: string | null;
 };
 
 export type ResendVerificationEmailRequest = {
@@ -1671,7 +1724,8 @@ export type ResetPasswordRequest = {
 };
 
 export type RevealPayoutAccountResponse = {
-  accountNumber?: string;
+  accountNumber?: string | null;
+  promptPayId?: string | null;
 };
 
 export type RevenueByMonthItem = {
@@ -1699,9 +1753,12 @@ export type SavedPaymentMethodResponse = {
 };
 
 export type SavePayoutAccountRequest = {
-  bankCode: string;
-  accountNumber: string;
+  accountType: string;
   accountHolderName: string;
+  bankCode?: string | null;
+  accountNumber?: string | null;
+  promptPayType?: string | null;
+  promptPayId?: string | null;
 };
 
 export type SaveStoreSectionRequest = {
@@ -1748,6 +1805,17 @@ export type SellerAutofillResponse = {
   resourceType?: string | null;
   gradeLevels?: Array<string>;
   tags?: Array<string>;
+};
+
+export type SellerBalanceEntryResponse = {
+  id?: string;
+  kind?: string;
+  amount?: number;
+  reason?: string;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  note?: string | null;
+  occurredAt?: string;
 };
 
 export type SellerBundleItemResponse = {
@@ -1878,6 +1946,11 @@ export type SellerEarningsResponse = {
   payouts?: Array<PayoutResponse>;
   nextPayoutDate?: string | null;
   subscriptionNetLifetime?: number;
+  availableBalance?: number;
+  onHoldAmount?: number;
+  minPayoutAmount?: number;
+  maxPayoutAmount?: number;
+  hasPayoutAccount?: boolean;
 };
 
 export type SellerFollowStatusResponse = {
@@ -2266,6 +2339,7 @@ export type UpdateNotificationSettingsRequest = {
 
 export type UpdatePayoutStatusRequest = {
   status: string;
+  reason?: string | null;
 };
 
 export type UpdatePlatformSettingsRequest = {
@@ -2273,6 +2347,7 @@ export type UpdatePlatformSettingsRequest = {
   vatPercent?: number;
   payoutMinTHB?: number;
   payoutSchedule: string;
+  payoutMaxTHB?: number;
   watermarkPolicy?: string | null;
   watermarkDefaultEnabled?: boolean | null;
   watermarkForensicEnabled?: boolean | null;
@@ -3281,6 +3356,194 @@ export type PostApiAdminPayoutsByPayoutIdStatusResponses = {
 
 export type PostApiAdminPayoutsByPayoutIdStatusResponse =
   PostApiAdminPayoutsByPayoutIdStatusResponses[keyof PostApiAdminPayoutsByPayoutIdStatusResponses];
+
+export type GetApiAdminSellersBySellerIdBalanceEntriesData = {
+  body?: never;
+  path: {
+    sellerId: string;
+  };
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/sellers/{sellerId}/balance-entries';
+};
+
+export type GetApiAdminSellersBySellerIdBalanceEntriesErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminSellersBySellerIdBalanceEntriesError =
+  GetApiAdminSellersBySellerIdBalanceEntriesErrors[keyof GetApiAdminSellersBySellerIdBalanceEntriesErrors];
+
+export type GetApiAdminSellersBySellerIdBalanceEntriesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfSellerBalanceEntryResponse;
+};
+
+export type GetApiAdminSellersBySellerIdBalanceEntriesResponse =
+  GetApiAdminSellersBySellerIdBalanceEntriesResponses[keyof GetApiAdminSellersBySellerIdBalanceEntriesResponses];
+
+export type PostApiAdminPayoutsByPayoutIdSlipData = {
+  body: {
+    file?: IFormFile;
+  };
+  path: {
+    payoutId: string;
+  };
+  query?: never;
+  url: '/api/admin/payouts/{payoutId}/slip';
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipError =
+  PostApiAdminPayoutsByPayoutIdSlipErrors[keyof PostApiAdminPayoutsByPayoutIdSlipErrors];
+
+export type PostApiAdminPayoutsByPayoutIdSlipResponses = {
+  /**
+   * OK
+   */
+  200: PayoutSlipResponse;
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipResponse =
+  PostApiAdminPayoutsByPayoutIdSlipResponses[keyof PostApiAdminPayoutsByPayoutIdSlipResponses];
+
+export type GetApiAdminPayoutsByPayoutIdSlipsData = {
+  body?: never;
+  path: {
+    payoutId: string;
+  };
+  query?: never;
+  url: '/api/admin/payouts/{payoutId}/slips';
+};
+
+export type GetApiAdminPayoutsByPayoutIdSlipsResponses = {
+  /**
+   * OK
+   */
+  200: Array<PayoutSlipResponse>;
+};
+
+export type GetApiAdminPayoutsByPayoutIdSlipsResponse =
+  GetApiAdminPayoutsByPayoutIdSlipsResponses[keyof GetApiAdminPayoutsByPayoutIdSlipsResponses];
+
+export type GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileData = {
+  body?: never;
+  path: {
+    payoutId: string;
+    slipId: string;
+  };
+  query?: never;
+  url: '/api/admin/payouts/{payoutId}/slips/{slipId}/file';
+};
+
+export type GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileError =
+  GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileErrors[keyof GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileErrors];
+
+export type GetApiAdminPayoutsByPayoutIdSlipsBySlipIdFileResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyData = {
+  body?: never;
+  path: {
+    payoutId: string;
+    slipId: string;
+  };
+  query?: never;
+  url: '/api/admin/payouts/{payoutId}/slips/{slipId}/reverify';
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyError =
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyErrors[keyof PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyErrors];
+
+export type PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponses = {
+  /**
+   * OK
+   */
+  200: PayoutSlipResponse;
+};
+
+export type PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponse =
+  PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponses[keyof PostApiAdminPayoutsByPayoutIdSlipsBySlipIdReverifyResponses];
+
+export type PostApiAdminPayoutsByPayoutIdCompleteManualData = {
+  body: CompletePayoutManuallyRequest;
+  path: {
+    payoutId: string;
+  };
+  query?: never;
+  url: '/api/admin/payouts/{payoutId}/complete-manual';
+};
+
+export type PostApiAdminPayoutsByPayoutIdCompleteManualErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminPayoutsByPayoutIdCompleteManualError =
+  PostApiAdminPayoutsByPayoutIdCompleteManualErrors[keyof PostApiAdminPayoutsByPayoutIdCompleteManualErrors];
+
+export type PostApiAdminPayoutsByPayoutIdCompleteManualResponses = {
+  /**
+   * OK
+   */
+  200: AdminPayoutResponse;
+};
+
+export type PostApiAdminPayoutsByPayoutIdCompleteManualResponse =
+  PostApiAdminPayoutsByPayoutIdCompleteManualResponses[keyof PostApiAdminPayoutsByPayoutIdCompleteManualResponses];
 
 export type GetApiAdminSettingsData = {
   body?: never;
@@ -7389,6 +7652,10 @@ export type PostApiSellerPayoutsErrors = {
    * Bad Request
    */
   400: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
 };
 
 export type PostApiSellerPayoutsError =
@@ -7403,6 +7670,59 @@ export type PostApiSellerPayoutsResponses = {
 
 export type PostApiSellerPayoutsResponse =
   PostApiSellerPayoutsResponses[keyof PostApiSellerPayoutsResponses];
+
+export type DeleteApiSellerPayoutsByPayoutIdData = {
+  body?: never;
+  path: {
+    payoutId: string;
+  };
+  query?: never;
+  url: '/api/seller/payouts/{payoutId}';
+};
+
+export type DeleteApiSellerPayoutsByPayoutIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type DeleteApiSellerPayoutsByPayoutIdError =
+  DeleteApiSellerPayoutsByPayoutIdErrors[keyof DeleteApiSellerPayoutsByPayoutIdErrors];
+
+export type DeleteApiSellerPayoutsByPayoutIdResponses = {
+  /**
+   * OK
+   */
+  200: PayoutResponse;
+};
+
+export type DeleteApiSellerPayoutsByPayoutIdResponse =
+  DeleteApiSellerPayoutsByPayoutIdResponses[keyof DeleteApiSellerPayoutsByPayoutIdResponses];
+
+export type GetApiSellerBalanceEntriesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/seller/balance-entries';
+};
+
+export type GetApiSellerBalanceEntriesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfSellerBalanceEntryResponse;
+};
+
+export type GetApiSellerBalanceEntriesResponse =
+  GetApiSellerBalanceEntriesResponses[keyof GetApiSellerBalanceEntriesResponses];
 
 export type GetApiSellerReviewsData = {
   body?: never;

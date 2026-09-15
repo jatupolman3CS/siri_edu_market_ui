@@ -9,6 +9,18 @@
     </button>
   </header>
 
+  <!-- payout-request-slip-verification v1 §4.5: "รอบโอนถัดไป" banner -->
+  <div class="card-soft px-4 py-3 text-sm flex items-center gap-2">
+    <app-icon name="wallet" [size]="16" />
+    @if (nextPayoutDate(); as d) {
+    <span>รอบโอนถัดไป: <span class="font-bold text-ink">{{ d | date: 'd MMM yyyy' }}</span></span>
+    } @else {
+    <span class="text-ink-soft">
+      ยังไม่ได้ตั้งรอบโอน — <a routerLink="/admin/settings" class="text-pink-600 font-semibold">ไปตั้งค่ารอบโอน</a>
+    </span>
+    }
+  </div>
+
   <div class="flex flex-wrap gap-2">
     @for (f of filters; track f.value) {
       <button
@@ -32,14 +44,16 @@
   } @else {
     <div class="card-soft p-6">
       <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
-        <table class="w-full min-w-[760px]">
+        <table class="w-full min-w-[960px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-4 py-3 font-semibold">ผู้ขาย</th>
               <th class="px-4 py-3 font-semibold">ยอดโอน</th>
-              <th class="px-4 py-3 font-semibold">บัญชี</th>
+              <th class="px-4 py-3 font-semibold">ปลายทาง</th>
+              <th class="px-4 py-3 font-semibold">ยอดคงเหลือผู้ขาย</th>
               <th class="px-4 py-3 font-semibold">ขอเมื่อ</th>
               <th class="px-4 py-3 font-semibold">สถานะ</th>
+              <th class="px-4 py-3 font-semibold">สถานะสลิป</th>
               <th class="px-4 py-3 font-semibold text-right">จัดการ</th>
             </tr>
           </thead>
@@ -53,17 +67,30 @@
                 <td class="px-4 py-3 text-sm font-bold text-ink whitespace-nowrap">
                   {{ p.netAmount | thb }}
                 </td>
-                <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">{{ p.bankAccount }}</td>
+                <td class="px-4 py-3 text-sm text-ink-soft">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 mr-1">
+                    {{ destinationBadge(p) }}
+                  </span>
+                  <div class="whitespace-nowrap">{{ p.payoutAccountMasked ?? p.bankAccount }}</div>
+                  <div class="text-xs text-ink-muted">{{ p.payoutAccountHolderName }}</div>
+                  @if (destinationChanged(p)) {
+                  <div class="mt-1 px-2 py-1 rounded-lg bg-orange-50 text-orange-700 text-xs">
+                    บัญชีปลายทางของผู้ขายถูกแก้ไขหลังจากยื่นคำขอ — กรุณาตรวจสอบก่อนโอน
+                  </div>
+                  }
+                </td>
+                <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">{{ p.sellerAvailableBalance | thb }}</td>
                 <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">
                   {{ p.requestedAt | date: 'dd MMM yyyy' }}
                 </td>
                 <td class="px-4 py-3">
-                  <span class="px-3 py-1 rounded-full text-xs font-semibold" [class]="statusClass(p.status)">
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap" [class]="statusClass(p.status)">
                     {{ statusLabel(p.status) }}
                   </span>
                 </td>
+                <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">{{ slipStatusLabel(p.latestSlipStatus) }}</td>
                 <td class="px-4 py-3">
-                  <div class="flex gap-2 justify-end">
+                  <div class="flex flex-wrap gap-2 justify-end">
                     @if (p.status === 'pending') {
                       <button
                         class="btn-ghost !py-1.5 !px-3 text-xs"
@@ -75,6 +102,13 @@
                     }
                     @if (p.status === 'pending' || p.status === 'processing') {
                       <button
+                        class="btn-ghost !py-1.5 !px-3 text-xs"
+                        [disabled]="busyId() === p.id"
+                        (click)="openSlipModal(p)"
+                      >
+                        อัปโหลดสลิป
+                      </button>
+                      <button
                         class="btn-pink !py-1.5 !px-3 text-xs"
                         [disabled]="busyId() === p.id"
                         (click)="setStatus(p.id!, 'paid')"
@@ -84,9 +118,13 @@
                       <button
                         class="btn-ghost !py-1.5 !px-3 text-xs"
                         [disabled]="busyId() === p.id"
-                        (click)="setStatus(p.id!, 'failed')"
+                        (click)="openFailModal(p.id!)"
                       >
                         ไม่สำเร็จ
+                      </button>
+                    } @else if (p.slipCount) {
+                      <button class="btn-ghost !py-1.5 !px-3 text-xs" (click)="openSlipModal(p)">
+                        ดูสลิป
                       </button>
                     }
                   </div>
@@ -109,3 +147,158 @@
     </div>
   }
 </div>
+
+<!-- §3.7/§4.5: slip upload + verification modal -->
+@if (slipModalPayout(); as payout) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(42,27,34,0.45)] backdrop-blur-md" (click)="closeSlipModal()">
+  <div class="card-soft w-full max-w-lg p-6 bg-white shadow-2xl border border-line max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between pb-3.5 border-b border-line mb-4">
+      <h3 class="text-base md:text-lg font-bold text-ink">สลิปการโอนเงิน — {{ payout.sellerName }}</h3>
+      <button class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft flex items-center justify-center" (click)="closeSlipModal()" aria-label="ปิด">
+        <app-icon name="close" [size]="14" />
+      </button>
+    </div>
+
+    @if (payout.status === 'pending' || payout.status === 'processing') {
+    <div
+      class="rounded-2xl border-2 border-dashed p-5 text-center cursor-pointer transition-colors"
+      [class]="dragOver() ? 'border-pink-400 bg-pink-50' : 'border-line'"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()"
+    >
+      @if (filePreviewUrl()) {
+        <img [src]="filePreviewUrl()" alt="ตัวอย่างสลิป" class="max-h-40 mx-auto rounded-xl mb-2" />
+      } @else if (selectedFile()) {
+        <p class="text-sm text-ink">{{ selectedFile()!.name }}</p>
+      } @else {
+        <app-icon name="upload" [size]="24" />
+        <p class="text-sm text-ink-soft mt-2">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</p>
+        <p class="text-xs text-ink-muted mt-1">รองรับ JPG, PNG, PDF ขนาดไม่เกิน 5MB</p>
+      }
+      <input #fileInput type="file" accept="image/*,application/pdf" class="hidden" (change)="onFileInputChange($event)" />
+    </div>
+    @if (fileError()) {
+      <p class="text-xs text-rose-600 mt-2">{{ fileError() }}</p>
+    }
+
+    <div class="flex gap-2 mt-3">
+      <button type="button" class="btn-pink !py-2 !px-5 text-sm" [disabled]="!selectedFile() || verifying()" (click)="uploadSlip()">
+        {{ verifying() ? 'กำลังตรวจสอบ...' : 'ตรวจสอบสลิป' }}
+      </button>
+      <button type="button" class="btn-ghost !py-2 !px-5 text-sm" (click)="openManualModal()">
+        ยืนยันด้วยตนเอง
+      </button>
+    </div>
+    }
+
+    @if (latestResult(); as result) {
+    <div class="mt-5 pt-5 border-t border-line">
+      <p class="text-xs font-semibold text-ink-soft mb-2">ผลการตรวจสอบล่าสุด</p>
+
+      @if (result.verificationStatus === 'matched') {
+        <div class="px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+          ยืนยันการโอนสำเร็จ รายการถูกปิดแล้ว
+        </div>
+      } @else if (result.verificationStatus === 'manually_accepted') {
+        <div class="px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+          ยืนยันด้วยตนเองแล้ว
+        </div>
+      } @else if (result.verificationStatus === 'provider_error') {
+        <div class="px-4 py-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+          ระบบตรวจสลิปไม่พร้อมใช้งานชั่วคราว
+          @if (result.providerErrorMessage) {
+          <div class="text-xs mt-1">{{ result.providerErrorMessage }}</div>
+          }
+        </div>
+      } @else if (result.verificationStatus === 'duplicate') {
+        <div class="px-4 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          {{ mismatchLabel('duplicate_slip') }}
+        </div>
+      } @else {
+        <div class="px-4 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm space-y-1">
+          @for (reason of result.mismatchReasons; track reason) {
+          <div>{{ mismatchLabel(reason) }}</div>
+          }
+        </div>
+      }
+
+      @if (result.verificationStatus !== 'matched' && result.verificationStatus !== 'manually_accepted' && (payout.status === 'pending' || payout.status === 'processing')) {
+      <button type="button" class="btn-ghost !py-1.5 !px-4 text-xs mt-3" [disabled]="verifying()" (click)="reverify(result)">
+        {{ verifying() ? 'กำลังตรวจสอบอีกครั้ง...' : 'ตรวจสอบอีกครั้ง' }}
+      </button>
+      }
+
+      <div class="text-xs text-ink-muted mt-3">
+        <a [href]="slipFileUrl(result)" target="_blank" rel="noopener" class="text-pink-600 font-semibold">ดูไฟล์สลิป</a>
+        · อัปโหลดโดย {{ result.uploadedByName }} เมื่อ {{ result.uploadedAt | date: 'd MMM yyyy HH:mm' }}
+      </div>
+    </div>
+    }
+
+    @if (loadingSlips()) {
+    <p class="text-sm text-ink-soft mt-4">กำลังโหลดประวัติสลิป…</p>
+    } @else if (slips().length > 1) {
+    <div class="mt-5 pt-5 border-t border-line">
+      <p class="text-xs font-semibold text-ink-soft mb-2">ประวัติสลิปทั้งหมด</p>
+      <ul class="space-y-2">
+        @for (s of slips(); track s.id) {
+        <li class="flex items-center justify-between text-xs text-ink-soft">
+          <span>{{ s.uploadedAt | date: 'd MMM yyyy HH:mm' }} — {{ slipStatusLabel(s.verificationStatus) }}</span>
+          <a [href]="slipFileUrl(s)" target="_blank" rel="noopener" class="text-pink-600 font-semibold">ดูไฟล์</a>
+        </li>
+        }
+      </ul>
+    </div>
+    }
+  </div>
+</div>
+}
+
+<!-- §3.7.6: "ยืนยันด้วยตนเอง" sub-modal -->
+@if (manualModalOpen()) {
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[rgba(42,27,34,0.45)] backdrop-blur-md" (click)="closeManualModal()">
+  <div class="card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line" (click)="$event.stopPropagation()">
+    <h3 class="text-base md:text-lg font-bold text-ink mb-3">ยืนยันด้วยตนเอง</h3>
+    <p class="text-xs text-ink-muted mb-3">ระบุเหตุผลที่ยืนยันโดยไม่ผ่านการตรวจสลิป (อย่างน้อย 10 ตัวอักษร)</p>
+    <textarea
+      class="input-soft w-full min-h-[96px]"
+      [ngModel]="manualNote()"
+      (ngModelChange)="manualNote.set($event)"
+      name="manualNote"
+      maxlength="500"
+      placeholder="เช่น ตรวจสอบกับธนาคารต้นทางแล้วโอนสำเร็จจริง"
+    ></textarea>
+    <div class="flex gap-2 mt-4 justify-end">
+      <button type="button" class="btn-ghost !py-2 !px-5 text-sm" [disabled]="manualSubmitting()" (click)="closeManualModal()">ยกเลิก</button>
+      <button type="button" class="btn-pink !py-2 !px-5 text-sm" [disabled]="manualSubmitting() || manualNote().trim().length < 10" (click)="submitManual()">
+        {{ manualSubmitting() ? 'กำลังยืนยัน...' : 'ยืนยัน' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- §3.12: "ไม่สำเร็จ" reason modal -->
+@if (failModalPayoutId()) {
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[rgba(42,27,34,0.45)] backdrop-blur-md" (click)="closeFailModal()">
+  <div class="card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line" (click)="$event.stopPropagation()">
+    <h3 class="text-base md:text-lg font-bold text-ink mb-3">ระบุเหตุผลที่โอนไม่สำเร็จ</h3>
+    <textarea
+      class="input-soft w-full min-h-[80px]"
+      [ngModel]="failReason()"
+      (ngModelChange)="failReason.set($event)"
+      name="failReason"
+      maxlength="500"
+      placeholder="เช่น เลขบัญชีปลายทางไม่ถูกต้อง"
+    ></textarea>
+    <div class="flex gap-2 mt-4 justify-end">
+      <button type="button" class="btn-ghost !py-2 !px-5 text-sm" (click)="closeFailModal()">ยกเลิก</button>
+      <button type="button" class="btn-pink !py-2 !px-5 text-sm" [disabled]="!failReason().trim()" (click)="confirmFail()">
+        ยืนยันไม่สำเร็จ
+      </button>
+    </div>
+  </div>
+</div>
+}

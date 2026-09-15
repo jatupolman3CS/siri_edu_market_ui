@@ -820,3 +820,153 @@ describe('AdminService — admin user management (admin-user-management v2 §3.1
     expect(report).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * payout-request-slip-verification v1 (docs/contracts/payout-request-slip-verification.md §3.7,
+ * §3.12) — round 2: wired to the real generated SDK after backend gate 1 passed and
+ * `npm run generate:api` re-ran against the live backend.
+ */
+function payoutSlipBody(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: 'slip-1',
+    payoutId: 'payout-1',
+    provider: 'mock',
+    verificationStatus: 'matched',
+    providerReference: 'MOCK-REF-1',
+    parsedAmount: 500,
+    parsedTransferredAt: '2026-09-10T00:00:00.000Z',
+    parsedReceiverNameMasked: 'สมชาย ใจดี',
+    parsedReceiverAccountLast4: '1234',
+    parsedSenderBankCode: 'KBANK',
+    mismatchReasons: [],
+    providerErrorCode: null,
+    providerErrorMessage: null,
+    fileUrl: '/api/admin/payouts/payout-1/slips/slip-1/file',
+    uploadedAt: '2026-09-10T00:05:00.000Z',
+    uploadedByName: 'Admin One',
+    ...over,
+  };
+}
+
+describe('AdminService — setPayoutStatus (payout-request-slip-verification v1 §3.12)', () => {
+  let requestBodies: string[];
+
+  beforeEach(() => {
+    requestBodies = [];
+    const stubbed = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      requestBodies.push(await request.clone().text());
+      return stubbed(input, init);
+    }) as typeof globalThis.fetch;
+  });
+
+  it('sends reason when status is "failed"', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/status', {
+      body: { id: 'payout-1', status: 'failed' },
+    });
+    const admin = buildService();
+
+    await admin.setPayoutStatus('payout-1', 'failed', 'บัญชีปลายทางปิดแล้ว');
+
+    expect(JSON.parse(requestBodies.at(-1) ?? '{}')).toEqual({ status: 'failed', reason: 'บัญชีปลายทางปิดแล้ว' });
+  });
+
+  it('sends reason:null when status is not "failed" even if a reason string is passed', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/status', {
+      body: { id: 'payout-1', status: 'processing' },
+    });
+    const admin = buildService();
+
+    await admin.setPayoutStatus('payout-1', 'processing', 'ไม่ควรถูกส่ง');
+
+    expect(JSON.parse(requestBodies.at(-1) ?? '{}')).toEqual({ status: 'processing', reason: null });
+  });
+});
+
+describe('AdminService — uploadPayoutSlip (payout-request-slip-verification v1 §3.7)', () => {
+  it('POSTs the file as multipart and maps the returned PayoutSlipResponse', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/slip', { body: payoutSlipBody() });
+    const admin = buildService();
+    const file = new File(['fake-slip-bytes'], 'slip.png', { type: 'image/png' });
+
+    const slip = await admin.uploadPayoutSlip('payout-1', file);
+
+    expect(slip.id).toBe('slip-1');
+    expect(slip.verificationStatus).toBe('matched');
+    expect(slip.mismatchReasons).toEqual([]);
+    expect(slip.fileUrl).toBe('/api/admin/payouts/payout-1/slips/slip-1/file');
+  });
+
+  it('rejects (409 duplicate) surfaces the backend message for the caller to catch', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/slip', {
+      status: 409,
+      body: { message: 'สลิปนี้ถูกใช้ยืนยันรายการอื่นแล้ว' },
+    });
+    const admin = buildService();
+    const file = new File(['fake'], 'dup.png', { type: 'image/png' });
+
+    await expect(admin.uploadPayoutSlip('payout-1', file)).rejects.toBeTruthy();
+  });
+});
+
+describe('AdminService — listPayoutSlips (payout-request-slip-verification v1 §3.7.7)', () => {
+  it('maps every slip in the array response', async () => {
+    stubRoute('GET', '/api/admin/payouts/payout-1/slips', {
+      body: [payoutSlipBody(), payoutSlipBody({ id: 'slip-2', verificationStatus: 'mismatched', mismatchReasons: ['amount_mismatch'] })],
+    });
+    const admin = buildService();
+
+    const slips = await admin.listPayoutSlips('payout-1');
+
+    expect(slips).toHaveLength(2);
+    expect(slips[1].verificationStatus).toBe('mismatched');
+    expect(slips[1].mismatchReasons).toEqual(['amount_mismatch']);
+  });
+
+  it('returns an empty array when the response has no slips', async () => {
+    stubRoute('GET', '/api/admin/payouts/payout-2/slips', { body: [] });
+    const admin = buildService();
+
+    const slips = await admin.listPayoutSlips('payout-2');
+
+    expect(slips).toEqual([]);
+  });
+});
+
+describe('AdminService — reverifyPayoutSlip (payout-request-slip-verification v1 §3.7.5)', () => {
+  it('POSTs to the reverify endpoint and maps the updated slip', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/slips/slip-1/reverify', {
+      body: payoutSlipBody({ verificationStatus: 'provider_error', providerErrorMessage: 'หมดโควต้าการตรวจสลิปชั่วคราว' }),
+    });
+    const admin = buildService();
+
+    const slip = await admin.reverifyPayoutSlip('payout-1', 'slip-1');
+
+    expect(slip.verificationStatus).toBe('provider_error');
+    expect(slip.providerErrorMessage).toBe('หมดโควต้าการตรวจสลิปชั่วคราว');
+  });
+});
+
+describe('AdminService — completePayoutManually (payout-request-slip-verification v1 §3.7.6)', () => {
+  it('POSTs the note and returns the updated AdminPayoutResponse', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/complete-manual', {
+      body: { id: 'payout-1', status: 'paid', completionNote: 'ตรวจสอบกับธนาคารแล้วโอนสำเร็จจริง' },
+    });
+    const admin = buildService();
+
+    const result = await admin.completePayoutManually('payout-1', 'ตรวจสอบกับธนาคารแล้วโอนสำเร็จจริง');
+
+    expect(result.status).toBe('paid');
+  });
+
+  it('a 400 (note too short) rejects for the page to surface', async () => {
+    stubRoute('POST', '/api/admin/payouts/payout-1/complete-manual', {
+      status: 400,
+      body: { message: 'กรุณาระบุเหตุผลอย่างน้อย 10 ตัวอักษร' },
+    });
+    const admin = buildService();
+
+    await expect(admin.completePayoutManually('payout-1', 'สั้นไป')).rejects.toBeTruthy();
+  });
+});

@@ -450,13 +450,66 @@ export interface SavedPaymentMethod {
 // Mirrors `PayoutAccountResponse` (docs/contracts/seller-payout-account-self-service.md §3.1)
 // exactly — `accountNumberMasked` is the only representation of the account number this app ever
 // holds outside of a `reveal()` call, which is why the full number never lives in this model.
+//
+// payout-request-slip-verification v1 §3.13.2: `accountType`/`promptPayType`/`promptPayMasked`
+// added to support PromptPay (phone / national ID) as an alternative to a bank account —
+// `accountType` is `null` only when `hasAccount` is `false` (nothing saved yet).
+
+export type PayoutAccountType = 'bank' | 'promptpay';
+export type PromptPayIdType = 'phone' | 'national_id';
 
 export interface PayoutAccount {
   hasAccount: boolean;
+  accountType: PayoutAccountType | null;
   bankCode: string;
   accountHolderName: string;
   accountNumberMasked: string;
+  promptPayType: PromptPayIdType | null;
+  promptPayMasked: string;
   updatedAt: string;
+}
+
+// ====== Seller balance ledger (payout-request-slip-verification v1 §2.1-§2.3/§3.5) ======
+// Mirrors `SellerBalanceEntryResponse` — one row of the seller's earnings ledger, the source of
+// truth for `availableBalance` (§1.2 DEC-1). `kind` stays a bare `string` (not narrowed) the same
+// way `PayoutResponse.status` does elsewhere in this app — the backend enum travels as a string
+// and label lookup happens where it's displayed (§4.4).
+
+export interface SellerBalanceEntry {
+  id: string;
+  /** `opening_balance` \| `order_earning` \| `subscription_share` \| `payout_hold` \| `payout_reversal` \| `adjustment` \| `order_refund` */
+  kind: string;
+  /** Signed — positive = money in, negative = money out. */
+  amount: number;
+  reason: string;
+  sourceType: string | null;
+  sourceId: string | null;
+  note: string | null;
+  occurredAt: string;
+}
+
+// ====== Payout e-slip verification (payout-request-slip-verification v1 §2.4/§3.7-§3.8) ======
+// Mirrors `PayoutSlipResponse` — one uploaded e-Slip and its verification result against a payout.
+
+export interface PayoutSlip {
+  id: string;
+  payoutId: string;
+  provider: string;
+  /** `pending` \| `matched` \| `mismatched` \| `provider_error` \| `duplicate` \| `manually_accepted` */
+  verificationStatus: string;
+  providerReference: string | null;
+  parsedAmount: number | null;
+  parsedTransferredAt: string | null;
+  parsedReceiverNameMasked: string | null;
+  parsedReceiverAccountLast4: string | null;
+  parsedSenderBankCode: string | null;
+  mismatchReasons: string[];
+  providerErrorCode: string | null;
+  providerErrorMessage: string | null;
+  /** `/api/admin/payouts/{payoutId}/slips/{id}/file` — admin-only, never a raw R2 URL (§4.5). */
+  fileUrl: string;
+  uploadedAt: string;
+  uploadedByName: string | null;
 }
 
 // ====== Subscription membership (subscription-membership v2 §3, §4) ======

@@ -41,13 +41,22 @@ import {
  *  - all three special-case `403 seller_profile_required` by flipping `sellerProfileRequired()`
  *    (never a toast for this one — the component hides the whole section silently instead).
  */
+/**
+ * payout-request-slip-verification v1 §3.13.2: `POST .../reveal` returns exactly one of
+ * `accountNumber` (bank) or `promptPayId` (PromptPay) — never both.
+ */
+export interface RevealedPayoutAccount {
+  accountNumber: string | null;
+  promptPayId: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PayoutAccountService {
   private readonly apiFail = inject(ApiFailureReporter);
 
   private readonly _account = signal<PayoutAccount | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
-  private readonly _revealed = signal<string | null>(null);
+  private readonly _revealed = signal<RevealedPayoutAccount | null>(null);
   /**
    * True when the last `load()` answered `403 seller_profile_required` (an Admin viewing
    * `/seller` without their own store) — §4: the component hides the whole section silently on
@@ -115,11 +124,21 @@ export class PayoutAccountService {
     }
   }
 
-  /** `PUT /api/seller/payout-account` (§3.1, upsert). */
+  /**
+   * `PUT /api/seller/payout-account` (§3.1, upsert).
+   *
+   * payout-request-slip-verification v1 §3.13: `accountType` selects which of the two field
+   * groups is required — `bankCode`/`accountNumber` for `'bank'`, `promptPayType`/`promptPayId`
+   * for `'promptpay'`. The unused group is simply omitted here; the backend clears it to `null`
+   * in the DB regardless of what a stale caller might send (§3.13 "ส่ง field ของอีกประเภทมาด้วย").
+   */
   async save(input: {
-    bankCode: string;
-    accountNumber: string;
+    accountType: 'bank' | 'promptpay';
     accountHolderName: string;
+    bankCode?: string;
+    accountNumber?: string;
+    promptPayType?: 'phone' | 'national_id';
+    promptPayId?: string;
   }): Promise<{ ok: boolean; error?: string }> {
     this._state.set(loadingActionState());
     try {
@@ -144,11 +163,18 @@ export class PayoutAccountService {
     }
   }
 
-  /** `POST /api/seller/payout-account/reveal` (§3.1). */
+  /**
+   * `POST /api/seller/payout-account/reveal` (§3.1). payout-request-slip-verification v1 §3.13.2:
+   * the response now carries `accountNumber` (bank) or `promptPayId` (PromptPay) — never both —
+   * so the full pair is kept rather than collapsing to one string.
+   */
   async reveal(): Promise<void> {
     try {
       const data = unwrapSdkResult(await postApiSellerPayoutAccountReveal());
-      this._revealed.set(data.accountNumber ?? null);
+      this._revealed.set({
+        accountNumber: data.accountNumber ?? null,
+        promptPayId: data.promptPayId ?? null,
+      });
     } catch (e) {
       // §4: component checks `revealed()` after the `await` and toasts "แสดงเลขบัญชีไม่สำเร็จ"
       // itself when it's still `null` — this service must never toast on top of that (covers the

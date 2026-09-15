@@ -23,8 +23,10 @@ import type {
   OrderResponse,
   OrderSimilarDocumentResponse,
   PayoutAccountResponse,
+  PayoutSlipResponse,
   PlatformStatsResponse,
   SavedPaymentMethodResponse,
+  SellerBalanceEntryResponse,
   SellerDashboardResponse,
   SellerDocumentResponse,
   SellerDocumentSummaryResponse,
@@ -64,13 +66,17 @@ import type {
   OrderStatus,
   PaymentMethod,
   PayoutAccount,
+  PayoutAccountType,
+  PayoutSlip,
   PlatformStats,
+  PromptPayIdType,
   QnAItem,
   ReferralCodeValidation,
   ReferralSummary,
   ResourceType,
   SavedPaymentMethod,
   Seller,
+  SellerBalanceEntry,
   SellerInsights,
   SellerQnaItem,
   SellerStats,
@@ -956,13 +962,61 @@ export function mapSavedPaymentMethod(d: SavedPaymentMethodResponse): SavedPayme
  * (docs/contracts/seller-payout-account-self-service.md §3.1), generated from the live backend by
  * `npm run generate:api`.
  */
+/** payout-request-slip-verification v1 §3.13.2: bare string on the wire, narrowed here. */
+function toPayoutAccountType(value: string | null | undefined): PayoutAccountType | null {
+  return value === 'bank' || value === 'promptpay' ? value : null;
+}
+
+function toPromptPayIdType(value: string | null | undefined): PromptPayIdType | null {
+  return value === 'phone' || value === 'national_id' ? value : null;
+}
+
 export function mapPayoutAccount(d: PayoutAccountResponse): PayoutAccount {
   return {
     hasAccount: d.hasAccount ?? false,
+    accountType: toPayoutAccountType(d.accountType),
     bankCode: d.bankCode ?? '',
     accountHolderName: d.accountHolderName ?? '',
     accountNumberMasked: d.accountNumberMasked ?? '',
+    promptPayType: toPromptPayIdType(d.promptPayType),
+    promptPayMasked: d.promptPayMasked ?? '',
     updatedAt: d.updatedAt ?? '',
+  };
+}
+
+/** payout-request-slip-verification v1 §3.5: one row of the seller earnings ledger. */
+export function mapSellerBalanceEntry(d: SellerBalanceEntryResponse): SellerBalanceEntry {
+  return {
+    id: d.id ?? '',
+    kind: d.kind ?? '',
+    amount: d.amount ?? 0,
+    reason: d.reason ?? '',
+    sourceType: d.sourceType ?? null,
+    sourceId: d.sourceId ?? null,
+    note: d.note ?? null,
+    occurredAt: d.occurredAt ?? '',
+  };
+}
+
+/** payout-request-slip-verification v1 §3.7.7: one uploaded e-Slip + its verification result. */
+export function mapPayoutSlip(d: PayoutSlipResponse): PayoutSlip {
+  return {
+    id: d.id ?? '',
+    payoutId: d.payoutId ?? '',
+    provider: d.provider ?? '',
+    verificationStatus: d.verificationStatus ?? 'pending',
+    providerReference: d.providerReference ?? null,
+    parsedAmount: d.parsedAmount ?? null,
+    parsedTransferredAt: d.parsedTransferredAt ?? null,
+    parsedReceiverNameMasked: d.parsedReceiverNameMasked ?? null,
+    parsedReceiverAccountLast4: d.parsedReceiverAccountLast4 ?? null,
+    parsedSenderBankCode: d.parsedSenderBankCode ?? null,
+    mismatchReasons: d.mismatchReasons ?? [],
+    providerErrorCode: d.providerErrorCode ?? null,
+    providerErrorMessage: d.providerErrorMessage ?? null,
+    fileUrl: d.fileUrl ?? '',
+    uploadedAt: d.uploadedAt ?? '',
+    uploadedByName: d.uploadedByName ?? null,
   };
 }
 
