@@ -1,4 +1,7 @@
 import type { AffiliateClickResult } from '../models';
+import { mapAffiliateClickResult } from '../api-mappers/mappers';
+import { unwrapSdkResult } from '../services/api-result';
+import { postApiAffiliateClick } from '../api';
 
 export const AFFILIATE_STORAGE_KEY = 'siriedu.affiliate-click';
 
@@ -9,13 +12,18 @@ interface StoredAffiliateClick {
 }
 
 /**
- * referral-program v2 §3.8 / §4.1:
- * Stub for POST /api/affiliate/click before SDK regen.
- * TODO(contract): wire หลัง regen
+ * referral-program v2 §3.8 / §4.1: `POST /api/affiliate/click` (anonymous — no auth header
+ * needed/sent). `404` (unknown/inactive code) and any other failure both resolve to `null` so
+ * the caller silently gives up capturing the click, exactly like an invalid `?aff=` code should.
  */
-async function defaultPostAffiliateClick(_code: string): Promise<AffiliateClickResult | null> {
-  // TODO(contract): wire หลัง regen
-  return null;
+async function defaultPostAffiliateClick(code: string): Promise<AffiliateClickResult | null> {
+  try {
+    const result = await postApiAffiliateClick({ body: { code } });
+    const data = unwrapSdkResult(result);
+    return data ? mapAffiliateClickResult(data) : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -77,9 +77,9 @@ export class OrderService {
   async create(input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
     this._checkoutState.set(loadingActionState());
     try {
-      // saved-credit-cards v1 §4/§3.1: `CreateOrderRequest` (generated) carries
-      // `savedPaymentMethodId` / `saveNewCard` straight through. Both are optional on the wire —
-      // `JSON.stringify` drops an `undefined` field rather than sending it as `null`.
+      // saved-credit-cards v1 §4/§3.1 + referral-program v1 §3.3/v2 §3.9: `CreateOrderRequest`
+      // (generated) carries all five fields straight through — every one optional on the wire,
+      // so `JSON.stringify` drops an `undefined` field rather than sending it as `null`.
       const result = await postApiOrders({
         body: {
           savedPaymentMethodId: input.savedPaymentMethodId,
@@ -87,7 +87,7 @@ export class OrderService {
           referralCode: input.referralCode,
           useReferralCredit: input.useReferralCredit,
           affiliateClickToken: input.affiliateClickToken,
-        } as unknown as { savedPaymentMethodId?: string; saveNewCard?: boolean },
+        },
       });
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);

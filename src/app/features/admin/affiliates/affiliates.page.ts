@@ -111,7 +111,10 @@ export class AdminAffiliatesPage {
     const rate = rateVal !== null && !Number.isNaN(rateVal) ? Number(rateVal) : null;
 
     try {
+      // §3.10: `isActive` is required on the wire — always resend the row's current value so a
+      // rate-only edit here can never accidentally flip the enabled/disabled toggle.
       const ok = await this.admin.updateAffiliateSettings(item.userId, {
+        isActive: item.isActive,
         commissionRatePercentOverride: rate,
       });
       if (ok) {

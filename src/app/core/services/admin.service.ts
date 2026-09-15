@@ -30,6 +30,7 @@ import {
   deleteApiAdminCategoriesById,
   deleteApiAdminCategoriesByCategoryIdSubcategoriesById,
   deleteApiAdminFeedbackById,
+  getApiAdminAffiliates,
   getApiAdminAnnouncements,
   getApiAdminAnnouncementsById,
   getApiAdminFeedback,
@@ -72,6 +73,7 @@ import {
   postApiAdminUsersByUserIdBan,
   postApiAdminUsersByUserIdReinstate,
   postApiAdminUsersByUserIdSuspend,
+  putApiAdminAffiliatesByUserIdSettings,
   putApiAdminAnnouncementsById,
   putApiAdminCategoriesById,
   putApiAdminCategoriesByCategoryIdSubcategoriesById,
@@ -498,6 +500,7 @@ function toAdminUserDetail(res: AdminUserDetailResponse): AdminUserDetail {
   };
 }
 import {
+  mapAdminAffiliateSummary,
   mapAdminPendingToDocumentItem,
   mapAdminTransaction,
   mapAnnouncementAdmin,
@@ -1410,35 +1413,60 @@ export class AdminService {
     }
   }
 
-  /**
-   * referral-program v2 §3.10 / §4.1:
-   * GET /api/admin/affiliates — paged list of affiliate summaries.
-   * TODO(contract): wire หลัง regen คืน empty page ไปก่อน
-   */
+  /** referral-program v2 §3.10/§4.1: `GET /api/admin/affiliates` — paged affiliate summaries. */
   async getAffiliates(
     page = 1,
     pageSize = 10,
   ): Promise<PagedResponse<AdminAffiliateSummary>> {
-    // TODO(contract): wire หลัง regen คืน empty page ไปก่อน
-    return {
-      items: [],
-      page,
-      pageSize,
-      totalCount: 0,
-      totalPages: 0,
-    };
+    try {
+      const result = await getApiAdminAffiliates({ query: { Page: page, PageSize: pageSize } });
+      const data = unwrapSdkResult(result);
+      return {
+        items: (data.items ?? []).map(mapAdminAffiliateSummary),
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 0,
+      };
+    } catch (e) {
+      this.apiFail.report('โหลดรายการลิงก์พันธมิตร', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
+    }
   }
 
   /**
-   * referral-program v2 §3.11 / §4.1:
-   * PUT /api/admin/affiliates/{userId}/settings — update affiliate active status or rate override.
-   * TODO(contract): wire หลัง regen
+   * referral-program v2 §3.10/§4.1: `PUT /api/admin/affiliates/{userId}/settings` — toggle
+   * `isActive` and/or set a per-affiliate commission-rate override (`null` clears it back to
+   * the global rate).
+   *
+   * KNOWN GAP (not fixable from this service alone — flagged to main session at the end of
+   * this round): the backend binds an omitted `commissionRatePercentOverride` the same as an
+   * explicit `null` (no tri-state "leave unchanged" semantics), and
+   * `AdminAffiliateSummaryResponse` only ever exposes the *effective* rate (override ?? global),
+   * never the raw override — so a caller that only wants to flip `isActive` (the table's quick
+   * toggle) has no way to read back and resend whatever override currently exists. Every call
+   * here therefore always sends `commissionRatePercentOverride` as given (defaulting to
+   * `null`), which — for the quick toggle path specifically — clears any pre-existing override.
+   * Fixing this needs a contract change (e.g. expose the raw override on the admin list
+   * response, or a dedicated `PATCH .../active` endpoint), not a frontend-only change.
    */
   async updateAffiliateSettings(
-    _userId: string,
-    _input: { isActive?: boolean; commissionRatePercentOverride?: number | null },
+    userId: string,
+    input: { isActive?: boolean; commissionRatePercentOverride?: number | null },
   ): Promise<boolean> {
-    // TODO(contract): wire หลัง regen
-    return true;
+    try {
+      const result = await putApiAdminAffiliatesByUserIdSettings({
+        path: { userId },
+        body: {
+          isActive: input.isActive ?? true,
+          commissionRatePercentOverride: input.commissionRatePercentOverride ?? null,
+        },
+      });
+      unwrapSdkResult(result);
+      return true;
+    } catch (e) {
+      this.apiFail.report('บันทึกการตั้งค่าลิงก์พันธมิตร', e);
+      return false;
+    }
   }
 }

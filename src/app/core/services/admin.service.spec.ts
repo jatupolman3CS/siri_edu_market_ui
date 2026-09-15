@@ -970,3 +970,85 @@ describe('AdminService — completePayoutManually (payout-request-slip-verificat
     await expect(admin.completePayoutManually('payout-1', 'สั้นไป')).rejects.toBeTruthy();
   });
 });
+
+describe('AdminService — getAffiliates (referral-program v2 §3.10)', () => {
+  it('lists affiliate summaries, mapped to the domain model', async () => {
+    stubRoute('GET', '/api/admin/affiliates', {
+      body: {
+        items: [
+          {
+            userId: 'usr-1',
+            displayName: 'สมชาย นักแชร์',
+            email: 'somchai@example.com',
+            code: 'AFF100',
+            commissionRatePercent: 12,
+            isActive: true,
+            totalClicks: 50,
+            totalConversions: 10,
+            commissionEarnedTotal: 1500,
+          },
+        ],
+        page: 1,
+        pageSize: 10,
+        totalCount: 1,
+        totalPages: 1,
+      },
+    });
+    const admin = buildService();
+
+    const result = await admin.getAffiliates(1, 10);
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].userId).toBe('usr-1');
+    expect(result.items[0].code).toBe('AFF100');
+    expect(result.totalCount).toBe(1);
+  });
+
+  it('returns an empty page and reports the failure when the call fails', async () => {
+    stubRoute('GET', '/api/admin/affiliates', { status: 500, body: { message: 'boom' } });
+    const admin = buildService();
+
+    const result = await admin.getAffiliates(1, 10);
+
+    expect(result.items).toEqual([]);
+    expect(result.totalCount).toBe(0);
+  });
+});
+
+describe('AdminService — updateAffiliateSettings (referral-program v2 §3.10)', () => {
+  it('PUTs isActive + commissionRatePercentOverride and resolves true on success', async () => {
+    stubRoute('PUT', '/api/admin/affiliates/usr-1/settings', {
+      body: {
+        userId: 'usr-1',
+        displayName: 'สมชาย นักแชร์',
+        email: 'somchai@example.com',
+        code: 'AFF100',
+        commissionRatePercent: 8,
+        isActive: false,
+        totalClicks: 50,
+        totalConversions: 10,
+        commissionEarnedTotal: 1500,
+      },
+    });
+    const admin = buildService();
+
+    const ok = await admin.updateAffiliateSettings('usr-1', {
+      isActive: false,
+      commissionRatePercentOverride: 8,
+    });
+
+    expect(ok).toBe(true);
+  });
+
+  it('resolves false and reports the failure when the call fails', async () => {
+    stubRoute('PUT', '/api/admin/affiliates/usr-1/settings', {
+      status: 400,
+      body: { message: 'อัตราคอมมิชชันต้องอยู่ระหว่าง 0 ถึง 100' },
+    });
+    const admin = buildService();
+
+    const ok = await admin.updateAffiliateSettings('usr-1', { commissionRatePercentOverride: 999 });
+
+    expect(ok).toBe(false);
+  });
+});

@@ -1,10 +1,15 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import type { AffiliateSummary } from '../models';
 import {
+  errorActionState,
   idleActionState,
   loadingActionState,
   type ActionState,
 } from './action-state';
+import { ApiFailureReporter } from './api-failure-reporter.service';
+import { unwrapSdkResult } from './api-result';
+import { mapAffiliateSummary } from '../api-mappers/mappers';
+import { getApiMeAffiliate } from '../api';
 import { captureAffiliateClick } from '../util/affiliate-capture';
 
 /**
@@ -13,6 +18,8 @@ import { captureAffiliateClick } from '../util/affiliate-capture';
  */
 @Injectable({ providedIn: 'root' })
 export class AffiliateService {
+  private readonly apiFail = inject(ApiFailureReporter);
+
   private readonly _summary = signal<AffiliateSummary | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
 
@@ -25,19 +32,18 @@ export class AffiliateService {
     });
   }
 
-  /**
-   * Refreshes the current user's affiliate summary from GET /api/me/affiliate.
-   * In round 1, backend is not generated yet.
-   */
+  /** referral-program v2 §3.7: `GET /api/me/affiliate` — lazy-creates the link server-side. */
   async refreshSummary(): Promise<void> {
     this._state.set(loadingActionState());
     try {
-      // TODO(contract): wire หลัง regen คืน null ไปก่อน ห้าม hardcode ตัวเลขปลอมที่ดูเหมือนของจริง
-      this._summary.set(null);
+      const result = await getApiMeAffiliate();
+      const data = unwrapSdkResult(result);
+      this._summary.set(data ? mapAffiliateSummary(data) : null);
       this._state.set(idleActionState());
-    } catch {
+    } catch (e) {
+      this.apiFail.report('โหลดข้อมูลลิงก์พันธมิตร', e);
       this._summary.set(null);
-      this._state.set(idleActionState());
+      this._state.set(errorActionState('โหลดข้อมูลลิงก์พันธมิตรไม่สำเร็จ'));
     }
   }
 

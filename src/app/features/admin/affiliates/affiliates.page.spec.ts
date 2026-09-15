@@ -113,7 +113,10 @@ describe('AdminAffiliatesPage', () => {
 
     await component.saveSettings();
 
+    // §3.10: the request always carries `isActive` alongside the rate — the required field on
+    // the wire has no partial-update semantics (see the comment on `AdminService.updateAffiliateSettings`).
     expect(updateSettingsSpy).toHaveBeenCalledWith('usr-1', {
+      isActive: true,
       commissionRatePercentOverride: 20,
     });
     expect(component.items()[0].commissionRatePercent).toBe(20);
