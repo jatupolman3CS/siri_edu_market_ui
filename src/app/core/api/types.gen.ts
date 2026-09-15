@@ -63,6 +63,18 @@ export type AdminAdsPlacementResponse = {
   updatedAt?: string | null;
 };
 
+export type AdminAffiliateSummaryResponse = {
+  userId: string;
+  displayName: string;
+  email: string;
+  code: string;
+  commissionRatePercent?: number;
+  isActive?: boolean;
+  totalClicks?: number;
+  totalConversions?: number;
+  commissionEarnedTotal?: number;
+};
+
 export type AdminAuditEntryResponse = {
   id?: string;
   actorUserId?: string | null;
@@ -724,6 +736,25 @@ export type AdsPlacementResponse = {
   requiresTarget?: boolean;
 };
 
+export type AffiliateClickRequest = {
+  code: string;
+};
+
+export type AffiliateClickResponse = {
+  clickToken: string;
+  expiresAt: string;
+};
+
+export type AffiliateSummaryResponse = {
+  code: string;
+  shareUrl: string;
+  commissionRatePercent?: number;
+  isActive?: boolean;
+  totalClicks?: number;
+  totalConversions?: number;
+  commissionEarnedTotal?: number;
+};
+
 export type AiPrescreenResult = {
   isSuccess?: boolean;
   riskLevel?: string | null;
@@ -827,6 +858,12 @@ export type BundleResponse = {
   downloads?: number;
   sellerId?: string;
   sellerName?: string;
+  createdAt?: string;
+};
+
+export type BuyerDocumentVersionResponse = {
+  versionNumber?: number;
+  changeNote?: string | null;
   createdAt?: string;
 };
 
@@ -943,6 +980,7 @@ export type CreateOrderRequest = {
   saveNewCard?: boolean;
   referralCode?: string | null;
   useReferralCredit?: boolean | null;
+  affiliateClickToken?: string | null;
 };
 
 export type CreateSubcategoryRequest = {
@@ -1103,6 +1141,9 @@ export type LibraryItemResponse = {
   myRating?: number | null;
   isRead?: boolean;
   markedReadAt?: string | null;
+  currentVersionNumber?: number;
+  hasNewVersion?: boolean;
+  latestChangeNote?: string | null;
 };
 
 export type LibraryReadStatusResponse = {
@@ -1427,6 +1468,14 @@ export type OrderSimilarDocumentsResponse = {
 
 export type PagedResponseOfAdminAdsCampaignResponse = {
   items?: Array<AdminAdsCampaignResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfAdminAffiliateSummaryResponse = {
+  items?: Array<AdminAffiliateSummaryResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -2092,6 +2141,8 @@ export type SellerDocumentResponse = {
   watermarkEffective?: boolean;
   watermarkPolicyLocked?: boolean;
   watermarkWarning?: string | null;
+  currentVersionNumber?: number;
+  lastVersionNotifiedBuyerCount?: number | null;
 };
 
 export type SellerDocumentSummaryResponse = {
@@ -2110,6 +2161,13 @@ export type SellerDocumentSummaryResponse = {
   viewCount?: number;
   conversionRatePercent?: number;
   updatedAt?: string;
+};
+
+export type SellerDocumentVersionResponse = {
+  versionNumber?: number;
+  changeNote?: string | null;
+  createdAt?: string;
+  notifiedBuyerCount?: number;
 };
 
 export type SellerEarningsResponse = {
@@ -2250,6 +2308,8 @@ export type SetExamCountdownEnabledRequest = {
 
 export type SetListedSellerDocumentMainFileRequest = {
   fileId: string;
+  isNewVersion?: boolean;
+  changeNote?: string | null;
 };
 
 export type SetQnaFaqRequest = {
@@ -2429,6 +2489,11 @@ export type UpdateAdsPlacementRequest = {
   dailySlotCapacity: number;
   maxPerResultPage: number;
   isEnabled: boolean;
+};
+
+export type UpdateAffiliateSettingsRequest = {
+  isActive: boolean | null;
+  commissionRatePercentOverride?: number | null;
 };
 
 export type UpdateAnnouncementRequest = {
@@ -4340,6 +4405,112 @@ export type GetApiAdminCrmDocumentAlertsResponses = {
 export type GetApiAdminCrmDocumentAlertsResponse =
   GetApiAdminCrmDocumentAlertsResponses[keyof GetApiAdminCrmDocumentAlertsResponses];
 
+export type GetApiAdminAffiliatesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/affiliates';
+};
+
+export type GetApiAdminAffiliatesErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+};
+
+export type GetApiAdminAffiliatesError =
+  GetApiAdminAffiliatesErrors[keyof GetApiAdminAffiliatesErrors];
+
+export type GetApiAdminAffiliatesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminAffiliateSummaryResponse;
+};
+
+export type GetApiAdminAffiliatesResponse =
+  GetApiAdminAffiliatesResponses[keyof GetApiAdminAffiliatesResponses];
+
+export type PutApiAdminAffiliatesByUserIdSettingsData = {
+  body: UpdateAffiliateSettingsRequest;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/affiliates/{userId}/settings';
+};
+
+export type PutApiAdminAffiliatesByUserIdSettingsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiAdminAffiliatesByUserIdSettingsError =
+  PutApiAdminAffiliatesByUserIdSettingsErrors[keyof PutApiAdminAffiliatesByUserIdSettingsErrors];
+
+export type PutApiAdminAffiliatesByUserIdSettingsResponses = {
+  /**
+   * OK
+   */
+  200: AdminAffiliateSummaryResponse;
+};
+
+export type PutApiAdminAffiliatesByUserIdSettingsResponse =
+  PutApiAdminAffiliatesByUserIdSettingsResponses[keyof PutApiAdminAffiliatesByUserIdSettingsResponses];
+
+export type PostApiAffiliateClickData = {
+  body: AffiliateClickRequest;
+  path?: never;
+  query?: never;
+  url: '/api/affiliate/click';
+};
+
+export type PostApiAffiliateClickErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiAffiliateClickError =
+  PostApiAffiliateClickErrors[keyof PostApiAffiliateClickErrors];
+
+export type PostApiAffiliateClickResponses = {
+  /**
+   * OK
+   */
+  200: AffiliateClickResponse;
+};
+
+export type PostApiAffiliateClickResponse =
+  PostApiAffiliateClickResponses[keyof PostApiAffiliateClickResponses];
+
 export type GetApiAdminAnnouncementsData = {
   body?: never;
   path?: never;
@@ -5519,6 +5690,35 @@ export type PostApiLibraryByDocumentIdDownloadResponses = {
 export type PostApiLibraryByDocumentIdDownloadResponse =
   PostApiLibraryByDocumentIdDownloadResponses[keyof PostApiLibraryByDocumentIdDownloadResponses];
 
+export type GetApiLibraryByDocumentIdVersionsData = {
+  body?: never;
+  path: {
+    documentId: string;
+  };
+  query?: never;
+  url: '/api/library/{documentId}/versions';
+};
+
+export type GetApiLibraryByDocumentIdVersionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiLibraryByDocumentIdVersionsError =
+  GetApiLibraryByDocumentIdVersionsErrors[keyof GetApiLibraryByDocumentIdVersionsErrors];
+
+export type GetApiLibraryByDocumentIdVersionsResponses = {
+  /**
+   * OK
+   */
+  200: Array<BuyerDocumentVersionResponse>;
+};
+
+export type GetApiLibraryByDocumentIdVersionsResponse =
+  GetApiLibraryByDocumentIdVersionsResponses[keyof GetApiLibraryByDocumentIdVersionsResponses];
+
 export type PostApiLibraryByDocumentIdReviewsData = {
   body: SubmitDocumentReviewRequest;
   path: {
@@ -6444,6 +6644,32 @@ export type GetApiMeReferralValidateResponses = {
 
 export type GetApiMeReferralValidateResponse =
   GetApiMeReferralValidateResponses[keyof GetApiMeReferralValidateResponses];
+
+export type GetApiMeAffiliateData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/affiliate';
+};
+
+export type GetApiMeAffiliateErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeAffiliateError = GetApiMeAffiliateErrors[keyof GetApiMeAffiliateErrors];
+
+export type GetApiMeAffiliateResponses = {
+  /**
+   * OK
+   */
+  200: AffiliateSummaryResponse;
+};
+
+export type GetApiMeAffiliateResponse =
+  GetApiMeAffiliateResponses[keyof GetApiMeAffiliateResponses];
 
 export type DeleteApiMeExamCountdownData = {
   body?: never;
@@ -8747,6 +8973,35 @@ export type PutApiSellerDocumentsByIdListedMainFileResponses = {
 
 export type PutApiSellerDocumentsByIdListedMainFileResponse =
   PutApiSellerDocumentsByIdListedMainFileResponses[keyof PutApiSellerDocumentsByIdListedMainFileResponses];
+
+export type GetApiSellerDocumentsByIdVersionsData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/seller/documents/{id}/versions';
+};
+
+export type GetApiSellerDocumentsByIdVersionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSellerDocumentsByIdVersionsError =
+  GetApiSellerDocumentsByIdVersionsErrors[keyof GetApiSellerDocumentsByIdVersionsErrors];
+
+export type GetApiSellerDocumentsByIdVersionsResponses = {
+  /**
+   * OK
+   */
+  200: Array<SellerDocumentVersionResponse>;
+};
+
+export type GetApiSellerDocumentsByIdVersionsResponse =
+  GetApiSellerDocumentsByIdVersionsResponses[keyof GetApiSellerDocumentsByIdVersionsResponses];
 
 export type GetApiSellerDocumentsByIdMainFilesByFileIdDownloadUrlData = {
   body?: never;

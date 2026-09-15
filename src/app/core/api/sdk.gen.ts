@@ -68,6 +68,9 @@ import type {
   GetApiAdminAdsCampaignsResponses,
   GetApiAdminAdsPlacementsData,
   GetApiAdminAdsPlacementsResponses,
+  GetApiAdminAffiliatesData,
+  GetApiAdminAffiliatesErrors,
+  GetApiAdminAffiliatesResponses,
   GetApiAdminAnnouncementsByIdData,
   GetApiAdminAnnouncementsByIdErrors,
   GetApiAdminAnnouncementsByIdResponses,
@@ -182,6 +185,9 @@ import type {
   GetApiFilesDownloadByKeyErrors,
   GetApiFilesPresignedByKeyData,
   GetApiFilesPresignedByKeyErrors,
+  GetApiLibraryByDocumentIdVersionsData,
+  GetApiLibraryByDocumentIdVersionsErrors,
+  GetApiLibraryByDocumentIdVersionsResponses,
   GetApiLibraryData,
   GetApiLibraryResponses,
   GetApiMarketplaceBundlesByIdData,
@@ -219,6 +225,9 @@ import type {
   GetApiMarketplaceSearchResponses,
   GetApiMarketplaceStatsData,
   GetApiMarketplaceStatsResponses,
+  GetApiMeAffiliateData,
+  GetApiMeAffiliateErrors,
+  GetApiMeAffiliateResponses,
   GetApiMeCrmData,
   GetApiMeCrmErrors,
   GetApiMeCrmResponses,
@@ -322,6 +331,9 @@ import type {
   GetApiSellerDocumentsByIdMainFilesErrors,
   GetApiSellerDocumentsByIdMainFilesResponses,
   GetApiSellerDocumentsByIdResponses,
+  GetApiSellerDocumentsByIdVersionsData,
+  GetApiSellerDocumentsByIdVersionsErrors,
+  GetApiSellerDocumentsByIdVersionsResponses,
   GetApiSellerDocumentsData,
   GetApiSellerDocumentsPricingHintData,
   GetApiSellerDocumentsPricingHintErrors,
@@ -441,6 +453,9 @@ import type {
   PostApiAdminUsersByUserIdSuspendData,
   PostApiAdminUsersByUserIdSuspendErrors,
   PostApiAdminUsersByUserIdSuspendResponses,
+  PostApiAffiliateClickData,
+  PostApiAffiliateClickErrors,
+  PostApiAffiliateClickResponses,
   PostApiAuthChangePasswordData,
   PostApiAuthChangePasswordErrors,
   PostApiAuthChangePasswordResponses,
@@ -611,6 +626,9 @@ import type {
   PutApiAdminAdsPlacementsByPlacementKeyData,
   PutApiAdminAdsPlacementsByPlacementKeyErrors,
   PutApiAdminAdsPlacementsByPlacementKeyResponses,
+  PutApiAdminAffiliatesByUserIdSettingsData,
+  PutApiAdminAffiliatesByUserIdSettingsErrors,
+  PutApiAdminAffiliatesByUserIdSettingsResponses,
   PutApiAdminAnnouncementsByIdData,
   PutApiAdminAnnouncementsByIdErrors,
   PutApiAdminAnnouncementsByIdResponses,
@@ -1494,6 +1512,51 @@ export const getApiAdminCrmDocumentAlerts = <ThrowOnError extends boolean = fals
     ...options,
   });
 
+export const getApiAdminAffiliates = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminAffiliatesData, ThrowOnError>,
+): RequestResult<GetApiAdminAffiliatesResponses, GetApiAdminAffiliatesErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminAffiliatesResponses,
+    GetApiAdminAffiliatesErrors,
+    ThrowOnError
+  >({ url: '/api/admin/affiliates', ...options });
+
+export const putApiAdminAffiliatesByUserIdSettings = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminAffiliatesByUserIdSettingsData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminAffiliatesByUserIdSettingsResponses,
+  PutApiAdminAffiliatesByUserIdSettingsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminAffiliatesByUserIdSettingsResponses,
+    PutApiAdminAffiliatesByUserIdSettingsErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/affiliates/{userId}/settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiAffiliateClick = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAffiliateClickData, ThrowOnError>,
+): RequestResult<PostApiAffiliateClickResponses, PostApiAffiliateClickErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiAffiliateClickResponses,
+    PostApiAffiliateClickErrors,
+    ThrowOnError
+  >({
+    url: '/api/affiliate/click',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
 export const getApiAdminAnnouncements = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminAnnouncementsData, ThrowOnError>,
 ): RequestResult<GetApiAdminAnnouncementsResponses, unknown, ThrowOnError> =>
@@ -2100,6 +2163,19 @@ export const postApiLibraryByDocumentIdDownload = <ThrowOnError extends boolean 
     ThrowOnError
   >({ url: '/api/library/{documentId}/download', ...options });
 
+export const getApiLibraryByDocumentIdVersions = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiLibraryByDocumentIdVersionsData, ThrowOnError>,
+): RequestResult<
+  GetApiLibraryByDocumentIdVersionsResponses,
+  GetApiLibraryByDocumentIdVersionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiLibraryByDocumentIdVersionsResponses,
+    GetApiLibraryByDocumentIdVersionsErrors,
+    ThrowOnError
+  >({ url: '/api/library/{documentId}/versions', ...options });
+
 export const postApiLibraryByDocumentIdReviews = <ThrowOnError extends boolean = false>(
   options: Options<PostApiLibraryByDocumentIdReviewsData, ThrowOnError>,
 ): RequestResult<
@@ -2504,6 +2580,15 @@ export const getApiMeReferralValidate = <ThrowOnError extends boolean = false>(
     GetApiMeReferralValidateErrors,
     ThrowOnError
   >({ url: '/api/me/referral/validate', ...options });
+
+export const getApiMeAffiliate = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeAffiliateData, ThrowOnError>,
+): RequestResult<GetApiMeAffiliateResponses, GetApiMeAffiliateErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeAffiliateResponses,
+    GetApiMeAffiliateErrors,
+    ThrowOnError
+  >({ url: '/api/me/affiliate', ...options });
 
 export const deleteApiMeExamCountdown = <ThrowOnError extends boolean = false>(
   options?: Options<DeleteApiMeExamCountdownData, ThrowOnError>,
@@ -3557,6 +3642,19 @@ export const putApiSellerDocumentsByIdListedMainFile = <ThrowOnError extends boo
       ...options.headers,
     },
   });
+
+export const getApiSellerDocumentsByIdVersions = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSellerDocumentsByIdVersionsData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerDocumentsByIdVersionsResponses,
+  GetApiSellerDocumentsByIdVersionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiSellerDocumentsByIdVersionsResponses,
+    GetApiSellerDocumentsByIdVersionsErrors,
+    ThrowOnError
+  >({ url: '/api/seller/documents/{id}/versions', ...options });
 
 export const getApiSellerDocumentsByIdMainFilesByFileIdDownloadUrl = <
   ThrowOnError extends boolean = false,
