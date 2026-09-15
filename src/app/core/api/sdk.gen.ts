@@ -40,6 +40,9 @@ import type {
   DeleteApiNotificationsLineConnectionData,
   DeleteApiNotificationsLineConnectionErrors,
   DeleteApiNotificationsLineConnectionResponses,
+  DeleteApiSellerAdsCampaignsByCampaignIdData,
+  DeleteApiSellerAdsCampaignsByCampaignIdErrors,
+  DeleteApiSellerAdsCampaignsByCampaignIdResponses,
   DeleteApiSellerBundlesByBundleIdData,
   DeleteApiSellerBundlesByBundleIdErrors,
   DeleteApiSellerBundlesByBundleIdResponses,
@@ -60,6 +63,11 @@ import type {
   DeleteApiWishlistData,
   DeleteApiWishlistErrors,
   DeleteApiWishlistResponses,
+  GetApiAdminAdsCampaignsData,
+  GetApiAdminAdsCampaignsErrors,
+  GetApiAdminAdsCampaignsResponses,
+  GetApiAdminAdsPlacementsData,
+  GetApiAdminAdsPlacementsResponses,
   GetApiAdminAnnouncementsByIdData,
   GetApiAdminAnnouncementsByIdErrors,
   GetApiAdminAnnouncementsByIdResponses,
@@ -280,6 +288,17 @@ import type {
   GetApiOrdersResponses,
   GetApiPaymentsStripeConfigData,
   GetApiPaymentsStripeConfigResponses,
+  GetApiSellerAdsAvailabilityData,
+  GetApiSellerAdsAvailabilityErrors,
+  GetApiSellerAdsAvailabilityResponses,
+  GetApiSellerAdsCampaignsByCampaignIdData,
+  GetApiSellerAdsCampaignsByCampaignIdErrors,
+  GetApiSellerAdsCampaignsByCampaignIdResponses,
+  GetApiSellerAdsCampaignsData,
+  GetApiSellerAdsCampaignsErrors,
+  GetApiSellerAdsCampaignsResponses,
+  GetApiSellerAdsPlacementsData,
+  GetApiSellerAdsPlacementsResponses,
   GetApiSellerBalanceEntriesData,
   GetApiSellerBalanceEntriesResponses,
   GetApiSellerBundlesByBundleIdData,
@@ -338,6 +357,9 @@ import type {
   PatchApiMeExamCountdownEnabledData,
   PatchApiMeExamCountdownEnabledErrors,
   PatchApiMeExamCountdownEnabledResponses,
+  PostApiAdminAdsCampaignsByCampaignIdStopData,
+  PostApiAdminAdsCampaignsByCampaignIdStopErrors,
+  PostApiAdminAdsCampaignsByCampaignIdStopResponses,
   PostApiAdminAnnouncementsData,
   PostApiAdminAnnouncementsErrors,
   PostApiAdminAnnouncementsResponses,
@@ -474,6 +496,11 @@ import type {
   PostApiLibraryByDocumentIdReviewsData,
   PostApiLibraryByDocumentIdReviewsErrors,
   PostApiLibraryByDocumentIdReviewsResponses,
+  PostApiMarketplaceAdsByCampaignIdClickData,
+  PostApiMarketplaceAdsByCampaignIdClickResponses,
+  PostApiMarketplaceAdsImpressionsData,
+  PostApiMarketplaceAdsImpressionsErrors,
+  PostApiMarketplaceAdsImpressionsResponses,
   PostApiMarketplaceDocumentsByIdQnaData,
   PostApiMarketplaceDocumentsByIdQnaErrors,
   PostApiMarketplaceDocumentsByIdQnaResponses,
@@ -522,6 +549,12 @@ import type {
   PostApiOrdersData,
   PostApiOrdersErrors,
   PostApiOrdersResponses,
+  PostApiSellerAdsCampaignsData,
+  PostApiSellerAdsCampaignsErrors,
+  PostApiSellerAdsCampaignsQuoteData,
+  PostApiSellerAdsCampaignsQuoteErrors,
+  PostApiSellerAdsCampaignsQuoteResponses,
+  PostApiSellerAdsCampaignsResponses,
   PostApiSellerBundlesData,
   PostApiSellerBundlesErrors,
   PostApiSellerBundlesResponses,
@@ -575,6 +608,9 @@ import type {
   PostApiWishlistData,
   PostApiWishlistErrors,
   PostApiWishlistResponses,
+  PutApiAdminAdsPlacementsByPlacementKeyData,
+  PutApiAdminAdsPlacementsByPlacementKeyErrors,
+  PutApiAdminAdsPlacementsByPlacementKeyResponses,
   PutApiAdminAnnouncementsByIdData,
   PutApiAdminAnnouncementsByIdErrors,
   PutApiAdminAnnouncementsByIdResponses,
@@ -657,6 +693,63 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const getApiAdminAdsCampaigns = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminAdsCampaignsData, ThrowOnError>,
+): RequestResult<GetApiAdminAdsCampaignsResponses, GetApiAdminAdsCampaignsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminAdsCampaignsResponses,
+    GetApiAdminAdsCampaignsErrors,
+    ThrowOnError
+  >({ url: '/api/admin/ads/campaigns', ...options });
+
+export const postApiAdminAdsCampaignsByCampaignIdStop = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminAdsCampaignsByCampaignIdStopData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminAdsCampaignsByCampaignIdStopResponses,
+  PostApiAdminAdsCampaignsByCampaignIdStopErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminAdsCampaignsByCampaignIdStopResponses,
+    PostApiAdminAdsCampaignsByCampaignIdStopErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/ads/campaigns/{campaignId}/stop',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiAdminAdsPlacements = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminAdsPlacementsData, ThrowOnError>,
+): RequestResult<GetApiAdminAdsPlacementsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiAdminAdsPlacementsResponses, unknown, ThrowOnError>({
+    url: '/api/admin/ads/placements',
+    ...options,
+  });
+
+export const putApiAdminAdsPlacementsByPlacementKey = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiAdminAdsPlacementsByPlacementKeyData, ThrowOnError>,
+): RequestResult<
+  PutApiAdminAdsPlacementsByPlacementKeyResponses,
+  PutApiAdminAdsPlacementsByPlacementKeyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiAdminAdsPlacementsByPlacementKeyResponses,
+    PutApiAdminAdsPlacementsByPlacementKeyErrors,
+    ThrowOnError
+  >({
+    url: '/api/admin/ads/placements/{placementKey}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const getApiAdminSubscriptions = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminSubscriptionsData, ThrowOnError>,
@@ -2232,6 +2325,35 @@ export const getApiMarketplaceStats = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
+export const postApiMarketplaceAdsImpressions = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMarketplaceAdsImpressionsData, ThrowOnError>,
+): RequestResult<
+  PostApiMarketplaceAdsImpressionsResponses,
+  PostApiMarketplaceAdsImpressionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiMarketplaceAdsImpressionsResponses,
+    PostApiMarketplaceAdsImpressionsErrors,
+    ThrowOnError
+  >({
+    url: '/api/marketplace/ads/impressions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiMarketplaceAdsByCampaignIdClick = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMarketplaceAdsByCampaignIdClickData, ThrowOnError>,
+): RequestResult<PostApiMarketplaceAdsByCampaignIdClickResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiMarketplaceAdsByCampaignIdClickResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/marketplace/ads/{campaignId}/click', ...options });
+
 export const getApiMeProfile = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMeProfileData, ThrowOnError>,
 ): RequestResult<GetApiMeProfileResponses, GetApiMeProfileErrors, ThrowOnError> =>
@@ -2855,6 +2977,102 @@ export const getApiPaymentsStripeConfig = <ThrowOnError extends boolean = false>
     url: '/api/payments/stripe-config',
     ...options,
   });
+
+export const getApiSellerAdsPlacements = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerAdsPlacementsData, ThrowOnError>,
+): RequestResult<GetApiSellerAdsPlacementsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerAdsPlacementsResponses, unknown, ThrowOnError>({
+    url: '/api/seller/ads/placements',
+    ...options,
+  });
+
+export const getApiSellerAdsAvailability = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerAdsAvailabilityData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerAdsAvailabilityResponses,
+  GetApiSellerAdsAvailabilityErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetApiSellerAdsAvailabilityResponses,
+    GetApiSellerAdsAvailabilityErrors,
+    ThrowOnError
+  >({ url: '/api/seller/ads/availability', ...options });
+
+export const postApiSellerAdsCampaignsQuote = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerAdsCampaignsQuoteData, ThrowOnError>,
+): RequestResult<
+  PostApiSellerAdsCampaignsQuoteResponses,
+  PostApiSellerAdsCampaignsQuoteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiSellerAdsCampaignsQuoteResponses,
+    PostApiSellerAdsCampaignsQuoteErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/ads/campaigns/quote',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiSellerAdsCampaigns = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerAdsCampaignsData, ThrowOnError>,
+): RequestResult<GetApiSellerAdsCampaignsResponses, GetApiSellerAdsCampaignsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiSellerAdsCampaignsResponses,
+    GetApiSellerAdsCampaignsErrors,
+    ThrowOnError
+  >({ url: '/api/seller/ads/campaigns', ...options });
+
+export const postApiSellerAdsCampaigns = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerAdsCampaignsData, ThrowOnError>,
+): RequestResult<
+  PostApiSellerAdsCampaignsResponses,
+  PostApiSellerAdsCampaignsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiSellerAdsCampaignsResponses,
+    PostApiSellerAdsCampaignsErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/ads/campaigns',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const deleteApiSellerAdsCampaignsByCampaignId = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteApiSellerAdsCampaignsByCampaignIdData, ThrowOnError>,
+): RequestResult<
+  DeleteApiSellerAdsCampaignsByCampaignIdResponses,
+  DeleteApiSellerAdsCampaignsByCampaignIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteApiSellerAdsCampaignsByCampaignIdResponses,
+    DeleteApiSellerAdsCampaignsByCampaignIdErrors,
+    ThrowOnError
+  >({ url: '/api/seller/ads/campaigns/{campaignId}', ...options });
+
+export const getApiSellerAdsCampaignsByCampaignId = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSellerAdsCampaignsByCampaignIdData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerAdsCampaignsByCampaignIdResponses,
+  GetApiSellerAdsCampaignsByCampaignIdErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiSellerAdsCampaignsByCampaignIdResponses,
+    GetApiSellerAdsCampaignsByCampaignIdErrors,
+    ThrowOnError
+  >({ url: '/api/seller/ads/campaigns/{campaignId}', ...options });
 
 export const getApiSellerBundles = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiSellerBundlesData, ThrowOnError>,

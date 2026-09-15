@@ -4,9 +4,16 @@
  */
 
 import type {
+  AdminAdsCampaignResponse,
+  AdminAdsPlacementResponse,
   AdminPendingDocumentResponse,
   AdminSubscriptionListItemResponse,
   AdminTransactionResponse,
+  AdsAvailabilityResponse,
+  AdsCampaignDetailResponse,
+  AdsCampaignQuoteResponse,
+  AdsCampaignResponse,
+  AdsPlacementResponse,
   AnnouncementAdminResponse,
   AnnouncementImageResponse,
   AnnouncementPopupResponse,
@@ -43,8 +50,17 @@ import type {
   SubscriptionResponse,
 } from '../api';
 import type {
+  AdminAdsCampaign,
+  AdminAdsPlacement,
   AdminSubscriptionListItem,
   AdminTransaction,
+  AdsAvailability,
+  AdsCampaign,
+  AdsCampaignDetail,
+  AdsCampaignQuote,
+  AdsCampaignStatus,
+  AdsPlacement,
+  AdsStopReason,
   AnnouncementAdmin,
   AnnouncementImage,
   AnnouncementPopup,
@@ -398,6 +414,11 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
     isFeatured: d.isFeatured,
     isEditorsPick: false,
     bundleDocumentIds: [],
+    // seller-ads-promotion v1 §3.9.1: additive fields on `MarketplaceDocumentResponse` — every
+    // endpoint except `GET /api/marketplace/search` (page 1, sort=popular) always sends
+    // `false`/`null` (DEC-6/AC-15), so this mapper trusts the server rather than re-deriving it.
+    isSponsored: d.isSponsored ?? false,
+    sponsoredCampaignId: d.sponsoredCampaignId ?? undefined,
   };
 }
 
@@ -1271,3 +1292,134 @@ export function mapAdminSubscriptionListItem(
   };
 }
 
+// ====== Seller Ads Promotion mappers (seller-ads-promotion v1, docs/contracts/seller-ads-promotion.md §3) ======
+// F-14 round 2 (this round): backend shipped and `npm run generate:api` regenerated the SDK
+// against the live backend — every mapper below reads the real generated response types.
+
+/** §2.3: bare wire string → the narrow union, defaulting to `scheduled` for an unrecognised value. */
+function toAdsCampaignStatus(value: string | undefined): AdsCampaignStatus {
+  switch (value) {
+    case 'active':
+    case 'completed':
+    case 'cancelled':
+    case 'stopped':
+      return value;
+    default:
+      return 'scheduled';
+  }
+}
+
+/** §2.2: bare wire string → the narrow union, or `null` when the campaign never stopped early. */
+function toAdsStopReason(value: string | null | undefined): AdsStopReason | null {
+  switch (value) {
+    case 'seller_cancelled':
+    case 'admin_stopped':
+    case 'account_suspended':
+    case 'document_unavailable':
+      return value;
+    default:
+      return null;
+  }
+}
+
+/** §3.1: only `IsEnabled` placements are ever sent by this endpoint. */
+export function mapAdsPlacement(d: AdsPlacementResponse): AdsPlacement {
+  return {
+    placementKey: d.placementKey ?? '',
+    displayName: d.displayName ?? '',
+    description: d.description ?? '',
+    pricePerDay: d.pricePerDay ?? 0,
+    weeklyPrice: d.weeklyPrice ?? null,
+    dailySlotCapacity: d.dailySlotCapacity ?? 0,
+    requiresTarget: d.requiresTarget ?? false,
+  };
+}
+
+/** §3.11.3: admin variant — includes disabled placements + the editable knobs. */
+export function mapAdminAdsPlacement(d: AdminAdsPlacementResponse): AdminAdsPlacement {
+  return {
+    ...mapAdsPlacement(d),
+    maxPerResultPage: d.maxPerResultPage ?? 1,
+    isEnabled: d.isEnabled ?? false,
+    activeCampaignCount: d.activeCampaignCount ?? 0,
+    updatedAt: d.updatedAt ?? null,
+  };
+}
+
+/** §3.2: `GET /api/seller/ads/availability` response. */
+export function mapAdsAvailability(d: AdsAvailabilityResponse): AdsAvailability {
+  return {
+    placementKey: d.placementKey ?? '',
+    targetKey: d.targetKey ?? '*',
+    pricePerDay: d.pricePerDay ?? 0,
+    weeklyPrice: d.weeklyPrice ?? null,
+    dailySlotCapacity: d.dailySlotCapacity ?? 0,
+    days: (d.days ?? []).map((day) => ({
+      date: day.date ?? '',
+      remainingSlots: day.remainingSlots ?? 0,
+      isSelectable: day.isSelectable ?? false,
+    })),
+  };
+}
+
+/** §3.3: `POST /api/seller/ads/campaigns/quote` response — §4.2 rule 1: the only source of money figures in the create-campaign form. */
+export function mapAdsCampaignQuote(d: AdsCampaignQuoteResponse): AdsCampaignQuote {
+  return {
+    dayCount: d.dayCount ?? 0,
+    pricePerDay: d.pricePerDay ?? 0,
+    pricingMode: d.pricingMode ?? 'daily',
+    totalAmount: d.totalAmount ?? 0,
+    availableBalance: d.availableBalance ?? 0,
+    canAfford: d.canAfford ?? false,
+    fullDates: d.fullDates ?? [],
+  };
+}
+
+/** §3.6: one campaign row, shared by every seller-facing ads endpoint that returns `AdsCampaignResponse`. */
+export function mapAdsCampaign(d: AdsCampaignResponse): AdsCampaign {
+  return {
+    id: d.id ?? '',
+    documentId: d.documentId ?? '',
+    documentTitle: d.documentTitle ?? '',
+    documentCoverUrl: resolvePublicUrl(d.documentCoverUrl),
+    sellerId: d.sellerId ?? '',
+    placementKey: d.placementKey ?? '',
+    placementName: d.placementName ?? '',
+    targetKey: d.targetKey ?? '*',
+    targetLabel: d.targetLabel ?? null,
+    startDate: d.startDate ?? '',
+    endDate: d.endDate ?? '',
+    dayCount: d.dayCount ?? 0,
+    pricePerDay: d.pricePerDay ?? 0,
+    totalAmount: d.totalAmount ?? 0,
+    refundedAmount: d.refundedAmount ?? 0,
+    status: toAdsCampaignStatus(d.status),
+    stopReason: toAdsStopReason(d.stopReason),
+    stopNote: d.stopNote ?? null,
+    stoppedAt: d.stoppedAt ?? null,
+    impressions: d.impressions ?? 0,
+    clicks: d.clicks ?? 0,
+    createdAt: d.createdAt ?? '',
+  };
+}
+
+/** §3.6: `GET /api/seller/ads/campaigns/{id}` response = {@link AdsCampaign} + per-day stats. */
+export function mapAdsCampaignDetail(d: AdsCampaignDetailResponse): AdsCampaignDetail {
+  return {
+    ...mapAdsCampaign(d),
+    dailyStats: (d.dailyStats ?? []).map((s) => ({
+      date: s.date ?? '',
+      impressions: s.impressions ?? 0,
+      clicks: s.clicks ?? 0,
+    })),
+  };
+}
+
+/** §3.11.1: the admin campaign list row = {@link AdsCampaign} + who owns it and their balance. */
+export function mapAdminAdsCampaign(d: AdminAdsCampaignResponse): AdminAdsCampaign {
+  return {
+    ...mapAdsCampaign(d),
+    sellerName: d.sellerName ?? '',
+    sellerAvailableBalance: d.sellerAvailableBalance ?? 0,
+  };
+}

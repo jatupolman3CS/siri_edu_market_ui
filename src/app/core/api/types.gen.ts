@@ -22,6 +22,47 @@ export type AddToWishlistRequest = {
   bundleId?: string | null;
 };
 
+export type AdminAdsCampaignResponse = {
+  sellerName?: string;
+  sellerAvailableBalance?: number;
+  id?: string;
+  documentId?: string;
+  documentTitle?: string;
+  documentCoverUrl?: string;
+  sellerId?: string;
+  placementKey?: string;
+  placementName?: string;
+  targetKey?: string;
+  targetLabel?: string | null;
+  startDate?: string;
+  endDate?: string;
+  dayCount?: number;
+  pricePerDay?: number;
+  totalAmount?: number;
+  refundedAmount?: number;
+  status?: string;
+  stopReason?: string | null;
+  stopNote?: string | null;
+  stoppedAt?: string | null;
+  impressions?: number;
+  clicks?: number;
+  createdAt?: string;
+};
+
+export type AdminAdsPlacementResponse = {
+  placementKey?: string;
+  displayName?: string;
+  description?: string;
+  pricePerDay?: number;
+  weeklyPrice?: number | null;
+  dailySlotCapacity?: number;
+  requiresTarget?: boolean;
+  maxPerResultPage?: number;
+  isEnabled?: boolean;
+  activeCampaignCount?: number;
+  updatedAt?: string | null;
+};
+
 export type AdminAuditEntryResponse = {
   id?: string;
   actorUserId?: string | null;
@@ -583,6 +624,106 @@ export type AdminWatermarkCopyResponse = {
   purgedAt?: string | null;
 };
 
+export type AdsAvailabilityDayResponse = {
+  date?: string;
+  remainingSlots?: number;
+  isSelectable?: boolean;
+};
+
+export type AdsAvailabilityResponse = {
+  placementKey?: string;
+  targetKey?: string;
+  pricePerDay?: number;
+  weeklyPrice?: number | null;
+  dailySlotCapacity?: number;
+  days?: Array<AdsAvailabilityDayResponse>;
+};
+
+export type AdsCampaignDailyStatResponse = {
+  date?: string;
+  impressions?: number;
+  clicks?: number;
+};
+
+export type AdsCampaignDetailResponse = {
+  dailyStats?: Array<AdsCampaignDailyStatResponse>;
+  id?: string;
+  documentId?: string;
+  documentTitle?: string;
+  documentCoverUrl?: string;
+  sellerId?: string;
+  placementKey?: string;
+  placementName?: string;
+  targetKey?: string;
+  targetLabel?: string | null;
+  startDate?: string;
+  endDate?: string;
+  dayCount?: number;
+  pricePerDay?: number;
+  totalAmount?: number;
+  refundedAmount?: number;
+  status?: string;
+  stopReason?: string | null;
+  stopNote?: string | null;
+  stoppedAt?: string | null;
+  impressions?: number;
+  clicks?: number;
+  createdAt?: string;
+};
+
+export type AdsCampaignQuoteRequest = {
+  documentId: string;
+  placementKey: string;
+  targetKey?: string | null;
+  startDate: string;
+  endDate: string;
+};
+
+export type AdsCampaignQuoteResponse = {
+  dayCount?: number;
+  pricePerDay?: number;
+  pricingMode?: string;
+  totalAmount?: number;
+  availableBalance?: number;
+  canAfford?: boolean;
+  fullDates?: Array<string>;
+};
+
+export type AdsCampaignResponse = {
+  id?: string;
+  documentId?: string;
+  documentTitle?: string;
+  documentCoverUrl?: string;
+  sellerId?: string;
+  placementKey?: string;
+  placementName?: string;
+  targetKey?: string;
+  targetLabel?: string | null;
+  startDate?: string;
+  endDate?: string;
+  dayCount?: number;
+  pricePerDay?: number;
+  totalAmount?: number;
+  refundedAmount?: number;
+  status?: string;
+  stopReason?: string | null;
+  stopNote?: string | null;
+  stoppedAt?: string | null;
+  impressions?: number;
+  clicks?: number;
+  createdAt?: string;
+};
+
+export type AdsPlacementResponse = {
+  placementKey?: string;
+  displayName?: string;
+  description?: string;
+  pricePerDay?: number;
+  weeklyPrice?: number | null;
+  dailySlotCapacity?: number;
+  requiresTarget?: boolean;
+};
+
 export type AiPrescreenResult = {
   isSuccess?: boolean;
   riskLevel?: string | null;
@@ -740,6 +881,15 @@ export type ChangePasswordRequest = {
 
 export type CompletePayoutManuallyRequest = {
   note: string;
+};
+
+export type CreateAdsCampaignRequest = {
+  expectedTotalAmount: number;
+  documentId: string;
+  placementKey: string;
+  targetKey?: string | null;
+  startDate: string;
+  endDate: string;
 };
 
 export type CreateAnnouncementRequest = {
@@ -1093,6 +1243,8 @@ export type MarketplaceDocumentResponse = {
   isFeatured?: boolean;
   topReviews?: Array<MarketplaceDocumentReviewResponse>;
   downloads?: number;
+  isSponsored?: boolean;
+  sponsoredCampaignId?: string | null;
 };
 
 export type MarketplaceDocumentReviewResponse = {
@@ -1273,6 +1425,14 @@ export type OrderSimilarDocumentsResponse = {
   items?: Array<OrderSimilarDocumentResponse>;
 };
 
+export type PagedResponseOfAdminAdsCampaignResponse = {
+  items?: Array<AdminAdsCampaignResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfAdminAuditLogResponse = {
   items?: Array<AdminAuditLogResponse>;
   page?: number;
@@ -1379,6 +1539,14 @@ export type PagedResponseOfAdminUserListItemResponse = {
 
 export type PagedResponseOfAdminWatermarkCopyResponse = {
   items?: Array<AdminWatermarkCopyResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
+export type PagedResponseOfAdsCampaignResponse = {
+  items?: Array<AdsCampaignResponse>;
   page?: number;
   pageSize?: number;
   totalCount?: number;
@@ -1655,6 +1823,10 @@ export type RecommendedDocumentsResponse = {
   strategyReason?: string;
   gatePassed?: boolean;
   explanations?: Array<RecommendationExplanationResponse>;
+};
+
+export type RecordAdsImpressionsRequest = {
+  campaignIds: Array<string>;
 };
 
 export type ReferralCodeValidationResponse = {
@@ -2089,6 +2261,11 @@ export type SetupIntentResponse = {
   clientSecret?: string;
 };
 
+export type StopAdsCampaignRequest = {
+  reason: string;
+  refundRemainingDays: boolean | null;
+};
+
 export type StorageKeyBackfillResponse = {
   dryRun?: boolean;
   usersScanned?: number;
@@ -2244,6 +2421,14 @@ export type TestEmailRequest = {
 export type TopCategoryItem = {
   category?: string;
   sales?: number;
+};
+
+export type UpdateAdsPlacementRequest = {
+  pricePerDay: number;
+  weeklyPrice?: number | null;
+  dailySlotCapacity: number;
+  maxPerResultPage: number;
+  isEnabled: boolean;
 };
 
 export type UpdateAnnouncementRequest = {
@@ -2428,6 +2613,130 @@ export type WishlistItemResponse = {
   format?: string | null;
   averageRating?: number | null;
 };
+
+export type GetApiAdminAdsCampaignsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+    status?: string;
+    sellerId?: string;
+    placement?: string;
+  };
+  url: '/api/admin/ads/campaigns';
+};
+
+export type GetApiAdminAdsCampaignsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiAdminAdsCampaignsError =
+  GetApiAdminAdsCampaignsErrors[keyof GetApiAdminAdsCampaignsErrors];
+
+export type GetApiAdminAdsCampaignsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdminAdsCampaignResponse;
+};
+
+export type GetApiAdminAdsCampaignsResponse =
+  GetApiAdminAdsCampaignsResponses[keyof GetApiAdminAdsCampaignsResponses];
+
+export type PostApiAdminAdsCampaignsByCampaignIdStopData = {
+  body: StopAdsCampaignRequest;
+  path: {
+    campaignId: string;
+  };
+  query?: never;
+  url: '/api/admin/ads/campaigns/{campaignId}/stop';
+};
+
+export type PostApiAdminAdsCampaignsByCampaignIdStopErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiAdminAdsCampaignsByCampaignIdStopError =
+  PostApiAdminAdsCampaignsByCampaignIdStopErrors[keyof PostApiAdminAdsCampaignsByCampaignIdStopErrors];
+
+export type PostApiAdminAdsCampaignsByCampaignIdStopResponses = {
+  /**
+   * OK
+   */
+  200: AdminAdsCampaignResponse;
+};
+
+export type PostApiAdminAdsCampaignsByCampaignIdStopResponse =
+  PostApiAdminAdsCampaignsByCampaignIdStopResponses[keyof PostApiAdminAdsCampaignsByCampaignIdStopResponses];
+
+export type GetApiAdminAdsPlacementsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/ads/placements';
+};
+
+export type GetApiAdminAdsPlacementsResponses = {
+  /**
+   * OK
+   */
+  200: Array<AdminAdsPlacementResponse>;
+};
+
+export type GetApiAdminAdsPlacementsResponse =
+  GetApiAdminAdsPlacementsResponses[keyof GetApiAdminAdsPlacementsResponses];
+
+export type PutApiAdminAdsPlacementsByPlacementKeyData = {
+  body: UpdateAdsPlacementRequest;
+  path: {
+    placementKey: string;
+  };
+  query?: never;
+  url: '/api/admin/ads/placements/{placementKey}';
+};
+
+export type PutApiAdminAdsPlacementsByPlacementKeyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PutApiAdminAdsPlacementsByPlacementKeyError =
+  PutApiAdminAdsPlacementsByPlacementKeyErrors[keyof PutApiAdminAdsPlacementsByPlacementKeyErrors];
+
+export type PutApiAdminAdsPlacementsByPlacementKeyResponses = {
+  /**
+   * OK
+   */
+  200: AdminAdsPlacementResponse;
+};
+
+export type PutApiAdminAdsPlacementsByPlacementKeyResponse =
+  PutApiAdminAdsPlacementsByPlacementKeyResponses[keyof PutApiAdminAdsPlacementsByPlacementKeyResponses];
 
 export type GetApiAdminSubscriptionsData = {
   body?: never;
@@ -5702,6 +6011,52 @@ export type GetApiMarketplaceStatsResponses = {
 export type GetApiMarketplaceStatsResponse =
   GetApiMarketplaceStatsResponses[keyof GetApiMarketplaceStatsResponses];
 
+export type PostApiMarketplaceAdsImpressionsData = {
+  body: RecordAdsImpressionsRequest;
+  path?: never;
+  query?: never;
+  url: '/api/marketplace/ads/impressions';
+};
+
+export type PostApiMarketplaceAdsImpressionsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type PostApiMarketplaceAdsImpressionsError =
+  PostApiMarketplaceAdsImpressionsErrors[keyof PostApiMarketplaceAdsImpressionsErrors];
+
+export type PostApiMarketplaceAdsImpressionsResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type PostApiMarketplaceAdsImpressionsResponse =
+  PostApiMarketplaceAdsImpressionsResponses[keyof PostApiMarketplaceAdsImpressionsResponses];
+
+export type PostApiMarketplaceAdsByCampaignIdClickData = {
+  body?: never;
+  path: {
+    campaignId: string;
+  };
+  query?: never;
+  url: '/api/marketplace/ads/{campaignId}/click';
+};
+
+export type PostApiMarketplaceAdsByCampaignIdClickResponses = {
+  /**
+   * No Content
+   */
+  204: void;
+};
+
+export type PostApiMarketplaceAdsByCampaignIdClickResponse =
+  PostApiMarketplaceAdsByCampaignIdClickResponses[keyof PostApiMarketplaceAdsByCampaignIdClickResponses];
+
 export type GetApiMeProfileData = {
   body?: never;
   path?: never;
@@ -7225,6 +7580,218 @@ export type GetApiPaymentsStripeConfigResponses = {
 
 export type GetApiPaymentsStripeConfigResponse =
   GetApiPaymentsStripeConfigResponses[keyof GetApiPaymentsStripeConfigResponses];
+
+export type GetApiSellerAdsPlacementsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/seller/ads/placements';
+};
+
+export type GetApiSellerAdsPlacementsResponses = {
+  /**
+   * OK
+   */
+  200: Array<AdsPlacementResponse>;
+};
+
+export type GetApiSellerAdsPlacementsResponse =
+  GetApiSellerAdsPlacementsResponses[keyof GetApiSellerAdsPlacementsResponses];
+
+export type GetApiSellerAdsAvailabilityData = {
+  body?: never;
+  path?: never;
+  query?: {
+    placement?: string;
+    targetKey?: string;
+    from?: string;
+    to?: string;
+  };
+  url: '/api/seller/ads/availability';
+};
+
+export type GetApiSellerAdsAvailabilityErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSellerAdsAvailabilityError =
+  GetApiSellerAdsAvailabilityErrors[keyof GetApiSellerAdsAvailabilityErrors];
+
+export type GetApiSellerAdsAvailabilityResponses = {
+  /**
+   * OK
+   */
+  200: AdsAvailabilityResponse;
+};
+
+export type GetApiSellerAdsAvailabilityResponse =
+  GetApiSellerAdsAvailabilityResponses[keyof GetApiSellerAdsAvailabilityResponses];
+
+export type PostApiSellerAdsCampaignsQuoteData = {
+  body: AdsCampaignQuoteRequest;
+  path?: never;
+  query?: never;
+  url: '/api/seller/ads/campaigns/quote';
+};
+
+export type PostApiSellerAdsCampaignsQuoteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiSellerAdsCampaignsQuoteError =
+  PostApiSellerAdsCampaignsQuoteErrors[keyof PostApiSellerAdsCampaignsQuoteErrors];
+
+export type PostApiSellerAdsCampaignsQuoteResponses = {
+  /**
+   * OK
+   */
+  200: AdsCampaignQuoteResponse;
+};
+
+export type PostApiSellerAdsCampaignsQuoteResponse =
+  PostApiSellerAdsCampaignsQuoteResponses[keyof PostApiSellerAdsCampaignsQuoteResponses];
+
+export type GetApiSellerAdsCampaignsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+    status?: string;
+  };
+  url: '/api/seller/ads/campaigns';
+};
+
+export type GetApiSellerAdsCampaignsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiSellerAdsCampaignsError =
+  GetApiSellerAdsCampaignsErrors[keyof GetApiSellerAdsCampaignsErrors];
+
+export type GetApiSellerAdsCampaignsResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfAdsCampaignResponse;
+};
+
+export type GetApiSellerAdsCampaignsResponse =
+  GetApiSellerAdsCampaignsResponses[keyof GetApiSellerAdsCampaignsResponses];
+
+export type PostApiSellerAdsCampaignsData = {
+  body: CreateAdsCampaignRequest;
+  path?: never;
+  query?: never;
+  url: '/api/seller/ads/campaigns';
+};
+
+export type PostApiSellerAdsCampaignsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type PostApiSellerAdsCampaignsError =
+  PostApiSellerAdsCampaignsErrors[keyof PostApiSellerAdsCampaignsErrors];
+
+export type PostApiSellerAdsCampaignsResponses = {
+  /**
+   * Created
+   */
+  201: AdsCampaignResponse;
+};
+
+export type PostApiSellerAdsCampaignsResponse =
+  PostApiSellerAdsCampaignsResponses[keyof PostApiSellerAdsCampaignsResponses];
+
+export type DeleteApiSellerAdsCampaignsByCampaignIdData = {
+  body?: never;
+  path: {
+    campaignId: string;
+  };
+  query?: never;
+  url: '/api/seller/ads/campaigns/{campaignId}';
+};
+
+export type DeleteApiSellerAdsCampaignsByCampaignIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Conflict
+   */
+  409: ProblemDetails;
+};
+
+export type DeleteApiSellerAdsCampaignsByCampaignIdError =
+  DeleteApiSellerAdsCampaignsByCampaignIdErrors[keyof DeleteApiSellerAdsCampaignsByCampaignIdErrors];
+
+export type DeleteApiSellerAdsCampaignsByCampaignIdResponses = {
+  /**
+   * OK
+   */
+  200: AdsCampaignResponse;
+};
+
+export type DeleteApiSellerAdsCampaignsByCampaignIdResponse =
+  DeleteApiSellerAdsCampaignsByCampaignIdResponses[keyof DeleteApiSellerAdsCampaignsByCampaignIdResponses];
+
+export type GetApiSellerAdsCampaignsByCampaignIdData = {
+  body?: never;
+  path: {
+    campaignId: string;
+  };
+  query?: never;
+  url: '/api/seller/ads/campaigns/{campaignId}';
+};
+
+export type GetApiSellerAdsCampaignsByCampaignIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSellerAdsCampaignsByCampaignIdError =
+  GetApiSellerAdsCampaignsByCampaignIdErrors[keyof GetApiSellerAdsCampaignsByCampaignIdErrors];
+
+export type GetApiSellerAdsCampaignsByCampaignIdResponses = {
+  /**
+   * OK
+   */
+  200: AdsCampaignDetailResponse;
+};
+
+export type GetApiSellerAdsCampaignsByCampaignIdResponse =
+  GetApiSellerAdsCampaignsByCampaignIdResponses[keyof GetApiSellerAdsCampaignsByCampaignIdResponses];
 
 export type GetApiSellerBundlesData = {
   body?: never;

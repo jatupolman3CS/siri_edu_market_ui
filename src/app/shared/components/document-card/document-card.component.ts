@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { RouterLink } from '@angular/router';
 import { DocumentItem } from '../../../core/models';
 import {
+  AdsService,
   CartService,
   QuickViewService,
   WishlistService,
@@ -31,9 +32,21 @@ export class DocumentCardComponent {
   private readonly cart = inject(CartService);
   readonly wishlist = inject(WishlistService);
   private readonly quickView = inject(QuickViewService);
+  private readonly ads = inject(AdsService);
 
   readonly doc = input.required<DocumentItem>();
   readonly density = input<'default' | 'compact'>('default');
+
+  /**
+   * seller-ads-promotion v1 §4.3: fired on click of either navigable link (cover / title) of a
+   * sponsored card, *before* the `routerLink` navigation it sits alongside — never
+   * `preventDefault`/`stopPropagation` (the navigation must still happen) and never awaited (the
+   * navigation must never wait on it).
+   */
+  onSponsoredNavigate(): void {
+    if (!this.doc().isSponsored) return;
+    this.ads.recordClick(this.doc().sponsoredCampaignId);
+  }
 
   inCart(): boolean {
     return this.cart.has(this.doc().id);

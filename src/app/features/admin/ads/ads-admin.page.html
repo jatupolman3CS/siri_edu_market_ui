@@ -1,0 +1,359 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-ink tracking-tight">จัดการโฆษณา (Ads)</h1>
+      <p class="text-sm text-ink-muted mt-1">
+        ตรวจสอบแคมเปญโฆษณาทั้งหมดในระบบ และกำหนดค่าตำแหน่งโฆษณา
+      </p>
+    </div>
+  </div>
+
+  <nz-tabs>
+    <!-- TAB 1: Campaigns -->
+    <nz-tab nzTitle="แคมเปญทั้งหมด">
+      <div class="space-y-4 pt-4">
+        <!-- Filters -->
+        <div class="card-soft p-4 flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-ink-muted">สถานะ:</span>
+            <nz-select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)" style="min-width: 140px">
+              @for (opt of statusFilterOptions; track opt.value) {
+                <nz-option [nzValue]="opt.value" [nzLabel]="opt.label" />
+              }
+            </nz-select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-ink-muted">ตำแหน่ง:</span>
+            <nz-select [ngModel]="placementFilter()" (ngModelChange)="onPlacementFilterChange($event)" style="min-width: 160px">
+              <nz-option nzValue="all" nzLabel="ทั้งหมด" />
+              @for (p of placements(); track p.placementKey) {
+                <nz-option [nzValue]="p.placementKey" [nzLabel]="p.displayName" />
+              }
+            </nz-select>
+          </div>
+
+          <div class="flex items-center gap-2 ml-auto">
+            <input
+              type="text"
+              class="input-soft text-sm !py-1.5 !px-3"
+              placeholder="Seller ID..."
+              [ngModel]="sellerIdFilter()"
+              (ngModelChange)="onSellerIdFilterChange($event)"
+              (keyup.enter)="applySellerIdFilter()"
+            />
+            <button type="button" class="btn-ghost !py-1.5 !px-3 text-xs" (click)="applySellerIdFilter()">
+              ค้นหา
+            </button>
+          </div>
+        </div>
+
+        @if (loadingList() && !campaigns().length) {
+          <div class="card-soft p-12 text-center text-sm text-ink-muted">
+            กำลังโหลดข้อมูล…
+          </div>
+        } @else if (!campaigns().length) {
+          <div class="card-soft p-12">
+            <app-empty-state
+              emoji="📢"
+              title="ไม่พบแคมเปญโฆษณา"
+              description="ไม่มีรายการแคมเปญที่ตรงกับเงื่อนไขการค้นหา"
+            />
+          </div>
+        } @else {
+          <div class="card-soft p-6 overflow-hidden">
+            <div class="table-responsive overflow-x-auto">
+              <table class="w-full text-left text-sm min-w-[900px]">
+                <thead>
+                  <tr class="border-b border-line text-xs font-semibold text-ink-muted">
+                    <th class="pb-3 pr-4">เอกสาร</th>
+                    <th class="pb-3 px-4">ผู้ขาย</th>
+                    <th class="pb-3 px-4">ตำแหน่ง</th>
+                    <th class="pb-3 px-4">ช่วงเวลา</th>
+                    <th class="pb-3 px-4 text-right">ยอดรวม</th>
+                    <th class="pb-3 px-4 text-center">สถานะ</th>
+                    <th class="pb-3 px-4 text-right">สถิติ (Imp/Click)</th>
+                    <th class="pb-3 pl-4 text-right">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-line">
+                  @for (c of campaigns(); track c.id) {
+                    <tr class="hover:bg-pink-50/40 transition-colors align-top">
+                      <td class="py-3.5 pr-4">
+                        <div class="flex items-center gap-2.5">
+                          <img
+                            appImgFallback
+                            [src]="c.documentCoverUrl"
+                            [alt]="c.documentTitle"
+                            class="w-10 h-10 rounded-lg object-cover shrink-0 border border-line"
+                          />
+                          <span class="font-semibold text-ink line-clamp-2 max-w-[200px]">{{ c.documentTitle }}</span>
+                        </div>
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <div class="font-medium text-ink">{{ c.sellerName }}</div>
+                        <div class="text-xs text-ink-muted">คงเหลือ {{ c.sellerAvailableBalance | thb }}</div>
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap text-ink-soft">
+                        <div>{{ c.placementName }}</div>
+                        @if (c.targetLabel) {
+                          <div class="text-xs text-ink-muted">{{ c.targetLabel }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap text-ink-soft text-xs">
+                        <div>{{ c.startDate | date: 'd MMM yy' }} – {{ c.endDate | date: 'd MMM yy' }}</div>
+                        <div class="text-ink-muted">{{ c.dayCount }} วัน ({{ c.pricePerDay | thb }}/วัน)</div>
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap font-medium text-ink">
+                        <div>{{ c.totalAmount | thb }}</div>
+                        @if (c.refundedAmount > 0) {
+                          <div class="text-xs text-emerald-600 font-normal">คืน {{ c.refundedAmount | thb }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        @switch (c.status) {
+                          @case ('active') { <span class="pill pill-green">{{ statusLabel(c.status) }}</span> }
+                          @case ('scheduled') { <span class="pill bg-sky-100 text-sky-700">{{ statusLabel(c.status) }}</span> }
+                          @case ('completed') { <span class="pill pill-soft">{{ statusLabel(c.status) }}</span> }
+                          @case ('cancelled') { <span class="pill pill-soft">{{ statusLabel(c.status) }}</span> }
+                          @default { <span class="pill pill-rose">{{ statusLabel(c.status) }}</span> }
+                        }
+                        @if (c.status === 'stopped' && stopReasonLabel(c.stopReason); as reason) {
+                          <div class="text-xs text-rose-600 mt-0.5">{{ reason }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap text-xs text-ink">
+                        <div>{{ c.impressions }} วิว</div>
+                        <div class="text-ink-muted">{{ c.clicks }} คลิก</div>
+                      </td>
+                      <td class="py-3.5 pl-4 text-right whitespace-nowrap">
+                        @if (canStop(c)) {
+                          <button
+                            type="button"
+                            class="btn-ghost !py-1 !px-2.5 text-xs text-rose-600 hover:bg-rose-50"
+                            (click)="openStop(c)"
+                          >
+                            ระงับแคมเปญ
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-line">
+              <app-pagination
+                [page]="page()"
+                [pageSize]="pageSize()"
+                [total]="total()"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
+              />
+            </div>
+          </div>
+        }
+      </div>
+    </nz-tab>
+
+    <!-- TAB 2: Placements -->
+    <nz-tab nzTitle="ตำแหน่งโฆษณา">
+      <div class="space-y-4 pt-4">
+        @if (loadingPlacements() && !placements().length) {
+          <div class="card-soft p-12 text-center text-sm text-ink-muted">
+            กำลังโหลดข้อมูลตำแหน่งโฆษณา…
+          </div>
+        } @else {
+          <div class="card-soft p-6 overflow-hidden">
+            <div class="table-responsive overflow-x-auto">
+              <table class="w-full text-left text-sm min-w-[700px]">
+                <thead>
+                  <tr class="border-b border-line text-xs font-semibold text-ink-muted">
+                    <th class="pb-3 pr-4">ตำแหน่ง</th>
+                    <th class="pb-3 px-4 text-right">ราคา/วัน</th>
+                    <th class="pb-3 px-4 text-right">ราคา/สัปดาห์</th>
+                    <th class="pb-3 px-4 text-center">ความจุ/วัน</th>
+                    <th class="pb-3 px-4 text-center">สูงสุด/หน้า</th>
+                    <th class="pb-3 px-4 text-center">สถานะ</th>
+                    <th class="pb-3 pl-4 text-right">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-line">
+                  @for (p of placements(); track p.placementKey) {
+                    <tr class="hover:bg-pink-50/40 transition-colors">
+                      <td class="py-3.5 pr-4">
+                        <div class="font-semibold text-ink">{{ p.displayName }}</div>
+                        <div class="text-xs font-mono text-ink-muted">{{ p.placementKey }}</div>
+                        @if (p.description) {
+                          <div class="text-xs text-ink-soft mt-0.5">{{ p.description }}</div>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-medium text-ink">
+                        {{ p.pricePerDay | thb }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-medium text-ink">
+                        {{ p.weeklyPrice != null ? (p.weeklyPrice | thb) : '—' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-center text-ink">
+                        {{ p.dailySlotCapacity }} slot
+                      </td>
+                      <td class="py-3.5 px-4 text-center text-ink">
+                        {{ p.maxPerResultPage }} ชิ้น
+                      </td>
+                      <td class="py-3.5 px-4 text-center">
+                        @if (p.isEnabled) {
+                          <span class="pill pill-green">เปิดใช้งาน</span>
+                        } @else {
+                          <span class="pill pill-rose">ปิดใช้งาน</span>
+                        }
+                      </td>
+                      <td class="py-3.5 pl-4 text-right">
+                        <button
+                          type="button"
+                          class="btn-ghost !py-1 !px-3 text-xs"
+                          (click)="openEditPlacement(p)"
+                        >
+                          แก้ไข
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
+    </nz-tab>
+  </nz-tabs>
+</div>
+
+<!-- Modal: Stop Campaign -->
+@if (stopTarget()) {
+  <nz-modal
+    [nzVisible]="true"
+    nzTitle="ระงับแคมเปญโฆษณา"
+    [nzOkText]="'ยืนยันการระงับ'"
+    [nzOkDanger]="true"
+    [nzOkLoading]="stopping()"
+    [nzOkDisabled]="!stopReasonValid()"
+    (nzOnCancel)="closeStop()"
+    (nzOnOk)="confirmStop()"
+  >
+    <ng-container *nzModalContent>
+      <div class="space-y-4">
+        <div class="text-sm text-ink">
+          คุณกำลังจะระงับแคมเปญโฆษณาของเอกสาร:
+          <span class="font-semibold">{{ stopTarget()?.documentTitle }}</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted mb-1">
+            เหตุผลในการระงับ (10-500 ตัวอักษร) *
+          </label>
+          <textarea
+            rows="3"
+            class="input-soft w-full text-sm"
+            placeholder="ระบุเหตุผลการระงับ..."
+            [ngModel]="stopReason()"
+            (ngModelChange)="stopReason.set($event)"
+          ></textarea>
+          @if (stopReasonError(); as err) {
+            <p class="text-xs text-rose-600 mt-1">{{ err }}</p>
+          }
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-lg bg-pink-50/50 border border-line">
+          <div>
+            <div class="text-sm font-semibold text-ink">คืนเงินค่าโฆษณาสำหรับวันที่เหลือ</div>
+            <div class="text-xs text-ink-muted">คืนเงินเข้ายอดคงเหลือของผู้ขายตามสัดส่วนวันที่เหลือ</div>
+          </div>
+          <nz-switch
+            [ngModel]="refundRemainingDays()"
+            (ngModelChange)="refundRemainingDays.set($event)"
+          />
+        </div>
+      </div>
+    </ng-container>
+  </nz-modal>
+}
+
+<!-- Modal: Edit Placement -->
+@if (editingPlacement()) {
+  <nz-modal
+    [nzVisible]="true"
+    [nzTitle]="'แก้ไขตำแหน่ง: ' + editingPlacement()?.displayName"
+    [nzOkText]="'บันทึก'"
+    [nzOkLoading]="savingPlacement()"
+    [nzOkDisabled]="!!placementFormError()"
+    (nzOnCancel)="closeEditPlacement()"
+    (nzOnOk)="savePlacement()"
+  >
+    <ng-container *nzModalContent>
+      <div class="space-y-4">
+        @if (placementFormErrorMessage(); as msg) {
+          <div class="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700">
+            {{ msg }}
+          </div>
+        }
+
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted mb-1">ราคาต่อวัน (THB) *</label>
+          <input
+            type="number"
+            class="input-soft w-full text-sm"
+            [ngModel]="placementForm().pricePerDay"
+            (ngModelChange)="updatePlacementForm({ pricePerDay: $event != null && $event !== '' ? +$event : null })"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted mb-1">ราคารายสัปดาห์ (THB, ว่างไว้ถ้าไม่มี)</label>
+          <input
+            type="number"
+            class="input-soft w-full text-sm"
+            [ngModel]="placementForm().weeklyPrice"
+            (ngModelChange)="updatePlacementForm({ weeklyPrice: $event != null && $event !== '' ? +$event : null })"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-ink-muted mb-1">ความจุต่อวัน (1-10) *</label>
+            <input
+              type="number"
+              class="input-soft w-full text-sm"
+              [ngModel]="placementForm().dailySlotCapacity"
+              (ngModelChange)="updatePlacementForm({ dailySlotCapacity: $event != null && $event !== '' ? +$event : null })"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink-muted mb-1">สูงสุดต่อหน้า (1-2) *</label>
+            <input
+              type="number"
+              class="input-soft w-full text-sm"
+              [ngModel]="placementForm().maxPerResultPage"
+              (ngModelChange)="updatePlacementForm({ maxPerResultPage: $event != null && $event !== '' ? +$event : null })"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-lg bg-pink-50/50 border border-line">
+          <div>
+            <div class="text-sm font-semibold text-ink">เปิดใช้งานตำแหน่งนี้</div>
+            <div class="text-xs text-ink-muted">หากปิด ผู้ขายจะไม่สามารถจองตำแหน่งนี้ได้ใหม่</div>
+          </div>
+          <nz-switch
+            [ngModel]="placementForm().isEnabled"
+            (ngModelChange)="updatePlacementForm({ isEnabled: $event })"
+          />
+        </div>
+
+        @if (placementFormError(); as formErr) {
+          <p class="text-xs text-rose-600">{{ formErr }}</p>
+        }
+      </div>
+    </ng-container>
+  </nz-modal>
+}

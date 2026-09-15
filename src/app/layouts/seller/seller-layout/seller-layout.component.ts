@@ -65,6 +65,8 @@ export class SellerLayoutComponent {
     { label: this.translation.t('seller.upload'), href: '/seller/upload', icon: 'upload' as const },
     { label: this.translation.currentLang() === 'th' ? 'พรีวิว PDF' : 'PDF Preview', href: '/seller/pdf-preview', icon: 'eye' as const },
     { label: this.translation.t('seller.payout'), href: '/seller/earnings', icon: 'wallet' as const },
+    // seller-ads-promotion v1 §4.1/§4.4: flat-fee ad campaigns bought with the seller's own ledger balance.
+    { label: 'โปรโมตเอกสาร', href: '/seller/ads', icon: 'sparkle' as const },
     { label: this.translation.currentLang() === 'th' ? 'คำถามจากผู้ซื้อ' : 'Customer Q&A', href: '/seller/qna', icon: 'bell' as const },
     { label: this.translation.currentLang() === 'th' ? 'หมวดหน้าร้าน' : 'Storefront Sections', href: '/seller/store-sections', icon: 'package' as const },
     { label: this.translation.currentLang() === 'th' ? 'แพ็กเกจของฉัน' : 'My Bundles', href: '/seller/bundles', icon: 'package' as const },

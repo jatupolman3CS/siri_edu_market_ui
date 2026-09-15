@@ -316,6 +316,15 @@ export interface DocumentItem {
    * `npm run generate:api` ships the field on the generated response type (round 1).
    */
   isAccessibleViaActiveSubscription?: boolean;
+  /**
+   * seller-ads-promotion v1 §3.9.1: `true` only on the item(s) pinned to the top of
+   * `GET /api/marketplace/search` (page 1, `sort=popular`, no `SellerId`) by an active ad
+   * campaign — every other endpoint that returns a document list always sends `false`/`null`
+   * (DEC-6/AC-15), so this stays `undefined`→falsy everywhere else.
+   */
+  isSponsored?: boolean;
+  /** seller-ads-promotion v1 §3.9.1: the campaign id to report impression/click against — `undefined` when `isSponsored` is falsy. */
+  sponsoredCampaignId?: string;
 }
 
 // ====== Bundle ======
@@ -890,6 +899,124 @@ export interface ReferralCodeValidation {
   valid: boolean;
   discountAmount?: number;
   reasonText?: string;
+}
+
+// ====== Seller Ads Promotion (seller-ads-promotion v1, docs/contracts/seller-ads-promotion.md §3) ======
+// F-14 — flat-fee ad campaigns a seller buys with their existing ledger balance (§1.2 DEC-1/DEC-2).
+// Mirrors the live, generated `AdsPlacementResponse` / `AdsCampaignResponse` / etc. — every field
+// below round-trips exactly what `core/services/ads.service.ts` gets back from the real SDK.
+
+/** §2.3 wire values — never renumber/rename, they travel as strings on the wire. */
+export type AdsCampaignStatus = 'scheduled' | 'active' | 'completed' | 'cancelled' | 'stopped';
+
+/** §2.2 `StopReason` constants — `null` unless the campaign ended early. */
+export type AdsStopReason =
+  | 'seller_cancelled'
+  | 'admin_stopped'
+  | 'account_suspended'
+  | 'document_unavailable';
+
+/** §3.1: one ad placement a seller can buy into — only `IsEnabled` rows are returned here. */
+export interface AdsPlacement {
+  placementKey: string;
+  displayName: string;
+  description: string;
+  pricePerDay: number;
+  /** `null` = no weekly package for this placement (DEC-1). */
+  weeklyPrice: number | null;
+  dailySlotCapacity: number;
+  /** `true` = the seller must pick a category (`targetKey`) — `category_top` today. */
+  requiresTarget: boolean;
+}
+
+/** §3.11.3: the admin variant of {@link AdsPlacement} — includes disabled rows + editable knobs. */
+export interface AdminAdsPlacement extends AdsPlacement {
+  maxPerResultPage: number;
+  isEnabled: boolean;
+  activeCampaignCount: number;
+  updatedAt: string | null;
+}
+
+/** §3.2: one calendar day's slot availability for a (placement, target) pair. */
+export interface AdsAvailabilityDay {
+  date: string;
+  remainingSlots: number;
+  /** `false` when full **or** in the past (Thai time) — drives the date-picker's `nzDisabledDate` (§4.2). */
+  isSelectable: boolean;
+}
+
+/** §3.2: `GET /api/seller/ads/availability` response. */
+export interface AdsAvailability {
+  placementKey: string;
+  targetKey: string;
+  pricePerDay: number;
+  weeklyPrice: number | null;
+  dailySlotCapacity: number;
+  days: AdsAvailabilityDay[];
+}
+
+/**
+ * §3.3: `POST /api/seller/ads/campaigns/quote` response — §4.2 rule 1: this is the **only**
+ * source of any money figure shown in the create-campaign form. Never compute a price in TS.
+ */
+export interface AdsCampaignQuote {
+  dayCount: number;
+  pricePerDay: number;
+  /** `daily` \| `weekly` (DEC-1). */
+  pricingMode: string;
+  totalAmount: number;
+  availableBalance: number;
+  canAfford: boolean;
+  /** Non-empty = the selected range collides with a full day — blocks submit (§4.2 rule 4). */
+  fullDates: string[];
+}
+
+/** §3.6: one campaign row, shared by the seller list/detail and (via {@link AdminAdsCampaign}) admin list. */
+export interface AdsCampaign {
+  id: string;
+  documentId: string;
+  documentTitle: string;
+  documentCoverUrl: string;
+  sellerId: string;
+  placementKey: string;
+  placementName: string;
+  targetKey: string;
+  /** `null` when the target category couldn't be resolved — falls back to the raw `targetKey` server-side. */
+  targetLabel: string | null;
+  startDate: string;
+  endDate: string;
+  dayCount: number;
+  /** Snapshot at purchase time — always used for refund math, never re-priced (§3.7). */
+  pricePerDay: number;
+  totalAmount: number;
+  refundedAmount: number;
+  status: AdsCampaignStatus;
+  stopReason: AdsStopReason | null;
+  /** Admin's free-text reason when they stopped the campaign — seller-visible (§3.6). */
+  stopNote: string | null;
+  stoppedAt: string | null;
+  /** Lifetime total across `dailyStats` — never used to compute money (DEC-11/AC-27). */
+  impressions: number;
+  clicks: number;
+  createdAt: string;
+}
+
+/** §3.6: one day of `AdsCampaignDetailResponse.dailyStats` — only days with real traffic are sent. */
+export interface AdsCampaignDailyStat {
+  date: string;
+  impressions: number;
+  clicks: number;
+}
+
+/** §3.6: `GET /api/seller/ads/campaigns/{id}` response = {@link AdsCampaign} + per-day stats. */
+export interface AdsCampaignDetail extends AdsCampaign {
+  dailyStats: AdsCampaignDailyStat[];
+}
+
+/** §3.11.1: the admin campaign list row = {@link AdsCampaign} + who owns it and their balance. */
+export interface AdminAdsCampaign extends AdsCampaign {
+  sellerName: string;
+  sellerAvailableBalance: number;
 }
 
 // ====== Exam Hub Landing Pages (exam-hub-landing-pages v1, docs/contracts/exam-hub-landing-pages.md §4) ======

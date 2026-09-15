@@ -3,6 +3,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { of } from 'rxjs';
 import { BuyerMarketplacePage } from './marketplace.page';
 import {
+  AdsService,
   BundleService,
   CartService,
   CatalogService,
@@ -105,11 +106,20 @@ function buildDiscoveryFake(discovery: DiscoveryBlock | null = null, state: Acti
   };
 }
 
+/** seller-ads-promotion v1 §4.3 (AC-38). */
+function buildAdsFake() {
+  return {
+    recordImpressions: vi.fn(),
+    recordClick: vi.fn(),
+  };
+}
+
 function render(
   catalog: ReturnType<typeof buildCatalogFake>,
   platformStats: ReturnType<typeof buildPlatformStatsFake>,
   query: Record<string, string> = {},
   discovery: ReturnType<typeof buildDiscoveryFake> = buildDiscoveryFake(),
+  ads: ReturnType<typeof buildAdsFake> = buildAdsFake(),
 ) {
   TestBed.configureTestingModule({
     imports: [BuyerMarketplacePage],
@@ -122,6 +132,7 @@ function render(
       { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
       { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
       { provide: DiscoveryService, useValue: discovery },
+      { provide: AdsService, useValue: ads },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -363,6 +374,42 @@ describe('BuyerMarketplacePage — discovery block (crm-driven-discovery v1 §3.
     const page = fixture.componentInstance;
     expect(page.showDiscoveryBlock()).toBe(false);
     expect(page.showDiscoverySkeleton()).toBe(false);
+  });
+});
+
+/**
+ * seller-ads-promotion v1 §4.3 (AC-38) — impressions fire once per rendered result set, through
+ * `AdsService` only (never the SDK directly from this page).
+ */
+describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.3, AC-38)', () => {
+  function sponsoredDoc(id: string, campaignId: string): DocumentItem {
+    return { ...buildDoc(id), isSponsored: true, sponsoredCampaignId: campaignId };
+  }
+
+  it('calls ads.recordImpressions() with the sponsored campaignIds of the current result set', () => {
+    const catalog = buildCatalogFake();
+    const docs = [sponsoredDoc('doc-1', 'camp-1'), buildDoc('doc-2')];
+    catalog.marketplaceResults = () => docs;
+    const ads = buildAdsFake();
+
+    render(catalog, buildPlatformStatsFake(undefined), {}, buildDiscoveryFake(), ads);
+
+    expect(ads.recordImpressions).toHaveBeenCalledTimes(1);
+    expect(ads.recordImpressions).toHaveBeenCalledWith(
+      docs,
+      ['camp-1'],
+    );
+  });
+
+
+  it('calls ads.recordImpressions() with an empty array when nothing on the page is sponsored (dedup lives in the service, not here)', () => {
+    const catalog = buildCatalogFake();
+    catalog.marketplaceResults = () => [buildDoc('doc-1'), buildDoc('doc-2')];
+    const ads = buildAdsFake();
+
+    render(catalog, buildPlatformStatsFake(undefined), {}, buildDiscoveryFake(), ads);
+
+    expect(ads.recordImpressions).toHaveBeenCalledWith(expect.any(Array), []);
   });
 });
 

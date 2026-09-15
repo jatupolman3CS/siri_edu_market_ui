@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSliderModule } from 'ng-zorro-antd/slider';
 import {
+  AdsService,
   BundleService,
   CatalogService,
   DiscoveryService,
@@ -72,6 +73,7 @@ export class BuyerMarketplacePage {
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
   readonly discovery = inject(DiscoveryService);
+  private readonly ads = inject(AdsService);
   readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -268,6 +270,22 @@ export class BuyerMarketplacePage {
           this.catalog.setTab(tab as 'all' | 'free' | 'top-rated' | 'new' | 'bundles');
         }
       });
+
+    // seller-ads-promotion v1 §4.3 (AC-38): fire impressions once per rendered result set.
+    // `marketplaceResults()` is a `computed()` that returns a fresh array only when one of its
+    // dependencies (the fetched page / filters / tab) actually changes — an OnPush re-render that
+    // doesn't touch any of those returns the same cached array reference, so `AdsService`'s
+    // reference-keyed dedup (§4.3: "กันยิงซ้ำตอน re-render") holds without this page inventing its
+    // own key. `isSponsored`/`sponsoredCampaignId` only exist on `/marketplace/search` results
+    // (DEC-6) — every other list this signal can hold (browse/tab-filtered) simply has no
+    // sponsored items, so `recordImpressions` no-ops there.
+    effect(() => {
+      const docs = this.catalog.marketplaceResults();
+      const sponsoredCampaignIds = docs
+        .filter((d) => d.isSponsored)
+        .map((d) => d.sponsoredCampaignId);
+      this.ads.recordImpressions(docs, sponsoredCampaignIds);
+    });
 
     // Accumulate documents on page progression, reset on page 1
     effect(() => {

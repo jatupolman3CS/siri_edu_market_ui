@@ -5,6 +5,7 @@
       <!-- Cover -->
       <a
         [routerLink]="['/document', doc().id]"
+        (click)="onSponsoredNavigate()"
         class="block relative aspect-[4/5] bg-pink-50 overflow-hidden rounded-3xl"
         [class.!rounded-2xl]="isCompact()"
       >
@@ -43,6 +44,15 @@
           [class.!left-2]="isCompact()"
           [class.!gap-1.5]="isCompact()"
         >
+          @if (doc().isSponsored) {
+            <!-- seller-ads-promotion v1 DEC-9: must be visible without hover — never hidden behind hover-only affordances. -->
+            <span
+              class="pill bg-ink text-white shadow-soft"
+              title="ผู้ขายจ่ายค่าโปรโมตเพื่อให้เอกสารนี้แสดงบนสุด"
+            >
+              📢 โฆษณา
+            </span>
+          }
           @if (doc().isFree) {
             <span class="pill bg-emerald-500 text-white shadow-soft">
               🆓 ฟรี
@@ -141,7 +151,7 @@
           </span>
         </div>
 
-        <a [routerLink]="['/document', doc().id]" class="block">
+        <a [routerLink]="['/document', doc().id]" (click)="onSponsoredNavigate()" class="block">
           <h3
             class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 min-h-[2.75em] group-hover:text-pink-600 transition-colors"
             [class.!text-[12px]]="isCompact()"

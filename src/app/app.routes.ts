@@ -326,6 +326,13 @@ export const routes: Routes = [
             (m) => m.SellerEarningsPage,
           ),
       },
+      // seller-ads-promotion v1 §4.1: flat-fee ad campaigns bought with the seller's ledger balance.
+      {
+        path: 'ads',
+        loadComponent: () =>
+          import('./features/seller/ads/ads.page').then((m) => m.SellerAdsPage),
+        title: 'โปรโมตเอกสารของคุณ — Siri Studio',
+      },
       {
         path: 'reviews',
         loadComponent: () =>
@@ -451,6 +458,22 @@ export const routes: Routes = [
           import('./features/admin/payouts/payouts.page').then(
             (m) => m.AdminPayoutsPage,
           ),
+      },
+      // referral-program v2 §4.1: admin management for affiliate links.
+      {
+        path: 'affiliates',
+        loadComponent: () =>
+          import('./features/admin/affiliates/affiliates.page').then(
+            (m) => m.AdminAffiliatesPage,
+          ),
+        title: 'จัดการลิงก์พันธมิตร — Admin',
+      },
+      // seller-ads-promotion v1 §4.1: all-campaigns queue + stop + placement price/capacity editor.
+      {
+        path: 'ads',
+        loadComponent: () =>
+          import('./features/admin/ads/ads-admin.page').then((m) => m.AdsAdminPage),
+        title: 'จัดการโฆษณา — Admin',
       },
       {
         path: 'seller-applications',

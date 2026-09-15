@@ -391,6 +391,16 @@ describe('SellerEarningsPage — ประวัติยอดเงิน / le
     expect(c.ledgerLabel('adjustment')).toBe('ปรับยอดโดยผู้ดูแลระบบ');
   });
 
+  it('seller-ads-promotion v1 §4.4: ledgerLabel() maps the 2 new ads kinds — both the documented snake_case and the raw MapKind() fallback the live backend actually sends', () => {
+    const { fixture } = render({});
+    const c = fixture.componentInstance;
+
+    expect(c.ledgerLabel('ads_spend')).toBe('ค่าโฆษณา');
+    expect(c.ledgerLabel('adsspend')).toBe('ค่าโฆษณา');
+    expect(c.ledgerLabel('ads_refund')).toBe('คืนค่าโฆษณา');
+    expect(c.ledgerLabel('adsrefund')).toBe('คืนค่าโฆษณา');
+  });
+
   it('renders the ledger rows with a +/- sign', async () => {
     const { fixture, fakeSeller } = render({});
     (fakeSeller.loadBalanceEntriesPaged as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
