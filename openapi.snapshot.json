@@ -17507,6 +17507,11 @@
             "type": "number",
             "format": "double"
           },
+          "commissionRatePercentOverride": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "isActive": {
             "type": "boolean"
           },

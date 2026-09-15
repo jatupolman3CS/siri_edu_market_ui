@@ -69,6 +69,7 @@ export type AdminAffiliateSummaryResponse = {
   email: string;
   code: string;
   commissionRatePercent?: number;
+  commissionRatePercentOverride?: number | null;
   isActive?: boolean;
   totalClicks?: number;
   totalConversions?: number;

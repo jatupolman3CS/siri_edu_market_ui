@@ -1122,7 +1122,7 @@ describe('mapAdminAffiliateSummary', () => {
 
   // referral-program v3 §1.6/§3.10 (AC-39): commissionRatePercentOverride is the raw override —
   // distinct from the effective `commissionRatePercent` above — and must round-trip both when set
-  // and when absent, since the SDK type doesn't carry the field yet (TODO(contract) in mappers.ts).
+  // and when absent.
   it('maps commissionRatePercentOverride when present', () => {
     const raw = {
       userId: 'usr-1',
