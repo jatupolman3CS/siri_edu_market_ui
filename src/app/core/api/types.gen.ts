@@ -357,6 +357,16 @@ export type AdminFeedbackListItemResponse = {
   handledByName?: string | null;
 };
 
+export type AdminMlRecommendationOverviewResponse = {
+  documentsWithEmbeddingCount?: number;
+  documentsWithBoughtTogetherCount?: number;
+  totalSimilarityPairs?: number;
+  averageCoPurchaseCount?: number;
+  lastComputedAt?: string | null;
+  embeddingDimensions?: number;
+  minCoPurchaseCount?: number;
+};
+
 export type AdminOpenReportResponse = {
   id?: string;
   documentId?: string;
@@ -613,6 +623,14 @@ export type AdminUserSellerStatsResponse = {
 
 export type AdminUsersSort = number;
 
+export type AdminWalletSummaryResponse = {
+  userId?: string;
+  balance?: number;
+  lifetimeToppedUp?: number;
+  lifetimeSpent?: number;
+  asOf?: string;
+};
+
 export type AdminWatermarkCopyResponse = {
   id?: string;
   watermarkToken?: string;
@@ -829,6 +847,15 @@ export type BanUserRequest = {
   messageToUser?: string | null;
 };
 
+export type BoughtTogetherItemResponse = {
+  document?: MarketplaceDocumentResponse;
+  coPurchaseCount?: number;
+};
+
+export type BoughtTogetherResponse = {
+  items?: Array<BoughtTogetherItemResponse>;
+};
+
 export type BundleDetailResponse = {
   id?: string;
   slug?: string;
@@ -982,6 +1009,7 @@ export type CreateOrderRequest = {
   referralCode?: string | null;
   useReferralCredit?: boolean | null;
   affiliateClickToken?: string | null;
+  payWithWallet?: boolean;
 };
 
 export type CreateSubcategoryRequest = {
@@ -995,6 +1023,10 @@ export type CreateSubcategoryRequest = {
 
 export type CreateSubscriptionMembershipRequest = {
   categoryIds: Array<string>;
+};
+
+export type CreateWalletTopUpRequest = {
+  amount: number;
 };
 
 export type DiscoveryResponse = {
@@ -1723,6 +1755,14 @@ export type PagedResponseOfSubscriptionAccessHistoryItemResponse = {
   totalPages?: number;
 };
 
+export type PagedResponseOfWalletEntryResponse = {
+  items?: Array<WalletEntryResponse>;
+  page?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+};
+
 export type PagedResponseOfWishlistItemResponse = {
   items?: Array<WishlistItemResponse>;
   page?: number;
@@ -1815,6 +1855,8 @@ export type PlatformSettingsResponse = {
   watermarkForensicEnabled?: boolean;
   watermarkCopyRetentionDays?: number;
   watermarkDefaultSubtitle?: string | null;
+  walletTopUpMinTHB?: number;
+  walletTopUpMaxTHB?: number;
 };
 
 export type PlatformStatsResponse = {
@@ -2604,6 +2646,8 @@ export type UpdatePlatformSettingsRequest = {
   watermarkForensicEnabled?: boolean | null;
   watermarkCopyRetentionDays?: number | null;
   watermarkDefaultSubtitle?: string | null;
+  walletTopUpMinTHB?: number | null;
+  walletTopUpMaxTHB?: number | null;
 };
 
 export type UpdateProfileRequest = {
@@ -2665,6 +2709,30 @@ export type VerifyEmailRequest = {
 export type VerifyOtpRequest = {
   email: string;
   otp: string;
+};
+
+export type WalletEntryResponse = {
+  id?: string;
+  kind?: string;
+  amount?: number;
+  reason?: string;
+  orderNumber?: string | null;
+  occurredAt?: string;
+};
+
+export type WalletSummaryResponse = {
+  balance?: number;
+  asOf?: string;
+};
+
+export type WalletTopUpResponse = {
+  id?: string;
+  amount?: number;
+  status?: string;
+  stripePaymentIntentId?: string | null;
+  clientSecret?: string | null;
+  createdAt?: string;
+  succeededAt?: string | null;
 };
 
 export type WishlistItemResponse = {
@@ -2803,6 +2871,23 @@ export type PutApiAdminAdsPlacementsByPlacementKeyResponses = {
 
 export type PutApiAdminAdsPlacementsByPlacementKeyResponse =
   PutApiAdminAdsPlacementsByPlacementKeyResponses[keyof PutApiAdminAdsPlacementsByPlacementKeyResponses];
+
+export type GetApiAdminMlRecommendationsOverviewData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/ml/recommendations/overview';
+};
+
+export type GetApiAdminMlRecommendationsOverviewResponses = {
+  /**
+   * OK
+   */
+  200: AdminMlRecommendationOverviewResponse;
+};
+
+export type GetApiAdminMlRecommendationsOverviewResponse =
+  GetApiAdminMlRecommendationsOverviewResponses[keyof GetApiAdminMlRecommendationsOverviewResponses];
 
 export type GetApiAdminSubscriptionsData = {
   body?: never;
@@ -4481,6 +4566,83 @@ export type PutApiAdminAffiliatesByUserIdSettingsResponses = {
 export type PutApiAdminAffiliatesByUserIdSettingsResponse =
   PutApiAdminAffiliatesByUserIdSettingsResponses[keyof PutApiAdminAffiliatesByUserIdSettingsResponses];
 
+export type GetApiAdminUsersByUserIdWalletData = {
+  body?: never;
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/api/admin/users/{userId}/wallet';
+};
+
+export type GetApiAdminUsersByUserIdWalletErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminUsersByUserIdWalletError =
+  GetApiAdminUsersByUserIdWalletErrors[keyof GetApiAdminUsersByUserIdWalletErrors];
+
+export type GetApiAdminUsersByUserIdWalletResponses = {
+  /**
+   * OK
+   */
+  200: AdminWalletSummaryResponse;
+};
+
+export type GetApiAdminUsersByUserIdWalletResponse =
+  GetApiAdminUsersByUserIdWalletResponses[keyof GetApiAdminUsersByUserIdWalletResponses];
+
+export type GetApiAdminUsersByUserIdWalletEntriesData = {
+  body?: never;
+  path: {
+    userId: string;
+  };
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/admin/users/{userId}/wallet/entries';
+};
+
+export type GetApiAdminUsersByUserIdWalletEntriesErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiAdminUsersByUserIdWalletEntriesError =
+  GetApiAdminUsersByUserIdWalletEntriesErrors[keyof GetApiAdminUsersByUserIdWalletEntriesErrors];
+
+export type GetApiAdminUsersByUserIdWalletEntriesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfWalletEntryResponse;
+};
+
+export type GetApiAdminUsersByUserIdWalletEntriesResponse =
+  GetApiAdminUsersByUserIdWalletEntriesResponses[keyof GetApiAdminUsersByUserIdWalletEntriesResponses];
+
 export type PostApiAffiliateClickData = {
   body: AffiliateClickRequest;
   path?: never;
@@ -6044,6 +6206,37 @@ export type GetApiMarketplaceDocumentsByIdBundlesResponses = {
 export type GetApiMarketplaceDocumentsByIdBundlesResponse =
   GetApiMarketplaceDocumentsByIdBundlesResponses[keyof GetApiMarketplaceDocumentsByIdBundlesResponses];
 
+export type GetApiMarketplaceDocumentsByIdBoughtTogetherData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: {
+    Take?: number;
+  };
+  url: '/api/marketplace/documents/{id}/bought-together';
+};
+
+export type GetApiMarketplaceDocumentsByIdBoughtTogetherErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiMarketplaceDocumentsByIdBoughtTogetherError =
+  GetApiMarketplaceDocumentsByIdBoughtTogetherErrors[keyof GetApiMarketplaceDocumentsByIdBoughtTogetherErrors];
+
+export type GetApiMarketplaceDocumentsByIdBoughtTogetherResponses = {
+  /**
+   * OK
+   */
+  200: BoughtTogetherResponse;
+};
+
+export type GetApiMarketplaceDocumentsByIdBoughtTogetherResponse =
+  GetApiMarketplaceDocumentsByIdBoughtTogetherResponses[keyof GetApiMarketplaceDocumentsByIdBoughtTogetherResponses];
+
 export type GetApiMarketplaceCategoriesData = {
   body?: never;
   path?: never;
@@ -7182,6 +7375,125 @@ export type PutApiMeCrmTrackingResponses = {
 
 export type PutApiMeCrmTrackingResponse =
   PutApiMeCrmTrackingResponses[keyof PutApiMeCrmTrackingResponses];
+
+export type GetApiMeWalletData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/me/wallet';
+};
+
+export type GetApiMeWalletErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeWalletError = GetApiMeWalletErrors[keyof GetApiMeWalletErrors];
+
+export type GetApiMeWalletResponses = {
+  /**
+   * OK
+   */
+  200: WalletSummaryResponse;
+};
+
+export type GetApiMeWalletResponse = GetApiMeWalletResponses[keyof GetApiMeWalletResponses];
+
+export type GetApiMeWalletEntriesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    Page?: number;
+    PageSize?: number;
+  };
+  url: '/api/me/wallet/entries';
+};
+
+export type GetApiMeWalletEntriesErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type GetApiMeWalletEntriesError =
+  GetApiMeWalletEntriesErrors[keyof GetApiMeWalletEntriesErrors];
+
+export type GetApiMeWalletEntriesResponses = {
+  /**
+   * OK
+   */
+  200: PagedResponseOfWalletEntryResponse;
+};
+
+export type GetApiMeWalletEntriesResponse =
+  GetApiMeWalletEntriesResponses[keyof GetApiMeWalletEntriesResponses];
+
+export type PostApiMeWalletTopupsData = {
+  body: CreateWalletTopUpRequest;
+  path?: never;
+  query?: never;
+  url: '/api/me/wallet/topups';
+};
+
+export type PostApiMeWalletTopupsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+};
+
+export type PostApiMeWalletTopupsError =
+  PostApiMeWalletTopupsErrors[keyof PostApiMeWalletTopupsErrors];
+
+export type PostApiMeWalletTopupsResponses = {
+  /**
+   * Created
+   */
+  201: WalletTopUpResponse;
+};
+
+export type PostApiMeWalletTopupsResponse =
+  PostApiMeWalletTopupsResponses[keyof PostApiMeWalletTopupsResponses];
+
+export type GetApiMeWalletTopupsByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/me/wallet/topups/{id}';
+};
+
+export type GetApiMeWalletTopupsByIdErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiMeWalletTopupsByIdError =
+  GetApiMeWalletTopupsByIdErrors[keyof GetApiMeWalletTopupsByIdErrors];
+
+export type GetApiMeWalletTopupsByIdResponses = {
+  /**
+   * OK
+   */
+  200: WalletTopUpResponse;
+};
+
+export type GetApiMeWalletTopupsByIdResponse =
+  GetApiMeWalletTopupsByIdResponses[keyof GetApiMeWalletTopupsByIdResponses];
 
 export type GetApiAdminNotificationConfigData = {
   body?: never;

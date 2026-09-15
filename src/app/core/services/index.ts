@@ -37,3 +37,4 @@ export * from './crm.service';
 export * from './discovery.service';
 export * from './ads.service';
 export * from './affiliate.service';
+export * from './wallet.service';

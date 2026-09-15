@@ -482,6 +482,44 @@ export interface SavedPaymentMethod {
   createdAt: string;
 }
 
+// ====== Buyer Wallet (buyer-wallet v1 §3.2-§3.5, §3.8) ======
+
+export interface WalletSummary {
+  balance: number;
+  asOf: string;
+}
+
+export type WalletEntryKind = 'topup' | 'purchase' | 'refund';
+
+export interface WalletEntry {
+  id: string;
+  kind: WalletEntryKind;
+  amount: number;
+  reason: string;
+  orderNumber?: string;
+  occurredAt: string;
+}
+
+export type WalletTopUpStatus = 'pending' | 'succeeded' | 'failed' | 'cancelled';
+
+export interface WalletTopUp {
+  id: string;
+  amount: number;
+  status: WalletTopUpStatus;
+  stripePaymentIntentId?: string | null;
+  clientSecret?: string | null;
+  createdAt: string;
+  succeededAt?: string | null;
+}
+
+export interface AdminWalletSummary {
+  userId: string;
+  balance: number;
+  lifetimeToppedUp: number;
+  lifetimeSpent: number;
+  asOf: string;
+}
+
 // ====== Seller payout account (seller-payout-account-self-service v1 §3.1/§4) ======
 // Mirrors `PayoutAccountResponse` (docs/contracts/seller-payout-account-self-service.md §3.1)
 // exactly — `accountNumberMasked` is the only representation of the account number this app ever

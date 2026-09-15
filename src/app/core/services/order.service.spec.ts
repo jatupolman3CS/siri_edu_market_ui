@@ -90,6 +90,32 @@ describe('OrderService.create — saved-credit-cards v1 §4: request body', () =
 
     expect(JSON.parse(sentBody)).toEqual({ saveNewCard: true });
   });
+
+  it('buyer-wallet v1 §3.1: sends payWithWallet when paying with buyer wallet', async () => {
+    let sentBody = '';
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      sentBody = await request.clone().text();
+      return jsonResponse({ id: 'order-1', orderNumber: 'SE-1', status: 'paid', paymentMethod: 'wallet' }, 200);
+    }) as typeof globalThis.fetch;
+
+    const outcome = await buildService().create({ payWithWallet: true });
+
+    expect(JSON.parse(sentBody)).toEqual({ payWithWallet: true });
+    expect(outcome.ok).toBe(true);
+  });
+
+  it('buyer-wallet v1 §3.1: returns ok: false and error message when wallet balance is insufficient (400)', async () => {
+    stubOrderPost(problem('validation_failed', 'ยอดเงินในกระเป๋าไม่พอสำหรับคำสั่งซื้อนี้', 400), 400);
+
+    const outcome = await buildService().create({ payWithWallet: true });
+
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.status).toBe(400);
+      expect(outcome.message).toContain('ยอดเงินในกระเป๋าไม่พอสำหรับคำสั่งซื้อนี้');
+    }
+  });
 });
 
 describe('OrderService.create — 409 branches', () => {

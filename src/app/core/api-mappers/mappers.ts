@@ -117,6 +117,12 @@ import type {
   SubscriptionPaymentHints,
   SubscriptionStatus,
   WatermarkCapability,
+  AdminWalletSummary,
+  WalletEntry,
+  WalletEntryKind,
+  WalletSummary,
+  WalletTopUp,
+  WalletTopUpStatus,
 } from '../models';
 import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS, EXAM_COUNTDOWN_EXAM_TYPES } from '../models';
 import { resolvePublicUrl } from '../api-runtime';
@@ -1023,6 +1029,96 @@ export function mapSavedPaymentMethod(d: SavedPaymentMethodResponse): SavedPayme
     expYear: d.expYear ?? 0,
     isDefault: d.isDefault ?? false,
     createdAt: d.createdAt ?? new Date().toISOString(),
+  };
+}
+
+/** buyer-wallet v1 §3.2: DTO shape until SDK regen ships WalletSummaryResponse. */
+export type WalletSummaryResponse = {
+  balance?: number | null;
+  asOf?: string | null;
+};
+
+/** buyer-wallet v1 §3.3: DTO shape until SDK regen ships WalletEntryResponse. */
+export type WalletEntryResponse = {
+  id?: string | null;
+  kind?: string | null;
+  amount?: number | null;
+  reason?: string | null;
+  orderNumber?: string | null;
+  occurredAt?: string | null;
+};
+
+/** buyer-wallet v1 §3.4/§3.5: DTO shape until SDK regen ships WalletTopUpResponse. */
+export type WalletTopUpResponse = {
+  id?: string | null;
+  amount?: number | null;
+  status?: string | null;
+  stripePaymentIntentId?: string | null;
+  clientSecret?: string | null;
+  createdAt?: string | null;
+  succeededAt?: string | null;
+};
+
+/** buyer-wallet v1 §3.8: DTO shape until SDK regen ships AdminWalletSummaryResponse. */
+export type AdminWalletSummaryResponse = {
+  userId?: string | null;
+  balance?: number | null;
+  lifetimeToppedUp?: number | null;
+  lifetimeSpent?: number | null;
+  asOf?: string | null;
+};
+
+function readWalletEntryKind(kind: string | null | undefined): WalletEntryKind {
+  if (kind === 'purchase' || kind === 'refund') return kind;
+  return 'topup';
+}
+
+function readWalletTopUpStatus(status: string | null | undefined): WalletTopUpStatus {
+  if (status === 'succeeded' || status === 'failed' || status === 'cancelled') return status;
+  return 'pending';
+}
+
+/** buyer-wallet v1 §3.2: maps WalletSummaryResponse to WalletSummary. */
+export function mapWalletSummary(d: WalletSummaryResponse): WalletSummary {
+  return {
+    balance: d.balance ?? 0,
+    asOf: d.asOf ?? new Date().toISOString(),
+  };
+}
+
+/** buyer-wallet v1 §3.3: maps WalletEntryResponse to WalletEntry. */
+export function mapWalletEntry(d: WalletEntryResponse): WalletEntry {
+  return {
+    id: d.id ?? '',
+    kind: readWalletEntryKind(d.kind),
+    amount: d.amount ?? 0,
+    reason: d.reason ?? '',
+    orderNumber: d.orderNumber ?? undefined,
+    occurredAt: d.occurredAt ?? '',
+  };
+}
+
+/** buyer-wallet v1 §3.4/§3.5: maps WalletTopUpResponse to WalletTopUp. */
+export function mapWalletTopUp(d: WalletTopUpResponse): WalletTopUp {
+  return {
+    id: d.id ?? '',
+    amount: d.amount ?? 0,
+    status: readWalletTopUpStatus(d.status),
+    stripePaymentIntentId: d.stripePaymentIntentId ?? null,
+    clientSecret: d.clientSecret ?? null,
+    createdAt: d.createdAt ?? '',
+    succeededAt: d.succeededAt ?? null,
+  };
+}
+
+/** buyer-wallet v1 §3.8: maps AdminWalletSummaryResponse to AdminWalletSummary. */
+export function mapAdminWalletSummary(d: AdminWalletSummaryResponse): AdminWalletSummary {
+  return {
+    userId: d.userId ?? '',
+    balance: d.balance ?? 0,
+    lifetimeToppedUp: d.lifetimeToppedUp ?? 0,
+    lifetimeSpent: d.lifetimeSpent ?? 0,
+    asOf: d.asOf ?? new Date().toISOString(),
   };
 }
 

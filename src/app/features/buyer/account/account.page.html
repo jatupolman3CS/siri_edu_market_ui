@@ -54,6 +54,33 @@
       <!-- saved-credit-cards v1 §4: manage mode — list / add / delete / set-default. -->
       <app-saved-cards mode="manage" class="block" />
 
+      <!-- buyer-wallet v1 §4.1: wallet summary card -->
+      <section id="wallet" class="card-soft p-6 border border-line">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-ink-muted text-xs font-semibold mb-1">
+              <app-icon name="wallet" [size]="16" />
+              <span>กระเป๋าเงิน SIRIEDUMARKET</span>
+            </div>
+            <div class="text-xs text-ink-muted mb-2">ยอดคงเหลือในกระเป๋าเงิน</div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+              @if (wallet.summary()?.balance != null) {
+                {{ wallet.summary()!.balance | thb }}
+              } @else {
+                —
+              }
+            </div>
+          </div>
+          <a
+            [routerLink]="['/wallet']"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-sm transition-colors"
+          >
+            <app-icon name="plus" [size]="16" />
+            <span>เติมเงิน / จัดการ</span>
+          </a>
+        </div>
+      </section>
+
       <!-- referral-program v1 §4: referral card -->
       <app-referral-card class="block" />
 

@@ -180,6 +180,89 @@
       }
     </div>
 
+    <!-- buyer-wallet v1 §4.6: read-only wallet summary + short ledger — DEC-5: no "แก้ยอด" action anywhere -->
+    <div class="card-soft p-5 space-y-3">
+      <h3 class="text-base font-bold text-ink flex items-center gap-2">
+        <app-icon name="wallet" [size]="18" />
+        กระเป๋าเงินของผู้ใช้
+      </h3>
+
+      @if (walletSummary(); as w) {
+        <div class="grid grid-cols-3 gap-3 pt-2 text-sm">
+          <div>
+            <div class="text-xs text-ink-muted">ยอดคงเหลือ</div>
+            <div class="text-lg font-extrabold text-ink">{{ w.balance | thb }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-ink-muted">ยอดเติมสะสม</div>
+            <div class="text-sm font-semibold text-emerald-600">{{ w.lifetimeToppedUp | thb }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-ink-muted">ยอดใช้จ่ายสะสม</div>
+            <div class="text-sm font-semibold text-ink-soft">{{ w.lifetimeSpent | thb }}</div>
+          </div>
+        </div>
+      } @else if (!walletEntriesLoading()) {
+        <div class="text-xs text-ink-muted py-2">ผู้ใช้นี้ยังไม่เคยใช้งานกระเป๋าเงิน</div>
+      }
+
+      @if (walletEntries().length > 0) {
+        <div class="table-scroll overflow-x-auto pt-2">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-pink-50 text-xs text-ink-muted uppercase">
+              <tr>
+                <th class="px-3 py-2 font-semibold">ประเภท</th>
+                <th class="px-3 py-2 font-semibold">รายการ</th>
+                <th class="px-3 py-2 font-semibold">วันเวลา</th>
+                <th class="px-3 py-2 font-semibold text-right">จำนวนเงิน</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              @for (entry of walletEntries(); track entry.id) {
+                <tr>
+                  <td class="px-3 py-2">{{ getWalletKindLabel(entry.kind) }}</td>
+                  <td class="px-3 py-2 text-ink-muted">
+                    @if (entry.orderNumber) {
+                      <span class="font-mono text-xs">#{{ entry.orderNumber }}</span>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="px-3 py-2 text-ink-muted text-xs">{{ entry.occurredAt | date: 'dd MMM yyyy HH:mm' }}</td>
+                  <td class="px-3 py-2 text-right font-semibold">
+                    @if (entry.amount > 0) {
+                      <span class="text-emerald-600">+{{ entry.amount | thb }}</span>
+                    } @else {
+                      <span class="text-rose-600">-{{ -entry.amount | thb }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (walletEntriesHasMore()) {
+          <div class="text-center pt-3">
+            <button
+              type="button"
+              (click)="loadMoreWalletEntries()"
+              [disabled]="walletEntriesLoading()"
+              class="btn-ghost text-xs !py-1.5 !px-4"
+            >
+              @if (walletEntriesLoading()) {
+                กำลังโหลด...
+              } @else {
+                โหลดเพิ่ม
+              }
+            </button>
+          </div>
+        }
+      } @else if (!walletEntriesLoading() && walletSummary()) {
+        <div class="text-xs text-ink-muted py-2">ยังไม่มีรายการในกระเป๋าเงิน</div>
+      }
+    </div>
+
     <!-- Moderation History -->
     <div class="card-soft p-5 space-y-3">
       <h3 class="text-base font-bold text-ink">ประวัติการถูกระงับการใช้งาน</h3>

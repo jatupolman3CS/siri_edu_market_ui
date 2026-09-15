@@ -13,6 +13,7 @@ import {
   getApiPaymentsStripeConfig,
   postApiOrders,
   postApiOrdersByIdCancel,
+  type CreateOrderRequest,
 } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { mapOrder, mapOrderSimilarDocument } from '../api-mappers/mappers';
@@ -24,6 +25,7 @@ import type { Order, OrderSimilarDocument } from '../models';
  * of collecting a fresh card through the Payment Element; `saveNewCard` only matters when
  * `savedPaymentMethodId` is absent, and asks Stripe to keep the card just entered for next time.
  * Neither is sent unless the buyer opted in — see `checkout.page.ts`.
+ * buyer-wallet v1 §3.1: `payWithWallet` pays full amount using wallet balance.
  */
 export interface CreateOrderInput {
   savedPaymentMethodId?: string;
@@ -31,6 +33,8 @@ export interface CreateOrderInput {
   referralCode?: string;
   useReferralCredit?: boolean;
   affiliateClickToken?: string;
+  /** buyer-wallet v1 §3.1: pay with buyer wallet */
+  payWithWallet?: boolean;
 }
 
 export type CreateOrderOutcome =
@@ -77,17 +81,19 @@ export class OrderService {
   async create(input: CreateOrderInput = {}): Promise<CreateOrderOutcome> {
     this._checkoutState.set(loadingActionState());
     try {
-      // saved-credit-cards v1 §4/§3.1 + referral-program v1 §3.3/v2 §3.9: `CreateOrderRequest`
-      // (generated) carries all five fields straight through — every one optional on the wire,
+      // saved-credit-cards v1 §4/§3.1 + referral-program v1 §3.3/v2 §3.9 + buyer-wallet v1 §3.1:
+      // `CreateOrderRequest` carries fields straight through — every one optional on the wire,
       // so `JSON.stringify` drops an `undefined` field rather than sending it as `null`.
+      const body: CreateOrderRequest & { payWithWallet?: boolean } = {
+        savedPaymentMethodId: input.savedPaymentMethodId,
+        saveNewCard: input.saveNewCard,
+        referralCode: input.referralCode,
+        useReferralCredit: input.useReferralCredit,
+        affiliateClickToken: input.affiliateClickToken,
+        ...(input.payWithWallet !== undefined ? { payWithWallet: input.payWithWallet } : {}),
+      };
       const result = await postApiOrders({
-        body: {
-          savedPaymentMethodId: input.savedPaymentMethodId,
-          saveNewCard: input.saveNewCard,
-          referralCode: input.referralCode,
-          useReferralCredit: input.useReferralCredit,
-          affiliateClickToken: input.affiliateClickToken,
-        },
+        body: body as CreateOrderRequest,
       });
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);

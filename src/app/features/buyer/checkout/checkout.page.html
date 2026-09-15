@@ -77,39 +77,90 @@
                   </p>
                 </div>
               } @else {
-                <!-- saved-credit-cards v1 §4: only shows a picker at all when the buyer has
-                     ≥1 saved card — "ใช้บัตรใหม่" is always one of the options once it does. -->
-                <app-saved-cards mode="select" [(selected)]="selectedSavedCardId" (selectedChange)="onSavedCardSelect($event)" />
-
-                @if (selectedSavedCardId() === 'new') {
-                  <label class="flex items-center gap-2 text-sm text-ink-soft mb-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      [checked]="saveNewCard()"
-                      (change)="saveNewCard.set($any($event.target).checked)"
-                      class="w-4 h-4 accent-pink-500"
-                    />
-                    บันทึกบัตรนี้ไว้สำหรับชำระเงินครั้งถัดไป
-                  </label>
-                  <p class="text-xs text-ink-muted mb-4">
-                    เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»
-                  </p>
-                } @else {
-                  <p class="text-sm text-ink-soft leading-relaxed mb-4">
-                    ชำระด้วยบัตรที่เลือกไว้ทันทีเมื่อกด «ยืนยันการชำระเงิน»
-                  </p>
-                }
-
-                @if (busy() && !paymentReady() && selectedSavedCardId() === 'new') {
-                  <div class="py-10 flex flex-col items-center justify-center text-center gap-2 text-ink-muted">
-                    <div class="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p class="text-sm font-medium text-ink">กำลังเปิดช่องทางการชำระเงิน…</p>
+                <!-- buyer-wallet v1 §4.4: pay with platform wallet — a third option alongside
+                     saved/new cards, disabled with a top-up link when the balance is insufficient. -->
+                <button
+                  type="button"
+                  class="w-full text-left mb-3 p-4 rounded-xl border-2 transition-colors"
+                  [class.border-pink-500]="payWithWallet()"
+                  [class.bg-pink-50]="payWithWallet()"
+                  [class.border-line]="!payWithWallet()"
+                  [class.opacity-60]="isWalletInsufficient()"
+                  [class.cursor-not-allowed]="isWalletInsufficient()"
+                  [disabled]="isWalletInsufficient()"
+                  (click)="selectWallet()"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-2 text-sm font-semibold text-ink">
+                      <app-icon name="wallet" [size]="18" />
+                      จ่ายด้วยกระเป๋าเงิน
+                    </span>
+                    <span class="text-sm font-bold text-ink">
+                      @if (wallet.summary()?.balance != null) {
+                        {{ wallet.summary()!.balance | thb }}
+                      } @else {
+                        —
+                      }
+                    </span>
                   </div>
-                }
+                  @if (isWalletInsufficient()) {
+                    <p class="text-xs text-rose-600 mt-2">
+                      ยอดเงินไม่พอ (คงเหลือ {{ wallet.summary()?.balance ?? 0 | thb }})
+                      <a
+                        routerLink="/wallet"
+                        class="underline font-semibold"
+                        (click)="$event.stopPropagation()"
+                      >เติมเงิน</a>
+                    </p>
+                  }
+                </button>
 
-                <!-- Stripe mounts the Payment Element here; the methods shown come from the
-                     Stripe Dashboard, so adding a wallet needs no change in this repository. -->
-                <div id="stripe-payment-element" class="min-h-[220px]" [class.hidden]="!paymentReady() || selectedSavedCardId() !== 'new'"></div>
+                @if (payWithWallet()) {
+                  <p class="text-sm text-ink-soft leading-relaxed mb-4">
+                    ชำระด้วยยอดเงินคงเหลือในกระเป๋าเงินทันทีเมื่อกด «ยืนยันการชำระเงิน»
+                  </p>
+                  <button
+                    type="button"
+                    class="text-xs text-pink-600 hover:underline mb-4"
+                    (click)="selectCard()"
+                  >
+                    ใช้บัตรแทน
+                  </button>
+                } @else {
+                  <!-- saved-credit-cards v1 §4: only shows a picker at all when the buyer has
+                       ≥1 saved card — "ใช้บัตรใหม่" is always one of the options once it does. -->
+                  <app-saved-cards mode="select" [(selected)]="selectedSavedCardId" (selectedChange)="onSavedCardSelect($event)" />
+
+                  @if (selectedSavedCardId() === 'new') {
+                    <label class="flex items-center gap-2 text-sm text-ink-soft mb-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="saveNewCard()"
+                        (change)="saveNewCard.set($any($event.target).checked)"
+                        class="w-4 h-4 accent-pink-500"
+                      />
+                      บันทึกบัตรนี้ไว้สำหรับชำระเงินครั้งถัดไป
+                    </label>
+                    <p class="text-xs text-ink-muted mb-4">
+                      เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»
+                    </p>
+                  } @else {
+                    <p class="text-sm text-ink-soft leading-relaxed mb-4">
+                      ชำระด้วยบัตรที่เลือกไว้ทันทีเมื่อกด «ยืนยันการชำระเงิน»
+                    </p>
+                  }
+
+                  @if (busy() && !paymentReady() && selectedSavedCardId() === 'new') {
+                    <div class="py-10 flex flex-col items-center justify-center text-center gap-2 text-ink-muted">
+                      <div class="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p class="text-sm font-medium text-ink">กำลังเปิดช่องทางการชำระเงิน…</p>
+                    </div>
+                  }
+
+                  <!-- Stripe mounts the Payment Element here; the methods shown come from the
+                       Stripe Dashboard, so adding a wallet needs no change in this repository. -->
+                  <div id="stripe-payment-element" class="min-h-[220px]" [class.hidden]="!paymentReady() || selectedSavedCardId() !== 'new'"></div>
+                }
               }
             </section>
           </div>

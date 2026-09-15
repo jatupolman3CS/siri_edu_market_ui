@@ -23,6 +23,8 @@ import type {
   BanUserRequest,
   ReinstateUserRequest,
   PayoutSlip,
+  AdminWalletSummary,
+  WalletEntry,
 } from '../models';
 import { AdminTransaction } from '../models';
 import {
@@ -53,6 +55,8 @@ import {
   getApiAdminTransactions,
   getApiAdminUsers,
   getApiAdminUsersByUserId,
+  getApiAdminUsersByUserIdWallet,
+  getApiAdminUsersByUserIdWalletEntries,
   getApiAdminWatermarkCopies,
   getApiAnnouncementsActive,
   postApiAdminAnnouncements,
@@ -507,6 +511,8 @@ import {
   mapCategory,
   mapPayoutSlip,
   mapSubcategoryAdmin,
+  mapAdminWalletSummary,
+  mapWalletEntry,
 } from '../api-mappers/mappers';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
@@ -1460,6 +1466,43 @@ export class AdminService {
     } catch (e) {
       this.apiFail.report('บันทึกการตั้งค่าลิงก์พันธมิตร', e);
       return false;
+    }
+  }
+
+  /** buyer-wallet v1 §3.8: GET /api/admin/users/{userId}/wallet */
+  async getUserWallet(userId: string): Promise<AdminWalletSummary | null> {
+    try {
+      const result = await getApiAdminUsersByUserIdWallet({ path: { userId } });
+      const data = unwrapSdkResult(result);
+      return mapAdminWalletSummary(data);
+    } catch (e) {
+      this.apiFail.report('โหลดข้อมูลกระเป๋าเงินผู้ใช้', e);
+      return null;
+    }
+  }
+
+  /** buyer-wallet v1 §3.9: GET /api/admin/users/{userId}/wallet/entries */
+  async getUserWalletEntries(
+    userId: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<PagedResponse<WalletEntry>> {
+    try {
+      const result = await getApiAdminUsersByUserIdWalletEntries({
+        path: { userId },
+        query: { Page: page, PageSize: pageSize },
+      });
+      const data = unwrapSdkResult(result);
+      return {
+        items: (data.items ?? []).map(mapWalletEntry),
+        page: data.page ?? page,
+        pageSize: data.pageSize ?? pageSize,
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 0,
+      };
+    } catch (e) {
+      this.apiFail.report('โหลดประวัติกระเป๋าเงินผู้ใช้', e);
+      return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
     }
   }
 }

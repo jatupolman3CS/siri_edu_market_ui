@@ -127,6 +127,8 @@ import type {
   GetApiAdminFeedbackByIdResponses,
   GetApiAdminFeedbackData,
   GetApiAdminFeedbackResponses,
+  GetApiAdminMlRecommendationsOverviewData,
+  GetApiAdminMlRecommendationsOverviewResponses,
   GetApiAdminNotificationConfigData,
   GetApiAdminNotificationConfigErrors,
   GetApiAdminNotificationConfigResponses,
@@ -163,6 +165,12 @@ import type {
   GetApiAdminUsersByUserIdData,
   GetApiAdminUsersByUserIdErrors,
   GetApiAdminUsersByUserIdResponses,
+  GetApiAdminUsersByUserIdWalletData,
+  GetApiAdminUsersByUserIdWalletEntriesData,
+  GetApiAdminUsersByUserIdWalletEntriesErrors,
+  GetApiAdminUsersByUserIdWalletEntriesResponses,
+  GetApiAdminUsersByUserIdWalletErrors,
+  GetApiAdminUsersByUserIdWalletResponses,
   GetApiAdminUsersData,
   GetApiAdminUsersErrors,
   GetApiAdminUsersResponses,
@@ -204,6 +212,9 @@ import type {
   GetApiMarketplaceCategoriesResponses,
   GetApiMarketplaceDiscoveryData,
   GetApiMarketplaceDiscoveryResponses,
+  GetApiMarketplaceDocumentsByIdBoughtTogetherData,
+  GetApiMarketplaceDocumentsByIdBoughtTogetherErrors,
+  GetApiMarketplaceDocumentsByIdBoughtTogetherResponses,
   GetApiMarketplaceDocumentsByIdBundlesData,
   GetApiMarketplaceDocumentsByIdBundlesErrors,
   GetApiMarketplaceDocumentsByIdBundlesResponses,
@@ -270,6 +281,15 @@ import type {
   GetApiMeSubscriptionData,
   GetApiMeSubscriptionErrors,
   GetApiMeSubscriptionResponses,
+  GetApiMeWalletData,
+  GetApiMeWalletEntriesData,
+  GetApiMeWalletEntriesErrors,
+  GetApiMeWalletEntriesResponses,
+  GetApiMeWalletErrors,
+  GetApiMeWalletResponses,
+  GetApiMeWalletTopupsByIdData,
+  GetApiMeWalletTopupsByIdErrors,
+  GetApiMeWalletTopupsByIdResponses,
   GetApiNotificationsFeedData,
   GetApiNotificationsFeedErrors,
   GetApiNotificationsFeedResponses,
@@ -549,6 +569,9 @@ import type {
   PostApiMeSubscriptionData,
   PostApiMeSubscriptionErrors,
   PostApiMeSubscriptionResponses,
+  PostApiMeWalletTopupsData,
+  PostApiMeWalletTopupsErrors,
+  PostApiMeWalletTopupsResponses,
   PostApiNotificationsFeedByIdReadData,
   PostApiNotificationsFeedByIdReadErrors,
   PostApiNotificationsFeedByIdReadResponses,
@@ -768,6 +791,15 @@ export const putApiAdminAdsPlacementsByPlacementKey = <ThrowOnError extends bool
       ...options.headers,
     },
   });
+
+export const getApiAdminMlRecommendationsOverview = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiAdminMlRecommendationsOverviewData, ThrowOnError>,
+): RequestResult<GetApiAdminMlRecommendationsOverviewResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminMlRecommendationsOverviewResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/admin/ml/recommendations/overview', ...options });
 
 export const getApiAdminSubscriptions = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminSubscriptionsData, ThrowOnError>,
@@ -1540,6 +1572,32 @@ export const putApiAdminAffiliatesByUserIdSettings = <ThrowOnError extends boole
       ...options.headers,
     },
   });
+
+export const getApiAdminUsersByUserIdWallet = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminUsersByUserIdWalletData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminUsersByUserIdWalletResponses,
+  GetApiAdminUsersByUserIdWalletErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminUsersByUserIdWalletResponses,
+    GetApiAdminUsersByUserIdWalletErrors,
+    ThrowOnError
+  >({ url: '/api/admin/users/{userId}/wallet', ...options });
+
+export const getApiAdminUsersByUserIdWalletEntries = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminUsersByUserIdWalletEntriesData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminUsersByUserIdWalletEntriesResponses,
+  GetApiAdminUsersByUserIdWalletEntriesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminUsersByUserIdWalletEntriesResponses,
+    GetApiAdminUsersByUserIdWalletEntriesErrors,
+    ThrowOnError
+  >({ url: '/api/admin/users/{userId}/wallet/entries', ...options });
 
 export const postApiAffiliateClick = <ThrowOnError extends boolean = false>(
   options: Options<PostApiAffiliateClickData, ThrowOnError>,
@@ -2327,6 +2385,19 @@ export const getApiMarketplaceDocumentsByIdBundles = <ThrowOnError extends boole
     ThrowOnError
   >({ url: '/api/marketplace/documents/{id}/bundles', ...options });
 
+export const getApiMarketplaceDocumentsByIdBoughtTogether = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiMarketplaceDocumentsByIdBoughtTogetherData, ThrowOnError>,
+): RequestResult<
+  GetApiMarketplaceDocumentsByIdBoughtTogetherResponses,
+  GetApiMarketplaceDocumentsByIdBoughtTogetherErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiMarketplaceDocumentsByIdBoughtTogetherResponses,
+    GetApiMarketplaceDocumentsByIdBoughtTogetherErrors,
+    ThrowOnError
+  >({ url: '/api/marketplace/documents/{id}/bought-together', ...options });
+
 export const getApiMarketplaceCategories = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMarketplaceCategoriesData, ThrowOnError>,
 ): RequestResult<GetApiMarketplaceCategoriesResponses, unknown, ThrowOnError> =>
@@ -2797,6 +2868,48 @@ export const putApiMeCrmTracking = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
+
+export const getApiMeWallet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeWalletData, ThrowOnError>,
+): RequestResult<GetApiMeWalletResponses, GetApiMeWalletErrors, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMeWalletResponses, GetApiMeWalletErrors, ThrowOnError>({
+    url: '/api/me/wallet',
+    ...options,
+  });
+
+export const getApiMeWalletEntries = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMeWalletEntriesData, ThrowOnError>,
+): RequestResult<GetApiMeWalletEntriesResponses, GetApiMeWalletEntriesErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMeWalletEntriesResponses,
+    GetApiMeWalletEntriesErrors,
+    ThrowOnError
+  >({ url: '/api/me/wallet/entries', ...options });
+
+export const postApiMeWalletTopups = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiMeWalletTopupsData, ThrowOnError>,
+): RequestResult<PostApiMeWalletTopupsResponses, PostApiMeWalletTopupsErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiMeWalletTopupsResponses,
+    PostApiMeWalletTopupsErrors,
+    ThrowOnError
+  >({
+    url: '/api/me/wallet/topups',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const getApiMeWalletTopupsById = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiMeWalletTopupsByIdData, ThrowOnError>,
+): RequestResult<GetApiMeWalletTopupsByIdResponses, GetApiMeWalletTopupsByIdErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiMeWalletTopupsByIdResponses,
+    GetApiMeWalletTopupsByIdErrors,
+    ThrowOnError
+  >({ url: '/api/me/wallet/topups/{id}', ...options });
 
 export const getApiAdminNotificationConfig = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminNotificationConfigData, ThrowOnError>,

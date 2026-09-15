@@ -3,7 +3,14 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerCheckoutPage } from './checkout.page';
-import { AuthService, CartService, OrderService, PaymentMethodService, ReferralService } from '../../../core/services';
+import {
+  AuthService,
+  CartService,
+  OrderService,
+  PaymentMethodService,
+  ReferralService,
+  WalletService,
+} from '../../../core/services';
 import { idleActionState, type ActionState } from '../../../core/services/action-state';
 import type {
   CartItem,
@@ -12,6 +19,7 @@ import type {
   ReferralSummary,
   SavedPaymentMethod,
   Seller,
+  WalletSummary,
 } from '../../../core/models';
 import { REFERRAL_HINT_STORAGE_KEY } from '../../../core/util/referral-capture';
 import { AFFILIATE_STORAGE_KEY } from '../../../core/util/affiliate-capture';
@@ -144,6 +152,16 @@ function fakePaymentMethods(initial: SavedPaymentMethod[] = []) {
   };
 }
 
+/** buyer-wallet v1 §4.4/§4.2 — mirrors `WalletService`'s public surface used by checkout. */
+function fakeWalletService(initialSummary: WalletSummary | null = null) {
+  const summary = signal<WalletSummary | null>(initialSummary);
+  return {
+    summary: summary.asReadonly(),
+    refreshSummary: vi.fn(async () => {}),
+    setSummary: (s: WalletSummary | null) => summary.set(s),
+  };
+}
+
 function fakeReferralService(initialSummary: ReferralSummary | null = null) {
   const summary = signal<ReferralSummary | null>(initialSummary);
   const state = signal<ActionState>(idleActionState());
@@ -170,6 +188,7 @@ async function settle(): Promise<void> {
 function render(
   paymentMethods: ReturnType<typeof fakePaymentMethods> = fakePaymentMethods([]),
   referral: ReturnType<typeof fakeReferralService> = fakeReferralService(),
+  wallet: ReturnType<typeof fakeWalletService> = fakeWalletService(),
 ) {
   const cart = fakeCart();
   const orders = {
@@ -188,13 +207,14 @@ function render(
       { provide: OrderService, useValue: orders },
       { provide: PaymentMethodService, useValue: paymentMethods },
       { provide: ReferralService, useValue: referral },
+      { provide: WalletService, useValue: wallet },
       { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
     ],
   });
 
   const fixture = TestBed.createComponent(BuyerCheckoutPage);
   fixture.detectChanges();
-  return { fixture, cart, orders, referral };
+  return { fixture, cart, orders, referral, wallet };
 }
 
 afterEach(() => TestBed.resetTestingModule());
@@ -456,6 +476,74 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
     );
 
     localStorage.removeItem(AFFILIATE_STORAGE_KEY);
+  });
+});
+
+describe('BuyerCheckoutPage — pay with wallet (buyer-wallet v1 §4.4, AC-26)', () => {
+  it('shows the wallet balance and enables selection when the balance covers the total', async () => {
+    const wallet = fakeWalletService({ balance: 200, asOf: '2026-09-15T00:00:00Z' });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), wallet);
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isWalletInsufficient()).toBe(false);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('จ่ายด้วยกระเป๋าเงิน');
+
+    fixture.componentInstance.selectWallet();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.payWithWallet()).toBe(true);
+  });
+
+  it('disables selection and shows the insufficient-balance message + top-up link when balance < total', async () => {
+    const wallet = fakeWalletService({ balance: 50, asOf: '2026-09-15T00:00:00Z' });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), wallet);
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isWalletInsufficient()).toBe(true);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ยอดเงินไม่พอ');
+    expect(text).toContain('เติมเงิน');
+
+    fixture.componentInstance.selectWallet();
+    fixture.detectChanges();
+
+    // Guarded client-side too — selection must not flip when insufficient.
+    expect(fixture.componentInstance.payWithWallet()).toBe(false);
+  });
+
+  it('startPayment() sends payWithWallet:true and nothing else when wallet is selected', async () => {
+    const wallet = fakeWalletService({ balance: 200, asOf: '2026-09-15T00:00:00Z' });
+    const { fixture, orders } = render(fakePaymentMethods([]), fakeReferralService(), wallet);
+    await settle();
+    fixture.detectChanges();
+
+    fixture.componentInstance.selectWallet();
+    orders.create.mockResolvedValueOnce({
+      ok: true,
+      order: { id: 'order-1', status: 'paid' },
+    });
+
+    await fixture.componentInstance.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith({ payWithWallet: true });
+  });
+
+  it('resets back to the "new card" path when a wallet payment attempt fails', async () => {
+    const wallet = fakeWalletService({ balance: 200, asOf: '2026-09-15T00:00:00Z' });
+    const { fixture, orders } = render(fakePaymentMethods([]), fakeReferralService(), wallet);
+    await settle();
+    fixture.detectChanges();
+
+    fixture.componentInstance.selectWallet();
+    orders.create.mockResolvedValueOnce({ ok: false, status: 400, message: 'ยอดเงินไม่พอ' });
+
+    await fixture.componentInstance.startPayment();
+
+    expect(fixture.componentInstance.payWithWallet()).toBe(false);
+    expect(fixture.componentInstance.selectedSavedCardId()).toBe('new');
   });
 });
 

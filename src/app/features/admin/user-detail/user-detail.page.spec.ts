@@ -88,6 +88,38 @@ describe('AdminUserDetailPage', () => {
       reinstateUser: vi.fn(async (_id: string, _req: any) =>
         userDetail({ accountStatus: 'active' }),
       ),
+      // buyer-wallet v1 §3.8/§3.9 — read-only wallet section (AC-29).
+      getUserWallet: vi.fn(async () => ({
+        userId: 'target-user-1',
+        balance: 250,
+        lifetimeToppedUp: 500,
+        lifetimeSpent: 250,
+        asOf: '2026-09-15T10:00:00Z',
+      })),
+      getUserWalletEntries: vi.fn(async () => ({
+        items: [
+          {
+            id: 'entry-1',
+            kind: 'topup',
+            amount: 500,
+            reason: 'wallet_topup',
+            orderNumber: undefined,
+            occurredAt: '2026-09-10T10:00:00Z',
+          },
+          {
+            id: 'entry-2',
+            kind: 'purchase',
+            amount: -250,
+            reason: 'order_paid_by_wallet',
+            orderNumber: 'ORD-1001',
+            occurredAt: '2026-09-12T10:00:00Z',
+          },
+        ],
+        page: 1,
+        pageSize: 10,
+        totalCount: 2,
+        totalPages: 1,
+      })),
     };
 
     mockAuth = {
@@ -279,5 +311,82 @@ describe('AdminUserDetailPage', () => {
     expect(mockMessage.success).toHaveBeenCalledWith('ปลดระงับบัญชีเรียบร้อยแล้ว');
     expect(comp.user()?.accountStatus).toBe('active');
     expect(comp.reinstateModalVisible()).toBe(false);
+  });
+
+  // buyer-wallet v1 §4.6 — AC-29: read-only wallet summary + ledger, no edit action anywhere.
+  it('renders read-only wallet summary + ledger with no edit action', async () => {
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    expect(mockAdmin.getUserWallet).toHaveBeenCalledWith('target-user-1');
+    expect(mockAdmin.getUserWalletEntries).toHaveBeenCalledWith('target-user-1', 1, 10);
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('กระเป๋าเงินของผู้ใช้');
+    expect(el.textContent).toContain('เติมเงิน');
+    expect(el.textContent).toContain('ซื้อเอกสาร');
+    expect(el.textContent).toContain('#ORD-1001');
+    // DEC-5: admin has no direct wallet-adjustment control anywhere on this page.
+    expect(el.textContent).not.toContain('แก้ยอด');
+    expect(el.querySelector('[data-wallet-edit]')).toBeNull();
+  });
+
+  it('loadMoreWalletEntries() fetches the next page and appends items', async () => {
+    mockAdmin.getUserWalletEntries.mockImplementation(
+      async (_userId: string, page: number, _pageSize: number) => {
+        if (page === 1) {
+          return {
+            items: [
+              {
+                id: 'entry-1',
+                kind: 'topup',
+                amount: 100,
+                reason: 'wallet_topup',
+                orderNumber: undefined,
+                occurredAt: '2026-09-10T10:00:00Z',
+              },
+            ],
+            page: 1,
+            pageSize: 1,
+            totalCount: 2,
+            totalPages: 2,
+          };
+        }
+        return {
+          items: [
+            {
+              id: 'entry-2',
+              kind: 'refund',
+              amount: 50,
+              reason: 'order_refunded_to_wallet',
+              orderNumber: 'ORD-2002',
+              occurredAt: '2026-09-11T10:00:00Z',
+            },
+          ],
+          page: 2,
+          pageSize: 1,
+          totalCount: 2,
+          totalPages: 2,
+        };
+      },
+    );
+
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    expect(comp.walletEntries().length).toBe(1);
+    expect(comp.walletEntriesHasMore()).toBe(true);
+
+    await comp.loadMoreWalletEntries();
+    await settle();
+
+    expect(mockAdmin.getUserWalletEntries).toHaveBeenLastCalledWith('target-user-1', 2, 10);
+    expect(comp.walletEntries().length).toBe(2);
+    expect(comp.walletEntriesHasMore()).toBe(false);
   });
 });

@@ -15,6 +15,7 @@ import {
   OrderService,
   PaymentMethodService,
   ReferralService,
+  WalletService,
 } from '../../../core/services';
 import type { CreateOrderInput } from '../../../core/services/order.service';
 import type { ReferralCodeValidation } from '../../../core/models';
@@ -67,6 +68,7 @@ export class BuyerCheckoutPage implements OnDestroy {
   private readonly orders = inject(OrderService);
   readonly paymentMethods = inject(PaymentMethodService);
   readonly referral = inject(ReferralService);
+  readonly wallet = inject(WalletService);
   private readonly message = inject(NzMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
@@ -130,6 +132,14 @@ export class BuyerCheckoutPage implements OnDestroy {
     return Math.max(0, rawTotal - this.referralDiscount());
   });
 
+  /** buyer-wallet v1 §4.4: pay with platform wallet */
+  readonly payWithWallet = signal(false);
+
+  readonly isWalletInsufficient = computed(() => {
+    const balance = this.wallet.summary()?.balance ?? 0;
+    return balance < this.payableTotal();
+  });
+
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
   private orderId: string | null = null;
@@ -149,17 +159,31 @@ export class BuyerCheckoutPage implements OnDestroy {
     await this.checkPaymentsConfigured();
     await this.loadSavedCards();
     await this.referral.refreshSummary();
+    await this.wallet.refreshSummary();
     this.initReferralHint();
 
     const isTest = typeof (globalThis as any).vi !== 'undefined';
     if (!isTest && !this.paymentsUnavailable() && this.cart.count() > 0 && this.auth.isAuthenticated()) {
-      if (this.selectedSavedCardId() === 'new') {
+      if (this.selectedSavedCardId() === 'new' && !this.payWithWallet()) {
         void this.startPayment();
       }
     }
   }
 
+  selectWallet(): void {
+    if (this.isWalletInsufficient()) return;
+    this.payWithWallet.set(true);
+  }
+
+  selectCard(): void {
+    this.payWithWallet.set(false);
+    if (this.selectedSavedCardId() === 'new' && !this.paymentReady() && !this.busy()) {
+      void this.startPayment();
+    }
+  }
+
   onSavedCardSelect(cardId: string): void {
+    this.payWithWallet.set(false);
     this.selectedSavedCardId.set(cardId);
     if (cardId === 'new' && !this.paymentReady() && !this.busy()) {
       void this.startPayment();
@@ -167,7 +191,9 @@ export class BuyerCheckoutPage implements OnDestroy {
   }
 
   async submitPayment(): Promise<void> {
-    if (this.selectedSavedCardId() !== 'new') {
+    if (this.payWithWallet()) {
+      await this.startPayment();
+    } else if (this.selectedSavedCardId() !== 'new') {
       await this.startPayment();
     } else {
       if (this.paymentReady()) {
@@ -276,12 +302,15 @@ export class BuyerCheckoutPage implements OnDestroy {
       return;
     }
 
+    const payingWithWallet = this.payWithWallet();
     const savedCardId = this.selectedSavedCardId();
-    const payingWithSavedCard = savedCardId !== 'new';
+    const payingWithSavedCard = !payingWithWallet && savedCardId !== 'new';
 
-    const createInput: CreateOrderInput = payingWithSavedCard
-      ? { savedPaymentMethodId: savedCardId }
-      : { saveNewCard: this.saveNewCard() };
+    const createInput: CreateOrderInput = payingWithWallet
+      ? { payWithWallet: true }
+      : payingWithSavedCard
+        ? { savedPaymentMethodId: savedCardId }
+        : { saveNewCard: this.saveNewCard() };
 
     if (this.referralValidation()?.valid && this.referralCode().trim()) {
       createInput.referralCode = this.referralCode().trim().toUpperCase();
@@ -301,6 +330,10 @@ export class BuyerCheckoutPage implements OnDestroy {
 
       if (!outcome.ok) {
         this.handleFailedCheckout(outcome);
+        if (payingWithWallet) {
+          this.payWithWallet.set(false);
+          this.selectedSavedCardId.set('new');
+        }
         return;
       }
 

@@ -5,7 +5,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AdminService, AuthService, ApiFailureReporter } from '../../../core/services';
-import type { AdminUserDetail, AdminUserAccountStatus } from '../../../core/models';
+import type {
+  AdminUserDetail,
+  AdminUserAccountStatus,
+  AdminWalletSummary,
+  WalletEntry,
+} from '../../../core/models';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -38,6 +43,18 @@ export class AdminUserDetailPage {
   readonly user = signal<AdminUserDetail | null>(null);
   readonly loading = signal(true);
   readonly submitting = signal(false);
+
+  // buyer-wallet v1 §4.6: read-only wallet summary + short ledger for admin user-detail.
+  readonly walletSummary = signal<AdminWalletSummary | null>(null);
+  readonly walletEntries = signal<WalletEntry[]>([]);
+  readonly walletEntriesLoading = signal(false);
+  private readonly walletEntriesPage = signal(0);
+  private readonly walletEntriesTotalCount = signal<number | null>(null);
+  readonly walletEntriesHasMore = computed(() => {
+    const total = this.walletEntriesTotalCount();
+    if (total == null) return true;
+    return this.walletEntries().length < total;
+  });
 
   // Modals state
   readonly suspendModalVisible = signal(false);
@@ -95,6 +112,54 @@ export class AdminUserDetailPage {
       this.message.error(this.apiFail.formatDetail(e));
     } finally {
       this.loading.set(false);
+    }
+    void this.loadWallet(userId);
+  }
+
+  // ===== buyer-wallet v1 §3.8/§3.9/§4.6 — read-only wallet section =====
+
+  private async loadWallet(userId: string): Promise<void> {
+    this.walletSummary.set(await this.admin.getUserWallet(userId));
+    await this.loadWalletEntriesFirst(userId);
+  }
+
+  async loadWalletEntriesFirst(userId: string): Promise<void> {
+    this.walletEntriesLoading.set(true);
+    try {
+      const result = await this.admin.getUserWalletEntries(userId, 1, 10);
+      this.walletEntries.set(result.items ?? []);
+      this.walletEntriesPage.set(1);
+      this.walletEntriesTotalCount.set(result.totalCount ?? 0);
+    } finally {
+      this.walletEntriesLoading.set(false);
+    }
+  }
+
+  async loadMoreWalletEntries(): Promise<void> {
+    const userId = this.user()?.id;
+    if (!userId || this.walletEntriesLoading()) return;
+    const nextPage = this.walletEntriesPage() + 1;
+    this.walletEntriesLoading.set(true);
+    try {
+      const result = await this.admin.getUserWalletEntries(userId, nextPage, 10);
+      this.walletEntries.update((prev) => [...prev, ...(result.items ?? [])]);
+      this.walletEntriesPage.set(nextPage);
+      this.walletEntriesTotalCount.set(result.totalCount ?? this.walletEntriesTotalCount());
+    } finally {
+      this.walletEntriesLoading.set(false);
+    }
+  }
+
+  getWalletKindLabel(kind: WalletEntry['kind']): string {
+    switch (kind) {
+      case 'topup':
+        return 'เติมเงิน';
+      case 'purchase':
+        return 'ซื้อเอกสาร';
+      case 'refund':
+        return 'คืนเงินเข้ากระเป๋า';
+      default:
+        return kind;
     }
   }
 

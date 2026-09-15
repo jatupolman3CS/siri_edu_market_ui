@@ -1052,3 +1052,84 @@ describe('AdminService — updateAffiliateSettings (referral-program v2 §3.10)'
     expect(ok).toBe(false);
   });
 });
+
+describe('AdminService — getUserWallet (buyer-wallet v1 §3.8)', () => {
+  it('GETs /api/admin/users/{userId}/wallet and maps response', async () => {
+    stubRoute('GET', '/api/admin/users/usr-1/wallet', {
+      body: {
+        userId: 'usr-1',
+        balance: 450,
+        lifetimeToppedUp: 1000,
+        lifetimeSpent: 550,
+        asOf: '2026-09-15T12:00:00.000Z',
+      },
+    });
+    const admin = buildService();
+
+    const wallet = await admin.getUserWallet('usr-1');
+
+    expect(wallet).toEqual({
+      userId: 'usr-1',
+      balance: 450,
+      lifetimeToppedUp: 1000,
+      lifetimeSpent: 550,
+      asOf: '2026-09-15T12:00:00.000Z',
+    });
+  });
+
+  it('returns null and reports failure when the call fails', async () => {
+    stubRoute('GET', '/api/admin/users/usr-1/wallet', { status: 500, body: { message: 'boom' } });
+    const admin = buildService();
+
+    const wallet = await admin.getUserWallet('usr-1');
+
+    expect(wallet).toBeNull();
+  });
+});
+
+describe('AdminService — getUserWalletEntries (buyer-wallet v1 §3.9)', () => {
+  it('GETs /api/admin/users/{userId}/wallet/entries and maps response', async () => {
+    stubRoute('GET', '/api/admin/users/usr-1/wallet/entries', {
+      body: {
+        items: [
+          {
+            id: 'ent-1',
+            kind: 'purchase',
+            amount: -100,
+            reason: 'order_paid_by_wallet',
+            orderNumber: 'ORD-123',
+            occurredAt: '2026-09-15T12:00:00.000Z',
+          },
+        ],
+        page: 1,
+        pageSize: 20,
+        totalCount: 1,
+        totalPages: 1,
+      },
+    });
+    const admin = buildService();
+
+    const result = await admin.getUserWalletEntries('usr-1', 1, 20);
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toEqual({
+      id: 'ent-1',
+      kind: 'purchase',
+      amount: -100,
+      reason: 'order_paid_by_wallet',
+      orderNumber: 'ORD-123',
+      occurredAt: '2026-09-15T12:00:00.000Z',
+    });
+    expect(result.totalCount).toBe(1);
+  });
+
+  it('returns an empty page when the call fails', async () => {
+    stubRoute('GET', '/api/admin/users/usr-1/wallet/entries', { status: 500, body: { message: 'boom' } });
+    const admin = buildService();
+
+    const result = await admin.getUserWalletEntries('usr-1', 1, 20);
+
+    expect(result.items).toEqual([]);
+    expect(result.totalCount).toBe(0);
+  });
+});

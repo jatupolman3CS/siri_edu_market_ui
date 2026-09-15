@@ -196,6 +196,16 @@ export const routes: Routes = [
           ),
         title: 'ความเป็นส่วนตัวของฉัน — SIRIEDUMARKET',
       },
+      // buyer-wallet v1 §4.1: "กระเป๋าเงินของฉัน"
+      {
+        path: 'wallet',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/wallet/wallet.page').then(
+            (m) => m.WalletPage,
+          ),
+        title: 'กระเป๋าเงิน SIRIEDUMARKET — SIRIEDUMARKET',
+      },
       {
         path: 'checkout',
         canActivate: [authGuard],

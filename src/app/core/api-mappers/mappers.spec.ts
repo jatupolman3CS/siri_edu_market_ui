@@ -17,6 +17,10 @@ import {
   mapAffiliateSummary,
   mapAffiliateClickResult,
   mapAdminAffiliateSummary,
+  mapWalletSummary,
+  mapWalletEntry,
+  mapWalletTopUp,
+  mapAdminWalletSummary,
 } from './mappers';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import { DEFAULT_STORE_READINESS } from '../models';
@@ -1146,6 +1150,163 @@ describe('mapAdminAffiliateSummary', () => {
     const mapped = mapAdminAffiliateSummary({ userId: '', displayName: '', email: '', code: '' });
 
     expect(mapped.commissionRatePercentOverride).toBeNull();
+  });
+});
+
+describe('mapWalletSummary', () => {
+  it('maps every field from the response', () => {
+    const summary = mapWalletSummary({
+      balance: 250.5,
+      asOf: '2026-09-15T12:00:00.000Z',
+    });
+
+    expect(summary).toEqual({
+      balance: 250.5,
+      asOf: '2026-09-15T12:00:00.000Z',
+    });
+  });
+
+  it('defaults missing balance to 0 and provides default asOf ISO string', () => {
+    const summary = mapWalletSummary({});
+
+    expect(summary.balance).toBe(0);
+    expect(summary.asOf).toBeTruthy();
+  });
+});
+
+describe('mapWalletEntry', () => {
+  it('maps a topup entry', () => {
+    const entry = mapWalletEntry({
+      id: 'entry-topup-1',
+      kind: 'topup',
+      amount: 100,
+      reason: 'wallet_topup',
+      occurredAt: '2026-09-15T12:00:00.000Z',
+    });
+
+    expect(entry).toEqual({
+      id: 'entry-topup-1',
+      kind: 'topup',
+      amount: 100,
+      reason: 'wallet_topup',
+      orderNumber: undefined,
+      occurredAt: '2026-09-15T12:00:00.000Z',
+    });
+  });
+
+  it('maps a purchase entry with orderNumber', () => {
+    const entry = mapWalletEntry({
+      id: 'entry-purchase-1',
+      kind: 'purchase',
+      amount: -50,
+      reason: 'order_paid_by_wallet',
+      orderNumber: 'ORD-2026-001',
+      occurredAt: '2026-09-15T12:10:00.000Z',
+    });
+
+    expect(entry).toEqual({
+      id: 'entry-purchase-1',
+      kind: 'purchase',
+      amount: -50,
+      reason: 'order_paid_by_wallet',
+      orderNumber: 'ORD-2026-001',
+      occurredAt: '2026-09-15T12:10:00.000Z',
+    });
+  });
+
+  it('maps a refund entry', () => {
+    const entry = mapWalletEntry({
+      id: 'entry-refund-1',
+      kind: 'refund',
+      amount: 50,
+      reason: 'order_refunded_to_wallet',
+      orderNumber: 'ORD-2026-001',
+      occurredAt: '2026-09-15T12:20:00.000Z',
+    });
+
+    expect(entry).toEqual({
+      id: 'entry-refund-1',
+      kind: 'refund',
+      amount: 50,
+      reason: 'order_refunded_to_wallet',
+      orderNumber: 'ORD-2026-001',
+      occurredAt: '2026-09-15T12:20:00.000Z',
+    });
+  });
+
+  it('falls back to topup kind and 0 amount on missing/empty response', () => {
+    const entry = mapWalletEntry({});
+
+    expect(entry.kind).toBe('topup');
+    expect(entry.amount).toBe(0);
+    expect(entry.id).toBe('');
+    expect(entry.reason).toBe('');
+    expect(entry.orderNumber).toBeUndefined();
+  });
+});
+
+describe('mapWalletTopUp', () => {
+  it('maps a pending topup response with clientSecret', () => {
+    const topup = mapWalletTopUp({
+      id: 'topup-1',
+      amount: 100,
+      status: 'pending',
+      stripePaymentIntentId: 'pi_test_123',
+      clientSecret: 'pi_test_123_secret_xyz',
+      createdAt: '2026-09-15T12:00:00.000Z',
+      succeededAt: null,
+    });
+
+    expect(topup).toEqual({
+      id: 'topup-1',
+      amount: 100,
+      status: 'pending',
+      stripePaymentIntentId: 'pi_test_123',
+      clientSecret: 'pi_test_123_secret_xyz',
+      createdAt: '2026-09-15T12:00:00.000Z',
+      succeededAt: null,
+    });
+  });
+
+  it('maps a succeeded topup response without clientSecret', () => {
+    const topup = mapWalletTopUp({
+      id: 'topup-2',
+      amount: 200,
+      status: 'succeeded',
+      stripePaymentIntentId: 'pi_test_456',
+      clientSecret: null,
+      createdAt: '2026-09-15T12:00:00.000Z',
+      succeededAt: '2026-09-15T12:05:00.000Z',
+    });
+
+    expect(topup.status).toBe('succeeded');
+    expect(topup.succeededAt).toBe('2026-09-15T12:05:00.000Z');
+    expect(topup.clientSecret).toBeNull();
+  });
+
+  it('falls back to pending status on unknown status', () => {
+    const topup = mapWalletTopUp({ status: 'unknown' });
+    expect(topup.status).toBe('pending');
+  });
+});
+
+describe('mapAdminWalletSummary', () => {
+  it('maps admin wallet summary correctly', () => {
+    const summary = mapAdminWalletSummary({
+      userId: 'usr-1',
+      balance: 150,
+      lifetimeToppedUp: 500,
+      lifetimeSpent: 350,
+      asOf: '2026-09-15T12:00:00.000Z',
+    });
+
+    expect(summary).toEqual({
+      userId: 'usr-1',
+      balance: 150,
+      lifetimeToppedUp: 500,
+      lifetimeSpent: 350,
+      asOf: '2026-09-15T12:00:00.000Z',
+    });
   });
 });
 
