@@ -1435,20 +1435,13 @@ export class AdminService {
   }
 
   /**
-   * referral-program v2 §3.10/§4.1: `PUT /api/admin/affiliates/{userId}/settings` — toggle
-   * `isActive` and/or set a per-affiliate commission-rate override (`null` clears it back to
-   * the global rate).
-   *
-   * KNOWN GAP (not fixable from this service alone — flagged to main session at the end of
-   * this round): the backend binds an omitted `commissionRatePercentOverride` the same as an
-   * explicit `null` (no tri-state "leave unchanged" semantics), and
-   * `AdminAffiliateSummaryResponse` only ever exposes the *effective* rate (override ?? global),
-   * never the raw override — so a caller that only wants to flip `isActive` (the table's quick
-   * toggle) has no way to read back and resend whatever override currently exists. Every call
-   * here therefore always sends `commissionRatePercentOverride` as given (defaulting to
-   * `null`), which — for the quick toggle path specifically — clears any pre-existing override.
-   * Fixing this needs a contract change (e.g. expose the raw override on the admin list
-   * response, or a dedicated `PATCH .../active` endpoint), not a frontend-only change.
+   * referral-program v2 §3.10/§4.1 (+ v3 §1.6/§4.2): `PUT /api/admin/affiliates/{userId}/settings`
+   * — toggle `isActive` and/or set a per-affiliate commission-rate override (`null` clears it
+   * back to the global rate). An omitted/`null` `commissionRatePercentOverride` on the wire
+   * always means "clear" (§3.10) — callers that don't intend to change it (e.g. the table's
+   * quick `isActive` toggle) must echo back the row's current
+   * `AdminAffiliateSummary.commissionRatePercentOverride` value themselves (see
+   * `affiliates.page.ts::toggleActive`).
    */
   async updateAffiliateSettings(
     userId: string,

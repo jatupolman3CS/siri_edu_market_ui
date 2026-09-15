@@ -1119,5 +1119,33 @@ describe('mapAdminAffiliateSummary', () => {
     expect(mapped.totalConversions).toBe(0);
     expect(mapped.commissionEarnedTotal).toBe(0);
   });
+
+  // referral-program v3 §1.6/§3.10 (AC-39): commissionRatePercentOverride is the raw override —
+  // distinct from the effective `commissionRatePercent` above — and must round-trip both when set
+  // and when absent, since the SDK type doesn't carry the field yet (TODO(contract) in mappers.ts).
+  it('maps commissionRatePercentOverride when present', () => {
+    const raw = {
+      userId: 'usr-1',
+      displayName: 'สมชาย นักแชร์',
+      email: 'somchai@example.com',
+      code: 'AFF100',
+      commissionRatePercent: 12,
+      commissionRatePercentOverride: 8.5,
+      isActive: true,
+      totalClicks: 50,
+      totalConversions: 10,
+      commissionEarnedTotal: 1500,
+    };
+
+    const mapped = mapAdminAffiliateSummary(raw);
+
+    expect(mapped.commissionRatePercentOverride).toBe(8.5);
+  });
+
+  it('maps commissionRatePercentOverride to null when absent (no override set)', () => {
+    const mapped = mapAdminAffiliateSummary({ userId: '', displayName: '', email: '', code: '' });
+
+    expect(mapped.commissionRatePercentOverride).toBeNull();
+  });
 });
 

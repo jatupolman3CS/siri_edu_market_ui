@@ -970,13 +970,20 @@ export interface AffiliateClickResult {
   expiresAt: string;
 }
 
-/** referral-program v2 §3.10: admin affiliate summary from `GET /api/admin/affiliates`. */
+/** referral-program v2 §3.10 (+ v3 §1.6/§3.10): admin affiliate summary from `GET /api/admin/affiliates`. */
 export interface AdminAffiliateSummary {
   userId: string;
   displayName: string;
   email: string;
   code: string;
   commissionRatePercent: number;
+  /**
+   * referral-program v3 §1.6/§3.10 (AC-39): raw `AFFILIATE_LINK.CommissionRatePercentOverride`
+   * value — `null` means no override is set (uses the global rate). Unlike
+   * `commissionRatePercent` (the effective rate), this is what a caller must echo back on
+   * `PUT .../settings` for a toggle-only update so it doesn't get wiped (§4.2).
+   */
+  commissionRatePercentOverride: number | null;
   isActive: boolean;
   totalClicks: number;
   totalConversions: number;

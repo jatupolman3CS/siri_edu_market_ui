@@ -22,6 +22,7 @@ describe('AdminAffiliatesPage', () => {
         email: 'somchai@example.com',
         code: 'SOMCHAI10',
         commissionRatePercent: 10,
+        commissionRatePercentOverride: 10,
         isActive: true,
         totalClicks: 55,
         totalConversions: 8,
@@ -33,6 +34,7 @@ describe('AdminAffiliatesPage', () => {
         email: 'somying@example.com',
         code: 'SOMYING20',
         commissionRatePercent: 15,
+        commissionRatePercentOverride: null,
         isActive: false,
         totalClicks: 12,
         totalConversions: 1,
@@ -85,13 +87,35 @@ describe('AdminAffiliatesPage', () => {
     expect(el.textContent).toContain('สมหญิง การค้า');
   });
 
-  it('toggles affiliate active state', async () => {
+  // referral-program v3 §1.6/§4.2, AC-40: toggling `isActive` must echo the row's existing
+  // `commissionRatePercentOverride` back — omitting it makes the backend clear the override (§3.10).
+  it('toggles affiliate active state and echoes the existing rate override (AC-40)', async () => {
     const item = component.items()[0];
+    expect(item.commissionRatePercentOverride).toBe(10);
+
     await component.toggleActive(item);
 
-    expect(updateSettingsSpy).toHaveBeenCalledWith('usr-1', { isActive: false });
+    expect(updateSettingsSpy).toHaveBeenCalledWith('usr-1', {
+      isActive: false,
+      commissionRatePercentOverride: 10,
+    });
     expect(component.items()[0].isActive).toBe(false);
+    // the override itself must be untouched by a toggle-only update
+    expect(component.items()[0].commissionRatePercentOverride).toBe(10);
     expect(messageSuccessSpy).toHaveBeenCalledWith('ปิดใช้งานสำเร็จ');
+  });
+
+  // AC-40: same behavior when the row has no override set — must echo `null`, not omit the field.
+  it('toggles affiliate active state and echoes null when no override is set (AC-40)', async () => {
+    const item = component.items()[1];
+    expect(item.commissionRatePercentOverride).toBeNull();
+
+    await component.toggleActive(item);
+
+    expect(updateSettingsSpy).toHaveBeenCalledWith('usr-2', {
+      isActive: true,
+      commissionRatePercentOverride: null,
+    });
   });
 
   it('opens and closes settings modal', () => {
@@ -122,5 +146,22 @@ describe('AdminAffiliatesPage', () => {
     expect(component.items()[0].commissionRatePercent).toBe(20);
     expect(messageSuccessSpy).toHaveBeenCalledWith('บันทึกการตั้งค่าสำเร็จ');
     expect(component.editingAffiliate()).toBeNull();
+  });
+
+  // referral-program v3 §1.6/§4.2, AC-41: an intentional "clear the override" via the rate-edit
+  // form must still send `commissionRatePercentOverride: null` — the AC-40 fix above only changes
+  // `toggleActive()`, `saveSettings()` is untouched and keeps working as before.
+  it('still sends commissionRatePercentOverride: null when the admin intentionally clears the rate (AC-41)', async () => {
+    const item = component.items()[0];
+    component.openSettingsModal(item);
+    component.rateOverrideInput.set(null);
+
+    await component.saveSettings();
+
+    expect(updateSettingsSpy).toHaveBeenCalledWith('usr-1', {
+      isActive: true,
+      commissionRatePercentOverride: null,
+    });
+    expect(messageSuccessSpy).toHaveBeenCalledWith('บันทึกการตั้งค่าสำเร็จ');
   });
 });

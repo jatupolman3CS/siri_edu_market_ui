@@ -1364,14 +1364,27 @@ export function mapAffiliateClickResult(d: AffiliateClickResponse): AffiliateCli
   };
 }
 
-/** referral-program v2 §3.10: `GET /api/admin/affiliates` item → {@link AdminAffiliateSummary}. */
+/**
+ * TODO(contract): wire after RP3-BE gate 1 + `npm run generate:api` — the generated
+ * `AdminAffiliateSummaryResponse` type doesn't carry `commissionRatePercentOverride` yet
+ * (referral-program v3 §1.6/§3.10, AC-39). Read it defensively via this local shape extension
+ * instead of casting to `any` / guessing a shape; once the SDK regenerates with the real field
+ * this extension becomes a no-op and `mapAdminAffiliateSummary` below needs no further changes.
+ */
+type AdminAffiliateSummaryResponseWithOverride = AdminAffiliateSummaryResponse & {
+  commissionRatePercentOverride?: number | null;
+};
+
+/** referral-program v2 §3.10 (+ v3 §1.6): `GET /api/admin/affiliates` item → {@link AdminAffiliateSummary}. */
 export function mapAdminAffiliateSummary(d: AdminAffiliateSummaryResponse): AdminAffiliateSummary {
+  const withOverride = d as AdminAffiliateSummaryResponseWithOverride;
   return {
     userId: d.userId ?? '',
     displayName: d.displayName ?? '',
     email: d.email ?? '',
     code: d.code ?? '',
     commissionRatePercent: d.commissionRatePercent ?? 0,
+    commissionRatePercentOverride: withOverride.commissionRatePercentOverride ?? null,
     isActive: d.isActive ?? true,
     totalClicks: d.totalClicks ?? 0,
     totalConversions: d.totalConversions ?? 0,

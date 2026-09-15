@@ -78,7 +78,13 @@ export class AdminAffiliatesPage {
     this.busyId.set(item.userId);
     const nextState = !item.isActive;
     try {
-      const ok = await this.admin.updateAffiliateSettings(item.userId, { isActive: nextState });
+      // referral-program v3 §1.6/§4.2 (AC-40): echo the row's current raw override back —
+      // omitting it here would make the backend interpret this toggle-only request as "clear
+      // the override" (§3.10), silently wiping whatever rate the admin set earlier.
+      const ok = await this.admin.updateAffiliateSettings(item.userId, {
+        isActive: nextState,
+        commissionRatePercentOverride: item.commissionRatePercentOverride,
+      });
       if (ok) {
         this.items.update((list) =>
           list.map((it) => (it.userId === item.userId ? { ...it, isActive: nextState } : it)),
