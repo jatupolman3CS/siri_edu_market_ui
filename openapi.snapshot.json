@@ -27218,6 +27218,13 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "priceAtAdd": {
+            "type": "number",
+            "format": "double"
+          },
+          "hasPriceDropped": {
+            "type": "boolean"
           }
         }
       }
