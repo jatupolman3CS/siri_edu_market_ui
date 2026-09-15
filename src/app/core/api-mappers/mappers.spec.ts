@@ -1045,8 +1045,8 @@ describe('mapAffiliateSummary', () => {
     expect(mapped.commissionEarnedTotal).toBe(300);
   });
 
-  it('falls back to safe defaults when fields are missing', () => {
-    const mapped = mapAffiliateSummary({});
+  it('falls back to safe defaults when optional fields are missing', () => {
+    const mapped = mapAffiliateSummary({ code: '', shareUrl: '' });
 
     expect(mapped.code).toBe('');
     expect(mapped.shareUrl).toBe('');
@@ -1072,7 +1072,7 @@ describe('mapAffiliateClickResult', () => {
   });
 
   it('defaults fields to empty strings when missing', () => {
-    const mapped = mapAffiliateClickResult({});
+    const mapped = mapAffiliateClickResult({ clickToken: '', expiresAt: '' });
 
     expect(mapped.clickToken).toBe('');
     expect(mapped.expiresAt).toBe('');
@@ -1106,8 +1106,8 @@ describe('mapAdminAffiliateSummary', () => {
     expect(mapped.commissionEarnedTotal).toBe(1500);
   });
 
-  it('falls back to defaults when fields are missing or null', () => {
-    const mapped = mapAdminAffiliateSummary({});
+  it('falls back to defaults when optional fields are missing', () => {
+    const mapped = mapAdminAffiliateSummary({ userId: '', displayName: '', email: '', code: '' });
 
     expect(mapped.userId).toBe('');
     expect(mapped.displayName).toBe('');

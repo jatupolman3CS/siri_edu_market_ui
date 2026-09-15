@@ -367,3 +367,29 @@ describe('LibraryService — ordersTab (order-status-tabs v1)', () => {
     expect(call?.search).not.toContain('tab');
   });
 });
+
+describe('LibraryService — getDocumentVersions (document-versioning v1 §3.5/§4.2)', () => {
+  it('GETs .../versions and maps the version history, newest first', async () => {
+    stubRoute('GET', '/api/library/doc-1/versions', [
+      { versionNumber: 2, changeNote: 'อัปเดตข้อสอบ', createdAt: '2026-09-10T00:00:00Z' },
+      { versionNumber: 1, changeNote: null, createdAt: '2026-08-01T00:00:00Z' },
+    ]);
+    const library = buildService();
+
+    const versions = await library.getDocumentVersions('doc-1');
+
+    expect(versions).toEqual([
+      { versionNumber: 2, changeNote: 'อัปเดตข้อสอบ', createdAt: '2026-09-10T00:00:00Z' },
+      { versionNumber: 1, changeNote: null, createdAt: '2026-08-01T00:00:00Z' },
+    ]);
+  });
+
+  it('returns an empty array (without throwing) when the caller has no LIBRARY_ITEM for this document (404)', async () => {
+    stubRoute('GET', '/api/library/doc-1/versions', { message: 'ไม่พบเอกสารนี้ในคลังของคุณ' }, 404);
+    const library = buildService();
+
+    const versions = await library.getDocumentVersions('doc-1');
+
+    expect(versions).toEqual([]);
+  });
+});

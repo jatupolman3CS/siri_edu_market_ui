@@ -362,9 +362,8 @@ export class SellerUploadPage {
         const mapped = mapSellerDocument(raw);
         this.mainFiles.set(mapped.mainFiles ?? []);
 
-        // document-versioning v1 §4.1: toast messages
-        const rawRec = raw as unknown as Record<string, unknown>;
-        const notifiedCount = rawRec['lastVersionNotifiedBuyerCount'] as number | null | undefined;
+        // document-versioning v1 §3.1/§4.1: toast messages
+        const notifiedCount = raw.lastVersionNotifiedBuyerCount;
 
         if (notifiedCount != null) {
           this.message.success(`อัปเดตเวอร์ชันใหม่แล้ว แจ้งเตือนผู้ซื้อเดิม ${notifiedCount} คน`);

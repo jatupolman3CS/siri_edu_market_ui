@@ -1,9 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { BuyerDocumentVersionInfo, LibraryItem, Order, WatermarkMode } from '../models';
-import { mapLibraryItem, mapOrder } from '../api-mappers/mappers';
+import { mapBuyerDocumentVersion, mapLibraryItem, mapOrder } from '../api-mappers/mappers';
 import { resolvePublicUrl, resolveApiUrl, resolveDownloadUrl } from '../api-runtime';
 import {
   getApiLibrary,
+  getApiLibraryByDocumentIdVersions,
   getApiOrders,
   postApiLibraryByDocumentIdDownload,
 } from '../api';
@@ -271,13 +272,19 @@ export class LibraryService {
   }
 
   /**
-   * document-versioning v1 §4.2/§6:
-   * Fetches version history for a library item from GET /api/library/{documentId}/versions.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   * document-versioning v1 §3.5/§4.2: `GET /api/library/{documentId}/versions` — version
+   * history for the "ดูสิ่งที่อัปเดต" link on a library item (`404` when the buyer has no
+   * `LIBRARY_ITEM` for this document — treated the same as "no history" here).
    */
   async getDocumentVersions(documentId: string): Promise<BuyerDocumentVersionInfo[]> {
-    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
-    return [];
+    try {
+      const result = await getApiLibraryByDocumentIdVersions({ path: { documentId } });
+      const data = unwrapSdkResult(result);
+      return (data ?? []).map(mapBuyerDocumentVersion);
+    } catch (e) {
+      this.apiFail.report('โหลดประวัติเวอร์ชัน', e);
+      return [];
+    }
   }
 
   private readonly _reviewState = signal<ActionState>(idleActionState());

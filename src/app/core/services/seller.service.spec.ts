@@ -13,6 +13,8 @@ type Route = { status?: number; body: unknown };
 
 let routes: Map<string, Route>;
 let realFetch: typeof globalThis.fetch;
+/** document-versioning v1 §1.3: lets a test assert the exact body a PUT call sent. */
+let requestBodies: { method: string; path: string; body: unknown }[];
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -27,12 +29,19 @@ function stubRoute(method: string, path: string, body: unknown, status = 200): v
 
 beforeEach(() => {
   routes = new Map();
+  requestBodies = [];
   realFetch = globalThis.fetch;
 
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(input, init);
     const url = new URL(request.url);
     const path = url.pathname;
+    const bodyText = await request.clone().text().catch(() => '');
+    requestBodies.push({
+      method: request.method,
+      path,
+      body: bodyText ? JSON.parse(bodyText) : undefined,
+    });
     const route = routes.get(`${request.method} ${path}`);
     if (!route) return jsonResponse({ title: 'no stub', status: 404, statusCode: 404 }, 404);
     return jsonResponse(route.body, route.status ?? 200);
@@ -390,5 +399,74 @@ describe('SellerService — getAutofillSuggestion (ai-listing-autofill v1 §0.2/
     const res = await service.getAutofillSuggestion({ sampleText: 'เนื้อหาไฟล์...' });
 
     expect(res.isSuccess).toBe(false);
+  });
+});
+
+describe('SellerService — setListedMainFile (document-versioning v1 §3.1/§4.1)', () => {
+  it('sends isNewVersion + changeNote to PUT .../listed-main-file and maps the response', async () => {
+    stubRoute('PUT', '/api/seller/documents/doc-1/listed-main-file', {
+      id: 'doc-1',
+      currentVersionNumber: 2,
+      lastVersionNotifiedBuyerCount: 5,
+    });
+    const service = buildService();
+
+    const result = await service.setListedMainFile('doc-1', 'file-2', {
+      isNewVersion: true,
+      changeNote: 'อัปเดตข้อสอบให้ตรงหลักสูตรปีล่าสุด',
+    });
+
+    const call = requestBodies.find(
+      (r) => r.method === 'PUT' && r.path === '/api/seller/documents/doc-1/listed-main-file',
+    );
+    expect(call?.body).toEqual({
+      fileId: 'file-2',
+      isNewVersion: true,
+      changeNote: 'อัปเดตข้อสอบให้ตรงหลักสูตรปีล่าสุด',
+    });
+    expect(result?.currentVersionNumber).toBe(2);
+    expect(result?.lastVersionNotifiedBuyerCount).toBe(5);
+  });
+
+  it('omits isNewVersion/changeNote when the caller does not opt into a new version', async () => {
+    stubRoute('PUT', '/api/seller/documents/doc-1/listed-main-file', { id: 'doc-1' });
+    const service = buildService();
+
+    await service.setListedMainFile('doc-1', 'file-2');
+
+    const call = requestBodies.find(
+      (r) => r.method === 'PUT' && r.path === '/api/seller/documents/doc-1/listed-main-file',
+    );
+    expect((call?.body as { fileId?: string }).fileId).toBe('file-2');
+    expect((call?.body as { isNewVersion?: boolean }).isNewVersion).toBeUndefined();
+  });
+});
+
+describe('SellerService — getDocumentVersions (document-versioning v1 §3.2/§4.1)', () => {
+  it('GETs .../versions and maps the version history, newest first', async () => {
+    stubRoute('GET', '/api/seller/documents/doc-1/versions', [
+      { versionNumber: 2, changeNote: 'แก้ไขล่าสุด', createdAt: '2026-09-10T00:00:00Z', notifiedBuyerCount: 5 },
+      { versionNumber: 1, changeNote: null, createdAt: '2026-08-01T00:00:00Z', notifiedBuyerCount: 0 },
+    ]);
+    const service = buildService();
+
+    const versions = await service.getDocumentVersions('doc-1');
+
+    expect(versions).toHaveLength(2);
+    expect(versions[0]).toEqual({
+      versionNumber: 2,
+      changeNote: 'แก้ไขล่าสุด',
+      createdAt: '2026-09-10T00:00:00Z',
+      notifiedBuyerCount: 5,
+    });
+  });
+
+  it('returns an empty array (without throwing) when the request fails', async () => {
+    stubRoute('GET', '/api/seller/documents/doc-1/versions', { message: 'boom' }, 500);
+    const service = buildService();
+
+    const versions = await service.getDocumentVersions('doc-1');
+
+    expect(versions).toEqual([]);
   });
 });

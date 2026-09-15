@@ -6,6 +6,7 @@
 import type {
   AdminAdsCampaignResponse,
   AdminAdsPlacementResponse,
+  AdminAffiliateSummaryResponse,
   AdminPendingDocumentResponse,
   AdminSubscriptionListItemResponse,
   AdminTransactionResponse,
@@ -14,11 +15,14 @@ import type {
   AdsCampaignQuoteResponse,
   AdsCampaignResponse,
   AdsPlacementResponse,
+  AffiliateClickResponse,
+  AffiliateSummaryResponse,
   AnnouncementAdminResponse,
   AnnouncementImageResponse,
   AnnouncementPopupResponse,
   BundleDetailResponse,
   BundleResponse,
+  BuyerDocumentVersionResponse,
   CategoryResponse,
   CategoryDetailResponse,
   LibraryItemResponse,
@@ -37,6 +41,7 @@ import type {
   SellerDashboardResponse,
   SellerDocumentResponse,
   SellerDocumentSummaryResponse,
+  SellerDocumentVersionResponse,
   SellerInfoResponse,
   SellerInsightsResponse,
   SellerProfileResponse,
@@ -68,6 +73,7 @@ import type {
   AnnouncementImage,
   AnnouncementPopup,
   Bundle,
+  BuyerDocumentVersionInfo,
   Category,
   DocumentItem,
   DocumentReview,
@@ -96,6 +102,7 @@ import type {
   SavedPaymentMethod,
   Seller,
   SellerBalanceEntry,
+  SellerDocumentVersionInfo,
   SellerInsights,
   SellerQnaItem,
   SellerStats,
@@ -593,12 +600,11 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     createdAt: item.purchasedAt ?? '',
     updatedAt: item.purchasedAt ?? '',
     reviews: [],
-    // document-versioning v1 §6: seller-facing fields on the library stub (buyer-facing shape).
-    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
-    currentVersionNumber: (item as unknown as Record<string, unknown>)['currentVersionNumber'] as number | undefined,
+    // document-versioning v1 §6: seller-facing fields on the library stub (buyer-facing shape) —
+    // wired to the real `LibraryItemResponse.currentVersionNumber` (round 2, post-regen).
+    currentVersionNumber: item.currentVersionNumber ?? undefined,
     lastVersionNotifiedBuyerCount: undefined,
   };
-  const rawItem = item as unknown as Record<string, unknown>;
   return {
     document: docStub,
     purchasedAt: item.purchasedAt ?? '',
@@ -608,13 +614,38 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     isReviewed: item.isReviewed ?? false,
     myReviewId: item.myReviewId ?? undefined,
     myRating: item.myRating ?? undefined,
-    isRead: (rawItem['isRead'] as boolean | undefined) ?? false,
-    markedReadAt: (rawItem['markedReadAt'] as string | undefined) ?? undefined,
-    // document-versioning v1 §6: buyer library fields.
-    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
-    hasNewVersion: (rawItem['hasNewVersion'] as boolean | undefined) ?? false,
-    currentVersionNumber: (rawItem['currentVersionNumber'] as number | undefined) ?? undefined,
-    latestChangeNote: (rawItem['latestChangeNote'] as string | null | undefined) ?? null,
+    isRead: item.isRead ?? false,
+    markedReadAt: item.markedReadAt ?? undefined,
+    // document-versioning v1 §3.3/§6: wired to the real `LibraryItemResponse` fields
+    // (round 2, post-regen).
+    hasNewVersion: item.hasNewVersion ?? false,
+    currentVersionNumber: item.currentVersionNumber ?? undefined,
+    latestChangeNote: item.latestChangeNote ?? null,
+  };
+}
+
+/**
+ * document-versioning v1 §3.2/§6: `GET /api/seller/documents/{id}/versions` row →
+ * {@link SellerDocumentVersionInfo}.
+ */
+export function mapSellerDocumentVersion(d: SellerDocumentVersionResponse): SellerDocumentVersionInfo {
+  return {
+    versionNumber: d.versionNumber ?? 0,
+    changeNote: d.changeNote ?? null,
+    createdAt: d.createdAt ?? '',
+    notifiedBuyerCount: d.notifiedBuyerCount ?? null,
+  };
+}
+
+/**
+ * document-versioning v1 §3.5/§6: `GET /api/library/{documentId}/versions` row →
+ * {@link BuyerDocumentVersionInfo}.
+ */
+export function mapBuyerDocumentVersion(d: BuyerDocumentVersionResponse): BuyerDocumentVersionInfo {
+  return {
+    versionNumber: d.versionNumber ?? 0,
+    changeNote: d.changeNote ?? null,
+    createdAt: d.createdAt ?? '',
   };
 }
 
@@ -944,6 +975,10 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     bundleDocumentIds: [],
     mainFiles,
     listedMainFileId: (d.listedMainFileId ?? '').trim() || mainFiles?.find((m) => m.isListedForSale)?.id,
+    // document-versioning v1 §3.1/§6: wired to the real `SellerDocumentResponse` fields
+    // (round 2, post-regen).
+    currentVersionNumber: d.currentVersionNumber ?? undefined,
+    lastVersionNotifiedBuyerCount: d.lastVersionNotifiedBuyerCount ?? null,
   };
 }
 
@@ -1306,53 +1341,41 @@ export function mapAdminSubscriptionListItem(
 }
 
 // ====== Affiliate mappers (referral-program v2, docs/contracts/referral-program.md §3.7–§3.10) ======
-// TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน — round 1 stub shapes only
+// Round 2 (post-regen): every mapper below reads the real generated response types.
 
-/**
- * referral-program v2 §3.7: maps the raw `GET /api/me/affiliate` response to {@link AffiliateSummary}.
- * TODO(contract): replace `unknown` param with the generated `AffiliateSummaryResponse` type after regen.
- */
-export function mapAffiliateSummary(d: unknown): AffiliateSummary {
-  const r = d as Record<string, unknown>;
+/** referral-program v2 §3.7: `GET /api/me/affiliate` response → {@link AffiliateSummary}. */
+export function mapAffiliateSummary(d: AffiliateSummaryResponse): AffiliateSummary {
   return {
-    code: (r['code'] as string) ?? '',
-    shareUrl: (r['shareUrl'] as string) ?? '',
-    commissionRatePercent: (r['commissionRatePercent'] as number) ?? 0,
-    isActive: (r['isActive'] as boolean) ?? true,
-    totalClicks: (r['totalClicks'] as number) ?? 0,
-    totalConversions: (r['totalConversions'] as number) ?? 0,
-    commissionEarnedTotal: (r['commissionEarnedTotal'] as number) ?? 0,
+    code: d.code ?? '',
+    shareUrl: d.shareUrl ?? '',
+    commissionRatePercent: d.commissionRatePercent ?? 0,
+    isActive: d.isActive ?? true,
+    totalClicks: d.totalClicks ?? 0,
+    totalConversions: d.totalConversions ?? 0,
+    commissionEarnedTotal: d.commissionEarnedTotal ?? 0,
   };
 }
 
-/**
- * referral-program v2 §3.8: maps the raw `POST /api/affiliate/click` response to {@link AffiliateClickResult}.
- * TODO(contract): replace `unknown` param with the generated `AffiliateClickResponse` type after regen.
- */
-export function mapAffiliateClickResult(d: unknown): AffiliateClickResult {
-  const r = d as Record<string, unknown>;
+/** referral-program v2 §3.8: `POST /api/affiliate/click` response → {@link AffiliateClickResult}. */
+export function mapAffiliateClickResult(d: AffiliateClickResponse): AffiliateClickResult {
   return {
-    clickToken: (r['clickToken'] as string) ?? '',
-    expiresAt: (r['expiresAt'] as string) ?? '',
+    clickToken: d.clickToken ?? '',
+    expiresAt: d.expiresAt ?? '',
   };
 }
 
-/**
- * referral-program v2 §3.10: maps the raw `GET /api/admin/affiliates` item to {@link AdminAffiliateSummary}.
- * TODO(contract): replace `unknown` param with the generated `AdminAffiliateSummaryResponse` type after regen.
- */
-export function mapAdminAffiliateSummary(d: unknown): AdminAffiliateSummary {
-  const r = d as Record<string, unknown>;
+/** referral-program v2 §3.10: `GET /api/admin/affiliates` item → {@link AdminAffiliateSummary}. */
+export function mapAdminAffiliateSummary(d: AdminAffiliateSummaryResponse): AdminAffiliateSummary {
   return {
-    userId: (r['userId'] as string) ?? '',
-    displayName: (r['displayName'] as string) ?? '',
-    email: (r['email'] as string) ?? '',
-    code: (r['code'] as string) ?? '',
-    commissionRatePercent: (r['commissionRatePercent'] as number) ?? 0,
-    isActive: (r['isActive'] as boolean) ?? true,
-    totalClicks: (r['totalClicks'] as number) ?? 0,
-    totalConversions: (r['totalConversions'] as number) ?? 0,
-    commissionEarnedTotal: (r['commissionEarnedTotal'] as number) ?? 0,
+    userId: d.userId ?? '',
+    displayName: d.displayName ?? '',
+    email: d.email ?? '',
+    code: d.code ?? '',
+    commissionRatePercent: d.commissionRatePercent ?? 0,
+    isActive: d.isActive ?? true,
+    totalClicks: d.totalClicks ?? 0,
+    totalConversions: d.totalConversions ?? 0,
+    commissionEarnedTotal: d.commissionEarnedTotal ?? 0,
   };
 }
 

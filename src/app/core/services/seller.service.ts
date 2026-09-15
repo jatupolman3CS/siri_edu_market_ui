@@ -13,6 +13,7 @@ import {
   mapSellerBalanceEntry,
   mapSellerDocument,
   mapSellerDocumentSummary,
+  mapSellerDocumentVersion,
   mapSellerQna,
   mapSellerStats,
 } from '../api-mappers/mappers';
@@ -62,6 +63,7 @@ import {
   postApiSellerDocumentsByIdMainFiles,
   putApiSellerDocumentsByIdListedMainFile,
 } from '../api/seller-document-main-files';
+import { getApiSellerDocumentsByIdVersions } from '../api';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager, type PagedResult } from './infinite-pager';
 
@@ -445,8 +447,8 @@ export class SellerService {
   }
 
   /**
-   * document-versioning v1 §4.1/§6:
-   * Sets listed main file with optional versioning parameters.
+   * document-versioning v1 §3.1/§4.1: sets the listed main file, optionally declaring the
+   * switch as a new version (records `DOCUMENT_VERSION` + notifies existing buyers server-side).
    */
   async setListedMainFile(
     id: string,
@@ -454,15 +456,13 @@ export class SellerService {
     options?: { isNewVersion?: boolean; changeNote?: string },
   ): Promise<SellerDocumentResponse | null> {
     try {
-      // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
-      const bodyPayload = {
-        fileId,
-        isNewVersion: options?.isNewVersion,
-        changeNote: options?.changeNote,
-      };
       const result = await putApiSellerDocumentsByIdListedMainFile({
         path: { id },
-        body: bodyPayload as unknown as Parameters<typeof putApiSellerDocumentsByIdListedMainFile>[0]['body'],
+        body: {
+          fileId,
+          isNewVersion: options?.isNewVersion,
+          changeNote: options?.changeNote,
+        },
       });
       return unwrapSdkResult(result) ?? null;
     } catch (e) {
@@ -472,13 +472,18 @@ export class SellerService {
   }
 
   /**
-   * document-versioning v1 §4.1/§6:
-   * Fetches version history for a seller document from GET /api/seller/documents/{id}/versions.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   * document-versioning v1 §3.2/§4.1: `GET /api/seller/documents/{id}/versions` — version
+   * history for the "ดูประวัติเวอร์ชัน" link on the edit-document page.
    */
   async getDocumentVersions(id: string): Promise<SellerDocumentVersionInfo[]> {
-    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
-    return [];
+    try {
+      const result = await getApiSellerDocumentsByIdVersions({ path: { id } });
+      const data = unwrapSdkResult(result);
+      return (data ?? []).map(mapSellerDocumentVersion);
+    } catch (e) {
+      this.apiFail.report('โหลดประวัติเวอร์ชัน', e);
+      return [];
+    }
   }
 
   async getMainFileDownloadUrl(

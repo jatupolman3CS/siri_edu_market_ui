@@ -326,14 +326,13 @@ export interface DocumentItem {
   /** seller-ads-promotion v1 §3.9.1: the campaign id to report impression/click against — `undefined` when `isSponsored` is falsy. */
   sponsoredCampaignId?: string;
   /**
-   * document-versioning v1 §6: current version number for this listing.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   * document-versioning v1 §3.1/§6: current version number for this listing — mirrors
+   * `SellerDocumentResponse.currentVersionNumber` (round 2, post-regen).
    */
   currentVersionNumber?: number;
   /**
-   * document-versioning v1 §6: buyer count notified on last new-version push.
+   * document-versioning v1 §3.1/§6: buyer count notified on last new-version push.
    * `null` when the current version was saved without the new-version flag.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
    */
   lastVersionNotifiedBuyerCount?: number | null;
 }
@@ -423,21 +422,20 @@ export interface LibraryItem {
   isRead: boolean;
   markedReadAt?: string;
   /**
-   * document-versioning v1 §6: true when the library item's version number lags behind the
-   * document's current version, meaning the buyer has a new file to download.
-   * After download, set `false` optimistically without refetch.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   * document-versioning v1 §3.3/§6: true when the library item's version number lags behind
+   * the document's current version, meaning the buyer has a new file to download. After
+   * download, set `false` optimistically without refetch — mirrors
+   * `LibraryItemResponse.hasNewVersion` (round 2, post-regen).
    */
   hasNewVersion: boolean;
   /**
-   * document-versioning v1 §6: buyer-visible version number of the document at purchase time.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   * document-versioning v1 §3.3/§6: buyer-visible version number of the document at purchase
+   * time.
    */
   currentVersionNumber?: number;
   /**
-   * document-versioning v1 §6: change note from the latest version, truncated at ~100 chars on
-   * card view. Shown in full inside the version history modal.
-   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   * document-versioning v1 §3.3/§6: change note from the latest version, truncated at ~100
+   * chars on card view. Shown in full inside the version history modal.
    */
   latestChangeNote?: string | null;
 }
@@ -931,12 +929,10 @@ export interface ReferralCodeValidation {
 }
 
 // ====== Document Versioning (document-versioning v1, docs/contracts/document-versioning.md §4/§6) ======
-// TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน — round 1 stub shapes only
 
 /**
- * document-versioning v1 §6: seller-facing version history row from
+ * document-versioning v1 §3.2/§6: seller-facing version history row from
  * `GET /api/seller/documents/{id}/versions`.
- * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
  */
 export interface SellerDocumentVersionInfo {
   versionNumber: number;
@@ -946,9 +942,8 @@ export interface SellerDocumentVersionInfo {
 }
 
 /**
- * document-versioning v1 §6: buyer-facing version history row from
+ * document-versioning v1 §3.5/§6: buyer-facing version history row from
  * `GET /api/library/{documentId}/versions`.
- * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
  */
 export interface BuyerDocumentVersionInfo {
   versionNumber: number;
@@ -957,12 +952,8 @@ export interface BuyerDocumentVersionInfo {
 }
 
 // ====== Affiliate Program (referral-program v2 / affiliate, docs/contracts/referral-program.md §3.7–§3.12) ======
-// TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน — round 1 stub shapes only
 
-/**
- * referral-program v2 §3.7: buyer's own affiliate summary from `GET /api/me/affiliate`.
- * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
- */
+/** referral-program v2 §3.7: buyer's own affiliate summary from `GET /api/me/affiliate`. */
 export interface AffiliateSummary {
   code: string;
   shareUrl: string;
@@ -973,19 +964,13 @@ export interface AffiliateSummary {
   commissionEarnedTotal: number;
 }
 
-/**
- * referral-program v2 §3.8: response from `POST /api/affiliate/click`.
- * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
- */
+/** referral-program v2 §3.8: response from `POST /api/affiliate/click`. */
 export interface AffiliateClickResult {
   clickToken: string;
   expiresAt: string;
 }
 
-/**
- * referral-program v2 §3.10: admin affiliate summary from `GET /api/admin/affiliates`.
- * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
- */
+/** referral-program v2 §3.10: admin affiliate summary from `GET /api/admin/affiliates`. */
 export interface AdminAffiliateSummary {
   userId: string;
   displayName: string;
