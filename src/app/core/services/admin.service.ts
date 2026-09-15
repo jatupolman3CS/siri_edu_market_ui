@@ -18,6 +18,7 @@ import type {
   AdminUserModerationEntry,
   AdminUserPurchaseStats,
   AdminUserSellerStats,
+  AdminAffiliateSummary,
   SuspendUserRequest,
   BanUserRequest,
   ReinstateUserRequest,
@@ -1407,5 +1408,37 @@ export class AdminService {
       this.apiFail.report('ปลดระงับบัญชีผู้ใช้', e);
       throw e;
     }
+  }
+
+  /**
+   * referral-program v2 §3.10 / §4.1:
+   * GET /api/admin/affiliates — paged list of affiliate summaries.
+   * TODO(contract): wire หลัง regen คืน empty page ไปก่อน
+   */
+  async getAffiliates(
+    page = 1,
+    pageSize = 10,
+  ): Promise<PagedResponse<AdminAffiliateSummary>> {
+    // TODO(contract): wire หลัง regen คืน empty page ไปก่อน
+    return {
+      items: [],
+      page,
+      pageSize,
+      totalCount: 0,
+      totalPages: 0,
+    };
+  }
+
+  /**
+   * referral-program v2 §3.11 / §4.1:
+   * PUT /api/admin/affiliates/{userId}/settings — update affiliate active status or rate override.
+   * TODO(contract): wire หลัง regen
+   */
+  async updateAffiliateSettings(
+    _userId: string,
+    _input: { isActive?: boolean; commissionRatePercentOverride?: number | null },
+  ): Promise<boolean> {
+    // TODO(contract): wire หลัง regen
+    return true;
   }
 }

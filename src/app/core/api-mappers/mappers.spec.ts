@@ -14,6 +14,9 @@ import {
   mapReferralCodeValidation,
   mapExamHubPage,
   mapLineConnectionStatus,
+  mapAffiliateSummary,
+  mapAffiliateClickResult,
+  mapAdminAffiliateSummary,
 } from './mappers';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import { DEFAULT_STORE_READINESS } from '../models';
@@ -1018,3 +1021,103 @@ describe('mapLineConnectionStatus', () => {
     expect(status.status).toBe('NotConnected');
   });
 });
+
+describe('mapAffiliateSummary', () => {
+  it('maps complete payload correctly', () => {
+    const raw = {
+      code: 'AFF12345',
+      shareUrl: 'http://localhost:4200/marketplace?aff=AFF12345',
+      commissionRatePercent: 10,
+      isActive: true,
+      totalClicks: 15,
+      totalConversions: 3,
+      commissionEarnedTotal: 300,
+    };
+
+    const mapped = mapAffiliateSummary(raw);
+
+    expect(mapped.code).toBe('AFF12345');
+    expect(mapped.shareUrl).toBe('http://localhost:4200/marketplace?aff=AFF12345');
+    expect(mapped.commissionRatePercent).toBe(10);
+    expect(mapped.isActive).toBe(true);
+    expect(mapped.totalClicks).toBe(15);
+    expect(mapped.totalConversions).toBe(3);
+    expect(mapped.commissionEarnedTotal).toBe(300);
+  });
+
+  it('falls back to safe defaults when fields are missing', () => {
+    const mapped = mapAffiliateSummary({});
+
+    expect(mapped.code).toBe('');
+    expect(mapped.shareUrl).toBe('');
+    expect(mapped.commissionRatePercent).toBe(0);
+    expect(mapped.isActive).toBe(true);
+    expect(mapped.totalClicks).toBe(0);
+    expect(mapped.totalConversions).toBe(0);
+    expect(mapped.commissionEarnedTotal).toBe(0);
+  });
+});
+
+describe('mapAffiliateClickResult', () => {
+  it('maps valid response correctly', () => {
+    const raw = {
+      clickToken: 'tok-abc-123',
+      expiresAt: '2026-10-15T00:00:00.000Z',
+    };
+
+    const mapped = mapAffiliateClickResult(raw);
+
+    expect(mapped.clickToken).toBe('tok-abc-123');
+    expect(mapped.expiresAt).toBe('2026-10-15T00:00:00.000Z');
+  });
+
+  it('defaults fields to empty strings when missing', () => {
+    const mapped = mapAffiliateClickResult({});
+
+    expect(mapped.clickToken).toBe('');
+    expect(mapped.expiresAt).toBe('');
+  });
+});
+
+describe('mapAdminAffiliateSummary', () => {
+  it('maps complete admin affiliate payload correctly', () => {
+    const raw = {
+      userId: 'usr-1',
+      displayName: 'สมชาย นักแชร์',
+      email: 'somchai@example.com',
+      code: 'AFF100',
+      commissionRatePercent: 12,
+      isActive: true,
+      totalClicks: 50,
+      totalConversions: 10,
+      commissionEarnedTotal: 1500,
+    };
+
+    const mapped = mapAdminAffiliateSummary(raw);
+
+    expect(mapped.userId).toBe('usr-1');
+    expect(mapped.displayName).toBe('สมชาย นักแชร์');
+    expect(mapped.email).toBe('somchai@example.com');
+    expect(mapped.code).toBe('AFF100');
+    expect(mapped.commissionRatePercent).toBe(12);
+    expect(mapped.isActive).toBe(true);
+    expect(mapped.totalClicks).toBe(50);
+    expect(mapped.totalConversions).toBe(10);
+    expect(mapped.commissionEarnedTotal).toBe(1500);
+  });
+
+  it('falls back to defaults when fields are missing or null', () => {
+    const mapped = mapAdminAffiliateSummary({});
+
+    expect(mapped.userId).toBe('');
+    expect(mapped.displayName).toBe('');
+    expect(mapped.email).toBe('');
+    expect(mapped.code).toBe('');
+    expect(mapped.commissionRatePercent).toBe(0);
+    expect(mapped.isActive).toBe(true);
+    expect(mapped.totalClicks).toBe(0);
+    expect(mapped.totalConversions).toBe(0);
+    expect(mapped.commissionEarnedTotal).toBe(0);
+  });
+});
+

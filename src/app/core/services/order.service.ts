@@ -30,6 +30,7 @@ export interface CreateOrderInput {
   saveNewCard?: boolean;
   referralCode?: string;
   useReferralCredit?: boolean;
+  affiliateClickToken?: string;
 }
 
 export type CreateOrderOutcome =
@@ -85,6 +86,7 @@ export class OrderService {
           saveNewCard: input.saveNewCard,
           referralCode: input.referralCode,
           useReferralCredit: input.useReferralCredit,
+          affiliateClickToken: input.affiliateClickToken,
         } as unknown as { savedPaymentMethodId?: string; saveNewCard?: boolean },
       });
       const data = unwrapSdkResult(result);

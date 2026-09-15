@@ -14,8 +14,9 @@ import type {
   Seller,
 } from '../../../core/models';
 import { REFERRAL_HINT_STORAGE_KEY } from '../../../core/util/referral-capture';
+import { AFFILIATE_STORAGE_KEY } from '../../../core/util/affiliate-capture';
 
-if (typeof globalThis.localStorage === 'undefined') {
+if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.clear !== 'function') {
   const store = new Map<string, string>();
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
@@ -429,5 +430,33 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
       useReferralCredit: true,
     });
   });
+
+  it('includes affiliateClickToken in orders.create when token is present in storage', async () => {
+    localStorage.setItem(
+      AFFILIATE_STORAGE_KEY,
+      JSON.stringify({
+        code: 'PARTNER99',
+        clickToken: 'click-token-12345',
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      }),
+    );
+
+    const referral = fakeReferralService();
+    const { fixture, orders } = render(fakePaymentMethods([]), referral);
+    await settle();
+
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+    await fixture.componentInstance.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        saveNewCard: false,
+        affiliateClickToken: 'click-token-12345',
+      }),
+    );
+
+    localStorage.removeItem(AFFILIATE_STORAGE_KEY);
+  });
 });
+
 

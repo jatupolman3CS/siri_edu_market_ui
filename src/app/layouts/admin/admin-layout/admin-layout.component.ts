@@ -99,6 +99,8 @@ export class AdminLayoutComponent {
         badge: this.newFeedbackCount() > 0 ? String(this.newFeedbackCount()) : undefined,
       },
       { label: isTh ? 'ถอนเงินผู้ขาย' : 'Seller Payouts', href: '/admin/payouts', icon: 'wallet' as const },
+      // referral-program v2 §4.1: affiliate links management
+      { label: isTh ? 'ลิงก์พันธมิตร' : 'Affiliates', href: '/admin/affiliates', icon: 'chart' as const },
       // seller-ads-promotion v1 §4.1: all-campaigns queue + placement price/capacity editor.
       { label: isTh ? 'โฆษณา' : 'Ads', href: '/admin/ads', icon: 'flag' as const },
       // GAP-01: review queue for buyers applying to sell.

@@ -52,6 +52,7 @@ import type {
 import type {
   AdminAdsCampaign,
   AdminAdsPlacement,
+  AdminAffiliateSummary,
   AdminSubscriptionListItem,
   AdminTransaction,
   AdsAvailability,
@@ -61,6 +62,8 @@ import type {
   AdsCampaignStatus,
   AdsPlacement,
   AdsStopReason,
+  AffiliateSummary,
+  AffiliateClickResult,
   AnnouncementAdmin,
   AnnouncementImage,
   AnnouncementPopup,
@@ -1302,6 +1305,57 @@ export function mapAdminSubscriptionListItem(
   };
 }
 
+// ====== Affiliate mappers (referral-program v2, docs/contracts/referral-program.md §3.7–§3.10) ======
+// TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน — round 1 stub shapes only
+
+/**
+ * referral-program v2 §3.7: maps the raw `GET /api/me/affiliate` response to {@link AffiliateSummary}.
+ * TODO(contract): replace `unknown` param with the generated `AffiliateSummaryResponse` type after regen.
+ */
+export function mapAffiliateSummary(d: unknown): AffiliateSummary {
+  const r = d as Record<string, unknown>;
+  return {
+    code: (r['code'] as string) ?? '',
+    shareUrl: (r['shareUrl'] as string) ?? '',
+    commissionRatePercent: (r['commissionRatePercent'] as number) ?? 0,
+    isActive: (r['isActive'] as boolean) ?? true,
+    totalClicks: (r['totalClicks'] as number) ?? 0,
+    totalConversions: (r['totalConversions'] as number) ?? 0,
+    commissionEarnedTotal: (r['commissionEarnedTotal'] as number) ?? 0,
+  };
+}
+
+/**
+ * referral-program v2 §3.8: maps the raw `POST /api/affiliate/click` response to {@link AffiliateClickResult}.
+ * TODO(contract): replace `unknown` param with the generated `AffiliateClickResponse` type after regen.
+ */
+export function mapAffiliateClickResult(d: unknown): AffiliateClickResult {
+  const r = d as Record<string, unknown>;
+  return {
+    clickToken: (r['clickToken'] as string) ?? '',
+    expiresAt: (r['expiresAt'] as string) ?? '',
+  };
+}
+
+/**
+ * referral-program v2 §3.10: maps the raw `GET /api/admin/affiliates` item to {@link AdminAffiliateSummary}.
+ * TODO(contract): replace `unknown` param with the generated `AdminAffiliateSummaryResponse` type after regen.
+ */
+export function mapAdminAffiliateSummary(d: unknown): AdminAffiliateSummary {
+  const r = d as Record<string, unknown>;
+  return {
+    userId: (r['userId'] as string) ?? '',
+    displayName: (r['displayName'] as string) ?? '',
+    email: (r['email'] as string) ?? '',
+    code: (r['code'] as string) ?? '',
+    commissionRatePercent: (r['commissionRatePercent'] as number) ?? 0,
+    isActive: (r['isActive'] as boolean) ?? true,
+    totalClicks: (r['totalClicks'] as number) ?? 0,
+    totalConversions: (r['totalConversions'] as number) ?? 0,
+    commissionEarnedTotal: (r['commissionEarnedTotal'] as number) ?? 0,
+  };
+}
+
 // ====== Seller Ads Promotion mappers (seller-ads-promotion v1, docs/contracts/seller-ads-promotion.md §3) ======
 // F-14 round 2 (this round): backend shipped and `npm run generate:api` regenerated the SDK
 // against the live backend — every mapper below reads the real generated response types.
@@ -1433,3 +1487,4 @@ export function mapAdminAdsCampaign(d: AdminAdsCampaignResponse): AdminAdsCampai
     sellerAvailableBalance: d.sellerAvailableBalance ?? 0,
   };
 }
+

@@ -19,6 +19,7 @@ import {
 import type { CreateOrderInput } from '../../../core/services/order.service';
 import type { ReferralCodeValidation } from '../../../core/models';
 import { getReferralCodeHint } from '../../../core/util/referral-capture';
+import { getAffiliateClickToken } from '../../../core/util/affiliate-capture';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -287,6 +288,10 @@ export class BuyerCheckoutPage implements OnDestroy {
     }
     if (this.useReferralCredit()) {
       createInput.useReferralCredit = true;
+    }
+    const affiliateClickToken = getAffiliateClickToken();
+    if (affiliateClickToken) {
+      createInput.affiliateClickToken = affiliateClickToken;
     }
 
     this.busy.set(true);

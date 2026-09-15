@@ -956,6 +956,48 @@ export interface BuyerDocumentVersionInfo {
   createdAt: string;
 }
 
+// ====== Affiliate Program (referral-program v2 / affiliate, docs/contracts/referral-program.md §3.7–§3.12) ======
+// TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน — round 1 stub shapes only
+
+/**
+ * referral-program v2 §3.7: buyer's own affiliate summary from `GET /api/me/affiliate`.
+ * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+ */
+export interface AffiliateSummary {
+  code: string;
+  shareUrl: string;
+  commissionRatePercent: number;
+  isActive: boolean;
+  totalClicks: number;
+  totalConversions: number;
+  commissionEarnedTotal: number;
+}
+
+/**
+ * referral-program v2 §3.8: response from `POST /api/affiliate/click`.
+ * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+ */
+export interface AffiliateClickResult {
+  clickToken: string;
+  expiresAt: string;
+}
+
+/**
+ * referral-program v2 §3.10: admin affiliate summary from `GET /api/admin/affiliates`.
+ * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+ */
+export interface AdminAffiliateSummary {
+  userId: string;
+  displayName: string;
+  email: string;
+  code: string;
+  commissionRatePercent: number;
+  isActive: boolean;
+  totalClicks: number;
+  totalConversions: number;
+  commissionEarnedTotal: number;
+}
+
 // ====== Seller Ads Promotion (seller-ads-promotion v1, docs/contracts/seller-ads-promotion.md §3) ======
 // F-14 — flat-fee ad campaigns a seller buys with their existing ledger balance (§1.2 DEC-1/DEC-2).
 // Mirrors the live, generated `AdsPlacementResponse` / `AdsCampaignResponse` / etc. — every field

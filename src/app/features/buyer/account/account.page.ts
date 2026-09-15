@@ -9,6 +9,7 @@ import { NotificationSettingsComponent } from '../../../shared/components/notifi
 import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
 import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
 import { ReferralCardComponent } from '../../../shared/components/referral-card/referral-card.component';
+import { AffiliateLinkCardComponent } from '../../../shared/components/affiliate-link-card/affiliate-link-card.component';
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
 
 /**
@@ -34,6 +35,7 @@ import { ExamCountdownFormComponent } from '../../../shared/components/exam-coun
     NotificationSettingsComponent,
     SavedCardsComponent,
     ReferralCardComponent,
+    AffiliateLinkCardComponent,
     ExamCountdownFormComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,6 +56,7 @@ export class AccountPage {
     { fragment: 'notifications', label: 'การแจ้งเตือน', icon: 'bell' as const },
     { fragment: 'cards', label: 'บัตรที่บันทึกไว้', icon: 'wallet' as const },
     { fragment: 'referral', label: 'ชวนเพื่อน', icon: 'tag' as const },
+    { fragment: 'affiliate', label: 'พันธมิตร', icon: 'wallet' as const },
     { fragment: 'exam-countdown', label: 'โหมดใกล้สอบ', icon: 'flag' as const },
     { fragment: 'shortcuts', label: 'ทางลัด', icon: 'dashboard' as const },
   ];
