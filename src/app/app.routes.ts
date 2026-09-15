@@ -459,15 +459,6 @@ export const routes: Routes = [
             (m) => m.AdminPayoutsPage,
           ),
       },
-      // referral-program v2 §4.1: admin management for affiliate links.
-      {
-        path: 'affiliates',
-        loadComponent: () =>
-          import('./features/admin/affiliates/affiliates.page').then(
-            (m) => m.AdminAffiliatesPage,
-          ),
-        title: 'จัดการลิงก์พันธมิตร — Admin',
-      },
       // seller-ads-promotion v1 §4.1: all-campaigns queue + stop + placement price/capacity editor.
       {
         path: 'ads',
