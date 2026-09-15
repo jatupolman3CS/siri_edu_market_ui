@@ -7,7 +7,7 @@ import { SellerUploadPage } from './upload.page';
 import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { downloadUrlForStorageKey } from '../../../core/api-runtime';
-import type { PlatformStats } from '../../../core/models';
+import type { DocumentItem, PlatformStats } from '../../../core/models';
 import type {
   DocumentGalleryItemRequest,
   SellerDocumentResponse,
@@ -892,3 +892,86 @@ describe('SellerUploadPage — watermark policy (watermark-completion v1 §4.3)'
     expect(component.watermarkWarning()).toBeNull();
   });
 });
+
+describe('SellerUploadPage — document versioning (document-versioning v1 §4/§6)', () => {
+  it('opens versionModalVisible when setting main file on approved document with salesCount > 0', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.editId.set('doc-1');
+    component.mainFiles.set([
+      { id: 'file-1', storageKey: 'k1', originalFileName: 'f1.pdf', uploadedAt: '', isListedForSale: false },
+    ]);
+    component.editDocument.set({
+      id: 'doc-1',
+      status: 'approved',
+      salesCount: 5,
+    } as unknown as DocumentItem);
+
+    component.selectListedMainFile('file-1');
+
+    expect(component.versionModalVisible()).toBe(true);
+    expect(component.pendingListedFileId()).toBe('file-1');
+  });
+
+  it('calls executeSetListedMainFile immediately without modal when salesCount === 0', async () => {
+    const setListedSpy = vi.fn().mockResolvedValue({ id: 'doc-1', status: 'approved' });
+    Object.assign(fakeSeller, { setListedMainFile: setListedSpy });
+
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.editId.set('doc-1');
+    component.mainFiles.set([
+      { id: 'file-1', storageKey: 'k1', originalFileName: 'f1.pdf', uploadedAt: '', isListedForSale: false },
+    ]);
+    component.editDocument.set({
+      id: 'doc-1',
+      status: 'approved',
+      salesCount: 0,
+    } as unknown as DocumentItem);
+
+
+    component.selectListedMainFile('file-1');
+
+    expect(component.versionModalVisible()).toBe(false);
+    expect(setListedSpy).toHaveBeenCalledWith('doc-1', 'file-1', { isNewVersion: false });
+  });
+
+  it('confirms version modal with new version option and changeNote', async () => {
+    const setListedSpy = vi.fn().mockResolvedValue({ id: 'doc-1', status: 'approved' });
+    Object.assign(fakeSeller, { setListedMainFile: setListedSpy });
+
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.editId.set('doc-1');
+    component.pendingListedFileId.set('file-2');
+    component.isNewVersionOption.set(true);
+    component.changeNoteInput.set('ปรับปรุงข้อสอบ');
+    component.versionModalVisible.set(true);
+
+    component.confirmVersionModal();
+
+    expect(component.versionModalVisible()).toBe(false);
+    expect(setListedSpy).toHaveBeenCalledWith('doc-1', 'file-2', {
+      isNewVersion: true,
+      changeNote: 'ปรับปรุงข้อสอบ',
+    });
+  });
+
+  it('opens history modal and loads document versions', async () => {
+    const getVersionsSpy = vi.fn().mockResolvedValue([
+      { versionNumber: 1, changeNote: 'first', createdAt: '2026-09-01' },
+    ]);
+    Object.assign(fakeSeller, { getDocumentVersions: getVersionsSpy });
+
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.editId.set('doc-1');
+
+    await component.openHistoryModal();
+
+    expect(component.historyModalVisible()).toBe(true);
+    expect(getVersionsSpy).toHaveBeenCalledWith('doc-1');
+    expect(component.historyVersions()).toHaveLength(1);
+  });
+});
+

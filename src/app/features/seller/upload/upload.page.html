@@ -117,10 +117,21 @@
 
               @if (isEditMode()) {
                 <div class="mt-6 p-4 rounded-2xl border border-line bg-white/80">
-                  <h3 class="text-sm font-bold text-ink mb-1">ไฟล์หลักของรายการ</h3>
-                  <p class="text-xs text-ink-muted mb-3">
-                    เลือกไฟล์ที่ใช้ขาย (ไฟล์สาธารณะต่อผู้ซื้อ) — หลังอนุมัติแล้ว หากเปลี่ยนไฟล์ที่ขาย ระบบจะส่งกลับไปรอตรวจสอบอีกครั้ง
-                  </p>
+                  <div class="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <h3 class="text-sm font-bold text-ink mb-1">ไฟล์หลักของรายการ</h3>
+                      <p class="text-xs text-ink-muted">
+                        เลือกไฟล์ที่ใช้ขาย (ไฟล์สาธารณะต่อผู้ซื้อ) — หลังอนุมัติแล้ว หากเปลี่ยนไฟล์ที่ขาย ระบบจะส่งกลับไปรอตรวจสอบอีกครั้ง
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn-ghost !py-1.5 !px-3 text-xs shrink-0"
+                      (click)="openHistoryModal()"
+                    >
+                      ดูประวัติเวอร์ชัน
+                    </button>
+                  </div>
                   @if (mainFilesLoading()) {
                     <p class="text-sm text-ink-muted">กำลังโหลดรายการไฟล์…</p>
                   } @else if (!mainFiles().length) {
@@ -815,3 +826,109 @@
         </aside>
       </div>
     </div>
+
+    <!-- Modal เลือกประเภทการอัปเดตไฟล์ (Document Versioning §4.1) -->
+    <nz-modal
+      [nzVisible]="versionModalVisible()"
+      [nzTitle]="'อัปเดตไฟล์เอกสาร'"
+      (nzOnCancel)="cancelVersionModal()"
+      (nzOnOk)="confirmVersionModal()"
+      [nzOkLoading]="listedSaving()"
+      [nzOkText]="'ยืนยัน'"
+      [nzCancelText]="'ยกเลิก'"
+    >
+      <ng-container *nzModalContent>
+        <div class="space-y-4">
+          <div class="space-y-3">
+            <label
+              class="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-pink-300 transition-all"
+              [class.border-pink-500]="!isNewVersionOption()"
+              [class.bg-pink-50]="!isNewVersionOption()"
+            >
+              <input
+                type="radio"
+                name="versionOption"
+                [checked]="!isNewVersionOption()"
+                (change)="isNewVersionOption.set(false)"
+                class="accent-pink-500 mt-1"
+              />
+              <div>
+                <div class="font-semibold text-sm text-ink">แก้ไขเล็กน้อย</div>
+                <div class="text-xs text-ink-muted mt-0.5">
+                  ไม่แจ้งเตือนผู้ซื้อเดิม เหมาะกับการแก้คำผิด/ปรับรูปแบบเล็กน้อย
+                </div>
+              </div>
+            </label>
+
+            <label
+              class="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-pink-300 transition-all"
+              [class.border-pink-500]="isNewVersionOption()"
+              [class.bg-pink-50]="isNewVersionOption()"
+            >
+              <input
+                type="radio"
+                name="versionOption"
+                [checked]="isNewVersionOption()"
+                (change)="isNewVersionOption.set(true)"
+                class="accent-pink-500 mt-1"
+              />
+              <div>
+                <div class="font-semibold text-sm text-ink">อัปเดตเวอร์ชันใหม่</div>
+                <div class="text-xs text-ink-muted mt-0.5">
+                  แจ้งเตือนผู้ซื้อเดิมทุกคนว่ามีไฟล์ใหม่ให้โหลดฟรี
+                </div>
+              </div>
+            </label>
+          </div>
+
+          @if (isNewVersionOption()) {
+            <div>
+              <label class="block text-xs font-semibold text-ink mb-1">
+                สรุปสิ่งที่อัปเดต (ไม่บังคับ)
+              </label>
+              <textarea
+                class="input-soft !rounded-xl text-sm"
+                rows="3"
+                maxlength="500"
+                [ngModel]="changeNoteInput()"
+                (ngModelChange)="changeNoteInput.set($event)"
+                placeholder="สรุปสิ่งที่อัปเดต (ไม่บังคับ)"
+              ></textarea>
+            </div>
+          }
+        </div>
+      </ng-container>
+    </nz-modal>
+
+    <!-- Modal ประวัติเวอร์ชัน (Seller Document Version History §4.1) -->
+    <nz-modal
+      [nzVisible]="historyModalVisible()"
+      [nzTitle]="'ประวัติเวอร์ชัน'"
+      [nzFooter]="null"
+      (nzOnCancel)="closeHistoryModal()"
+    >
+      <ng-container *nzModalContent>
+        @if (historyLoading()) {
+          <div class="py-8 text-center text-sm text-ink-muted">กำลังโหลดประวัติเวอร์ชัน…</div>
+        } @else if (!historyVersions().length) {
+          <div class="py-8 text-center text-sm text-ink-muted">ยังไม่มีประวัติเวอร์ชันสำหรับเอกสารนี้</div>
+        } @else {
+          <div class="divide-y divide-line">
+            @for (v of historyVersions(); track v.versionNumber) {
+              <div class="py-3 first:pt-0 last:pb-0">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-sm text-ink">เวอร์ชัน {{ v.versionNumber }}</span>
+                  <span class="text-xs text-ink-muted">{{ v.createdAt ? (v.createdAt | slice: 0 : 10) : '—' }}</span>
+                </div>
+                @if (v.changeNote) {
+                  <p class="text-xs text-ink-soft mt-1">{{ v.changeNote }}</p>
+                }
+                @if (v.notifiedBuyerCount != null) {
+                  <p class="text-xs text-emerald-600 mt-1">แจ้งเตือนผู้ซื้อ {{ v.notifiedBuyerCount }} คน</p>
+                }
+              </div>
+            }
+          </div>
+        }
+      </ng-container>
+    </nz-modal>

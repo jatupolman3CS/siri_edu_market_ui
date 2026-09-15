@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import {
   CdkDrag,
   CdkDropList,
@@ -10,7 +11,7 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
-import { DocumentItem, DocumentPricingHint, WatermarkCapability } from '../../../core/models';
+import { DocumentItem, DocumentPricingHint, SellerDocumentVersionInfo, WatermarkCapability } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { AuthService, CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import {
@@ -54,6 +55,7 @@ type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
     CdkDrag,
     SlicePipe,
     ImgFallbackDirective,
+    NzModalModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './upload.page.html',
@@ -90,6 +92,16 @@ export class SellerUploadPage {
   readonly mainFiles = signal<MainFileRow[]>([]);
   readonly mainFilesLoading = signal(false);
   readonly listedSaving = signal(false);
+
+  // document-versioning v1 §4.1: editDocument + versioning modals state
+  readonly editDocument = signal<DocumentItem | null>(null);
+  readonly versionModalVisible = signal(false);
+  readonly pendingListedFileId = signal<string>('');
+  readonly isNewVersionOption = signal(false);
+  readonly changeNoteInput = signal('');
+  readonly historyModalVisible = signal(false);
+  readonly historyVersions = signal<SellerDocumentVersionInfo[]>([]);
+  readonly historyLoading = signal(false);
 
   readonly galleryItems = signal<GalleryItem[]>([]);
   readonly galleryUploading = signal<boolean>(false);
@@ -220,6 +232,7 @@ export class SellerUploadPage {
   }
 
   private applyEditDocument(doc: DocumentItem): void {
+    this.editDocument.set(doc);
     this.title.set(doc.title);
     this.shortDescription.set(doc.shortDescription);
     this.longDescription.set(doc.description || doc.shortDescription);
@@ -303,25 +316,86 @@ export class SellerUploadPage {
   }
 
   selectListedMainFile(fileId: string): void {
-    void (async () => {
-      if (!this.isEditMode() || !this.editId()) return;
-      if (this.mainFiles().find((m) => m.id === fileId)?.isListedForSale) return;
-      this.listedSaving.set(true);
-      try {
-        const raw = await this.seller.setListedMainFile(this.editId(), fileId);
-        if (raw) {
-          const mapped = mapSellerDocument(raw);
-          this.mainFiles.set(mapped.mainFiles ?? []);
-          if (mapped.status === 'pending') {
-            this.message.info('เปลี่ยนไฟล์ที่ขายแล้ว — สถานะกลับเป็นรอตรวจสอบ');
-          } else {
-            this.message.success('ตั้งไฟล์ที่ขายแล้ว');
-          }
+    if (!this.isEditMode() || !this.editId()) return;
+    if (this.mainFiles().find((m) => m.id === fileId)?.isListedForSale) return;
+
+    const doc = this.editDocument();
+    const requiresPrompt = doc?.status === 'approved' && (doc?.salesCount ?? 0) > 0;
+
+    if (requiresPrompt) {
+      this.pendingListedFileId.set(fileId);
+      this.isNewVersionOption.set(false);
+      this.changeNoteInput.set('');
+      this.versionModalVisible.set(true);
+      return;
+    }
+
+    void this.executeSetListedMainFile(fileId, { isNewVersion: false });
+  }
+
+  cancelVersionModal(): void {
+    this.versionModalVisible.set(false);
+    this.pendingListedFileId.set('');
+    this.changeNoteInput.set('');
+  }
+
+  confirmVersionModal(): void {
+    const fileId = this.pendingListedFileId();
+    if (!fileId) {
+      this.versionModalVisible.set(false);
+      return;
+    }
+    const isNewVersion = this.isNewVersionOption();
+    const changeNote = isNewVersion ? this.changeNoteInput().trim() : undefined;
+    this.versionModalVisible.set(false);
+    void this.executeSetListedMainFile(fileId, { isNewVersion, changeNote });
+  }
+
+  async executeSetListedMainFile(
+    fileId: string,
+    options: { isNewVersion: boolean; changeNote?: string },
+  ): Promise<void> {
+    this.listedSaving.set(true);
+    try {
+      const raw = await this.seller.setListedMainFile(this.editId(), fileId, options);
+      if (raw) {
+        const mapped = mapSellerDocument(raw);
+        this.mainFiles.set(mapped.mainFiles ?? []);
+
+        // document-versioning v1 §4.1: toast messages
+        const rawRec = raw as unknown as Record<string, unknown>;
+        const notifiedCount = rawRec['lastVersionNotifiedBuyerCount'] as number | null | undefined;
+
+        if (notifiedCount != null) {
+          this.message.success(`อัปเดตเวอร์ชันใหม่แล้ว แจ้งเตือนผู้ซื้อเดิม ${notifiedCount} คน`);
         }
-      } finally {
-        this.listedSaving.set(false);
+
+        if (mapped.status === 'pending') {
+          this.message.info('เปลี่ยนไฟล์ที่ขายแล้ว — สถานะกลับเป็นรอตรวจสอบ');
+        } else if (notifiedCount == null) {
+          this.message.success('ตั้งไฟล์ที่ขายแล้ว');
+        }
       }
-    })();
+    } finally {
+      this.listedSaving.set(false);
+    }
+  }
+
+  async openHistoryModal(): Promise<void> {
+    const docId = this.editId();
+    if (!docId) return;
+    this.historyModalVisible.set(true);
+    this.historyLoading.set(true);
+    try {
+      const versions = await this.seller.getDocumentVersions(docId);
+      this.historyVersions.set(versions);
+    } finally {
+      this.historyLoading.set(false);
+    }
+  }
+
+  closeHistoryModal(): void {
+    this.historyModalVisible.set(false);
   }
 
   downloadMainFile(fileId: string): void {

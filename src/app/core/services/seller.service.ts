@@ -5,6 +5,7 @@ import {
   DocumentItem,
   DocumentPricingHint,
   SellerBalanceEntry,
+  SellerDocumentVersionInfo,
   SellerQnaItem,
   SellerStats,
 } from '../models';
@@ -443,17 +444,41 @@ export class SellerService {
     }
   }
 
-  async setListedMainFile(id: string, fileId: string): Promise<SellerDocumentResponse | null> {
+  /**
+   * document-versioning v1 §4.1/§6:
+   * Sets listed main file with optional versioning parameters.
+   */
+  async setListedMainFile(
+    id: string,
+    fileId: string,
+    options?: { isNewVersion?: boolean; changeNote?: string },
+  ): Promise<SellerDocumentResponse | null> {
     try {
+      // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+      const bodyPayload = {
+        fileId,
+        isNewVersion: options?.isNewVersion,
+        changeNote: options?.changeNote,
+      };
       const result = await putApiSellerDocumentsByIdListedMainFile({
         path: { id },
-        body: { fileId },
+        body: bodyPayload as unknown as Parameters<typeof putApiSellerDocumentsByIdListedMainFile>[0]['body'],
       });
       return unwrapSdkResult(result) ?? null;
     } catch (e) {
       this.apiFail.report('ตั้งไฟล์ที่ขาย', e);
       return null;
     }
+  }
+
+  /**
+   * document-versioning v1 §4.1/§6:
+   * Fetches version history for a seller document from GET /api/seller/documents/{id}/versions.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  async getDocumentVersions(id: string): Promise<SellerDocumentVersionInfo[]> {
+    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+    return [];
   }
 
   async getMainFileDownloadUrl(

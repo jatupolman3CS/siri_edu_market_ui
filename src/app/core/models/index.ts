@@ -325,6 +325,17 @@ export interface DocumentItem {
   isSponsored?: boolean;
   /** seller-ads-promotion v1 §3.9.1: the campaign id to report impression/click against — `undefined` when `isSponsored` is falsy. */
   sponsoredCampaignId?: string;
+  /**
+   * document-versioning v1 §6: current version number for this listing.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  currentVersionNumber?: number;
+  /**
+   * document-versioning v1 §6: buyer count notified on last new-version push.
+   * `null` when the current version was saved without the new-version flag.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  lastVersionNotifiedBuyerCount?: number | null;
 }
 
 // ====== Bundle ======
@@ -411,6 +422,24 @@ export interface LibraryItem {
   myRating?: number;
   isRead: boolean;
   markedReadAt?: string;
+  /**
+   * document-versioning v1 §6: true when the library item's version number lags behind the
+   * document's current version, meaning the buyer has a new file to download.
+   * After download, set `false` optimistically without refetch.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  hasNewVersion: boolean;
+  /**
+   * document-versioning v1 §6: buyer-visible version number of the document at purchase time.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  currentVersionNumber?: number;
+  /**
+   * document-versioning v1 §6: change note from the latest version, truncated at ~100 chars on
+   * card view. Shown in full inside the version history modal.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  latestChangeNote?: string | null;
 }
 
 // ====== Loyalty points ======
@@ -899,6 +928,32 @@ export interface ReferralCodeValidation {
   valid: boolean;
   discountAmount?: number;
   reasonText?: string;
+}
+
+// ====== Document Versioning (document-versioning v1, docs/contracts/document-versioning.md §4/§6) ======
+// TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน — round 1 stub shapes only
+
+/**
+ * document-versioning v1 §6: seller-facing version history row from
+ * `GET /api/seller/documents/{id}/versions`.
+ * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+ */
+export interface SellerDocumentVersionInfo {
+  versionNumber: number;
+  changeNote: string | null;
+  createdAt: string;
+  notifiedBuyerCount: number | null;
+}
+
+/**
+ * document-versioning v1 §6: buyer-facing version history row from
+ * `GET /api/library/{documentId}/versions`.
+ * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+ */
+export interface BuyerDocumentVersionInfo {
+  versionNumber: number;
+  changeNote: string | null;
+  createdAt: string;
 }
 
 // ====== Seller Ads Promotion (seller-ads-promotion v1, docs/contracts/seller-ads-promotion.md §3) ======

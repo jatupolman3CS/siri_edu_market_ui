@@ -229,6 +229,39 @@ describe('mapLibraryItem', () => {
     expect(mapped.isRead).toBe(true);
     expect(mapped.markedReadAt).toBe('2026-09-08T12:00:00Z');
   });
+
+  /** document-versioning-fe: falls back to safe defaults when version fields are omitted */
+  it('falls back to hasNewVersion=false and undefined versions when omitted', () => {
+    const item: LibraryItemResponse = {
+      documentId: 'doc-10',
+      title: 'เคมีเบื้องต้น',
+      purchasedAt: '2026-08-01T00:00:00Z',
+    };
+
+    const mapped = mapLibraryItem(item);
+
+    expect(mapped.hasNewVersion).toBe(false);
+    expect(mapped.currentVersionNumber).toBeUndefined();
+    expect(mapped.latestChangeNote).toBeNull();
+  });
+
+  /** document-versioning-fe: carries hasNewVersion/currentVersionNumber/latestChangeNote through */
+  it('carries hasNewVersion/currentVersionNumber/latestChangeNote through when present', () => {
+    const raw = {
+      documentId: 'doc-10',
+      title: 'เคมีเบื้องต้น',
+      purchasedAt: '2026-08-01T00:00:00Z',
+      hasNewVersion: true,
+      currentVersionNumber: 2,
+      latestChangeNote: 'ปรับปรุงเนื้อหาบทที่ 3',
+    };
+
+    const mapped = mapLibraryItem(raw as unknown as LibraryItemResponse);
+
+    expect(mapped.hasNewVersion).toBe(true);
+    expect(mapped.currentVersionNumber).toBe(2);
+    expect(mapped.latestChangeNote).toBe('ปรับปรุงเนื้อหาบทที่ 3');
+  });
 });
 
 describe('mapBundle', () => {

@@ -3,7 +3,9 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
+import type { BuyerDocumentVersionInfo } from '../../../core/models';
 import {
   AuthService,
   LibraryFilter,
@@ -27,6 +29,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     RouterLink,
     FormsModule,
     NzDrawerModule,
+    NzModalModule,
     NzTooltipModule,
     PageHeroComponent,
     IconComponent,
@@ -126,5 +129,25 @@ export class BuyerLibraryPage {
     if (result) {
       setTimeout(() => this.closeReviewModal(), 1500);
     }
+  }
+
+  // document-versioning v1 §4.2: version history modal for library items
+  readonly versionsModal = signal<{ documentId: string; title: string } | null>(null);
+  readonly versionsList = signal<BuyerDocumentVersionInfo[]>([]);
+  readonly versionsLoading = signal(false);
+
+  async openVersionsModal(documentId: string, title: string): Promise<void> {
+    this.versionsModal.set({ documentId, title });
+    this.versionsLoading.set(true);
+    try {
+      const list = await this.library.getDocumentVersions(documentId);
+      this.versionsList.set(list);
+    } finally {
+      this.versionsLoading.set(false);
+    }
+  }
+
+  closeVersionsModal(): void {
+    this.versionsModal.set(null);
   }
 }

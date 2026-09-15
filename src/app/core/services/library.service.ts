@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { LibraryItem, Order, WatermarkMode } from '../models';
+import { BuyerDocumentVersionInfo, LibraryItem, Order, WatermarkMode } from '../models';
 import { mapLibraryItem, mapOrder } from '../api-mappers/mappers';
 import { resolvePublicUrl, resolveApiUrl, resolveDownloadUrl } from '../api-runtime';
 import {
@@ -244,6 +244,14 @@ export class LibraryService {
       const result = await postApiLibraryByDocumentIdDownload({ path: { documentId } });
       const data = unwrapSdkResult(result);
       this._state.set(successActionState('ดาวน์โหลดเรียบร้อย'));
+
+      // document-versioning v1 §4.2: update local state optimistically
+      this.libraryPager.updateItems((items) =>
+        items.map((item) =>
+          item.document.id === documentId ? { ...item, hasNewVersion: false } : item,
+        ),
+      );
+
       const url = resolveDownloadUrl(data?.downloadUrl, this.auth.accessToken());
       if (url) {
         window.open(url, '_blank', 'noopener');
@@ -260,6 +268,16 @@ export class LibraryService {
       this._state.set(errorActionState('ดาวน์โหลดไม่สำเร็จ'));
       return null;
     }
+  }
+
+  /**
+   * document-versioning v1 §4.2/§6:
+   * Fetches version history for a library item from GET /api/library/{documentId}/versions.
+   * TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+   */
+  async getDocumentVersions(documentId: string): Promise<BuyerDocumentVersionInfo[]> {
+    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+    return [];
   }
 
   private readonly _reviewState = signal<ActionState>(idleActionState());

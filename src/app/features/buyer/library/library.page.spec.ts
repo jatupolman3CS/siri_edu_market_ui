@@ -90,6 +90,7 @@ function renderWithItems(
     reviewState: () => idleActionState(),
     resetReviewState: vi.fn(),
     submitReview: vi.fn(async () => null),
+    getDocumentVersions: vi.fn(async () => []),
   };
 
   TestBed.configureTestingModule({
@@ -519,3 +520,50 @@ describe('BuyerLibraryPage — watermark notice on download (watermark-completio
     expect(infoMessages).toEqual([]);
   });
 });
+
+describe('BuyerLibraryPage — document versioning (document-versioning v1 §4/§6)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('renders "มีเวอร์ชันใหม่" badge and change note when item has new version', () => {
+    const item = buildItem('doc-1', {
+      hasNewVersion: true,
+      currentVersionNumber: 2,
+      latestChangeNote: 'แก้ไขสูตรคำนวณและข้อสอบเพิ่มเติม',
+    });
+    const fixture = renderWithItems([item]);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('มีเวอร์ชันใหม่');
+    expect(text).toContain('แก้ไขสูตรคำนวณและข้อสอบเพิ่มเติม');
+    expect(text).toContain('ดูสิ่งที่อัปเดต');
+  });
+
+  it('does not render "มีเวอร์ชันใหม่" badge when item has no new version', () => {
+    const item = buildItem('doc-1', {
+      hasNewVersion: false,
+    });
+    const fixture = renderWithItems([item]);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).not.toContain('มีเวอร์ชันใหม่');
+  });
+
+  it('opens versions modal on clicking "ดูสิ่งที่อัปเดต"', async () => {
+    const item = buildItem('doc-1', {
+      hasNewVersion: true,
+      latestChangeNote: 'แก้ไขสูตร',
+    });
+    const fixture = renderWithItems([item]);
+    const comp = fixture.componentInstance;
+
+    await comp.openVersionsModal(item.document.id, item.document.title);
+
+    expect(comp.versionsModal()).toEqual({
+      documentId: item.document.id,
+      title: item.document.title,
+    });
+  });
+
+});
+
+

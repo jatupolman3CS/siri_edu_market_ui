@@ -590,7 +590,12 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     createdAt: item.purchasedAt ?? '',
     updatedAt: item.purchasedAt ?? '',
     reviews: [],
+    // document-versioning v1 §6: seller-facing fields on the library stub (buyer-facing shape).
+    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+    currentVersionNumber: (item as unknown as Record<string, unknown>)['currentVersionNumber'] as number | undefined,
+    lastVersionNotifiedBuyerCount: undefined,
   };
+  const rawItem = item as unknown as Record<string, unknown>;
   return {
     document: docStub,
     purchasedAt: item.purchasedAt ?? '',
@@ -600,8 +605,13 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     isReviewed: item.isReviewed ?? false,
     myReviewId: item.myReviewId ?? undefined,
     myRating: item.myRating ?? undefined,
-    isRead: (item as any).isRead ?? false,
-    markedReadAt: (item as any).markedReadAt ?? undefined,
+    isRead: (rawItem['isRead'] as boolean | undefined) ?? false,
+    markedReadAt: (rawItem['markedReadAt'] as string | undefined) ?? undefined,
+    // document-versioning v1 §6: buyer library fields.
+    // TODO(contract): wire SDK จริงหลัง backend gate 1 ผ่าน
+    hasNewVersion: (rawItem['hasNewVersion'] as boolean | undefined) ?? false,
+    currentVersionNumber: (rawItem['currentVersionNumber'] as number | undefined) ?? undefined,
+    latestChangeNote: (rawItem['latestChangeNote'] as string | null | undefined) ?? null,
   };
 }
 

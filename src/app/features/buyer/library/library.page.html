@@ -129,6 +129,13 @@
                   <app-icon name="check" [size]="11" />
                   เป็นเจ้าของแล้ว
                 </span>
+                @if (item.hasNewVersion) {
+                  <span
+                    class="absolute top-10 right-3 pill bg-rose-500 text-white shadow-soft"
+                  >
+                    มีเวอร์ชันใหม่
+                  </span>
+                }
                 @if (item.isReviewed) {
                   <span class="absolute bottom-3 left-3 pill bg-amber-400 text-white shadow-soft">
                     <app-icon name="star" [size]="11" />
@@ -153,6 +160,21 @@
                 <h3 class="text-base font-bold text-ink leading-snug line-clamp-2">
                   {{ item.document.title }}
                 </h3>
+
+                @if (item.hasNewVersion && item.latestChangeNote) {
+                  <p class="text-xs text-rose-600 bg-rose-50 rounded-lg p-2 mt-1 line-clamp-2">
+                    {{ item.latestChangeNote }}
+                  </p>
+                }
+
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-pink-600 hover:text-pink-700 text-left inline-flex items-center gap-1 w-fit"
+                  (click)="openVersionsModal(item.document.id, item.document.title)"
+                >
+                  <app-icon name="doc" [size]="12" />
+                  ดูสิ่งที่อัปเดต
+                </button>
 
                 <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-ink-muted mt-2">
                   <div>เลขที่คำสั่งซื้อ</div>
@@ -392,3 +414,33 @@
     </div>
   </ng-container>
 </nz-drawer>
+
+<!-- Modal ประวัติเวอร์ชันสำหรับผู้ซื้อ (Buyer Document Versions §4.2) -->
+<nz-modal
+  [nzVisible]="!!versionsModal()"
+  [nzTitle]="'ประวัติเวอร์ชัน: ' + (versionsModal()?.title ?? '')"
+  [nzFooter]="null"
+  (nzOnCancel)="closeVersionsModal()"
+>
+  <ng-container *nzModalContent>
+    @if (versionsLoading()) {
+      <div class="py-8 text-center text-sm text-ink-muted">กำลังโหลดประวัติเวอร์ชัน…</div>
+    } @else if (!versionsList().length) {
+      <div class="py-8 text-center text-sm text-ink-muted">ยังไม่มีประวัติเวอร์ชันสำหรับเอกสารนี้</div>
+    } @else {
+      <div class="divide-y divide-line">
+        @for (v of versionsList(); track v.versionNumber) {
+          <div class="py-3 first:pt-0 last:pb-0">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-ink">เวอร์ชัน {{ v.versionNumber }}</span>
+              <span class="text-xs text-ink-muted">{{ v.createdAt ? (v.createdAt | timeAgo) : '—' }}</span>
+            </div>
+            @if (v.changeNote) {
+              <p class="text-xs text-ink-soft mt-1 whitespace-pre-wrap">{{ v.changeNote }}</p>
+            }
+          </div>
+        }
+      </div>
+    }
+  </ng-container>
+</nz-modal>
