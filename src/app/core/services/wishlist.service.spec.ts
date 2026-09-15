@@ -105,6 +105,22 @@ describe('WishlistService', () => {
     expect(wishlist.items()[0].price).toBe(0);
   });
 
+  it('wishlist-price-drop-alerts v1 §3.3: maps hasPriceDropped from the API', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1', { hasPriceDropped: true })]));
+    const wishlist = buildService();
+    await settle();
+
+    expect(wishlist.items()[0].hasPriceDropped).toBe(true);
+  });
+
+  it('wishlist-price-drop-alerts v1 §3.3: defaults hasPriceDropped to false when the API omits it', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
+    const wishlist = buildService();
+    await settle();
+
+    expect(wishlist.items()[0].hasPriceDropped).toBe(false);
+  });
+
   it('answers has() from what the API returned', async () => {
     stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
     const wishlist = buildService();

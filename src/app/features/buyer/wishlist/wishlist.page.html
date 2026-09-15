@@ -42,7 +42,16 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           @for (doc of wishlist.items(); track doc.id) {
-            <app-document-card [doc]="doc" />
+            <div class="relative">
+              @if (doc.hasPriceDropped) {
+                <span
+                  class="absolute top-3 left-3 z-20 pill bg-pink-500 text-white shadow-soft text-[10px] font-bold"
+                >
+                  🔻 ราคาลดแล้ว!
+                </span>
+              }
+              <app-document-card [doc]="doc" />
+            </div>
           }
         </div>
 

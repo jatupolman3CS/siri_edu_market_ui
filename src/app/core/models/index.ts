@@ -223,6 +223,8 @@ export interface DocumentItem {
   discountExpiresAt?: string;
   /** discount-urgency v1 §4 — detail-only social-proof count for the current UTC calendar month. */
   soldThisMonthCount?: number;
+  /** wishlist-price-drop-alerts v1 §3.3 — wishlist-only, undefined นอกบริบทนี้เสมอ. */
+  hasPriceDropped?: boolean;
   format: FileFormat;
   pages: number;
   fileSize: string;

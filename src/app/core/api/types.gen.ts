@@ -2746,6 +2746,8 @@ export type WishlistItemResponse = {
   addedAt?: string;
   format?: string | null;
   averageRating?: number | null;
+  priceAtAdd?: number;
+  hasPriceDropped?: boolean;
 };
 
 export type GetApiAdminAdsCampaignsData = {

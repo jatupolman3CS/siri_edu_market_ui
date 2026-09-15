@@ -78,6 +78,7 @@ export class WishlistService {
         createdAt: w.addedAt ?? '',
         updatedAt: '',
         reviews: [],
+        hasPriceDropped: w.hasPriceDropped ?? false,
       })) as DocumentItem[];
 
       return {
