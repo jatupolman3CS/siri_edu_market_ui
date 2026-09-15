@@ -25,6 +25,7 @@ import type {
   PayoutSlip,
   AdminWalletSummary,
   WalletEntry,
+  AdminMlRecommendationOverview,
 } from '../models';
 import { AdminTransaction } from '../models';
 import {
@@ -55,6 +56,7 @@ import {
   getApiAdminTransactions,
   getApiAdminUsers,
   getApiAdminUsersByUserId,
+  getApiAdminMlRecommendationsOverview,
   getApiAdminUsersByUserIdWallet,
   getApiAdminUsersByUserIdWalletEntries,
   getApiAdminWatermarkCopies,
@@ -513,6 +515,7 @@ import {
   mapSubcategoryAdmin,
   mapAdminWalletSummary,
   mapWalletEntry,
+  mapAdminMlRecommendationOverview,
 } from '../api-mappers/mappers';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
@@ -1503,6 +1506,21 @@ export class AdminService {
     } catch (e) {
       this.apiFail.report('โหลดประวัติกระเป๋าเงินผู้ใช้', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
+    }
+  }
+
+  /**
+   * ml-embedding-recommendations v1 §3.2/§4.2: `GET /api/admin/ml/recommendations/overview` —
+   * read-only monitoring card, no query params, no auto-create/action.
+   */
+  async getMlRecommendationOverview(): Promise<AdminMlRecommendationOverview | null> {
+    try {
+      const result = await getApiAdminMlRecommendationsOverview();
+      const data = unwrapSdkResult(result);
+      return mapAdminMlRecommendationOverview(data);
+    } catch (e) {
+      this.apiFail.report('โหลดสถานะระบบแนะนำสินค้า', e);
+      return null;
     }
   }
 }

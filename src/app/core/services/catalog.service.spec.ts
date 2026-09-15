@@ -970,3 +970,46 @@ describe('CatalogService — seller follower count & profile cache', () => {
   });
 });
 
+// ml-embedding-recommendations v1 §3.1/§4.3: "มักซื้อคู่กับเอกสารนี้"
+describe('CatalogService — loadBoughtTogether (ml-embedding-recommendations v1 §3.1)', () => {
+  it('GETs the bought-together endpoint with the requested take and maps every item', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1/bought-together', {
+      items: [
+        { document: documentRow('doc-2'), coPurchaseCount: 5 },
+        { document: documentRow('doc-3'), coPurchaseCount: 2 },
+      ],
+    });
+    const catalog = buildService();
+
+    const items = await catalog.loadBoughtTogether('doc-1', 6);
+
+    expect(items).toHaveLength(2);
+    expect(items[0].document.id).toBe('doc-2');
+    expect(items[0].coPurchaseCount).toBe(5);
+    expect(items[1].coPurchaseCount).toBe(2);
+    const req = requests.find(
+      (r) => r.method === 'GET' && r.path === '/api/marketplace/documents/doc-1/bought-together',
+    );
+    expect(req?.query.get('Take')).toBe('6');
+  });
+
+  it('resolves [] (not a throw) when there are no qualifying pairs', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1/bought-together', { items: [] });
+    const catalog = buildService();
+
+    await expect(catalog.loadBoughtTogether('doc-1')).resolves.toEqual([]);
+  });
+
+  it('resolves [] and reports the failure instead of throwing (§4.3 — non-blocking section)', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-1/bought-together', { status: 500 }, 500);
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [CatalogService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const catalog = TestBed.inject(CatalogService);
+
+    await expect(catalog.loadBoughtTogether('doc-1')).resolves.toEqual([]);
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+});
+

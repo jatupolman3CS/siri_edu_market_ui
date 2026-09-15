@@ -1,0 +1,58 @@
+<div class="space-y-6">
+  <header>
+    <h1 class="text-2xl font-extrabold text-ink">สถานะระบบแนะนำสินค้า (Bought Together)</h1>
+    <p class="text-sm text-ink-soft">
+      ตรวจสอบว่าโมเดลแนะนำ "มักซื้อคู่กับเอกสารนี้" เคยคำนวณสำเร็จหรือยัง (อ่านอย่างเดียว)
+    </p>
+  </header>
+
+  @if (loading()) {
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+  } @else {
+    @let ov = overview();
+
+    @if (!ov?.lastComputedAt) {
+      <div class="card-soft p-4 border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+        <strong>ยังไม่เคยคำนวณ</strong> — ตรวจสอบว่างาน job.ml-embedding-rebuild เปิดอยู่
+      </div>
+    }
+
+    <section class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <app-stat-card
+        label="เอกสารที่มี embedding"
+        [value]="(ov?.documentsWithEmbeddingCount ?? 0) + ' เอกสาร'"
+        icon="🧬"
+      />
+      <app-stat-card
+        label="เอกสารที่มีคำแนะนำ"
+        [value]="(ov?.documentsWithBoughtTogetherCount ?? 0) + ' เอกสาร'"
+        icon="🔗"
+      />
+      <app-stat-card
+        label="คู่คำแนะนำทั้งหมด"
+        [value]="(ov?.totalSimilarityPairs ?? 0) + ' คู่'"
+        icon="🧮"
+      />
+      <app-stat-card
+        label="ซื้อคู่กันเฉลี่ย"
+        [value]="((ov?.averageCoPurchaseCount ?? 0) | number: '1.1-1') + ' ครั้ง/คู่'"
+        icon="🛒"
+      />
+      <app-stat-card
+        label="ขั้นต่ำซื้อคู่ที่ใช้แนะนำ"
+        [value]="(ov?.minCoPurchaseThreshold ?? 0) + ' ครั้ง'"
+        icon="🎯"
+      />
+      <app-stat-card
+        label="จำนวนมิติ Embedding"
+        [value]="(ov?.embeddingDimensions ?? 0) + ' มิติ'"
+        icon="📐"
+      />
+      <app-stat-card
+        label="คำนวณล่าสุด"
+        [value]="ov?.lastComputedAt ? ((ov!.lastComputedAt | date: 'd MMM yyyy HH:mm') ?? '') : 'ยังไม่เคยคำนวณ'"
+        icon="🕒"
+      />
+    </section>
+  }
+</div>

@@ -35,6 +35,7 @@ import {
   RESOURCE_TYPE_ICONS,
   RESOURCE_TYPE_LABELS,
   type Bundle,
+  type BoughtTogetherItem,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { ReportDocumentComponent } from '../../../shared/components/report-document/report-document.component';
@@ -168,6 +169,15 @@ export class BuyerDocumentDetailPage {
     () => this.crossSellLoading() || this.crossSellCards().length > 0,
   );
 
+  // ===== ml-embedding-recommendations v1 §4.3: "มักซื้อคู่กับเอกสารนี้" =====
+  // Same non-blocking contract as cross-sell above: a failed/empty result just hides the
+  // section — no empty state, no error banner (§4.3/AC-23).
+  readonly boughtTogether = signal<BoughtTogetherItem[]>([]);
+  readonly boughtTogetherState = signal<ActionState>(idleActionState());
+  readonly boughtTogetherLoading = computed(
+    () => this.boughtTogetherState().status === 'loading',
+  );
+
   /**
    * real-data-stats v1 §4.5 (Group A — no backend needed): "สรุป N ข้อโดย AI" reads
    * `d.aiSummary.length` instead of a hardcoded "3", and the whole tab is hidden when there is
@@ -293,6 +303,7 @@ export class BuyerDocumentDetailPage {
       // fires (see NavigationSourceService's class doc for why the timing matters).
       if (id) this.catalog.loadDocumentDetail(id, this.navSource.classifyEntrySource());
       this.loadCrossSellBundles(id);
+      this.loadBoughtTogether(id);
     });
     // Track recently viewed
     effect(() => {
@@ -474,6 +485,26 @@ export class BuyerDocumentDetailPage {
       const bundles = await this.bundles.loadBundlesContainingDocument(documentId, 3);
       this.crossSellBundles.set(bundles);
       this.crossSellState.set(idleActionState());
+    })();
+  }
+
+  /**
+   * ml-embedding-recommendations v1 §3.1/§4.3: loads "มักซื้อคู่กับเอกสารนี้" non-blocking —
+   * `CatalogService.loadBoughtTogether` never throws (errors are reported via
+   * `ApiFailureReporter` inside the service and resolved as `[]`), so the section just stays
+   * hidden on failure/empty result instead of showing a page-wide error banner or empty state.
+   */
+  private loadBoughtTogether(documentId: string): void {
+    this.boughtTogether.set([]);
+    if (!documentId) {
+      this.boughtTogetherState.set(idleActionState());
+      return;
+    }
+    this.boughtTogetherState.set(loadingActionState());
+    void (async () => {
+      const items = await this.catalog.loadBoughtTogether(documentId, 6);
+      this.boughtTogether.set(items);
+      this.boughtTogetherState.set(idleActionState());
     })();
   }
 }

@@ -108,6 +108,8 @@ export class AdminLayoutComponent {
       { label: isTh ? 'หมวดหมู่' : 'Categories', href: '/admin/categories', icon: 'tag' as const },
       // crm-core v1 §4.1: CRM overview — segments, top search terms, top category facets.
       { label: isTh ? 'CRM' : 'CRM', href: '/admin/crm', icon: 'chart' as const },
+      // ml-embedding-recommendations v1 §4.2: read-only "bought together" job monitoring card.
+      { label: isTh ? 'คำแนะนำสินค้า (ML)' : 'ML Recommendations', href: '/admin/ml-recommendations', icon: 'sparkle' as const },
       // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
       { label: isTh ? 'ประกาศข่าวสาร' : 'Announcements', href: '/admin/announcements', icon: 'bell' as const },
       // notification-master-config v1 §0.4 root cause #4: this used to link to the buyer

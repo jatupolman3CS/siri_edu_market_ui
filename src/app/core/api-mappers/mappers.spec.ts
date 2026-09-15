@@ -21,6 +21,8 @@ import {
   mapWalletEntry,
   mapWalletTopUp,
   mapAdminWalletSummary,
+  mapBoughtTogetherItem,
+  mapAdminMlRecommendationOverview,
 } from './mappers';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import { DEFAULT_STORE_READINESS } from '../models';
@@ -1307,6 +1309,62 @@ describe('mapAdminWalletSummary', () => {
       lifetimeSpent: 350,
       asOf: '2026-09-15T12:00:00.000Z',
     });
+  });
+});
+
+// ml-embedding-recommendations v1 §3.1/§3.2
+describe('mapBoughtTogetherItem', () => {
+  const document: MarketplaceDocumentResponse = {
+    id: 'doc-2',
+    title: 'แบบฝึกหัดฟิสิกส์ ม.5',
+    price: 39,
+  };
+
+  it('maps document + coPurchaseCount correctly', () => {
+    const item = mapBoughtTogetherItem({ document, coPurchaseCount: 5 });
+
+    expect(item).not.toBeNull();
+    expect(item?.document.id).toBe('doc-2');
+    expect(item?.coPurchaseCount).toBe(5);
+  });
+
+  it('defaults a missing coPurchaseCount to 0', () => {
+    const item = mapBoughtTogetherItem({ document });
+    expect(item?.coPurchaseCount).toBe(0);
+  });
+
+  it('returns null when the wire response omits document (defensive — §3.1 says required)', () => {
+    expect(mapBoughtTogetherItem({ coPurchaseCount: 3 })).toBeNull();
+  });
+});
+
+describe('mapAdminMlRecommendationOverview', () => {
+  it('maps every field correctly', () => {
+    const overview = mapAdminMlRecommendationOverview({
+      documentsWithEmbeddingCount: 120,
+      documentsWithBoughtTogetherCount: 80,
+      totalSimilarityPairs: 640,
+      averageCoPurchaseCount: 3.25,
+      lastComputedAt: '2026-09-15T03:00:00.000Z',
+      embeddingDimensions: 32,
+      minCoPurchaseCount: 1,
+    });
+
+    expect(overview).toEqual({
+      documentsWithEmbeddingCount: 120,
+      documentsWithBoughtTogetherCount: 80,
+      totalSimilarityPairs: 640,
+      averageCoPurchaseCount: 3.25,
+      lastComputedAt: '2026-09-15T03:00:00.000Z',
+      embeddingDimensions: 32,
+      minCoPurchaseThreshold: 1,
+    });
+  });
+
+  it('defaults lastComputedAt to null when the job has never run — not a rendering bug', () => {
+    const overview = mapAdminMlRecommendationOverview({});
+    expect(overview.lastComputedAt).toBeNull();
+    expect(overview.documentsWithEmbeddingCount).toBe(0);
   });
 });
 

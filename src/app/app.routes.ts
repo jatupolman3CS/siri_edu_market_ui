@@ -596,6 +596,16 @@ export const routes: Routes = [
           ),
         title: 'ตั้งค่าการแจ้งเตือนของระบบ — Admin',
       },
+      // ml-embedding-recommendations v1 §4.2: read-only "สถานะระบบแนะนำสินค้า (Bought Together)"
+      // monitoring card — light, single-module, not a full page.
+      {
+        path: 'ml-recommendations',
+        loadComponent: () =>
+          import('./features/admin/ml-recommendations/ml-recommendations-admin.page').then(
+            (m) => m.MlRecommendationsAdminPage,
+          ),
+        title: 'สถานะระบบแนะนำสินค้า — Admin',
+      },
     ],
   },
 

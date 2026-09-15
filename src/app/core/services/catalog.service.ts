@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
+  BoughtTogetherItem,
   Category,
   CrmFacetType,
   DocumentItem,
@@ -11,7 +12,14 @@ import {
   SellerSalesByMonthPoint,
   Subcategory,
 } from '../models';
-import { mapCategory, mapCategoryDetail, mapDocument, mapDocumentDetail, mapSellerProfile } from '../api-mappers/mappers';
+import {
+  mapBoughtTogetherItem,
+  mapCategory,
+  mapCategoryDetail,
+  mapDocument,
+  mapDocumentDetail,
+  mapSellerProfile,
+} from '../api-mappers/mappers';
 import type { DocumentEntrySource } from './navigation-source.service';
 import type { MarketplaceSearchResponse } from '../api/types.gen';
 import {
@@ -19,6 +27,7 @@ import {
   getApiMarketplaceCategories,
   getApiMarketplaceCategoriesBySlug,
   getApiMarketplaceDocumentsById,
+  getApiMarketplaceDocumentsByIdBoughtTogether,
   getApiMarketplaceDocumentsByIdPreview,
   getApiMarketplaceDocumentsByIdRelated,
   getApiMarketplaceFree,
@@ -1399,6 +1408,28 @@ export class CatalogService {
     return this._documents()
       .filter((d) => d.id !== documentId && d.categoryIds.some((id) => docCats.has(id)))
       .slice(0, limit);
+  }
+
+  // ===== ml-embedding-recommendations v1 §3.1/§4.3: "มักซื้อคู่กับเอกสารนี้" =====
+  // Same shape as `BundleService.loadBundlesContainingDocument` (document-bundle-cross-sell):
+  // the page loads this non-blocking, so a failure resolves as `[]` (section hidden silently)
+  // rather than throwing — there is no error banner for this section (§4.3).
+
+  /** Documents historically bought together with `documentId`, ranked strongest-first. */
+  async loadBoughtTogether(documentId: string, take = 6): Promise<BoughtTogetherItem[]> {
+    try {
+      const result = await getApiMarketplaceDocumentsByIdBoughtTogether({
+        path: { id: documentId },
+        query: { Take: take },
+      });
+      const data = unwrapSdkResult(result);
+      return (data.items ?? [])
+        .map(mapBoughtTogetherItem)
+        .filter((item): item is BoughtTogetherItem => item !== null);
+    } catch (e) {
+      this.apiFail.report('โหลดเอกสารที่มักซื้อคู่กัน', e);
+      return [];
+    }
   }
 
   /**

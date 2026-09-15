@@ -759,6 +759,38 @@
           </section>
         }
 
+        <!-- ml-embedding-recommendations v1 §4.1/§4.3: "มักซื้อคู่กับเอกสารนี้" — placed between
+             cross-sell (bundle) and "more from seller" per §4.1 (both are complementary-purchase
+             signals; this one is user-behavior-driven, not metadata-driven like `related` below). -->
+        @if (boughtTogetherLoading() || boughtTogether().length > 0) {
+          <section class="mt-12">
+            <h2 class="section-title mb-2">มักซื้อคู่กับเอกสารนี้</h2>
+            <p class="section-subtitle mb-6">ผู้ที่ซื้อเอกสารนี้มักซื้อเอกสารเหล่านี้ด้วย</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              @if (boughtTogetherLoading()) {
+                @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                  <div class="card-soft overflow-hidden animate-pulse" aria-hidden="true">
+                    <div class="aspect-[4/5] bg-line"></div>
+                    <div class="p-4 flex flex-col gap-2">
+                      <div class="h-3 w-1/3 rounded bg-line"></div>
+                      <div class="h-4 w-3/4 rounded bg-line"></div>
+                    </div>
+                  </div>
+                }
+              } @else {
+                @for (item of boughtTogether(); track item.document.id) {
+                  <div class="relative">
+                    <span class="absolute top-3 right-3 z-10 pill bg-pink-600 text-white shadow-soft text-[11px]">
+                      ซื้อคู่กันแล้ว {{ item.coPurchaseCount }} ครั้ง
+                    </span>
+                    <app-document-card [doc]="item.document" />
+                  </div>
+                }
+              }
+            </div>
+          </section>
+        }
+
         <!-- More from this seller -->
         @if (moreFromSeller().length) {
           <section class="mt-12">

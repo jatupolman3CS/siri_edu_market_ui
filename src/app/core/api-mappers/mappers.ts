@@ -7,6 +7,7 @@ import type {
   AdminAdsCampaignResponse,
   AdminAdsPlacementResponse,
   AdminAffiliateSummaryResponse,
+  AdminMlRecommendationOverviewResponse,
   AdminPendingDocumentResponse,
   AdminSubscriptionListItemResponse,
   AdminTransactionResponse,
@@ -20,6 +21,7 @@ import type {
   AnnouncementAdminResponse,
   AnnouncementImageResponse,
   AnnouncementPopupResponse,
+  BoughtTogetherItemResponse,
   BundleDetailResponse,
   BundleResponse,
   BuyerDocumentVersionResponse,
@@ -58,6 +60,7 @@ import type {
   AdminAdsCampaign,
   AdminAdsPlacement,
   AdminAffiliateSummary,
+  AdminMlRecommendationOverview,
   AdminSubscriptionListItem,
   AdminTransaction,
   AdsAvailability,
@@ -72,6 +75,7 @@ import type {
   AnnouncementAdmin,
   AnnouncementImage,
   AnnouncementPopup,
+  BoughtTogetherItem,
   Bundle,
   BuyerDocumentVersionInfo,
   Category,
@@ -1119,6 +1123,41 @@ export function mapAdminWalletSummary(d: AdminWalletSummaryResponse): AdminWalle
     lifetimeToppedUp: d.lifetimeToppedUp ?? 0,
     lifetimeSpent: d.lifetimeSpent ?? 0,
     asOf: d.asOf ?? new Date().toISOString(),
+  };
+}
+
+/**
+ * ml-embedding-recommendations v1 §3.1: one row of `BoughtTogetherResponse.items`. `document` is
+ * required on the wire (§3.1) but generated as optional — returns `null` for the rare/defensive
+ * case it is missing so the caller can filter it out rather than render a broken card.
+ */
+export function mapBoughtTogetherItem(d: BoughtTogetherItemResponse): BoughtTogetherItem | null {
+  if (!d.document) return null;
+  return {
+    document: mapDocument(d.document),
+    coPurchaseCount: d.coPurchaseCount ?? 0,
+  };
+}
+
+/**
+ * ml-embedding-recommendations v1 §3.2: `GET /api/admin/ml/recommendations/overview`.
+ *
+ * Wire field is `minCoPurchaseCount` (confirmed against `openapi.snapshot.json` post gate-1 —
+ * the spec's §3.2 response table names it `minCoPurchaseThreshold`, a documentation-only naming
+ * choice that never made it into the shipped DTO) — the domain model keeps the spec's more
+ * readable name; only this mapper needs to know about the mismatch.
+ */
+export function mapAdminMlRecommendationOverview(
+  d: AdminMlRecommendationOverviewResponse,
+): AdminMlRecommendationOverview {
+  return {
+    documentsWithEmbeddingCount: d.documentsWithEmbeddingCount ?? 0,
+    documentsWithBoughtTogetherCount: d.documentsWithBoughtTogetherCount ?? 0,
+    totalSimilarityPairs: d.totalSimilarityPairs ?? 0,
+    averageCoPurchaseCount: d.averageCoPurchaseCount ?? 0,
+    lastComputedAt: d.lastComputedAt ?? null,
+    embeddingDimensions: d.embeddingDimensions ?? 0,
+    minCoPurchaseThreshold: d.minCoPurchaseCount ?? 0,
   };
 }
 

@@ -520,6 +520,27 @@ export interface AdminWalletSummary {
   asOf: string;
 }
 
+// ====== ML Embedding Recommendations (ml-embedding-recommendations v1 §3.1/§3.2/§4) ======
+
+/** One row of `GET /api/marketplace/documents/{id}/bought-together` — §3.1. */
+export interface BoughtTogetherItem {
+  document: DocumentItem;
+  /** จำนวนครั้งที่เคยถูกซื้อร่วมกันจริง — always `>= MinCoPurchaseCount` (backend-side gate). */
+  coPurchaseCount: number;
+}
+
+/** `GET /api/admin/ml/recommendations/overview` — §3.2, read-only admin monitoring card. */
+export interface AdminMlRecommendationOverview {
+  documentsWithEmbeddingCount: number;
+  documentsWithBoughtTogetherCount: number;
+  totalSimilarityPairs: number;
+  averageCoPurchaseCount: number;
+  /** `null` = job ยังไม่เคยรันสำเร็จเลย. */
+  lastComputedAt: string | null;
+  embeddingDimensions: number;
+  minCoPurchaseThreshold: number;
+}
+
 // ====== Seller payout account (seller-payout-account-self-service v1 §3.1/§4) ======
 // Mirrors `PayoutAccountResponse` (docs/contracts/seller-payout-account-self-service.md §3.1)
 // exactly — `accountNumberMasked` is the only representation of the account number this app ever

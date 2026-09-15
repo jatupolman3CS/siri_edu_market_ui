@@ -15,7 +15,7 @@ import {
 } from '../../../core/services';
 import { idleActionState } from '../../../core/services/action-state';
 import { mapDocumentDetail } from '../../../core/api-mappers/mappers';
-import type { Bundle, DocumentItem } from '../../../core/models';
+import type { BoughtTogetherItem, Bundle, DocumentItem } from '../../../core/models';
 
 /**
  * document-bundle-cross-sell v1 §4 / §1 test list — "ในแพ็กเกจที่คุ้มกว่า" cross-sell section:
@@ -106,6 +106,9 @@ function buildCatalog(doc: DocumentItem | undefined) {
     loadDocumentPreview: vi.fn(async () => ({})),
     updateSellerFollowerCount: vi.fn(),
     fetchSellerProfile: vi.fn(async () => null),
+    // ml-embedding-recommendations v1 §4.3: "มักซื้อคู่กับเอกสารนี้" — non-blocking, resolves []
+    // by default so every existing spec in this file keeps rendering exactly as before.
+    loadBoughtTogether: vi.fn(async (): Promise<BoughtTogetherItem[]> => []),
   };
 }
 
@@ -200,13 +203,100 @@ describe('BuyerDocumentDetailPage — cross-sell "ในแพ็กเกจท
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    const skeletons = root.querySelectorAll('.animate-pulse');
+    // Scoped to this section: the sibling "มักซื้อคู่กับเอกสารนี้" section (ml-embedding-recommendations
+    // v1 §4.3) also renders skeleton cards of its own while its independent load is in flight.
+    const section = Array.from(root.querySelectorAll('section')).find((s) =>
+      s.textContent?.includes('ในแพ็กเกจที่คุ้มกว่า'),
+    );
+    expect(section).toBeDefined();
+    const skeletons = section!.querySelectorAll('.animate-pulse');
     expect(skeletons.length).toBe(3);
     expect(root.textContent ?? '').not.toContain('ดูแพ็กเกจ');
     expect(root.textContent ?? '').not.toContain('📦 BUNDLE');
 
     // avoid an unresolved promise leaking into the next test
     resolveBundles([]);
+  });
+});
+
+/**
+ * ml-embedding-recommendations v1 §4.1/§4.3/§4.4 — "มักซื้อคู่กับเอกสารนี้": non-blocking, hides
+ * entirely (no empty state) when there are 0 items or the call fails, shows skeleton cards
+ * (no text) while loading, and the exact Thai copy from §4.4.
+ */
+describe('BuyerDocumentDetailPage — "มักซื้อคู่กับเอกสารนี้" (ml-embedding-recommendations v1 §4.3)', () => {
+  function boughtTogetherItem(id: string, coPurchaseCount = 3): BoughtTogetherItem {
+    return { document: buildDoc({ id, title: `เอกสาร ${id}` }), coPurchaseCount };
+  }
+
+  function renderWithBoughtTogether(boughtTogetherResult: () => Promise<BoughtTogetherItem[]>) {
+    const doc = buildDoc();
+    const catalog = buildCatalog(doc);
+    catalog.loadBoughtTogether = vi.fn(boughtTogetherResult);
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: catalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, catalog };
+  }
+
+  it('shows the section with the exact copy + coPurchaseCount badge when there is >=1 item', async () => {
+    const { fixture, catalog } = renderWithBoughtTogether(async () => [boughtTogetherItem('doc-2', 5)]);
+    await settle();
+    fixture.detectChanges();
+
+    expect(catalog.loadBoughtTogether).toHaveBeenCalledWith('doc-1', 6);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('มักซื้อคู่กับเอกสารนี้');
+    expect(text).toContain('ผู้ที่ซื้อเอกสารนี้มักซื้อเอกสารเหล่านี้ด้วย');
+    expect(text).toContain('ซื้อคู่กันแล้ว 5 ครั้ง');
+    expect(text).toContain('เอกสาร doc-2');
+  });
+
+  it('hides the whole section (no empty state) when there are no items', async () => {
+    const { fixture } = renderWithBoughtTogether(async () => []);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('มักซื้อคู่กับเอกสารนี้');
+  });
+
+  it('shows 6 skeleton cards with no text while loading, and no fabricated data', () => {
+    let resolveItems!: (value: BoughtTogetherItem[]) => void;
+    const pending = new Promise<BoughtTogetherItem[]>((resolve) => {
+      resolveItems = resolve;
+    });
+    const { fixture } = renderWithBoughtTogether(() => pending);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const section = Array.from(root.querySelectorAll('section')).find((s) =>
+      s.textContent?.includes('มักซื้อคู่กับเอกสารนี้'),
+    );
+    expect(section).toBeDefined();
+    expect(section!.querySelectorAll('.animate-pulse').length).toBe(6);
+    expect(section!.textContent ?? '').not.toContain('ซื้อคู่กันแล้ว');
+
+    // avoid an unresolved promise leaking into the next test
+    resolveItems([]);
   });
 });
 

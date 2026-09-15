@@ -1133,3 +1133,62 @@ describe('AdminService — getUserWalletEntries (buyer-wallet v1 §3.9)', () => 
     expect(result.totalCount).toBe(0);
   });
 });
+
+describe('AdminService — getMlRecommendationOverview (ml-embedding-recommendations v1 §3.2)', () => {
+  it('GETs /api/admin/ml/recommendations/overview and maps every field', async () => {
+    stubRoute('GET', '/api/admin/ml/recommendations/overview', {
+      body: {
+        documentsWithEmbeddingCount: 120,
+        documentsWithBoughtTogetherCount: 80,
+        totalSimilarityPairs: 640,
+        averageCoPurchaseCount: 3.25,
+        lastComputedAt: '2026-09-15T03:00:00.000Z',
+        embeddingDimensions: 32,
+        // Wire field is `minCoPurchaseCount` (confirmed in openapi.snapshot.json post gate-1) —
+        // the domain model keeps the spec's more readable `minCoPurchaseThreshold` name (§3.2).
+        minCoPurchaseCount: 1,
+      },
+    });
+    const admin = buildService();
+
+    const overview = await admin.getMlRecommendationOverview();
+
+    expect(overview).toEqual({
+      documentsWithEmbeddingCount: 120,
+      documentsWithBoughtTogetherCount: 80,
+      totalSimilarityPairs: 640,
+      averageCoPurchaseCount: 3.25,
+      lastComputedAt: '2026-09-15T03:00:00.000Z',
+      embeddingDimensions: 32,
+      minCoPurchaseThreshold: 1,
+    });
+  });
+
+  it('surfaces lastComputedAt:null as-is — the job has never run, not a rendering bug', async () => {
+    stubRoute('GET', '/api/admin/ml/recommendations/overview', {
+      body: {
+        documentsWithEmbeddingCount: 0,
+        documentsWithBoughtTogetherCount: 0,
+        totalSimilarityPairs: 0,
+        averageCoPurchaseCount: 0,
+        lastComputedAt: null,
+        embeddingDimensions: 32,
+        minCoPurchaseCount: 1,
+      },
+    });
+    const admin = buildService();
+
+    const overview = await admin.getMlRecommendationOverview();
+
+    expect(overview?.lastComputedAt).toBeNull();
+  });
+
+  it('returns null and reports failure when the call fails', async () => {
+    stubRoute('GET', '/api/admin/ml/recommendations/overview', { status: 500, body: { message: 'boom' } });
+    const admin = buildService();
+
+    const overview = await admin.getMlRecommendationOverview();
+
+    expect(overview).toBeNull();
+  });
+});
