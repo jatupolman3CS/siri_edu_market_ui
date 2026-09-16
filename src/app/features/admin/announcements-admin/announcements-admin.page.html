@@ -14,31 +14,18 @@
     <table class="w-full min-w-[600px]">
       <thead class="bg-pink-50">
         <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+          <th class="px-5 py-3 w-24"></th>
           <th class="px-5 py-3 font-semibold">หัวข้อ</th>
           <th class="px-5 py-3 font-semibold">สถานะ</th>
           <th class="px-5 py-3 font-semibold text-right">รูป</th>
           <th class="px-5 py-3 font-semibold text-right">ลำดับการแสดง</th>
-          <th class="px-5 py-3"></th>
         </tr>
       </thead>
       <tbody>
         @for (a of pagedAnnouncements(); track a.id) {
           <tr class="border-t border-line hover:bg-pink-50/40">
-            <td class="px-5 py-3">
-              <div class="flex items-center gap-3">
-                @if (a.images[0]; as cover) {
-                  <img appImgFallback [src]="cover.imageUrl" alt="" class="w-10 h-10 rounded-xl object-cover shrink-0" />
-                }
-                <span class="text-sm font-bold text-ink">{{ a.title }}</span>
-              </div>
-            </td>
-            <td class="px-5 py-3">
-              <span class="pill-soft text-[11px]">{{ statusLabel(a) }}</span>
-            </td>
-            <td class="px-5 py-3 text-sm text-ink-soft text-right">{{ a.images.length }}</td>
-            <td class="px-5 py-3 text-sm text-ink-soft text-right">{{ a.sortOrder }}</td>
-            <td class="px-5 py-3">
-              <div class="flex items-center gap-1 justify-end">
+            <td class="px-5 py-3 whitespace-nowrap">
+              <div class="flex items-center gap-1">
                 <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="openEdit(a)">
                   <app-icon name="edit" [size]="14" />
                 </button>
@@ -52,6 +39,19 @@
                 </button>
               </div>
             </td>
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-3">
+                @if (a.images[0]; as cover) {
+                  <img appImgFallback [src]="cover.imageUrl" alt="" class="w-10 h-10 rounded-xl object-cover shrink-0" />
+                }
+                <span class="text-sm font-bold text-ink">{{ a.title }}</span>
+              </div>
+            </td>
+            <td class="px-5 py-3">
+              <span class="pill-soft text-[11px]">{{ statusLabel(a) }}</span>
+            </td>
+            <td class="px-5 py-3 text-sm text-ink-soft text-right">{{ a.images.length }}</td>
+            <td class="px-5 py-3 text-sm text-ink-soft text-right">{{ a.sortOrder }}</td>
           </tr>
         } @empty {
           <tr>

@@ -118,27 +118,73 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 }
 
 /* ---------------- NG-ZORRO theme overrides ---------------- */
+.ant-btn {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', system-ui, sans-serif !important;
+  border-radius: 9999px !important;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 .ant-btn-primary {
   background: var(--pink-500) !important;
   border-color: var(--pink-500) !important;
-  border-radius: 999px !important;
+  border-radius: 9999px !important;
   font-weight: 600;
+  color: #ffffff !important;
   box-shadow: 0 4px 16px -4px rgba(242, 99, 142, 0.4) !important;
 }
 .ant-btn-primary:hover,
 .ant-btn-primary:focus {
   background: var(--pink-600) !important;
   border-color: var(--pink-600) !important;
+  color: #ffffff !important;
 }
+
+/* Default & Cancel buttons (.ant-btn default / unstyled) matching system .btn-ghost */
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text),
 .ant-btn-default {
-  border-radius: 999px !important;
-  border-color: var(--line) !important;
+  border-radius: 9999px !important;
+  border: 1px solid var(--line) !important;
   color: var(--ink) !important;
-  background: #fff !important;
+  background: #ffffff !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
 }
+
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):hover,
 .ant-btn-default:hover {
   border-color: var(--pink-300) !important;
   color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+}
+
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):focus,
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):focus-visible,
+.ant-btn-default:focus,
+.ant-btn-default:focus-visible {
+  border-color: var(--pink-400) !important;
+  color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.35) !important;
+  outline: none !important;
+}
+
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):active,
+.ant-btn-default:active {
+  border-color: var(--pink-500) !important;
+  color: var(--pink-700) !important;
+  background: var(--pink-100) !important;
+}
+
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):disabled,
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text)[disabled],
+.ant-btn-default:disabled,
+.ant-btn-default[disabled] {
+  border-color: var(--line) !important;
+  color: var(--ink-muted) !important;
+  background: #fdfafc !important;
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
 }
 
 .ant-input,
@@ -296,6 +342,46 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   margin-top: 0 !important;
 }
 
+.ant-modal-footer .ant-btn {
+  min-height: 40px !important;
+  padding: 0 1.25rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.ant-modal-footer .ant-btn-primary {
+  font-weight: 600 !important;
+}
+
+.ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous) {
+  border: 1px solid var(--line) !important;
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover {
+  border-color: var(--pink-300) !important;
+  color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+}
+
+.ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus,
+.ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus-visible {
+  border-color: var(--pink-400) !important;
+  color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.35) !important;
+  outline: none !important;
+}
+
 /* Modal Confirm & Alert Dialogs (Delete/Confirm/Warning Popups) */
 .ant-modal-confirm .ant-modal-content {
   padding: 1.75rem !important;
@@ -376,6 +462,39 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   min-height: 40px !important;
   padding: 0 1.25rem !important;
   font-size: 0.875rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-primary {
+  font-weight: 600 !important;
+}
+
+.ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous) {
+  border: 1px solid var(--line) !important;
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover {
+  border-color: var(--pink-300) !important;
+  color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+}
+
+.ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus,
+.ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus-visible {
+  border-color: var(--pink-400) !important;
+  color: var(--pink-600) !important;
+  background: var(--pink-50) !important;
+  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.35) !important;
+  outline: none !important;
 }
 
 .ant-btn-dangerous,

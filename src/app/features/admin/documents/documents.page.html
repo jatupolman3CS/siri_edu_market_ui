@@ -109,6 +109,7 @@
               (nzCheckedChange)="toggleSelectAll($event)"
             ></label>
           </th>
+          <th class="px-3 py-3 w-12 text-center"></th>
           <th class="px-3 py-3 font-semibold">เอกสาร</th>
           <th class="px-3 py-3 font-semibold">ผู้ขาย</th>
           <th class="px-3 py-3 font-semibold">สถานะ</th>
@@ -116,7 +117,6 @@
           <th class="px-3 py-3 font-semibold text-center">ดาวน์โหลด</th>
           <th class="px-3 py-3 font-semibold text-right">ราคา</th>
           <th class="px-3 py-3 font-semibold">อัปเดต</th>
-          <th class="px-3 py-3"></th>
         </tr>
       </thead>
       <tbody>
@@ -128,6 +128,11 @@
                 [nzChecked]="selectedIds().has(d.id)"
                 (nzCheckedChange)="toggleSelect(d.id, $event)"
               ></label>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <a [routerLink]="['/admin/documents', d.id]" class="btn-icon !w-8 !h-8 inline-flex" title="รายละเอียด">
+                <app-icon name="edit" [size]="14" />
+              </a>
             </td>
             <td class="px-3 py-3">
               <div class="font-bold text-ink text-sm line-clamp-1">{{ d.title }}</div>
@@ -162,11 +167,6 @@
             </td>
             <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ d.price | thb }}</td>
             <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ d.updatedAt | timeAgo }}</td>
-            <td class="px-3 py-3 text-right">
-              <a [routerLink]="['/admin/documents', d.id]" class="btn-icon !w-8 !h-8 inline-flex" title="รายละเอียด">
-                <app-icon name="edit" [size]="14" />
-              </a>
-            </td>
           </tr>
         } @empty {
           <tr>

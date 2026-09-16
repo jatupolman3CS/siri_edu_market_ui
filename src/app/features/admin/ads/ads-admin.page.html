@@ -170,19 +170,28 @@
               <table class="w-full text-left text-sm min-w-[700px]">
                 <thead>
                   <tr class="border-b border-line text-xs font-semibold text-ink-muted">
-                    <th class="pb-3 pr-4">ตำแหน่ง</th>
+                    <th class="pb-3 pr-4">การจัดการ</th>
+                    <th class="pb-3 px-4">ตำแหน่ง</th>
                     <th class="pb-3 px-4 text-right">ราคา/วัน</th>
                     <th class="pb-3 px-4 text-right">ราคา/สัปดาห์</th>
                     <th class="pb-3 px-4 text-center">ความจุ/วัน</th>
                     <th class="pb-3 px-4 text-center">สูงสุด/หน้า</th>
-                    <th class="pb-3 px-4 text-center">สถานะ</th>
-                    <th class="pb-3 pl-4 text-right">การจัดการ</th>
+                    <th class="pb-3 pl-4 text-center">สถานะ</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-line">
                   @for (p of placements(); track p.placementKey) {
                     <tr class="hover:bg-pink-50/40 transition-colors">
-                      <td class="py-3.5 pr-4">
+                      <td class="py-3.5 pr-4 whitespace-nowrap">
+                        <button
+                          type="button"
+                          class="btn-ghost !py-1 !px-3 text-xs"
+                          (click)="openEditPlacement(p)"
+                        >
+                          แก้ไข
+                        </button>
+                      </td>
+                      <td class="py-3.5 px-4">
                         <div class="font-semibold text-ink">{{ p.displayName }}</div>
                         <div class="text-xs font-mono text-ink-muted">{{ p.placementKey }}</div>
                         @if (p.description) {
@@ -201,21 +210,12 @@
                       <td class="py-3.5 px-4 text-center text-ink">
                         {{ p.maxPerResultPage }} ชิ้น
                       </td>
-                      <td class="py-3.5 px-4 text-center">
+                      <td class="py-3.5 pl-4 text-center">
                         @if (p.isEnabled) {
                           <span class="pill pill-green">เปิดใช้งาน</span>
                         } @else {
                           <span class="pill pill-rose">ปิดใช้งาน</span>
                         }
-                      </td>
-                      <td class="py-3.5 pl-4 text-right">
-                        <button
-                          type="button"
-                          class="btn-ghost !py-1 !px-3 text-xs"
-                          (click)="openEditPlacement(p)"
-                        >
-                          แก้ไข
-                        </button>
                       </td>
                     </tr>
                   }
