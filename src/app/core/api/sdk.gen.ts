@@ -363,6 +363,9 @@ import type {
   GetApiSellerEarningsResponses,
   GetApiSellerPayoutAccountData,
   GetApiSellerPayoutAccountResponses,
+  GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileData,
+  GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileErrors,
+  GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileResponses,
   GetApiSellerPayoutsData,
   GetApiSellerPayoutsResponses,
   GetApiSellerQnaData,
@@ -454,6 +457,9 @@ import type {
   PostApiAdminOrdersByOrderIdRefundData,
   PostApiAdminOrdersByOrderIdRefundErrors,
   PostApiAdminOrdersByOrderIdRefundResponses,
+  PostApiAdminPayoutsBatchSlipsData,
+  PostApiAdminPayoutsBatchSlipsErrors,
+  PostApiAdminPayoutsBatchSlipsResponses,
   PostApiAdminPayoutsByPayoutIdCompleteManualData,
   PostApiAdminPayoutsByPayoutIdCompleteManualErrors,
   PostApiAdminPayoutsByPayoutIdCompleteManualResponses,
@@ -1261,6 +1267,27 @@ export const postApiAdminPayoutsByPayoutIdSlip = <ThrowOnError extends boolean =
   >({
     ...formDataBodySerializer,
     url: '/api/admin/payouts/{payoutId}/slip',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+
+export const postApiAdminPayoutsBatchSlips = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminPayoutsBatchSlipsData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminPayoutsBatchSlipsResponses,
+  PostApiAdminPayoutsBatchSlipsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminPayoutsBatchSlipsResponses,
+    PostApiAdminPayoutsBatchSlipsErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    url: '/api/admin/payouts/batch-slips',
     ...options,
     headers: {
       'Content-Type': null,
@@ -3527,6 +3554,21 @@ export const deleteApiSellerPayoutsByPayoutId = <ThrowOnError extends boolean = 
     DeleteApiSellerPayoutsByPayoutIdErrors,
     ThrowOnError
   >({ url: '/api/seller/payouts/{payoutId}', ...options });
+
+export const getApiSellerPayoutsByPayoutIdSlipsBySlipIdFile = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileResponses,
+  GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileResponses,
+    GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileErrors,
+    ThrowOnError
+  >({ url: '/api/seller/payouts/{payoutId}/slips/{slipId}/file', ...options });
 
 export const getApiSellerBalanceEntries = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiSellerBalanceEntriesData, ThrowOnError>,

@@ -6,7 +6,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import type { AdminPayoutResponse } from '../../../core/api';
-import type { PayoutSlip } from '../../../core/models';
+import type { BatchPayoutSlipsResponse, PayoutSlip } from '../../../core/models';
 
 /**
  * payout-request-slip-verification v1 (docs/contracts/payout-request-slip-verification.md
@@ -69,6 +69,55 @@ function slipFixture(overrides: Partial<PayoutSlip> = {}): PayoutSlip {
 
 type Messages = { success: string[]; warning: string[]; error: string[] };
 
+function batchResultFixture(overrides: Partial<BatchPayoutSlipsResponse> = {}): BatchPayoutSlipsResponse {
+  return {
+    totalFiles: 2,
+    matchedCount: 1,
+    completedCount: 1,
+    failedCount: 0,
+    unmatchedCount: 1,
+    items: [
+      {
+        fileName: 'slip-1.png',
+        fileSizeBytes: 1000,
+        slipId: 'slip-9',
+        slipUrl: '/api/admin/payouts/payout-1/slips/slip-9/file',
+        payoutId: 'payout-1',
+        sellerName: 'สมชาย ใจดี',
+        sellerEmail: 'somchai@example.com',
+        requestedAmount: 500,
+        parsedAmount: 500,
+        parsedReceiverName: 'สมชาย ใจดี',
+        parsedReceiverAccountLast4: '1234',
+        providerReference: 'MOCK-REF-9',
+        verificationStatus: 'matched',
+        mismatchReasons: [],
+        payoutStatus: 'paid',
+        message: 'จับคู่สำเร็จ โอนเงินเรียบร้อย',
+      },
+      {
+        fileName: 'slip-2.png',
+        fileSizeBytes: 2000,
+        slipId: null,
+        slipUrl: null,
+        payoutId: null,
+        sellerName: null,
+        sellerEmail: null,
+        requestedAmount: null,
+        parsedAmount: 300,
+        parsedReceiverName: null,
+        parsedReceiverAccountLast4: null,
+        providerReference: null,
+        verificationStatus: 'unmatched',
+        mismatchReasons: ['no_matching_payout'],
+        payoutStatus: null,
+        message: 'ไม่พบคำขอถอนเงินที่ตรงกับยอดเงินในสลิป',
+      },
+    ],
+    ...overrides,
+  };
+}
+
 function render(opts: {
   items?: AdminPayoutResponse[];
   nextPayoutDate?: string | null;
@@ -77,6 +126,7 @@ function render(opts: {
   completePayoutManually?: ReturnType<typeof vi.fn>;
   reverifyPayoutSlip?: ReturnType<typeof vi.fn>;
   setPayoutStatus?: ReturnType<typeof vi.fn>;
+  uploadBatchPayoutSlips?: ReturnType<typeof vi.fn>;
 } = {}) {
   const items = opts.items ?? [payoutFixture()];
   const messages: Messages = { success: [], warning: [], error: [] };
@@ -106,6 +156,7 @@ function render(opts: {
     uploadPayoutSlip: opts.uploadPayoutSlip ?? vi.fn(async () => slipFixture()),
     reverifyPayoutSlip: opts.reverifyPayoutSlip ?? vi.fn(async () => slipFixture({ verificationStatus: 'matched' })),
     completePayoutManually: opts.completePayoutManually ?? vi.fn(async () => payoutFixture({ status: 'paid' })),
+    uploadBatchPayoutSlips: opts.uploadBatchPayoutSlips ?? vi.fn(async () => batchResultFixture()),
   };
   const fakeAuth = { accessToken: () => 'test-token' };
   const fakeApiFail = { report: vi.fn() };
@@ -348,5 +399,87 @@ describe('AdminPayoutsPage — "ไม่สำเร็จ" requires a reason (
 
     expect(setPayoutStatus).toHaveBeenCalledWith('payout-1', 'failed', 'เลขบัญชีปลายทางไม่ถูกต้อง');
     expect(messages.success).toContain('อัปเดตสถานะเรียบร้อย');
+  });
+});
+
+describe('AdminPayoutsPage — "อัปโหลดสลิป (หลายไฟล์)" batch modal (withdrawal-management round 2)', () => {
+  it('opens the batch modal via openBatchModal() with an empty file queue', () => {
+    const { fixture } = render();
+
+    fixture.componentInstance.openBatchModal();
+
+    expect(fixture.componentInstance.batchModalOpen()).toBe(true);
+    expect(fixture.componentInstance.batchFiles()).toEqual([]);
+    expect(fixture.componentInstance.batchResult()).toBeNull();
+  });
+
+  it('rejects a non-image/pdf file added to the batch queue', () => {
+    const { fixture } = render();
+    fixture.componentInstance.openBatchModal();
+
+    fixture.componentInstance.onBatchFilesInputChange({
+      target: { files: [new File(['x'], 'note.txt', { type: 'text/plain' })], value: '' },
+    } as unknown as Event);
+
+    expect(fixture.componentInstance.batchFiles().length).toBe(0);
+    expect(fixture.componentInstance.batchError()).toContain('รองรับเฉพาะไฟล์รูปภาพหรือ PDF');
+  });
+
+  it('accepts multiple valid files and removeBatchFile() drops one by index', () => {
+    const { fixture } = render();
+    fixture.componentInstance.openBatchModal();
+    const a = new File([new Uint8Array(10)], 'slip-a.png', { type: 'image/png' });
+    const b = new File([new Uint8Array(10)], 'slip-b.pdf', { type: 'application/pdf' });
+
+    fixture.componentInstance.onBatchFilesInputChange({ target: { files: [a, b], value: '' } } as unknown as Event);
+    expect(fixture.componentInstance.batchFiles()).toEqual([a, b]);
+
+    fixture.componentInstance.removeBatchFile(0);
+    expect(fixture.componentInstance.batchFiles()).toEqual([b]);
+  });
+
+  it('submitBatchUpload() calls admin.uploadBatchPayoutSlips(files) and shows the per-file result table', async () => {
+    const uploadBatchPayoutSlips = vi.fn(async () => batchResultFixture());
+    const { fixture, messages } = render({ uploadBatchPayoutSlips });
+    fixture.componentInstance.openBatchModal();
+    const file = new File([new Uint8Array(10)], 'slip-1.png', { type: 'image/png' });
+    fixture.componentInstance.onBatchFilesInputChange({ target: { files: [file], value: '' } } as unknown as Event);
+
+    await fixture.componentInstance.submitBatchUpload();
+    await settle(fixture);
+
+    expect(uploadBatchPayoutSlips).toHaveBeenCalledWith([file]);
+    expect(messages.success).toContain('โอนเงินสำเร็จอัตโนมัติ 1 รายการ');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('สมชาย ใจดี');
+    expect(text).toContain('ไม่พบรายการถอนเงินที่ตรงกัน');
+  });
+
+  it('shows a "ดูสลิป" preview link only for a batch item that has a slipUrl', async () => {
+    const { fixture } = render({ uploadBatchPayoutSlips: vi.fn(async () => batchResultFixture()) });
+    fixture.componentInstance.openBatchModal();
+    fixture.componentInstance.onBatchFilesInputChange({
+      target: { files: [new File([new Uint8Array(10)], 'slip-1.png', { type: 'image/png' })], value: '' },
+    } as unknown as Event);
+
+    await fixture.componentInstance.submitBatchUpload();
+    await settle(fixture);
+
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).filter((a) =>
+      a.textContent?.includes('ดูสลิป'),
+    );
+    expect(links.length).toBe(1);
+    expect(links[0].getAttribute('href')).toContain('/api/admin/payouts/payout-1/slips/slip-9/file');
+  });
+
+  it('closeBatchModal() resets the queue and result', () => {
+    const { fixture } = render();
+    fixture.componentInstance.openBatchModal();
+    fixture.componentInstance.batchResult.set(batchResultFixture());
+
+    fixture.componentInstance.closeBatchModal();
+
+    expect(fixture.componentInstance.batchModalOpen()).toBe(false);
+    expect(fixture.componentInstance.batchResult()).toBeNull();
   });
 });

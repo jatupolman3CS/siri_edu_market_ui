@@ -76,6 +76,62 @@
         </ul>
       </section>
 
+      <!-- payment-method-master-config v1 §4.1: master on/off switch per payout channel a seller
+           may pick on `/seller` — saved by the shared "บันทึกการเปลี่ยนแปลง" button below, only
+           the switches touched here are sent (§3.2 nullable pattern). -->
+      <section class="card-tile mb-6">
+        <h2 class="text-lg font-bold text-ink mb-1">ช่องทางการรับเงินของผู้ขาย</h2>
+        <p class="text-xs text-ink-muted mb-5">
+          เปิด/ปิดช่องทางที่ผู้ขายเลือกใช้รับเงินได้ในหน้าตั้งค่าบัญชีรับเงิน — ปิดช่องทางใดแล้ว ผู้ขายจะไม่เห็นตัวเลือกนั้นอีก
+        </p>
+
+        <div class="card-tile-body space-y-5">
+          <div class="flex items-start gap-4 p-4 rounded-2xl border border-line">
+            <nz-switch
+              name="payout-method-bank-enabled"
+              [ngModel]="form().payoutMethodBankEnabled"
+              (ngModelChange)="patch('payoutMethodBankEnabled', $event)"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-ink">บัญชีธนาคาร</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 p-4 rounded-2xl border border-line">
+            <nz-switch
+              name="payout-method-promptpay-phone-enabled"
+              [ngModel]="form().payoutMethodPromptPayPhoneEnabled"
+              (ngModelChange)="patch('payoutMethodPromptPayPhoneEnabled', $event)"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-ink">พร้อมเพย์ (เบอร์โทรศัพท์)</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 p-4 rounded-2xl border border-line">
+            <nz-switch
+              name="payout-method-promptpay-national-id-enabled"
+              [ngModel]="form().payoutMethodPromptPayNationalIdEnabled"
+              (ngModelChange)="patch('payoutMethodPromptPayNationalIdEnabled', $event)"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-ink">พร้อมเพย์ (เลขบัตรประชาชน)</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 p-4 rounded-2xl border border-line">
+            <nz-switch
+              name="payout-method-promptpay-qr-enabled"
+              [ngModel]="form().payoutMethodPromptPayQrEnabled"
+              (ngModelChange)="patch('payoutMethodPromptPayQrEnabled', $event)"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-ink">พร้อมเพย์ (QR Code)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="card-soft p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">การจัดเก็บไฟล์</h2>
         <p class="text-xs text-ink-muted mb-5">Cloudflare R2 — S3-Compatible Storage</p>

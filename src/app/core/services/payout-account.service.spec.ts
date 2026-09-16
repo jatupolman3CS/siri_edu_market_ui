@@ -122,7 +122,14 @@ describe('mapPayoutAccount', () => {
       accountNumberMasked: '••••••••1234',
       promptPayType: null,
       promptPayMasked: '',
+      promptPayQrImageUrl: null,
       updatedAt: '2026-09-08T00:00:00.000Z',
+      // payment-method-master-config v1 — `accountBody()` doesn't send these (SDK not regenerated
+      // yet), so they fall back to the platform's current default shape (QR-only).
+      payoutMethodBankEnabled: false,
+      payoutMethodPromptPayPhoneEnabled: false,
+      payoutMethodPromptPayNationalIdEnabled: false,
+      payoutMethodPromptPayQrEnabled: true,
     });
   });
 
@@ -141,6 +148,29 @@ describe('mapPayoutAccount', () => {
     expect(mapped.promptPayType).toBe('phone');
     expect(mapped.promptPayMasked).toBe('••••••••5678');
     expect(mapped.bankCode).toBe('');
+  });
+
+  it('payment-method-master-config v1: maps a PromptPay QR Code account response, including the echoed master-config flags', () => {
+    const mapped = mapPayoutAccount(
+      accountBody({
+        accountType: 'promptpay',
+        bankCode: null,
+        accountNumberMasked: null,
+        promptPayType: 'qr_code',
+        promptPayMasked: null,
+        promptPayQrImageUrl: 'https://cdn.example.com/qr/abc.png',
+        payoutMethodBankEnabled: false,
+        payoutMethodPromptPayPhoneEnabled: false,
+        payoutMethodPromptPayNationalIdEnabled: false,
+        payoutMethodPromptPayQrEnabled: true,
+      }),
+    );
+
+    expect(mapped.accountType).toBe('promptpay');
+    expect(mapped.promptPayType).toBe('qr_code');
+    expect(mapped.promptPayQrImageUrl).toBe('https://cdn.example.com/qr/abc.png');
+    expect(mapped.payoutMethodBankEnabled).toBe(false);
+    expect(mapped.payoutMethodPromptPayQrEnabled).toBe(true);
   });
 
   it('§AC-2: defaults every field to a safe empty value when hasAccount is false', () => {
@@ -163,7 +193,12 @@ describe('mapPayoutAccount', () => {
       accountNumberMasked: '',
       promptPayType: null,
       promptPayMasked: '',
+      promptPayQrImageUrl: null,
       updatedAt: '',
+      payoutMethodBankEnabled: false,
+      payoutMethodPromptPayPhoneEnabled: false,
+      payoutMethodPromptPayNationalIdEnabled: false,
+      payoutMethodPromptPayQrEnabled: true,
     });
   });
 
@@ -177,7 +212,12 @@ describe('mapPayoutAccount', () => {
     expect(mapped.accountNumberMasked).toBe('');
     expect(mapped.promptPayType).toBeNull();
     expect(mapped.promptPayMasked).toBe('');
+    expect(mapped.promptPayQrImageUrl).toBeNull();
     expect(mapped.updatedAt).toBe('');
+    expect(mapped.payoutMethodBankEnabled).toBe(false);
+    expect(mapped.payoutMethodPromptPayPhoneEnabled).toBe(false);
+    expect(mapped.payoutMethodPromptPayNationalIdEnabled).toBe(false);
+    expect(mapped.payoutMethodPromptPayQrEnabled).toBe(true);
   });
 });
 
@@ -215,7 +255,12 @@ describe('PayoutAccountService', () => {
         accountNumberMasked: '',
         promptPayType: null,
         promptPayMasked: '',
+        promptPayQrImageUrl: null,
         updatedAt: '',
+        payoutMethodBankEnabled: false,
+        payoutMethodPromptPayPhoneEnabled: false,
+        payoutMethodPromptPayNationalIdEnabled: false,
+        payoutMethodPromptPayQrEnabled: true,
       });
       expect(service.state()).toEqual({ status: 'idle' });
     });
@@ -315,6 +360,52 @@ describe('PayoutAccountService', () => {
       expect(service.account()?.promptPayMasked).toBe('••••••••5678');
       const call = requests.find((r) => r.method === 'PUT' && r.path === '/api/seller/payout-account');
       expect(JSON.parse(call?.body ?? '{}')).toEqual(promptPayInput);
+    });
+
+    it('payment-method-master-config v1: sends promptPayType "qr_code" + promptPayQrImageUrl, no promptPayId', async () => {
+      stubRoute(
+        'PUT',
+        '/api/seller/payout-account',
+        accountBody({
+          accountType: 'promptpay',
+          bankCode: null,
+          accountNumberMasked: null,
+          promptPayType: 'qr_code',
+          promptPayMasked: null,
+          promptPayQrImageUrl: 'https://cdn.example.com/qr/abc.png',
+        }),
+      );
+      const service = buildService();
+
+      const qrInput = {
+        accountType: 'promptpay' as const,
+        accountHolderName: 'สมชาย ใจดี',
+        promptPayType: 'qr_code' as const,
+        promptPayQrImageUrl: 'https://cdn.example.com/qr/abc.png',
+      };
+      const result = await service.save(qrInput);
+
+      expect(result).toEqual({ ok: true });
+      expect(service.account()?.promptPayType).toBe('qr_code');
+      expect(service.account()?.promptPayQrImageUrl).toBe('https://cdn.example.com/qr/abc.png');
+      const call = requests.find((r) => r.method === 'PUT' && r.path === '/api/seller/payout-account');
+      expect(JSON.parse(call?.body ?? '{}')).toEqual(qrInput);
+    });
+
+    it('§4/payment-method-master-config v1: a disabled-channel 400 (e.g. "ระบบยังไม่เปิดให้ใช้วิธี…") surfaces as result.error, same as any other validation message', async () => {
+      stubRoute(
+        'PUT',
+        '/api/seller/payout-account',
+        { message: 'ระบบยังไม่เปิดให้ใช้วิธีโอนเข้าบัญชีธนาคารในขณะนี้' },
+        400,
+      );
+      const apiFail = { report: vi.fn() };
+      const service = buildService(apiFail);
+
+      const result = await service.save(validBankInput);
+
+      expect(result).toEqual({ ok: false, error: 'ระบบยังไม่เปิดให้ใช้วิธีโอนเข้าบัญชีธนาคารในขณะนี้' });
+      expect(apiFail.report).not.toHaveBeenCalled();
     });
 
     it('ends state=idle (not stuck loading) after a successful save', async () => {

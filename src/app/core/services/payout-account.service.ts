@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import type { PayoutAccount } from '../models';
+import type { PayoutAccount, PromptPayIdType } from '../models';
 import { mapPayoutAccount } from '../api-mappers/mappers';
 import {
   getApiSellerPayoutAccount,
@@ -131,14 +131,24 @@ export class PayoutAccountService {
    * groups is required — `bankCode`/`accountNumber` for `'bank'`, `promptPayType`/`promptPayId`
    * for `'promptpay'`. The unused group is simply omitted here; the backend clears it to `null`
    * in the DB regardless of what a stale caller might send (§3.13 "ส่ง field ของอีกประเภทมาด้วย").
+   *
+   * payment-method-master-config v1: `promptPayType: 'qr_code'` sends `promptPayQrImageUrl`
+   * instead of `promptPayId` — the backend rejects it as `400` (`plainValidationMessage` below)
+   * if it's empty or if the admin has disabled the channel, same shape as every other `400` here.
+   * `SavePayoutAccountRequest.promptPayType`/`.promptPayId` are untyped `string`s on the generated
+   * SDK, so no cast was ever needed here for the new value or field — the payout-method-master-
+   * config fields on `PayoutAccountResponse`/`PlatformSettingsResponse` that *did* need a
+   * temporary cast (in `core/api-mappers/mappers.ts`/`admin.service.ts`) are now on the generated
+   * types directly (backend commit `801bcbf`), so those casts are gone too.
    */
   async save(input: {
     accountType: 'bank' | 'promptpay';
     accountHolderName: string;
     bankCode?: string;
     accountNumber?: string;
-    promptPayType?: 'phone' | 'national_id';
+    promptPayType?: PromptPayIdType;
     promptPayId?: string;
+    promptPayQrImageUrl?: string;
   }): Promise<{ ok: boolean; error?: string }> {
     this._state.set(loadingActionState());
     try {

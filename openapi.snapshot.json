@@ -3138,6 +3138,70 @@
         }
       }
     },
+    "/api/admin/payouts/batch-slips": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "$ref": "#/components/schemas/IFormFileCollection"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchPayoutSlipsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchPayoutSlipsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchPayoutSlipsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/payouts/{payoutId}/slips": {
       "get": {
         "tags": [
@@ -15215,6 +15279,58 @@
         }
       }
     },
+    "/api/seller/payouts/{payoutId}/slips/{slipId}/file": {
+      "get": {
+        "tags": [
+          "SellerDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "payoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "slipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/seller/balance-entries": {
       "get": {
         "tags": [
@@ -19436,9 +19552,25 @@
             "type": "string",
             "nullable": true
           },
+          "promptPayQrImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "updatedAt": {
             "type": "string",
             "nullable": true
+          },
+          "payoutMethodBankEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayPhoneEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayNationalIdEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayQrEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -19467,11 +19599,6 @@
             "type": "string",
             "nullable": true
           },
-          "latestSlipId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
           "latestSlipStatus": {
             "type": "string",
             "nullable": true
@@ -19479,6 +19606,10 @@
           "slipCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "payoutAccountQrImageUrl": {
+            "type": "string",
+            "nullable": true
           },
           "id": {
             "type": "string",
@@ -19525,6 +19656,15 @@
             "type": "string"
           },
           "slipStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestSlipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "slipUrl": {
             "type": "string",
             "nullable": true
           }
@@ -20996,6 +21136,110 @@
           }
         }
       },
+      "BatchPayoutSlipItemResponse": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "fileSizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "slipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "slipUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "payoutId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sellerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sellerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestedAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "parsedAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "parsedReceiverName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parsedReceiverAccountLast4": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "verificationStatus": {
+            "type": "string"
+          },
+          "mismatchReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "payoutStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "BatchPayoutSlipsResponse": {
+        "type": "object",
+        "properties": {
+          "totalFiles": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matchedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unmatchedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchPayoutSlipItemResponse"
+            }
+          }
+        }
+      },
       "BoughtTogetherItemResponse": {
         "type": "object",
         "properties": {
@@ -22034,6 +22278,12 @@
       "IFormFile": {
         "type": "string",
         "format": "binary"
+      },
+      "IFormFileCollection": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/IFormFile"
+        }
       },
       "LibraryItemResponse": {
         "type": "object",
@@ -24246,9 +24496,25 @@
             "type": "string",
             "nullable": true
           },
+          "promptPayQrImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "updatedAt": {
             "type": "string",
             "nullable": true
+          },
+          "payoutMethodBankEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayPhoneEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayNationalIdEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayQrEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -24300,6 +24566,15 @@
             "type": "string"
           },
           "slipStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestSlipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "slipUrl": {
             "type": "string",
             "nullable": true
           }
@@ -24423,6 +24698,18 @@
           "walletTopUpMaxTHB": {
             "type": "number",
             "format": "double"
+          },
+          "payoutMethodBankEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayPhoneEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayNationalIdEnabled": {
+            "type": "boolean"
+          },
+          "payoutMethodPromptPayQrEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -24837,6 +25124,10 @@
           "promptPayId": {
             "type": "string",
             "nullable": true
+          },
+          "promptPayQrImageUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -24941,6 +25232,11 @@
             "nullable": true
           },
           "promptPayId": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptPayQrImageUrl": {
+            "maxLength": 500,
             "type": "string",
             "nullable": true
           }
@@ -27053,6 +27349,22 @@
             "minimum": 0,
             "type": "number",
             "format": "double",
+            "nullable": true
+          },
+          "payoutMethodBankEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "payoutMethodPromptPayPhoneEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "payoutMethodPromptPayNationalIdEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "payoutMethodPromptPayQrEnabled": {
+            "type": "boolean",
             "nullable": true
           }
         }

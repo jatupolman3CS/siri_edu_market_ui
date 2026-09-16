@@ -33,6 +33,24 @@ const WATERMARK_SETTING_KEYS: readonly WatermarkSettingKey[] = [
   'watermarkDefaultSubtitle',
 ];
 
+/**
+ * payment-method-master-config v1: same "nullable = leave the stored value alone" pattern as the
+ * watermark fields above — the 4 payout-channel switches are only sent once the admin actually
+ * flips one, tracked separately since they are unrelated settings.
+ */
+type PayoutMethodSettingKey =
+  | 'payoutMethodBankEnabled'
+  | 'payoutMethodPromptPayPhoneEnabled'
+  | 'payoutMethodPromptPayNationalIdEnabled'
+  | 'payoutMethodPromptPayQrEnabled';
+
+const PAYOUT_METHOD_SETTING_KEYS: readonly PayoutMethodSettingKey[] = [
+  'payoutMethodBankEnabled',
+  'payoutMethodPromptPayPhoneEnabled',
+  'payoutMethodPromptPayNationalIdEnabled',
+  'payoutMethodPromptPayQrEnabled',
+];
+
 /** watermark-completion v1 §2.2: `WatermarkCopyRetentionDays` is constrained to 7–3650. */
 const RETENTION_DAYS_MIN = 7;
 const RETENTION_DAYS_MAX = 3650;
@@ -64,10 +82,18 @@ export class AdminSettingsPage {
     watermarkForensicEnabled: true,
     watermarkCopyRetentionDays: 90,
     watermarkDefaultSubtitle: null,
+    // payment-method-master-config v1 defaults — the platform's current default (QR-only) until
+    // `loadSettings()` answers.
+    payoutMethodBankEnabled: false,
+    payoutMethodPromptPayPhoneEnabled: false,
+    payoutMethodPromptPayNationalIdEnabled: false,
+    payoutMethodPromptPayQrEnabled: true,
   });
 
   /** watermark-completion v1 §4.1: only touched watermark fields are sent on save. */
   private readonly touchedWatermarkKeys = signal<ReadonlySet<WatermarkSettingKey>>(new Set());
+  /** payment-method-master-config v1: only touched payout-method switches are sent on save. */
+  private readonly touchedPayoutMethodKeys = signal<ReadonlySet<PayoutMethodSettingKey>>(new Set());
 
   readonly saving = signal(false);
   readonly storage = this.admin.storageUsage;
@@ -134,16 +160,26 @@ export class AdminSettingsPage {
         watermarkForensicEnabled: s.watermarkForensicEnabled,
         watermarkCopyRetentionDays: Number(s.watermarkCopyRetentionDays ?? 90),
         watermarkDefaultSubtitle: s.watermarkDefaultSubtitle,
+        payoutMethodBankEnabled: s.payoutMethodBankEnabled,
+        payoutMethodPromptPayPhoneEnabled: s.payoutMethodPromptPayPhoneEnabled,
+        payoutMethodPromptPayNationalIdEnabled: s.payoutMethodPromptPayNationalIdEnabled,
+        payoutMethodPromptPayQrEnabled: s.payoutMethodPromptPayQrEnabled,
       });
     }
     // Reloading discards the pending edits, so nothing is "touched" any more either.
     this.touchedWatermarkKeys.set(new Set());
+    this.touchedPayoutMethodKeys.set(new Set());
   }
 
   patch<K extends keyof PlatformSettings>(key: K, value: PlatformSettings[K]): void {
     this.form.update((f) => ({ ...f, [key]: value }));
     if ((WATERMARK_SETTING_KEYS as readonly string[]).includes(key as string)) {
       this.touchedWatermarkKeys.update((keys) => new Set(keys).add(key as WatermarkSettingKey));
+    }
+    if ((PAYOUT_METHOD_SETTING_KEYS as readonly string[]).includes(key as string)) {
+      this.touchedPayoutMethodKeys.update((keys) =>
+        new Set(keys).add(key as PayoutMethodSettingKey),
+      );
     }
   }
 
@@ -156,6 +192,7 @@ export class AdminSettingsPage {
   private buildSettingsUpdate(): PlatformSettingsUpdate {
     const f = this.form();
     const touched = this.touchedWatermarkKeys();
+    const touchedPayoutMethods = this.touchedPayoutMethodKeys();
     const body: PlatformSettingsUpdate = {
       feeRatePercent: f.feeRatePercent,
       vatPercent: f.vatPercent,
@@ -176,6 +213,18 @@ export class AdminSettingsPage {
       // §3.2: '' is the documented way to clear the stored subtitle back to null.
       body.watermarkDefaultSubtitle = (f.watermarkDefaultSubtitle ?? '').trim();
     }
+    if (touchedPayoutMethods.has('payoutMethodBankEnabled')) {
+      body.payoutMethodBankEnabled = f.payoutMethodBankEnabled;
+    }
+    if (touchedPayoutMethods.has('payoutMethodPromptPayPhoneEnabled')) {
+      body.payoutMethodPromptPayPhoneEnabled = f.payoutMethodPromptPayPhoneEnabled;
+    }
+    if (touchedPayoutMethods.has('payoutMethodPromptPayNationalIdEnabled')) {
+      body.payoutMethodPromptPayNationalIdEnabled = f.payoutMethodPromptPayNationalIdEnabled;
+    }
+    if (touchedPayoutMethods.has('payoutMethodPromptPayQrEnabled')) {
+      body.payoutMethodPromptPayQrEnabled = f.payoutMethodPromptPayQrEnabled;
+    }
     return body;
   }
 
@@ -190,6 +239,7 @@ export class AdminSettingsPage {
     try {
       await this.admin.saveSettings(body);
       this.touchedWatermarkKeys.set(new Set());
+      this.touchedPayoutMethodKeys.set(new Set());
       this.message.success('บันทึกการตั้งค่าเรียบร้อย');
     } catch {
       // apiFail already toasted by AdminService

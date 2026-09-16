@@ -1,10 +1,10 @@
 # Endpoint coverage report
 
-- backend endpoints parsed: **264**
-- SDK functions exported: **263**
-- SDK functions imported by app code: **263**
+- backend endpoints parsed: **265**
+- SDK functions exported: **265**
+- SDK functions imported by app code: **265**
 - orphan frontend (SDK -> no backend route match): **0**
-- orphan backend (route -> no SDK call): **1**
+- orphan backend (route -> no SDK call): **0**
 - unused SDK exports (defined but never imported): **0**
 
 ## Orphan frontend
@@ -13,7 +13,7 @@ _none_
 
 ## Orphan backend
 
-- POST `api/admin/payouts/batch-slips` (AdminController.cs)
+_none_
 
 ## Unused SDK exports
 

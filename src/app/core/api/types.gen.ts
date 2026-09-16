@@ -390,7 +390,12 @@ export type AdminPayoutAccountResponse = {
   accountNumberMasked?: string | null;
   promptPayType?: string | null;
   promptPayMasked?: string | null;
+  promptPayQrImageUrl?: string | null;
   updatedAt?: string | null;
+  payoutMethodBankEnabled?: boolean;
+  payoutMethodPromptPayPhoneEnabled?: boolean;
+  payoutMethodPromptPayNationalIdEnabled?: boolean;
+  payoutMethodPromptPayQrEnabled?: boolean;
 };
 
 export type AdminPayoutResponse = {
@@ -400,9 +405,9 @@ export type AdminPayoutResponse = {
   sellerAvailableBalance?: number;
   payoutAccountMasked?: string | null;
   payoutAccountHolderName?: string | null;
-  latestSlipId?: string | null;
   latestSlipStatus?: string | null;
   slipCount?: number;
+  payoutAccountQrImageUrl?: string | null;
   id?: string;
   grossAmount?: number;
   fee?: number;
@@ -416,6 +421,8 @@ export type AdminPayoutResponse = {
   cancelledAt?: string | null;
   requestedAt?: string;
   slipStatus?: string | null;
+  latestSlipId?: string | null;
+  slipUrl?: string | null;
 };
 
 export type AdminPendingDocumentResponse = {
@@ -847,6 +854,34 @@ export type BanUserRequest = {
   messageToUser?: string | null;
 };
 
+export type BatchPayoutSlipItemResponse = {
+  fileName?: string;
+  fileSizeBytes?: number;
+  slipId?: string | null;
+  slipUrl?: string | null;
+  payoutId?: string | null;
+  sellerName?: string | null;
+  sellerEmail?: string | null;
+  requestedAmount?: number | null;
+  parsedAmount?: number | null;
+  parsedReceiverName?: string | null;
+  parsedReceiverAccountLast4?: string | null;
+  providerReference?: string | null;
+  verificationStatus?: string;
+  mismatchReasons?: Array<string>;
+  payoutStatus?: string | null;
+  message?: string | null;
+};
+
+export type BatchPayoutSlipsResponse = {
+  totalFiles?: number;
+  matchedCount?: number;
+  completedCount?: number;
+  failedCount?: number;
+  unmatchedCount?: number;
+  items?: Array<BatchPayoutSlipItemResponse>;
+};
+
 export type BoughtTogetherItemResponse = {
   document?: MarketplaceDocumentResponse;
   coPurchaseCount?: number;
@@ -1159,6 +1194,8 @@ export type GeneratePreviewResponse = {
 };
 
 export type IFormFile = Blob | File;
+
+export type IFormFileCollection = Array<IFormFile>;
 
 export type LibraryItemResponse = {
   documentId?: string;
@@ -1805,7 +1842,12 @@ export type PayoutAccountResponse = {
   accountNumberMasked?: string | null;
   promptPayType?: string | null;
   promptPayMasked?: string | null;
+  promptPayQrImageUrl?: string | null;
   updatedAt?: string | null;
+  payoutMethodBankEnabled?: boolean;
+  payoutMethodPromptPayPhoneEnabled?: boolean;
+  payoutMethodPromptPayNationalIdEnabled?: boolean;
+  payoutMethodPromptPayQrEnabled?: boolean;
 };
 
 export type PayoutResponse = {
@@ -1822,6 +1864,8 @@ export type PayoutResponse = {
   cancelledAt?: string | null;
   requestedAt?: string;
   slipStatus?: string | null;
+  latestSlipId?: string | null;
+  slipUrl?: string | null;
 };
 
 export type PayoutSlipResponse = {
@@ -1857,6 +1901,10 @@ export type PlatformSettingsResponse = {
   watermarkDefaultSubtitle?: string | null;
   walletTopUpMinTHB?: number;
   walletTopUpMaxTHB?: number;
+  payoutMethodBankEnabled?: boolean;
+  payoutMethodPromptPayPhoneEnabled?: boolean;
+  payoutMethodPromptPayNationalIdEnabled?: boolean;
+  payoutMethodPromptPayQrEnabled?: boolean;
 };
 
 export type PlatformStatsResponse = {
@@ -1990,6 +2038,7 @@ export type ResetPasswordRequest = {
 export type RevealPayoutAccountResponse = {
   accountNumber?: string | null;
   promptPayId?: string | null;
+  promptPayQrImageUrl?: string | null;
 };
 
 export type RevenueByMonthItem = {
@@ -2023,6 +2072,7 @@ export type SavePayoutAccountRequest = {
   accountNumber?: string | null;
   promptPayType?: string | null;
   promptPayId?: string | null;
+  promptPayQrImageUrl?: string | null;
 };
 
 export type SaveStoreSectionRequest = {
@@ -2648,6 +2698,10 @@ export type UpdatePlatformSettingsRequest = {
   watermarkDefaultSubtitle?: string | null;
   walletTopUpMinTHB?: number | null;
   walletTopUpMaxTHB?: number | null;
+  payoutMethodBankEnabled?: boolean | null;
+  payoutMethodPromptPayPhoneEnabled?: boolean | null;
+  payoutMethodPromptPayNationalIdEnabled?: boolean | null;
+  payoutMethodPromptPayQrEnabled?: boolean | null;
 };
 
 export type UpdateProfileRequest = {
@@ -3889,6 +3943,35 @@ export type PostApiAdminPayoutsByPayoutIdSlipResponses = {
 
 export type PostApiAdminPayoutsByPayoutIdSlipResponse =
   PostApiAdminPayoutsByPayoutIdSlipResponses[keyof PostApiAdminPayoutsByPayoutIdSlipResponses];
+
+export type PostApiAdminPayoutsBatchSlipsData = {
+  body: {
+    files?: IFormFileCollection;
+  };
+  path?: never;
+  query?: never;
+  url: '/api/admin/payouts/batch-slips';
+};
+
+export type PostApiAdminPayoutsBatchSlipsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type PostApiAdminPayoutsBatchSlipsError =
+  PostApiAdminPayoutsBatchSlipsErrors[keyof PostApiAdminPayoutsBatchSlipsErrors];
+
+export type PostApiAdminPayoutsBatchSlipsResponses = {
+  /**
+   * OK
+   */
+  200: BatchPayoutSlipsResponse;
+};
+
+export type PostApiAdminPayoutsBatchSlipsResponse =
+  PostApiAdminPayoutsBatchSlipsResponses[keyof PostApiAdminPayoutsBatchSlipsResponses];
 
 export type GetApiAdminPayoutsByPayoutIdSlipsData = {
   body?: never;
@@ -8813,6 +8896,33 @@ export type DeleteApiSellerPayoutsByPayoutIdResponses = {
 
 export type DeleteApiSellerPayoutsByPayoutIdResponse =
   DeleteApiSellerPayoutsByPayoutIdResponses[keyof DeleteApiSellerPayoutsByPayoutIdResponses];
+
+export type GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileData = {
+  body?: never;
+  path: {
+    payoutId: string;
+    slipId: string;
+  };
+  query?: never;
+  url: '/api/seller/payouts/{payoutId}/slips/{slipId}/file';
+};
+
+export type GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileError =
+  GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileErrors[keyof GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileErrors];
+
+export type GetApiSellerPayoutsByPayoutIdSlipsBySlipIdFileResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
 
 export type GetApiSellerBalanceEntriesData = {
   body?: never;

@@ -21,6 +21,8 @@ import type {
   AnnouncementAdminResponse,
   AnnouncementImageResponse,
   AnnouncementPopupResponse,
+  BatchPayoutSlipItemResponse as ApiBatchPayoutSlipItemResponse,
+  BatchPayoutSlipsResponse as ApiBatchPayoutSlipsResponse,
   BoughtTogetherItemResponse,
   BundleDetailResponse,
   BundleResponse,
@@ -75,6 +77,8 @@ import type {
   AnnouncementAdmin,
   AnnouncementImage,
   AnnouncementPopup,
+  BatchPayoutSlipItemResponse,
+  BatchPayoutSlipsResponse,
   BoughtTogetherItem,
   Bundle,
   BuyerDocumentVersionInfo,
@@ -1172,7 +1176,7 @@ function toPayoutAccountType(value: string | null | undefined): PayoutAccountTyp
 }
 
 function toPromptPayIdType(value: string | null | undefined): PromptPayIdType | null {
-  return value === 'phone' || value === 'national_id' ? value : null;
+  return value === 'phone' || value === 'national_id' || value === 'qr_code' ? value : null;
 }
 
 export function mapPayoutAccount(d: PayoutAccountResponse): PayoutAccount {
@@ -1184,7 +1188,14 @@ export function mapPayoutAccount(d: PayoutAccountResponse): PayoutAccount {
     accountNumberMasked: d.accountNumberMasked ?? '',
     promptPayType: toPromptPayIdType(d.promptPayType),
     promptPayMasked: d.promptPayMasked ?? '',
+    promptPayQrImageUrl: d.promptPayQrImageUrl ?? null,
     updatedAt: d.updatedAt ?? '',
+    // payment-method-master-config v1 — platform default (per spec) is QR-only until an admin
+    // flips a switch, mirrors `toPlatformSettings` in admin.service.ts.
+    payoutMethodBankEnabled: d.payoutMethodBankEnabled ?? false,
+    payoutMethodPromptPayPhoneEnabled: d.payoutMethodPromptPayPhoneEnabled ?? false,
+    payoutMethodPromptPayNationalIdEnabled: d.payoutMethodPromptPayNationalIdEnabled ?? false,
+    payoutMethodPromptPayQrEnabled: d.payoutMethodPromptPayQrEnabled ?? true,
   };
 }
 
@@ -1221,6 +1232,38 @@ export function mapPayoutSlip(d: PayoutSlipResponse): PayoutSlip {
     fileUrl: d.fileUrl ?? '',
     uploadedAt: d.uploadedAt ?? '',
     uploadedByName: d.uploadedByName ?? null,
+  };
+}
+
+function mapBatchPayoutSlipItem(d: ApiBatchPayoutSlipItemResponse): BatchPayoutSlipItemResponse {
+  return {
+    fileName: d.fileName ?? '',
+    fileSizeBytes: d.fileSizeBytes ?? 0,
+    slipId: d.slipId ?? null,
+    slipUrl: d.slipUrl ?? null,
+    payoutId: d.payoutId ?? null,
+    sellerName: d.sellerName ?? null,
+    sellerEmail: d.sellerEmail ?? null,
+    requestedAmount: d.requestedAmount ?? null,
+    parsedAmount: d.parsedAmount ?? null,
+    parsedReceiverName: d.parsedReceiverName ?? null,
+    parsedReceiverAccountLast4: d.parsedReceiverAccountLast4 ?? null,
+    providerReference: d.providerReference ?? null,
+    verificationStatus: d.verificationStatus ?? 'unmatched',
+    mismatchReasons: d.mismatchReasons ?? [],
+    payoutStatus: d.payoutStatus ?? null,
+    message: d.message ?? null,
+  };
+}
+
+export function mapBatchPayoutSlipsResponse(d: ApiBatchPayoutSlipsResponse): BatchPayoutSlipsResponse {
+  return {
+    totalFiles: d.totalFiles ?? 0,
+    matchedCount: d.matchedCount ?? 0,
+    completedCount: d.completedCount ?? 0,
+    failedCount: d.failedCount ?? 0,
+    unmatchedCount: d.unmatchedCount ?? 0,
+    items: (d.items ?? []).map(mapBatchPayoutSlipItem),
   };
 }
 

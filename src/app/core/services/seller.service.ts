@@ -81,6 +81,8 @@ export interface SellerPayoutRow {
   cancelledAt: string | null;
   /** Latest e-slip verification status for this payout, if any (§3.4). */
   slipStatus: string | null;
+  latestSlipId?: string | null;
+  slipUrl?: string | null;
 }
 
 function toSellerPayoutRow(p: PayoutResponse): SellerPayoutRow {
@@ -96,6 +98,8 @@ function toSellerPayoutRow(p: PayoutResponse): SellerPayoutRow {
     paidAt: p.paidAt ?? null,
     cancelledAt: p.cancelledAt ?? null,
     slipStatus: p.slipStatus ?? null,
+    latestSlipId: p.latestSlipId ?? null,
+    slipUrl: p.slipUrl ?? null,
   };
 }
 

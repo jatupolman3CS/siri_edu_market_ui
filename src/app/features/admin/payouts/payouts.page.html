@@ -4,9 +4,12 @@
       <h1 class="text-2xl font-extrabold text-ink">การถอนเงินผู้ขาย</h1>
       <p class="text-sm text-ink-soft">ตรวจสอบและอัปเดตสถานะการโอนเงินให้ผู้ขาย</p>
     </div>
-    <button class="btn-ghost" [disabled]="loading()" (click)="reload()">
-      {{ loading() ? 'กำลังโหลด…' : 'รีเฟรช' }}
-    </button>
+    <div class="flex gap-2">
+      <button class="btn-pink" (click)="openBatchModal()">อัปโหลดสลิป (หลายไฟล์)</button>
+      <button class="btn-ghost" [disabled]="loading()" (click)="reload()">
+        {{ loading() ? 'กำลังโหลด…' : 'รีเฟรช' }}
+      </button>
+    </div>
   </header>
 
   <!-- payout-request-slip-verification v1 §4.5: "รอบโอนถัดไป" banner -->
@@ -299,6 +302,137 @@
         ยืนยันไม่สำเร็จ
       </button>
     </div>
+  </div>
+</div>
+}
+
+<!-- withdrawal-management (round 2): "อัปโหลดสลิป (หลายไฟล์)" batch upload + auto-matching modal -->
+@if (batchModalOpen()) {
+<div class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[rgba(42,27,34,0.45)] backdrop-blur-md" (click)="closeBatchModal()">
+  <div class="card-soft w-full max-w-2xl p-6 bg-white shadow-2xl border border-line max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between pb-3.5 border-b border-line mb-4">
+      <h3 class="text-base md:text-lg font-bold text-ink">อัปโหลดสลิปหลายไฟล์ — จับคู่อัตโนมัติ</h3>
+      <button class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft flex items-center justify-center" [disabled]="batchUploading()" (click)="closeBatchModal()" aria-label="ปิด">
+        <app-icon name="close" [size]="14" />
+      </button>
+    </div>
+
+    <p class="text-xs text-ink-muted mb-3">
+      เลือกไฟล์สลิปได้หลายไฟล์พร้อมกัน ระบบจะตรวจสอบและจับคู่กับรายการถอนเงินที่รอดำเนินการให้อัตโนมัติ
+    </p>
+
+    <div
+      class="rounded-2xl border-2 border-dashed border-line p-5 text-center cursor-pointer transition-colors hover:border-pink-300"
+      (click)="batchFileInput.click()"
+    >
+      <app-icon name="upload" [size]="24" />
+      <p class="text-sm text-ink-soft mt-2">คลิกเพื่อเลือกไฟล์สลิปหลายไฟล์</p>
+      <p class="text-xs text-ink-muted mt-1">รองรับ JPG, PNG, PDF ต่อไฟล์</p>
+      <input #batchFileInput type="file" multiple accept="image/*,application/pdf" class="hidden" (change)="onBatchFilesInputChange($event)" />
+    </div>
+
+    @if (batchError()) {
+      <p class="text-xs text-rose-600 mt-2">{{ batchError() }}</p>
+    }
+
+    @if (batchFiles().length > 0) {
+    <ul class="mt-3 space-y-1.5">
+      @for (f of batchFiles(); track f.name + f.size; let i = $index) {
+      <li class="flex items-center justify-between text-sm bg-pink-50 rounded-xl px-3 py-2">
+        <span class="truncate">{{ f.name }}</span>
+        <button type="button" class="text-ink-muted hover:text-rose-600 ml-2" (click)="removeBatchFile(i)" aria-label="เอาไฟล์นี้ออก">
+          <app-icon name="close" [size]="12" />
+        </button>
+      </li>
+      }
+    </ul>
+    }
+
+    <div class="flex gap-2 mt-4">
+      <button type="button" class="btn-pink !py-2 !px-5 text-sm" [disabled]="batchFiles().length === 0 || batchUploading()" (click)="submitBatchUpload()">
+        {{ batchUploading() ? 'กำลังอัปโหลดและตรวจสอบ...' : 'อัปโหลดและจับคู่อัตโนมัติ (' + batchFiles().length + ' ไฟล์)' }}
+      </button>
+    </div>
+
+    @if (batchResult(); as result) {
+    <div class="mt-5 pt-5 border-t border-line">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-center">
+        <div class="rounded-xl bg-pink-50 p-2">
+          <div class="text-lg font-bold text-ink">{{ result.totalFiles }}</div>
+          <div class="text-xs text-ink-muted">ไฟล์ทั้งหมด</div>
+        </div>
+        <div class="rounded-xl bg-emerald-50 p-2">
+          <div class="text-lg font-bold text-emerald-700">{{ result.completedCount }}</div>
+          <div class="text-xs text-ink-muted">โอนสำเร็จ</div>
+        </div>
+        <div class="rounded-xl bg-sky-50 p-2">
+          <div class="text-lg font-bold text-sky-700">{{ result.matchedCount }}</div>
+          <div class="text-xs text-ink-muted">จับคู่ได้</div>
+        </div>
+        <div class="rounded-xl bg-amber-50 p-2">
+          <div class="text-lg font-bold text-amber-700">{{ result.unmatchedCount + result.failedCount }}</div>
+          <div class="text-xs text-ink-muted">ไม่สำเร็จ/ไม่พบคู่</div>
+        </div>
+      </div>
+
+      <div class="table-scroll overflow-x-auto">
+        <table class="w-full min-w-[560px] text-sm">
+          <thead class="bg-pink-50">
+            <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
+              <th class="px-3 py-2 font-semibold">ไฟล์</th>
+              <th class="px-3 py-2 font-semibold">ผู้ขาย</th>
+              <th class="px-3 py-2 font-semibold">ยอดเงิน</th>
+              <th class="px-3 py-2 font-semibold">สถานะ</th>
+              <th class="px-3 py-2 font-semibold"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of result.items; track item.fileName + $index) {
+            <tr class="border-t border-line align-top">
+              <td class="px-3 py-2 text-ink-soft break-all">{{ item.fileName }}</td>
+              <td class="px-3 py-2">
+                @if (item.sellerName) {
+                <div class="font-semibold text-ink">{{ item.sellerName }}</div>
+                <div class="text-xs text-ink-muted">{{ item.sellerEmail }}</div>
+                } @else {
+                <span class="text-ink-muted">—</span>
+                }
+              </td>
+              <td class="px-3 py-2 whitespace-nowrap">
+                @if (item.parsedAmount !== null) {
+                <div>{{ item.parsedAmount | thb }}</div>
+                }
+                @if (item.requestedAmount !== null) {
+                <div class="text-xs text-ink-muted">คำขอ {{ item.requestedAmount | thb }}</div>
+                }
+              </td>
+              <td class="px-3 py-2">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold inline-block" [class]="batchStatusClass(item.verificationStatus)">
+                  {{ batchStatusLabel(item.verificationStatus) }}
+                </span>
+                @if (item.message) {
+                <div class="text-xs text-ink-muted mt-1">{{ item.message }}</div>
+                }
+                @if (item.mismatchReasons.length > 0) {
+                <ul class="text-xs text-rose-600 mt-1 space-y-0.5">
+                  @for (reason of item.mismatchReasons; track reason) {
+                  <li>{{ mismatchLabel(reason) }}</li>
+                  }
+                </ul>
+                }
+              </td>
+              <td class="px-3 py-2 whitespace-nowrap">
+                @if (item.slipUrl) {
+                <a [href]="batchItemFileUrl(item.slipUrl)" target="_blank" rel="noopener" class="text-pink-600 font-semibold text-xs">ดูสลิป</a>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
   </div>
 </div>
 }

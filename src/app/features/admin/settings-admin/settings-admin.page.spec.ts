@@ -84,6 +84,10 @@ function platformSettings(overrides: Partial<PlatformSettings> = {}): PlatformSe
     watermarkForensicEnabled: true,
     watermarkCopyRetentionDays: 90,
     watermarkDefaultSubtitle: null,
+    payoutMethodBankEnabled: false,
+    payoutMethodPromptPayPhoneEnabled: false,
+    payoutMethodPromptPayNationalIdEnabled: false,
+    payoutMethodPromptPayQrEnabled: true,
     ...overrides,
   };
 }
@@ -301,6 +305,81 @@ describe('AdminSettingsPage — watermark policy card (watermark-completion v1 �
 
     expect(saveSpy).not.toHaveBeenCalled();
     expect(messages.error.join(' ')).toContain('7');
+  });
+});
+
+describe('AdminSettingsPage — payout method master config (payment-method-master-config v1)', () => {
+  it('renders the section heading and all 4 channel labels, reflecting the loaded QR-only default', async () => {
+    const { fixture } = renderPage(platformSettings());
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ช่องทางการรับเงินของผู้ขาย');
+    expect(text).toContain('บัญชีธนาคาร');
+    expect(text).toContain('พร้อมเพย์ (เบอร์โทรศัพท์)');
+    expect(text).toContain('พร้อมเพย์ (เลขบัตรประชาชน)');
+    expect(text).toContain('พร้อมเพย์ (QR Code)');
+
+    const page = fixture.componentInstance;
+    expect(page.form().payoutMethodBankEnabled).toBe(false);
+    expect(page.form().payoutMethodPromptPayQrEnabled).toBe(true);
+  });
+
+  it('§3.2: PUT carries only the payout-method switch the admin actually flipped', async () => {
+    const { fixture, admin } = renderPage(platformSettings());
+    await settle();
+    const page = fixture.componentInstance;
+    const saveSpy = vi.spyOn(admin, 'saveSettings').mockResolvedValue(platformSettings());
+
+    page.patch('payoutMethodBankEnabled', true);
+    await page.save();
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      feeRatePercent: 12,
+      vatPercent: 7,
+      payoutMinTHB: 500,
+      payoutSchedule: 'monthly-15',
+      payoutMethodBankEnabled: true,
+    });
+    expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
+  });
+
+  it('§3.2: an untouched payout-method section is not sent at all (nullable = leave as is)', async () => {
+    const { fixture, admin } = renderPage(platformSettings());
+    await settle();
+    const page = fixture.componentInstance;
+    const saveSpy = vi.spyOn(admin, 'saveSettings').mockResolvedValue(platformSettings());
+
+    page.patch('vatPercent', 10);
+    await page.save();
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      feeRatePercent: 12,
+      vatPercent: 10,
+      payoutMinTHB: 500,
+      payoutSchedule: 'monthly-15',
+    });
+  });
+
+  it('flipping a watermark field and a payout-method field in the same save sends both, untouched fields excluded', async () => {
+    const { fixture, admin } = renderPage(platformSettings());
+    await settle();
+    const page = fixture.componentInstance;
+    const saveSpy = vi.spyOn(admin, 'saveSettings').mockResolvedValue(platformSettings());
+
+    page.patch('watermarkPolicy', 'required_always');
+    page.patch('payoutMethodPromptPayQrEnabled', false);
+    await page.save();
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      feeRatePercent: 12,
+      vatPercent: 7,
+      payoutMinTHB: 500,
+      payoutSchedule: 'monthly-15',
+      watermarkPolicy: 'required_always',
+      payoutMethodPromptPayQrEnabled: false,
+    });
   });
 });
 

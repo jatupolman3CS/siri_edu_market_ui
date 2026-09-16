@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { PayoutAccountService, PlatformStatsService, SellerService, type SellerPayoutRow } from '../../../core/services';
+import { AuthService } from '../../../core/services/auth.service';
+import { resolveDownloadUrl } from '../../../core/api-runtime';
 import { THAI_BANKS, type SellerBalanceEntry } from '../../../core/models';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -54,6 +56,7 @@ export class SellerEarningsPage {
   readonly seller = inject(SellerService);
   readonly payoutAccount = inject(PayoutAccountService);
   readonly platformStats = inject(PlatformStatsService);
+  private readonly auth = inject(AuthService);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
 
@@ -262,6 +265,15 @@ export class SellerEarningsPage {
     } finally {
       this.cancellingId.set(null);
     }
+  }
+
+  /**
+   * withdrawal-management (round 2): admin's uploaded transfer slip for a paid payout —
+   * `p.slipUrl` is `/api/seller/payouts/{payoutId}/slips/{slipId}/file`, seller-owned only
+   * (backend 404s for any other seller's payout).
+   */
+  slipFileUrl(p: SellerPayoutRow): string {
+    return resolveDownloadUrl(p.slipUrl, this.auth.accessToken(), null, true);
   }
 
   statusLabel(status: string | undefined): string {

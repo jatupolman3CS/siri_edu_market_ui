@@ -551,9 +551,16 @@ export interface AdminMlRecommendationOverview {
 // payout-request-slip-verification v1 §3.13.2: `accountType`/`promptPayType`/`promptPayMasked`
 // added to support PromptPay (phone / national ID) as an alternative to a bank account —
 // `accountType` is `null` only when `hasAccount` is `false` (nothing saved yet).
+//
+// payment-method-master-config v1: `promptPayType` gains `'qr_code'` (a PromptPay QR image
+// upload, alongside phone/national ID) and `promptPayQrImageUrl` carries that image's URL —
+// unlike `accountNumberMasked`/`promptPayMasked` this is never masked (it's a public image, not
+// sensitive digits), so it needs no `reveal()` round-trip. `payoutMethod*Enabled` echo the admin's
+// master on/off switch per channel (`AdminService.PlatformSettings`) so the seller-side form knows
+// which channels to even offer.
 
 export type PayoutAccountType = 'bank' | 'promptpay';
-export type PromptPayIdType = 'phone' | 'national_id';
+export type PromptPayIdType = 'phone' | 'national_id' | 'qr_code';
 
 export interface PayoutAccount {
   hasAccount: boolean;
@@ -563,7 +570,12 @@ export interface PayoutAccount {
   accountNumberMasked: string;
   promptPayType: PromptPayIdType | null;
   promptPayMasked: string;
+  promptPayQrImageUrl?: string | null;
   updatedAt: string;
+  payoutMethodBankEnabled?: boolean;
+  payoutMethodPromptPayPhoneEnabled?: boolean;
+  payoutMethodPromptPayNationalIdEnabled?: boolean;
+  payoutMethodPromptPayQrEnabled?: boolean;
 }
 
 // ====== Seller balance ledger (payout-request-slip-verification v1 §2.1-§2.3/§3.5) ======
@@ -607,6 +619,43 @@ export interface PayoutSlip {
   fileUrl: string;
   uploadedAt: string;
   uploadedByName: string | null;
+}
+
+/**
+ * withdrawal-management — `POST /api/admin/payouts/batch-slips` response item, one per uploaded
+ * file. Kept as a non-optional app-internal model (mapped from the generated, all-optional
+ * `BatchPayoutSlipItemResponse` via `mapBatchPayoutSlipsResponse` in `core/api-mappers/mappers.ts`).
+ */
+export interface BatchPayoutSlipItemResponse {
+  fileName: string;
+  fileSizeBytes: number;
+  slipId: string | null;
+  /** `/api/admin/payouts/{payoutId}/slips/{slipId}/file` when matched, else `null`. */
+  slipUrl: string | null;
+  payoutId: string | null;
+  sellerName: string | null;
+  sellerEmail: string | null;
+  requestedAmount: number | null;
+  parsedAmount: number | null;
+  parsedReceiverName: string | null;
+  parsedReceiverAccountLast4: string | null;
+  providerReference: string | null;
+  /** matched | mismatched | duplicate | provider_error | unreadable | unmatched */
+  verificationStatus: string;
+  mismatchReasons: string[];
+  /** pending | processing | paid | failed | null (null when no payout was matched) */
+  payoutStatus: string | null;
+  message: string | null;
+}
+
+/** withdrawal-management (round 2) — `POST /api/admin/payouts/batch-slips` response. */
+export interface BatchPayoutSlipsResponse {
+  totalFiles: number;
+  matchedCount: number;
+  completedCount: number;
+  failedCount: number;
+  unmatchedCount: number;
+  items: BatchPayoutSlipItemResponse[];
 }
 
 // ====== Subscription membership (subscription-membership v2 §3, §4) ======

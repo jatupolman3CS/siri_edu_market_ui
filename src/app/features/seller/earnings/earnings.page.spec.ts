@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { PayoutAccountService, PlatformStatsService, SellerService } from '../../../core/services';
+import { AuthService } from '../../../core/services/auth.service';
 import { SellerEarningsPage } from './earnings.page';
 import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS } from '../../../core/models';
 import type { PayoutAccount, PlatformStats, SellerStats } from '../../../core/models';
@@ -124,6 +125,7 @@ function render(opts: {
       { provide: PayoutAccountService, useValue: fakePayoutAccount },
       { provide: NzModalService, useValue: fakeModal },
       { provide: NzMessageService, useValue: fakeMessage },
+      { provide: AuthService, useValue: { accessToken: () => 'test-token' } },
     ],
   });
 
@@ -374,6 +376,59 @@ describe('SellerEarningsPage — ยกเลิกคำขอ (payout-request-
     await onOk();
 
     expect(cancelPayout).toHaveBeenCalledWith('payout-1');
+  });
+});
+
+describe('SellerEarningsPage — ดูสลิปการโอนเงิน (withdrawal-management round 2)', () => {
+  const paidPayoutWithSlip: SellerPayoutRow = {
+    id: 'payout-2',
+    grossAmount: 500,
+    fee: 0,
+    netAmount: 500,
+    status: 'paid',
+    bankAccount: 'KBANK ••••1234',
+    destinationType: 'bank',
+    requestedAt: '2026-09-10T00:00:00.000Z',
+    paidAt: '2026-09-11T00:00:00.000Z',
+    cancelledAt: null,
+    slipStatus: 'matched',
+    latestSlipId: 'slip-9',
+    slipUrl: '/api/seller/payouts/payout-2/slips/slip-9/file',
+  };
+
+  it('shows a "ดูสลิปการโอนเงิน" link on a paid row that has a slipUrl', async () => {
+    const { fixture } = render({ payouts: [paidPayoutWithSlip] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).filter((a) =>
+      a.textContent?.includes('ดูสลิปการโอนเงิน'),
+    );
+    expect(links.length).toBe(1);
+    expect(links[0].getAttribute('href')).toContain('/api/seller/payouts/payout-2/slips/slip-9/file');
+    expect(links[0].getAttribute('href')).toContain('token=test-token');
+  });
+
+  it('hides the link on a paid row with no slipUrl yet', async () => {
+    const { fixture } = render({
+      payouts: [{ ...paidPayoutWithSlip, latestSlipId: null, slipUrl: null }],
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ดูสลิปการโอนเงิน');
+  });
+
+  it('hides the link on a non-paid row even if a slipUrl is present', async () => {
+    const { fixture } = render({
+      payouts: [{ ...paidPayoutWithSlip, status: 'processing' }],
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ดูสลิปการโอนเงิน');
   });
 });
 

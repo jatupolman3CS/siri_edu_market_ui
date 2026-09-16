@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminPayoutResponse } from '../../../core/api';
 import { resolveDownloadUrl } from '../../../core/api-runtime';
-import type { PayoutSlip } from '../../../core/models';
+import type { BatchPayoutSlipsResponse, PayoutSlip } from '../../../core/models';
 import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
@@ -104,6 +104,13 @@ export class AdminPayoutsPage {
   // ===== §3.12: "ไม่สำเร็จ" now requires a reason =====
   readonly failModalPayoutId = signal<string | null>(null);
   readonly failReason = signal('');
+
+  // ===== withdrawal-management (round 2): "อัปโหลดสลิป (หลายไฟล์)" batch modal =====
+  readonly batchModalOpen = signal(false);
+  readonly batchFiles = signal<File[]>([]);
+  readonly batchUploading = signal(false);
+  readonly batchResult = signal<BatchPayoutSlipsResponse | null>(null);
+  readonly batchError = signal<string | null>(null);
 
   constructor() {
     void this.reload();
@@ -342,6 +349,103 @@ export class AdminPayoutsPage {
       this.apiFail.report('ยืนยันด้วยตนเอง', e);
     } finally {
       this.manualSubmitting.set(false);
+    }
+  }
+
+  // ===== withdrawal-management (round 2): batch slip upload + auto-matching =====
+
+  openBatchModal(): void {
+    this.batchModalOpen.set(true);
+    this.batchFiles.set([]);
+    this.batchResult.set(null);
+    this.batchError.set(null);
+  }
+
+  closeBatchModal(): void {
+    if (this.batchUploading()) return;
+    this.batchModalOpen.set(false);
+    this.batchFiles.set([]);
+    this.batchResult.set(null);
+    this.batchError.set(null);
+  }
+
+  private addBatchFiles(files: File[]): void {
+    if (files.length === 0) return;
+    const accepted: File[] = [];
+    for (const file of files) {
+      const isImage = file.type.startsWith('image/');
+      const isPdf = file.type === 'application/pdf';
+      if (isImage || isPdf) accepted.push(file);
+    }
+    if (accepted.length < files.length) {
+      this.batchError.set('บางไฟล์ถูกข้าม — รองรับเฉพาะไฟล์รูปภาพหรือ PDF');
+    }
+    this.batchFiles.update((list) => [...list, ...accepted]);
+  }
+
+  onBatchFilesInputChange(evt: Event): void {
+    const input = evt.target as HTMLInputElement;
+    this.addBatchFiles(Array.from(input.files ?? []));
+    input.value = '';
+  }
+
+  removeBatchFile(index: number): void {
+    this.batchFiles.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  async submitBatchUpload(): Promise<void> {
+    const files = this.batchFiles();
+    if (files.length === 0 || this.batchUploading()) return;
+    this.batchUploading.set(true);
+    this.batchError.set(null);
+    try {
+      const result = await this.admin.uploadBatchPayoutSlips(files);
+      this.batchResult.set(result);
+      this.batchFiles.set([]);
+      if (result.completedCount > 0) {
+        this.message.success(`โอนเงินสำเร็จอัตโนมัติ ${result.completedCount} รายการ`);
+      }
+      await this.reload();
+    } catch (e) {
+      this.apiFail.report('อัปโหลดสลิปหลายไฟล์', e);
+    } finally {
+      this.batchUploading.set(false);
+    }
+  }
+
+  batchItemFileUrl(url: string | null): string {
+    if (!url) return '';
+    return resolveDownloadUrl(url, this.auth.accessToken(), null, true);
+  }
+
+  batchStatusLabel(status: string): string {
+    switch (status) {
+      case 'matched':
+        return 'จับคู่สำเร็จ โอนเงินเรียบร้อย';
+      case 'mismatched':
+        return 'จับคู่ได้ แต่ข้อมูลไม่ตรงทั้งหมด';
+      case 'duplicate':
+        return 'สลิปซ้ำ';
+      case 'provider_error':
+        return 'ตรวจสอบไฟล์ไม่สำเร็จ';
+      case 'unreadable':
+        return 'อ่านไฟล์ไม่ได้';
+      case 'unmatched':
+        return 'ไม่พบรายการถอนเงินที่ตรงกัน';
+      default:
+        return status;
+    }
+  }
+
+  batchStatusClass(status: string): string {
+    switch (status) {
+      case 'matched':
+        return 'bg-emerald-50 text-emerald-700';
+      case 'mismatched':
+      case 'unmatched':
+        return 'bg-amber-50 text-amber-700';
+      default:
+        return 'bg-rose-50 text-rose-700';
     }
   }
 

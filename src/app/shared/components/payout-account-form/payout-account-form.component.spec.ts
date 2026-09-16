@@ -2,9 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { PayoutAccountFormComponent } from './payout-account-form.component';
-import { PayoutAccountService, type RevealedPayoutAccount } from '../../../core/services';
+import { PayoutAccountService, SellerService, type RevealedPayoutAccount } from '../../../core/services';
 import { idleActionState, loadingActionState, errorActionState, type ActionState } from '../../../core/services/action-state';
 import type { PayoutAccount } from '../../../core/models';
+import type { UploadResponse } from '../../../core/api/types.gen';
 
 /**
  * seller-payout-account-self-service v1 (docs/contracts/seller-payout-account-self-service.md
@@ -62,11 +63,40 @@ function fakePayoutAccount(
 
 type Messages = { success: string[]; warning: string[]; error: string[] };
 
-function render(fake: ReturnType<typeof fakePayoutAccount>, messages: Messages = { success: [], warning: [], error: [] }) {
+/** payment-method-master-config v1 — `PayoutAccountFormComponent` reuses `SellerService.uploadFile` for the QR image. */
+function fakeSeller(uploadFile = vi.fn(async (_file: File): Promise<UploadResponse> => uploadResponseFixture())) {
+  return { uploadFile };
+}
+
+function uploadResponseFixture(overrides: Partial<UploadResponse> = {}): UploadResponse {
+  return {
+    key: 'uploads/qr/abc.png',
+    publicUrl: 'https://cdn.example.com/qr/abc.png',
+    eTag: 'etag',
+    optimizedKey: null,
+    optimizedUrl: null,
+    ...overrides,
+  };
+}
+
+/** jsdom won't let a real `<input type="file">` be assigned `.files` directly — fake the `Event` instead. */
+function fileChangeEvent(file: File | null): Event {
+  const input = document.createElement('input');
+  input.type = 'file';
+  Object.defineProperty(input, 'files', { value: file ? [file] : [], writable: false });
+  return { target: input } as unknown as Event;
+}
+
+function render(
+  fake: ReturnType<typeof fakePayoutAccount>,
+  messages: Messages = { success: [], warning: [], error: [] },
+  seller: ReturnType<typeof fakeSeller> = fakeSeller(),
+) {
   TestBed.configureTestingModule({
     imports: [PayoutAccountFormComponent],
     providers: [
       { provide: PayoutAccountService, useValue: fake },
+      { provide: SellerService, useValue: seller },
       {
         provide: NzMessageService,
         useValue: {
@@ -329,6 +359,194 @@ describe('PayoutAccountFormComponent — PromptPay mode (payout-request-slip-ver
     expect(text).toContain('พร้อมเพย์');
     expect(text).toContain('เบอร์โทรศัพท์');
     expect(text).toContain('••••••••5678');
+  });
+});
+
+describe('PayoutAccountFormComponent — payment-method-master-config v1 (data-driven channel visibility)', () => {
+  it('hides "โอนเข้าบัญชีธนาคาร" and both non-QR PromptPay sub-type buttons when the admin has disabled everything but QR (today\'s real default)', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          hasAccount: false,
+          accountType: null,
+          payoutMethodBankEnabled: false,
+          payoutMethodPromptPayPhoneEnabled: false,
+          payoutMethodPromptPayNationalIdEnabled: false,
+          payoutMethodPromptPayQrEnabled: true,
+        }),
+      ),
+    );
+    const el = fixture.nativeElement as HTMLElement;
+    const text = el.textContent ?? '';
+
+    expect(text).not.toContain('โอนเข้าบัญชีธนาคาร');
+    expect(text).toContain('พร้อมเพย์');
+    expect(text).not.toContain('เบอร์โทรศัพท์');
+    expect(text).not.toContain('เลขบัตรประชาชน');
+    // The component defaults straight to the only enabled channel/sub-type — no click needed.
+    expect(fixture.componentInstance.accountTypeSelection()).toBe('promptpay');
+    expect(fixture.componentInstance.promptPayTypeSelection()).toBe('qr_code');
+    expect(el.querySelector('input[type="file"]')).toBeTruthy();
+  });
+
+  it('shows every channel/sub-type when the admin has left all 4 enabled', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          hasAccount: false,
+          accountType: null,
+          payoutMethodBankEnabled: true,
+          payoutMethodPromptPayPhoneEnabled: true,
+          payoutMethodPromptPayNationalIdEnabled: true,
+          payoutMethodPromptPayQrEnabled: true,
+        }),
+      ),
+    );
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('โอนเข้าบัญชีธนาคาร');
+    expect(text).toContain('เบอร์โทรศัพท์');
+    expect(text).toContain('เลขบัตรประชาชน');
+    expect(text).toContain('QR Code');
+  });
+
+  it('startEdit() falls back to the first enabled channel when the saved accountType/promptPayType has since been disabled', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          accountType: 'bank',
+          payoutMethodBankEnabled: false,
+          payoutMethodPromptPayPhoneEnabled: false,
+          payoutMethodPromptPayNationalIdEnabled: false,
+          payoutMethodPromptPayQrEnabled: true,
+        }),
+      ),
+    );
+
+    fixture.componentInstance.startEdit();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.accountTypeSelection()).toBe('promptpay');
+    expect(fixture.componentInstance.promptPayTypeSelection()).toBe('qr_code');
+  });
+});
+
+describe('PayoutAccountFormComponent — PromptPay QR Code upload (payment-method-master-config v1)', () => {
+  it('shows the upload hint text exactly as specified, and blocks submit with the backend\'s own message until an image is uploaded', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    const fixture = render(fake);
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.selectPromptPayType('qr_code');
+    fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'แนะนำให้อัปโหลดเป็นรูปภาพ QR Code เพื่อความสะดวกและแม่นยำ',
+    );
+
+    await fixture.componentInstance.submit();
+
+    expect(fake.save).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.fieldErrors().qrImage).toBe('กรุณาอัปโหลดรูปภาพ QR Code พร้อมเพย์');
+  });
+
+  it('uploading a file calls SellerService.uploadFile, stores publicUrl, shows the preview, and clears the field error', async () => {
+    const uploadFile = vi.fn(async () => uploadResponseFixture({ publicUrl: 'https://cdn.example.com/qr/new.png' }));
+    const fixture = render(
+      fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null })),
+      undefined,
+      fakeSeller(uploadFile),
+    );
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.selectPromptPayType('qr_code');
+    fixture.componentInstance.fieldErrors.update((e) => ({ ...e, qrImage: 'กรุณาอัปโหลดรูปภาพ QR Code พร้อมเพย์' }));
+
+    const file = new File(['x'], 'qr.png', { type: 'image/png' });
+    await fixture.componentInstance.onQrFileChange(fileChangeEvent(file));
+    fixture.detectChanges();
+
+    expect(uploadFile).toHaveBeenCalledWith(file);
+    expect(fixture.componentInstance.promptPayQrImageUrl()).toBe('https://cdn.example.com/qr/new.png');
+    expect(fixture.componentInstance.fieldErrors().qrImage).toBeNull();
+    const img = (fixture.nativeElement as HTMLElement).querySelector('img[alt*="QR Code"]') as HTMLImageElement | null;
+    expect(img?.src).toBe('https://cdn.example.com/qr/new.png');
+  });
+
+  it('does nothing when the file picker is dismissed with no file chosen', async () => {
+    const uploadFile = vi.fn(async () => uploadResponseFixture());
+    const fixture = render(
+      fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null })),
+      undefined,
+      fakeSeller(uploadFile),
+    );
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.selectPromptPayType('qr_code');
+
+    await fixture.componentInstance.onQrFileChange(fileChangeEvent(null));
+
+    expect(uploadFile).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.promptPayQrImageUrl()).toBeNull();
+  });
+
+  it('submit() sends promptPayType "qr_code" + promptPayQrImageUrl, never promptPayId', async () => {
+    const fake = fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null }));
+    fake.save.mockResolvedValueOnce({ ok: true });
+    const uploadFile = vi.fn(async () => uploadResponseFixture());
+    const fixture = render(fake, undefined, fakeSeller(uploadFile));
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.selectPromptPayType('qr_code');
+    fixture.componentInstance.accountHolderName.set('สมชาย ใจดี');
+    await fixture.componentInstance.onQrFileChange(fileChangeEvent(new File(['x'], 'qr.png', { type: 'image/png' })));
+
+    await fixture.componentInstance.submit();
+
+    expect(fake.save).toHaveBeenCalledWith({
+      accountType: 'promptpay',
+      accountHolderName: 'สมชาย ใจดี',
+      promptPayType: 'qr_code',
+      promptPayQrImageUrl: 'https://cdn.example.com/qr/abc.png',
+    });
+  });
+
+  it('masked view shows the saved QR image instead of masked text, and hides the reveal/hide buttons', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          accountType: 'promptpay',
+          promptPayType: 'qr_code',
+          promptPayMasked: '',
+          bankCode: '',
+          accountNumberMasked: '',
+          promptPayQrImageUrl: 'https://cdn.example.com/qr/saved.png',
+        }),
+      ),
+    );
+    const el = fixture.nativeElement as HTMLElement;
+
+    const img = el.querySelector('img[alt="QR Code พร้อมเพย์"]') as HTMLImageElement | null;
+    expect(img?.src).toBe('https://cdn.example.com/qr/saved.png');
+    expect(el.textContent).not.toContain('แสดงเลขบัญชีเต็ม');
+    expect(el.textContent).toContain('แก้ไข');
+  });
+
+  it('startEdit() prefills the staged upload with the already-saved QR image (unlike the masked bank/digit fields, no re-upload forced)', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          accountType: 'promptpay',
+          promptPayType: 'qr_code',
+          promptPayQrImageUrl: 'https://cdn.example.com/qr/saved.png',
+        }),
+      ),
+    );
+
+    fixture.componentInstance.startEdit();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.promptPayQrImageUrl()).toBe('https://cdn.example.com/qr/saved.png');
+    expect(fixture.componentInstance.promptPayTypeSelection()).toBe('qr_code');
   });
 });
 

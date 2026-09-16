@@ -23,6 +23,7 @@ import type {
   BanUserRequest,
   ReinstateUserRequest,
   PayoutSlip,
+  BatchPayoutSlipsResponse,
   AdminWalletSummary,
   WalletEntry,
   AdminMlRecommendationOverview,
@@ -71,6 +72,7 @@ import {
   postApiAdminDocumentsByIdReject,
   postApiAdminDocumentsByIdReportsByReportIdResolve,
   postApiAdminOrdersByOrderIdRefund,
+  postApiAdminPayoutsBatchSlips,
   postApiAdminPayoutsByPayoutIdCompleteManual,
   postApiAdminPayoutsByPayoutIdSlip,
   postApiAdminPayoutsByPayoutIdSlipsBySlipIdReverify,
@@ -134,6 +136,16 @@ export interface PlatformSettings {
   watermarkForensicEnabled: boolean;
   watermarkCopyRetentionDays: number;
   watermarkDefaultSubtitle: string | null;
+  /**
+   * payment-method-master-config v1 — master on/off switch per payout channel a seller may pick
+   * on `/seller` (`PayoutAccountFormComponent`). Always present on the wire (never `null`),
+   * mirrored 1:1 into `PayoutAccountResponse` so the seller-side form can hide a disabled channel
+   * without a second round-trip.
+   */
+  payoutMethodBankEnabled: boolean;
+  payoutMethodPromptPayPhoneEnabled: boolean;
+  payoutMethodPromptPayNationalIdEnabled: boolean;
+  payoutMethodPromptPayQrEnabled: boolean;
 }
 
 /** watermark-completion v1 §2.2/§3.2 — the 3 values `watermarkPolicy` may hold. */
@@ -158,6 +170,14 @@ export interface PlatformSettingsUpdate {
   watermarkCopyRetentionDays?: number;
   /** `''` clears the stored subtitle back to null (§3.2). */
   watermarkDefaultSubtitle?: string;
+  /**
+   * payment-method-master-config v1 — same "omitted = leave the stored value alone" semantics as
+   * the watermark fields above; the admin page only sends a toggle the operator actually flipped.
+   */
+  payoutMethodBankEnabled?: boolean;
+  payoutMethodPromptPayPhoneEnabled?: boolean;
+  payoutMethodPromptPayNationalIdEnabled?: boolean;
+  payoutMethodPromptPayQrEnabled?: boolean;
 }
 
 /**
@@ -305,6 +325,12 @@ function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
     watermarkForensicEnabled: res.watermarkForensicEnabled ?? true,
     watermarkCopyRetentionDays: res.watermarkCopyRetentionDays ?? 90,
     watermarkDefaultSubtitle: res.watermarkDefaultSubtitle ?? null,
+    // payment-method-master-config v1 — platform default (per spec) is QR-only until an admin
+    // flips a switch, so a response this build can't yet parse falls back to that same shape.
+    payoutMethodBankEnabled: res.payoutMethodBankEnabled ?? false,
+    payoutMethodPromptPayPhoneEnabled: res.payoutMethodPromptPayPhoneEnabled ?? false,
+    payoutMethodPromptPayNationalIdEnabled: res.payoutMethodPromptPayNationalIdEnabled ?? false,
+    payoutMethodPromptPayQrEnabled: res.payoutMethodPromptPayQrEnabled ?? true,
   };
 }
 
@@ -510,6 +536,7 @@ import {
   mapAdminPendingToDocumentItem,
   mapAdminTransaction,
   mapAnnouncementAdmin,
+  mapBatchPayoutSlipsResponse,
   mapCategory,
   mapPayoutSlip,
   mapSubcategoryAdmin,
@@ -1044,6 +1071,12 @@ export class AdminService {
       body: { note },
     });
     return unwrapSdkResult(result);
+  }
+
+  /** `POST /api/admin/payouts/batch-slips` — batch upload & auto-match multiple payout slips. */
+  async uploadBatchPayoutSlips(files: File[]): Promise<BatchPayoutSlipsResponse> {
+    const result = await postApiAdminPayoutsBatchSlips({ body: { files } });
+    return mapBatchPayoutSlipsResponse(unwrapSdkResult(result));
   }
 
   /**
