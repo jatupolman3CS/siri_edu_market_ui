@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /onboarding
+Disallow: /account
+Disallow: /become-seller
+Disallow: /checkout
+Disallow: /orders
+Disallow: /wallet
+Disallow: /notifications
+Disallow: /wishlist
+Disallow: /seller
+Disallow: /admin
+
+Sitemap: https://siriedumarket.siristudiophoto.com/api/system/sitemap.xml

@@ -13,6 +13,7 @@ import {
   BundleService,
   CatalogService,
   FollowService,
+  SeoMetaService,
 } from '../../../core/services';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
@@ -51,6 +52,7 @@ export class BuyerStorefrontPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly message = inject(NzMessageService);
+  private readonly seo = inject(SeoMetaService);
 
   readonly sellerId = signal<string>('');
   readonly tab = signal<'all' | 'bundles' | 'free' | 'top'>('all');
@@ -129,6 +131,18 @@ export class BuyerStorefrontPage {
           this.follow.setFollowing(id, profile.isFollowing);
         } else {
           void this.follow.hydrateFromApi(id);
+        }
+        // seo-ssr v1 §4.1/DEC-2/DEC-9: dynamic title/meta/canonical/JSON-LD (ProfilePage wrapping
+        // Organization, no aggregateRating) — re-runs on every route param change (store A → store
+        // B), so nothing stale from the previous seller lingers (AC-17 equivalent for `/store/:id`).
+        if (profile) {
+          this.seo.setStoreSeo({
+            studioName: profile.studioName ?? '',
+            bio: profile.bio ?? '',
+            canonicalUrl: this.seo.canonicalUrl(`/store/${id}`),
+            avatarImageUrl: this.resolveAvatarUrl(profile.avatarUrl),
+            bannerImageUrl: profile.bannerUrl ? this.resolvePublicUrl(profile.bannerUrl) : '',
+          });
         }
       })();
       this.catalog.loadSellerDocuments(id);

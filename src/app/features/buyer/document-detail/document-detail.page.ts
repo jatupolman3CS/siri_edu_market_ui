@@ -22,6 +22,7 @@ import {
   LibraryService,
   NavigationSourceService,
   RecentlyViewedService,
+  SeoMetaService,
   WishlistService,
   calcBundleSaveAmount,
   calcBundleSavePercent,
@@ -85,6 +86,7 @@ export class BuyerDocumentDetailPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  private readonly seo = inject(SeoMetaService);
 
   readonly id = signal<string>('');
   readonly selectedImage = signal<number>(0);
@@ -315,6 +317,27 @@ export class BuyerDocumentDetailPage {
           void this.catalog.fetchSellerProfile?.(d.seller.id);
         }
       }
+    });
+    // seo-ssr v1 §4.1/DEC-2: dynamic title/meta/canonical/JSON-LD (Product +
+    // additionalType: LearningResource) — re-runs on every new document (navigating from
+    // document A to document B), so nothing stale from the previous document lingers (AC-17).
+    effect(() => {
+      const d = this.doc();
+      if (!d) return;
+      this.seo.setDocumentSeo({
+        documentId: d.id,
+        title: d.title,
+        shortDescription: d.shortDescription,
+        canonicalUrl: this.seo.canonicalUrl(`/document/${d.id}`),
+        coverImageUrl: d.cover,
+        galleryImageUrls: d.gallery,
+        price: d.price,
+        studioName: d.seller.studioName,
+        resourceType: d.resourceType,
+        language: d.language,
+        reviewCount: d.reviewCount,
+        averageRating: d.rating,
+      });
     });
     // Best-effort: load library once for owned-check
     effect(() => {

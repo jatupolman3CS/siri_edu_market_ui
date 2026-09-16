@@ -2,13 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CatalogService } from '../../../core/services';
+import { CatalogService, SeoMetaService } from '../../../core/services';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -34,6 +35,7 @@ import { FormsModule } from '@angular/forms';
 export class BuyerCategoryDetailPage {
   readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
+  private readonly seo = inject(SeoMetaService);
 
   readonly slug = signal<string>('');
   readonly selectedSubId = signal<string>('');
@@ -115,6 +117,17 @@ export class BuyerCategoryDetailPage {
         const s = this.catalog.getSubcategoryBySlug(sub);
         if (s) this.selectedSubId.set(s.id);
       }
+    });
+    // seo-ssr v1 §4.1/DEC-2/DEC-8: dynamic title/meta/canonical/JSON-LD (CollectionPage only, no
+    // ItemList) — re-runs whenever the loaded category changes (AC-17 for `/category/:slug`).
+    effect(() => {
+      const cat = this.category();
+      if (!cat) return;
+      this.seo.setCategorySeo({
+        name: cat.name,
+        description: cat.description,
+        canonicalUrl: this.seo.canonicalUrl(`/category/${cat.slug}`),
+      });
     });
   }
 }

@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerStorefrontPage } from './storefront.page';
@@ -240,6 +241,97 @@ describe('BuyerStorefrontPage — toggleFollow', () => {
     expect(fakeCatalog.updateSellerFollowerCount).not.toHaveBeenCalled();
     expect(fakeMessage.success).not.toHaveBeenCalled();
     expect(fakeMessage.info).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * seo-ssr v1 §1.4 group C (AC-16/AC-17) — dynamic title/meta description/canonical link/JSON-LD
+ * (`ProfilePage` wrapping `Organization`, DEC-9: no `aggregateRating`) for `/store/:id`. `Title`/
+ * `Meta` are the real Angular services here, so the assertions prove the tags actually land in
+ * the DOM.
+ */
+describe('BuyerStorefrontPage — SEO meta (seo-ssr v1)', () => {
+  async function flushMicrotasks(times = 5): Promise<void> {
+    for (let i = 0; i < times; i++) {
+      await Promise.resolve();
+    }
+  }
+
+  function renderWithProfile(profile: SellerProfileResponse, sellerId = 'seller-1') {
+    const fakeCatalog: Partial<CatalogService> = {
+      sellerProfile: signal<SellerProfileResponse | null>(profile).asReadonly(),
+      sellerProfileState: signal(idleActionState()).asReadonly(),
+      sellerDocuments: signal<DocumentItem[]>([]),
+      sellerDocumentsState: signal(idleActionState()).asReadonly(),
+      sellerSalesByMonth: signal([]).asReadonly(),
+      loadSellerProfile: vi.fn(async () => profile),
+      loadSellerDocuments: vi.fn(),
+    };
+    const fakeFollow: Partial<FollowService> = {
+      isFollowing: () => false,
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => false),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerStorefrontPage],
+      providers: [
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: sellerId })) } },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: BundleService, useValue: { getBySellerId: () => [] } },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: NzMessageService, useValue: { success: vi.fn(), info: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerStorefrontPage);
+    fixture.detectChanges();
+    return { fixture, titleService: TestBed.inject(Title), meta: TestBed.inject(Meta) };
+  }
+
+  afterEach(() => {
+    document.getElementById('seo-json-ld')?.remove();
+    document.querySelector('link[rel="canonical"]')?.remove();
+  });
+
+  it('AC-16: sets document.title, meta description, canonical link, and a parseable ProfilePage/Organization JSON-LD', async () => {
+    const profile = sellerProfile({ studioName: 'ครูเอ สตูดิโอ', bio: 'ร้านเอกสารคุณภาพ' });
+    const { titleService, meta } = renderWithProfile(profile);
+    await flushMicrotasks();
+
+    expect(titleService.getTitle()).toBe('ครูเอ สตูดิโอ — SIRIEDUMARKET');
+    expect(meta.getTag('name="description"')?.content).toBe('ร้านเอกสารคุณภาพ');
+
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    expect(canonical?.getAttribute('href')).toBe(`${window.location.origin}/store/seller-1`);
+
+    const script = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const data = JSON.parse(script!.text) as Record<string, unknown>;
+    expect(data['@type']).toBe('ProfilePage');
+    const mainEntity = data['mainEntity'] as Record<string, unknown>;
+    expect(mainEntity['@type']).toBe('Organization');
+    expect(mainEntity['aggregateRating']).toBeUndefined();
+  });
+
+  it('AC-17: navigating from one store to another does not leave a stale title/JSON-LD', async () => {
+    const sellerA = sellerProfile({ id: 'seller-a', studioName: 'ร้าน A' });
+    const { titleService: titleA } = renderWithProfile(sellerA, 'seller-a');
+    await flushMicrotasks();
+    expect(titleA.getTitle()).toContain('ร้าน A');
+
+    TestBed.resetTestingModule();
+    const sellerB = sellerProfile({ id: 'seller-b', studioName: 'ร้าน B' });
+    const { titleService: titleB } = renderWithProfile(sellerB, 'seller-b');
+    await flushMicrotasks();
+    expect(titleB.getTitle()).toContain('ร้าน B');
+    expect(titleB.getTitle()).not.toContain('ร้าน A');
+
+    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    const data = JSON.parse((scripts[0] as HTMLScriptElement).text) as Record<string, unknown>;
+    expect((data['mainEntity'] as Record<string, unknown>)['name']).toBe('ร้าน B');
   });
 });
 

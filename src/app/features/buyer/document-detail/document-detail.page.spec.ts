@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { BuyerDocumentDetailPage } from './document-detail.page';
 import {
@@ -1098,6 +1099,100 @@ describe('BuyerDocumentDetailPage — seller profile enrichment & toggleFollow',
 
     await fixture.componentInstance.toggleFollow();
     expect(fakeCatalog.updateSellerFollowerCount).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * seo-ssr v1 §1.4 group C (AC-15/AC-17) — dynamic title/meta description/canonical link/JSON-LD
+ * for `/document/:id`, wired through the shared `SeoMetaService` (mirrors `exam-hub.page.ts`'s
+ * existing `Title`/`Meta` usage). `Title`/`Meta` are the real Angular services here (not faked)
+ * so the assertions prove the tags actually land in the DOM, not just that a method was called.
+ */
+describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
+  function renderDoc(doc: DocumentItem) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, titleService: TestBed.inject(Title), meta: TestBed.inject(Meta) };
+  }
+
+  afterEach(() => {
+    document.getElementById('seo-json-ld')?.remove();
+    document.querySelector('link[rel="canonical"]')?.remove();
+  });
+
+  it('AC-15: sets document.title, meta description, canonical link, and a parseable JSON-LD script', () => {
+    const doc = buildDoc({
+      id: 'doc-1',
+      title: 'สรุปคณิต ม.6',
+      shortDescription: 'สรุปเข้มก่อนสอบ',
+      reviewCount: 0,
+    });
+    const { titleService, meta } = renderDoc(doc);
+
+    expect(titleService.getTitle()).toBe('สรุปคณิต ม.6 — SIRIEDUMARKET');
+    expect(meta.getTag('name="description"')?.content).toBe('สรุปเข้มก่อนสอบ');
+
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    expect(canonical?.getAttribute('href')).toBe(`${window.location.origin}/document/doc-1`);
+
+    const script = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const data = JSON.parse(script!.text) as Record<string, unknown>;
+    expect(data['@type']).toBe('Product');
+  });
+
+  it('DEC-7: reviewCount > 0 includes aggregateRating; reviewCount === 0 omits it entirely', () => {
+    const withReviews = buildDoc({ id: 'doc-2', reviewCount: 8, rating: 4.6 });
+    renderDoc(withReviews);
+    const scriptWith = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    const dataWith = JSON.parse(scriptWith!.text) as Record<string, unknown>;
+    expect(dataWith['aggregateRating']).toBeDefined();
+    expect((dataWith['aggregateRating'] as Record<string, unknown>)['reviewCount']).toBe(8);
+
+    // Fresh TestBed environment for the second render — `SeoMetaService` is `providedIn: 'root'`
+    // so configuring the test module again after a component has been created requires a reset.
+    TestBed.resetTestingModule();
+    const withoutReviews = buildDoc({ id: 'doc-3', reviewCount: 0, rating: 3 });
+    renderDoc(withoutReviews);
+    const scriptWithout = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    const dataWithout = JSON.parse(scriptWithout!.text) as Record<string, unknown>;
+    expect(dataWithout['aggregateRating']).toBeUndefined();
+  });
+
+  it('AC-17: navigating from one document to another (component re-render) does not leave a stale title/JSON-LD', () => {
+    const docA = buildDoc({ id: 'doc-a', title: 'เอกสาร A', shortDescription: 'คำอธิบาย A' });
+    const { titleService: titleA } = renderDoc(docA);
+    expect(titleA.getTitle()).toContain('เอกสาร A');
+
+    TestBed.resetTestingModule();
+    const docB = buildDoc({ id: 'doc-b', title: 'เอกสาร B', shortDescription: 'คำอธิบาย B' });
+    const { titleService: titleB } = renderDoc(docB);
+    expect(titleB.getTitle()).toContain('เอกสาร B');
+    expect(titleB.getTitle()).not.toContain('เอกสาร A');
+
+    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts.length).toBe(1);
+    const data = JSON.parse((scripts[0] as HTMLScriptElement).text) as Record<string, unknown>;
+    expect(data['sku']).toBe('doc-b');
   });
 });
 
