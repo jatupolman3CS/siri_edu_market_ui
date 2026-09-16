@@ -19,6 +19,7 @@ import type { MarketplaceDocumentResponse } from '../../../core/api';
 import type {
   Bundle,
   Category,
+  DiscoveryBlock,
   DocumentItem,
   ExamCountdownSetting,
   PlatformStats,
@@ -113,14 +114,23 @@ function buildCatalog(
   };
 }
 
-function buildDiscoveryFake(popularTerms: PopularSearchTerm[] = []) {
+/**
+ * marketplace-home-redesign v2 §1 ข้อ 8 / §4.3: the CRM discovery block moved here from
+ * `marketplace.page.ts` — `discovery`/`discoveryState` accept overrides the same way the old
+ * marketplace spec's `buildDiscoveryFake` did (AC-8b).
+ */
+function buildDiscoveryFake(
+  popularTerms: PopularSearchTerm[] = [],
+  discovery: DiscoveryBlock | null = null,
+  discoveryState: ActionState = idleActionState(),
+) {
   return {
     popularTerms: () => popularTerms,
     popularPersonalized: () => false,
     popularTermsState: () => idleActionState(),
     loadPopularTerms: vi.fn(),
-    discovery: () => null,
-    discoveryState: () => idleActionState(),
+    discovery: () => discovery,
+    discoveryState: () => discoveryState,
     loadDiscovery: vi.fn(),
   };
 }
@@ -173,6 +183,8 @@ function render(opts: {
   documents?: DocumentItem[];
   sellerProfiles?: Map<string, Seller>;
   popularTerms?: PopularSearchTerm[];
+  discovery?: DiscoveryBlock | null;
+  discoveryState?: ActionState;
 }) {
   const fakeStats = {
     stats: () => opts.stats,
@@ -189,7 +201,11 @@ function render(opts: {
     opts.recommendedExplanations ?? new Map(),
   );
   const examCountdown = opts.examCountdown ?? fakeExamCountdownService();
-  const discovery = buildDiscoveryFake(opts.popularTerms ?? []);
+  const discovery = buildDiscoveryFake(
+    opts.popularTerms ?? [],
+    opts.discovery ?? null,
+    opts.discoveryState ?? idleActionState(),
+  );
 
   TestBed.configureTestingModule({
     imports: [BuyerHomePage],
@@ -634,5 +650,87 @@ describe('BuyerHomePage — featured creators follower count', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('42 ฟอลโลเวอร์');
     expect(text).toContain('25 เอกสาร');
+  });
+});
+
+/**
+ * marketplace-home-redesign v2 §1 ข้อ 8 / §4.3, AC-8b: the CRM discovery block
+ * (`app-popular-search-chips` + `app-discovery-rail`) moved here from
+ * `marketplace.page.ts`/`.html` — same behavior, same 3-second skeleton cap, same
+ * `discovery.loadDiscovery()` call, just a different page.
+ */
+function buildDiscoverySection() {
+  return {
+    key: 'interest:category:math',
+    title: 'คณิตศาสตร์ที่คุณสนใจ',
+    reason: 'เพราะคุณสนใจคณิตศาสตร์',
+    facetType: 'category' as const,
+    facetValue: 'math',
+    facetLabel: 'คณิตศาสตร์',
+    items: [
+      mapDocument({ id: 'doc-1', slug: 'doc-1', title: 'เอกสาร 1', shortDescription: '', price: 100 }),
+      mapDocument({ id: 'doc-2', slug: 'doc-2', title: 'เอกสาร 2', shortDescription: '', price: 100 }),
+      mapDocument({ id: 'doc-3', slug: 'doc-3', title: 'เอกสาร 3', shortDescription: '', price: 100 }),
+    ],
+  };
+}
+
+function buildDiscoveryBlock(): DiscoveryBlock {
+  return {
+    strategy: 'declared-interest',
+    strategyReason: 'เพราะคุณสนใจคณิตศาสตร์',
+    gatePassed: false,
+    sections: [buildDiscoverySection()],
+    popularTerms: [{ term: 'toeic', rank: 1, isRising: false }],
+    generatedAt: '2026-09-14T00:00:00Z',
+  };
+}
+
+describe('BuyerHomePage — CRM discovery block (marketplace-home-redesign v2 §1 ข้อ 8/§4.3, AC-8b)', () => {
+  it('calls discovery.loadDiscovery() on construction', () => {
+    render({});
+
+    const discovery = TestBed.inject(DiscoveryService) as unknown as { loadDiscovery: ReturnType<typeof vi.fn> };
+    expect(discovery.loadDiscovery).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the discovery rail + popular chips when data is loaded', () => {
+    const fixture = render({ discovery: buildDiscoveryBlock() });
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('คณิตศาสตร์ที่คุณสนใจ');
+    expect(text).toContain('toeic');
+  });
+
+  it('shows the loading skeleton (not the block) while discoveryState() is loading', () => {
+    const fixture = render({ discovery: null, discoveryState: loadingActionState() });
+
+    const page = fixture.componentInstance;
+    expect(page.showDiscoverySkeleton()).toBe(true);
+    expect(page.showDiscoveryBlock()).toBe(false);
+  });
+
+  it('renders nothing when sections and popularTerms are both empty', () => {
+    const fixture = render({
+      discovery: {
+        strategy: 'popular-fallback',
+        strategyReason: '',
+        gatePassed: false,
+        sections: [],
+        popularTerms: [],
+        generatedAt: '2026-09-14T00:00:00Z',
+      },
+    });
+
+    const page = fixture.componentInstance;
+    expect(page.showDiscoveryBlock()).toBe(false);
+    expect(page.showDiscoverySkeleton()).toBe(false);
+  });
+
+  it('renders nothing when discovery() is null and not loading', () => {
+    const fixture = render({ discovery: null });
+
+    const page = fixture.componentInstance;
+    expect(page.showDiscoveryBlock()).toBe(false);
   });
 });

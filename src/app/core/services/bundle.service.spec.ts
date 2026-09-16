@@ -217,6 +217,181 @@ describe('BundleService — loadBundleDetail / getDocuments (Q-04)', () => {
   });
 });
 
+/**
+ * marketplace-home-redesign v2 §4.2 (round 2 — SDK wired): the "แพ็กเกจ" tab's search pager —
+ * `searchPager` is a brand-new `createServerPager` instance, entirely separate from `pager`/
+ * `featured()` above (AC-4b regression: those must keep passing unmodified, asserted by the
+ * existing describe blocks in this file with zero changes). Backend now supports `Q`/`Sort` on
+ * `GET /api/marketplace/bundles` (gate 1 passed) — `fetch` calls the real SDK and maps the
+ * response through `mapBundle`, same as `pager` above.
+ */
+describe('BundleService — bundleResults / searchPager (marketplace-home-redesign v2 §4.2, round 2 SDK wired)', () => {
+  function bundleDto(overrides: Partial<Record<string, unknown>> = {}) {
+    return {
+      id: 'bun-1',
+      slug: 'bun-1',
+      title: 'แพ็กคุ้ม TOEIC',
+      description: 'รวมข้อสอบ TOEIC',
+      coverUrl: 'https://example.test/cover.jpg',
+      price: 150,
+      originalPrice: 200,
+      documentCount: 3,
+      averageRating: 4.5,
+      reviewCount: 10,
+      downloads: 99,
+      sellerId: 'seller-1',
+      sellerName: 'ครูเอ',
+      createdAt: '2026-01-01T00:00:00Z',
+      ...overrides,
+    };
+  }
+
+  it('starts empty and idle before loadBundleResultsPage() is ever called', () => {
+    const service = buildService();
+
+    expect(service.bundleResults()).toEqual([]);
+    expect(service.bundleResultsTotalCount()).toBe(0);
+  });
+
+  it('loadBundleResultsPage(1, q) calls GET /api/marketplace/bundles with Q/Page/PageSize and maps the response through mapBundle', async () => {
+    stubRoute('GET', '/api/marketplace/bundles', {
+      items: [bundleDto()],
+      page: 1,
+      pageSize: 24,
+      totalCount: 1,
+      totalPages: 1,
+    });
+    const service = buildService();
+
+    await service.loadBundleResultsPage(1, 'TOEIC');
+
+    expect(service.bundleResults()).toHaveLength(1);
+    expect(service.bundleResults()[0].id).toBe('bun-1');
+    expect(service.bundleResults()[0].title).toBe('แพ็กคุ้ม TOEIC');
+    expect(service.bundleResultsTotalCount()).toBe(1);
+    expect(service.bundleResultsState().status).toBe('idle');
+
+    const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls as unknown[][];
+    const call = calls.find((args) => {
+      const req = args[0];
+      const url = req instanceof Request ? req.url : String(req);
+      return url.includes('/api/marketplace/bundles') && url.includes('Q=');
+    });
+    expect(call).toBeDefined();
+    const req = call?.[0] as Request;
+    const url = new URL(req.url);
+    expect(url.searchParams.get('Q')).toBe('TOEIC');
+    expect(url.searchParams.get('Page')).toBe('1');
+    expect(url.searchParams.get('PageSize')).toBe('24');
+    // §3.1: this tab doesn't offer its own sort option — Sort is left unset so the backend
+    // falls back to its own default ("newest"), not sent as an explicit param.
+    expect(url.searchParams.get('Sort')).toBeNull();
+  });
+
+  it('omits the Q param entirely when the search term is empty (AC-4b regression: same shape as the unfiltered list)', async () => {
+    stubRoute('GET', '/api/marketplace/bundles', {
+      items: [bundleDto()],
+      page: 1,
+      pageSize: 24,
+      totalCount: 1,
+      totalPages: 1,
+    });
+    const service = buildService();
+
+    await service.loadBundleResultsPage(1, '');
+
+    const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls as unknown[][];
+    const call = calls.find((args) => {
+      const req = args[0];
+      const url = req instanceof Request ? req.url : String(req);
+      return url.includes('/api/marketplace/bundles') && !url.includes('/documents/');
+    });
+    expect(call).toBeDefined();
+    const req = call?.[0] as Request;
+    const url = new URL(req.url);
+    expect(url.searchParams.get('Q')).toBeNull();
+  });
+
+  it('loadBundleResultsPage(page > 1) reuses the last search term and sends the requested Page', async () => {
+    stubRoute('GET', '/api/marketplace/bundles', {
+      items: [bundleDto({ id: 'bun-2' })],
+      page: 2,
+      pageSize: 24,
+      totalCount: 30,
+      totalPages: 2,
+    });
+    const service = buildService();
+
+    await service.loadBundleResultsPage(1, 'TOEIC');
+    await service.loadBundleResultsPage(2);
+
+    const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls as unknown[][];
+    const lastCall = [...calls].reverse().find((args) => {
+      const req = args[0];
+      const url = req instanceof Request ? req.url : String(req);
+      return url.includes('/api/marketplace/bundles') && !url.includes('/documents/');
+    });
+    expect(lastCall).toBeDefined();
+    const req = lastCall?.[0] as Request;
+    const url = new URL(req.url);
+    expect(url.searchParams.get('Page')).toBe('2');
+    expect(url.searchParams.get('Q')).toBe('TOEIC');
+  });
+
+  it('never mutates the unrelated `pager`/`bundles()`/`featured()` used by the home strip and /bundles page (AC-4b)', async () => {
+    const service = buildService();
+    // Let the constructor's own fire-and-forget refreshBundles() settle on the default empty
+    // stub *before* swapping the route's body — otherwise that still-in-flight request could
+    // read the swapped-in body too (same route key), leaking search results into `pager`.
+    await vi.waitFor(() => expect(service.bundlesState().status).toBe('idle'));
+    const before = service.bundles();
+
+    stubRoute('GET', '/api/marketplace/bundles', {
+      items: [bundleDto()],
+      page: 1,
+      pageSize: 24,
+      totalCount: 1,
+      totalPages: 1,
+    });
+    await service.loadBundleResultsPage(1, 'TOEIC');
+
+    expect(service.bundles()).toBe(before);
+  });
+
+  it('reports the failure via ApiFailureReporter and leaves bundleResultsState errored when the request fails', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/bundles',
+      { title: 'Server Error', status: 500, statusCode: 500 },
+      500,
+    );
+    const apiFail = { report: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [BundleService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    const service = TestBed.inject(BundleService);
+
+    await service.loadBundleResultsPage(1, 'TOEIC');
+
+    expect(apiFail.report).toHaveBeenCalled();
+    expect(service.bundleResultsState().status).toBe('error');
+  });
+
+  it('retryBundleResults() re-requests the current page without throwing', async () => {
+    stubRoute('GET', '/api/marketplace/bundles', {
+      items: [bundleDto()],
+      page: 2,
+      pageSize: 24,
+      totalCount: 30,
+      totalPages: 2,
+    });
+    const service = buildService();
+    await service.loadBundleResultsPage(2);
+
+    await expect(Promise.resolve(service.retryBundleResults())).resolves.toBeUndefined();
+  });
+});
+
 describe('calcBundleSavePercent', () => {
   it('rounds (1 - price/originalPrice) * 100', () => {
     expect(calcBundleSavePercent(75, 100)).toBe(25);

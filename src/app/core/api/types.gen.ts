@@ -6345,6 +6345,8 @@ export type GetApiMarketplaceBundlesData = {
   body?: never;
   path?: never;
   query?: {
+    Q?: string;
+    Sort?: string;
     Page?: number;
     PageSize?: number;
   };

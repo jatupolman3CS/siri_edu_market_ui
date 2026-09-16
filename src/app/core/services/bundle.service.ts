@@ -26,6 +26,7 @@ import {
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager } from './infinite-pager';
+import { createServerPager } from './server-pager';
 
 @Injectable({ providedIn: 'root' })
 export class BundleService {
@@ -62,6 +63,63 @@ export class BundleService {
   readonly featured = computed(() =>
     [...this.bundles()].sort((a, b) => b.rating - a.rating).slice(0, 4),
   );
+
+  /**
+   * marketplace-home-redesign v2 §4.2 (round 2 — SDK wired): tab "แพ็กเกจ" ในหน้า marketplace —
+   * pager ใหม่แยกจาก `pager`/`featured()` ด้านบนโดยสิ้นเชิง (ห้ามใช้ตัวเดียวกัน จะกระทบ home strip /
+   * `/bundles`). Backend extend `GET /api/marketplace/bundles` เพิ่ม `Q`/`Sort` แล้ว (gate 1 ผ่าน) —
+   * `Sort` ไม่ส่งค่าเลย ปล่อยให้ backend fallback เป็น `"newest"` เอง (ตาม spec §3.1 — tab นี้ไม่มี
+   * ตัวเลือก sort ของตัวเอง).
+   */
+  private readonly searchPager = createServerPager<Bundle, string>({
+    pageSize: 24,
+    errorMessage: 'ค้นหาแพ็กเกจไม่สำเร็จ',
+    fetch: async (page, pageSize, q) => {
+      const term = q?.trim();
+      const result = await getApiMarketplaceBundles({
+        query: { Page: page, PageSize: pageSize, Q: term ? term : undefined },
+      });
+      const data = unwrapSdkResult(result);
+      return {
+        items: (data.items ?? []).map(mapBundle),
+        page: data.page,
+        pageSize: data.pageSize,
+        totalCount: data.totalCount,
+        totalPages: data.totalPages,
+      };
+    },
+  });
+
+  readonly bundleResults = this.searchPager.items;
+  readonly bundleResultsState = this.searchPager.state;
+  readonly bundleResultsTotalCount = this.searchPager.totalCount;
+  readonly bundleResultsPage = this.searchPager.page;
+
+  /** Last `Q` used — kept so `loadMore`-style calls (page > 1) reuse the same search term. */
+  private _bundleResultsQuery = '';
+
+  /**
+   * marketplace-home-redesign v2 §4.2: `page <= 1` reloads from page 1 with `q` (defaults to the
+   * last-used term so infinite-scroll "โหลดเพิ่มเติม" calls with `page > 1` don't need to repeat
+   * it) — mirrors `CatalogService.loadMarketplaceResultsPage`'s reset-vs-append split.
+   */
+  async loadBundleResultsPage(page: number, q?: string): Promise<void> {
+    if (q !== undefined) this._bundleResultsQuery = q;
+    try {
+      if (page <= 1) {
+        await this.searchPager.reloadFromPage1(this._bundleResultsQuery);
+      } else {
+        await this.searchPager.onPageChange(page);
+      }
+    } catch (e) {
+      this.apiFail.report('ค้นหาแพ็กเกจ', e);
+    }
+  }
+
+  /** ลองใหม่ "หน้าเดิม" ที่ error ไว้ (ไม่กระโดดกลับหน้า 1) — ตาม pattern เดียวกับ catalog.service.ts. */
+  retryBundleResults(): void {
+    void this.loadBundleResultsPage(this.searchPager.page());
+  }
 
   constructor() {
     void this.refreshBundles();

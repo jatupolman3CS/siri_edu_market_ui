@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -21,6 +21,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
 import { PopularSearchChipsComponent } from '../../../shared/components/popular-search-chips/popular-search-chips.component';
+import { DiscoveryRailComponent } from '../../../shared/components/discovery-rail/discovery-rail.component';
 import { TranslatePipe } from '../../../core/i18n';
 import type { RecommendationExplanation, RecommendationStrategy } from '../../../core/models';
 
@@ -31,6 +32,9 @@ const RECOMMENDED_STRATEGY_TITLES: Record<RecommendationStrategy, string> = {
   'declared-interest': 'จากหมวดที่คุณเลือกไว้',
   'popular-fallback': 'ยอดนิยมตอนนี้',
 };
+
+/** crm-driven-discovery v1 §4.3: "ระหว่างโหลด...นานสุด 3 วินาที จากนั้นถ้ายังไม่มีข้อมูลให้ซ่อนบล็อก". */
+const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
 
 @Component({
   selector: 'app-buyer-home',
@@ -47,6 +51,7 @@ const RECOMMENDED_STRATEGY_TITLES: Record<RecommendationStrategy, string> = {
     ImgFallbackDirective,
     ExamCountdownFormComponent,
     PopularSearchChipsComponent,
+    DiscoveryRailComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +68,7 @@ export class BuyerHomePage {
   readonly discovery = inject(DiscoveryService);
   private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
+  private readonly destroyRef = inject(DestroyRef);
 
   // ===== exam-countdown-mode v1 §4 =====
 
@@ -148,6 +154,27 @@ export class BuyerHomePage {
     return this.catalog.recommendedExplanations().get(documentId);
   }
 
+  // ===== crm-driven-discovery v1 §3.2/§4.3 — moved here from marketplace.page.ts by
+  // marketplace-home-redesign v2 §1 ข้อ 8 / §4.3 ("CRM discovery block — ย้ายมาจาก marketplace").
+  // Same state shape, same 3-second skeleton cap, same `discovery.loadDiscovery()` call — only the
+  // page that owns it changed. `DiscoveryService` is a root-singleton cached 5 นาที (§0), so
+  // moving the call site here does not cause an extra/duplicate fetch when navigating between
+  // home ↔ marketplace within that window. =====
+
+  private readonly discoveryTimedOut = signal(false);
+  private discoveryTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+  readonly showDiscoverySkeleton = computed(
+    () => this.discovery.discoveryState().status === 'loading' && !this.discoveryTimedOut(),
+  );
+
+  /** §4.3: "เมื่อ sections.length === 0 && popularTerms.length === 0 → ไม่ render บล็อกเลย". */
+  readonly showDiscoveryBlock = computed(() => {
+    const d = this.discovery.discovery();
+    if (!d) return false;
+    return d.sections.length > 0 || d.popularTerms.length > 0;
+  });
+
   readonly quickSearches = [
     'สรุปคณิตม.ปลาย',
     'Pitch Deck',
@@ -188,6 +215,9 @@ export class BuyerHomePage {
     // crm-driven-discovery v1 §3.1/§4.2/§4.3: "ฮิตตอนนี้:" chips — anonymous-safe, cached 5 นาที
     // ฝั่ง service เอง (สลับหน้า home ↔ marketplace ไม่ยิงซ้ำ).
     void this.discovery.loadPopularTerms();
+    // marketplace-home-redesign v2 §4.3 (moved from marketplace.page.ts): "ยังไม่ได้ค้นหาอะไรเลย"
+    // block — cheap to call unconditionally, cached 5 นาทีฝั่ง service (§0).
+    void this.discovery.loadDiscovery();
     // real-data-stats v1 §4.2: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
     // exam-countdown-mode v1 §0 ข้อ 11 / AC-14: guard ด้วย isAuthenticated() เสมอ — หน้าแรกเป็น
@@ -202,6 +232,26 @@ export class BuyerHomePage {
       if (docs.length > 0) {
         this.catalog.loadSellerProfilesForDocuments?.(docs);
       }
+    });
+
+    // marketplace-home-redesign v2 §4.3 (moved from marketplace.page.ts): §4.3 3-second skeleton
+    // cap — starts a timer whenever the fetch is loading, clears it as soon as it settles either way.
+    effect(() => {
+      const status = this.discovery.discoveryState().status;
+      if (this.discoveryTimeoutHandle != null) {
+        clearTimeout(this.discoveryTimeoutHandle);
+        this.discoveryTimeoutHandle = null;
+      }
+      if (status === 'loading') {
+        this.discoveryTimedOut.set(false);
+        this.discoveryTimeoutHandle = setTimeout(() => this.discoveryTimedOut.set(true), DISCOVERY_SKELETON_TIMEOUT_MS);
+      } else {
+        this.discoveryTimedOut.set(false);
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      if (this.discoveryTimeoutHandle != null) clearTimeout(this.discoveryTimeoutHandle);
     });
   }
 

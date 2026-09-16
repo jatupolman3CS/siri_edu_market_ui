@@ -1,24 +1,24 @@
-<!-- ===================== HERO ===================== -->
-    <section class="relative max-w-7xl mx-auto px-4 lg:px-6 pt-8 pb-12">
-      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink border border-line p-6 sm:p-8 md:p-14">
+<!-- ===================== HERO (marketplace-home-redesign v2 §1 ข้อ 3/§4.3: ย่อลง) ===================== -->
+    <section class="relative max-w-7xl mx-auto px-4 lg:px-6 pt-6 pb-8">
+      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink border border-line p-5 sm:p-6 md:p-9">
         <div class="absolute -top-32 -right-24 w-96 h-96 rounded-full glass-blob"></div>
         <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full glass-blob opacity-60"></div>
 
-        <div class="relative grid lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-7">
-            <span class="pill-pink mb-5 animate-fade-in">
+        <div class="relative grid xl:grid-cols-12 gap-6 items-center">
+          <div class="xl:col-span-7">
+            <span class="pill-pink mb-4 animate-fade-in">
               <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
               {{ 'home.newArrivalsTitle' | trans }} + {{ catalog.newArrivals().length || '' }}
             </span>
-            <h1 class="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-ink leading-[1.05] mb-5">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-ink leading-[1.08] mb-3">
               {{ 'home.heroTitle' | trans }}
             </h1>
-            <p class="text-base md:text-lg text-ink-soft max-w-xl mb-8 leading-relaxed">
+            <p class="text-sm md:text-base text-ink-soft max-w-xl mb-5 leading-relaxed">
               {{ 'home.heroSubtitle' | trans }}
             </p>
 
             <!-- Hero search -->
-            <form class="relative max-w-xl mb-6" (submit)="goSearch($event)">
+            <form class="relative max-w-xl mb-5" (submit)="goSearch($event)">
               <button
                 type="submit"
                 [attr.aria-label]="'common.search' | trans"
@@ -47,7 +47,7 @@
             />
 
             <!-- Trust stats (real-data-stats v1 §4.2) -->
-            <div class="flex flex-wrap gap-x-8 gap-y-3 mt-8 pt-6 border-t border-pink-200/60">
+            <div class="flex flex-wrap gap-x-8 gap-y-3 mt-5 pt-4 border-t border-pink-200/60">
               <div>
                 @if (platformStats.stats(); as ps) {
                   <div class="text-2xl font-extrabold text-ink">{{ ps.totalApprovedDocuments | compact }}+</div>
@@ -93,42 +93,45 @@
             </div>
           </div>
 
-          <!-- Right: floating doc cards -->
-          <div class="lg:col-span-5 hidden lg:block">
-            <div class="relative h-[480px]">
-              <div class="absolute top-0 right-12 w-56 rotate-[-6deg] card-soft p-3 animate-slide-up">
-                <img appImgFallback [src]="catalog.featured()[0]?.cover" class="w-full h-64 object-cover rounded-2xl" alt="" />
-                <div class="px-1 pt-3 pb-1">
-                  <div class="text-xs text-ink-muted">{{ catalog.featured()[0]?.seller?.studioName }}</div>
-                  <div class="text-sm font-bold text-ink line-clamp-1">{{ catalog.featured()[0]?.title }}</div>
+          <!-- Right: floating doc cards — marketplace-home-redesign v2 §4.3: decorative-only column,
+               shrunk + hidden below `xl` (was `lg`) so the hero's real footprint drops on most
+               viewports; the search form + trust stats above stay untouched (§4.3 "คงกล่องค้นหาหลัก
+               และ trust stats ไว้"). -->
+          <div class="hidden xl:block xl:col-span-5">
+            <div class="relative h-[340px]">
+              <div class="absolute top-0 right-8 w-40 rotate-[-6deg] card-soft p-2.5 animate-slide-up">
+                <img appImgFallback [src]="catalog.featured()[0]?.cover" class="w-full h-44 object-cover rounded-xl" alt="" />
+                <div class="px-1 pt-2 pb-0.5">
+                  <div class="text-[10px] text-ink-muted">{{ catalog.featured()[0]?.seller?.studioName }}</div>
+                  <div class="text-xs font-bold text-ink line-clamp-1">{{ catalog.featured()[0]?.title }}</div>
                 </div>
               </div>
-              <div class="absolute top-32 right-0 w-48 rotate-[8deg] card-soft p-3 animate-slide-up" style="animation-delay: 100ms">
-                <img appImgFallback [src]="catalog.featured()[1]?.cover" class="w-full h-56 object-cover rounded-2xl" alt="" />
-                <div class="px-1 pt-2 pb-1 flex items-center gap-1">
-                  <span class="pill-pink !py-0">★ {{ catalog.featured()[1]?.rating }}</span>
+              <div class="absolute top-24 right-0 w-32 rotate-[8deg] card-soft p-2.5 animate-slide-up" style="animation-delay: 100ms">
+                <img appImgFallback [src]="catalog.featured()[1]?.cover" class="w-full h-36 object-cover rounded-xl" alt="" />
+                <div class="px-1 pt-1.5 pb-0.5 flex items-center gap-1">
+                  <span class="pill-pink !py-0 !text-[10px]">★ {{ catalog.featured()[1]?.rating }}</span>
                 </div>
               </div>
-              <div class="absolute bottom-8 left-12 w-52 rotate-[3deg] card-soft p-3 animate-slide-up" style="animation-delay: 200ms">
-                <img appImgFallback [src]="catalog.featured()[2]?.cover" class="w-full h-60 object-cover rounded-2xl" alt="" />
-                <div class="px-1 pt-2 pb-1 text-sm font-bold text-pink-600">
+              <div class="absolute bottom-4 left-4 w-36 rotate-[3deg] card-soft p-2.5 animate-slide-up" style="animation-delay: 200ms">
+                <img appImgFallback [src]="catalog.featured()[2]?.cover" class="w-full h-40 object-cover rounded-xl" alt="" />
+                <div class="px-1 pt-1.5 pb-0.5 text-xs font-bold text-pink-600">
                   ฿{{ catalog.featured()[2]?.price }}
                 </div>
               </div>
-              <div class="absolute top-4 left-2 card-soft px-4 py-2.5 flex items-center gap-2 animate-slide-up" style="animation-delay: 350ms">
-                <span class="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
-                  <app-icon name="sparkle" [size]="16" />
+              <div class="absolute top-2 left-0 card-soft px-3 py-2 flex items-center gap-2 animate-slide-up" style="animation-delay: 350ms">
+                <span class="w-7 h-7 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <app-icon name="sparkle" [size]="14" />
                 </span>
-                <div class="text-xs">
+                <div class="text-[11px]">
                   <div class="font-bold text-ink">AI Summary</div>
                   <div class="text-ink-muted">สรุปสินค้าให้อัตโนมัติ</div>
                 </div>
               </div>
-              <div class="absolute bottom-32 right-2 card-soft px-4 py-2.5 flex items-center gap-2 animate-slide-up" style="animation-delay: 450ms">
-                <span class="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
-                  <app-icon name="package" [size]="16" />
+              <div class="absolute bottom-20 right-0 card-soft px-3 py-2 flex items-center gap-2 animate-slide-up" style="animation-delay: 450ms">
+                <span class="w-7 h-7 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <app-icon name="package" [size]="14" />
                 </span>
-                <div class="text-xs">
+                <div class="text-[11px]">
                   <div class="font-bold text-ink">📦 Bundles</div>
                   @if (maxBundleSavePercent() > 0) {
                     <div class="text-ink-muted">ประหยัดถึง {{ maxBundleSavePercent() }}%</div>
@@ -209,6 +212,57 @@
       <!-- isEnabled=false: ไม่ render อะไรเลย (§0 การตัดสินใจที่ 5, AC-19) -->
     }
 
+    <!-- marketplace-home-redesign v2 §1 ข้อ 5/6 / §4.3: Free Strip + Bundles Strip ย้ายขึ้นมาอยู่ติด
+         hero แทนที่พื้นที่ hero ที่หายไป — เนื้อหา/การ fetch เดิม (catalog.freeResources() /
+         bundles.featured()) ไม่เปลี่ยน, แค่ reorder -->
+
+    <!-- ===================== FREE STRIP ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-pink-50 border-emerald-200">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <span class="text-xs font-semibold text-emerald-600 tracking-[0.18em] uppercase mb-2 block">🎁 ฟรี · 100%</span>
+            <h2 class="section-title">เอกสารดีๆ แจกฟรี</h2>
+            <p class="section-subtitle">ดาวน์โหลดได้ทันที ไม่ต้องสมัครสมาชิก</p>
+          </div>
+          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 group">
+            ดูทั้งหมด
+            <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
+          </a>
+        </div>
+        @if (catalog.catalogState().status === 'loading') {
+          <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
+        } @else if (catalog.catalogState().status === 'error') {
+          <app-empty-state emoji="⚠️" title="โหลดเอกสารฟรีไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+            <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
+              ลองใหม่
+            </button>
+          </app-empty-state>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @for (doc of catalog.freeResources().slice(0, 3); track doc.id) {
+              <app-document-card [doc]="doc" />
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ===================== BUNDLES STRIP ===================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <app-section-header
+        eyebrow="แพ็กเกจ"
+        title="แพ็กเกจคุ้มค่า ประหยัดกว่าซื้อแยก"
+        [subtitle]="bundlesSubtitle()"
+        link="/bundles"
+      />
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @for (b of bundles.featured(); track b.id) {
+          <app-bundle-card [bundle]="b" />
+        }
+      </div>
+    </section>
+
     <!-- ===================== RECENTLY VIEWED ===================== -->
     @if (recent.count() > 0) {
       <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
@@ -255,7 +309,8 @@
       </section>
     }
 
-    <!-- ===================== CATEGORIES (with sub-cat preview) ===================== -->
+    <!-- ===================== CATEGORIES (with sub-cat preview) — marketplace-home-redesign v2
+         §1 ข้อ 7/§4.3: เลื่อนแนวนอนได้จริงแทน static grid เดิม (เนื้อหาการ์ดไม่เปลี่ยน) ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
       <app-section-header
         eyebrow="หมวดหมู่"
@@ -263,11 +318,11 @@
         [subtitle]="categoriesSubtitle()"
         link="/categories"
       />
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="flex gap-4 overflow-x-auto pb-2">
         @for (cat of catalog.categories(); track cat.id) {
           <a
             [routerLink]="['/category', cat.slug]"
-            class="group relative overflow-hidden card-soft p-5 hover:-translate-y-1 transition-transform"
+            class="group relative overflow-hidden card-soft p-5 flex-shrink-0 w-64 hover:-translate-y-1 transition-transform"
           >
             <div class="absolute inset-0 bg-gradient-to-br from-pink-200 to-pink-50 opacity-50 transition-opacity group-hover:opacity-80"></div>
             <div class="relative">
@@ -295,20 +350,24 @@
       </div>
     </section>
 
-    <!-- ===================== BUNDLES STRIP ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
-      <app-section-header
-        eyebrow="แพ็กเกจ"
-        title="แพ็กเกจคุ้มค่า ประหยัดกว่าซื้อแยก"
-        [subtitle]="bundlesSubtitle()"
-        link="/bundles"
-      />
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        @for (b of bundles.featured(); track b.id) {
-          <app-bundle-card [bundle]="b" />
+    <!-- ===================== CRM DISCOVERY BLOCK (crm-driven-discovery v1 §3.2/§4.3) — moved here
+         from marketplace.page.html by marketplace-home-redesign v2 §1 ข้อ 8/§4.3 ===================== -->
+    @if (showDiscoverySkeleton()) {
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+        <div class="bg-white rounded-2xl border border-line h-40 animate-pulse" aria-hidden="true"></div>
+      </section>
+    } @else if (showDiscoveryBlock()) {
+      @let d = discovery.discovery()!;
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16 flex flex-col gap-6">
+        <app-popular-search-chips
+          [terms]="d.popularTerms"
+          [label]="'marketplace.popularSearchLabel' | trans"
+        />
+        @for (section of d.sections; track section.key) {
+          <app-discovery-rail [section]="section" />
         }
-      </div>
-    </section>
+      </section>
+    }
 
     <!-- ===================== TRENDING ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
@@ -321,38 +380,6 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         @for (doc of catalog.trending().slice(0, 4); track doc.id) {
           <app-document-card [doc]="doc" />
-        }
-      </div>
-    </section>
-
-    <!-- ===================== FREE STRIP ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
-      <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-pink-50 border-emerald-200">
-        <div class="flex items-end justify-between mb-6">
-          <div>
-            <span class="text-xs font-semibold text-emerald-600 tracking-[0.18em] uppercase mb-2 block">🎁 ฟรี · 100%</span>
-            <h2 class="section-title">เอกสารดีๆ แจกฟรี</h2>
-            <p class="section-subtitle">ดาวน์โหลดได้ทันที ไม่ต้องสมัครสมาชิก</p>
-          </div>
-          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 group">
-            ดูทั้งหมด
-            <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
-          </a>
-        </div>
-        @if (catalog.catalogState().status === 'loading') {
-          <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
-        } @else if (catalog.catalogState().status === 'error') {
-          <app-empty-state emoji="⚠️" title="โหลดเอกสารฟรีไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
-            <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
-              ลองใหม่
-            </button>
-          </app-empty-state>
-        } @else {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @for (doc of catalog.freeResources().slice(0, 3); track doc.id) {
-              <app-document-card [doc]="doc" />
-            }
-          </div>
         }
       </div>
     </section>

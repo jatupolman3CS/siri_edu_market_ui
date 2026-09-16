@@ -378,8 +378,34 @@ describe('CatalogService — document preview and questions (F-01)', () => {
   });
 });
 
+describe('CatalogService — marketplacePager pageSize regression guard (marketplace-home-redesign v2 §1 ข้อ 1/§4.1)', () => {
+  it('AC-1b: catalogPager (loadCatalog, home/free/category-detail catalog fetch) still requests PageSize=24, untouched by the marketplacePager bump to 40', async () => {
+    stubRoute('GET', '/api/marketplace/catalog', { documents: searchPage([documentRow('doc-1')]) });
+    const catalog = buildService();
+
+    catalog.loadCatalog();
+    await settle();
+
+    const req = requests.find((r) => r.path === '/api/marketplace/catalog');
+    expect(req).toBeDefined();
+    expect(req!.query.get('PageSize')).toBe('24');
+  });
+
+  it('AC-1b: freePager (loadFreeResources) still requests PageSize=24, untouched by the marketplacePager bump to 40', async () => {
+    stubRoute('GET', '/api/marketplace/free', searchPage([documentRow('doc-1')]));
+    const catalog = buildService();
+
+    catalog.loadFreeResources();
+    await settle();
+
+    const req = requests.find((r) => r.path === '/api/marketplace/free');
+    expect(req).toBeDefined();
+    expect(req!.query.get('PageSize')).toBe('24');
+  });
+});
+
 describe('CatalogService — marketplace results panel (marketplace-paged-results v1)', () => {
-  it('AC-1/AC-2: resetFilters() loads page 1 from /marketplace/search with default page size 24', async () => {
+  it('AC-1a: resetFilters() loads page 1 from /marketplace/search with default page size 40 (10 แถว × 4 คอลัมน์ desktop)', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
     const catalog = buildService();
 
@@ -389,7 +415,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
     const search = requests.find((r) => r.path === '/api/marketplace/search');
     expect(search).toBeDefined();
     expect(search!.query.get('Page')).toBe('1');
-    expect(search!.query.get('PageSize')).toBe('24');
+    expect(search!.query.get('PageSize')).toBe('40');
     expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-1']);
   });
 

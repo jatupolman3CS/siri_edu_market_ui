@@ -1,19 +1,20 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { BuyerMarketplacePage } from './marketplace.page';
 import {
   AdsService,
+  BundleService,
   CartService,
   CatalogService,
-  DiscoveryService,
   PlatformStatsService,
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
-import { idleActionState, loadingActionState, type ActionState } from '../../../core/services/action-state';
+import { idleActionState, type ActionState } from '../../../core/services/action-state';
 import { mapDocument } from '../../../core/api-mappers/mappers';
-import type { Category, DiscoveryBlock, DocumentItem, PlatformStats } from '../../../core/models';
+import type { Bundle, Category, DocumentItem, PlatformStats } from '../../../core/models';
 
 /**
  * real-data-stats v1 §4 (project-owner instruction, round 2 dispatch notes) — marketplace hero
@@ -35,31 +36,29 @@ const DEFAULT_FILTERS = {
   sort: 'popular' as const,
 };
 
+/**
+ * marketplace-home-redesign v2 §4.2: `filters`/`setFilters`/`resetFilters` are backed by a real
+ * signal here (not static return values) so `toggleCategory()`'s bug-fix logic (AC-2a/2b) — which
+ * reads `catalog.filters()` right after calling `catalog.setFilters()` — behaves the same way the
+ * real `CatalogService` does across consecutive calls in one test.
+ */
 function buildCatalogFake(categories: Category[] = []) {
+  const filtersSignal = signal({ ...DEFAULT_FILTERS });
   return {
     initForMarketplace: vi.fn(),
-    loadCategories: vi.fn(),
     loadCategoryDetailBySlug: vi.fn(),
     categories: () => categories,
     documents: (): DocumentItem[] => [],
     freeResources: (): DocumentItem[] => [],
-    newArrivals: (): DocumentItem[] => [],
-    // marketplace-redesign v1 §Screens 2: rail 2 ("ยอดนิยม") data source.
-    trending: (): DocumentItem[] => [],
-    filtered: () => [],
-    resultTotal: () => 0,
-    filters: () => DEFAULT_FILTERS,
-    tab: () => 'all' as const,
-    catalogState: () => idleActionState(),
-    catalogHasMore: () => false,
-    loadCatalog: vi.fn(),
-    loadMoreCatalog: vi.fn(),
-    setFilters: vi.fn(),
+    filters: () => filtersSignal(),
+    setFilters: vi.fn((patch: Record<string, unknown>) => {
+      filtersSignal.update((f) => ({ ...f, ...patch }));
+    }),
     setTab: vi.fn(),
-    resetFilters: vi.fn(),
-    getCategoryBySlug: () => undefined,
+    resetFilters: vi.fn(() => filtersSignal.set({ ...DEFAULT_FILTERS })),
+    getCategoryBySlug: (slug: string) => categories.find((c) => c.slug === slug),
     getSubcategoryBySlug: () => undefined,
-    getCategoryById: () => undefined,
+    getCategoryById: (id: string) => categories.find((c) => c.id === id),
     getSubcategoryById: () => undefined,
     marketplaceResults: (): DocumentItem[] => [],
     marketplaceResultsState: () => idleActionState(),
@@ -70,10 +69,6 @@ function buildCatalogFake(categories: Category[] = []) {
     marketplaceHasMore: () => false,
     marketplacePageSizeOptions: [12, 24, 48],
     loadMarketplaceResultsPage: vi.fn(),
-    loadMoreMarketplaceResults: vi.fn(function (this: any) {
-      this.loadMarketplaceResultsPage(this.marketplaceResultsPage() + 1);
-    }),
-    setMarketplacePageSize: vi.fn(),
     retryMarketplaceResults: vi.fn(),
   };
 }
@@ -86,15 +81,54 @@ function buildPlatformStatsFake(stats: PlatformStats | undefined) {
   };
 }
 
-function buildDiscoveryFake(discovery: DiscoveryBlock | null = null, state: ActionState = idleActionState()) {
+function buildBundle(id: string, over: Partial<Bundle> = {}): Bundle {
   return {
-    popularTerms: () => discovery?.popularTerms ?? [],
-    popularPersonalized: () => false,
-    popularTermsState: () => idleActionState(),
-    loadPopularTerms: vi.fn(),
-    discovery: () => discovery,
-    discoveryState: () => state,
-    loadDiscovery: vi.fn(),
+    id,
+    slug: id,
+    title: `แพ็กเกจ ${id}`,
+    description: 'รวมเอกสารคุ้ม ๆ',
+    cover: '',
+    price: 150,
+    originalPrice: 200,
+    documentIds: ['doc-1', 'doc-2'],
+    documentCount: 2,
+    seller: {
+      id: 'seller-1',
+      studioName: 'ครูเอ',
+      ownerName: 'เอ',
+      avatar: '',
+      bio: '',
+      joinedAt: '2026-01-01T00:00:00Z',
+      rating: 4.5,
+      totalSales: 10,
+      totalDocuments: 5,
+      followerCount: 20,
+      responseHours: 1,
+      badges: [],
+    },
+    createdAt: '2026-01-01T00:00:00Z',
+    rating: 4.7,
+    reviewCount: 12,
+    downloads: 340,
+    ...over,
+  };
+}
+
+/**
+ * marketplace-home-redesign v2 §4.2: `BundleService.searchPager` round-1 stub — `bundleResults`
+ * defaults to `[]` (never mock data), `bundleResultsState`/`bundleResultsPage` are real signals so
+ * the page's own "load more"/accumulate effect can be exercised the same way it is against the
+ * real service.
+ */
+function buildBundleFake(bundleResults: Bundle[] = [], state: ActionState = idleActionState()) {
+  const page = signal(1);
+  return {
+    bundleResults: () => bundleResults,
+    bundleResultsState: () => state,
+    bundleResultsTotalCount: () => bundleResults.length,
+    bundleResultsPage: page.asReadonly(),
+    loadBundleResultsPage: vi.fn(),
+    retryBundleResults: vi.fn(),
   };
 }
 
@@ -110,7 +144,7 @@ function render(
   catalog: ReturnType<typeof buildCatalogFake>,
   platformStats: ReturnType<typeof buildPlatformStatsFake>,
   query: Record<string, string> = {},
-  discovery: ReturnType<typeof buildDiscoveryFake> = buildDiscoveryFake(),
+  bundles: ReturnType<typeof buildBundleFake> = buildBundleFake(),
   ads: ReturnType<typeof buildAdsFake> = buildAdsFake(),
 ) {
   TestBed.configureTestingModule({
@@ -122,7 +156,7 @@ function render(
       { provide: PlatformStatsService, useValue: platformStats },
       { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
       { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
-      { provide: DiscoveryService, useValue: discovery },
+      { provide: BundleService, useValue: bundles },
       { provide: AdsService, useValue: ads },
       {
         provide: ActivatedRoute,
@@ -139,6 +173,23 @@ function render(
 }
 
 afterEach(() => TestBed.resetTestingModule());
+
+function buildDoc(id: string): DocumentItem {
+  return mapDocument({ id, slug: id, title: `เอกสาร ${id}`, shortDescription: '', price: 100 });
+}
+
+function buildCategory(over: Partial<Category>): Category {
+  return {
+    id: 'cat-1',
+    name: 'การศึกษา',
+    slug: 'education',
+    icon: '📚',
+    color: '#F9A8D4',
+    description: '',
+    documentCount: 100,
+    ...over,
+  };
+}
 
 describe('BuyerMarketplacePage — hero description (real-data-stats v1 §4)', () => {
   it('drops the "กว่า N เอกสาร" clause while platform stats have not loaded yet', () => {
@@ -177,7 +228,6 @@ describe('BuyerMarketplacePage — hero description (real-data-stats v1 §4)', (
   });
 });
 
-
 describe('Marketplace search URL', () => {
   it('automatically applies the incoming query after clearing previous filters', () => {
     const catalog = buildCatalogFake();
@@ -207,177 +257,216 @@ describe('Marketplace clear search', () => {
 });
 
 /**
- * marketplace-redesign v1 §State Management / §Interactions — browse vs. list mode, the 4
- * segmented tabs (`all`/`new`/`popular`/`free`), and the "หน้ารวม" reset button.
+ * marketplace-home-redesign v2 §1 ข้อ 8 / AC-8a/8c: this page is a single view now — no more
+ * `view`/`listMode()`/`goToBrowse()`/rails/"ดูทั้งหมด" closing CTA. Entering `/marketplace` with no
+ * filter shows the category chip row + results grid immediately.
  */
-describe('BuyerMarketplacePage — browse/list mode (marketplace-redesign v1)', () => {
-  it('starts in browse mode when there is no query and no active filter', () => {
+describe('BuyerMarketplacePage — single view, no browse mode (marketplace-home-redesign v2 AC-8a/8c)', () => {
+  it('has no dead `view`/`listMode`/`goToBrowse` left over from marketplace-redesign v1', () => {
     const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
+    const page = fixture.componentInstance as unknown as Record<string, unknown>;
 
-    expect(page.view()).toBe('browse');
-    expect(page.listMode()).toBe(false);
+    expect(page['view']).toBeUndefined();
+    expect(page['listMode']).toBeUndefined();
+    expect(page['goToBrowse']).toBeUndefined();
   });
 
-  it('enters list mode as soon as any filter is active, without touching view() (§Interactions)', () => {
-    const catalog = buildCatalogFake();
-    const baseFilters = catalog.filters();
-    catalog.filters = () => ({ ...baseFilters, categoryIds: ['cat-1'] });
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
-
-    expect(page.view()).toBe('browse');
-    expect(page.listMode()).toBe(true);
-  });
-
-  it('deep-links into list mode via ?view=list', () => {
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), { view: 'list' });
-    const page = fixture.componentInstance;
-
-    expect(page.view()).toBe('list');
-    expect(page.listMode()).toBe(true);
-  });
-
-  it('exposes exactly 4 segmented tabs in order: all, new, popular, free', () => {
+  it('never renders the old "← หน้ารวม" button or the browse-mode closing CTA', () => {
     const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    expect(page.tabs().map((t) => t.value)).toEqual(['all', 'new', 'popular', 'free']);
+    expect(text).not.toContain('หน้ารวม');
+    expect(text).not.toContain('ดูเอกสารทั้งหมด');
   });
 
-  it('selectTab("new") enters list mode, sets the catalog tab, and highlights "new"', () => {
-    const catalog = buildCatalogFake();
+  it('shows the category chip row unconditionally (no more `@if (!listMode())` gate)', () => {
+    const catalog = buildCatalogFake([buildCategory({ id: 'cat-1', name: 'คณิตศาสตร์' })]);
     const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    page.selectTab('new');
-
-    expect(page.view()).toBe('list');
-    expect(page.activeUiTab()).toBe('new');
-    expect(catalog.setTab).toHaveBeenCalledWith('new');
-  });
-
-  it('selectTab("popular") maps to catalog tab "all" + sort "popular" (no dedicated MarketplaceTab)', () => {
-    const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
-
-    page.selectTab('popular');
-
-    expect(page.activeUiTab()).toBe('popular');
-    expect(catalog.setTab).toHaveBeenCalledWith('all');
-    expect(catalog.setFilters).toHaveBeenCalledWith({ sort: 'popular' });
-  });
-
-  it('goToBrowse() resets filters + the active tab and returns to browse mode', () => {
-    const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
-
-    page.selectTab('free');
-    catalog.resetFilters.mockClear();
-    page.goToBrowse();
-
-    expect(page.view()).toBe('browse');
-    expect(page.activeUiTab()).toBe('all');
-    expect(catalog.resetFilters).toHaveBeenCalled();
+    expect(text).toContain('คณิตศาสตร์');
+    expect(text).toContain('ทั้งหมด'); // "ทั้งหมด" chip
   });
 });
 
 /**
- * gate-2 fix (integrator-qa report, marketplace-redesign v1 §Screens/Views ข้อ 2 + rail-3 table):
- * rail "ดูทั้งหมด {n}" / segmented-tab counts must reflect the *real* group total, not the 5/6/8
- * hard-capped arrays `newArrivals()`/`trending()`/`freeResources()` return for display, and the
- * "ฟรี" rail must also include documents with `previewPages > 0` (not just `isFree`).
+ * marketplace-home-redesign v2 §1 ข้อ 2 / §0 (bug fix), AC-2a/2b: clicking a category chip
+ * directly (top row or sidebar) must hydrate its subcategories the same way a `?category=slug`
+ * deep link already does.
  */
-describe('BuyerMarketplacePage — rail/tab total counts (gate-2 deviation A/B fix)', () => {
-  function docWithCreatedAt(id: string, createdAt: string): DocumentItem {
-    return { ...buildDoc(id), createdAt };
+describe('BuyerMarketplacePage — toggleCategory hydrates subcategories (marketplace-home-redesign v2 AC-2a/2b)', () => {
+  it('AC-2a: selecting exactly one category calls loadCategoryDetailBySlug with its slug', () => {
+    const cat = buildCategory({ id: 'cat-math', slug: 'math', name: 'คณิตศาสตร์' });
+    const catalog = buildCatalogFake([cat]);
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.toggleCategory('cat-math');
+
+    expect(catalog.loadCategoryDetailBySlug).toHaveBeenCalledWith('math');
+  });
+
+  it('does not call loadCategoryDetailBySlug once more than one category ends up selected', () => {
+    const catA = buildCategory({ id: 'cat-a', slug: 'a' });
+    const catB = buildCategory({ id: 'cat-b', slug: 'b' });
+    const catalog = buildCatalogFake([catA, catB]);
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.toggleCategory('cat-a');
+    catalog.loadCategoryDetailBySlug.mockClear();
+    page.toggleCategory('cat-b'); // now 2 categories selected
+
+    expect(catalog.loadCategoryDetailBySlug).not.toHaveBeenCalled();
+  });
+
+  it('AC-2b: switching from one selected category to another re-hydrates the new one', () => {
+    const catA = buildCategory({ id: 'cat-a', slug: 'a' });
+    const catB = buildCategory({ id: 'cat-b', slug: 'b' });
+    const catalog = buildCatalogFake([catA, catB]);
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.toggleCategory('cat-a');
+    expect(catalog.loadCategoryDetailBySlug).toHaveBeenCalledWith('a');
+
+    page.toggleCategory('cat-a'); // deselect
+    page.toggleCategory('cat-b'); // select the new one
+
+    expect(catalog.loadCategoryDetailBySlug).toHaveBeenCalledWith('b');
+  });
+
+  it('does not call loadCategoryDetailBySlug when no category ends up selected', () => {
+    const cat = buildCategory({ id: 'cat-math', slug: 'math' });
+    const catalog = buildCatalogFake([cat]);
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.toggleCategory('cat-math');
+    catalog.loadCategoryDetailBySlug.mockClear();
+    page.toggleCategory('cat-math'); // deselect back to none
+
+    expect(catalog.loadCategoryDetailBySlug).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * marketplace-home-redesign v2 §1 ข้อ 4/8 / §4.2, AC-4c/4d/4e: toolbar tabs shrink to
+ * `'all' | 'free' | 'package'` — the new "แพ็กเกจ" tab searches bundles with the current search
+ * term and renders `app-bundle-card`, never `app-document-card`.
+ */
+describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-4c/4d/4e)', () => {
+  it('AC-4e: exposes exactly 3 tabs in order: all, free, package', () => {
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    expect(page.tabs().map((t) => t.value)).toEqual(['all', 'free', 'package']);
+  });
+
+  it('the "package" tab badge shows no count until it has been activated once this session (§4.2)', () => {
+    const bundles = buildBundleFake([buildBundle('b-1')]);
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, bundles);
+    const page = fixture.componentInstance;
+
+    expect(page.tabs().find((t) => t.value === 'package')?.count).toBeNull();
+  });
+
+  it('selectTab("package") sets the catalog tab to "bundles" and fetches page 1 with the current search term (AC-4c/4d)', () => {
+    const catalog = buildCatalogFake();
+    const bundles = buildBundleFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), {}, bundles);
+    const page = fixture.componentInstance;
+
+    catalog.setFilters({ search: '  TOEIC  ' });
+    page.selectTab('package');
+
+    expect(page.activeUiTab()).toBe('package');
+    expect(catalog.setTab).toHaveBeenCalledWith('bundles');
+    expect(bundles.loadBundleResultsPage).toHaveBeenCalledWith(1, 'TOEIC');
+  });
+
+  it('shows the real badge count once the "package" tab has been activated', () => {
+    const bundles = buildBundleFake([buildBundle('b-1'), buildBundle('b-2')]);
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, bundles);
+    const page = fixture.componentInstance;
+
+    page.selectTab('package');
+
+    expect(page.tabs().find((t) => t.value === 'package')?.count).toBe(2);
+  });
+
+  it('selectTab("all") / selectTab("free") set the catalog tab directly and never call BundleService', () => {
+    const catalog = buildCatalogFake();
+    const bundles = buildBundleFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), {}, bundles);
+    const page = fixture.componentInstance;
+
+    page.selectTab('free');
+
+    expect(catalog.setTab).toHaveBeenCalledWith('free');
+    expect(bundles.loadBundleResultsPage).not.toHaveBeenCalled();
+  });
+
+  it('§4.2 query param migration: legacy ?tab=new falls back to "all" silently (no throw)', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), { tab: 'new' });
+
+    expect(fixture.componentInstance.activeUiTab()).toBe('all');
+    expect(catalog.setTab).toHaveBeenCalledWith('all');
+  });
+
+  it('§4.2 query param migration: legacy ?tab=popular falls back to "all" silently (no throw)', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), { tab: 'popular' });
+
+    expect(fixture.componentInstance.activeUiTab()).toBe('all');
+    expect(catalog.setTab).toHaveBeenCalledWith('all');
+  });
+
+  it('AC-4c: a deep link with ?tab=package renders app-bundle-card, not app-document-card', () => {
+    const bundle = buildBundle('b-1');
+    const bundles = buildBundleFake([bundle]);
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), { tab: 'package' }, bundles);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-bundle-card')).not.toBeNull();
+    expect(el.querySelector('app-document-card')).toBeNull();
+  });
+});
+
+/**
+ * seller-ads-promotion v1 §4.3 (AC-38) — impressions fire once per rendered result set, through
+ * `AdsService` only (never the SDK directly from this page).
+ */
+describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.3, AC-38)', () => {
+  function sponsoredDoc(id: string, campaignId: string): DocumentItem {
+    return { ...buildDoc(id), isSponsored: true, sponsoredCampaignId: campaignId };
   }
 
-  function docWithPreview(id: string, previewPages: number, isFree = false): DocumentItem {
-    return { ...buildDoc(id), previewPages, isFree };
-  }
-
-  it('Deviation A: "new" rail/tab count is the real total of documents created within 10 days, not the 6-item newArrivals() cap', () => {
+  it('calls ads.recordImpressions() with the sponsored campaignIds of the current result set', () => {
     const catalog = buildCatalogFake();
-    const now = new Date();
-    const within10Days = (daysAgo: number) =>
-      new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
-    // 8 documents created within the last 10 days — more than the 6-item slice() cap
-    // `catalog.newArrivals()` itself uses internally.
-    const recentDocs = Array.from({ length: 8 }, (_, i) => docWithCreatedAt(`new-${i}`, within10Days(1)));
-    const staleDoc = docWithCreatedAt('old-1', within10Days(30));
-    catalog.documents = () => [...recentDocs, staleDoc];
-    catalog.newArrivals = () => recentDocs.slice(0, 6);
+    const docs = [sponsoredDoc('doc-1', 'camp-1'), buildDoc('doc-2')];
+    catalog.marketplaceResults = () => docs;
+    const ads = buildAdsFake();
 
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
+    render(catalog, buildPlatformStatsFake(undefined), {}, buildBundleFake(), ads);
 
-    expect(page.newArrivalsTotalCount()).toBe(8);
-    expect(page.newArrivalsTotalCount()).not.toBe(catalog.newArrivals().length);
-    expect(page.rails().find((r) => r.key === 'new')?.viewAllLabel).toBe('ดูทั้งหมด 8 รายการ');
-    expect(page.tabs().find((t) => t.value === 'new')?.count).toBe(8);
+    expect(ads.recordImpressions).toHaveBeenCalledTimes(1);
+    expect(ads.recordImpressions).toHaveBeenCalledWith(
+      docs,
+      ['camp-1'],
+    );
   });
 
-  it('Deviation A: "popular" rail/tab count falls back to the raw document total when the backend total is unavailable (not the 8-item trending() cap)', () => {
+  it('calls ads.recordImpressions() with an empty array when nothing on the page is sponsored (dedup lives in the service, not here)', () => {
     const catalog = buildCatalogFake();
-    const docs = Array.from({ length: 12 }, (_, i) => buildDoc(`doc-${i}`));
-    catalog.documents = () => docs;
-    catalog.trending = () => docs.slice(0, 8);
-    // marketplaceResultsTotalCount() defaults to 0 in buildCatalogFake() — allDocumentsCount()
-    // falls back to documents().length in that case.
+    catalog.marketplaceResults = () => [buildDoc('doc-1'), buildDoc('doc-2')];
+    const ads = buildAdsFake();
 
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
+    render(catalog, buildPlatformStatsFake(undefined), {}, buildBundleFake(), ads);
 
-    expect(page.trendingTotalCount()).toBe(12);
-    expect(page.trendingTotalCount()).not.toBe(catalog.trending().length);
-    expect(page.rails().find((r) => r.key === 'popular')?.viewAllLabel).toBe('ดูทั้งหมด 12 รายการ');
-    expect(page.tabs().find((t) => t.value === 'popular')?.count).toBe(12);
-  });
-
-  /**
-   * integrator-qa gate-3 fix (marketplace-redesign v1 §Screens/Views rail "ยอดนิยม"): its
-   * "ดูทั้งหมด" button maps to `tab='all' + sort='popular'`, i.e. the exact same set as "ทั้งหมด" —
-   * so its true total must equal `allDocumentsCount()` / `marketplaceResultsTotalCount()` (the
-   * backend total of the whole marketplace), not `catalog.documents().length`, which in browse
-   * mode is capped to a single page (24) and silently under-counts once the real pool is larger.
-   */
-  it('gate-3: "popular" rail/tab count reads the backend marketplace total, not the page-capped documents() array length', () => {
-    const catalog = buildCatalogFake();
-    // Only 12 documents loaded on the current page, but the backend reports 3,000 total —
-    // trendingTotalCount() must report the backend total, never the loaded page length.
-    const docs = Array.from({ length: 12 }, (_, i) => buildDoc(`doc-${i}`));
-    catalog.documents = () => docs;
-    catalog.trending = () => docs.slice(0, 8);
-    catalog.marketplaceResultsTotalCount = () => 3000;
-
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
-
-    expect(page.trendingTotalCount()).toBe(3000);
-    expect(page.trendingTotalCount()).toBe(page.allDocumentsCount());
-    expect(page.trendingTotalCount()).not.toBe(catalog.documents().length);
-    expect(page.rails().find((r) => r.key === 'popular')?.viewAllLabel).toBe('ดูทั้งหมด 3000 รายการ');
-    expect(page.tabs().find((t) => t.value === 'popular')?.count).toBe(3000);
-  });
-
-  it('Deviation B: the "free" rail merges isFree documents with preview-only documents (free first), and its count includes both groups', () => {
-    const catalog = buildCatalogFake();
-    const free = [docWithPreview('free-1', 0, true), docWithPreview('free-2', 0, true)];
-    const previewOnly = [docWithPreview('preview-1', 5, false)];
-    const neitherDoc = docWithPreview('plain-1', 0, false);
-    catalog.freeResources = () => free;
-    catalog.documents = () => [...free, ...previewOnly, neitherDoc];
-
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const page = fixture.componentInstance;
-
-    const merged = page.freeAndPreviewDocuments();
-    expect(merged.map((d) => d.id)).toEqual(['free-1', 'free-2', 'preview-1']);
-    expect(page.rails().find((r) => r.key === 'free')?.viewAllLabel).toBe('ดูทั้งหมด 3 รายการ');
-    expect(page.tabs().find((t) => t.value === 'free')?.count).toBe(3);
+    expect(ads.recordImpressions).toHaveBeenCalledWith(expect.any(Array), []);
   });
 });
 
@@ -403,8 +492,7 @@ describe('Marketplace results panel (marketplace-paged-results v1)', () => {
         seller: { id: 's1', displayName: 'ครูสมชาย', isVerified: true },
       } as any,
     ];
-    // marketplace-redesign v1: the results grid only renders in list mode.
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), { view: 'list' });
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
 
     const loadMoreBtn = (fixture.nativeElement as HTMLElement).querySelector(
       'button.btn-load-more',
@@ -415,127 +503,5 @@ describe('Marketplace results panel (marketplace-paged-results v1)', () => {
     fixture.detectChanges();
 
     expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);
-  });
-});
-
-/**
- * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.2/§4.3/§1.4 (F-10, ข้อ 14)
- * — AC-27: the discovery block shows only when `anyActive() === false`, and disappears the moment
- * a search term/filter is applied.
- */
-function buildDoc(id: string): DocumentItem {
-  return mapDocument({ id, slug: id, title: `เอกสาร ${id}`, shortDescription: '', price: 100 });
-}
-
-function buildDiscoverySection() {
-  return {
-    key: 'interest:category:math',
-    title: 'คณิตศาสตร์ที่คุณสนใจ',
-    reason: 'เพราะคุณสนใจคณิตศาสตร์',
-    facetType: 'category' as const,
-    facetValue: 'math',
-    facetLabel: 'คณิตศาสตร์',
-    items: [buildDoc('doc-1'), buildDoc('doc-2'), buildDoc('doc-3')],
-  };
-}
-
-function buildDiscoveryBlock(): DiscoveryBlock {
-  return {
-    strategy: 'declared-interest',
-    strategyReason: 'เพราะคุณสนใจคณิตศาสตร์',
-    gatePassed: false,
-    sections: [buildDiscoverySection()],
-    popularTerms: [{ term: 'toeic', rank: 1, isRising: false }],
-    generatedAt: '2026-09-14T00:00:00Z',
-  };
-}
-
-describe('BuyerMarketplacePage — discovery block (crm-driven-discovery v1 §3.2/§4.3, AC-27)', () => {
-  it('calls discovery.loadDiscovery() on construction', () => {
-    const discovery = buildDiscoveryFake();
-    render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
-
-    expect(discovery.loadDiscovery).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows the discovery rail + popular chips when anyActive() === false and data is loaded', () => {
-    const discovery = buildDiscoveryFake(buildDiscoveryBlock());
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
-
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('คณิตศาสตร์ที่คุณสนใจ');
-    expect(text).toContain('toeic');
-  });
-
-  it('hides the discovery block entirely when anyActive() === true (a search term is present)', () => {
-    const catalog = buildCatalogFake();
-    const baseFilters = catalog.filters();
-    catalog.filters = () => ({ ...baseFilters, search: 'toeic' });
-    const discovery = buildDiscoveryFake(buildDiscoveryBlock());
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), {}, discovery);
-
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).not.toContain('คณิตศาสตร์ที่คุณสนใจ');
-  });
-
-  it('shows the loading skeleton (not the block) while discoveryState() is loading', () => {
-    const discovery = buildDiscoveryFake(null, loadingActionState());
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
-
-    const page = fixture.componentInstance;
-    expect(page.showDiscoverySkeleton()).toBe(true);
-    expect(page.showDiscoveryBlock()).toBe(false);
-  });
-
-  it('renders nothing when sections and popularTerms are both empty', () => {
-    const discovery = buildDiscoveryFake({
-      strategy: 'popular-fallback',
-      strategyReason: '',
-      gatePassed: false,
-      sections: [],
-      popularTerms: [],
-      generatedAt: '2026-09-14T00:00:00Z',
-    });
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, discovery);
-
-    const page = fixture.componentInstance;
-    expect(page.showDiscoveryBlock()).toBe(false);
-    expect(page.showDiscoverySkeleton()).toBe(false);
-  });
-});
-
-/**
- * seller-ads-promotion v1 §4.3 (AC-38) — impressions fire once per rendered result set, through
- * `AdsService` only (never the SDK directly from this page).
- */
-describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.3, AC-38)', () => {
-  function sponsoredDoc(id: string, campaignId: string): DocumentItem {
-    return { ...buildDoc(id), isSponsored: true, sponsoredCampaignId: campaignId };
-  }
-
-  it('calls ads.recordImpressions() with the sponsored campaignIds of the current result set', () => {
-    const catalog = buildCatalogFake();
-    const docs = [sponsoredDoc('doc-1', 'camp-1'), buildDoc('doc-2')];
-    catalog.marketplaceResults = () => docs;
-    const ads = buildAdsFake();
-
-    render(catalog, buildPlatformStatsFake(undefined), {}, buildDiscoveryFake(), ads);
-
-    expect(ads.recordImpressions).toHaveBeenCalledTimes(1);
-    expect(ads.recordImpressions).toHaveBeenCalledWith(
-      docs,
-      ['camp-1'],
-    );
-  });
-
-
-  it('calls ads.recordImpressions() with an empty array when nothing on the page is sponsored (dedup lives in the service, not here)', () => {
-    const catalog = buildCatalogFake();
-    catalog.marketplaceResults = () => [buildDoc('doc-1'), buildDoc('doc-2')];
-    const ads = buildAdsFake();
-
-    render(catalog, buildPlatformStatsFake(undefined), {}, buildDiscoveryFake(), ads);
-
-    expect(ads.recordImpressions).toHaveBeenCalledWith(expect.any(Array), []);
   });
 });

@@ -136,6 +136,8 @@ export const th = {
     subtitleNew: 'เอกสารที่อัปโหลดภายใน 10 วันที่ผ่านมา',
     subtitlePopular: 'เอกสารที่ดาวน์โหลดและรีวิวมากที่สุด',
     subtitleFree: 'ดาวน์โหลดฟรี หรืออ่านตัวอย่างบางส่วนก่อนซื้อ',
+    // marketplace-home-redesign v2 §1 ข้อ 4/§4.2 — tab "แพ็กเกจ"
+    subtitlePackage: 'ค้นหาแพ็กเกจที่คุ้มค่ากว่าซื้อแยก',
     allCategoriesChip: 'ทั้งหมด',
     // marketplace-redesign v1 §Copy — browse mode rails
     railNewEyebrow: 'มาใหม่',
@@ -156,6 +158,7 @@ export const th = {
     tabNew: 'มาใหม่',
     tabPopular: 'ยอดนิยม',
     tabFree: 'ทดลองใช้ฟรี',
+    tabPackage: 'แพ็กเกจ',
     sortOptionPopular: 'เรียงตาม: ความนิยม',
     sortOptionNewest: 'เรียงตาม: ล่าสุด',
     sortOptionRating: 'เรียงตาม: คะแนนรีวิว',

@@ -138,6 +138,8 @@ export const en: TranslationKeys = {
     subtitleNew: 'Documents uploaded within the last 10 days',
     subtitlePopular: 'Most downloaded and reviewed documents',
     subtitleFree: 'Free downloads, or a free preview before you buy',
+    // marketplace-home-redesign v2 §1 item 4/§4.2 — "Package" tab
+    subtitlePackage: 'Search bundles that save more than buying separately',
     allCategoriesChip: 'All',
     // marketplace-redesign v1 §Copy — browse mode rails
     railNewEyebrow: 'New',
@@ -158,6 +160,7 @@ export const en: TranslationKeys = {
     tabNew: 'New',
     tabPopular: 'Popular',
     tabFree: 'Free',
+    tabPackage: 'Bundles',
     sortOptionPopular: 'Sort: Popularity',
     sortOptionNewest: 'Sort: Newest',
     sortOptionRating: 'Sort: Rating',

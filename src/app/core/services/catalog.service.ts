@@ -186,7 +186,9 @@ export class CatalogService {
    * (which still share `_documents` via infinite-scroll) are untouched.
    */
   private readonly marketplacePager = createServerPager<DocumentItem>({
-    pageSize: 24,
+    // marketplace-home-redesign v2 §1 ข้อ 1 / §4.1: 10 แถว × 4 คอลัมน์ที่ breakpoint `lg` ก่อนต้อง
+    // กด "โหลดเพิ่มเติม" (AC-1a) — ห้ามแตะ catalogPager/freePager ด้านบน (คนละหน้า, AC-1b).
+    pageSize: 40,
     pageSizeOptions: [12, 24, 48],
     errorMessage: 'ค้นหาเอกสารไม่สำเร็จ',
     fetch: async (page, pageSize) => {

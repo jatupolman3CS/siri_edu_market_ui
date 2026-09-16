@@ -9328,6 +9328,20 @@
         ],
         "parameters": [
           {
+            "name": "Q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {

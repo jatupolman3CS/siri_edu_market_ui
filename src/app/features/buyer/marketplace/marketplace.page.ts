@@ -16,13 +16,14 @@ import { FormsModule } from '@angular/forms';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import {
   AdsService,
+  BundleService,
   CatalogService,
-  DiscoveryService,
   PlatformStatsService,
   RecentlyViewedService,
 } from '../../../core/services';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
+  Bundle,
   Category,
   DocumentItem,
   GRADE_LEVEL_LABELS,
@@ -31,43 +32,26 @@ import {
   ResourceType,
 } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
-import { MarketplaceRailComponent } from '../../../shared/components/marketplace-rail/marketplace-rail.component';
+import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
-import { PopularSearchChipsComponent } from '../../../shared/components/popular-search-chips/popular-search-chips.component';
-import { DiscoveryRailComponent } from '../../../shared/components/discovery-rail/discovery-rail.component';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
-/** crm-driven-discovery v1 §4.3: "ระหว่างโหลด...นานสุด 3 วินาที จากนั้นถ้ายังไม่มีข้อมูลให้ซ่อนบล็อก". */
-const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
-
 /**
- * marketplace-redesign v1 §Screens/Views ข้อ 2, rail 1 ("มาใหม่"): "เอกสารที่อัปโหลดภายใน 10
- * วันที่ผ่านมา" — gate-2 deviation A fix (integrator-qa): window used to derive the rail's real
- * total count (`newArrivalsTotalCount` below), not just the 5/6-card display cap.
+ * marketplace-home-redesign v2 §1 ข้อ 8 / §4.2: หน้านี้เหลือ view เดียว (chip หมวดหมู่ + sidebar
+ * filter + grid ผลลัพธ์เสมอ) — `view`/`listMode()`/`goToBrowse()`/rails "มาใหม่"/"ยอดนิยม"/"ฟรี"/
+ * CRM discovery block/ปุ่ม "ดูทั้งหมด" ปิดท้าย ถูกตัดออกทั้งหมด (CRM discovery ย้ายไป home.page.ts).
  */
-const NEW_ARRIVALS_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
-
-/** marketplace-redesign v1 §State Management */
-type MarketplaceView = 'browse' | 'list';
-type MarketplaceUiTab = 'all' | 'new' | 'popular' | 'free';
+type MarketplaceUiTab = 'all' | 'free' | 'package';
 type FilterGroupKey = 'category' | 'grade' | 'resourceType' | 'price' | 'rating' | 'format' | 'standard';
 type PriceRangeKey = 'all' | 'free' | 'lt100' | '100-199' | 'gte200';
-
-interface MarketplaceRailViewModel {
-  key: 'new' | 'popular' | 'free';
-  eyebrow: string;
-  title: string;
-  desc: string;
-  viewAllLabel: string;
-  docs: DocumentItem[];
-}
 
 interface MarketplaceUiTabViewModel {
   value: MarketplaceUiTab;
   label: string;
-  count: number;
+  /** `null` = ไม่แสดงตัวเลข badge (ยังไม่เคยกดเข้าแท็บ "แพ็กเกจ" ในเซสชันนี้ — §4.2). */
+  count: number | null;
 }
 
 @Component({
@@ -78,12 +62,10 @@ interface MarketplaceUiTabViewModel {
     FormsModule,
     NzSelectModule,
     DocumentCardComponent,
-    MarketplaceRailComponent,
+    BundleCardComponent,
     IconComponent,
     EmptyStateComponent,
     ImgFallbackDirective,
-    PopularSearchChipsComponent,
-    DiscoveryRailComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,9 +74,9 @@ interface MarketplaceUiTabViewModel {
 })
 export class BuyerMarketplacePage {
   readonly catalog = inject(CatalogService);
+  readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
-  readonly discovery = inject(DiscoveryService);
   private readonly ads = inject(AdsService);
   readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
@@ -161,10 +143,11 @@ export class BuyerMarketplacePage {
     { value: 4.5, labelKey: 'marketplace.rating45' },
   ];
 
-  // ===== marketplace-redesign v1 §State Management =====
+  // ===== marketplace-home-redesign v2 §4.2 State Management =====
 
-  readonly view = signal<MarketplaceView>('browse');
   readonly activeUiTab = signal<MarketplaceUiTab>('all');
+  /** §4.2: true once the "แพ็กเกจ" tab has been activated at least once this session. */
+  readonly packageTabActivated = signal(false);
   readonly openGroups = signal<Record<FilterGroupKey, boolean>>({
     category: true,
     grade: true,
@@ -192,10 +175,6 @@ export class BuyerMarketplacePage {
     );
   });
 
-  readonly listMode = computed(
-    () => this.view() === 'list' || !!this.catalog.filters().search.trim() || !!this.anyActive(),
-  );
-
   readonly priceRange = computed<PriceRangeKey>(() => {
     const f = this.catalog.filters();
     if (f.freeOnly) return 'free';
@@ -212,57 +191,16 @@ export class BuyerMarketplacePage {
 
   readonly marketSubtitle = computed(() => {
     const search = this.catalog.filters().search.trim();
-    if (!this.listMode()) return this.i18n.t('marketplace.subtitleBrowse');
     if (search) return this.i18n.t('marketplace.subtitleSearch', { q: search });
     switch (this.activeUiTab()) {
-      case 'new':
-        return this.i18n.t('marketplace.subtitleNew');
-      case 'popular':
-        return this.i18n.t('marketplace.subtitlePopular');
       case 'free':
         return this.i18n.t('marketplace.subtitleFree');
+      case 'package':
+        return this.i18n.t('marketplace.subtitlePackage');
       default:
         return this.i18n.t('marketplace.subtitleAll');
     }
   });
-
-  readonly closingCtaLabel = computed(() =>
-    this.i18n.t('marketplace.browseAllCta', { n: this.allDocumentsCount() }),
-  );
-
-  /**
-   * gate-2 deviation A fix (integrator-qa, marketplace-redesign v1 §Screens/Views ข้อ 2): "ตัวเลข
-   * {n} ในปุ่ม = จำนวนทั้งหมดของกลุ่มนั้น (ไม่ใช่ 5)". `catalog.newArrivals()`/`trending()` cap
-   * their arrays at 6/8 for internal reuse elsewhere in the service, so the rail/tab badge counts
-   * can't read `.length` off those directly without silently under-counting once the real pool is
-   * bigger than the cap. Both counts derive from `catalog.documents()` — the same raw, unsliced
-   * pool `newArrivals()`/`trending()` themselves sort/slice from — so they stay in sync with
-   * whatever's currently loaded (grows via infinite scroll, matches the existing "ทั้งหมด" tab
-   * count design note in `catalog.service.ts` `syncListWithBackend()`).
-   *
-   * "มาใหม่" total = documents created within the last 10 days (the rail's own definition, §Copy
-   * "เอกสารที่อัปโหลดภายใน 10 วันที่ผ่านมา") rather than every loaded document, since `newArrivals()`
-   * itself has no such cutoff (it's just "newest N"). No backend endpoint returns this count
-   * directly (no `CreatedAfter`/date filter on `/marketplace/search`) — this is the best true count
-   * obtainable client-side without adding a new API call, per integrator-qa gate-2 report option 2.
-   */
-  readonly newArrivalsTotalCount = computed(() => {
-    const cutoff = Date.now() - NEW_ARRIVALS_WINDOW_MS;
-    return this.catalog
-      .documents()
-      .filter((d) => new Date(d.createdAt).getTime() >= cutoff).length;
-  });
-
-  /**
-   * "ยอดนิยม" has no inherent subset cutoff (`trending()` is just "top N by downloads" out of the
-   * whole pool) — its "ดูทั้งหมด" button maps to `tab='all' + sort='popular'` (§Screens/Views
-   * rail-2 row), i.e. *exactly* the same set as "ทั้งหมด", just resorted. So its true total must
-   * equal `allDocumentsCount()` (backend `marketplaceResultsTotalCount`), not
-   * `catalog.documents().length` — the latter is only the first page (24) of the loaded catalog
-   * in browse mode and under-counts once the real pool exceeds the page size (integrator-qa
-   * gate-3 finding, marketplace-redesign v1 §Screens/Views rail "ยอดนิยม").
-   */
-  readonly trendingTotalCount = computed(() => this.allDocumentsCount());
 
   /**
    * gate-2 deviation B fix (integrator-qa, marketplace-redesign v1 §Screens/Views rail 3 table):
@@ -270,6 +208,8 @@ export class BuyerMarketplacePage {
    * ด้วย โดยเรียงฟรีก่อน". Merges `catalog.freeResources()` (`isFree`) with the rest of
    * `catalog.documents()` that have `previewPages > 0` — the two are disjoint partitions of
    * `documents()` (an `isFree` doc is already in the first half), so no de-dup pass is needed.
+   * Still the "ฟรี" tab badge's source of truth post-redesign (marketplace-home-redesign v2 §4.2
+   * kept this unchanged — only the rails that used to also read this were removed).
    */
   readonly freeAndPreviewDocuments = computed<DocumentItem[]>(() => {
     const free = this.catalog.freeResources();
@@ -279,78 +219,32 @@ export class BuyerMarketplacePage {
     return [...free, ...previewOnly];
   });
 
-  readonly rails = computed<MarketplaceRailViewModel[]>(() => {
-    const newArrivals = this.catalog.newArrivals();
-    const trending = this.catalog.trending();
-    const freeAndPreview = this.freeAndPreviewDocuments();
-    return [
-      {
-        key: 'new',
-        eyebrow: this.i18n.t('marketplace.railNewEyebrow'),
-        title: this.i18n.t('marketplace.railNewTitle'),
-        desc: this.i18n.t('marketplace.railNewDesc'),
-        viewAllLabel: this.i18n.t('marketplace.railViewAll', { n: this.newArrivalsTotalCount() }),
-        docs: newArrivals.slice(0, 5),
-      },
-      {
-        key: 'popular',
-        eyebrow: this.i18n.t('marketplace.railPopularEyebrow'),
-        title: this.i18n.t('marketplace.railPopularTitle'),
-        desc: this.i18n.t('marketplace.railPopularDesc'),
-        viewAllLabel: this.i18n.t('marketplace.railViewAll', { n: this.trendingTotalCount() }),
-        docs: trending.slice(0, 5),
-      },
-      {
-        key: 'free',
-        eyebrow: this.i18n.t('marketplace.railFreeEyebrow'),
-        title: this.i18n.t('marketplace.railFreeTitle'),
-        desc: this.i18n.t('marketplace.railFreeDesc'),
-        viewAllLabel: this.i18n.t('marketplace.railViewAll', { n: freeAndPreview.length }),
-        docs: freeAndPreview.slice(0, 5),
-      },
-    ];
-  });
-
   readonly tabs = computed<MarketplaceUiTabViewModel[]>(() => [
     { value: 'all', label: this.i18n.t('marketplace.tabAll'), count: this.allDocumentsCount() },
-    { value: 'new', label: this.i18n.t('marketplace.tabNew'), count: this.newArrivalsTotalCount() },
-    { value: 'popular', label: this.i18n.t('marketplace.tabPopular'), count: this.trendingTotalCount() },
     { value: 'free', label: this.i18n.t('marketplace.tabFree'), count: this.freeAndPreviewDocuments().length },
+    {
+      value: 'package',
+      label: this.i18n.t('marketplace.tabPackage'),
+      count: this.packageTabActivated() ? this.bundles.bundleResultsTotalCount() : null,
+    },
   ]);
+
+  /**
+   * Angular class bindings can't host raw Tailwind arbitrary-value brackets/commas
+   * (`[class.lg:grid-cols-[256px_minmax(0,1fr)]]` isn't valid template syntax) — a plain
+   * `[class]` string binding sidesteps that instead of reaching for `NgClass`.
+   */
+  readonly resultsGridClass = computed(() =>
+    this.activeUiTab() !== 'package'
+      ? 'grid grid-cols-1 gap-6 items-start lg:grid-cols-[256px_minmax(0,1fr)]'
+      : 'grid grid-cols-1 gap-6 items-start',
+  );
 
   readonly singleSelectedCategoryWithSubs = computed<Category | null>(() => {
     const ids = this.catalog.filters().categoryIds;
     if (ids.length !== 1) return null;
     const cat = this.catalog.getCategoryById(ids[0]);
     return cat && cat.subcategories && cat.subcategories.length > 0 ? cat : null;
-  });
-
-  /** Same 3-second skeleton cap as the CRM discovery block (§Interactions "Loading"), shared by all 3 rails since they all read off the same `_documents()` fetch. */
-  private readonly railsTimedOut = signal(false);
-  private railsTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
-
-  readonly showRailsSkeleton = computed(
-    () =>
-      this.catalog.catalogState().status === 'loading' &&
-      this.catalog.documents().length === 0 &&
-      !this.railsTimedOut(),
-  );
-
-  // ===== crm-driven-discovery v1 §3.2/§4.3 (ข้อ 14) =====
-
-  /** `true` while the discovery fetch is loading *and* hasn't yet crossed the §4.3 3-second skeleton cap. */
-  private readonly discoveryTimedOut = signal(false);
-  private discoveryTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
-
-  readonly showDiscoverySkeleton = computed(
-    () => this.discovery.discoveryState().status === 'loading' && !this.discoveryTimedOut(),
-  );
-
-  /** §4.3: "เมื่อ sections.length === 0 && popularTerms.length === 0 → ไม่ render บล็อกเลย". */
-  readonly showDiscoveryBlock = computed(() => {
-    const d = this.discovery.discovery();
-    if (!d) return false;
-    return d.sections.length > 0 || d.popularTerms.length > 0;
   });
 
   /** marketplace-paged-results v1 §4.3: results panel's own scroll container (AC-12). */
@@ -366,6 +260,19 @@ export class BuyerMarketplacePage {
     const total = this.catalog.marketplaceResultsTotalCount();
     if (total === 0) return false;
     return this.accumulatedDocs().length < total;
+  });
+
+  /**
+   * marketplace-home-redesign v2 §4.2 ("Tab 'package' — งานใหม่"): accumulate pattern แยกจาก
+   * `accumulatedDocs` เพื่อไม่ให้ปนกัน — round 1 stub เสมอว่างเพราะ `BundleService.searchPager`
+   * ยัง TODO(contract) อยู่.
+   */
+  readonly accumulatedBundles = signal<Bundle[]>([]);
+
+  readonly hasMoreBundles = computed(() => {
+    const total = this.bundles.bundleResultsTotalCount();
+    if (total === 0) return false;
+    return this.accumulatedBundles().length < total;
   });
 
   gradeLabel(g: GradeLevel): string {
@@ -393,100 +300,22 @@ export class BuyerMarketplacePage {
     this.catalog.retryMarketplaceResults();
   }
 
+  loadMoreBundles(): void {
+    if (this.bundles.bundleResultsState().status === 'loading') return;
+    if (!this.hasMoreBundles()) return;
+    void this.bundles.loadBundleResultsPage(this.bundles.bundleResultsPage() + 1);
+  }
+
+  retryBundleResults(): void {
+    this.bundles.retryBundleResults();
+  }
+
   constructor() {
     // Explicit init to avoid root service auto-fetching on unrelated pages.
     this.catalog.resetFilters();
     this.catalog.initForMarketplace();
     // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
-    // crm-driven-discovery v1 §3.2/§4.2/§4.3: "ยังไม่ได้ค้นหาอะไรเลย" block — cheap to call
-    // unconditionally, cached 5 นาทีฝั่ง service (§4.2), only ever rendered when !anyActive().
-    void this.discovery.loadDiscovery();
-
-    // §4.3 3-second skeleton cap: starts a timer whenever the fetch is loading, clears it as soon
-    // as it settles either way.
-    effect(() => {
-      const status = this.discovery.discoveryState().status;
-      if (this.discoveryTimeoutHandle != null) {
-        clearTimeout(this.discoveryTimeoutHandle);
-        this.discoveryTimeoutHandle = null;
-      }
-      if (status === 'loading') {
-        this.discoveryTimedOut.set(false);
-        this.discoveryTimeoutHandle = setTimeout(() => this.discoveryTimedOut.set(true), DISCOVERY_SKELETON_TIMEOUT_MS);
-      } else {
-        this.discoveryTimedOut.set(false);
-      }
-    });
-
-    // marketplace-redesign v1 §Interactions "Loading" — same 3-second skeleton cap, gated on the
-    // fetch backing `rails()` (`newArrivals`/`trending`/`freeResources` all read `_documents()`).
-    effect(() => {
-      const status = this.catalog.catalogState().status;
-      if (this.railsTimeoutHandle != null) {
-        clearTimeout(this.railsTimeoutHandle);
-        this.railsTimeoutHandle = null;
-      }
-      if (status === 'loading') {
-        this.railsTimedOut.set(false);
-        this.railsTimeoutHandle = setTimeout(() => this.railsTimedOut.set(true), DISCOVERY_SKELETON_TIMEOUT_MS);
-      } else {
-        this.railsTimedOut.set(false);
-      }
-    });
-
-    this.destroyRef.onDestroy(() => {
-      if (this.discoveryTimeoutHandle != null) clearTimeout(this.discoveryTimeoutHandle);
-      if (this.railsTimeoutHandle != null) clearTimeout(this.railsTimeoutHandle);
-    });
-
-    // marketplace-redesign v1 §Interactions "Query params / deep link": `?view=list`,
-    // `?tab=new|free|all`, `?q=`, `?category=`, `?subcategory=`. `tab=popular`/`view` combos the
-    // segmented tabs enter through `selectTab()` never round-trip through the URL as `tab` (see
-    // that method) — only `view=list` marks them as "already in list mode" here, so this branch
-    // must never reset filters just because `tab` happens to be absent while `view=list` is set.
-    this.route.queryParamMap
-      .pipe(takeUntilDestroyed())
-      .subscribe((params) => {
-        const q = (params.get('q') ?? '').trim();
-        this.searchTerm.set(q);
-        const cat = params.get('category');
-        const sub = params.get('subcategory');
-        const tabParam = params.get('tab');
-        const viewParam = params.get('view');
-
-        if (!cat && !sub && !tabParam && !viewParam) {
-          this.catalog.resetFilters();
-          this.activeUiTab.set('all');
-        }
-        if (q !== this.catalog.filters().search) {
-          this.catalog.setFilters({ search: q });
-        }
-        if (cat) {
-          const c = this.catalog.getCategoryBySlug(cat);
-          // Lazy-load subcategories for selected category only.
-          void this.catalog.loadCategoryDetailBySlug(cat);
-          if (c && !this.catalog.filters().categoryIds.includes(c.id)) {
-            this.catalog.setFilters({ categoryIds: [c.id] });
-          }
-        }
-        if (sub) {
-          const s = this.catalog.getSubcategoryBySlug(sub);
-          if (s && !this.catalog.filters().subcategoryIds.includes(s.id)) {
-            this.catalog.setFilters({
-              categoryIds: [s.parentId],
-              subcategoryIds: [s.id],
-            });
-          }
-        }
-        if (tabParam === 'all' || tabParam === 'new' || tabParam === 'free') {
-          this.catalog.setTab(tabParam);
-          this.activeUiTab.set(tabParam);
-        }
-
-        const isListFromUrl = viewParam === 'list' || !!tabParam || !!cat || !!q;
-        this.view.set(isListFromUrl ? 'list' : 'browse');
-      });
 
     // seller-ads-promotion v1 §4.3 (AC-38): fire impressions once per rendered result set.
     // `marketplaceResults()` is a `computed()` that returns a fresh array only when one of its
@@ -494,8 +323,8 @@ export class BuyerMarketplacePage {
     // doesn't touch any of those returns the same cached array reference, so `AdsService`'s
     // reference-keyed dedup (§4.3: "กันยิงซ้ำตอน re-render") holds without this page inventing its
     // own key. `isSponsored`/`sponsoredCampaignId` only exist on `/marketplace/search` results
-    // (DEC-6) — every other list this signal can hold (browse/tab-filtered) simply has no
-    // sponsored items, so `recordImpressions` no-ops there.
+    // (DEC-6) — every other list this signal can hold simply has no sponsored items, so
+    // `recordImpressions` no-ops there.
     effect(() => {
       const docs = this.catalog.marketplaceResults();
       const sponsoredCampaignIds = docs
@@ -523,6 +352,25 @@ export class BuyerMarketplacePage {
       }
     });
 
+    // Same accumulate-on-page-progression pattern as accumulatedDocs above, for the "แพ็กเกจ" tab.
+    effect(() => {
+      const page = this.bundles.bundleResultsPage();
+      const state = this.bundles.bundleResultsState();
+      const newResults = this.bundles.bundleResults();
+
+      if (state.status === 'idle') {
+        if (page <= 1) {
+          this.accumulatedBundles.set(newResults);
+        } else {
+          this.accumulatedBundles.update((prev) => {
+            const existingIds = new Set(prev.map((b) => b.id));
+            const fresh = newResults.filter((b) => !existingIds.has(b.id));
+            return [...prev, ...fresh];
+          });
+        }
+      }
+    });
+
     // Reset resultsPanel scroll to top ONLY on page 1 / filter change (not when loading more)
     effect(() => {
       if (
@@ -539,7 +387,11 @@ export class BuyerMarketplacePage {
         this.observer = new IntersectionObserver(
           (entries) => {
             if (entries[0]?.isIntersecting) {
-              this.loadMore();
+              if (this.activeUiTab() === 'package') {
+                this.loadMoreBundles();
+              } else {
+                this.loadMore();
+              }
             }
           },
           { root: this.resultsPanel()?.nativeElement ?? null, rootMargin: '120px' },
@@ -558,12 +410,55 @@ export class BuyerMarketplacePage {
     this.destroyRef.onDestroy(() => {
       this.observer?.disconnect();
     });
+
+    // marketplace-home-redesign v2 §4.2 "Query param migration": `?q=`, `?category=`,
+    // `?subcategory=`, `?tab=all|free|package` — `tab=new`/`tab=popular` from an old bookmark
+    // fall back to "all" silently (no throw, no redirect).
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => {
+        const q = (params.get('q') ?? '').trim();
+        this.searchTerm.set(q);
+        const cat = params.get('category');
+        const sub = params.get('subcategory');
+        const tabParam = params.get('tab');
+
+        if (!cat && !sub && !tabParam) {
+          this.catalog.resetFilters();
+          this.activeUiTab.set('all');
+        }
+        if (q !== this.catalog.filters().search) {
+          this.catalog.setFilters({ search: q });
+        }
+        if (cat) {
+          const c = this.catalog.getCategoryBySlug(cat);
+          // Lazy-load subcategories for selected category only.
+          void this.catalog.loadCategoryDetailBySlug(cat);
+          if (c && !this.catalog.filters().categoryIds.includes(c.id)) {
+            this.catalog.setFilters({ categoryIds: [c.id] });
+          }
+        }
+        if (sub) {
+          const s = this.catalog.getSubcategoryBySlug(sub);
+          if (s && !this.catalog.filters().subcategoryIds.includes(s.id)) {
+            this.catalog.setFilters({
+              categoryIds: [s.parentId],
+              subcategoryIds: [s.id],
+            });
+          }
+        }
+        if (tabParam === 'all' || tabParam === 'free' || tabParam === 'package') {
+          this.applyUiTab(tabParam);
+        } else if (tabParam === 'new' || tabParam === 'popular') {
+          this.applyUiTab('all');
+        }
+      });
   }
 
   /**
-   * marketplace-paged-results v1 §4 (AC-12 fix, round 2): updates the `?q=`/category/subcategory
-   * query params for bookmarking/sharing through a *real* `Router.navigate()` — a prior attempt
-   * used `Location.go()` to dodge the app-wide `withInMemoryScrolling({ scrollPositionRestoration:
+   * marketplace-home-redesign v2 §4.2: updates the `?q=`/category/subcategory query params for
+   * bookmarking/sharing through a *real* `Router.navigate()` — a prior attempt used
+   * `Location.go()` to dodge the app-wide `withInMemoryScrolling({ scrollPositionRestoration:
    * 'top' })` (app.config.ts) scroll-to-top, but that left the Router's internal `currentUrlTree`
    * bookkeeping stale: pressing browser Back immediately after a search (no real navigation in
    * between) reverted the URL bar via popstate, yet the Router never learned about it, so
@@ -615,6 +510,18 @@ export class BuyerMarketplacePage {
       categoryIds: newIds,
       subcategoryIds: newSubIds,
     });
+
+    // marketplace-home-redesign v2 §1 ข้อ 2 / §0 (bug fix): `catalog.categories()` only ever
+    // carries `subcategoryCount` (a number) until `loadCategoryDetailBySlug(slug)` hydrates the
+    // real `subcategories` array for that one category — this used to only happen from a
+    // `?category=slug` deep link (see the queryParamMap subscriber below), never from clicking a
+    // chip directly, so `singleSelectedCategoryWithSubs()` stayed `null` forever on that path.
+    if (newIds.length === 1) {
+      const cat = this.catalog.getCategoryById(newIds[0]);
+      if (cat?.slug) {
+        void this.catalog.loadCategoryDetailBySlug(cat.slug);
+      }
+    }
   }
 
   clearCategories(): void {
@@ -683,40 +590,32 @@ export class BuyerMarketplacePage {
   }
 
   /**
-   * marketplace-redesign v1 §Interactions — rail "ดูทั้งหมด" buttons, the closing browse-mode CTA,
-   * and the list-mode segmented tabs all funnel through here. `'popular'` has no `MarketplaceTab`
-   * of its own on `CatalogService` — it's `tab='all'` + `sort='popular'` — so its query param
-   * patch intentionally omits `tab` (see the queryParamMap subscription above for why that's safe).
+   * marketplace-home-redesign v2 §4.2: sets the active tab and, for `'package'`, triggers the
+   * "แพ็กเกจ" search fetch (page 1) with the search box's *current* term — not re-fetched on every
+   * keystroke (§4.2 "หลีกเลี่ยงยิง request คู่ขนานทุก keystroke"), only on entering the tab.
    */
-  selectTab(tab: MarketplaceUiTab): void {
+  private applyUiTab(tab: MarketplaceUiTab): void {
     this.activeUiTab.set(tab);
-    this.view.set('list');
-    if (tab === 'popular') {
-      this.catalog.setTab('all');
-      this.catalog.setFilters({ sort: 'popular' });
-      this.updateQueryParams({ tab: null, view: 'list' });
+    if (tab === 'package') {
+      this.packageTabActivated.set(true);
+      this.catalog.setTab('bundles');
+      void this.bundles.loadBundleResultsPage(1, this.catalog.filters().search.trim());
     } else {
       this.catalog.setTab(tab);
-      this.updateQueryParams({ tab, view: 'list' });
     }
+  }
+
+  selectTab(tab: MarketplaceUiTab): void {
+    this.applyUiTab(tab);
+    this.updateQueryParams({ tab });
     this.scrollToTop();
   }
 
-  /** "ล้างทั้งหมด" / "ล้างตัวกรอง" — never touches `view` (§Interactions). */
+  /** "ล้างทั้งหมด" / "ล้างตัวกรอง" */
   reset(): void {
     this.searchTerm.set('');
     this.catalog.resetFilters();
     this.activeUiTab.set('all');
     this.updateQueryParams({ q: null, category: null, subcategory: null, tab: null });
-  }
-
-  /** Toolbar "← หน้ารวม" — clears everything *and* returns to browse mode. */
-  goToBrowse(): void {
-    this.searchTerm.set('');
-    this.catalog.resetFilters();
-    this.activeUiTab.set('all');
-    this.view.set('browse');
-    this.updateQueryParams({ q: null, category: null, subcategory: null, tab: null, view: null });
-    this.scrollToTop();
   }
 }
