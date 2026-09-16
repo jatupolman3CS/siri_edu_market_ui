@@ -14,12 +14,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 /**
  * payout-request-slip-verification v1 §4.4 / seller-ads-promotion v1 §4.4: ledger `kind` → Thai
- * label. `AdsSpend`/`AdsRefund` are keyed both as `ads_spend`/`ads_refund` (the snake_case
- * convention every other kind on this list uses, e.g. `OpeningBalance` → `opening_balance`) *and*
- * as `adsspend`/`adsrefund` — `SellerBalanceService.MapKind` (backend) has an explicit `case` for
- * every other enum member but falls through to `kind.ToString().ToLowerInvariant()` for these two
- * (verified against the live backend), which drops the underscore. Both keys are kept so the
- * label still resolves correctly either way, whichever the backend actually sends.
+ * label (snake_case convention matching backend SellerBalanceService.MapKind).
  */
 const LEDGER_KIND_LABELS: Record<string, string> = {
   opening_balance: 'ยอดยกมา',
@@ -30,9 +25,7 @@ const LEDGER_KIND_LABELS: Record<string, string> = {
   order_refund: 'คืนเงินให้ผู้ซื้อ',
   adjustment: 'ปรับยอดโดยผู้ดูแลระบบ',
   ads_spend: 'ค่าโฆษณา',
-  adsspend: 'ค่าโฆษณา',
   ads_refund: 'คืนค่าโฆษณา',
-  adsrefund: 'คืนค่าโฆษณา',
 };
 
 function formatBaht(v: number): string {
