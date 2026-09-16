@@ -4,7 +4,6 @@ import { of } from 'rxjs';
 import { BuyerMarketplacePage } from './marketplace.page';
 import {
   AdsService,
-  BundleService,
   CartService,
   CatalogService,
   DiscoveryService,
@@ -42,9 +41,11 @@ function buildCatalogFake(categories: Category[] = []) {
     loadCategories: vi.fn(),
     loadCategoryDetailBySlug: vi.fn(),
     categories: () => categories,
-    documents: () => [],
-    freeResources: () => [],
-    newArrivals: () => [],
+    documents: (): DocumentItem[] => [],
+    freeResources: (): DocumentItem[] => [],
+    newArrivals: (): DocumentItem[] => [],
+    // marketplace-redesign v1 §Screens 2: rail 2 ("ยอดนิยม") data source.
+    trending: (): DocumentItem[] => [],
     filtered: () => [],
     resultTotal: () => 0,
     filters: () => DEFAULT_FILTERS,
@@ -74,15 +75,6 @@ function buildCatalogFake(categories: Category[] = []) {
     }),
     setMarketplacePageSize: vi.fn(),
     retryMarketplaceResults: vi.fn(),
-  };
-}
-
-function buildBundleFake() {
-  return {
-    bundles: () => [],
-    bundlesState: () => idleActionState(),
-    hasMore: () => false,
-    loadMore: vi.fn(),
   };
 }
 
@@ -126,7 +118,6 @@ function render(
     providers: [
       provideRouter([]),
       { provide: CatalogService, useValue: catalog },
-      { provide: BundleService, useValue: buildBundleFake() },
       { provide: RecentlyViewedService, useValue: { count: () => 0, items: () => [], clear: vi.fn() } },
       { provide: PlatformStatsService, useValue: platformStats },
       { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
@@ -202,31 +193,7 @@ describe('Marketplace search URL', () => {
   });
 });
 
-describe('Marketplace explicit search submission', () => {
-  it('keeps typing local in searchTerm and only triggers catalog filter on applySearch / button click', async () => {
-    const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    await fixture.whenStable();
-
-    const input = (fixture.nativeElement as HTMLElement).querySelector('input[name="marketplaceSearch"]') as HTMLInputElement;
-    expect(input).not.toBeNull();
-
-    input.value = 'คณิต ม.ปลาย';
-    input.dispatchEvent(new Event('input'));
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    // typing alone does NOT call setFilters with the new search
-    expect(catalog.setFilters).not.toHaveBeenCalledWith({ search: 'คณิต ม.ปลาย' });
-
-    // clicking the search button or submitting form triggers search
-    const searchBtn = input.form?.querySelector('button[type="submit"]') as HTMLButtonElement;
-    searchBtn.click();
-    await fixture.whenStable();
-
-    expect(catalog.setFilters).toHaveBeenCalledWith({ search: 'คณิต ม.ปลาย' });
-  });
-
+describe('Marketplace clear search', () => {
   it('clears search on clearSearch()', () => {
     const catalog = buildCatalogFake();
     const fixture = render(catalog, buildPlatformStatsFake(undefined), { q: 'ชีวะ' });
@@ -239,23 +206,182 @@ describe('Marketplace explicit search submission', () => {
   });
 });
 
-describe('Marketplace results panel (marketplace-paged-results v1)', () => {
-  it('AC-9: renders the search button as a flex sibling of the input, not an absolute overlay', () => {
+/**
+ * marketplace-redesign v1 §State Management / §Interactions — browse vs. list mode, the 4
+ * segmented tabs (`all`/`new`/`popular`/`free`), and the "หน้ารวม" reset button.
+ */
+describe('BuyerMarketplacePage — browse/list mode (marketplace-redesign v1)', () => {
+  it('starts in browse mode when there is no query and no active filter', () => {
     const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
 
-    const input = (fixture.nativeElement as HTMLElement).querySelector(
-      'input[name="marketplaceSearch"]',
-    ) as HTMLInputElement;
-    const form = input.closest('form') as HTMLElement;
-    const button = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-
-    expect(button).not.toBeNull();
-    expect(button.parentElement).toBe(form);
-    expect(form.classList.contains('flex')).toBe(true);
-    expect(button.classList.contains('btn-icon')).toBe(true);
-    expect(getComputedStyle(button).position).not.toBe('absolute');
+    expect(page.view()).toBe('browse');
+    expect(page.listMode()).toBe(false);
   });
 
+  it('enters list mode as soon as any filter is active, without touching view() (§Interactions)', () => {
+    const catalog = buildCatalogFake();
+    const baseFilters = catalog.filters();
+    catalog.filters = () => ({ ...baseFilters, categoryIds: ['cat-1'] });
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    expect(page.view()).toBe('browse');
+    expect(page.listMode()).toBe(true);
+  });
+
+  it('deep-links into list mode via ?view=list', () => {
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), { view: 'list' });
+    const page = fixture.componentInstance;
+
+    expect(page.view()).toBe('list');
+    expect(page.listMode()).toBe(true);
+  });
+
+  it('exposes exactly 4 segmented tabs in order: all, new, popular, free', () => {
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    expect(page.tabs().map((t) => t.value)).toEqual(['all', 'new', 'popular', 'free']);
+  });
+
+  it('selectTab("new") enters list mode, sets the catalog tab, and highlights "new"', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.selectTab('new');
+
+    expect(page.view()).toBe('list');
+    expect(page.activeUiTab()).toBe('new');
+    expect(catalog.setTab).toHaveBeenCalledWith('new');
+  });
+
+  it('selectTab("popular") maps to catalog tab "all" + sort "popular" (no dedicated MarketplaceTab)', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.selectTab('popular');
+
+    expect(page.activeUiTab()).toBe('popular');
+    expect(catalog.setTab).toHaveBeenCalledWith('all');
+    expect(catalog.setFilters).toHaveBeenCalledWith({ sort: 'popular' });
+  });
+
+  it('goToBrowse() resets filters + the active tab and returns to browse mode', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.selectTab('free');
+    catalog.resetFilters.mockClear();
+    page.goToBrowse();
+
+    expect(page.view()).toBe('browse');
+    expect(page.activeUiTab()).toBe('all');
+    expect(catalog.resetFilters).toHaveBeenCalled();
+  });
+});
+
+/**
+ * gate-2 fix (integrator-qa report, marketplace-redesign v1 §Screens/Views ข้อ 2 + rail-3 table):
+ * rail "ดูทั้งหมด {n}" / segmented-tab counts must reflect the *real* group total, not the 5/6/8
+ * hard-capped arrays `newArrivals()`/`trending()`/`freeResources()` return for display, and the
+ * "ฟรี" rail must also include documents with `previewPages > 0` (not just `isFree`).
+ */
+describe('BuyerMarketplacePage — rail/tab total counts (gate-2 deviation A/B fix)', () => {
+  function docWithCreatedAt(id: string, createdAt: string): DocumentItem {
+    return { ...buildDoc(id), createdAt };
+  }
+
+  function docWithPreview(id: string, previewPages: number, isFree = false): DocumentItem {
+    return { ...buildDoc(id), previewPages, isFree };
+  }
+
+  it('Deviation A: "new" rail/tab count is the real total of documents created within 10 days, not the 6-item newArrivals() cap', () => {
+    const catalog = buildCatalogFake();
+    const now = new Date();
+    const within10Days = (daysAgo: number) =>
+      new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+    // 8 documents created within the last 10 days — more than the 6-item slice() cap
+    // `catalog.newArrivals()` itself uses internally.
+    const recentDocs = Array.from({ length: 8 }, (_, i) => docWithCreatedAt(`new-${i}`, within10Days(1)));
+    const staleDoc = docWithCreatedAt('old-1', within10Days(30));
+    catalog.documents = () => [...recentDocs, staleDoc];
+    catalog.newArrivals = () => recentDocs.slice(0, 6);
+
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    expect(page.newArrivalsTotalCount()).toBe(8);
+    expect(page.newArrivalsTotalCount()).not.toBe(catalog.newArrivals().length);
+    expect(page.rails().find((r) => r.key === 'new')?.viewAllLabel).toBe('ดูทั้งหมด 8 รายการ');
+    expect(page.tabs().find((t) => t.value === 'new')?.count).toBe(8);
+  });
+
+  it('Deviation A: "popular" rail/tab count falls back to the raw document total when the backend total is unavailable (not the 8-item trending() cap)', () => {
+    const catalog = buildCatalogFake();
+    const docs = Array.from({ length: 12 }, (_, i) => buildDoc(`doc-${i}`));
+    catalog.documents = () => docs;
+    catalog.trending = () => docs.slice(0, 8);
+    // marketplaceResultsTotalCount() defaults to 0 in buildCatalogFake() — allDocumentsCount()
+    // falls back to documents().length in that case.
+
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    expect(page.trendingTotalCount()).toBe(12);
+    expect(page.trendingTotalCount()).not.toBe(catalog.trending().length);
+    expect(page.rails().find((r) => r.key === 'popular')?.viewAllLabel).toBe('ดูทั้งหมด 12 รายการ');
+    expect(page.tabs().find((t) => t.value === 'popular')?.count).toBe(12);
+  });
+
+  /**
+   * integrator-qa gate-3 fix (marketplace-redesign v1 §Screens/Views rail "ยอดนิยม"): its
+   * "ดูทั้งหมด" button maps to `tab='all' + sort='popular'`, i.e. the exact same set as "ทั้งหมด" —
+   * so its true total must equal `allDocumentsCount()` / `marketplaceResultsTotalCount()` (the
+   * backend total of the whole marketplace), not `catalog.documents().length`, which in browse
+   * mode is capped to a single page (24) and silently under-counts once the real pool is larger.
+   */
+  it('gate-3: "popular" rail/tab count reads the backend marketplace total, not the page-capped documents() array length', () => {
+    const catalog = buildCatalogFake();
+    // Only 12 documents loaded on the current page, but the backend reports 3,000 total —
+    // trendingTotalCount() must report the backend total, never the loaded page length.
+    const docs = Array.from({ length: 12 }, (_, i) => buildDoc(`doc-${i}`));
+    catalog.documents = () => docs;
+    catalog.trending = () => docs.slice(0, 8);
+    catalog.marketplaceResultsTotalCount = () => 3000;
+
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    expect(page.trendingTotalCount()).toBe(3000);
+    expect(page.trendingTotalCount()).toBe(page.allDocumentsCount());
+    expect(page.trendingTotalCount()).not.toBe(catalog.documents().length);
+    expect(page.rails().find((r) => r.key === 'popular')?.viewAllLabel).toBe('ดูทั้งหมด 3000 รายการ');
+    expect(page.tabs().find((t) => t.value === 'popular')?.count).toBe(3000);
+  });
+
+  it('Deviation B: the "free" rail merges isFree documents with preview-only documents (free first), and its count includes both groups', () => {
+    const catalog = buildCatalogFake();
+    const free = [docWithPreview('free-1', 0, true), docWithPreview('free-2', 0, true)];
+    const previewOnly = [docWithPreview('preview-1', 5, false)];
+    const neitherDoc = docWithPreview('plain-1', 0, false);
+    catalog.freeResources = () => free;
+    catalog.documents = () => [...free, ...previewOnly, neitherDoc];
+
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    const merged = page.freeAndPreviewDocuments();
+    expect(merged.map((d) => d.id)).toEqual(['free-1', 'free-2', 'preview-1']);
+    expect(page.rails().find((r) => r.key === 'free')?.viewAllLabel).toBe('ดูทั้งหมด 3 รายการ');
+    expect(page.tabs().find((t) => t.value === 'free')?.count).toBe(3);
+  });
+});
+
+describe('Marketplace results panel (marketplace-paged-results v1)', () => {
   it('clicking the "โหลดเพิ่มเติม" button calls catalog.loadMarketplaceResultsPage with the next page', () => {
     const catalog = buildCatalogFake();
     catalog.marketplaceResultsTotalPages = () => 3;
@@ -277,7 +403,8 @@ describe('Marketplace results panel (marketplace-paged-results v1)', () => {
         seller: { id: 's1', displayName: 'ครูสมชาย', isVerified: true },
       } as any,
     ];
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    // marketplace-redesign v1: the results grid only renders in list mode.
+    const fixture = render(catalog, buildPlatformStatsFake(undefined), { view: 'list' });
 
     const loadMoreBtn = (fixture.nativeElement as HTMLElement).querySelector(
       'button.btn-load-more',
@@ -412,4 +539,3 @@ describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.
     expect(ads.recordImpressions).toHaveBeenCalledWith(expect.any(Array), []);
   });
 });
-

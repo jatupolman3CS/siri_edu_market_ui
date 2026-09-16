@@ -376,8 +376,19 @@ import type {
   GetApiSellersBySellerIdProfileResponses,
   GetApiSellerStoreSectionsData,
   GetApiSellerStoreSectionsResponses,
+  GetApiSeoCategoryBySlugData,
+  GetApiSeoCategoryBySlugErrors,
+  GetApiSeoCategoryBySlugResponses,
+  GetApiSeoDocumentByIdData,
+  GetApiSeoDocumentByIdErrors,
+  GetApiSeoDocumentByIdResponses,
+  GetApiSeoStoreBySellerIdData,
+  GetApiSeoStoreBySellerIdErrors,
+  GetApiSeoStoreBySellerIdResponses,
   GetApiSystemR2Data,
   GetApiSystemR2Responses,
+  GetApiSystemSitemapXmlData,
+  GetApiSystemSitemapXmlResponses,
   GetApiSystemStatusData,
   GetApiSystemStatusResponses,
   GetApiWishlistData,
@@ -3869,6 +3880,33 @@ export const postApiSellersBySellerIdFollow = <ThrowOnError extends boolean = fa
     ThrowOnError
   >({ url: '/api/sellers/{sellerId}/follow', ...options });
 
+export const getApiSeoDocumentById = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSeoDocumentByIdData, ThrowOnError>,
+): RequestResult<GetApiSeoDocumentByIdResponses, GetApiSeoDocumentByIdErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiSeoDocumentByIdResponses,
+    GetApiSeoDocumentByIdErrors,
+    ThrowOnError
+  >({ url: '/api/seo/document/{id}', ...options });
+
+export const getApiSeoCategoryBySlug = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSeoCategoryBySlugData, ThrowOnError>,
+): RequestResult<GetApiSeoCategoryBySlugResponses, GetApiSeoCategoryBySlugErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiSeoCategoryBySlugResponses,
+    GetApiSeoCategoryBySlugErrors,
+    ThrowOnError
+  >({ url: '/api/seo/category/{slug}', ...options });
+
+export const getApiSeoStoreBySellerId = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSeoStoreBySellerIdData, ThrowOnError>,
+): RequestResult<GetApiSeoStoreBySellerIdResponses, GetApiSeoStoreBySellerIdErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiSeoStoreBySellerIdResponses,
+    GetApiSeoStoreBySellerIdErrors,
+    ThrowOnError
+  >({ url: '/api/seo/store/{sellerId}', ...options });
+
 export const postApiWebhooksStripe = <ThrowOnError extends boolean = false>(
   options?: Options<PostApiWebhooksStripeData, ThrowOnError>,
 ): RequestResult<PostApiWebhooksStripeResponses, unknown, ThrowOnError> =>
@@ -3971,6 +4009,14 @@ export const getApiSystemStatus = <ThrowOnError extends boolean = false>(
 ): RequestResult<GetApiSystemStatusResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<GetApiSystemStatusResponses, unknown, ThrowOnError>({
     url: '/api/system/status',
+    ...options,
+  });
+
+export const getApiSystemSitemapXml = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSystemSitemapXmlData, ThrowOnError>,
+): RequestResult<GetApiSystemSitemapXmlResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSystemSitemapXmlResponses, unknown, ThrowOnError>({
+    url: '/api/system/sitemap.xml',
     ...options,
   });
 

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DocumentItem } from '../../../core/models';
+import { DocumentItem, RESOURCE_TYPE_LABELS } from '../../../core/models';
 import {
   AdsService,
   CartService,
@@ -12,6 +12,7 @@ import { CompactPipe } from '../../pipes/compact.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-document-card',
@@ -23,6 +24,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
     IconComponent,
     RatingStarsComponent,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-card.component.html',
@@ -33,9 +35,16 @@ export class DocumentCardComponent {
   readonly wishlist = inject(WishlistService);
   private readonly quickView = inject(QuickViewService);
   private readonly ads = inject(AdsService);
+  private readonly i18n = inject(TranslationService);
 
   readonly doc = input.required<DocumentItem>();
   readonly density = input<'default' | 'compact'>('default');
+
+  /** marketplace-redesign v1 §Screens 4 — compact card's resource-type chip, no emoji. */
+  resourceTypeLabel(): string {
+    const type = this.doc().resourceType;
+    return this.i18n.t(`resourceTypes.${type}`) || RESOURCE_TYPE_LABELS[type];
+  }
 
   /**
    * seller-ads-promotion v1 §4.3: fired on click of either navigable link (cover / title) of a

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { RouterLink } from '@angular/router';
 import type { DiscoverySection } from '../../../core/models';
 import { DocumentCardComponent } from '../document-card/document-card.component';
+import { IconComponent } from '../icon/icon.component';
 
 /**
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.2/§4.3 — one rail of the
@@ -13,7 +14,7 @@ import { DocumentCardComponent } from '../document-card/document-card.component'
 @Component({
   selector: 'app-discovery-rail',
   standalone: true,
-  imports: [RouterLink, DocumentCardComponent],
+  imports: [RouterLink, DocumentCardComponent, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './discovery-rail.component.html',
 })

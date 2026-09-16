@@ -9540,6 +9540,84 @@ export type PostApiSellersBySellerIdFollowResponses = {
   200: unknown;
 };
 
+export type GetApiSeoDocumentByIdData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/seo/document/{id}';
+};
+
+export type GetApiSeoDocumentByIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSeoDocumentByIdError =
+  GetApiSeoDocumentByIdErrors[keyof GetApiSeoDocumentByIdErrors];
+
+export type GetApiSeoDocumentByIdResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type GetApiSeoCategoryBySlugData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/api/seo/category/{slug}';
+};
+
+export type GetApiSeoCategoryBySlugErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSeoCategoryBySlugError =
+  GetApiSeoCategoryBySlugErrors[keyof GetApiSeoCategoryBySlugErrors];
+
+export type GetApiSeoCategoryBySlugResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type GetApiSeoStoreBySellerIdData = {
+  body?: never;
+  path: {
+    sellerId: string;
+  };
+  query?: never;
+  url: '/api/seo/store/{sellerId}';
+};
+
+export type GetApiSeoStoreBySellerIdErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSeoStoreBySellerIdError =
+  GetApiSeoStoreBySellerIdErrors[keyof GetApiSeoStoreBySellerIdErrors];
+
+export type GetApiSeoStoreBySellerIdResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
 export type PostApiWebhooksStripeData = {
   body?: never;
   path?: never;
@@ -9738,6 +9816,20 @@ export type GetApiSystemStatusResponses = {
 
 export type GetApiSystemStatusResponse =
   GetApiSystemStatusResponses[keyof GetApiSystemStatusResponses];
+
+export type GetApiSystemSitemapXmlData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/system/sitemap.xml';
+};
+
+export type GetApiSystemSitemapXmlResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
 
 export type GetApiSystemR2Data = {
   body?: never;

@@ -1,536 +1,616 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-      <!-- Tabs -->
-      <nav class="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
-        @for (t of tabs(); track t.value) {
-          <button
-            class="px-5 py-2.5 rounded-full text-sm font-medium border whitespace-nowrap transition-colors"
-            [class.bg-pink-500]="catalog.tab() === t.value"
-            [class.text-white]="catalog.tab() === t.value"
-            [class.border-pink-500]="catalog.tab() === t.value"
-            [class.bg-white]="catalog.tab() !== t.value"
-            [class.text-ink-soft]="catalog.tab() !== t.value"
-            [class.border-line]="catalog.tab() !== t.value"
-            (click)="catalog.setTab(t.value)"
-          >
-            <span>{{ t.icon }} {{ t.label }}</span>
-            <span class="ml-1 opacity-70 text-xs">{{ t.count }}</span>
-          </button>
-        }
-      </nav>
+<div class="max-w-7xl mx-auto px-6 pt-8 pb-20 bg-canvas">
+  <!-- Page header -->
+  <header class="mb-5">
+    <h1 class="text-[32px] font-extrabold tracking-[-0.02em] text-ink">{{ 'marketplace.title' | trans }}</h1>
+    <p class="text-sm text-ink-muted mt-1.5">{{ marketSubtitle() }}</p>
+  </header>
 
-      <!-- Recently viewed strip -->
-      @if (recent.count() > 0 && catalog.tab() !== 'bundles') {
-        <section class="card-soft p-5 mb-6">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold text-ink flex items-center gap-2">
-              <app-icon name="eye" [size]="14" className="text-pink-500" />
-              ที่คุณเพิ่งดู
-            </h3>
-            <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">
-              ล้าง
-            </button>
-          </div>
-          <div class="flex gap-3 overflow-x-auto pb-1">
-            @for (d of recent.items(); track d.id) {
-              <a
-                [routerLink]="['/document', d.id]"
-                class="flex-shrink-0 w-28 group"
-              >
-                <img
-                  appImgFallback
-                  [src]="d.cover"
-                  class="w-28 h-32 rounded-2xl object-cover ring-2 ring-transparent group-hover:ring-pink-300 transition-all"
-                  [alt]="d.title"
-                />
-                <div class="text-[11px] text-ink line-clamp-2 mt-1.5 leading-tight group-hover:text-pink-600">
-                  {{ d.title }}
-                </div>
-              </a>
-            }
-          </div>
+  <!-- Category chips row -->
+  <div
+    class="flex flex-wrap gap-2"
+    [class.mb-9]="!singleSelectedCategoryWithSubs()"
+    [class.mb-2]="!!singleSelectedCategoryWithSubs()"
+  >
+    <button
+      type="button"
+      class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
+      [class.bg-pink-100]="catalog.filters().categoryIds.length === 0"
+      [class.text-pink-700]="catalog.filters().categoryIds.length === 0"
+      [class.border-pink-500]="catalog.filters().categoryIds.length === 0"
+      [class.bg-white]="catalog.filters().categoryIds.length > 0"
+      [class.text-ink-soft]="catalog.filters().categoryIds.length > 0"
+      [class.border-line]="catalog.filters().categoryIds.length > 0"
+      (click)="clearCategories()"
+    >
+      {{ 'marketplace.allCategoriesChip' | trans }}
+      <span class="text-xs font-medium opacity-65">{{ allDocumentsCount() }}</span>
+    </button>
+    @for (cat of catalog.categories(); track cat.id) {
+      @let active = catalog.filters().categoryIds.includes(cat.id);
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
+        [class.bg-pink-100]="active"
+        [class.text-pink-700]="active"
+        [class.border-pink-500]="active"
+        [class.bg-white]="!active"
+        [class.text-ink-soft]="!active"
+        [class.border-line]="!active"
+        (click)="toggleCategory(cat.id)"
+      >
+        <span>{{ cat.icon }}</span>
+        {{ cat.name }}
+        <span class="text-xs font-medium opacity-65">{{ cat.documentCount }}</span>
+      </button>
+    }
+  </div>
+
+  @if (singleSelectedCategoryWithSubs(); as selectedCat) {
+    <div class="flex flex-wrap gap-1.5 mb-9">
+      @for (sub of selectedCat.subcategories; track sub.id) {
+        @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+          [class.bg-pink-100]="subActive"
+          [class.text-pink-700]="subActive"
+          [class.border-pink-500]="subActive"
+          [class.bg-white]="!subActive"
+          [class.text-ink-soft]="!subActive"
+          [class.border-line]="!subActive"
+          (click)="toggleSubcategory(sub.id)"
+        >
+          @if (sub.icon) { <span>{{ sub.icon }}</span> }
+          {{ sub.name }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Recently viewed strip (unaffected by the redesign) -->
+  @if (recent.count() > 0) {
+    <section class="card-soft p-5 mb-9">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-ink flex items-center gap-2">
+          <app-icon name="eye" [size]="14" className="text-pink-500" />
+          ที่คุณเพิ่งดู
+        </h3>
+        <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">
+          ล้าง
+        </button>
+      </div>
+      <div class="flex gap-3 overflow-x-auto pb-1">
+        @for (d of recent.items(); track d.id) {
+          <a
+            [routerLink]="['/document', d.id]"
+            class="flex-shrink-0 w-28 group"
+          >
+            <img
+              appImgFallback
+              [src]="d.cover"
+              class="w-28 h-32 rounded-2xl object-cover ring-2 ring-transparent group-hover:ring-pink-300 transition-all"
+              [alt]="d.title"
+            />
+            <div class="text-[11px] text-ink line-clamp-2 mt-1.5 leading-tight group-hover:text-pink-600">
+              {{ d.title }}
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  @if (!listMode()) {
+    <!-- ========================= Browse mode (หน้ารวม) ========================= -->
+    <div class="flex flex-col gap-12 animate-slide-up">
+      @for (rail of rails(); track rail.key) {
+        @if (showRailsSkeleton() || rail.docs.length >= 3) {
+          <app-marketplace-rail
+            [eyebrow]="rail.eyebrow"
+            [title]="rail.title"
+            [desc]="rail.desc"
+            [viewAllLabel]="rail.viewAllLabel"
+            [docs]="rail.docs"
+            [loading]="showRailsSkeleton()"
+            (viewAll)="selectTab(rail.key)"
+          />
+        }
+      }
+
+      <!-- crm-driven-discovery v1 §3.2/§4.3 (ข้อ 14): CRM discovery block, restyled header to match the rails above -->
+      @if (showDiscoverySkeleton()) {
+        <div class="bg-white rounded-2xl border border-line h-40 animate-pulse" aria-hidden="true"></div>
+      } @else if (showDiscoveryBlock()) {
+        @let d = discovery.discovery()!;
+        <section class="flex flex-col gap-6">
+          <app-popular-search-chips
+            [terms]="d.popularTerms"
+            [label]="'marketplace.popularSearchLabel' | trans"
+          />
+          @for (section of d.sections; track section.key) {
+            <app-discovery-rail [section]="section" />
+          }
         </section>
       }
 
-      <!-- Bundles tab -->
-      @if (catalog.tab() === 'bundles') {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (b of bundles.bundles(); track b.id) {
-            <app-bundle-card [bundle]="b" />
+      <div class="flex justify-center pt-4">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-[15px] font-semibold transition-colors duration-200 shadow-[0_8px_24px_-8px_rgba(242,99,142,0.45)]"
+          (click)="selectTab('all')"
+        >
+          {{ closingCtaLabel() }}
+          <app-icon name="arrow-right" [size]="16" />
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- ========================= List mode (ผลลัพธ์) ========================= -->
+    <div class="animate-slide-up">
+      <!-- Toolbar -->
+      <div class="flex items-center gap-3 mb-5 overflow-x-auto pb-1">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-[13px] font-semibold bg-white text-ink-soft border border-line hover:bg-pink-50 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+          (click)="goToBrowse()"
+        >
+          <app-icon name="arrow-left" [size]="15" />
+          {{ 'marketplace.backToBrowse' | trans }}
+        </button>
+
+        <div class="inline-flex p-1 rounded-full bg-white border border-line gap-0.5 flex-shrink-0">
+          @for (t of tabs(); track t.value) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors duration-200 whitespace-nowrap"
+              [class.bg-pink-500]="activeUiTab() === t.value"
+              [class.text-white]="activeUiTab() === t.value"
+              [class.bg-transparent]="activeUiTab() !== t.value"
+              [class.text-ink-soft]="activeUiTab() !== t.value"
+              (click)="selectTab(t.value)"
+            >
+              {{ t.label }}
+              <span class="text-xs font-medium opacity-70">{{ t.count }}</span>
+            </button>
           }
         </div>
 
-        @if (bundles.hasMore()) {
-          <div class="flex justify-center mt-6">
-            <button
-              type="button"
-              class="btn-pink"
-              (click)="bundles.loadMore()"
-              [disabled]="bundles.bundlesState().status === 'loading'"
-            >
-              โหลดเพิ่ม
+        <div class="ml-auto flex items-center gap-3 flex-shrink-0">
+          <span class="text-sm whitespace-nowrap">
+            <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span>
+            <span class="text-ink-muted"> {{ 'common.items' | trans }}</span>
+          </span>
+          <nz-select
+            [ngModel]="catalog.filters().sort"
+            (ngModelChange)="catalog.setFilters({ sort: $event })"
+            style="min-width: 170px"
+          >
+            <nz-option nzValue="popular" [nzLabel]="'marketplace.sortOptionPopular' | trans" />
+            <nz-option nzValue="newest" [nzLabel]="'marketplace.sortOptionNewest' | trans" />
+            <nz-option nzValue="rating" [nzLabel]="'marketplace.sortOptionRating' | trans" />
+            <nz-option nzValue="price-asc" [nzLabel]="'marketplace.sortOptionPriceAsc' | trans" />
+            <nz-option nzValue="price-desc" [nzLabel]="'marketplace.sortOptionPriceDesc' | trans" />
+          </nz-select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[256px_minmax(0,1fr)] gap-6 items-start">
+        <!-- Sidebar filters -->
+        <aside class="bg-white rounded-2xl border border-line shadow-soft p-1.5 pb-2 lg:sticky lg:top-[88px]">
+          <div class="flex items-center justify-between px-3.5 pt-3 pb-2.5">
+            <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
+              <app-icon name="filter" [size]="16" />
+              {{ 'marketplace.filters' | trans }}
+            </h3>
+            <button type="button" class="text-xs font-semibold text-pink-600 hover:underline" (click)="reset()">
+              {{ 'marketplace.clearAll' | trans }}
             </button>
           </div>
-        }
-      } @else {
-        <div class="grid lg:grid-cols-12 gap-6">
-          <!-- Sidebar Filters -->
-          <aside class="lg:col-span-3">
-            <div class="card-soft p-5 sticky top-[88px] max-h-[calc(100vh-100px)] overflow-y-auto">
-              <div class="flex items-center justify-between mb-5">
-                <h3 class="text-base font-bold text-ink flex items-center gap-2">
-                  <app-icon name="filter" [size]="16" />
-                  {{ 'common.filter' | trans }}
-                </h3>
-                <button
-                  class="text-xs text-pink-600 hover:underline font-semibold"
-                  (click)="reset()"
-                >
-                  {{ 'marketplace.resetFilters' | trans }}
-                </button>
-              </div>
 
-              <!-- Search -->
-              <div class="mb-5">
-                <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                  {{ 'common.search' | trans }}
-                </label>
-                <form class="flex items-center gap-2" (ngSubmit)="applySearch()">
-                  <input
-                    type="search"
-                    name="marketplaceSearch"
-                    [ngModel]="searchTerm()"
-                    (ngModelChange)="searchTerm.set($event)"
-                    [placeholder]="'marketplace.searchPlaceholder' | trans"
-                    class="flex-1 min-w-0 pl-3.5 pr-3.5 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
-                  />
+          <!-- Grade -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('grade')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupGrade' | trans }}</span>
+              @if (catalog.filters().gradeLevels.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                  {{ catalog.filters().gradeLevels.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().grade ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().grade) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (g of grades; track g) {
+                  @let active = catalog.filters().gradeLevels.includes(g);
                   <button
-                    type="submit"
-                    [attr.aria-label]="'common.search' | trans"
-                    [attr.title]="'common.search' | trans"
-                    class="btn-icon flex-shrink-0"
+                    type="button"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleGrade(g)"
                   >
-                    <app-icon name="search" [size]="16" />
-                  </button>
-                </form>
-              </div>
-
-              <!-- Categories with sub-categories -->
-              <div class="mb-6">
-                <label class="text-xs font-semibold text-ink-soft mb-3 flex items-center justify-between">
-                  <span>{{ 'footer.categories' | trans }}</span>
-                  @if (catalog.filters().categoryIds.length) {
-                    <button class="text-pink-600 text-[10px] hover:underline" (click)="catalog.setFilters({ categoryIds: [], subcategoryIds: [] })">
-                      {{ 'cartDrawer.clearAll' | trans }}
-                    </button>
-                  }
-                </label>
-                <div class="flex flex-col gap-1">
-                  @for (cat of catalog.categories(); track cat.id) {
-                    <div>
-                      <button
-                        class="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-pink-50 transition-colors text-left"
-                        [class.bg-pink-50]="catalog.filters().categoryIds.includes(cat.id)"
-                        (click)="toggleCategory(cat.id)"
-                      >
-                        <span class="text-base">{{ cat.icon }}</span>
-                        <span class="text-sm text-ink flex-1">{{ cat.name }}</span>
-                        <span class="text-xs text-ink-muted">{{ cat.documentCount }}</span>
-                        <app-icon
-                          name="chevron-down"
-                          [size]="14"
-                          [className]="
-                            catalog.filters().categoryIds.includes(cat.id)
-                              ? 'text-pink-500 rotate-180 transition-transform'
-                              : 'text-ink-muted transition-transform'
-                          "
-                        />
-                      </button>
-                      @if (catalog.filters().categoryIds.includes(cat.id) && cat.subcategories?.length) {
-                        <div class="pl-6 py-1 flex flex-col gap-0.5">
-                          <div class="relative px-3 mb-1">
-                            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-ink-muted">
-                              <app-icon name="search" [size]="12" />
-                            </span>
-                            <input
-                              type="search"
-                              [ngModel]="getSubSearch(cat.id)"
-                              (ngModelChange)="setSubSearch(cat.id, $event)"
-                              placeholder="ค้นหาหมวดย่อย…"
-                              class="w-full pl-7 pr-2 py-1.5 rounded-lg border border-line bg-white text-xs focus:border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-100"
-                            />
-                          </div>
-                          @for (sub of filteredSubcategories(cat); track sub.id) {
-                            <label
-                              class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                class="w-3.5 h-3.5 accent-pink-500"
-                                [checked]="catalog.filters().subcategoryIds.includes(sub.id)"
-                                (change)="toggleSubcategory(sub.id)"
-                              />
-                              <span class="text-xs">{{ sub.icon }}</span>
-                              <span class="text-xs text-ink-soft flex-1">{{ sub.name }}</span>
-                              <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
-                            </label>
-                          } @empty {
-                            <div class="px-3 py-2 text-[11px] text-ink-muted">ไม่พบหมวดย่อยที่ค้นหา</div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <!-- Grade Level -->
-              <div class="mb-6">
-                <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  {{ 'marketplace.filterByGrade' | trans }}
-                </label>
-                <div class="flex flex-wrap gap-1.5">
-                  @for (g of grades; track g) {
-                    <button
-                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                      [class.border-pink-500]="catalog.filters().gradeLevels.includes(g)"
-                      [class.bg-pink-50]="catalog.filters().gradeLevels.includes(g)"
-                      [class.text-pink-600]="catalog.filters().gradeLevels.includes(g)"
-                      [class.border-line]="!catalog.filters().gradeLevels.includes(g)"
-                      [class.text-ink-soft]="!catalog.filters().gradeLevels.includes(g)"
-                      (click)="toggleGrade(g)"
-                    >
-                      {{ gradeLabel(g) }}
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <!-- Resource Type -->
-              <div class="mb-6">
-                <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  {{ 'marketplace.filterBySubject' | trans }}
-                </label>
-                <div class="flex flex-wrap gap-1.5">
-                  @for (rt of resourceTypes; track rt) {
-                    <button
-                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                      [class.border-pink-500]="catalog.filters().resourceTypes.includes(rt)"
-                      [class.bg-pink-50]="catalog.filters().resourceTypes.includes(rt)"
-                      [class.text-pink-600]="catalog.filters().resourceTypes.includes(rt)"
-                      [class.border-line]="!catalog.filters().resourceTypes.includes(rt)"
-                      [class.text-ink-soft]="!catalog.filters().resourceTypes.includes(rt)"
-                      (click)="toggleResourceType(rt)"
-                    >
-                      {{ resourceIcon(rt) }} {{ resourceLabel(rt) }}
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <!-- Standards -->
-              <div class="mb-6">
-                <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  หลักสูตร / สอบ
-                </label>
-                <div class="flex flex-wrap gap-1.5">
-                  @for (s of standards; track s) {
-                    <button
-                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                      [class.border-pink-500]="catalog.filters().standards.includes(s)"
-                      [class.bg-pink-50]="catalog.filters().standards.includes(s)"
-                      [class.text-pink-600]="catalog.filters().standards.includes(s)"
-                      [class.border-line]="!catalog.filters().standards.includes(s)"
-                      [class.text-ink-soft]="!catalog.filters().standards.includes(s)"
-                      (click)="toggleStandard(s)"
-                    >
-                      {{ s }}
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <!-- Format -->
-              <div class="mb-6">
-                <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  รูปแบบไฟล์
-                </label>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  @for (fmt of formats; track fmt) {
-                    <button
-                      type="button"
-                      class="px-3 py-2 rounded-xl border text-xs font-semibold uppercase transition-colors"
-                      [class.border-pink-300]="catalog.filters().formats.includes(fmt)"
-                      [class.bg-pink-50]="catalog.filters().formats.includes(fmt)"
-                      [class.text-pink-600]="catalog.filters().formats.includes(fmt)"
-                      [class.border-line]="!catalog.filters().formats.includes(fmt)"
-                      [class.text-ink-muted]="!catalog.filters().formats.includes(fmt)"
-                      (click)="toggleFormat(fmt)"
-                    >
-                      {{ fmt }}
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <!-- Free toggle -->
-              <div class="mb-6">
-                <label class="flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
-                  <input
-                    type="checkbox"
-                    [checked]="catalog.filters().freeOnly"
-                    (change)="catalog.setFilters({ freeOnly: !catalog.filters().freeOnly })"
-                    class="w-5 h-5 accent-pink-500"
-                  />
-                  <span class="text-sm font-semibold text-ink flex-1">{{ 'marketplace.priceFree' | trans }}</span>
-                  <span class="text-base">🎁</span>
-                </label>
-              </div>
-
-              <!-- Price -->
-              <div class="mb-6">
-                <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  {{ 'marketplace.filterByPrice' | trans }} (THB)
-                </label>
-                <nz-slider
-                  [nzRange]="true"
-                  [nzMin]="0"
-                  [nzMax]="1000"
-                  [nzStep]="50"
-                  [ngModel]="priceRange()"
-                  (ngModelChange)="setPriceRange($event)"
-                />
-                <div class="flex justify-between text-xs text-ink-soft mt-2">
-                  <span>฿{{ catalog.filters().minPrice }}</span>
-                  <span>฿{{ catalog.filters().maxPrice }}</span>
-                </div>
-              </div>
-
-              <!-- Min rating -->
-              <div>
-                <label class="text-xs font-semibold text-ink-soft mb-3 block">
-                  {{ 'common.rating' | trans }}
-                </label>
-                <div class="flex flex-col gap-1">
-                  @for (r of [4.5, 4.0, 3.5, 0]; track r) {
-                    <label
-                      class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-pink-50 cursor-pointer text-sm transition-colors"
-                    >
-                      <input
-                        type="radio"
-                        name="minRating"
-                        class="w-4 h-4 accent-pink-500"
-                        [checked]="catalog.filters().minRating === r"
-                        (change)="catalog.setFilters({ minRating: r })"
-                      />
-                      @if (r > 0) {
-                        <span class="text-pink-500">★</span>
-                        <span class="text-ink">{{ r }}+</span>
-                      } @else {
-                        <span class="text-ink">{{ 'common.all' | trans }}</span>
-                      }
-                    </label>
-                  }
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <!-- Result -->
-          <div class="lg:col-span-9">
-            <!-- Toolbar -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-              <div class="flex items-center gap-2 text-sm flex-wrap">
-                <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span>
-                <span class="text-ink-muted">{{ 'common.items' | trans }}</span>
-                @if (catalog.filters().search) {
-                  <span class="text-ink">“{{ catalog.filters().search }}”</span>
-                }
-              </div>
-
-              <div class="flex items-center gap-3">
-                <span class="text-xs text-ink-muted">{{ 'marketplace.sortBy' | trans }}</span>
-                <nz-select
-                  [ngModel]="catalog.filters().sort"
-                  (ngModelChange)="catalog.setFilters({ sort: $event })"
-                  style="min-width: 180px"
-                >
-                  <nz-option nzValue="relevance" [nzLabel]="'marketplace.sortPopular' | trans" />
-                  <nz-option nzValue="popular" [nzLabel]="'marketplace.sortPopular' | trans" />
-                  <nz-option nzValue="newest" [nzLabel]="'marketplace.sortNewest' | trans" />
-                  <nz-option nzValue="rating" [nzLabel]="'marketplace.sortRating' | trans" />
-                  <nz-option nzValue="price-asc" [nzLabel]="'marketplace.sortPriceAsc' | trans" />
-                  <nz-option nzValue="price-desc" [nzLabel]="'marketplace.sortPriceDesc' | trans" />
-                </nz-select>
-              </div>
-            </div>
-
-            <!-- Active chips -->
-            @if (anyActive()) {
-              <div class="flex flex-wrap gap-2 mb-5">
-                @if (catalog.filters().search) {
-                  <button class="pill-pink" (click)="clearSearch()">
-                    🔍 “{{ catalog.filters().search }}” <app-icon name="x" [size]="11" />
+                    {{ gradeLabel(g) }}
                   </button>
                 }
-                @for (id of catalog.filters().categoryIds; track id) {
-                  @if (catalog.getCategoryById(id); as c) {
-                    <button class="pill-pink" (click)="toggleCategory(id)">
-                      {{ c.icon }} {{ c.name }} <app-icon name="x" [size]="11" />
-                    </button>
-                  }
-                }
-                @for (id of catalog.filters().subcategoryIds; track id) {
-                  @if (catalog.getSubcategoryById(id); as sub) {
-                    <button class="pill bg-pink-200 text-pink-800" (click)="toggleSubcategory(id)">
-                      {{ sub.icon }} {{ sub.name }} <app-icon name="x" [size]="11" />
-                    </button>
-                  }
-                }
-                @for (g of catalog.filters().gradeLevels; track g) {
-                  <button class="pill-pink" (click)="toggleGrade(g)">
-                    {{ gradeLabel(g) }} <app-icon name="x" [size]="11" />
-                  </button>
-                }
-                @for (rt of catalog.filters().resourceTypes; track rt) {
-                  <button class="pill-pink" (click)="toggleResourceType(rt)">
-                    {{ resourceLabel(rt) }} <app-icon name="x" [size]="11" />
-                  </button>
-                }
-                @for (s of catalog.filters().standards; track s) {
-                  <button class="pill-pink" (click)="toggleStandard(s)">
-                    {{ s }} <app-icon name="x" [size]="11" />
-                  </button>
-                }
-                @for (f of catalog.filters().formats; track f) {
-                  <button class="pill-pink uppercase" (click)="toggleFormat(f)">
-                    {{ f }} <app-icon name="x" [size]="11" />
-                  </button>
-                }
-                @if (catalog.filters().freeOnly) {
-                  <button class="pill-pink" (click)="catalog.setFilters({ freeOnly: false })">
-                    🎁 ฟรี <app-icon name="x" [size]="11" />
-                  </button>
-                }
-                <button class="pill bg-rose-100 text-rose-600 hover:bg-rose-200" (click)="reset()">
-                  ล้างทั้งหมด
-                </button>
               </div>
             }
+          </div>
 
-            <!-- crm-driven-discovery v1 §3.2/§4.3 (ข้อ 14): ยังไม่ได้ค้นหาอะไรเลย -->
-            @if (!anyActive()) {
-              @if (showDiscoverySkeleton()) {
-                <div class="card-soft h-40 animate-pulse mb-8" aria-hidden="true"></div>
-              } @else if (showDiscoveryBlock()) {
-                @let d = discovery.discovery()!;
-                <section class="mb-8">
-                  <app-popular-search-chips
-                    [terms]="d.popularTerms"
-                    label="คนอื่นกำลังค้นหา:"
-                  />
-                </section>
-                @for (section of d.sections; track section.key) {
-                  <app-discovery-rail [section]="section" />
+          <!-- Resource type -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('resourceType')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupResourceType' | trans }}</span>
+              @if (catalog.filters().resourceTypes.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                  {{ catalog.filters().resourceTypes.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().resourceType ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().resourceType) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (rt of resourceTypes; track rt) {
+                  @let active = catalog.filters().resourceTypes.includes(rt);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleResourceType(rt)"
+                  >
+                    {{ resourceLabel(rt) }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Price -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('price')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupPrice' | trans }}</span>
+              @if (priceRange() !== 'all') {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">1</span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().price ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().price) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (opt of priceOptions; track opt.value) {
+                  @let active = priceRange() === opt.value;
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="setPriceRangeOption(opt.value)"
+                  >
+                    {{ opt.labelKey | trans }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Rating -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('rating')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupRating' | trans }}</span>
+              @if (catalog.filters().minRating > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">1</span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().rating ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().rating) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (r of ratingOptions; track r.value) {
+                  @let active = catalog.filters().minRating === r.value;
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="catalog.setFilters({ minRating: r.value })"
+                  >
+                    {{ r.labelKey | trans }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Format -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('format')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupFormat' | trans }}</span>
+              @if (catalog.filters().formats.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                  {{ catalog.filters().formats.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().format ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().format) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (fmt of formats; track fmt) {
+                  @let active = catalog.filters().formats.includes(fmt);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium uppercase border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleFormat(fmt)"
+                  >
+                    {{ fmt }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Standards -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('standard')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupStandard' | trans }}</span>
+              @if (catalog.filters().standards.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                  {{ catalog.filters().standards.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().standard ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().standard) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (s of standards; track s) {
+                  @let active = catalog.filters().standards.includes(s);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleStandard(s)"
+                  >
+                    {{ s }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </aside>
+
+        <!-- Results -->
+        <div>
+          @if (anyActive()) {
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <span class="text-xs text-ink-muted">{{ 'marketplace.activeFiltersLabel' | trans }}</span>
+              @if (catalog.filters().search) {
+                <button class="pill-pink" (click)="clearSearch()">
+                  {{ 'marketplace.activeChipSearch' | trans: { q: catalog.filters().search } }}
+                  <app-icon name="x" [size]="11" />
+                </button>
+              }
+              @for (id of catalog.filters().categoryIds; track id) {
+                @if (catalog.getCategoryById(id); as c) {
+                  <button class="pill-pink" (click)="toggleCategory(id)">
+                    {{ c.icon }} {{ c.name }} <app-icon name="x" [size]="11" />
+                  </button>
                 }
               }
-            }
-
-            <!-- Result panel — lazy load / โหลดเพิ่มเติม -->
-            <div
-              #resultsPanel
-              class="relative max-h-[75vh] min-h-[420px] overflow-y-auto pr-1"
-            >
-              @if (catalog.marketplaceResultsState().status === 'error' && accumulatedDocs().length === 0) {
-                <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
-                  <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
-                    {{ 'common.retry' | trans }}
+              @for (id of catalog.filters().subcategoryIds; track id) {
+                @if (catalog.getSubcategoryById(id); as sub) {
+                  <button class="pill-pink" (click)="toggleSubcategory(id)">
+                    {{ sub.name }} <app-icon name="x" [size]="11" />
                   </button>
-                </app-empty-state>
-              } @else if (catalog.marketplaceResultsState().status !== 'loading' && accumulatedDocs().length === 0) {
-                <app-empty-state
-                  emoji="🔎"
-                  [title]="'marketplace.noResults' | trans"
-                  description=""
-                >
-                  <button class="btn-pink mt-4" (click)="reset()">{{ 'marketplace.resetFilters' | trans }}</button>
-                </app-empty-state>
-              } @else {
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 gap-3 md:gap-4">
-                  @for (doc of accumulatedDocs(); track doc.id) {
-                    <app-document-card [doc]="doc" density="compact" />
-                  }
+                }
+              }
+              @for (g of catalog.filters().gradeLevels; track g) {
+                <button class="pill-pink" (click)="toggleGrade(g)">
+                  {{ gradeLabel(g) }} <app-icon name="x" [size]="11" />
+                </button>
+              }
+              @for (rt of catalog.filters().resourceTypes; track rt) {
+                <button class="pill-pink" (click)="toggleResourceType(rt)">
+                  {{ resourceLabel(rt) }} <app-icon name="x" [size]="11" />
+                </button>
+              }
+              @for (s of catalog.filters().standards; track s) {
+                <button class="pill-pink" (click)="toggleStandard(s)">
+                  {{ s }} <app-icon name="x" [size]="11" />
+                </button>
+              }
+              @for (f of catalog.filters().formats; track f) {
+                <button class="pill-pink uppercase" (click)="toggleFormat(f)">
+                  {{ f }} <app-icon name="x" [size]="11" />
+                </button>
+              }
+              @if (priceRange() !== 'all') {
+                <button class="pill-pink" (click)="setPriceRangeOption('all')">
+                  {{ 'marketplace.activeChipPrice' | trans: { label: priceRangeLabel() } }}
+                  <app-icon name="x" [size]="11" />
+                </button>
+              }
+              @if (catalog.filters().minRating > 0) {
+                <button class="pill-pink" (click)="catalog.setFilters({ minRating: 0 })">
+                  {{ 'marketplace.activeChipRating' | trans: { r: catalog.filters().minRating } }}
+                  <app-icon name="x" [size]="11" />
+                </button>
+              }
+              <button class="pill bg-rose-100 text-rose-600 hover:bg-rose-200" (click)="reset()">
+                {{ 'marketplace.clearFiltersChip' | trans }}
+              </button>
+            </div>
+          }
+
+          <!-- Result panel — lazy load / โหลดเพิ่มเติม -->
+          <div
+            #resultsPanel
+            class="relative max-h-[75vh] min-h-[420px] overflow-y-auto pr-1"
+          >
+            @if (catalog.marketplaceResultsState().status === 'error' && accumulatedDocs().length === 0) {
+              <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
+                <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
+                  {{ 'common.retry' | trans }}
+                </button>
+              </app-empty-state>
+            } @else if (catalog.marketplaceResultsState().status !== 'loading' && accumulatedDocs().length === 0) {
+              <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
+                <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
+                  <app-icon name="search" [size]="30" className="text-pink-500" />
                 </div>
+                <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyTitle' | trans }}</h3>
+                <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
+                <button class="btn-pink mt-4" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
+              </div>
+            } @else {
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                @for (doc of accumulatedDocs(); track doc.id) {
+                  <app-document-card [doc]="doc" density="compact" />
+                }
+              </div>
 
-                <!-- Lazy load / โหลดเพิ่มเติม Controls -->
-                @if (accumulatedDocs().length > 0) {
-                  <div class="flex flex-col items-center justify-center pt-8 pb-6 gap-3">
-                    <!-- Progress count & bar -->
-                    <div class="text-xs text-ink-muted">
-                      แสดง <span class="font-bold text-ink">{{ accumulatedDocs().length }}</span> จากทั้งหมด <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span> รายการ
+              <!-- Lazy load / โหลดเพิ่มเติม Controls -->
+              @if (accumulatedDocs().length > 0) {
+                <div class="flex flex-col items-center justify-center pt-8 pb-6 gap-3">
+                  <!-- Progress count & bar -->
+                  <div class="text-xs text-ink-muted">
+                    แสดง <span class="font-bold text-ink">{{ accumulatedDocs().length }}</span> จากทั้งหมด <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span> รายการ
+                  </div>
+                  @if (catalog.marketplaceResultsTotalCount() > 0) {
+                    <div class="w-48 h-1.5 bg-pink-100/80 rounded-full overflow-hidden">
+                      <div
+                        class="h-full bg-pink-500 rounded-full transition-all duration-300"
+                        [style.width.%]="(accumulatedDocs().length / catalog.marketplaceResultsTotalCount()) * 100"
+                      ></div>
                     </div>
-                    @if (catalog.marketplaceResultsTotalCount() > 0) {
-                      <div class="w-48 h-1.5 bg-pink-100/80 rounded-full overflow-hidden">
-                        <div
-                          class="h-full bg-pink-500 rounded-full transition-all duration-300"
-                          [style.width.%]="(accumulatedDocs().length / catalog.marketplaceResultsTotalCount()) * 100"
-                        ></div>
-                      </div>
-                    }
+                  }
 
-                    <!-- Action Button / Load More State -->
-                    @if (hasMore()) {
-                      @if (catalog.marketplaceResultsState().status === 'error') {
-                        <div class="flex items-center gap-2 mt-1">
-                          <span class="text-xs text-rose-500">โหลดไม่สำเร็จ</span>
-                          <button
-                            type="button"
-                            (click)="retryLoadMore()"
-                            class="px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-600 hover:bg-pink-200 transition-colors cursor-pointer"
-                          >
-                            {{ 'common.retry' | trans }}
-                          </button>
-                        </div>
-                      } @else {
+                  <!-- Action Button / Load More State -->
+                  @if (hasMore()) {
+                    @if (catalog.marketplaceResultsState().status === 'error') {
+                      <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-rose-500">โหลดไม่สำเร็จ</span>
                         <button
                           type="button"
-                          (click)="loadMore()"
-                          [disabled]="catalog.marketplaceResultsState().status === 'loading'"
-                          class="btn-load-more btn-pink !px-8 !py-2.5 flex items-center gap-2 text-sm font-semibold shadow-soft hover:shadow-pop active:scale-95 transition-all cursor-pointer disabled:opacity-75 mt-1"
+                          (click)="retryLoadMore()"
+                          class="px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-600 hover:bg-pink-200 transition-colors cursor-pointer"
                         >
-                          @if (catalog.marketplaceResultsState().status === 'loading') {
-                            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                            <span>กำลังโหลดเพิ่มเติม…</span>
-                          } @else {
-                            <app-icon name="plus" [size]="16" />
-                            <span>โหลดเพิ่มเติม</span>
-                          }
+                          {{ 'common.retry' | trans }}
                         </button>
-                      }
-
-                      <!-- Intersection Observer Sentinel for automatic scroll trigger -->
-                      <div #sentinel class="h-4 w-full" aria-hidden="true"></div>
-                    } @else {
-                      <div class="inline-flex items-center gap-1.5 py-2 px-4 rounded-full bg-pink-50/80 text-xs font-medium text-ink-muted border border-pink-100/60 mt-1">
-                        <app-icon name="check" [size]="14" className="text-emerald-500" />
-                        <span>แสดงเอกสารครบทั้งหมดแล้ว</span>
                       </div>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="loadMore()"
+                        [disabled]="catalog.marketplaceResultsState().status === 'loading'"
+                        class="btn-load-more btn-pink !px-8 !py-2.5 flex items-center gap-2 text-sm font-semibold shadow-soft hover:shadow-pop active:scale-95 transition-all cursor-pointer disabled:opacity-75 mt-1"
+                      >
+                        @if (catalog.marketplaceResultsState().status === 'loading') {
+                          <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>กำลังโหลดเพิ่มเติม…</span>
+                        } @else {
+                          <app-icon name="plus" [size]="16" />
+                          <span>โหลดเพิ่มเติม</span>
+                        }
+                      </button>
                     }
-                  </div>
-                }
-              }
 
-              @if (catalog.marketplaceResultsState().status === 'loading' && accumulatedDocs().length === 0) {
-                <div
-                  class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <span class="w-7 h-7 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
-                  <span class="text-xs font-semibold text-ink-soft">{{ 'common.loading' | trans }}</span>
+                    <!-- Intersection Observer Sentinel for automatic scroll trigger -->
+                    <div #sentinel class="h-4 w-full" aria-hidden="true"></div>
+                  } @else {
+                    <div class="inline-flex items-center gap-1.5 py-2 px-4 rounded-full bg-pink-50/80 text-xs font-medium text-ink-muted border border-pink-100/60 mt-1">
+                      <app-icon name="check" [size]="14" className="text-emerald-500" />
+                      <span>แสดงเอกสารครบทั้งหมดแล้ว</span>
+                    </div>
+                  }
                 </div>
               }
-            </div>
+            }
+
+            @if (catalog.marketplaceResultsState().status === 'loading' && accumulatedDocs().length === 0) {
+              <div
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
+                role="status"
+                aria-live="polite"
+              >
+                <span class="w-7 h-7 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+                <span class="text-xs font-semibold text-ink-soft">{{ 'common.loading' | trans }}</span>
+              </div>
+            }
           </div>
         </div>
-      }
+      </div>
     </div>
+  }
+</div>

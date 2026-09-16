@@ -1,0 +1,39 @@
+@if (loading()) {
+  <section>
+    <div class="flex items-end justify-between gap-4 mb-5">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-pink-500 mb-1.5">{{ eyebrow() }}</p>
+        <h2 class="text-2xl font-bold tracking-[-0.02em] text-ink">{{ title() }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ desc() }}</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      @for (slot of skeletonSlots; track slot) {
+        <div class="aspect-[4/5] rounded-2xl bg-pink-100/60 animate-pulse" aria-hidden="true"></div>
+      }
+    </div>
+  </section>
+} @else if (docs().length >= 3) {
+  <section>
+    <div class="flex items-end justify-between gap-4 mb-5">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-pink-500 mb-1.5">{{ eyebrow() }}</p>
+        <h2 class="text-2xl font-bold tracking-[-0.02em] text-ink">{{ title() }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ desc() }}</p>
+      </div>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold text-pink-600 bg-white border border-line hover:bg-pink-50 hover:border-pink-300 transition-colors duration-200 whitespace-nowrap"
+        (click)="viewAll.emit()"
+      >
+        {{ viewAllLabel() }}
+        <app-icon name="arrow-right" [size]="16" />
+      </button>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      @for (doc of docs(); track doc.id) {
+        <app-document-card [doc]="doc" density="compact" />
+      }
+    </div>
+  </section>
+}

@@ -14,10 +14,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzSliderModule } from 'ng-zorro-antd/slider';
 import {
   AdsService,
-  BundleService,
   CatalogService,
   DiscoveryService,
   PlatformStatsService,
@@ -29,13 +27,11 @@ import {
   DocumentItem,
   GRADE_LEVEL_LABELS,
   GradeLevel,
-  RESOURCE_TYPE_ICONS,
   RESOURCE_TYPE_LABELS,
   ResourceType,
-  Subcategory,
 } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
-import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
+import { MarketplaceRailComponent } from '../../../shared/components/marketplace-rail/marketplace-rail.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -46,6 +42,34 @@ import { TranslationService, TranslatePipe } from '../../../core/i18n';
 /** crm-driven-discovery v1 §4.3: "ระหว่างโหลด...นานสุด 3 วินาที จากนั้นถ้ายังไม่มีข้อมูลให้ซ่อนบล็อก". */
 const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
 
+/**
+ * marketplace-redesign v1 §Screens/Views ข้อ 2, rail 1 ("มาใหม่"): "เอกสารที่อัปโหลดภายใน 10
+ * วันที่ผ่านมา" — gate-2 deviation A fix (integrator-qa): window used to derive the rail's real
+ * total count (`newArrivalsTotalCount` below), not just the 5/6-card display cap.
+ */
+const NEW_ARRIVALS_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
+
+/** marketplace-redesign v1 §State Management */
+type MarketplaceView = 'browse' | 'list';
+type MarketplaceUiTab = 'all' | 'new' | 'popular' | 'free';
+type FilterGroupKey = 'grade' | 'resourceType' | 'price' | 'rating' | 'format' | 'standard';
+type PriceRangeKey = 'all' | 'free' | 'lt100' | '100-199' | 'gte200';
+
+interface MarketplaceRailViewModel {
+  key: 'new' | 'popular' | 'free';
+  eyebrow: string;
+  title: string;
+  desc: string;
+  viewAllLabel: string;
+  docs: DocumentItem[];
+}
+
+interface MarketplaceUiTabViewModel {
+  value: MarketplaceUiTab;
+  label: string;
+  count: number;
+}
+
 @Component({
   selector: 'app-buyer-marketplace',
   standalone: true,
@@ -53,9 +77,8 @@ const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
     RouterLink,
     FormsModule,
     NzSelectModule,
-    NzSliderModule,
     DocumentCardComponent,
-    BundleCardComponent,
+    MarketplaceRailComponent,
     IconComponent,
     EmptyStateComponent,
     ImgFallbackDirective,
@@ -69,7 +92,6 @@ const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
 })
 export class BuyerMarketplacePage {
   readonly catalog = inject(CatalogService);
-  readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
   readonly platformStats = inject(PlatformStatsService);
   readonly discovery = inject(DiscoveryService);
@@ -88,6 +110,10 @@ export class BuyerMarketplacePage {
    * home page already binds to `platformStats.stats()?.totalApprovedDocuments` (§4.2). Drops the
    * "กว่า N เอกสาร" clause entirely while stats haven't loaded yet, rather than showing a stale
    * hardcoded count.
+   *
+   * marketplace-redesign v1 dropped the hero banner from the template (§Overview "ตัดออก"), but
+   * this computed + its dedicated spec describe stay — not rendered anywhere right now, kept as
+   * pre-existing behavior outside this redesign's scope.
    */
   readonly heroDescription = computed(() => {
     const isEn = this.i18n.currentLang() === 'en';
@@ -120,21 +146,33 @@ export class BuyerMarketplacePage {
     'TGAT', 'TPAT', 'A-Level', 'O-NET', 'IELTS', 'TOEIC', 'TOEFL',
   ];
 
-  readonly tabs = computed(() => {
-    const isEn = this.i18n.currentLang() === 'en';
-    return [
-      { value: 'all' as const, label: isEn ? 'All' : 'ทั้งหมด', icon: '🌸', count: this.catalog.documents().length },
-      { value: 'free' as const, label: isEn ? 'Free' : 'ฟรี', icon: '🎁', count: this.catalog.freeResources().length },
-      { value: 'top-rated' as const, label: isEn ? 'Top Rated' : 'คะแนนสูง', icon: '⭐', count: this.catalog.documents().filter(d => d.rating >= 4.7).length },
-      { value: 'new' as const, label: isEn ? 'New Arrivals' : 'มาใหม่', icon: '✨', count: this.catalog.newArrivals().length },
-      { value: 'bundles' as const, label: isEn ? 'Bundles' : 'แพ็กเกจ', icon: '📦', count: this.bundles.bundles().length },
-    ];
-  });
+  readonly priceOptions: ReadonlyArray<{ value: PriceRangeKey; labelKey: string }> = [
+    { value: 'all', labelKey: 'marketplace.priceOptionAll' },
+    { value: 'free', labelKey: 'marketplace.priceOptionFree' },
+    { value: 'lt100', labelKey: 'marketplace.priceOptionLt100' },
+    { value: '100-199', labelKey: 'marketplace.priceOption100to199' },
+    { value: 'gte200', labelKey: 'marketplace.priceOptionGte200' },
+  ];
 
-  readonly priceRange = computed<[number, number]>(() => [
-    this.catalog.filters().minPrice,
-    this.catalog.filters().maxPrice,
-  ]);
+  readonly ratingOptions: ReadonlyArray<{ value: number; labelKey: string }> = [
+    { value: 0, labelKey: 'marketplace.ratingAll' },
+    { value: 3.5, labelKey: 'marketplace.rating35' },
+    { value: 4, labelKey: 'marketplace.rating4' },
+    { value: 4.5, labelKey: 'marketplace.rating45' },
+  ];
+
+  // ===== marketplace-redesign v1 §State Management =====
+
+  readonly view = signal<MarketplaceView>('browse');
+  readonly activeUiTab = signal<MarketplaceUiTab>('all');
+  readonly openGroups = signal<Record<FilterGroupKey, boolean>>({
+    grade: true,
+    resourceType: true,
+    price: true,
+    rating: false,
+    format: false,
+    standard: false,
+  });
 
   readonly anyActive = computed(() => {
     const f = this.catalog.filters();
@@ -152,6 +190,150 @@ export class BuyerMarketplacePage {
       f.minRating > 0
     );
   });
+
+  readonly listMode = computed(
+    () => this.view() === 'list' || !!this.catalog.filters().search.trim() || !!this.anyActive(),
+  );
+
+  readonly priceRange = computed<PriceRangeKey>(() => {
+    const f = this.catalog.filters();
+    if (f.freeOnly) return 'free';
+    if (f.minPrice === 0 && f.maxPrice === 99) return 'lt100';
+    if (f.minPrice === 100 && f.maxPrice === 199) return '100-199';
+    if (f.minPrice === 200 && f.maxPrice === 1000) return 'gte200';
+    return 'all';
+  });
+
+  readonly allDocumentsCount = computed(() => {
+    const total = this.catalog.marketplaceResultsTotalCount();
+    return total > 0 ? total : this.catalog.documents().length;
+  });
+
+  readonly marketSubtitle = computed(() => {
+    const search = this.catalog.filters().search.trim();
+    if (!this.listMode()) return this.i18n.t('marketplace.subtitleBrowse');
+    if (search) return this.i18n.t('marketplace.subtitleSearch', { q: search });
+    switch (this.activeUiTab()) {
+      case 'new':
+        return this.i18n.t('marketplace.subtitleNew');
+      case 'popular':
+        return this.i18n.t('marketplace.subtitlePopular');
+      case 'free':
+        return this.i18n.t('marketplace.subtitleFree');
+      default:
+        return this.i18n.t('marketplace.subtitleAll');
+    }
+  });
+
+  readonly closingCtaLabel = computed(() =>
+    this.i18n.t('marketplace.browseAllCta', { n: this.allDocumentsCount() }),
+  );
+
+  /**
+   * gate-2 deviation A fix (integrator-qa, marketplace-redesign v1 §Screens/Views ข้อ 2): "ตัวเลข
+   * {n} ในปุ่ม = จำนวนทั้งหมดของกลุ่มนั้น (ไม่ใช่ 5)". `catalog.newArrivals()`/`trending()` cap
+   * their arrays at 6/8 for internal reuse elsewhere in the service, so the rail/tab badge counts
+   * can't read `.length` off those directly without silently under-counting once the real pool is
+   * bigger than the cap. Both counts derive from `catalog.documents()` — the same raw, unsliced
+   * pool `newArrivals()`/`trending()` themselves sort/slice from — so they stay in sync with
+   * whatever's currently loaded (grows via infinite scroll, matches the existing "ทั้งหมด" tab
+   * count design note in `catalog.service.ts` `syncListWithBackend()`).
+   *
+   * "มาใหม่" total = documents created within the last 10 days (the rail's own definition, §Copy
+   * "เอกสารที่อัปโหลดภายใน 10 วันที่ผ่านมา") rather than every loaded document, since `newArrivals()`
+   * itself has no such cutoff (it's just "newest N"). No backend endpoint returns this count
+   * directly (no `CreatedAfter`/date filter on `/marketplace/search`) — this is the best true count
+   * obtainable client-side without adding a new API call, per integrator-qa gate-2 report option 2.
+   */
+  readonly newArrivalsTotalCount = computed(() => {
+    const cutoff = Date.now() - NEW_ARRIVALS_WINDOW_MS;
+    return this.catalog
+      .documents()
+      .filter((d) => new Date(d.createdAt).getTime() >= cutoff).length;
+  });
+
+  /**
+   * "ยอดนิยม" has no inherent subset cutoff (`trending()` is just "top N by downloads" out of the
+   * whole pool) — its "ดูทั้งหมด" button maps to `tab='all' + sort='popular'` (§Screens/Views
+   * rail-2 row), i.e. *exactly* the same set as "ทั้งหมด", just resorted. So its true total must
+   * equal `allDocumentsCount()` (backend `marketplaceResultsTotalCount`), not
+   * `catalog.documents().length` — the latter is only the first page (24) of the loaded catalog
+   * in browse mode and under-counts once the real pool exceeds the page size (integrator-qa
+   * gate-3 finding, marketplace-redesign v1 §Screens/Views rail "ยอดนิยม").
+   */
+  readonly trendingTotalCount = computed(() => this.allDocumentsCount());
+
+  /**
+   * gate-2 deviation B fix (integrator-qa, marketplace-redesign v1 §Screens/Views rail 3 table):
+   * "ถ้า `DocumentItem` มี field ที่บอกว่ามีตัวอย่างให้อ่านฟรี (preview pages) ให้รวมเอกสารเหล่านั้น
+   * ด้วย โดยเรียงฟรีก่อน". Merges `catalog.freeResources()` (`isFree`) with the rest of
+   * `catalog.documents()` that have `previewPages > 0` — the two are disjoint partitions of
+   * `documents()` (an `isFree` doc is already in the first half), so no de-dup pass is needed.
+   */
+  readonly freeAndPreviewDocuments = computed<DocumentItem[]>(() => {
+    const free = this.catalog.freeResources();
+    const previewOnly = this.catalog
+      .documents()
+      .filter((d) => !d.isFree && d.previewPages > 0);
+    return [...free, ...previewOnly];
+  });
+
+  readonly rails = computed<MarketplaceRailViewModel[]>(() => {
+    const newArrivals = this.catalog.newArrivals();
+    const trending = this.catalog.trending();
+    const freeAndPreview = this.freeAndPreviewDocuments();
+    return [
+      {
+        key: 'new',
+        eyebrow: this.i18n.t('marketplace.railNewEyebrow'),
+        title: this.i18n.t('marketplace.railNewTitle'),
+        desc: this.i18n.t('marketplace.railNewDesc'),
+        viewAllLabel: this.i18n.t('marketplace.railViewAll', { n: this.newArrivalsTotalCount() }),
+        docs: newArrivals.slice(0, 5),
+      },
+      {
+        key: 'popular',
+        eyebrow: this.i18n.t('marketplace.railPopularEyebrow'),
+        title: this.i18n.t('marketplace.railPopularTitle'),
+        desc: this.i18n.t('marketplace.railPopularDesc'),
+        viewAllLabel: this.i18n.t('marketplace.railViewAll', { n: this.trendingTotalCount() }),
+        docs: trending.slice(0, 5),
+      },
+      {
+        key: 'free',
+        eyebrow: this.i18n.t('marketplace.railFreeEyebrow'),
+        title: this.i18n.t('marketplace.railFreeTitle'),
+        desc: this.i18n.t('marketplace.railFreeDesc'),
+        viewAllLabel: this.i18n.t('marketplace.railViewAll', { n: freeAndPreview.length }),
+        docs: freeAndPreview.slice(0, 5),
+      },
+    ];
+  });
+
+  readonly tabs = computed<MarketplaceUiTabViewModel[]>(() => [
+    { value: 'all', label: this.i18n.t('marketplace.tabAll'), count: this.allDocumentsCount() },
+    { value: 'new', label: this.i18n.t('marketplace.tabNew'), count: this.newArrivalsTotalCount() },
+    { value: 'popular', label: this.i18n.t('marketplace.tabPopular'), count: this.trendingTotalCount() },
+    { value: 'free', label: this.i18n.t('marketplace.tabFree'), count: this.freeAndPreviewDocuments().length },
+  ]);
+
+  readonly singleSelectedCategoryWithSubs = computed<Category | null>(() => {
+    const ids = this.catalog.filters().categoryIds;
+    if (ids.length !== 1) return null;
+    const cat = this.catalog.getCategoryById(ids[0]);
+    return cat && cat.subcategories && cat.subcategories.length > 0 ? cat : null;
+  });
+
+  /** Same 3-second skeleton cap as the CRM discovery block (§Interactions "Loading"), shared by all 3 rails since they all read off the same `_documents()` fetch. */
+  private readonly railsTimedOut = signal(false);
+  private railsTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+  readonly showRailsSkeleton = computed(
+    () =>
+      this.catalog.catalogState().status === 'loading' &&
+      this.catalog.documents().length === 0 &&
+      !this.railsTimedOut(),
+  );
 
   // ===== crm-driven-discovery v1 §3.2/§4.3 (ข้อ 14) =====
 
@@ -191,8 +373,12 @@ export class BuyerMarketplacePage {
   resourceLabel(t: ResourceType): string {
     return this.i18n.t(`resourceTypes.${t}` as any) || RESOURCE_TYPE_LABELS[t];
   }
-  resourceIcon(t: ResourceType): string {
-    return RESOURCE_TYPE_ICONS[t];
+
+  priceRangeLabel(): string {
+    const key = this.priceRange();
+    if (key === 'all') return '';
+    const option = this.priceOptions.find((o) => o.value === key);
+    return option ? this.i18n.t(option.labelKey) : '';
   }
 
   loadMore(): void {
@@ -231,10 +417,33 @@ export class BuyerMarketplacePage {
         this.discoveryTimedOut.set(false);
       }
     });
-    this.destroyRef.onDestroy(() => {
-      if (this.discoveryTimeoutHandle != null) clearTimeout(this.discoveryTimeoutHandle);
+
+    // marketplace-redesign v1 §Interactions "Loading" — same 3-second skeleton cap, gated on the
+    // fetch backing `rails()` (`newArrivals`/`trending`/`freeResources` all read `_documents()`).
+    effect(() => {
+      const status = this.catalog.catalogState().status;
+      if (this.railsTimeoutHandle != null) {
+        clearTimeout(this.railsTimeoutHandle);
+        this.railsTimeoutHandle = null;
+      }
+      if (status === 'loading') {
+        this.railsTimedOut.set(false);
+        this.railsTimeoutHandle = setTimeout(() => this.railsTimedOut.set(true), DISCOVERY_SKELETON_TIMEOUT_MS);
+      } else {
+        this.railsTimedOut.set(false);
+      }
     });
 
+    this.destroyRef.onDestroy(() => {
+      if (this.discoveryTimeoutHandle != null) clearTimeout(this.discoveryTimeoutHandle);
+      if (this.railsTimeoutHandle != null) clearTimeout(this.railsTimeoutHandle);
+    });
+
+    // marketplace-redesign v1 §Interactions "Query params / deep link": `?view=list`,
+    // `?tab=new|free|all`, `?q=`, `?category=`, `?subcategory=`. `tab=popular`/`view` combos the
+    // segmented tabs enter through `selectTab()` never round-trip through the URL as `tab` (see
+    // that method) — only `view=list` marks them as "already in list mode" here, so this branch
+    // must never reset filters just because `tab` happens to be absent while `view=list` is set.
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())
       .subscribe((params) => {
@@ -242,9 +451,12 @@ export class BuyerMarketplacePage {
         this.searchTerm.set(q);
         const cat = params.get('category');
         const sub = params.get('subcategory');
-        const tab = params.get('tab');
-        if (!cat && !sub && !tab) {
+        const tabParam = params.get('tab');
+        const viewParam = params.get('view');
+
+        if (!cat && !sub && !tabParam && !viewParam) {
           this.catalog.resetFilters();
+          this.activeUiTab.set('all');
         }
         if (q !== this.catalog.filters().search) {
           this.catalog.setFilters({ search: q });
@@ -266,9 +478,13 @@ export class BuyerMarketplacePage {
             });
           }
         }
-        if (tab && ['all', 'free', 'top-rated', 'new', 'bundles'].includes(tab)) {
-          this.catalog.setTab(tab as 'all' | 'free' | 'top-rated' | 'new' | 'bundles');
+        if (tabParam === 'all' || tabParam === 'new' || tabParam === 'free') {
+          this.catalog.setTab(tabParam);
+          this.activeUiTab.set(tabParam);
         }
+
+        const isListFromUrl = viewParam === 'list' || !!tabParam || !!cat || !!q;
+        this.view.set(isListFromUrl ? 'list' : 'browse');
       });
 
     // seller-ads-promotion v1 §4.3 (AC-38): fire impressions once per rendered result set.
@@ -366,12 +582,17 @@ export class BuyerMarketplacePage {
     });
   }
 
-  applySearch(): void {
-    const q = this.searchTerm().trim();
-    this.catalog.setFilters({ search: q });
-    this.updateQueryParams({ q: q || null });
+  private scrollToTop(): void {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0 });
+    }
   }
 
+  /**
+   * marketplace-redesign v1 §Overview "ตัดออก": the page's own duplicate search box is gone
+   * (search now happens through the global header, which navigates here with `?q=`) — only the
+   * clear-search affordance (the active "search" chip's ✕) survives on this page.
+   */
   clearSearch(): void {
     this.searchTerm.set('');
     this.catalog.setFilters({ search: '' });
@@ -395,6 +616,10 @@ export class BuyerMarketplacePage {
     });
   }
 
+  clearCategories(): void {
+    this.catalog.setFilters({ categoryIds: [], subcategoryIds: [] });
+  }
+
   toggleSubcategory(id: string): void {
     const ids = this.catalog.filters().subcategoryIds;
     this.catalog.setFilters({
@@ -402,27 +627,6 @@ export class BuyerMarketplacePage {
         ? ids.filter((x) => x !== id)
         : [...ids, id],
     });
-  }
-
-  /** Per-category subcategory search term. */
-  readonly subSearchByCat = signal<Record<string, string>>({});
-
-  getSubSearch(catId: string): string {
-    return this.subSearchByCat()[catId] ?? '';
-  }
-
-  setSubSearch(catId: string, value: string): void {
-    this.subSearchByCat.update((cur) => ({ ...cur, [catId]: value }));
-  }
-
-  filteredSubcategories(cat: Category): Subcategory[] {
-    const term = this.getSubSearch(cat.id).trim().toLowerCase();
-    const subs = cat.subcategories ?? [];
-    if (!term) return subs;
-    return subs.filter((s) =>
-      (s.name ?? '').toLowerCase().includes(term) ||
-      (s.slug ?? '').toLowerCase().includes(term),
-    );
   }
 
   toggleGrade(g: GradeLevel): void {
@@ -453,13 +657,65 @@ export class BuyerMarketplacePage {
     });
   }
 
-  setPriceRange(range: [number, number]): void {
-    this.catalog.setFilters({ minPrice: range[0], maxPrice: range[1] });
+  setPriceRangeOption(option: PriceRangeKey): void {
+    switch (option) {
+      case 'all':
+        this.catalog.setFilters({ freeOnly: false, minPrice: 0, maxPrice: 1000 });
+        break;
+      case 'free':
+        this.catalog.setFilters({ freeOnly: true, minPrice: 0, maxPrice: 1000 });
+        break;
+      case 'lt100':
+        this.catalog.setFilters({ freeOnly: false, minPrice: 0, maxPrice: 99 });
+        break;
+      case '100-199':
+        this.catalog.setFilters({ freeOnly: false, minPrice: 100, maxPrice: 199 });
+        break;
+      case 'gte200':
+        this.catalog.setFilters({ freeOnly: false, minPrice: 200, maxPrice: 1000 });
+        break;
+    }
   }
 
+  toggleGroup(key: FilterGroupKey): void {
+    this.openGroups.update((g) => ({ ...g, [key]: !g[key] }));
+  }
+
+  /**
+   * marketplace-redesign v1 §Interactions — rail "ดูทั้งหมด" buttons, the closing browse-mode CTA,
+   * and the list-mode segmented tabs all funnel through here. `'popular'` has no `MarketplaceTab`
+   * of its own on `CatalogService` — it's `tab='all'` + `sort='popular'` — so its query param
+   * patch intentionally omits `tab` (see the queryParamMap subscription above for why that's safe).
+   */
+  selectTab(tab: MarketplaceUiTab): void {
+    this.activeUiTab.set(tab);
+    this.view.set('list');
+    if (tab === 'popular') {
+      this.catalog.setTab('all');
+      this.catalog.setFilters({ sort: 'popular' });
+      this.updateQueryParams({ tab: null, view: 'list' });
+    } else {
+      this.catalog.setTab(tab);
+      this.updateQueryParams({ tab, view: 'list' });
+    }
+    this.scrollToTop();
+  }
+
+  /** "ล้างทั้งหมด" / "ล้างตัวกรอง" — never touches `view` (§Interactions). */
   reset(): void {
     this.searchTerm.set('');
     this.catalog.resetFilters();
-    this.updateQueryParams({ q: null, category: null, subcategory: null });
+    this.activeUiTab.set('all');
+    this.updateQueryParams({ q: null, category: null, subcategory: null, tab: null });
+  }
+
+  /** Toolbar "← หน้ารวม" — clears everything *and* returns to browse mode. */
+  goToBrowse(): void {
+    this.searchTerm.set('');
+    this.catalog.resetFilters();
+    this.activeUiTab.set('all');
+    this.view.set('browse');
+    this.updateQueryParams({ q: null, category: null, subcategory: null, tab: null, view: null });
+    this.scrollToTop();
   }
 }
