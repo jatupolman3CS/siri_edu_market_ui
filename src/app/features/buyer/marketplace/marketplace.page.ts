@@ -52,7 +52,7 @@ const NEW_ARRIVALS_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
 /** marketplace-redesign v1 §State Management */
 type MarketplaceView = 'browse' | 'list';
 type MarketplaceUiTab = 'all' | 'new' | 'popular' | 'free';
-type FilterGroupKey = 'grade' | 'resourceType' | 'price' | 'rating' | 'format' | 'standard';
+type FilterGroupKey = 'category' | 'grade' | 'resourceType' | 'price' | 'rating' | 'format' | 'standard';
 type PriceRangeKey = 'all' | 'free' | 'lt100' | '100-199' | 'gte200';
 
 interface MarketplaceRailViewModel {
@@ -166,6 +166,7 @@ export class BuyerMarketplacePage {
   readonly view = signal<MarketplaceView>('browse');
   readonly activeUiTab = signal<MarketplaceUiTab>('all');
   readonly openGroups = signal<Record<FilterGroupKey, boolean>>({
+    category: true,
     grade: true,
     resourceType: true,
     price: true,

@@ -5,66 +5,68 @@
     <p class="text-sm text-ink-muted mt-1.5">{{ marketSubtitle() }}</p>
   </header>
 
-  <!-- Category chips row -->
-  <div
-    class="flex flex-wrap gap-2"
-    [class.mb-9]="!singleSelectedCategoryWithSubs()"
-    [class.mb-2]="!!singleSelectedCategoryWithSubs()"
-  >
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
-      [class.bg-pink-100]="catalog.filters().categoryIds.length === 0"
-      [class.text-pink-700]="catalog.filters().categoryIds.length === 0"
-      [class.border-pink-500]="catalog.filters().categoryIds.length === 0"
-      [class.bg-white]="catalog.filters().categoryIds.length > 0"
-      [class.text-ink-soft]="catalog.filters().categoryIds.length > 0"
-      [class.border-line]="catalog.filters().categoryIds.length > 0"
-      (click)="clearCategories()"
+  <!-- Category chips row — browse mode only; list mode's filter sidebar has its own Category group on the left (ผู้ใช้สั่ง 2026-09-16: ย้ายกลับไปซ้ายเหมือนเดิมตอนกรองเอกสาร) -->
+  @if (!listMode()) {
+    <div
+      class="flex flex-wrap gap-2"
+      [class.mb-9]="!singleSelectedCategoryWithSubs()"
+      [class.mb-2]="!!singleSelectedCategoryWithSubs()"
     >
-      {{ 'marketplace.allCategoriesChip' | trans }}
-      <span class="text-xs font-medium opacity-65">{{ allDocumentsCount() }}</span>
-    </button>
-    @for (cat of catalog.categories(); track cat.id) {
-      @let active = catalog.filters().categoryIds.includes(cat.id);
       <button
         type="button"
         class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
-        [class.bg-pink-100]="active"
-        [class.text-pink-700]="active"
-        [class.border-pink-500]="active"
-        [class.bg-white]="!active"
-        [class.text-ink-soft]="!active"
-        [class.border-line]="!active"
-        (click)="toggleCategory(cat.id)"
+        [class.bg-pink-100]="catalog.filters().categoryIds.length === 0"
+        [class.text-pink-700]="catalog.filters().categoryIds.length === 0"
+        [class.border-pink-500]="catalog.filters().categoryIds.length === 0"
+        [class.bg-white]="catalog.filters().categoryIds.length > 0"
+        [class.text-ink-soft]="catalog.filters().categoryIds.length > 0"
+        [class.border-line]="catalog.filters().categoryIds.length > 0"
+        (click)="clearCategories()"
       >
-        <span>{{ cat.icon }}</span>
-        {{ cat.name }}
-        <span class="text-xs font-medium opacity-65">{{ cat.documentCount }}</span>
+        {{ 'marketplace.allCategoriesChip' | trans }}
+        <span class="text-xs font-medium opacity-65">{{ allDocumentsCount() }}</span>
       </button>
-    }
-  </div>
-
-  @if (singleSelectedCategoryWithSubs(); as selectedCat) {
-    <div class="flex flex-wrap gap-1.5 mb-9">
-      @for (sub of selectedCat.subcategories; track sub.id) {
-        @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
+      @for (cat of catalog.categories(); track cat.id) {
+        @let active = catalog.filters().categoryIds.includes(cat.id);
         <button
           type="button"
-          class="inline-flex items-center gap-1 px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-          [class.bg-pink-100]="subActive"
-          [class.text-pink-700]="subActive"
-          [class.border-pink-500]="subActive"
-          [class.bg-white]="!subActive"
-          [class.text-ink-soft]="!subActive"
-          [class.border-line]="!subActive"
-          (click)="toggleSubcategory(sub.id)"
+          class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
+          [class.bg-pink-100]="active"
+          [class.text-pink-700]="active"
+          [class.border-pink-500]="active"
+          [class.bg-white]="!active"
+          [class.text-ink-soft]="!active"
+          [class.border-line]="!active"
+          (click)="toggleCategory(cat.id)"
         >
-          @if (sub.icon) { <span>{{ sub.icon }}</span> }
-          {{ sub.name }}
+          <span>{{ cat.icon }}</span>
+          {{ cat.name }}
+          <span class="text-xs font-medium opacity-65">{{ cat.documentCount }}</span>
         </button>
       }
     </div>
+
+    @if (singleSelectedCategoryWithSubs(); as selectedCat) {
+      <div class="flex flex-wrap gap-1.5 mb-9">
+        @for (sub of selectedCat.subcategories; track sub.id) {
+          @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+            [class.bg-pink-100]="subActive"
+            [class.text-pink-700]="subActive"
+            [class.border-pink-500]="subActive"
+            [class.bg-white]="!subActive"
+            [class.text-ink-soft]="!subActive"
+            [class.border-line]="!subActive"
+            (click)="toggleSubcategory(sub.id)"
+          >
+            @if (sub.icon) { <span>{{ sub.icon }}</span> }
+            {{ sub.name }}
+          </button>
+        }
+      </div>
+    }
   }
 
   <!-- Recently viewed strip (unaffected by the redesign) -->
@@ -205,6 +207,71 @@
             <button type="button" class="text-xs font-semibold text-pink-600 hover:underline" (click)="reset()">
               {{ 'marketplace.clearAll' | trans }}
             </button>
+          </div>
+
+          <!-- Category — ย้ายกลับมาไว้ด้านซ้ายในแผงตัวกรอง (ผู้ใช้สั่ง 2026-09-16 ให้เหมือนก่อน marketplace-redesign v1) -->
+          <div class="border-t border-line">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('category')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'footer.categories' | trans }}</span>
+              @if (catalog.filters().categoryIds.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                  {{ catalog.filters().categoryIds.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().category ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().category) {
+              <div class="flex flex-col gap-0.5 px-3.5 pb-3.5">
+                @for (cat of catalog.categories(); track cat.id) {
+                  @let catActive = catalog.filters().categoryIds.includes(cat.id);
+                  <div>
+                    <button
+                      type="button"
+                      class="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-pink-50 transition-colors duration-200 text-left"
+                      [class.bg-pink-50]="catActive"
+                      (click)="toggleCategory(cat.id)"
+                    >
+                      <span class="text-sm">{{ cat.icon }}</span>
+                      <span class="text-[13px] text-ink flex-1">{{ cat.name }}</span>
+                      <span class="text-[11px] text-ink-muted">{{ cat.documentCount }}</span>
+                      @if (cat.subcategories?.length) {
+                        <app-icon
+                          name="chevron-down"
+                          [size]="12"
+                          [className]="catActive ? 'text-pink-500 rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+                        />
+                      }
+                    </button>
+                    @if (catActive && cat.subcategories?.length) {
+                      <div class="pl-7 py-1 flex flex-col gap-0.5">
+                        @for (sub of cat.subcategories; track sub.id) {
+                          @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
+                          <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-pink-50/60 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              class="w-3.5 h-3.5 accent-pink-500"
+                              [checked]="subActive"
+                              (change)="toggleSubcategory(sub.id)"
+                            />
+                            @if (sub.icon) { <span class="text-xs">{{ sub.icon }}</span> }
+                            <span class="text-xs text-ink-soft flex-1">{{ sub.name }}</span>
+                            <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
+                          </label>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
 
           <!-- Grade -->
