@@ -268,6 +268,17 @@ function isAuthEndpoint(input: RequestInfo | URL): boolean {
   );
 }
 
+function accessTokenExpiresSoon(token: string): boolean {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return false;
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: unknown };
+    return typeof decoded.exp === 'number' && decoded.exp * 1000 <= Date.now() + 120_000;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * admin-user-management §4.6 (ข): a 403 whose ProblemDetails `code` says the account was
  * suspended/banned ends the session with the server's own Thai explanation.
@@ -292,6 +303,7 @@ async function notifyIfAccountRestricted(response: Response, input: RequestInfo 
   } catch {
     return;
   }
+
 
   const code = extractErrorCode(payload);
   if (code && ACCOUNT_RESTRICTED_CODES.includes(code)) _accountRestrictedHandler(payload);
@@ -328,7 +340,7 @@ export const createClientConfig: CreateClientConfig = (config) => ({
         const devRole = _devRoleGetter?.() ?? null;
 
         const headers = new Headers(request.headers);
-        if (token) headers.set('Authorization', `Bearer ${token}`);
+        if (token && !isAuthEndpoint(input)) headers.set('Authorization', `Bearer ${token}`);
         if (devRole) headers.set('X-Dev-Role', devRole);
         if (!headers.has('Accept-Language')) {
           try {
@@ -341,7 +353,14 @@ export const createClientConfig: CreateClientConfig = (config) => ({
         return fetch(new Request(request, { headers, credentials: 'include' }));
       };
 
-      const tokenSent = _tokenGetter?.() ?? null;
+      let tokenSent = _tokenGetter?.() ?? null;
+      if (tokenSent && !isAuthEndpoint(input) && _tokenRefresher && accessTokenExpiresSoon(tokenSent)) {
+        tokenSent = await _tokenRefresher();
+        if (!tokenSent) {
+          _unauthorizedHandler?.();
+          return new Response(null, { status: 401 });
+        }
+      }
       const response = await send(tokenSent);
       // Before the 401 branch: a restricted account is a verdict, not a stale token, so there is
       // nothing to refresh — a refresh by a banned user is refused by the API anyway.

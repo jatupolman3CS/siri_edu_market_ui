@@ -27,9 +27,24 @@ import { WishlistService } from './wishlist.service';
 const STORAGE_KEY = 'siriedu.auth';
 const PENDING_KEY = 'siriedu.auth.pending';
 const ACCESS_TOKEN_KEY = 'siriedu.auth.token';
-// AUD-007: refresh token must live separately from the access token so signOut/refresh
-// can send the right field instead of accidentally sending the access token as a refresh token.
 const REFRESH_TOKEN_KEY = 'siriedu.auth.refresh';
+const LAST_ACTIVE_KEY = 'siriedu.auth.last_active';
+const MAX_INACTIVITY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const REFRESH_THRESHOLD_MS = 4 * 60 * 1000; // 4 minutes before expiry
+const ACTIVITY_THROTTLE_MS = 30 * 1000; // 30 seconds
+const CHECK_INTERVAL_MS = 45 * 1000; // 45 seconds
+
+function parseJwtExpiry(token: string | null): number | null {
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: unknown };
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
 
 export type AuthProvider = 'email' | 'google' | 'facebook' | 'line';
 
@@ -105,6 +120,7 @@ export class AuthService {
    * 401 would land on top of the real reason the session ended.
    */
   private _accountRestricted = false;
+  private _lastRecordedActivity = 0;
   /**
    * DEV-BYPASS: set by `provideDevAuthBypass` while the development sign-in bypass is on.
    * There is no login page to come back through in that mode, so `signOut()` hands control here
@@ -163,6 +179,8 @@ export class AuthService {
         /* ignore */
       }
     }
+
+    this.initSessionKeepAlive();
   }
 
   /**
@@ -593,6 +611,7 @@ export class AuthService {
     this._session.set(null);
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LAST_ACTIVE_KEY);
     }
 
     // DEV-BYPASS: signing out of a build with no working login would strand the user on
@@ -770,6 +789,7 @@ export class AuthService {
     // Every login flow (password, OAuth, verify-email) ends here, so this is the one place a
     // reinstated account clears the sticky restriction guard.
     this._accountRestricted = false;
+    this.recordActivity(true);
     const session: AuthSession = {
       user,
       provider,
@@ -870,6 +890,111 @@ export class AuthService {
     }
 
     this.signOut();
+  }
+
+  private recordActivity(force = false): void {
+    const now = Date.now();
+    if (!force && now - this._lastRecordedActivity < ACTIVITY_THROTTLE_MS) {
+      return;
+    }
+    this._lastRecordedActivity = now;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(LAST_ACTIVE_KEY, now.toString());
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private getLastActive(): number {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const val = localStorage.getItem(LAST_ACTIVE_KEY);
+        if (val) {
+          const num = parseInt(val, 10);
+          if (!isNaN(num) && num > 0) return num;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    return Date.now();
+  }
+
+  private initSessionKeepAlive(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    if (this._session() && this._accessToken()) {
+      if (!localStorage.getItem(LAST_ACTIVE_KEY)) {
+        this.recordActivity(true);
+      }
+    }
+
+    const onUserActivity = () => {
+      if (this._session() !== null) {
+        this.recordActivity();
+      }
+    };
+    ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach((event) => {
+      window.addEventListener(event, onUserActivity, { passive: true });
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === ACCESS_TOKEN_KEY) {
+        this._accessToken.set(event.newValue);
+      } else if (event.key === REFRESH_TOKEN_KEY) {
+        this._refreshToken.set(event.newValue);
+      } else if (event.key === STORAGE_KEY) {
+        if (!event.newValue) {
+          this._session.set(null);
+          this._accessToken.set(null);
+          this._refreshToken.set(null);
+        } else {
+          try {
+            this._session.set(JSON.parse(event.newValue) as AuthSession);
+          } catch {
+            /* ignore */
+          }
+        }
+      } else if (event.key === LAST_ACTIVE_KEY && event.newValue) {
+        const val = parseInt(event.newValue, 10);
+        if (!isNaN(val) && val > this._lastRecordedActivity) {
+          this._lastRecordedActivity = val;
+        }
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this._session() !== null) {
+        this.recordActivity();
+        void this.checkKeepAliveAndInactivity();
+      }
+    });
+
+    setInterval(() => {
+      void this.checkKeepAliveAndInactivity();
+    }, CHECK_INTERVAL_MS);
+  }
+
+  async checkKeepAliveAndInactivity(): Promise<void> {
+    if (!this._session() || !this._accessToken()) return;
+
+    const lastActive = this.getLastActive();
+    const now = Date.now();
+    if (now - lastActive > MAX_INACTIVITY_MS) {
+      this.signOut();
+      this.message.warning('เซสชันหมดอายุเนื่องจากไม่มีการใช้งานเกิน 7 วัน กรุณาเข้าสู่ระบบใหม่');
+      void this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    const exp = parseJwtExpiry(this._accessToken());
+    if (exp !== null && exp - now <= REFRESH_THRESHOLD_MS) {
+      if (this._refreshToken()) {
+        await this.refreshSession();
+      }
+    }
   }
 }
 

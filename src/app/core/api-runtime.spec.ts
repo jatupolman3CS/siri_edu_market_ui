@@ -163,6 +163,37 @@ describe('resolveApiUrl / resolvePublicUrl (AC-13)', () => {
  * the same way the real SDK-generated `postApiXxx`/`getApiXxx` calls do.
  */
 describe('createClientConfig 401 retry (BUG-04)', () => {
+  it('refreshes an expiring JWT before the first request', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    const expiring = `header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 60 }))}.sig`;
+    runtime.setAuthTokenGetter(() => expiring);
+    const refresher = vi.fn().mockResolvedValue('fresh-token');
+    runtime.setTokenRefresher(refresher);
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await runtime.createClientConfig().fetch!('http://localhost:5282/api/library');
+
+    expect(response.status).toBe(200);
+    expect(refresher).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect((fetchMock.mock.calls[0][0] as Request).headers.get('Authorization')).toBe('Bearer fresh-token');
+  });
+
+  it('does not refresh a JWT with more than two minutes remaining', async () => {
+    const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
+    const valid = `header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 }))}.sig`;
+    runtime.setAuthTokenGetter(() => valid);
+    const refresher = vi.fn();
+    runtime.setTokenRefresher(refresher);
+    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await runtime.createClientConfig().fetch!('http://localhost:5282/api/library');
+
+    expect(refresher).not.toHaveBeenCalled();
+  });
+
   it('refreshes the token once and replays the request instead of signing the user out', async () => {
     const runtime = await loadApiRuntime({ apiUrl: 'http://localhost:5282' });
     runtime.setAuthTokenGetter(() => 'stale-token');

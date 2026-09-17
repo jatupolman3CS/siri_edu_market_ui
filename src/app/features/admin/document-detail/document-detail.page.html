@@ -9,6 +9,14 @@
         <p class="text-xs text-ink-muted font-mono">{{ doc()!.id }}</p>
       }
     </div>
+    @if (doc()) {
+      <div class="ml-auto">
+        <a [routerLink]="['/admin/documents', doc()!.id, 'watermark']" class="btn-soft !py-2 !px-3 text-xs flex items-center gap-1.5 text-pink-600 hover:text-pink-700">
+          <app-icon name="shield" [size]="14" />
+          <span>จัดการลายน้ำ (Watermark Studio)</span>
+        </a>
+      </div>
+    }
   </div>
 
   @if (loading()) {

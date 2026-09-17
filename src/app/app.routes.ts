@@ -307,6 +307,22 @@ export const routes: Routes = [
           ),
         title: 'พรีวิว PDF — Siri Studio',
       },
+      {
+        path: 'documents/:id/watermark',
+        loadComponent: () =>
+          import('./features/seller/watermark-editor/watermark-editor.page').then(
+            (m) => m.WatermarkEditorPage,
+          ),
+        title: 'จัดการลายน้ำ — Siri Studio',
+      },
+      {
+        path: 'watermark',
+        loadComponent: () =>
+          import('./features/seller/watermark-editor/watermark-editor.page').then(
+            (m) => m.WatermarkEditorPage,
+          ),
+        title: 'จัดการลายน้ำ — Siri Studio',
+      },
       // G-05: /seller/ai is gone — route, page, service method, endpoint and SDK helper all
       // removed in the dead-code sweep. It never called a language model: it concatenated
       // existing fields and wrote constant tags while the page advertised AI. Bringing it
@@ -404,6 +420,14 @@ export const routes: Routes = [
             (m) => m.AdminDocumentDetailPage,
           ),
         title: 'รายละเอียดเอกสาร — Admin',
+      },
+      {
+        path: 'documents/:id/watermark',
+        loadComponent: () =>
+          import('./features/seller/watermark-editor/watermark-editor.page').then(
+            (m) => m.WatermarkEditorPage,
+          ),
+        title: 'จัดการลายน้ำ — Admin',
       },
       {
         path: 'approval',

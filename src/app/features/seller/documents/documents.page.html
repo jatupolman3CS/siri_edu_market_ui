@@ -75,6 +75,9 @@
               <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="edit(d.id)">
                 <app-icon name="edit" [size]="14" />
               </button>
+              <a [routerLink]="['/seller/documents', d.id, 'watermark']" class="btn-icon !w-8 !h-8 text-pink-600 hover:!bg-pink-50" title="จัดการลายน้ำ (Watermark Studio)">
+                <app-icon name="shield" [size]="14" />
+              </a>
               <button type="button"
                 class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500 hover:!border-rose-200" title="ลบ"
                 (click)="confirmRemove(d.id, d.title)">
