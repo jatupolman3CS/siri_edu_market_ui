@@ -72,7 +72,7 @@ export class BundleService {
    * ตัวเลือก sort ของตัวเอง).
    */
   private readonly searchPager = createServerPager<Bundle, string>({
-    pageSize: 24,
+    pageSize: 16,
     errorMessage: 'ค้นหาแพ็กเกจไม่สำเร็จ',
     fetch: async (page, pageSize, q) => {
       const term = q?.trim();
@@ -93,7 +93,9 @@ export class BundleService {
   readonly bundleResults = this.searchPager.items;
   readonly bundleResultsState = this.searchPager.state;
   readonly bundleResultsTotalCount = this.searchPager.totalCount;
+  readonly bundleResultsTotalPages = this.searchPager.totalPages;
   readonly bundleResultsPage = this.searchPager.page;
+  readonly bundleResultsPageSize = this.searchPager.pageSize;
 
   /** Last `Q` used — kept so `loadMore`-style calls (page > 1) reuse the same search term. */
   private _bundleResultsQuery = '';

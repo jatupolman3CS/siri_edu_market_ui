@@ -147,10 +147,8 @@
     </div>
 
     <div [class]="resultsGridClass()">
-      <!-- Sidebar filters — marketplace-home-redesign v2 §4.2: ไม่ใช้กับ tab "แพ็กเกจ" (bundle ไม่มี
-           ความสัมพันธ์ตรงกับ grade/resourceType/price/rating/format/standard) -->
-      @if (activeUiTab() !== 'package') {
-        <aside class="bg-white rounded-2xl border border-line shadow-soft p-1.5 pb-2 lg:sticky lg:top-[88px]">
+      <!-- Sidebar filters -->
+      <aside class="bg-white rounded-2xl border border-line shadow-soft p-1.5 pb-2 lg:sticky lg:top-[88px]">
           <div class="flex items-center justify-between px-3.5 pt-3 pb-2.5">
             <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
               <app-icon name="filter" [size]="16" />
@@ -467,8 +465,7 @@
               </div>
             }
           </div>
-        </aside>
-      }
+      </aside>
 
       <!-- Results -->
       <div>
@@ -535,17 +532,14 @@
 
         @if (activeUiTab() === 'package') {
           <!-- ================= "แพ็กเกจ" tab (marketplace-home-redesign v2 §4.2, round 1 stub) ================= -->
-          <div
-            #resultsPanel
-            class="relative max-h-[75vh] min-h-[420px] overflow-y-auto pr-1"
-          >
-            @if (bundles.bundleResultsState().status === 'error' && accumulatedBundles().length === 0) {
+          <div class="relative min-h-[420px] pr-1">
+            @if (bundles.bundleResultsState().status === 'error' && bundles.bundleResults().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="retryBundleResults()">
                   {{ 'common.retry' | trans }}
                 </button>
               </app-empty-state>
-            } @else if (bundles.bundleResultsState().status !== 'loading' && accumulatedBundles().length === 0) {
+            } @else if (bundles.bundleResultsState().status !== 'loading' && bundles.bundleResults().length === 0) {
               <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
                 <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
                   <app-icon name="package" [size]="30" className="text-pink-500" />
@@ -558,58 +552,26 @@
               </div>
             } @else {
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                @for (b of accumulatedBundles(); track b.id) {
+                @for (b of bundles.bundleResults(); track b.id) {
                   <app-bundle-card [bundle]="b" />
                 }
               </div>
 
-              @if (accumulatedBundles().length > 0) {
-                <div class="flex flex-col items-center justify-center pt-8 pb-6 gap-3">
-                  <div class="text-xs text-ink-muted">
-                    แสดง <span class="font-bold text-ink">{{ accumulatedBundles().length }}</span> จากทั้งหมด <span class="font-bold text-ink">{{ bundles.bundleResultsTotalCount() }}</span> รายการ
-                  </div>
-
-                  @if (hasMoreBundles()) {
-                    @if (bundles.bundleResultsState().status === 'error') {
-                      <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs text-rose-500">โหลดไม่สำเร็จ</span>
-                        <button
-                          type="button"
-                          (click)="retryBundleResults()"
-                          class="px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-600 hover:bg-pink-200 transition-colors cursor-pointer"
-                        >
-                          {{ 'common.retry' | trans }}
-                        </button>
-                      </div>
-                    } @else {
-                      <button
-                        type="button"
-                        (click)="loadMoreBundles()"
-                        [disabled]="bundles.bundleResultsState().status === 'loading'"
-                        class="btn-load-more btn-pink !px-8 !py-2.5 flex items-center gap-2 text-sm font-semibold shadow-soft hover:shadow-pop active:scale-95 transition-all cursor-pointer disabled:opacity-75 mt-1"
-                      >
-                        @if (bundles.bundleResultsState().status === 'loading') {
-                          <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                          <span>กำลังโหลดเพิ่มเติม…</span>
-                        } @else {
-                          <app-icon name="plus" [size]="16" />
-                          <span>โหลดเพิ่มเติม</span>
-                        }
-                      </button>
-                    }
-
-                    <div #sentinel class="h-4 w-full" aria-hidden="true"></div>
-                  } @else {
-                    <div class="inline-flex items-center gap-1.5 py-2 px-4 rounded-full bg-pink-50/80 text-xs font-medium text-ink-muted border border-pink-100/60 mt-1">
-                      <app-icon name="check" [size]="14" className="text-emerald-500" />
-                      <span>แสดงแพ็กเกจครบทั้งหมดแล้ว</span>
-                    </div>
-                  }
+              @if (bundles.bundleResults().length > 0) {
+                <div class="border-t border-line mt-8 pt-4">
+                  <app-pagination
+                    [page]="bundles.bundleResultsPage()"
+                    [pageSize]="bundles.bundleResultsPageSize()"
+                    [total]="bundles.bundleResultsTotalCount()"
+                    [totalPages]="bundles.bundleResultsTotalPages()"
+                    [showPageSize]="false"
+                    (pageChange)="changeBundlePage($event)"
+                  />
                 </div>
               }
             }
 
-            @if (bundles.bundleResultsState().status === 'loading' && accumulatedBundles().length === 0) {
+            @if (bundles.bundleResultsState().status === 'loading' && bundles.bundleResults().length === 0) {
               <div
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
                 role="status"
@@ -621,18 +583,15 @@
             }
           </div>
         } @else {
-          <!-- Result panel — lazy load / โหลดเพิ่มเติม -->
-          <div
-            #resultsPanel
-            class="relative max-h-[75vh] min-h-[420px] overflow-y-auto pr-1"
-          >
-            @if (catalog.marketplaceResultsState().status === 'error' && accumulatedDocs().length === 0) {
+          <!-- Result panel -->
+          <div class="relative min-h-[420px] pr-1">
+            @if (catalog.marketplaceResultsState().status === 'error' && catalog.marketplaceResults().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
                   {{ 'common.retry' | trans }}
                 </button>
               </app-empty-state>
-            } @else if (catalog.marketplaceResultsState().status !== 'loading' && accumulatedDocs().length === 0) {
+            } @else if (catalog.marketplaceResultsState().status !== 'loading' && catalog.marketplaceResults().length === 0) {
               <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
                 <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
                   <app-icon name="search" [size]="30" className="text-pink-500" />
@@ -643,70 +602,27 @@
               </div>
             } @else {
               <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                @for (doc of accumulatedDocs(); track doc.id) {
+                @for (doc of catalog.marketplaceResults(); track doc.id) {
                   <app-document-card [doc]="doc" density="compact" />
                 }
               </div>
 
-              <!-- Lazy load / โหลดเพิ่มเติม Controls -->
-              @if (accumulatedDocs().length > 0) {
-                <div class="flex flex-col items-center justify-center pt-8 pb-6 gap-3">
-                  <!-- Progress count & bar -->
-                  <div class="text-xs text-ink-muted">
-                    แสดง <span class="font-bold text-ink">{{ accumulatedDocs().length }}</span> จากทั้งหมด <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span> รายการ
-                  </div>
-                  @if (catalog.marketplaceResultsTotalCount() > 0) {
-                    <div class="w-48 h-1.5 bg-pink-100/80 rounded-full overflow-hidden">
-                      <div
-                        class="h-full bg-pink-500 rounded-full transition-all duration-300"
-                        [style.width.%]="(accumulatedDocs().length / catalog.marketplaceResultsTotalCount()) * 100"
-                      ></div>
-                    </div>
-                  }
-
-                  <!-- Action Button / Load More State -->
-                  @if (hasMore()) {
-                    @if (catalog.marketplaceResultsState().status === 'error') {
-                      <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs text-rose-500">โหลดไม่สำเร็จ</span>
-                        <button
-                          type="button"
-                          (click)="retryLoadMore()"
-                          class="px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-600 hover:bg-pink-200 transition-colors cursor-pointer"
-                        >
-                          {{ 'common.retry' | trans }}
-                        </button>
-                      </div>
-                    } @else {
-                      <button
-                        type="button"
-                        (click)="loadMore()"
-                        [disabled]="catalog.marketplaceResultsState().status === 'loading'"
-                        class="btn-load-more btn-pink !px-8 !py-2.5 flex items-center gap-2 text-sm font-semibold shadow-soft hover:shadow-pop active:scale-95 transition-all cursor-pointer disabled:opacity-75 mt-1"
-                      >
-                        @if (catalog.marketplaceResultsState().status === 'loading') {
-                          <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                          <span>กำลังโหลดเพิ่มเติม…</span>
-                        } @else {
-                          <app-icon name="plus" [size]="16" />
-                          <span>โหลดเพิ่มเติม</span>
-                        }
-                      </button>
-                    }
-
-                    <!-- Intersection Observer Sentinel for automatic scroll trigger -->
-                    <div #sentinel class="h-4 w-full" aria-hidden="true"></div>
-                  } @else {
-                    <div class="inline-flex items-center gap-1.5 py-2 px-4 rounded-full bg-pink-50/80 text-xs font-medium text-ink-muted border border-pink-100/60 mt-1">
-                      <app-icon name="check" [size]="14" className="text-emerald-500" />
-                      <span>แสดงเอกสารครบทั้งหมดแล้ว</span>
-                    </div>
-                  }
+              @if (catalog.marketplaceResults().length > 0) {
+                <div class="border-t border-line mt-8 pt-4">
+                  <app-pagination
+                    [page]="catalog.marketplaceResultsPage()"
+                    [pageSize]="catalog.marketplaceResultsPageSize()"
+                    [pageSizeOptions]="catalog.marketplacePageSizeOptions"
+                    [total]="catalog.marketplaceResultsTotalCount()"
+                    [totalPages]="catalog.marketplaceResultsTotalPages()"
+                    (pageChange)="changePage($event)"
+                    (pageSizeChange)="changePageSize($event)"
+                  />
                 </div>
               }
             }
 
-            @if (catalog.marketplaceResultsState().status === 'loading' && accumulatedDocs().length === 0) {
+            @if (catalog.marketplaceResultsState().status === 'loading' && catalog.marketplaceResults().length === 0) {
               <div
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
                 role="status"

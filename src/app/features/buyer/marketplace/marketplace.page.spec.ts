@@ -63,12 +63,13 @@ function buildCatalogFake(categories: Category[] = []) {
     marketplaceResults: (): DocumentItem[] => [],
     marketplaceResultsState: () => idleActionState(),
     marketplaceResultsPage: () => 1,
-    marketplaceResultsPageSize: () => 24,
+    marketplaceResultsPageSize: () => 16,
     marketplaceResultsTotalCount: () => 0,
     marketplaceResultsTotalPages: () => 1,
     marketplaceHasMore: () => false,
-    marketplacePageSizeOptions: [12, 24, 48],
+    marketplacePageSizeOptions: [12, 16, 24, 48],
     loadMarketplaceResultsPage: vi.fn(),
+    setMarketplacePageSize: vi.fn(),
     retryMarketplaceResults: vi.fn(),
   };
 }
@@ -126,7 +127,9 @@ function buildBundleFake(bundleResults: Bundle[] = [], state: ActionState = idle
     bundleResults: () => bundleResults,
     bundleResultsState: () => state,
     bundleResultsTotalCount: () => bundleResults.length,
+    bundleResultsTotalPages: () => 1,
     bundleResultsPage: page.asReadonly(),
+    bundleResultsPageSize: () => 16,
     loadBundleResultsPage: vi.fn(),
     retryBundleResults: vi.fn(),
   };
@@ -470,8 +473,18 @@ describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.
   });
 });
 
-describe('Marketplace results panel (marketplace-paged-results v1)', () => {
-  it('clicking the "โหลดเพิ่มเติม" button calls catalog.loadMarketplaceResultsPage with the next page', () => {
+describe('Marketplace results pagination', () => {
+  it('keeps the filters sidebar visible on the package tab', () => {
+    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const sidebar = (fixture.nativeElement as HTMLElement).querySelector('aside');
+
+    fixture.componentInstance.selectTab('package');
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('aside')).toBe(sidebar);
+  });
+
+  it('loads the selected page from the pagination below the document grid', () => {
     const catalog = buildCatalogFake();
     catalog.marketplaceResultsTotalPages = () => 3;
     catalog.marketplaceResultsPage = () => 1;
@@ -494,12 +507,13 @@ describe('Marketplace results panel (marketplace-paged-results v1)', () => {
     ];
     const fixture = render(catalog, buildPlatformStatsFake(undefined));
 
-    const loadMoreBtn = (fixture.nativeElement as HTMLElement).querySelector(
-      'button.btn-load-more',
-    ) as HTMLButtonElement;
-    expect(loadMoreBtn).not.toBeNull();
+    const pagination = (fixture.nativeElement as HTMLElement).querySelector('app-pagination');
+    const nextButton = pagination?.querySelector('button[aria-label]');
+    const buttons = pagination?.querySelectorAll<HTMLButtonElement>('button[aria-label]');
+    expect(pagination).not.toBeNull();
+    expect(nextButton).not.toBeNull();
 
-    loadMoreBtn.click();
+    buttons?.[buttons.length - 1].click();
     fixture.detectChanges();
 
     expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);

@@ -1,14 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
-  ElementRef,
-  afterNextRender,
   computed,
   effect,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -23,7 +19,6 @@ import {
 } from '../../../core/services';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
-  Bundle,
   Category,
   DocumentItem,
   GRADE_LEVEL_LABELS,
@@ -35,6 +30,7 @@ import { DocumentCardComponent } from '../../../shared/components/document-card/
 import { BundleCardComponent } from '../../../shared/components/bundle-card/bundle-card.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
@@ -65,6 +61,7 @@ interface MarketplaceUiTabViewModel {
     BundleCardComponent,
     IconComponent,
     EmptyStateComponent,
+    PaginationComponent,
     ImgFallbackDirective,
     TranslatePipe,
   ],
@@ -235,9 +232,7 @@ export class BuyerMarketplacePage {
    * `[class]` string binding sidesteps that instead of reaching for `NgClass`.
    */
   readonly resultsGridClass = computed(() =>
-    this.activeUiTab() !== 'package'
-      ? 'grid grid-cols-1 gap-6 items-start lg:grid-cols-[256px_minmax(0,1fr)]'
-      : 'grid grid-cols-1 gap-6 items-start',
+    'grid grid-cols-1 gap-6 items-start lg:grid-cols-[256px_minmax(0,1fr)]',
   );
 
   readonly singleSelectedCategoryWithSubs = computed<Category | null>(() => {
@@ -245,34 +240,6 @@ export class BuyerMarketplacePage {
     if (ids.length !== 1) return null;
     const cat = this.catalog.getCategoryById(ids[0]);
     return cat && cat.subcategories && cat.subcategories.length > 0 ? cat : null;
-  });
-
-  /** marketplace-paged-results v1 §4.3: results panel's own scroll container (AC-12). */
-  readonly resultsPanel = viewChild<ElementRef<HTMLDivElement>>('resultsPanel');
-  private readonly sentinel = viewChild<ElementRef<HTMLDivElement>>('sentinel');
-  private observer: IntersectionObserver | null = null;
-  private readonly destroyRef = inject(DestroyRef);
-
-  /** Accumulated documents for lazy load / "โหลดเพิ่มเติม" */
-  readonly accumulatedDocs = signal<DocumentItem[]>([]);
-
-  readonly hasMore = computed(() => {
-    const total = this.catalog.marketplaceResultsTotalCount();
-    if (total === 0) return false;
-    return this.accumulatedDocs().length < total;
-  });
-
-  /**
-   * marketplace-home-redesign v2 §4.2 ("Tab 'package' — งานใหม่"): accumulate pattern แยกจาก
-   * `accumulatedDocs` เพื่อไม่ให้ปนกัน — round 1 stub เสมอว่างเพราะ `BundleService.searchPager`
-   * ยัง TODO(contract) อยู่.
-   */
-  readonly accumulatedBundles = signal<Bundle[]>([]);
-
-  readonly hasMoreBundles = computed(() => {
-    const total = this.bundles.bundleResultsTotalCount();
-    if (total === 0) return false;
-    return this.accumulatedBundles().length < total;
   });
 
   gradeLabel(g: GradeLevel): string {
@@ -289,21 +256,21 @@ export class BuyerMarketplacePage {
     return option ? this.i18n.t(option.labelKey) : '';
   }
 
-  loadMore(): void {
+  changePage(page: number): void {
     if (this.catalog.marketplaceResultsState().status === 'loading') return;
-    if (!this.hasMore()) return;
-    const nextPage = this.catalog.marketplaceResultsPage() + 1;
-    this.catalog.loadMarketplaceResultsPage(nextPage);
+    this.catalog.loadMarketplaceResultsPage(page);
+    this.scrollToTop();
   }
 
-  retryLoadMore(): void {
-    this.catalog.retryMarketplaceResults();
+  changePageSize(pageSize: number): void {
+    this.catalog.setMarketplacePageSize(pageSize);
+    this.scrollToTop();
   }
 
-  loadMoreBundles(): void {
+  changeBundlePage(page: number): void {
     if (this.bundles.bundleResultsState().status === 'loading') return;
-    if (!this.hasMoreBundles()) return;
-    void this.bundles.loadBundleResultsPage(this.bundles.bundleResultsPage() + 1);
+    void this.bundles.loadBundleResultsPage(page);
+    this.scrollToTop();
   }
 
   retryBundleResults(): void {
@@ -331,84 +298,6 @@ export class BuyerMarketplacePage {
         .filter((d) => d.isSponsored)
         .map((d) => d.sponsoredCampaignId);
       this.ads.recordImpressions(docs, sponsoredCampaignIds);
-    });
-
-    // Accumulate documents on page progression, reset on page 1
-    effect(() => {
-      const page = this.catalog.marketplaceResultsPage();
-      const state = this.catalog.marketplaceResultsState();
-      const newResults = this.catalog.marketplaceResults();
-
-      if (state.status === 'idle') {
-        if (page <= 1) {
-          this.accumulatedDocs.set(newResults);
-        } else {
-          this.accumulatedDocs.update((prev) => {
-            const existingIds = new Set(prev.map((d) => d.id));
-            const fresh = newResults.filter((d) => !existingIds.has(d.id));
-            return [...prev, ...fresh];
-          });
-        }
-      }
-    });
-
-    // Same accumulate-on-page-progression pattern as accumulatedDocs above, for the "แพ็กเกจ" tab.
-    effect(() => {
-      const page = this.bundles.bundleResultsPage();
-      const state = this.bundles.bundleResultsState();
-      const newResults = this.bundles.bundleResults();
-
-      if (state.status === 'idle') {
-        if (page <= 1) {
-          this.accumulatedBundles.set(newResults);
-        } else {
-          this.accumulatedBundles.update((prev) => {
-            const existingIds = new Set(prev.map((b) => b.id));
-            const fresh = newResults.filter((b) => !existingIds.has(b.id));
-            return [...prev, ...fresh];
-          });
-        }
-      }
-    });
-
-    // Reset resultsPanel scroll to top ONLY on page 1 / filter change (not when loading more)
-    effect(() => {
-      if (
-        this.catalog.marketplaceResultsState().status === 'loading' &&
-        this.catalog.marketplaceResultsPage() <= 1
-      ) {
-        const el = this.resultsPanel()?.nativeElement;
-        if (el) el.scrollTop = 0;
-      }
-    });
-
-    afterNextRender(() => {
-      if (typeof IntersectionObserver !== 'undefined') {
-        this.observer = new IntersectionObserver(
-          (entries) => {
-            if (entries[0]?.isIntersecting) {
-              if (this.activeUiTab() === 'package') {
-                this.loadMoreBundles();
-              } else {
-                this.loadMore();
-              }
-            }
-          },
-          { root: this.resultsPanel()?.nativeElement ?? null, rootMargin: '120px' },
-        );
-      }
-    });
-
-    effect(() => {
-      const el = this.sentinel()?.nativeElement;
-      if (el && this.observer) {
-        this.observer.disconnect();
-        this.observer.observe(el);
-      }
-    });
-
-    this.destroyRef.onDestroy(() => {
-      this.observer?.disconnect();
     });
 
     // marketplace-home-redesign v2 §4.2 "Query param migration": `?q=`, `?category=`,
