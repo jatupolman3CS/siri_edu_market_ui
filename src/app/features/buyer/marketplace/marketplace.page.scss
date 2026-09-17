@@ -1,3 +1,11 @@
+:host {
+  display: block;
+}
+
+.animate-slide-up {
+  transform: none !important;
+}
+
 .filter-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(242, 99, 142, 0.3) transparent;

@@ -41,7 +41,7 @@
   <!-- ========================= Results (marketplace-home-redesign v2 §1 ข้อ 8: view เดียว) ========================= -->
   <div class="animate-slide-up">
     <!-- Toolbar -->
-    <div class="sticky top-[60px] md:top-[88px] z-20 bg-canvas/95 backdrop-blur-md py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 mb-5 border-b border-line/50 flex items-center gap-3 overflow-x-auto transition-all shadow-xs">
+    <div class="flex items-center gap-3 mb-5 overflow-x-auto pb-1">
       <div class="inline-flex p-1 rounded-full bg-white border border-line gap-0.5 flex-shrink-0">
         @for (t of tabs(); track t.value) {
           <button
@@ -84,7 +84,7 @@
 
     <div [class]="resultsGridClass()">
       <!-- Sidebar filters -->
-      <aside class="bg-white rounded-2xl border border-line shadow-soft p-1.5 pb-2 lg:sticky lg:top-[160px] max-h-[calc(100vh-175px)] overflow-y-auto overscroll-contain filter-scrollbar">
+      <aside class="bg-white rounded-2xl border border-line shadow-soft p-1.5 pb-2 lg:sticky lg:top-[96px] max-h-[calc(100vh-112px)] overflow-y-auto overscroll-contain filter-scrollbar">
           <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-xs flex items-center justify-between px-3.5 pt-3 pb-2.5 rounded-t-xl border-b border-line/40">
             <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
               <app-icon name="filter" [size]="16" />
