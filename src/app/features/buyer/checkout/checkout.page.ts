@@ -344,10 +344,12 @@ export class BuyerCheckoutPage implements OnDestroy {
         return;
       }
 
-      // BUG-02: a zero-total order is fulfilled server-side without a gateway, so there is
+      // BUG-02 / buyer-wallet: an order paid by wallet or zero-total is fulfilled server-side without a gateway, so there is
       // nothing for Stripe to collect.
-      if (order.status === 'paid') {
+      if (order.status === 'paid' || order.status === 'fulfilled') {
         this.cart.clear();
+        await this.wallet.refreshSummary();
+        this.message.success('ชำระเงินสำเร็จแล้ว');
         await this.ngZone.run(() =>
           this.router.navigateByUrl(this.router.createUrlTree(['/orders'], { queryParams: { success: 1 } })),
         );

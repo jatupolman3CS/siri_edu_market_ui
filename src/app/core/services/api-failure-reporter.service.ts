@@ -19,7 +19,9 @@ export class ApiFailureReporter {
   /** context = ข้อความสั้นๆ ภาษาไทย เช่น "โหลดตะกร้า" */
   report(context: string, error?: unknown): void {
     const detail = this.formatDetail(error);
-    this.message.error(detail ? `${context} — ${detail}` : context);
+    if (typeof this.message?.error === 'function') {
+      this.message.error(detail ? `${context} — ${detail}` : context);
+    }
   }
 
   formatDetail(error: unknown): string {

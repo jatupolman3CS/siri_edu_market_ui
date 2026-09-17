@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ReferralCardComponent } from './referral-card.component';
-import { ReferralService } from '../../../core/services';
+import { AffiliateService, ReferralService } from '../../../core/services';
 import type { ReferralSummary } from '../../../core/models';
 import { errorActionState, idleActionState, loadingActionState, type ActionState } from '../../../core/services/action-state';
 
@@ -29,12 +29,21 @@ describe('ReferralCardComponent', () => {
 
     const fakeMessageService = {
       success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+    };
+
+    const fakeAffiliateService = {
+      summary: signal(null).asReadonly(),
+      state: signal(idleActionState()).asReadonly(),
+      refreshSummary: () => Promise.resolve(),
     };
 
     await TestBed.configureTestingModule({
       imports: [ReferralCardComponent],
       providers: [
         { provide: ReferralService, useValue: fakeReferralService },
+        { provide: AffiliateService, useValue: fakeAffiliateService },
         { provide: NzMessageService, useValue: fakeMessageService },
       ],
     }).compileComponents();

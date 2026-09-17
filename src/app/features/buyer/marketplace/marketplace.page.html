@@ -1,73 +1,9 @@
 <div class="max-w-7xl mx-auto px-6 pt-8 pb-20 bg-canvas">
   <!-- Page header -->
-  <header class="mb-5">
+  <header class="mb-8">
     <h1 class="text-[32px] font-extrabold tracking-[-0.02em] text-ink">{{ 'marketplace.title' | trans }}</h1>
     <p class="text-sm text-ink-muted mt-1.5">{{ marketSubtitle() }}</p>
   </header>
-
-  <!-- Category chips row — marketplace-home-redesign v2 §1 ข้อ 8: แสดงตลอด (ตัดเงื่อนไข !listMode()
-       เดิม) sidebar filter ด้านล่างมี Category group ของตัวเองอยู่แล้ว (ผู้ใช้สั่ง 2026-09-16 ให้
-       เหมือนก่อน marketplace-redesign v1) — การมี category ซ้ำสองที่ตั้งใจ ไม่ใช่บั๊ก -->
-  <div
-    class="flex flex-wrap gap-2"
-    [class.mb-9]="!singleSelectedCategoryWithSubs()"
-    [class.mb-2]="!!singleSelectedCategoryWithSubs()"
-  >
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
-      [class.bg-pink-100]="catalog.filters().categoryIds.length === 0"
-      [class.text-pink-700]="catalog.filters().categoryIds.length === 0"
-      [class.border-pink-500]="catalog.filters().categoryIds.length === 0"
-      [class.bg-white]="catalog.filters().categoryIds.length > 0"
-      [class.text-ink-soft]="catalog.filters().categoryIds.length > 0"
-      [class.border-line]="catalog.filters().categoryIds.length > 0"
-      (click)="clearCategories()"
-    >
-      {{ 'marketplace.allCategoriesChip' | trans }}
-      <span class="text-xs font-medium opacity-65">{{ allDocumentsCount() }}</span>
-    </button>
-    @for (cat of catalog.categories(); track cat.id) {
-      @let active = catalog.filters().categoryIds.includes(cat.id);
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200 hover:border-pink-300"
-        [class.bg-pink-100]="active"
-        [class.text-pink-700]="active"
-        [class.border-pink-500]="active"
-        [class.bg-white]="!active"
-        [class.text-ink-soft]="!active"
-        [class.border-line]="!active"
-        (click)="toggleCategory(cat.id)"
-      >
-        <span>{{ cat.icon }}</span>
-        {{ cat.name }}
-        <span class="text-xs font-medium opacity-65">{{ cat.documentCount }}</span>
-      </button>
-    }
-  </div>
-
-  @if (singleSelectedCategoryWithSubs(); as selectedCat) {
-    <div class="flex flex-wrap gap-1.5 mb-9">
-      @for (sub of selectedCat.subcategories; track sub.id) {
-        @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-          [class.bg-pink-100]="subActive"
-          [class.text-pink-700]="subActive"
-          [class.border-pink-500]="subActive"
-          [class.bg-white]="!subActive"
-          [class.text-ink-soft]="!subActive"
-          [class.border-line]="!subActive"
-          (click)="toggleSubcategory(sub.id)"
-        >
-          @if (sub.icon) { <span>{{ sub.icon }}</span> }
-          {{ sub.name }}
-        </button>
-      }
-    </div>
-  }
 
   <!-- Recently viewed strip (unaffected by the redesign) -->
   @if (recent.count() > 0) {
@@ -110,7 +46,7 @@
         @for (t of tabs(); track t.value) {
           <button
             type="button"
-            class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors duration-200 whitespace-nowrap"
+            class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors duration-200 whitespace-nowrap cursor-pointer"
             [class.bg-pink-500]="activeUiTab() === t.value"
             [class.text-white]="activeUiTab() === t.value"
             [class.bg-transparent]="activeUiTab() !== t.value"
@@ -329,7 +265,7 @@
                   @let active = priceRange() === opt.value;
                   <button
                     type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300 cursor-pointer"
                     [class.bg-pink-100]="active"
                     [class.text-pink-700]="active"
                     [class.border-pink-500]="active"

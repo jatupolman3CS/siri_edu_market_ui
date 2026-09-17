@@ -177,6 +177,14 @@
         <!-- BUG-09: an unpaid order blocks a fresh checkout for the same documents,
              so the buyer needs a way to release it. -->
         @if (o.status === 'awaiting_payment') {
+          <button
+            class="btn-pink bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5"
+            [disabled]="payingWithWallet() || (wallet.summary()?.balance ?? 0) < o.total"
+            (click)="payWithWallet(o.id)"
+          >
+            <app-icon name="wallet" [size]="14" />
+            {{ payingWithWallet() ? 'กำลังตัดยอดเงิน…' : 'ชำระด้วยกระเป๋าเงิน (ตัดยอดทันที)' }}
+          </button>
           <button class="btn-ghost" [disabled]="cancelling()" (click)="cancelOrder(o.id)">
             {{ cancelling() ? 'กำลังยกเลิก…' : 'ยกเลิกคำสั่งซื้อ' }}
           </button>

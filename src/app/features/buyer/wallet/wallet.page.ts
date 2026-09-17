@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   NgZone,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -37,7 +38,7 @@ import { loadStripeScript } from '../../../core/util/load-stripe-script';
   templateUrl: './wallet.page.html',
   styleUrls: ['./wallet.page.scss'],
 })
-export class WalletPage implements OnInit {
+export class WalletPage implements OnInit, OnDestroy {
   readonly wallet = inject(WalletService);
   private readonly orders = inject(OrderService);
   private readonly auth = inject(AuthService);
@@ -67,6 +68,8 @@ export class WalletPage implements OnInit {
 
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private visibilityListener: (() => void) | null = null;
 
   async ngOnInit(): Promise<void> {
     void this.wallet.refreshSummary();
@@ -76,6 +79,54 @@ export class WalletPage implements OnInit {
     if (query['topup'] === '1' && query['id']) {
       const topUpId = query['id'] as string;
       await this.handleRedirectReturn(topUpId);
+    }
+
+    if (typeof document !== 'undefined') {
+      this.visibilityListener = () => {
+        if (!document.hidden && this.currentTopUp()) {
+          const topUpId = this.currentTopUp()!.id;
+          void (async () => {
+            const polled = await this.wallet.pollTopUp(topUpId);
+            if (polled?.status === 'succeeded') {
+              await this.handleTopUpSucceeded(topUpId);
+            }
+          })();
+        }
+      };
+      document.addEventListener('visibilitychange', this.visibilityListener);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopPolling();
+    if (typeof document !== 'undefined' && this.visibilityListener) {
+      document.removeEventListener('visibilitychange', this.visibilityListener);
+      this.visibilityListener = null;
+    }
+  }
+
+  private startPolling(topUpId: string): void {
+    this.stopPolling();
+    this.pollTimer = setInterval(() => {
+      void (async () => {
+        const topup = this.currentTopUp();
+        if (!topup || topup.id !== topUpId) {
+          this.stopPolling();
+          return;
+        }
+        const polled = await this.wallet.pollTopUp(topUpId);
+        if (polled?.status === 'succeeded') {
+          this.stopPolling();
+          await this.handleTopUpSucceeded(topUpId);
+        }
+      })();
+    }, 2500);
+  }
+
+  private stopPolling(): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
     }
   }
 
@@ -104,6 +155,7 @@ export class WalletPage implements OnInit {
       }
 
       this.currentTopUp.set(topup);
+      this.startPolling(topup.id);
 
       if (topup.clientSecret) {
         this.mountingPayment.set(true);
@@ -165,6 +217,7 @@ export class WalletPage implements OnInit {
   }
 
   cancelTopUp(): void {
+    this.stopPolling();
     this.currentTopUp.set(null);
     this.stripe = null;
     this.elements = null;
@@ -206,16 +259,30 @@ export class WalletPage implements OnInit {
   }
 
   private async handleTopUpSucceeded(topUpId: string): Promise<void> {
-    const polled = await this.wallet.pollTopUp(topUpId);
-    if (polled?.status === 'succeeded') {
-      this.message.success('เติมเงินสำเร็จ');
+    this.stopPolling();
+    this.busy.set(true);
+    let succeeded = false;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const polled = await this.wallet.pollTopUp(topUpId);
+      if (polled?.status === 'succeeded') {
+        succeeded = true;
+        break;
+      }
+      if (attempt < 11) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+
+    if (succeeded) {
+      this.message.success('เติมเงินสำเร็จ ยอดเงินในกระเป๋าของคุณอัปเดตเรียบร้อยแล้ว');
     } else {
-      this.message.info('ระบบกำลังดำเนินการเติมเงิน กรุณารอสักครู่');
+      this.message.info('ระบบกำลังดำเนินการเติมเงิน ยอดจะปรากฏในกระเป๋าเงินเร็วๆ นี้');
     }
     this.currentTopUp.set(null);
     this.amount.set(null);
     await this.wallet.refreshSummary();
     await this.wallet.loadLedgerFirst();
+    this.busy.set(false);
     this.cdr.markForCheck();
   }
 

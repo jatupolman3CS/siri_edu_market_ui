@@ -118,4 +118,52 @@
           </p>
         }
       </div>
-    </app-auth-layout>
+
+  @if (lineModalVisible()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-line space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#06C755]/10 flex items-center justify-center text-[#06C755] font-bold text-lg">
+            LINE
+          </div>
+          <div>
+            <h3 class="font-bold text-ink text-base">เข้าสู่ระบบด้วย LINE</h3>
+            <p class="text-xs text-ink-muted">กรุณาระบุอีเมลของคุณเพื่อดำเนินการต่อ</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-1.5 block">อีเมลของคุณ</label>
+          <input
+            type="email"
+            [(ngModel)]="lineEmail"
+            class="input-soft w-full text-sm"
+            placeholder="you@example.com"
+            (keydown.enter)="confirmLineEmail()"
+            autofocus
+          />
+          @if (lineEmailError()) {
+            <p class="text-xs text-rose-500 mt-1">{{ lineEmailError() }}</p>
+          }
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button
+            type="button"
+            class="flex-1 py-2.5 rounded-full border border-line text-sm font-semibold text-ink-soft hover:bg-slate-50 transition-all"
+            (click)="lineModalVisible.set(false)"
+          >
+            ยกเลิก
+          </button>
+          <button
+            type="button"
+            class="flex-1 py-2.5 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white text-sm font-semibold transition-all shadow-md shadow-[#06C755]/20"
+            (click)="confirmLineEmail()"
+          >
+            ดำเนินการต่อ
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</app-auth-layout>

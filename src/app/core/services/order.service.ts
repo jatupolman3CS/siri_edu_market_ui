@@ -13,6 +13,7 @@ import {
   getApiPaymentsStripeConfig,
   postApiOrders,
   postApiOrdersByIdCancel,
+  postApiOrdersByIdPayWallet,
   type CreateOrderRequest,
 } from '../api';
 import { unwrapSdkResult } from './api-result';
@@ -186,6 +187,21 @@ export class OrderService {
       return order;
     } catch (e) {
       this.apiFail.report('ยกเลิกคำสั่งซื้อ', e);
+      return null;
+    }
+  }
+
+  /**
+   * buyer-wallet v1: pays an awaiting-payment order using the buyer's wallet balance.
+   */
+  async payWithWallet(id: string): Promise<Order | null> {
+    try {
+      const result = await postApiOrdersByIdPayWallet({ path: { id } });
+      const order = mapOrder(unwrapSdkResult(result));
+      this._detail.set(order);
+      return order;
+    } catch (e) {
+      this.apiFail.report('ชำระเงินด้วยกระเป๋าเงิน', e);
       return null;
     }
   }

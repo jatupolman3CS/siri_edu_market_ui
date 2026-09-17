@@ -46,6 +46,7 @@ function buildCatalogFake(categories: Category[] = []) {
   const filtersSignal = signal({ ...DEFAULT_FILTERS });
   return {
     initForMarketplace: vi.fn(),
+    loadFreeResources: vi.fn(),
     loadCategoryDetailBySlug: vi.fn(),
     categories: () => categories,
     documents: (): DocumentItem[] => [],
@@ -284,13 +285,16 @@ describe('BuyerMarketplacePage — single view, no browse mode (marketplace-home
     expect(text).not.toContain('ดูเอกสารทั้งหมด');
   });
 
-  it('shows the category chip row unconditionally (no more `@if (!listMode())` gate)', () => {
+  it('does not render top category chips row (categories are filtered via sidebar)', () => {
     const catalog = buildCatalogFake([buildCategory({ id: 'cat-1', name: 'คณิตศาสตร์' })]);
     const fixture = render(catalog, buildPlatformStatsFake(undefined));
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    const el = fixture.nativeElement as HTMLElement;
 
-    expect(text).toContain('คณิตศาสตร์');
-    expect(text).toContain('ทั้งหมด'); // "ทั้งหมด" chip
+    // Categories are present in the sidebar filter
+    expect(el.querySelector('aside')?.textContent).toContain('คณิตศาสตร์');
+    // Top category chips row is removed — next element after header is the results container
+    const header = el.querySelector('header');
+    expect(header?.nextElementSibling?.classList.contains('animate-slide-up')).toBe(true);
   });
 });
 
@@ -410,6 +414,46 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
     expect(catalog.setTab).toHaveBeenCalledWith('free');
     expect(bundles.loadBundleResultsPage).not.toHaveBeenCalled();
+  });
+
+  it('setPriceRangeOption("free") sets freeOnly filter and syncs activeUiTab', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.setPriceRangeOption('free');
+
+    expect(catalog.filters().freeOnly).toBe(true);
+    expect(page.priceRange()).toBe('free');
+    expect(page.activeUiTab()).toBe('free');
+  });
+
+  it('clicking active price option "free" toggles it back to "all"', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.setPriceRangeOption('free');
+    expect(page.priceRange()).toBe('free');
+
+    // Click again to toggle off
+    page.setPriceRangeOption('free');
+    expect(page.priceRange()).toBe('all');
+    expect(catalog.filters().freeOnly).toBe(false);
+    expect(page.activeUiTab()).toBe('all');
+  });
+
+  it('selectTab("free") toggles back to "all" when clicked while already active', () => {
+    const catalog = buildCatalogFake();
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const page = fixture.componentInstance;
+
+    page.selectTab('free');
+    expect(page.activeUiTab()).toBe('free');
+
+    page.selectTab('free');
+    expect(page.activeUiTab()).toBe('all');
+    expect(catalog.setTab).toHaveBeenCalledWith('all');
   });
 
   it('§4.2 query param migration: legacy ?tab=new falls back to "all" silently (no throw)', () => {

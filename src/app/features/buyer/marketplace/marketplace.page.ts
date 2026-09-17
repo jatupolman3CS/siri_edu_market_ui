@@ -22,7 +22,6 @@ import {
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
   Bundle,
-  Category,
   DocumentItem,
   GRADE_LEVEL_LABELS,
   GradeLevel,
@@ -193,8 +192,15 @@ export class BuyerMarketplacePage {
     return 'all';
   });
 
+  private cachedAllDocCount = 0;
+
   readonly allDocumentsCount = computed(() => {
     const total = this.catalog.marketplaceResultsTotalCount();
+    if (this.activeUiTab() === 'all' && total > 0) {
+      this.cachedAllDocCount = total;
+      return total;
+    }
+    if (this.cachedAllDocCount > 0) return this.cachedAllDocCount;
     return total > 0 ? total : this.catalog.documents().length;
   });
 
@@ -228,9 +234,17 @@ export class BuyerMarketplacePage {
     return [...free, ...previewOnly];
   });
 
+  readonly freeDocumentsCount = computed(() => {
+    if (this.activeUiTab() === 'free') {
+      const total = this.catalog.marketplaceResultsTotalCount();
+      if (total > 0) return total;
+    }
+    return this.freeAndPreviewDocuments().length;
+  });
+
   readonly tabs = computed<MarketplaceUiTabViewModel[]>(() => [
     { value: 'all', label: this.i18n.t('marketplace.tabAll'), count: this.allDocumentsCount() },
-    { value: 'free', label: this.i18n.t('marketplace.tabFree'), count: this.freeAndPreviewDocuments().length },
+    { value: 'free', label: this.i18n.t('marketplace.tabFree'), count: this.freeDocumentsCount() },
     {
       value: 'package',
       label: this.i18n.t('marketplace.tabPackage'),
@@ -246,13 +260,6 @@ export class BuyerMarketplacePage {
   readonly resultsGridClass = computed(() =>
     'grid grid-cols-1 gap-6 items-start lg:grid-cols-[256px_minmax(0,1fr)]',
   );
-
-  readonly singleSelectedCategoryWithSubs = computed<Category | null>(() => {
-    const ids = this.catalog.filters().categoryIds;
-    if (ids.length !== 1) return null;
-    const cat = this.catalog.getCategoryById(ids[0]);
-    return cat && cat.subcategories && cat.subcategories.length > 0 ? cat : null;
-  });
 
   gradeLabel(g: GradeLevel): string {
     return this.i18n.t(`gradeLevels.${g}` as any) || GRADE_LEVEL_LABELS[g];
@@ -319,6 +326,7 @@ export class BuyerMarketplacePage {
     // Explicit init to avoid root service auto-fetching on unrelated pages.
     this.catalog.resetFilters();
     this.catalog.initForMarketplace();
+    this.catalog.loadFreeResources();
     // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
 
@@ -538,20 +546,55 @@ export class BuyerMarketplacePage {
   }
 
   setPriceRangeOption(option: PriceRangeKey): void {
+    // Toggle off: clicking the currently active price option resets back to 'all'
+    if (this.priceRange() === option && option !== 'all') {
+      this.setPriceRangeOption('all');
+      return;
+    }
+
+    if (this.activeUiTab() === 'package') {
+      this.activeUiTab.set(option === 'free' ? 'free' : 'all');
+      this.catalog.setTab(option === 'free' ? 'free' : 'all');
+      this.updateQueryParams({ tab: option === 'free' ? 'free' : null });
+    }
+
     switch (option) {
       case 'all':
+        if (this.activeUiTab() === 'free') {
+          this.activeUiTab.set('all');
+          this.catalog.setTab('all');
+          this.updateQueryParams({ tab: null });
+        }
         this.catalog.setFilters({ freeOnly: false, minPrice: 0, maxPrice: 1000 });
         break;
       case 'free':
+        this.activeUiTab.set('free');
+        this.catalog.setTab('free');
         this.catalog.setFilters({ freeOnly: true, minPrice: 0, maxPrice: 1000 });
+        this.updateQueryParams({ tab: 'free' });
         break;
       case 'lt100':
+        if (this.activeUiTab() === 'free') {
+          this.activeUiTab.set('all');
+          this.catalog.setTab('all');
+          this.updateQueryParams({ tab: null });
+        }
         this.catalog.setFilters({ freeOnly: false, minPrice: 0, maxPrice: 99 });
         break;
       case '100-199':
+        if (this.activeUiTab() === 'free') {
+          this.activeUiTab.set('all');
+          this.catalog.setTab('all');
+          this.updateQueryParams({ tab: null });
+        }
         this.catalog.setFilters({ freeOnly: false, minPrice: 100, maxPrice: 199 });
         break;
       case 'gte200':
+        if (this.activeUiTab() === 'free') {
+          this.activeUiTab.set('all');
+          this.catalog.setTab('all');
+          this.updateQueryParams({ tab: null });
+        }
         this.catalog.setFilters({ freeOnly: false, minPrice: 200, maxPrice: 1000 });
         break;
     }
@@ -572,14 +615,24 @@ export class BuyerMarketplacePage {
       this.packageTabActivated.set(true);
       this.catalog.setTab('bundles');
       void this.bundles.loadBundleResultsPage(1, this.catalog.filters().search.trim());
+    } else if (tab === 'free') {
+      this.catalog.setTab('free');
+      this.catalog.setFilters({ freeOnly: true, minPrice: 0, maxPrice: 1000 });
     } else {
-      this.catalog.setTab(tab);
+      this.catalog.setTab('all');
+      if (this.catalog.filters().freeOnly) {
+        this.catalog.setFilters({ freeOnly: false });
+      }
     }
   }
 
   selectTab(tab: MarketplaceUiTab): void {
+    if (tab === 'free' && this.activeUiTab() === 'free') {
+      this.selectTab('all');
+      return;
+    }
     this.applyUiTab(tab);
-    this.updateQueryParams({ tab });
+    this.updateQueryParams({ tab: tab === 'all' ? null : tab });
     this.scrollToTop();
   }
 

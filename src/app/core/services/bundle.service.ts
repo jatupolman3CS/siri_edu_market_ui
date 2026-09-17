@@ -72,7 +72,7 @@ export class BundleService {
    * ตัวเลือก sort ของตัวเอง).
    */
   private readonly searchPager = createServerPager<Bundle, string>({
-    pageSize: 20,
+    pageSize: 24,
     pageSizeOptions: [12, 20, 24, 40, 48],
     errorMessage: 'ค้นหาแพ็กเกจไม่สำเร็จ',
     fetch: async (page, pageSize, q) => {

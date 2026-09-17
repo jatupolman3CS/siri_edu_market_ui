@@ -16,6 +16,14 @@
       <p class="mt-1 text-sm text-neutral-500">
         แชร์ลิงก์นี้ ทุกยอดขายที่เกิดจากลิงก์ของคุณภายใน 30 วันหลังมีคนคลิก คุณจะได้ค่าคอมมิชชันสะสมไว้
       </p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
+          🎁 เพื่อนได้ส่วนลด 20 บาททันที
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          💰 คุณได้ส่วนลด 20 บาท + คอมมิชชัน {{ affiliate.summary()?.commissionRatePercent ?? 5 }}%
+        </span>
+      </div>
     </div>
   </div>
 

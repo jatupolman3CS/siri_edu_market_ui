@@ -93,25 +93,47 @@
                   }
                 }
               </div>
+              @if (d.previewPages > 0) {
+                <div class="px-3 pb-3 bg-white flex items-center justify-between border-t border-line/60 pt-2.5">
+                  <div class="flex items-center gap-1.5 text-xs text-ink-muted">
+                    <app-icon name="eye" [size]="14" className="text-pink-500" />
+                    <span>มีตัวอย่างพรีวิว {{ d.previewPages }} หน้าแรก (ลายน้ำจากระบบ)</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-pink !py-1.5 !px-3.5 text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                    (click)="openPreview(true)"
+                    [disabled]="previewLoading()"
+                  >
+                    @if (previewLoading()) {
+                      กำลังโหลด…
+                    } @else {
+                      <app-icon name="eye" [size]="13" />
+                      ดูตัวอย่างเอกสาร
+                    }
+                  </button>
+                </div>
+              }
             </div>
 
             <!-- Tabs -->
             <div class="mt-8">
               <nz-tabs>
                 @if (d.previewPages > 0) {
-                  <nz-tab nzTitle="พรีวิว">
+                  <nz-tab nzTitle="พรีวิว" (nzSelect)="onPreviewTabSelect()">
                     <div class="mt-4 card-cream p-6">
                       <div class="flex items-start justify-between gap-4 mb-4">
                         <div>
-                          <div class="text-sm font-bold text-ink">พรีวิวฟรี</div>
+                          <div class="text-sm font-bold text-ink">พรีวิวฟรี (ตัวอย่างเอกสารพร้อมลายน้ำ)</div>
                           <div class="text-xs text-ink-muted mt-1">
-                            ดูตัวอย่างได้ประมาณ {{ d.previewPages }} หน้าแรก (ลายน้ำอยู่ที่ภาพจากเซิร์ฟเวอร์เท่านั้น)
+                            ดูตัวอย่างได้ประมาณ {{ d.previewPages }} หน้าแรก (ลายน้ำป้องกันการคัดลอกจากเซิร์ฟเวอร์)
                           </div>
                         </div>
-                        <button class="btn-pink !py-2.5 !px-5 text-sm" type="button" (click)="openPreview()" [disabled]="previewLoading()">
+                        <button class="btn-pink !py-2.5 !px-5 text-sm flex items-center gap-1.5" type="button" (click)="openPreview(true)" [disabled]="previewLoading()">
                           @if (previewLoading()) {
                             กำลังโหลด…
                           } @else {
+                            <app-icon name="eye" [size]="15" />
                             เปิดพรีวิว
                           }
                         </button>
@@ -119,7 +141,49 @@
 
                       @if (preview(); as p) {
                         @if (p.excerptTitle) {
-                          <div class="text-sm font-bold text-ink mb-2">{{ p.excerptTitle }}</div>
+                          <div class="text-sm font-bold text-ink mb-3">{{ p.excerptTitle }}</div>
+                        }
+
+                        @if (previewRasterUrls().length > 0) {
+                          <!-- Inline Preview Page Gallery -->
+                          <div class="space-y-4 mb-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                              @for (path of previewRasterUrls(); track $index) {
+                                <div
+                                  class="group relative rounded-xl border border-line bg-white p-2 shadow-xs hover:shadow-md transition-all cursor-pointer overflow-hidden"
+                                  (click)="openPreview(true)"
+                                >
+                                  <div class="aspect-[1/1.4] overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center relative">
+                                    <img
+                                      appImgFallback
+                                      [src]="previewImgSrc(path)"
+                                      alt="ตัวอย่างหน้า {{ $index + 1 }}"
+                                      class="w-full h-full object-contain select-none transition-transform duration-200 group-hover:scale-102"
+                                      loading="lazy"
+                                      draggable="false"
+                                      (contextmenu)="$event.preventDefault()"
+                                    />
+                                    <div class="absolute inset-0 bg-pink-900/0 group-hover:bg-pink-900/10 transition-colors flex items-center justify-center">
+                                      <span class="opacity-0 group-hover:opacity-100 transition-opacity pill bg-white/90 text-pink-600 text-xs font-bold shadow-xs">
+                                        คลิกเพื่อขยาย
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div class="mt-2 flex items-center justify-between text-xs text-ink-muted px-1">
+                                    <span>หน้า {{ $index + 1 }}</span>
+                                    <span class="text-pink-600 font-medium group-hover:underline flex items-center gap-0.5">
+                                      <app-icon name="eye" [size]="12" /> ขยาย
+                                    </span>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                            <div class="text-center pt-1">
+                              <button type="button" class="btn-ghost !py-2 !px-4 text-xs font-semibold text-pink-600 inline-flex items-center gap-1.5" (click)="openPreview(true)">
+                                <app-icon name="eye" [size]="14" /> ดูภาพขนาดเต็มทั้งหมด ({{ previewRasterUrls().length }} หน้า)
+                              </button>
+                            </div>
+                          </div>
                         }
 
                         @if (d.format !== 'pdf' && previewRasterUrls().length === 0) {
@@ -134,13 +198,14 @@
                           />
                         } @else if (p.excerptLines?.length) {
                           <div class="rounded-2xl border border-line bg-white p-4">
+                            <div class="text-xs font-semibold text-ink-muted mb-2">เนื้อหาตัวอย่างย่อ:</div>
                             <div class="space-y-2 text-sm text-ink-soft leading-relaxed">
                               @for (line of p.excerptLines!; track line) {
                                 <p class="m-0">{{ line }}</p>
                               }
                             </div>
                           </div>
-                        } @else {
+                        } @else if (previewRasterUrls().length === 0) {
                           <app-empty-state
                             emoji="📄"
                             title="ยังไม่มีตัวอย่างพรีวิว"
@@ -148,8 +213,15 @@
                           />
                         }
                       } @else {
-                        <div class="text-xs text-ink-muted">
-                          กด “เปิดพรีวิว” เพื่อโหลดตัวอย่างเอกสาร
+                        <div class="text-center py-6">
+                          <button class="btn-pink !py-2.5 !px-6 text-sm flex items-center gap-2 mx-auto" type="button" (click)="openPreview(false)" [disabled]="previewLoading()">
+                            @if (previewLoading()) {
+                              กำลังโหลดตัวอย่าง…
+                            } @else {
+                              <app-icon name="eye" [size]="16" />
+                              เปิดพรีวิว
+                            }
+                          </button>
                         </div>
                       }
                     </div>
@@ -537,9 +609,9 @@
                       ดาวน์โหลดฟรีเลย
                     </button>
                   } @else if (owned()) {
-                    <button class="btn-pink !py-3.5 text-base" type="button" disabled>
-                      <app-icon name="check" [size]="18" />
-                      อยู่ในคลังแล้ว
+                    <button class="btn-pink !py-3.5 text-base" type="button" (click)="downloadOwned()">
+                      <app-icon name="download" [size]="18" />
+                      ดาวน์โหลดเอกสาร (อยู่ในคลังแล้ว)
                     </button>
                     <a routerLink="/library" class="btn-ghost !py-3.5">
                       ไปที่คลังของฉัน

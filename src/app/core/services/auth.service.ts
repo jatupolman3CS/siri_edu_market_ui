@@ -497,7 +497,7 @@ export class AuthService {
    */
   async signInWithProvider(
     provider: Exclude<AuthProvider, 'email'>,
-    options?: { returnUrl?: string },
+    options?: { returnUrl?: string; email?: string },
   ): Promise<{ ok: boolean; error?: string }> {
     if (provider === 'google') {
       try {
@@ -522,12 +522,13 @@ export class AuthService {
 
     if (provider === 'line') {
       await this.oauthClients.ensureLoaded();
-      // AC-7: the server decides. An empty channel id means it cannot finish the exchange, so
-      // the flow stops here instead of sending the user to a consent screen that leads nowhere.
-      if (!this.oauthClients.lineLoginChannelId()) {
+      const channelId = this.oauthClients.lineLoginChannelId();
+      if (!channelId) {
         return { ok: false, error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE' };
       }
-      const started = this.lineOauth.startSignIn(options?.returnUrl ?? '/');
+      const started = options?.email
+        ? this.lineOauth.startSignIn(options.returnUrl ?? '/', options.email)
+        : this.lineOauth.startSignIn(options?.returnUrl ?? '/');
       if (!started) {
         return { ok: false, error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE' };
       }
@@ -563,6 +564,7 @@ export class AuthService {
   async completeLineSignIn(input: {
     code: string;
     state: string;
+    email?: string;
   }): Promise<{ ok: boolean; error?: string; returnUrl?: string }> {
     if (!input.code) {
       return { ok: false, error: 'ไม่พบรหัสยืนยันจาก LINE กรุณาลองใหม่อีกครั้ง' };
@@ -571,6 +573,7 @@ export class AuthService {
     if (!pending) {
       return { ok: false, error: 'คำขอเข้าสู่ระบบไม่ถูกต้องหรือหมดอายุ กรุณาลองใหม่อีกครั้ง' };
     }
+    const resolvedEmail = (input.email ?? pending.email)?.trim() || undefined;
     try {
       const result = await postApiAuthExternalByProvider({
         path: { provider: 'line' },
@@ -578,6 +581,7 @@ export class AuthService {
           authorizationCode: input.code,
           redirectUri: pending.redirectUri,
           acceptTerms: true,
+          email: resolvedEmail,
         },
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });

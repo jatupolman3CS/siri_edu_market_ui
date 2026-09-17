@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services';
 import { AuthLayoutComponent } from '../../../layouts/auth/auth-layout/auth-layout.component';
@@ -21,7 +22,7 @@ const GENERIC_FAILURE_MESSAGE = 'เข้าสู่ระบบด้วย L
 @Component({
   selector: 'app-auth-line-callback',
   standalone: true,
-  imports: [RouterLink, AuthLayoutComponent],
+  imports: [RouterLink, FormsModule, AuthLayoutComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './line-callback.page.html',
   styleUrl: './line-callback.page.scss',
@@ -33,6 +34,8 @@ export class AuthLineCallbackPage {
 
   readonly loading = signal<boolean>(true);
   readonly error = signal<string>('');
+  readonly retryEmail = signal<string>('');
+  readonly retryEmailError = signal<string>('');
 
   /** The exchange is single-use; a second query-param emission must not replay it. */
   private handled = false;
@@ -73,5 +76,14 @@ export class AuthLineCallbackPage {
   private fail(message: string): void {
     this.loading.set(false);
     this.error.set(message);
+  }
+
+  retryWithEmail(): void {
+    const email = this.retryEmail().trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.retryEmailError.set('กรุณาระบุอีเมลที่ถูกต้อง');
+      return;
+    }
+    void this.auth.signInWithProvider('line', { email });
   }
 }

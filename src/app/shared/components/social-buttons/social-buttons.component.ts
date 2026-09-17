@@ -30,7 +30,7 @@ export class SocialButtonsComponent {
    * of flashing a button that then has to disappear.
    */
   readonly googleAvailable = signal(false);
-  /** AC-7: same rule for LINE — hidden until the server reports a usable login channel id. */
+  /** AC-7: LINE sign-in button follows server configuration. */
   readonly lineAvailable = signal(false);
 
   constructor() {
@@ -39,15 +39,13 @@ export class SocialButtonsComponent {
 
   private async checkProviders(): Promise<void> {
     try {
-      // One `GET /api/auth/oauth-clients` answers for both providers — `GoogleOauthConfigService`
-      // reads the very same service (§4.1), so awaiting it once is what settles both reads below.
       await this.oauthClients.ensureLoaded();
     } catch {
       /* an unreachable API is itself a reason the buttons cannot work */
     }
-    // Google keeps going through its own service: the environment fallback for an unreachable API
-    // (D-08b) lives there and applies to Google only.
-    this.googleAvailable.set(!!this.googleConfig.getClientId());
-    this.lineAvailable.set(!!this.oauthClients.lineLoginChannelId());
+    const googleId = this.googleConfig.getClientId();
+    this.googleAvailable.set(!!googleId);
+    const lineId = this.oauthClients.lineLoginChannelId();
+    this.lineAvailable.set(!!lineId);
   }
 }

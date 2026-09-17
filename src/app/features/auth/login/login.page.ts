@@ -40,6 +40,10 @@ export class AuthLoginPage {
 
   readonly returnUrl = signal<string>('/');
 
+  readonly lineModalVisible = signal<boolean>(false);
+  readonly lineEmail = signal<string>('');
+  readonly lineEmailError = signal<string>('');
+
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => {
       this.returnUrl.set(p.get('returnUrl') ?? '/');
@@ -61,11 +65,38 @@ export class AuthLoginPage {
 
   onSocial(provider: AuthProvider): void {
     if (provider === 'email') return;
+    if (provider === 'line') {
+      this.lineEmail.set(this.email().trim());
+      this.lineEmailError.set('');
+      this.lineModalVisible.set(true);
+      return;
+    }
+    this.executeSocial(provider);
+  }
+
+  confirmLineEmail(): void {
+    const mail = this.lineEmail().trim();
+    if (!mail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      this.lineEmailError.set('กรุณาระบุอีเมลที่ถูกต้อง');
+      return;
+    }
+    this.lineModalVisible.set(false);
     this.loading.set(true);
     void (async () => {
-      // external-login-and-mail-config v1 §4.1: redirect-based providers (LINE) leave this page
-      // behind, so where the user wanted to go has to travel with the request. For LINE this
-      // promise never settles — the browser is already navigating to the consent page.
+      const r = await this.auth.signInWithProvider('line', {
+        returnUrl: this.returnUrl(),
+        email: mail,
+      });
+      this.loading.set(false);
+      if (!r.ok) {
+        this.error.set(r.error ?? 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ');
+      }
+    })();
+  }
+
+  private executeSocial(provider: Exclude<AuthProvider, 'email'>): void {
+    this.loading.set(true);
+    void (async () => {
       const r = await this.auth.signInWithProvider(provider, { returnUrl: this.returnUrl() });
       this.loading.set(false);
       if (!r.ok) {

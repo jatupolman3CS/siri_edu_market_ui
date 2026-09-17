@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzTabChangeEvent, NzTabsModule } from 'ng-zorro-antd/tabs';
-import { AuthService, LibraryService, OrderService } from '../../../core/services';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { AuthService, LibraryService, OrderService, WalletService } from '../../../core/services';
 import type { OrderTabFilter } from '../../../core/services/library.service';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -41,10 +42,12 @@ const TAB_ORDER: readonly OrderTabFilter[] = [
 })
 export class BuyerOrdersPage {
   readonly library = inject(LibraryService);
+  readonly wallet = inject(WalletService);
   private readonly orderService = inject(OrderService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly message = inject(NzMessageService);
 
   readonly showSuccess = signal<boolean>(false);
 
@@ -56,6 +59,7 @@ export class BuyerOrdersPage {
 
   /** order-status-tabs v1 §4: guards against firing a second cancel while one is in flight. */
   readonly cancellingId = signal<string | null>(null);
+  readonly payingWalletId = signal<string | null>(null);
 
   constructor() {
     if (!this.auth.isAuthenticated()) {
@@ -63,6 +67,7 @@ export class BuyerOrdersPage {
       return;
     }
     void this.library.refreshOrders();
+    void this.wallet.refreshSummary();
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())
       .subscribe((params) => {
@@ -103,6 +108,21 @@ export class BuyerOrdersPage {
       }
     } finally {
       this.cancellingId.set(null);
+    }
+  }
+
+  async payWithWallet(orderId: string): Promise<void> {
+    if (this.payingWalletId() !== null) return;
+    this.payingWalletId.set(orderId);
+    try {
+      const updated = await this.orderService.payWithWallet(orderId);
+      if (updated && (updated.status === 'paid' || updated.status === 'fulfilled')) {
+        this.message.success('ชำระเงินด้วยกระเป๋าเงินสำเร็จ ยอดเงินตัดเรียบร้อยแล้ว');
+        await this.wallet.refreshSummary();
+        await this.library.refreshOrders();
+      }
+    } finally {
+      this.payingWalletId.set(null);
     }
   }
 

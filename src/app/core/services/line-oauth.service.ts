@@ -23,6 +23,8 @@ export interface LineOauthStateRecord {
   redirectUri: string;
   /** Epoch milliseconds — used for the 10-minute expiry. */
   createdAt: number;
+  /** Optional email provided by user for account linking when LINE does not provide email. */
+  email?: string;
 }
 
 /**
@@ -64,7 +66,7 @@ export class LineOauthService {
    * Returns `false` (without navigating) when LINE is unavailable on this server or there is no
    * browser origin to come back to.
    */
-  startSignIn(returnUrl: string): boolean {
+  startSignIn(returnUrl: string, email?: string): boolean {
     const channelId = this.oauthClients.lineLoginChannelId();
     if (!channelId) return false;
 
@@ -77,6 +79,7 @@ export class LineOauthService {
       returnUrl: returnUrl || '/',
       redirectUri,
       createdAt: Date.now(),
+      ...(email ? { email: email.trim() } : {}),
     });
     this.redirectTo(this.buildAuthorizeUrl(channelId, state, redirectUri));
     return true;
@@ -143,6 +146,7 @@ export class LineOauthService {
         returnUrl: typeof parsed.returnUrl === 'string' ? parsed.returnUrl : '/',
         redirectUri: parsed.redirectUri,
         createdAt: parsed.createdAt,
+        email: typeof parsed.email === 'string' ? parsed.email : undefined,
       };
     } catch {
       return null;

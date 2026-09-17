@@ -1175,6 +1175,7 @@ export type ExternalLoginRequest = {
   authorizationCode: string;
   redirectUri?: string | null;
   acceptTerms?: boolean;
+  email?: string | null;
 };
 
 export type FeedbackAttachmentResponse = {
@@ -8131,6 +8132,25 @@ export type PostApiOrdersByIdCancelResponses = {
 
 export type PostApiOrdersByIdCancelResponse =
   PostApiOrdersByIdCancelResponses[keyof PostApiOrdersByIdCancelResponses];
+
+export type PostApiOrdersByIdPayWalletData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/orders/{id}/pay-wallet';
+};
+
+export type PostApiOrdersByIdPayWalletResponses = {
+  /**
+   * OK
+   */
+  200: OrderResponse;
+};
+
+export type PostApiOrdersByIdPayWalletResponse =
+  PostApiOrdersByIdPayWalletResponses[keyof PostApiOrdersByIdPayWalletResponses];
 
 export type GetApiOrdersByIdData = {
   body?: never;

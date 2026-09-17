@@ -36,7 +36,7 @@ export class GoogleOauthConfigService {
    */
   getClientId(): string {
     if (this.oauthClients.apiAnswered()) {
-      return this.oauthClients.googleClientId();
+      return this.oauthClients.googleClientId()?.trim() ?? '';
     }
     return (environment.googleOAuthClientId ?? '').trim();
   }

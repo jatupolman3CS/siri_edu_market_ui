@@ -40,7 +40,7 @@ export async function captureAffiliateClick(
 
   try {
     const params = new URLSearchParams(window.location.search);
-    const aff = params.get('aff')?.trim();
+    const aff = (params.get('aff') || params.get('ref'))?.trim();
     if (!aff) return;
 
     // Check if existing token is still valid

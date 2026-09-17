@@ -110,6 +110,16 @@
                   <span>·</span>
                   <button
                     type="button"
+                    class="btn-pink bg-emerald-600 hover:bg-emerald-700 text-white !py-1 !px-2.5 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm disabled:opacity-50"
+                    [disabled]="payingWalletId() !== null || (wallet.summary()?.balance ?? 0) < o.total"
+                    (click)="payWithWallet(o.id)"
+                  >
+                    <app-icon name="wallet" [size]="12" />
+                    {{ payingWalletId() === o.id ? 'กำลังตัดยอด…' : 'ชำระด้วยกระเป๋าเงิน' }}
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
                     class="btn-ghost !py-1.5 !px-3 text-xs"
                     [disabled]="cancellingId() !== null"
                     (click)="cancelOrder(o.id)"

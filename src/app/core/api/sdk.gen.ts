@@ -601,6 +601,8 @@ import type {
   PostApiOrdersByIdCancelData,
   PostApiOrdersByIdCancelErrors,
   PostApiOrdersByIdCancelResponses,
+  PostApiOrdersByIdPayWalletData,
+  PostApiOrdersByIdPayWalletResponses,
   PostApiOrdersData,
   PostApiOrdersErrors,
   PostApiOrdersResponses,
@@ -3184,6 +3186,15 @@ export const postApiOrdersByIdCancel = <ThrowOnError extends boolean = false>(
     PostApiOrdersByIdCancelErrors,
     ThrowOnError
   >({ url: '/api/orders/{id}/cancel', ...options });
+
+export const postApiOrdersByIdPayWallet = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiOrdersByIdPayWalletData, ThrowOnError>,
+): RequestResult<PostApiOrdersByIdPayWalletResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiOrdersByIdPayWalletResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/api/orders/{id}/pay-wallet', ...options });
 
 export const getApiOrdersById = <ThrowOnError extends boolean = false>(
   options: Options<GetApiOrdersByIdData, ThrowOnError>,

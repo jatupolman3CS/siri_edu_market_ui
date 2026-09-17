@@ -9,7 +9,7 @@ export function captureReferralCode(): void {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   try {
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref')?.trim();
+    const ref = (params.get('ref') || params.get('aff'))?.trim();
     if (ref) {
       localStorage.setItem(REFERRAL_HINT_STORAGE_KEY, ref.toUpperCase());
     }

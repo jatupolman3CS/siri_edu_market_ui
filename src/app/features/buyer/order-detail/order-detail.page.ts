@@ -6,7 +6,8 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService, OrderService } from '../../../core/services';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { AuthService, OrderService, WalletService } from '../../../core/services';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -37,8 +38,11 @@ export class BuyerOrderDetailPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly wallet = inject(WalletService);
+  private readonly message = inject(NzMessageService);
 
   readonly loading = signal(true);
+  readonly payingWithWallet = signal(false);
   readonly order = this.orderService.detail;
   // order-similar-documents v1 §4: "เอกสารที่คล้ายกับคำสั่งซื้อนี้" — hidden entirely when empty
   // or errored (§1.6), never rendered for anything but paid/fulfilled orders (§4 AC-16).
@@ -53,6 +57,8 @@ export class BuyerOrderDetailPage {
       this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
+
+    void this.wallet.refreshSummary();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -142,6 +148,20 @@ export class BuyerOrderDetailPage {
       await this.orderService.cancel(id);
     } finally {
       this.cancelling.set(false);
+    }
+  }
+
+  async payWithWallet(id: string): Promise<void> {
+    if (this.payingWithWallet()) return;
+    this.payingWithWallet.set(true);
+    try {
+      const updated = await this.orderService.payWithWallet(id);
+      if (updated && (updated.status === 'paid' || updated.status === 'fulfilled')) {
+        this.message.success('ชำระเงินด้วยกระเป๋าเงินสำเร็จ ยอดเงินตัดเรียบร้อยแล้ว');
+        await this.wallet.refreshSummary();
+      }
+    } finally {
+      this.payingWithWallet.set(false);
     }
   }
 

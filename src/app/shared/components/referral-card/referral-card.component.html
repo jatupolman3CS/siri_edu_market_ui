@@ -5,11 +5,19 @@
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
           <app-icon name="tag" [size]="18" />
         </span>
-        <h2 class="text-lg font-bold text-neutral-900">ชวนเพื่อน รับส่วนลดคนละ 20 บาท</h2>
+        <h2 class="text-lg font-bold text-neutral-900">ชวนเพื่อน รับส่วนลดคนละ 20 บาท & ลิงก์พันธมิตร รับค่าคอมมิชชัน 5%</h2>
       </div>
       <p class="mt-1 text-sm text-neutral-500">
-        แชร์ลิงก์นี้ให้เพื่อน เมื่อเพื่อนซื้อเอกสารครั้งแรกสำเร็จ คุณจะได้เครดิตส่วนลด 20 บาททันที
+        แชร์ลิงก์นี้ให้เพื่อน เมื่อเพื่อนซื้อเอกสารครั้งแรกสำเร็จ คุณจะได้เครดิตส่วนลด 20 บาททันที และได้รับค่าคอมมิชชัน 5% จากทุกยอดสั่งซื้อของเพื่อน
       </p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
+          🎁 เพื่อนได้ส่วนลด 20 บาททันที
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          💰 คุณได้ส่วนลด 20 บาท + คอมมิชชัน 5%
+        </span>
+      </div>
     </div>
   </div>
 
@@ -46,7 +54,7 @@
       </button>
     </div>
 
-    <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
         <span class="text-xs text-neutral-500">สถานะการแนะนำ</span>
         <div class="mt-0.5 text-sm font-semibold text-neutral-800">
@@ -68,6 +76,29 @@
           }
         </div>
       </div>
+
+      @if (affiliate && affiliate.summary()) {
+        <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
+          <span class="text-xs text-neutral-500">จำนวนคลิกลิงก์</span>
+          <div class="mt-0.5 text-sm font-semibold text-neutral-800">
+            มีคนคลิกแล้ว {{ affiliate.summary()?.totalClicks ?? 0 }} ครั้ง
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
+          <span class="text-xs text-neutral-500">จำนวนที่ซื้อสำเร็จ</span>
+          <div class="mt-0.5 text-sm font-semibold text-neutral-800">
+            เกิดยอดขายแล้ว {{ affiliate.summary()?.totalConversions ?? 0 }} รายการ
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
+          <span class="text-xs text-neutral-500">ค่าคอมมิชชันสะสม</span>
+          <div class="mt-0.5 text-sm font-semibold text-emerald-600">
+            {{ affiliate.summary()?.commissionEarnedTotal ?? 0 }} บาท ({{ affiliate.summary()?.commissionRatePercent ?? 5 }}%)
+          </div>
+        </div>
+      }
     </div>
   }
 </section>

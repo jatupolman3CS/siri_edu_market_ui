@@ -21,6 +21,29 @@
         <p class="flex-1 font-semibold">{{ error() }}</p>
       </div>
 
+      @if (error().includes('อีเมล') || error().includes('email')) {
+        <div class="mb-6 p-5 rounded-2xl bg-white border border-line text-left space-y-3 shadow-sm">
+          <label class="text-xs font-semibold text-ink-soft block">ระบุอีเมลเพื่อดำเนินการต่อ</label>
+          <input
+            type="email"
+            [(ngModel)]="retryEmail"
+            class="input-soft w-full text-sm"
+            placeholder="yourname@example.com"
+            (keydown.enter)="retryWithEmail()"
+          />
+          @if (retryEmailError()) {
+            <p class="text-xs text-rose-500">{{ retryEmailError() }}</p>
+          }
+          <button
+            type="button"
+            class="w-full py-2.5 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white text-sm font-semibold transition-all shadow-md shadow-[#06C755]/20"
+            (click)="retryWithEmail()"
+          >
+            เข้าสู่ระบบด้วย LINE พร้อมอีเมลนี้
+          </button>
+        </div>
+      }
+
       <a
         routerLink="/auth/login"
         class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-semibold text-sm transition-all"

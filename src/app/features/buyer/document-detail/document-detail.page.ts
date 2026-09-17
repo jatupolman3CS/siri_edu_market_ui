@@ -411,6 +411,16 @@ export class BuyerDocumentDetailPage {
   }
 
   /**
+   * Allows direct download of already-owned documents from the document detail page.
+   */
+  downloadOwned(): void {
+    const d = this.doc();
+    if (d) {
+      void this.downloadWithNotice(d.id);
+    }
+  }
+
+  /**
    * watermark-completion v1 §4.4: shows the backend's `watermarkNotice` (it names the buyer's
    * own `WMK-XXXXXXXX` copy code) through this page's existing message service. The download
    * itself is started by `LibraryService` exactly as before.
@@ -423,7 +433,13 @@ export class BuyerDocumentDetailPage {
     }
   }
 
-  openPreview(): void {
+  onPreviewTabSelect(): void {
+    if (!this.preview() && !this.previewLoading()) {
+      this.openPreview(false);
+    }
+  }
+
+  openPreview(forceModal = true): void {
     const id = this.id();
     const d = this.doc();
     if (!id || !d) return;
@@ -440,14 +456,18 @@ export class BuyerDocumentDetailPage {
         this.preview.set(data);
         const raster = data.previewImageUrls?.filter((u) => u?.trim()) ?? [];
         if (raster.length > 0) {
-          this.showPreviewGallery.set(true);
-        } else {
+          if (forceModal) {
+            this.showPreviewGallery.set(true);
+          }
+        } else if (forceModal) {
           this.message.warning(
-            'ยังไม่มีพรีวิวภาพพร้อมลายน้ำสำหรับเอกสารนี้ — ตรวจสอบว่าเป็น PDF และมีไฟล์ในระบบจัดเก็บ',
+            'ยังไม่มีพรีวิวภาพพร้อมลายน้ำสำหรับเอกสารนี้ — ระบบกำลังเตรียมตัวอย่างพรีวิว',
           );
         }
       } catch {
-        this.message.error('โหลดพรีวิวไม่สำเร็จ');
+        if (forceModal) {
+          this.message.error('โหลดพรีวิวไม่สำเร็จ');
+        }
       } finally {
         this.previewLoading.set(false);
       }
