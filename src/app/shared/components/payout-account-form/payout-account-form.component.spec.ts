@@ -468,10 +468,10 @@ describe('PayoutAccountFormComponent — PromptPay QR Code upload (payment-metho
     fixture.detectChanges();
 
     expect(uploadFile).toHaveBeenCalledWith(file);
-    expect(fixture.componentInstance.promptPayQrImageUrl()).toBe('https://cdn.example.com/qr/new.png');
+    expect(fixture.componentInstance.promptPayQrImageUrl()).toBe('/api/files/download/uploads/qr/abc.png');
     expect(fixture.componentInstance.fieldErrors().qrImage).toBeNull();
     const img = (fixture.nativeElement as HTMLElement).querySelector('img[alt*="QR Code"]') as HTMLImageElement | null;
-    expect(img?.src).toBe('https://cdn.example.com/qr/new.png');
+    expect(img?.src).toContain('/api/files/download/uploads/qr/abc.png');
   });
 
   it('does nothing when the file picker is dismissed with no file chosen', async () => {
@@ -506,7 +506,7 @@ describe('PayoutAccountFormComponent — PromptPay QR Code upload (payment-metho
       accountType: 'promptpay',
       accountHolderName: 'สมชาย ใจดี',
       promptPayType: 'qr_code',
-      promptPayQrImageUrl: 'https://cdn.example.com/qr/abc.png',
+      promptPayQrImageUrl: '/api/files/download/uploads/qr/abc.png',
     });
   });
 

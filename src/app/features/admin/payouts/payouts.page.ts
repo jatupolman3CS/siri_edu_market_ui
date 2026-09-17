@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminPayoutResponse } from '../../../core/api';
-import { resolveDownloadUrl } from '../../../core/api-runtime';
+import { resolveDownloadUrl, resolvePublicUrl } from '../../../core/api-runtime';
 import type { BatchPayoutSlipsResponse, PayoutSlip } from '../../../core/models';
 import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -72,6 +72,11 @@ export class AdminPayoutsPage {
   readonly loading = signal<boolean>(false);
   readonly filter = signal<PayoutFilter>('pending');
   readonly busyId = signal<string | null>(null);
+  readonly qrModalPayout = signal<AdminPayoutResponse | null>(null);
+
+  qrImageUrl(payout: AdminPayoutResponse): string {
+    return resolvePublicUrl(payout.payoutAccountQrImageUrl);
+  }
 
   /** §4.5: "รอบโอนถัดไป" banner, from `GET /api/admin/settings`. */
   readonly nextPayoutDate = signal<string | null>(null);

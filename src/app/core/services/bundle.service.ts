@@ -72,7 +72,8 @@ export class BundleService {
    * ตัวเลือก sort ของตัวเอง).
    */
   private readonly searchPager = createServerPager<Bundle, string>({
-    pageSize: 16,
+    pageSize: 20,
+    pageSizeOptions: [12, 20, 24, 40, 48],
     errorMessage: 'ค้นหาแพ็กเกจไม่สำเร็จ',
     fetch: async (page, pageSize, q) => {
       const term = q?.trim();
@@ -96,6 +97,13 @@ export class BundleService {
   readonly bundleResultsTotalPages = this.searchPager.totalPages;
   readonly bundleResultsPage = this.searchPager.page;
   readonly bundleResultsPageSize = this.searchPager.pageSize;
+  readonly bundleResultsPageSizeOptions = this.searchPager.pageSizeOptions;
+
+  setBundleResultsPageSize(size: number): void {
+    void this.searchPager.onPageSizeChange(size).catch((e) => {
+      this.apiFail.report('ค้นหาแพ็กเกจ', e);
+    });
+  }
 
   /** Last `Q` used — kept so `loadMore`-style calls (page > 1) reuse the same search term. */
   private _bundleResultsQuery = '';

@@ -380,6 +380,7 @@ export const routes: Routes = [
         (m) => m.AdminLayoutComponent,
       ),
     children: [
+      { path: 'dashboard', redirectTo: '/admin', pathMatch: 'full' },
       {
         path: '',
         loadComponent: () =>

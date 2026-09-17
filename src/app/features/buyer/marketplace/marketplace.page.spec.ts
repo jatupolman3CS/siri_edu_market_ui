@@ -63,11 +63,11 @@ function buildCatalogFake(categories: Category[] = []) {
     marketplaceResults: (): DocumentItem[] => [],
     marketplaceResultsState: () => idleActionState(),
     marketplaceResultsPage: () => 1,
-    marketplaceResultsPageSize: () => 16,
+    marketplaceResultsPageSize: () => 20,
     marketplaceResultsTotalCount: () => 0,
     marketplaceResultsTotalPages: () => 1,
     marketplaceHasMore: () => false,
-    marketplacePageSizeOptions: [12, 16, 24, 48],
+    marketplacePageSizeOptions: [12, 20, 24, 40, 48],
     loadMarketplaceResultsPage: vi.fn(),
     setMarketplacePageSize: vi.fn(),
     retryMarketplaceResults: vi.fn(),
@@ -129,7 +129,9 @@ function buildBundleFake(bundleResults: Bundle[] = [], state: ActionState = idle
     bundleResultsTotalCount: () => bundleResults.length,
     bundleResultsTotalPages: () => 1,
     bundleResultsPage: page.asReadonly(),
-    bundleResultsPageSize: () => 16,
+    bundleResultsPageSize: () => 20,
+    bundleResultsPageSizeOptions: [12, 20, 24, 40, 48],
+    setBundleResultsPageSize: vi.fn(),
     loadBundleResultsPage: vi.fn(),
     retryBundleResults: vi.fn(),
   };
@@ -474,6 +476,36 @@ describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.
 });
 
 describe('Marketplace results pagination', () => {
+  it('appends the next page on load more and replaces results on direct page navigation', () => {
+    const catalog = buildCatalogFake();
+    const results = signal([buildDoc('doc-1')]);
+    const page = signal(1);
+    const state = signal<ActionState>(idleActionState());
+    catalog.marketplaceResults = results.asReadonly();
+    catalog.marketplaceResultsPage = page.asReadonly();
+    catalog.marketplaceResultsState = state.asReadonly();
+    catalog.marketplaceResultsTotalPages = () => 3;
+    catalog.marketplaceResultsTotalCount = () => 60;
+    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+
+    fixture.componentInstance.loadMoreResults();
+    expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);
+    state.set({ status: 'loading' } as ActionState);
+    page.set(2);
+    results.set([buildDoc('doc-2')]);
+    state.set(idleActionState());
+    fixture.detectChanges();
+    expect(fixture.componentInstance.displayedDocs().map((doc) => doc.id)).toEqual(['doc-1', 'doc-2']);
+
+    fixture.componentInstance.changePage(1);
+    state.set({ status: 'loading' } as ActionState);
+    page.set(1);
+    results.set([buildDoc('doc-1')]);
+    state.set(idleActionState());
+    fixture.detectChanges();
+    expect(fixture.componentInstance.displayedDocs().map((doc) => doc.id)).toEqual(['doc-1']);
+  });
+
   it('keeps the filters sidebar visible on the package tab', () => {
     const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
     const sidebar = (fixture.nativeElement as HTMLElement).querySelector('aside');

@@ -269,6 +269,28 @@ describe('AdminPayoutsPage — คอลัมน์ปลายทาง / ย�
   });
 });
 
+describe('AdminPayoutsPage — PromptPay QR', () => {
+  it('opens the saved QR and closes the dialog', async () => {
+    const url = '/api/files/download/seller/qr.png';
+    const { fixture } = render({
+      items: [payoutFixture({ destinationType: 'promptpay', payoutAccountQrImageUrl: url })],
+    });
+    await settle(fixture);
+
+    const root = fixture.nativeElement as HTMLElement;
+    const button = Array.from(root.querySelectorAll('button')).find((item) => item.textContent?.includes('แสดง QR พร้อมเพย์'));
+    expect(button).toBeTruthy();
+    button!.click();
+    fixture.detectChanges();
+
+    const dialog = root.querySelector('[role="dialog"]');
+    expect(dialog?.querySelector('img')?.getAttribute('src')).toContain(url);
+    (dialog?.querySelector('button[aria-label="ปิด"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
 describe('AdminPayoutsPage — modal อัปโหลดสลิป (AC-38)', () => {
   it('rejects a file that is not image/* or application/pdf', () => {
     const { fixture } = render();

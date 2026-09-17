@@ -126,6 +126,7 @@ export const th = {
     securePayment: 'ชำระเงินผ่านระบบที่ปลอดภัย — PromptPay / บัตรเครดิต',
   },
   marketplace: {
+    loadMore: 'โหลดเพิ่มเติม',
     title: 'ตลาดเอกสาร',
     searchPlaceholder: 'พิมพ์ชื่อวิชา ระดับชั้น หรือหัวข้อที่ต้องการ…',
     resetFilters: 'ล้างตัวกรองทั้งหมด',

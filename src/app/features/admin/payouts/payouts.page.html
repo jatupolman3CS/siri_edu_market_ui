@@ -76,6 +76,9 @@
                   </span>
                   <div class="whitespace-nowrap">{{ p.payoutAccountMasked ?? p.bankAccount }}</div>
                   <div class="text-xs text-ink-muted">{{ p.payoutAccountHolderName }}</div>
+                  @if (p.payoutAccountQrImageUrl) {
+                    <button type="button" class="text-pink-600 text-xs font-semibold mt-1" (click)="qrModalPayout.set(p)">แสดง QR พร้อมเพย์</button>
+                  }
                   @if (destinationChanged(p)) {
                   <div class="mt-1 px-2 py-1 rounded-lg bg-orange-50 text-orange-700 text-xs">
                     บัญชีปลายทางของผู้ขายถูกแก้ไขหลังจากยื่นคำขอ — กรุณาตรวจสอบก่อนโอน
@@ -150,6 +153,20 @@
     </div>
   }
 </div>
+
+@if (qrModalPayout(); as payout) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="qrModalPayout.set(null)">
+    <div class="bg-white rounded-lg p-5 w-full max-w-sm text-center" role="dialog" aria-modal="true" aria-label="QR พร้อมเพย์" (click)="$event.stopPropagation()">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-semibold text-ink">QR พร้อมเพย์</h2>
+        <button type="button" class="text-ink-soft" aria-label="ปิด" (click)="qrModalPayout.set(null)"><app-icon name="close" [size]="18" /></button>
+      </div>
+      <p class="text-sm text-ink mb-1">{{ payout.sellerName }}</p>
+      <p class="text-sm font-semibold text-ink mb-4">{{ payout.netAmount | thb }}</p>
+      <img [src]="qrImageUrl(payout)" alt="QR พร้อมเพย์ของผู้ขาย" class="w-full max-w-64 mx-auto object-contain" />
+    </div>
+  </div>
+}
 
 <!-- §3.7/§4.5: slip upload + verification modal -->
 @if (slipModalPayout(); as payout) {

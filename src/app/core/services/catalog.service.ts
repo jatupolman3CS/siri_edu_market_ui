@@ -186,8 +186,8 @@ export class CatalogService {
    * (which still share `_documents` via infinite-scroll) are untouched.
    */
   private readonly marketplacePager = createServerPager<DocumentItem>({
-    pageSize: 16,
-    pageSizeOptions: [12, 16, 24, 48],
+    pageSize: 20,
+    pageSizeOptions: [12, 20, 24, 40, 48],
     errorMessage: 'ค้นหาเอกสารไม่สำเร็จ',
     fetch: async (page, pageSize) => {
       const result = await getApiMarketplaceSearch(this.buildSearchOptions(page, pageSize));

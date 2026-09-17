@@ -3,8 +3,10 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -19,6 +21,7 @@ import {
 } from '../../../core/services';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
+  Bundle,
   Category,
   DocumentItem,
   GRADE_LEVEL_LABELS,
@@ -143,6 +146,15 @@ export class BuyerMarketplacePage {
   // ===== marketplace-home-redesign v2 §4.2 State Management =====
 
   readonly activeUiTab = signal<MarketplaceUiTab>('all');
+  readonly displayedDocs = signal<DocumentItem[]>([]);
+  readonly displayedBundles = signal<Bundle[]>([]);
+  private readonly loadMoreSentinel = viewChild<ElementRef<HTMLElement>>('loadMoreSentinel');
+  private displayedDocPage = 0;
+  private displayedBundlePage = 0;
+  private lastDocResults: DocumentItem[] | undefined;
+  private lastBundleResults: Bundle[] | undefined;
+  private appendDocPage = 0;
+  private appendBundlePage = 0;
   /** §4.2: true once the "แพ็กเกจ" tab has been activated at least once this session. */
   readonly packageTabActivated = signal(false);
   readonly openGroups = signal<Record<FilterGroupKey, boolean>>({
@@ -258,19 +270,45 @@ export class BuyerMarketplacePage {
 
   changePage(page: number): void {
     if (this.catalog.marketplaceResultsState().status === 'loading') return;
+    this.appendDocPage = 0;
     this.catalog.loadMarketplaceResultsPage(page);
     this.scrollToTop();
   }
 
   changePageSize(pageSize: number): void {
+    this.appendDocPage = 0;
     this.catalog.setMarketplacePageSize(pageSize);
     this.scrollToTop();
   }
 
   changeBundlePage(page: number): void {
     if (this.bundles.bundleResultsState().status === 'loading') return;
+    this.appendBundlePage = 0;
     void this.bundles.loadBundleResultsPage(page);
     this.scrollToTop();
+  }
+
+  changeBundlePageSize(pageSize: number): void {
+    this.appendBundlePage = 0;
+    this.bundles.setBundleResultsPageSize(pageSize);
+    this.scrollToTop();
+  }
+
+  loadMoreResults(): void {
+    if (this.activeUiTab() === 'package') {
+      if (this.bundles.bundleResultsState().status !== 'idle') return;
+      const next = this.bundles.bundleResultsPage() + 1;
+      if (next > this.bundles.bundleResultsTotalPages()) return;
+      this.appendBundlePage = next;
+      void this.bundles.loadBundleResultsPage(next);
+      return;
+    }
+
+    if (this.catalog.marketplaceResultsState().status !== 'idle') return;
+    const next = this.catalog.marketplaceResultsPage() + 1;
+    if (next > this.catalog.marketplaceResultsTotalPages()) return;
+    this.appendDocPage = next;
+    this.catalog.loadMarketplaceResultsPage(next);
   }
 
   retryBundleResults(): void {
@@ -283,6 +321,51 @@ export class BuyerMarketplacePage {
     this.catalog.initForMarketplace();
     // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
     this.platformStats.loadStats();
+
+    effect(() => {
+      const status = this.catalog.marketplaceResultsState().status;
+      const page = this.catalog.marketplaceResultsPage();
+      const docs = this.catalog.marketplaceResults();
+      if (status !== 'idle') return;
+      if (page === this.displayedDocPage && docs === this.lastDocResults) return;
+      if (page === this.appendDocPage && page === this.displayedDocPage + 1) {
+        this.displayedDocs.update((current) => [...current, ...docs]);
+      } else {
+        this.displayedDocs.set(docs);
+      }
+      this.displayedDocPage = page;
+      this.lastDocResults = docs;
+      this.appendDocPage = 0;
+    });
+
+    effect(() => {
+      const status = this.bundles.bundleResultsState().status;
+      const page = this.bundles.bundleResultsPage();
+      const items = this.bundles.bundleResults();
+      if (status !== 'idle') return;
+      if (page === this.displayedBundlePage && items === this.lastBundleResults) return;
+      if (page === this.appendBundlePage && page === this.displayedBundlePage + 1) {
+        this.displayedBundles.update((current) => [...current, ...items]);
+      } else {
+        this.displayedBundles.set(items);
+      }
+      this.displayedBundlePage = page;
+      this.lastBundleResults = items;
+      this.appendBundlePage = 0;
+    });
+
+    effect((onCleanup) => {
+      const target = this.loadMoreSentinel()?.nativeElement;
+      if (!target || typeof IntersectionObserver === 'undefined') return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) this.loadMoreResults();
+        },
+        { rootMargin: '240px' },
+      );
+      observer.observe(target);
+      onCleanup(() => observer.disconnect());
+    });
 
     // seller-ads-promotion v1 §4.3 (AC-38): fire impressions once per rendered result set.
     // `marketplaceResults()` is a `computed()` that returns a fresh array only when one of its

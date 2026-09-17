@@ -127,7 +127,7 @@
               }
               @if (promptPayQrImageUrl()) {
                 <img
-                  [src]="promptPayQrImageUrl()!"
+                  [src]="resolveQrUrl(promptPayQrImageUrl())"
                   alt="ตัวอย่างรูปภาพ QR Code พร้อมเพย์"
                   class="mt-3 w-40 h-40 object-contain rounded-xl border border-line bg-white"
                 />
@@ -199,7 +199,7 @@
             <p class="text-xs text-ink-muted mb-1">QR Code พร้อมเพย์</p>
             @if (account()!.promptPayQrImageUrl) {
               <img
-                [src]="account()!.promptPayQrImageUrl!"
+                [src]="resolveQrUrl(account()!.promptPayQrImageUrl)"
                 alt="QR Code พร้อมเพย์"
                 class="w-40 h-40 object-contain rounded-xl border border-line bg-white"
               />

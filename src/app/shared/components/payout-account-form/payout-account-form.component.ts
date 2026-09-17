@@ -5,6 +5,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { THAI_BANKS, type PayoutAccountType, type PromptPayIdType } from '../../../core/models';
 import { PayoutAccountService, SellerService } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
+import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
 
 type FieldErrors = {
   bankCode: string | null;
@@ -75,6 +76,7 @@ export class PayoutAccountFormComponent {
   private readonly message = inject(NzMessageService);
 
   readonly banks = THAI_BANKS;
+  readonly resolveQrUrl = resolvePublicUrl;
 
   readonly account = this.payoutAccount.account;
   readonly state = this.payoutAccount.state;
@@ -285,7 +287,10 @@ export class PayoutAccountFormComponent {
     this.qrUploading.set(true);
     try {
       const data = await this.seller.uploadFile(file);
-      this.promptPayQrImageUrl.set(data.publicUrl);
+      const qrUrl = data.key
+        ? new URL(downloadUrlForStorageKey(data.key)).pathname
+        : data.publicUrl;
+      this.promptPayQrImageUrl.set(qrUrl);
       this.fieldErrors.update((e) => ({ ...e, qrImage: null }));
     } catch {
       // SellerService already reported this via ApiFailureReporter.

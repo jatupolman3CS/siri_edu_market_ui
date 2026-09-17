@@ -129,6 +129,7 @@ export const en: TranslationKeys = {
   },
   marketplace: {
     title: 'Marketplace',
+    loadMore: 'Load more',
     searchPlaceholder: 'Search by subject, grade level, or topic…',
     resetFilters: 'Reset Filters',
     // marketplace-redesign v1 §Copy — page header / category chips

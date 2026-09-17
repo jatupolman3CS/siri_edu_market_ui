@@ -533,13 +533,13 @@
         @if (activeUiTab() === 'package') {
           <!-- ================= "แพ็กเกจ" tab (marketplace-home-redesign v2 §4.2, round 1 stub) ================= -->
           <div class="relative min-h-[420px] pr-1">
-            @if (bundles.bundleResultsState().status === 'error' && bundles.bundleResults().length === 0) {
+            @if (bundles.bundleResultsState().status === 'error' && displayedBundles().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="retryBundleResults()">
                   {{ 'common.retry' | trans }}
                 </button>
               </app-empty-state>
-            } @else if (bundles.bundleResultsState().status !== 'loading' && bundles.bundleResults().length === 0) {
+            } @else if (bundles.bundleResultsState().status !== 'loading' && displayedBundles().length === 0) {
               <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
                 <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
                   <app-icon name="package" [size]="30" className="text-pink-500" />
@@ -552,26 +552,34 @@
               </div>
             } @else {
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                @for (b of bundles.bundleResults(); track b.id) {
+                @for (b of displayedBundles(); track b.id) {
                   <app-bundle-card [bundle]="b" />
                 }
               </div>
 
-              @if (bundles.bundleResults().length > 0) {
+              @if (displayedBundles().length > 0) {
+                @if (bundles.bundleResultsPage() < bundles.bundleResultsTotalPages() || bundles.bundleResultsState().status === 'error') {
+                  <div #loadMoreSentinel class="flex justify-center py-6">
+                    <button type="button" class="btn-pink" [disabled]="bundles.bundleResultsState().status === 'loading'" (click)="bundles.bundleResultsState().status === 'error' ? retryBundleResults() : loadMoreResults()">
+                      {{ bundles.bundleResultsState().status === 'loading' ? ('common.loading' | trans) : bundles.bundleResultsState().status === 'error' ? ('common.retry' | trans) : ('marketplace.loadMore' | trans) }}
+                    </button>
+                  </div>
+                }
                 <div class="border-t border-line mt-8 pt-4">
                   <app-pagination
                     [page]="bundles.bundleResultsPage()"
                     [pageSize]="bundles.bundleResultsPageSize()"
+                    [pageSizeOptions]="bundles.bundleResultsPageSizeOptions"
                     [total]="bundles.bundleResultsTotalCount()"
                     [totalPages]="bundles.bundleResultsTotalPages()"
-                    [showPageSize]="false"
                     (pageChange)="changeBundlePage($event)"
+                    (pageSizeChange)="changeBundlePageSize($event)"
                   />
                 </div>
               }
             }
 
-            @if (bundles.bundleResultsState().status === 'loading' && bundles.bundleResults().length === 0) {
+            @if (bundles.bundleResultsState().status === 'loading' && displayedBundles().length === 0) {
               <div
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
                 role="status"
@@ -585,13 +593,13 @@
         } @else {
           <!-- Result panel -->
           <div class="relative min-h-[420px] pr-1">
-            @if (catalog.marketplaceResultsState().status === 'error' && catalog.marketplaceResults().length === 0) {
+            @if (catalog.marketplaceResultsState().status === 'error' && displayedDocs().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
                   {{ 'common.retry' | trans }}
                 </button>
               </app-empty-state>
-            } @else if (catalog.marketplaceResultsState().status !== 'loading' && catalog.marketplaceResults().length === 0) {
+            } @else if (catalog.marketplaceResultsState().status !== 'loading' && displayedDocs().length === 0) {
               <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
                 <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
                   <app-icon name="search" [size]="30" className="text-pink-500" />
@@ -602,12 +610,19 @@
               </div>
             } @else {
               <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                @for (doc of catalog.marketplaceResults(); track doc.id) {
+                @for (doc of displayedDocs(); track doc.id) {
                   <app-document-card [doc]="doc" density="compact" />
                 }
               </div>
 
-              @if (catalog.marketplaceResults().length > 0) {
+              @if (displayedDocs().length > 0) {
+                @if (catalog.marketplaceResultsPage() < catalog.marketplaceResultsTotalPages() || catalog.marketplaceResultsState().status === 'error') {
+                  <div #loadMoreSentinel class="flex justify-center py-6">
+                    <button type="button" class="btn-pink" [disabled]="catalog.marketplaceResultsState().status === 'loading'" (click)="catalog.marketplaceResultsState().status === 'error' ? catalog.retryMarketplaceResults() : loadMoreResults()">
+                      {{ catalog.marketplaceResultsState().status === 'loading' ? ('common.loading' | trans) : catalog.marketplaceResultsState().status === 'error' ? ('common.retry' | trans) : ('marketplace.loadMore' | trans) }}
+                    </button>
+                  </div>
+                }
                 <div class="border-t border-line mt-8 pt-4">
                   <app-pagination
                     [page]="catalog.marketplaceResultsPage()"
@@ -622,7 +637,7 @@
               }
             }
 
-            @if (catalog.marketplaceResultsState().status === 'loading' && catalog.marketplaceResults().length === 0) {
+            @if (catalog.marketplaceResultsState().status === 'loading' && displayedDocs().length === 0) {
               <div
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
                 role="status"
