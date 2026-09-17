@@ -84,19 +84,22 @@
 
     <div [class]="resultsGridClass()">
       <!-- Sidebar filters -->
-      <aside class="bg-white rounded-2xl border border-line shadow-soft p-1.5 pb-2 lg:sticky lg:top-[96px] max-h-[calc(100vh-112px)] overflow-y-auto overscroll-contain filter-scrollbar">
-          <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-xs flex items-center justify-between px-3.5 pt-3 pb-2.5 rounded-t-xl border-b border-line/40">
-            <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
-              <app-icon name="filter" [size]="16" />
-              {{ 'marketplace.filters' | trans }}
-            </h3>
-            <button type="button" class="text-xs font-semibold text-pink-600 hover:underline cursor-pointer" (click)="reset()">
-              {{ 'marketplace.clearAll' | trans }}
-            </button>
-          </div>
+      <aside class="bg-white rounded-2xl border border-line shadow-soft flex flex-col overflow-hidden lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto lg:overscroll-contain filter-scrollbar">
+        <!-- Header: Locked at top of card -->
+        <div class="shrink-0 lg:sticky lg:top-0 flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-line/60 bg-white rounded-t-2xl z-10">
+          <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
+            <app-icon name="filter" [size]="16" />
+            {{ 'marketplace.filters' | trans }}
+          </h3>
+          <button type="button" class="text-xs font-semibold text-pink-600 hover:underline cursor-pointer" (click)="reset()">
+            {{ 'marketplace.clearAll' | trans }}
+          </button>
+        </div>
 
+        <!-- Filter items: the aside owns desktop scrolling so the header stays locked to the top edge. -->
+        <div class="p-1.5 pb-3">
           <!-- Category — ย้ายกลับมาไว้ด้านซ้ายในแผงตัวกรอง (ผู้ใช้สั่ง 2026-09-16 ให้เหมือนก่อน marketplace-redesign v1) -->
-          <div class="border-t border-line">
+          <div>
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -401,6 +404,7 @@
               </div>
             }
           </div>
+        </div>
       </aside>
 
       <!-- Results -->
