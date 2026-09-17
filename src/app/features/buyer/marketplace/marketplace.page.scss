@@ -1,0 +1,21 @@
+.filter-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(242, 99, 142, 0.3) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(242, 99, 142, 0.25);
+    border-radius: 9999px;
+
+    &:hover {
+      background-color: rgba(242, 99, 142, 0.5);
+    }
+  }
+}
