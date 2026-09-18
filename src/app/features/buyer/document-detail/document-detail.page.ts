@@ -303,7 +303,16 @@ export class BuyerDocumentDetailPage {
       // not the preview sub-view) is the only mount point that counts as a "view" — classify the
       // traffic source right here, synchronously, before this navigation's own NavigationEnd
       // fires (see NavigationSourceService's class doc for why the timing matters).
-      if (id) this.catalog.loadDocumentDetail(id, this.navSource.classifyEntrySource());
+      if (id) {
+        this.catalog.loadDocumentDetail(id, this.navSource.classifyEntrySource());
+        void this.catalog.loadDocumentPreview(id).then((data) => {
+          if (this.id() === id) {
+            this.preview.set(data);
+          }
+        }).catch(() => {
+          // non-blocking background preview prefetch
+        });
+      }
       this.loadCrossSellBundles(id);
       this.loadBoughtTogether(id);
     });
@@ -447,6 +456,15 @@ export class BuyerDocumentDetailPage {
       this.message.info('เอกสารนี้ยังไม่เปิดพรีวิว');
       return;
     }
+
+    const existingRaster = this.previewRasterUrls();
+    if (existingRaster.length > 0) {
+      if (forceModal) {
+        this.showPreviewGallery.set(true);
+      }
+      return;
+    }
+
     if (this.previewLoading()) return;
 
     void (async () => {
@@ -460,9 +478,18 @@ export class BuyerDocumentDetailPage {
             this.showPreviewGallery.set(true);
           }
         } else if (forceModal) {
-          this.message.warning(
-            'ยังไม่มีพรีวิวภาพพร้อมลายน้ำสำหรับเอกสารนี้ — ระบบกำลังเตรียมตัวอย่างพรีวิว',
-          );
+          if (typeof document !== 'undefined') {
+            document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          if (d.format && d.format !== 'pdf') {
+            this.message.info(
+              `เอกสารนี้เป็นไฟล์ประเภท ${d.format.toUpperCase()} สามารถดูเนื้อหาตัวอย่างได้ในแท็บพรีวิว`,
+            );
+          } else {
+            this.message.warning(
+              'ยังไม่มีพรีวิวภาพพร้อมลายน้ำสำหรับเอกสารนี้ — ระบบกำลังเตรียมตัวอย่างพรีวิว',
+            );
+          }
         }
       } catch {
         if (forceModal) {
