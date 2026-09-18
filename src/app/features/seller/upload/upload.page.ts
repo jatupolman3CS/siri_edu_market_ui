@@ -160,6 +160,19 @@ export class SellerUploadPage {
   readonly isFree = signal<boolean>(false);
 
   /**
+   * Validation error when original price is set (>0) but not strictly greater than current price.
+   */
+  readonly originalPriceError = computed<string | null>(() => {
+    if (this.isFree()) return null;
+    const p = this.price();
+    const op = this.originalPrice();
+    if (op > 0 && op <= p) {
+      return `ราคาเต็มก่อนลดต้องมากกว่าราคาขายปัจจุบัน (฿${p}) หรือใส่ 0 หากไม่มีส่วนลด`;
+    }
+    return null;
+  });
+
+  /**
    * seller-pricing-and-storefront-stats v1 §3.1/§4: competitor price range for step 3
    * ("ตั้งราคา") — `null` while loading, not-yet-fetched, or on a failed request (AC-8/AC-10
    * both render nothing; the template additionally hides the box when `sampleSize < 3`, AC-8).
@@ -537,6 +550,10 @@ export class SellerUploadPage {
   });
 
   next(): void {
+    if (this.step() === 3 && this.originalPriceError()) {
+      this.message.error(this.originalPriceError()!);
+      return;
+    }
     // seller-pricing-and-storefront-stats v1 §4/AC-7: fetch the pricing hint only the moment the
     // seller first reaches step 3 — not on every category checkbox toggle in step 2.
     const enteringStep3 = this.step() !== 3;
@@ -545,6 +562,19 @@ export class SellerUploadPage {
       void this.loadPricingHint();
     }
   }
+
+  goToStep(targetStep: number): void {
+    if (this.step() === 3 && targetStep > 3 && this.originalPriceError()) {
+      this.message.error(this.originalPriceError()!);
+      return;
+    }
+    const enteringStep3 = this.step() !== 3 && targetStep === 3;
+    this.step.set(targetStep);
+    if (enteringStep3) {
+      void this.loadPricingHint();
+    }
+  }
+
   prev(): void {
     this.step.update((s) => Math.max(1, s - 1));
   }
@@ -679,6 +709,11 @@ export class SellerUploadPage {
       // "Free" forces price = 0; UI hid the price input but enforce here too.
       const effectivePrice = this.isFree() ? 0 : this.price();
 
+      if (this.originalPriceError()) {
+        this.message.error(this.originalPriceError()!);
+        return;
+      }
+
       try {
         if (this.isEditMode()) {
           const id = this.editId();
@@ -711,6 +746,20 @@ export class SellerUploadPage {
             editBody.previewStorageKey = null;
           }
           await this.seller.updateDocument(id, editBody);
+
+          // watermark-config drift fix: position/opacity/color/rotation/personalized-template
+          // fields are NOT part of UpdateSellerDocumentRequest above — they only live on the
+          // dedicated watermark-config endpoint. Mirror the create-mode call below so editing an
+          // existing listing can actually reach them too (previously unreachable in edit mode).
+          const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
+          if (tpl.config) {
+            try {
+              await postApiSellerDocumentWatermarkConfig(id, tpl.config);
+            } catch {
+              this.message.error('บันทึกการตั้งค่าลายน้ำไม่สำเร็จ กรุณาลองใหม่');
+            }
+          }
+
           this.message.success('บันทึกการแก้ไขเรียบร้อย');
         } else {
           if (!f || !uploaded) {

@@ -504,6 +504,49 @@ describe('SellerUploadPage — discount urgency originalPrice/discountExpiresAt 
     expect(body.originalPrice).toBe(0);
     expect(body.discountExpiresAt).toBeNull();
   });
+
+  it('validates originalPrice must be greater than current price when greater than 0', async () => {
+    const { component } = renderForEdit();
+    await settleConstructorLoad();
+
+    component.price.set(199);
+    component.originalPrice.set(100);
+    expect(component.originalPriceError()).toContain('ราคาเต็มก่อนลดต้องมากกว่าราคาขายปัจจุบัน (฿199)');
+
+    component.originalPrice.set(199);
+    expect(component.originalPriceError()).toContain('ราคาเต็มก่อนลดต้องมากกว่าราคาขายปัจจุบัน (฿199)');
+
+    component.originalPrice.set(299);
+    expect(component.originalPriceError()).toBeNull();
+
+    component.originalPrice.set(0);
+    expect(component.originalPriceError()).toBeNull();
+
+    component.originalPrice.set(100);
+    component.setIsFree(true);
+    expect(component.originalPriceError()).toBeNull();
+  });
+
+  it('blocks step 3 next() and submit() when originalPrice is less than or equal to current price', async () => {
+    const { component, updateDocumentCalls } = renderForEdit();
+    await settleConstructorLoad();
+
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+    component.price.set(199);
+    component.originalPrice.set(150);
+    component.step.set(3);
+
+    component.next();
+    expect(component.step()).toBe(3);
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(0);
+  });
 });
 
 /**

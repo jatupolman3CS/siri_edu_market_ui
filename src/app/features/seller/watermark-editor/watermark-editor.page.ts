@@ -7,10 +7,16 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../../../core/services';
 import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
+import {
+  getApiSellerDocumentWatermarkConfig,
+  postApiSellerDocumentWatermarkConfig,
+  type SellerWatermarkConfigRequest,
+} from '../../../core/api/seller-watermark.api';
+import { unwrapSdkResult } from '../../../core/services/api-result';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 export interface PositionOption {
@@ -32,13 +38,22 @@ export class WatermarkEditorPage {
   private readonly auth = inject(AuthService);
   private readonly templates = inject(SellerWatermarkTemplateService);
   private readonly message = inject(NzMessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   // Active Tab: 'web-preview' | 'personalized'
   readonly activeTab = signal<'web-preview' | 'personalized'>('web-preview');
 
+  // watermark-editor-document-mode v1 §4: null = template mode (`/seller/watermark`),
+  // a document id = document mode (`/seller/documents/:id/watermark`) — read once at init.
+  readonly documentId = signal<string | null>(null);
+  // Only meaningful in document mode — stays true forever if the GET fails so the form is
+  // never rendered against a document that doesn't exist / isn't the caller's (AC-03).
+  readonly loading = signal(false);
+  readonly documentTitle = signal('');
+
   readonly saving = signal(false);
   readonly watermarkEnabled = signal(true);
-  readonly previewWatermarkSubtitle = signal('');
   readonly previewWatermarkFontFamily = signal('Noto Sans Thai');
   readonly previewWatermarkFontOptions = ['Noto Sans Thai', 'Sarabun', 'Kanit', 'Prompt', 'Arial'];
 
@@ -129,35 +144,82 @@ export class WatermarkEditorPage {
   }
 
   constructor() {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.documentId.set(id);
+    if (id) {
+      this.loading.set(true);
+      void this.loadDocumentConfig(id);
+    } else {
+      this.loadTemplateConfig();
+    }
+  }
+
+  private loadTemplateConfig(): void {
     const template = this.templates.loadOrDefault(this.auth.user()?.id);
     this.watermarkEnabled.set(template.enabled);
-    this.previewWatermarkSubtitle.set(template.previewWatermarkSubtitle);
     this.previewWatermarkFontFamily.set(template.previewWatermarkFontFamily);
-    this.watermarkText.set(template.config.watermarkText ?? 'SIRI EDUMARKET PREVIEW');
-    this.watermarkPosition.set(template.config.watermarkPosition ?? 'center-diagonal');
-    this.watermarkOpacity.set(Math.round((template.config.watermarkOpacity ?? 0.25) * 100));
-    this.watermarkColor.set(template.config.watermarkColor ?? '#E11D48');
-    this.watermarkFontSize.set(template.config.watermarkFontSize ?? 42);
-    this.watermarkRotation.set(template.config.watermarkRotationDegrees ?? -30);
-    this.downloadWatermarkPosition.set(template.config.downloadWatermarkPosition ?? 'footer');
-    this.downloadWatermarkTemplate.set(template.config.downloadWatermarkTemplate ?? '');
+    this.watermarkText.set(template.previewWatermarkSubtitle || 'SIRI EDUMARKET PREVIEW');
+    this.watermarkPosition.set(template.config.previewWatermarkPosition ?? 'center-diagonal');
+    this.watermarkOpacity.set(Math.round((template.config.previewWatermarkOpacity ?? 0.25) * 100));
+    this.watermarkColor.set(template.config.previewWatermarkColor ?? '#E11D48');
+    this.watermarkFontSize.set(template.config.previewWatermarkFontSize ?? 42);
+    this.watermarkRotation.set(template.config.previewWatermarkRotation ?? -30);
+    this.downloadWatermarkPosition.set(template.config.personalizedWatermarkPosition ?? 'footer');
+    this.downloadWatermarkTemplate.set(template.config.personalizedWatermarkTemplate ?? '');
+  }
+
+  /**
+   * watermark-editor-document-mode v1 §4: GET is called once on init in document mode and
+   * mapped into the same signals the template already renders/edits. A failure here (404 or
+   * anything else) is a real error per §1 — not a "not configured yet" state to fall back on —
+   * so `loading` is deliberately left `true` (never flipped to `false` in the catch branch):
+   * the form must never render against a document that doesn't exist / isn't the caller's.
+   */
+  private async loadDocumentConfig(id: string): Promise<void> {
+    try {
+      const result = await getApiSellerDocumentWatermarkConfig(id);
+      const data = unwrapSdkResult(result);
+      this.documentTitle.set(data.title ?? '');
+      this.watermarkEnabled.set(data.watermarkEnabled);
+      this.watermarkText.set(data.previewWatermarkSubtitle ?? '');
+      this.previewWatermarkFontFamily.set(data.previewWatermarkFontFamily ?? 'Noto Sans Thai');
+      this.watermarkPosition.set(data.previewWatermarkPosition ?? 'center-diagonal');
+      this.watermarkOpacity.set(Math.round((data.previewWatermarkOpacity ?? 0.25) * 100));
+      this.watermarkColor.set(data.previewWatermarkColor ?? '#E11D48');
+      this.watermarkFontSize.set(data.previewWatermarkFontSize ?? 42);
+      this.watermarkRotation.set(data.previewWatermarkRotation ?? -30);
+      this.downloadWatermarkPosition.set(data.personalizedWatermarkPosition ?? 'footer');
+      this.downloadWatermarkTemplate.set(data.personalizedWatermarkTemplate ?? '');
+      this.loading.set(false);
+    } catch {
+      this.message.error('ไม่พบเอกสารนี้ หรือคุณไม่มีสิทธิ์แก้ไข');
+      void this.router.navigate(['/seller/documents']);
+    }
   }
 
   saveConfig(): void {
+    const id = this.documentId();
+    if (id) {
+      void this.saveDocumentConfig(id);
+    } else {
+      this.saveTemplateConfig();
+    }
+  }
+
+  private saveTemplateConfig(): void {
     this.saving.set(true);
     const saved = this.templates.save(this.auth.user()?.id, {
       enabled: this.watermarkEnabled(),
-      previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
+      previewWatermarkSubtitle: this.watermarkText().trim(),
       previewWatermarkFontFamily: this.previewWatermarkFontFamily(),
       config: {
-        watermarkText: this.watermarkText().trim() || 'SIRI EDUMARKET PREVIEW',
-        watermarkPosition: this.watermarkPosition(),
-        watermarkOpacity: this.watermarkOpacity() / 100,
-        watermarkColor: this.watermarkColor(),
-        watermarkFontSize: this.watermarkFontSize(),
-        watermarkRotationDegrees: this.watermarkRotation(),
-        downloadWatermarkPosition: this.downloadWatermarkPosition(),
-        downloadWatermarkTemplate: this.downloadWatermarkTemplate().trim(),
+        previewWatermarkPosition: this.watermarkPosition(),
+        previewWatermarkOpacity: this.watermarkOpacity() / 100,
+        previewWatermarkColor: this.watermarkColor(),
+        previewWatermarkFontSize: this.watermarkFontSize(),
+        previewWatermarkRotation: this.watermarkRotation(),
+        personalizedWatermarkPosition: this.downloadWatermarkPosition(),
+        personalizedWatermarkTemplate: this.downloadWatermarkTemplate().trim(),
       },
     });
     this.saving.set(false);
@@ -165,6 +227,31 @@ export class WatermarkEditorPage {
       this.message.success('บันทึกเทมเพลตลายน้ำเรียบร้อยแล้ว (จะถูกนำไปใช้กับเอกสารใหม่โดยอัตโนมัติ)');
     } else {
       this.message.error('บันทึกเทมเพลตลายน้ำไม่สำเร็จ');
+    }
+  }
+
+  private async saveDocumentConfig(id: string): Promise<void> {
+    this.saving.set(true);
+    const body: SellerWatermarkConfigRequest = {
+      watermarkEnabled: this.watermarkEnabled(),
+      previewWatermarkSubtitle: this.watermarkText().trim(),
+      previewWatermarkFontFamily: this.previewWatermarkFontFamily(),
+      previewWatermarkPosition: this.watermarkPosition(),
+      previewWatermarkOpacity: this.watermarkOpacity() / 100,
+      previewWatermarkColor: this.watermarkColor(),
+      previewWatermarkFontSize: this.watermarkFontSize(),
+      previewWatermarkRotation: this.watermarkRotation(),
+      personalizedWatermarkPosition: this.downloadWatermarkPosition(),
+      personalizedWatermarkTemplate: this.downloadWatermarkTemplate().trim(),
+    };
+    try {
+      const result = await postApiSellerDocumentWatermarkConfig(id, body);
+      unwrapSdkResult(result);
+      this.message.success('บันทึกลายน้ำของเอกสารนี้เรียบร้อยแล้ว');
+    } catch {
+      this.message.error('บันทึกลายน้ำของเอกสารนี้ไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      this.saving.set(false);
     }
   }
 }

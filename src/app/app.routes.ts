@@ -306,8 +306,11 @@ export const routes: Routes = [
       },
       {
         path: 'documents/:id/watermark',
-        redirectTo: 'watermark',
-        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/seller/watermark-editor/watermark-editor.page').then(
+            (m) => m.WatermarkEditorPage,
+          ),
+        title: 'จัดการลายน้ำเอกสาร — Siri Studio',
       },
       {
         path: 'watermark',
@@ -414,11 +417,6 @@ export const routes: Routes = [
             (m) => m.AdminDocumentDetailPage,
           ),
         title: 'รายละเอียดเอกสาร — Admin',
-      },
-      {
-        path: 'documents/:id/watermark',
-        redirectTo: 'documents',
-        pathMatch: 'full',
       },
       {
         path: 'approval',

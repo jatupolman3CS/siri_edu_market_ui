@@ -22561,6 +22561,10 @@
           },
           "acceptTerms": {
             "type": "boolean"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -26076,6 +26080,33 @@
             "type": "string",
             "nullable": true
           },
+          "previewWatermarkPosition": {
+            "type": "string"
+          },
+          "previewWatermarkOpacity": {
+            "type": "number",
+            "format": "double"
+          },
+          "previewWatermarkColor": {
+            "type": "string"
+          },
+          "previewWatermarkRotation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "previewWatermarkFontSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "personalizedWatermarkPosition": {
+            "type": "string"
+          },
+          "personalizedWatermarkTemplate": {
+            "type": "string",
+            "nullable": true
+          },
           "categoryIds": {
             "type": "array",
             "items": {
@@ -27474,6 +27505,41 @@
           },
           "previewWatermarkFontFamily": {
             "maxLength": 128,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkPosition": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkOpacity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "previewWatermarkColor": {
+            "maxLength": 32,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkRotation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "previewWatermarkFontSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "personalizedWatermarkPosition": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "personalizedWatermarkTemplate": {
+            "maxLength": 512,
             "type": "string",
             "nullable": true
           },

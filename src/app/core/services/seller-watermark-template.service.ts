@@ -13,14 +13,14 @@ export const DEFAULT_WATERMARK_TEMPLATE: SellerWatermarkTemplate = {
   previewWatermarkSubtitle: '',
   previewWatermarkFontFamily: 'Noto Sans Thai',
   config: {
-    watermarkText: 'SIRI EDUMARKET PREVIEW',
-    watermarkPosition: 'center-diagonal',
-    watermarkOpacity: 0.25,
-    watermarkColor: '#E11D48',
-    watermarkFontSize: 42,
-    watermarkRotationDegrees: -30,
-    downloadWatermarkPosition: 'footer',
-    downloadWatermarkTemplate:
+    previewWatermarkSubtitle: 'SIRI EDUMARKET PREVIEW',
+    previewWatermarkPosition: 'center-diagonal',
+    previewWatermarkOpacity: 0.25,
+    previewWatermarkColor: '#E11D48',
+    previewWatermarkFontSize: 42,
+    previewWatermarkRotation: -30,
+    personalizedWatermarkPosition: 'footer',
+    personalizedWatermarkTemplate:
       'เอกสารนี้ได้รับสิทธิ์การใช้งานโดย {email} เมื่อ {date} (รหัสตรวจสอบ: {token}) ห้ามทำซ้ำ ดัดแปลง หรือเผยแพร่ต่อ',
   },
 };
@@ -40,7 +40,7 @@ export class SellerWatermarkTemplateService {
       const value: unknown = JSON.parse(raw);
       if (!value || typeof value !== 'object' || !('config' in value)) return null;
       const template = value as SellerWatermarkTemplate;
-      if (!template.config || typeof template.config.watermarkText !== 'string') return null;
+      if (!template.config || typeof template.config.previewWatermarkPosition !== 'string') return null;
       return template;
     } catch {
       return null;
