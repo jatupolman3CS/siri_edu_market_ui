@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import type { AdminDocumentDetail } from '../../../core/api/admin-documents.api';
-import { resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
+import { resolvePublicUrl, resolveDownloadUrl, downloadUrlForStorageKey } from '../../../core/api-runtime';
 import { AdminService, AuthService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -211,7 +211,7 @@ export class AdminApprovalPage {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
     const rawUrl = await this.admin.getFileDownloadUrl(key, true);
-    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}?inline=true`;
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
     const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
     if (url) window.open(url, '_blank', 'noopener');
   }
@@ -220,7 +220,7 @@ export class AdminApprovalPage {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
     const rawUrl = await this.admin.getFileDownloadUrl(key, false);
-    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}`;
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
     const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
     if (url) window.open(url, '_blank', 'noopener');
   }
@@ -229,7 +229,7 @@ export class AdminApprovalPage {
     const key = storageKey?.trim();
     if (!key) return;
     const rawUrl = await this.admin.getFileDownloadUrl(key, true);
-    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}?inline=true`;
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
     const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
     if (url) window.open(url, '_blank', 'noopener');
   }
@@ -238,7 +238,7 @@ export class AdminApprovalPage {
     const key = storageKey?.trim();
     if (!key) return;
     const rawUrl = await this.admin.getFileDownloadUrl(key, false);
-    const targetUrl = rawUrl || `/api/files/download/${encodeURIComponent(key)}`;
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
     const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
     if (url) window.open(url, '_blank', 'noopener');
   }

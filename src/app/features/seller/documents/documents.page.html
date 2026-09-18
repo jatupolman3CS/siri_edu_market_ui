@@ -112,6 +112,14 @@
           </td>
           <td class="px-5 py-4">
             <span [class]="statusPillClass(d.status)">{{ statusLabel(d.status) }}</span>
+            @if (d.status === 'rejected' && d.rejectionReason) {
+              <div
+                class="mt-1 text-xs text-rose-600 max-w-[220px] truncate"
+                [title]="d.rejectionReason"
+              >
+                เหตุผล: {{ d.rejectionReason }}
+              </div>
+            }
           </td>
           <td class="px-5 py-4 text-xs text-ink-muted whitespace-nowrap">
             {{ d.updatedAt | timeAgo }}

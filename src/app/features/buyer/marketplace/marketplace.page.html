@@ -549,7 +549,7 @@
                 <button class="btn-pink mt-4" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
               </div>
             } @else {
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div class="document-card-grid">
                 @for (doc of displayedDocs(); track doc.id) {
                   <app-document-card [doc]="doc" density="compact" />
                 }

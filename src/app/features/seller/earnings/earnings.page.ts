@@ -3,7 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { PayoutAccountService, PlatformStatsService, SellerService, type SellerPayoutRow } from '../../../core/services';
 import { AuthService } from '../../../core/services/auth.service';
 import { resolveDownloadUrl } from '../../../core/api-runtime';
@@ -47,6 +47,7 @@ function formatBaht(v: number): string {
     CommonModule,
     DatePipe,
     FormsModule,
+    NzModalModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './earnings.page.html',

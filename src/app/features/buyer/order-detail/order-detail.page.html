@@ -152,10 +152,10 @@
             <p class="text-sm text-ink-muted mb-4">
               คัดจากเอกสารในคำสั่งซื้อของคุณ และยังไม่มีในคลังของคุณ
             </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="document-card-grid">
               @for (s of similar(); track s.document.id) {
                 <div>
-                  <app-document-card [doc]="s.document" />
+                  <app-document-card [doc]="s.document" density="compact" />
                   <p class="text-xs text-ink-muted mt-2 line-clamp-2">{{ s.reason }}</p>
                 </div>
               }

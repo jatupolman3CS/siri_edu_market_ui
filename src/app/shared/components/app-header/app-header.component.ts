@@ -149,8 +149,6 @@ export class AppHeaderComponent {
     const items: { label: string; href: string; exact?: boolean }[] = [
       { label: this.translation.t('nav.home'), href: '/', exact: true },
       { label: this.translation.t('nav.marketplace'), href: '/marketplace' },
-      { label: this.translation.t('nav.bundles'), href: '/bundles' },
-      { label: this.translation.t('nav.free'), href: '/free' },
       { label: this.translation.t('nav.categories'), href: '/categories' },
     ];
     if (this.auth.isSeller() || this.auth.isAdmin()) {
@@ -161,7 +159,6 @@ export class AppHeaderComponent {
 
   /**
    * Sub-nav items displayed on desktop left side:
-   * 'marketplace', 'bundles', and 'free' are grouped consecutively right next to each other.
    * Excludes only 'categories' (has its own dedicated leading button).
    */
   readonly subnavItems = computed(() =>

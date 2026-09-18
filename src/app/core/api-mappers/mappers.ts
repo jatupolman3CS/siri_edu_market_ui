@@ -993,6 +993,9 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     // (round 2, post-regen).
     currentVersionNumber: d.currentVersionNumber ?? undefined,
     lastVersionNotifiedBuyerCount: d.lastVersionNotifiedBuyerCount ?? null,
+    // document-rejection-reason v1 §4: real SDK fields (post regen) — no cast needed.
+    rejectionReason: d.rejectionReason ?? null,
+    rejectedAt: d.rejectedAt ?? null,
   };
 }
 
@@ -1314,6 +1317,9 @@ export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): Docu
     isFeatured: false,
     isEditorsPick: false,
     bundleDocumentIds: [],
+    // document-rejection-reason v1 §4: real SDK fields (post regen) — no cast needed.
+    rejectionReason: d.rejectionReason ?? null,
+    rejectedAt: d.rejectedAt ?? null,
   };
 }
 

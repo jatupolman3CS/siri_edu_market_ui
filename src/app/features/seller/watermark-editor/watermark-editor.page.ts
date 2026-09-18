@@ -3,21 +3,14 @@ import {
   Component,
   computed,
   inject,
-  OnInit,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { SellerService } from '../../../core/services';
-import { resolveApiUrl } from '../../../core/api-runtime';
-import {
-  getApiSellerDocumentWatermarkConfig,
-  postApiSellerDocumentWatermarkConfig,
-  SellerWatermarkConfigResponse,
-} from '../../../core/api/seller-watermark.api';
-import { DocumentItem } from '../../../core/models';
+import { AuthService } from '../../../core/services';
+import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 export interface PositionOption {
@@ -35,27 +28,19 @@ export interface PositionOption {
   templateUrl: './watermark-editor.page.html',
   styleUrl: './watermark-editor.page.scss',
 })
-export class WatermarkEditorPage implements OnInit {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly seller = inject(SellerService);
+export class WatermarkEditorPage {
+  private readonly auth = inject(AuthService);
+  private readonly templates = inject(SellerWatermarkTemplateService);
   private readonly message = inject(NzMessageService);
 
   // Active Tab: 'web-preview' | 'personalized'
   readonly activeTab = signal<'web-preview' | 'personalized'>('web-preview');
 
-  // Preview Mode: 'simulator' | 'server-previews'
-  readonly previewMode = signal<'simulator' | 'server-previews'>('simulator');
-
-  // Loading States
-  readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly documentsLoading = signal(false);
-
-  // Document selection
-  readonly documentId = signal<string>('');
-  readonly documentTitle = signal<string>('');
-  readonly sellerDocuments = signal<DocumentItem[]>([]);
+  readonly watermarkEnabled = signal(true);
+  readonly previewWatermarkSubtitle = signal('');
+  readonly previewWatermarkFontFamily = signal('Noto Sans Thai');
+  readonly previewWatermarkFontOptions = ['Noto Sans Thai', 'Sarabun', 'Kanit', 'Prompt', 'Arial'];
 
   // Tab 1: Web Preview Watermark Settings
   readonly watermarkText = signal<string>('SIRI EDUMARKET PREVIEW');
@@ -75,11 +60,6 @@ export class WatermarkEditorPage implements OnInit {
   readonly simBuyerEmail = signal<string>('buyer.somchai@example.com');
   readonly simToken = signal<string>('SEC-9F2B8D');
 
-  // Server-rendered previews
-  readonly previewRasterUrls = signal<string[]>([]);
-  readonly previewPageCount = signal<number>(0);
-  readonly previewTimestamp = signal<number>(Date.now());
-  readonly selectedPreviewPageIndex = signal<number>(0);
 
   // Color presets
   readonly colorPresets = [
@@ -128,74 +108,6 @@ export class WatermarkEditorPage implements OnInit {
       .replace(/{platform}/gi, platform);
   });
 
-  ngOnInit(): void {
-    const idFromParam = this.route.snapshot.paramMap.get('id');
-    if (idFromParam) {
-      this.documentId.set(idFromParam);
-      void this.loadWatermarkConfig(idFromParam);
-    } else {
-      void this.loadSellerDocuments();
-    }
-  }
-
-  async loadSellerDocuments(): Promise<void> {
-    this.documentsLoading.set(true);
-    try {
-      const res = await this.seller.listDocumentsPaged({ page: 1, pageSize: 50 });
-      const items = res.items ?? [];
-      this.sellerDocuments.set(items);
-      if (items.length > 0 && !this.documentId()) {
-        const first = items[0];
-        this.documentId.set(first.id);
-        this.documentTitle.set(first.title);
-        void this.loadWatermarkConfig(first.id);
-      }
-    } catch {
-      this.message.error('ไม่สามารถโหลดรายการเอกสารได้');
-    } finally {
-      this.documentsLoading.set(false);
-    }
-  }
-
-  onDocumentSelectChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const selectedId = target.value;
-    if (selectedId && selectedId !== this.documentId()) {
-      this.documentId.set(selectedId);
-      const found = this.sellerDocuments().find((d) => d.id === selectedId);
-      if (found) this.documentTitle.set(found.title);
-      void this.loadWatermarkConfig(selectedId);
-    }
-  }
-
-  async loadWatermarkConfig(docId: string): Promise<void> {
-    this.loading.set(true);
-    try {
-      const res = await getApiSellerDocumentWatermarkConfig(docId);
-      if (res.data) {
-        const data = res.data;
-        this.documentTitle.set(data.title || 'เอกสาร');
-        this.watermarkText.set(data.watermarkText || 'SIRI EDUMARKET PREVIEW');
-        this.watermarkPosition.set(data.watermarkPosition || 'center-diagonal');
-        this.watermarkOpacity.set(Math.round((data.watermarkOpacity ?? 0.25) * 100));
-        this.watermarkColor.set(data.watermarkColor || '#E11D48');
-        this.watermarkFontSize.set(data.watermarkFontSize || 42);
-        this.watermarkRotation.set(data.watermarkRotationDegrees ?? -30);
-        this.downloadWatermarkPosition.set(data.downloadWatermarkPosition || 'footer');
-        if (data.downloadWatermarkTemplate) {
-          this.downloadWatermarkTemplate.set(data.downloadWatermarkTemplate);
-        }
-        this.previewRasterUrls.set(data.previewRasterUrls || []);
-        this.previewPageCount.set(data.previewPageCount || (data.previewRasterUrls?.length ?? 0));
-        this.previewTimestamp.set(Date.now());
-      }
-    } catch {
-      this.message.error('โหลดการตั้งค่าลายน้ำไม่สำเร็จ');
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
   setPosition(pos: string): void {
     this.watermarkPosition.set(pos);
     if (pos === 'center-diagonal') {
@@ -216,49 +128,43 @@ export class WatermarkEditorPage implements OnInit {
     this.downloadWatermarkTemplate.set(`${current} ${tag}`);
   }
 
-  resolvePreviewImageUrl(path: string): string {
-    if (!path) return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return `${path}?t=${this.previewTimestamp()}`;
-    }
-    return `${resolveApiUrl(path)}?t=${this.previewTimestamp()}`;
+  constructor() {
+    const template = this.templates.loadOrDefault(this.auth.user()?.id);
+    this.watermarkEnabled.set(template.enabled);
+    this.previewWatermarkSubtitle.set(template.previewWatermarkSubtitle);
+    this.previewWatermarkFontFamily.set(template.previewWatermarkFontFamily);
+    this.watermarkText.set(template.config.watermarkText ?? 'SIRI EDUMARKET PREVIEW');
+    this.watermarkPosition.set(template.config.watermarkPosition ?? 'center-diagonal');
+    this.watermarkOpacity.set(Math.round((template.config.watermarkOpacity ?? 0.25) * 100));
+    this.watermarkColor.set(template.config.watermarkColor ?? '#E11D48');
+    this.watermarkFontSize.set(template.config.watermarkFontSize ?? 42);
+    this.watermarkRotation.set(template.config.watermarkRotationDegrees ?? -30);
+    this.downloadWatermarkPosition.set(template.config.downloadWatermarkPosition ?? 'footer');
+    this.downloadWatermarkTemplate.set(template.config.downloadWatermarkTemplate ?? '');
   }
 
-  async saveConfig(): Promise<void> {
-    const docId = this.documentId();
-    if (!docId) {
-      this.message.warning('กรุณาเลือกเอกสาร');
-      return;
-    }
-
+  saveConfig(): void {
     this.saving.set(true);
-    try {
-      const res = await postApiSellerDocumentWatermarkConfig(docId, {
+    const saved = this.templates.save(this.auth.user()?.id, {
+      enabled: this.watermarkEnabled(),
+      previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
+      previewWatermarkFontFamily: this.previewWatermarkFontFamily(),
+      config: {
         watermarkText: this.watermarkText().trim() || 'SIRI EDUMARKET PREVIEW',
         watermarkPosition: this.watermarkPosition(),
-        watermarkOpacity: (this.watermarkOpacity() || 25) / 100,
-        watermarkColor: this.watermarkColor() || '#E11D48',
-        watermarkFontSize: this.watermarkFontSize() || 42,
-        watermarkRotationDegrees: this.watermarkRotation() || 0,
+        watermarkOpacity: this.watermarkOpacity() / 100,
+        watermarkColor: this.watermarkColor(),
+        watermarkFontSize: this.watermarkFontSize(),
+        watermarkRotationDegrees: this.watermarkRotation(),
         downloadWatermarkPosition: this.downloadWatermarkPosition(),
         downloadWatermarkTemplate: this.downloadWatermarkTemplate().trim(),
-      });
-
-      if (res.data) {
-        this.previewRasterUrls.set(res.data.previewRasterUrls || []);
-        this.previewPageCount.set(res.data.previewPageCount || (res.data.previewRasterUrls?.length ?? 0));
-        this.previewTimestamp.set(Date.now());
-        this.message.success('บันทึกการตั้งค่าลายน้ำและเรนเดอร์ภาพพรีวิว .NET สำเร็จเรียบร้อย');
-        if (this.previewRasterUrls().length > 0) {
-          this.previewMode.set('server-previews');
-        }
-      } else {
-        this.message.success('บันทึกการตั้งค่าลายน้ำสำเร็จ');
-      }
-    } catch {
-      this.message.error('เกิดข้อผิดพลาดในการบันทึกการตั้งค่าลายน้ำ');
-    } finally {
-      this.saving.set(false);
+      },
+    });
+    this.saving.set(false);
+    if (saved) {
+      this.message.success('บันทึกเทมเพลตลายน้ำเรียบร้อยแล้ว (จะถูกนำไปใช้กับเอกสารใหม่โดยอัตโนมัติ)');
+    } else {
+      this.message.error('บันทึกเทมเพลตลายน้ำไม่สำเร็จ');
     }
   }
 }

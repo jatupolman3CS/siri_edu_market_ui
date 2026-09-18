@@ -491,7 +491,8 @@ export class AdminDocumentDetailPage {
     const key = this.doc()?.fileStorageKey?.trim();
     if (!key) return;
     const rawUrl = await this.admin.getFileDownloadUrl(key);
-    const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken());
     if (url) window.open(url, '_blank', 'noopener');
   }
 

@@ -248,6 +248,11 @@ export interface DocumentItem {
   /** seller-analytics-insights v1 §3.4: `round(salesCount/viewCount*100, 1)`, `0` when viewCount is 0. */
   conversionRatePercent?: number;
   status: DocumentStatus;
+  /** document-rejection-reason v1 §3: admin's free-text reason from the most recent rejection.
+   * Null unless status === 'rejected'. */
+  rejectionReason?: string | null;
+  /** document-rejection-reason v1 §3: ISO timestamp of the most recent rejection. */
+  rejectedAt?: string | null;
   watermarkEnabled: boolean;
   previewPages: number;
   /** Second line on raster preview watermark (optional). */

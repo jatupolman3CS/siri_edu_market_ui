@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DevRoleSwitcherComponent } from './core/dev/dev-role-switcher.component';
-import { NavigationSourceService } from './core/services';
+import { NavigationSourceService, NotificationToastService } from './core/services';
 
 @Component({
   selector: 'app-root',
@@ -16,4 +16,9 @@ export class App {
   // instantiated until something injects them, so this injection (its return value is
   // intentionally unused) is what makes that happen at app startup.
   private readonly navSource = inject(NavigationSourceService);
+
+  // Global "new notification" toast (top-right corner popup) — same force-instantiation trick
+  // as `navSource` above, so it starts polling once at app startup instead of being duplicated
+  // per layout (buyer/seller/admin all share this one root component).
+  private readonly notificationToast = inject(NotificationToastService);
 }

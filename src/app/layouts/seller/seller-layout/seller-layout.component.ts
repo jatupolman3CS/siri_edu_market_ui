@@ -63,7 +63,6 @@ export class SellerLayoutComponent {
     { label: this.translation.t('seller.dashboard'), href: '/seller', icon: 'dashboard' as const, exact: true },
     { label: this.translation.t('seller.documents'), href: '/seller/documents', icon: 'doc' as const },
     { label: this.translation.t('seller.upload'), href: '/seller/upload', icon: 'upload' as const },
-    { label: this.translation.currentLang() === 'th' ? 'พรีวิว PDF' : 'PDF Preview', href: '/seller/pdf-preview', icon: 'eye' as const },
     { label: this.translation.currentLang() === 'th' ? 'จัดการลายน้ำ' : 'Watermark Studio', href: '/seller/watermark', icon: 'shield' as const },
     { label: this.translation.t('seller.payout'), href: '/seller/earnings', icon: 'wallet' as const },
     // seller-ads-promotion v1 §4.1/§4.4: flat-fee ad campaigns bought with the seller's own ledger balance.

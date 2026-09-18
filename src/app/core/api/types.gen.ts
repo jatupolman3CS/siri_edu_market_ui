@@ -2223,6 +2223,14 @@ export type SellerDocumentResponse = {
   watermarkEnabled?: boolean;
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
+  previewWatermarkPosition?: string;
+  previewWatermarkOpacity?: number;
+  previewWatermarkColor?: string;
+  previewWatermarkRotation?: number | null;
+  previewWatermarkFontSize?: number | null;
+  personalizedWatermarkPosition?: string;
+  personalizedWatermarkTemplate?: string | null;
+  previewRasterUrls?: Array<string>;
   categoryIds?: Array<string>;
   isFree?: boolean;
   createdAt?: string;
@@ -2237,6 +2245,8 @@ export type SellerDocumentResponse = {
   watermarkWarning?: string | null;
   currentVersionNumber?: number;
   lastVersionNotifiedBuyerCount?: number | null;
+  rejectionReason?: string | null;
+  rejectedAt?: string | null;
 };
 
 export type SellerDocumentSummaryResponse = {
@@ -2255,6 +2265,8 @@ export type SellerDocumentSummaryResponse = {
   viewCount?: number;
   conversionRatePercent?: number;
   updatedAt?: string;
+  rejectionReason?: string | null;
+  rejectedAt?: string | null;
 };
 
 export type SellerDocumentVersionResponse = {
@@ -2384,6 +2396,37 @@ export type SellerTrafficBreakdownResponse = {
   searchPercent?: number;
   categoryPercent?: number;
   directPercent?: number;
+};
+
+export type SellerWatermarkConfigRequest = {
+  watermarkEnabled?: boolean | null;
+  previewWatermarkSubtitle?: string | null;
+  previewWatermarkFontFamily?: string | null;
+  previewWatermarkPosition?: string | null;
+  previewWatermarkOpacity?: number | null;
+  previewWatermarkColor?: string | null;
+  previewWatermarkRotation?: number | null;
+  previewWatermarkFontSize?: number | null;
+  personalizedWatermarkPosition?: string | null;
+  personalizedWatermarkTemplate?: string | null;
+};
+
+export type SellerWatermarkConfigResponse = {
+  documentId?: string;
+  title?: string;
+  format?: string;
+  watermarkEnabled?: boolean;
+  previewWatermarkSubtitle?: string | null;
+  previewWatermarkFontFamily?: string | null;
+  previewWatermarkPosition?: string;
+  previewWatermarkOpacity?: number;
+  previewWatermarkColor?: string;
+  previewWatermarkRotation?: number | null;
+  previewWatermarkFontSize?: number | null;
+  personalizedWatermarkPosition?: string;
+  personalizedWatermarkTemplate?: string | null;
+  previewImageUrls?: Array<string>;
+  hasMainFile?: boolean;
 };
 
 export type SendOtpRequest = {
@@ -2636,6 +2679,13 @@ export type UpdateDocumentRequest = {
   fileSize?: string | null;
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
+  previewWatermarkPosition?: string | null;
+  previewWatermarkOpacity?: number | null;
+  previewWatermarkColor?: string | null;
+  previewWatermarkRotation?: number | null;
+  previewWatermarkFontSize?: number | null;
+  personalizedWatermarkPosition?: string | null;
+  personalizedWatermarkTemplate?: string | null;
   galleryImageUrls?: Array<string> | null;
   galleryItems?: Array<DocumentGalleryItemRequest> | null;
   originalPrice?: number | null;
@@ -8142,6 +8192,20 @@ export type PostApiOrdersByIdPayWalletData = {
   url: '/api/orders/{id}/pay-wallet';
 };
 
+export type PostApiOrdersByIdPayWalletErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiOrdersByIdPayWalletError =
+  PostApiOrdersByIdPayWalletErrors[keyof PostApiOrdersByIdPayWalletErrors];
+
 export type PostApiOrdersByIdPayWalletResponses = {
   /**
    * OK
@@ -9288,6 +9352,101 @@ export type PostApiSellerDocumentsByIdPreviewRasterResponses = {
    */
   200: unknown;
 };
+
+export type GetApiSellerDocumentsByIdWatermarkConfigData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/seller/documents/{id}/watermark-config';
+};
+
+export type GetApiSellerDocumentsByIdWatermarkConfigErrors = {
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiSellerDocumentsByIdWatermarkConfigError =
+  GetApiSellerDocumentsByIdWatermarkConfigErrors[keyof GetApiSellerDocumentsByIdWatermarkConfigErrors];
+
+export type GetApiSellerDocumentsByIdWatermarkConfigResponses = {
+  /**
+   * OK
+   */
+  200: SellerWatermarkConfigResponse;
+};
+
+export type GetApiSellerDocumentsByIdWatermarkConfigResponse =
+  GetApiSellerDocumentsByIdWatermarkConfigResponses[keyof GetApiSellerDocumentsByIdWatermarkConfigResponses];
+
+export type PostApiSellerDocumentsByIdWatermarkConfigData = {
+  body: SellerWatermarkConfigRequest;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/seller/documents/{id}/watermark-config';
+};
+
+export type PostApiSellerDocumentsByIdWatermarkConfigErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiSellerDocumentsByIdWatermarkConfigError =
+  PostApiSellerDocumentsByIdWatermarkConfigErrors[keyof PostApiSellerDocumentsByIdWatermarkConfigErrors];
+
+export type PostApiSellerDocumentsByIdWatermarkConfigResponses = {
+  /**
+   * OK
+   */
+  200: SellerWatermarkConfigResponse;
+};
+
+export type PostApiSellerDocumentsByIdWatermarkConfigResponse =
+  PostApiSellerDocumentsByIdWatermarkConfigResponses[keyof PostApiSellerDocumentsByIdWatermarkConfigResponses];
+
+export type PutApiSellerDocumentsByIdWatermarkConfigData = {
+  body: SellerWatermarkConfigRequest;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/seller/documents/{id}/watermark-config';
+};
+
+export type PutApiSellerDocumentsByIdWatermarkConfigErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PutApiSellerDocumentsByIdWatermarkConfigError =
+  PutApiSellerDocumentsByIdWatermarkConfigErrors[keyof PutApiSellerDocumentsByIdWatermarkConfigErrors];
+
+export type PutApiSellerDocumentsByIdWatermarkConfigResponses = {
+  /**
+   * OK
+   */
+  200: SellerWatermarkConfigResponse;
+};
+
+export type PutApiSellerDocumentsByIdWatermarkConfigResponse =
+  PutApiSellerDocumentsByIdWatermarkConfigResponses[keyof PutApiSellerDocumentsByIdWatermarkConfigResponses];
 
 export type PostApiSellerDocumentsByIdGeneratePreviewData = {
   body?: never;

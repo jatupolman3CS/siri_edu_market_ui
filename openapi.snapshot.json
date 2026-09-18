@@ -25797,6 +25797,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectedAt": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -25857,6 +25865,14 @@
           },
           "updatedAt": {
             "type": "string"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectedAt": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

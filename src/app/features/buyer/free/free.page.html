@@ -33,9 +33,9 @@
       } @else if (catalog.freeResources().length === 0) {
         <app-empty-state emoji="🎁" title="ตอนนี้ยังไม่มีเอกสารฟรี" />
       } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div class="document-card-grid">
           @for (doc of catalog.freeResources(); track doc.id) {
-            <app-document-card [doc]="doc" />
+            <app-document-card [doc]="doc" density="compact" />
           }
         </div>
 

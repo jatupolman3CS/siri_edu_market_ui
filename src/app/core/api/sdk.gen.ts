@@ -354,6 +354,9 @@ import type {
   GetApiSellerDocumentsByIdVersionsData,
   GetApiSellerDocumentsByIdVersionsErrors,
   GetApiSellerDocumentsByIdVersionsResponses,
+  GetApiSellerDocumentsByIdWatermarkConfigData,
+  GetApiSellerDocumentsByIdWatermarkConfigErrors,
+  GetApiSellerDocumentsByIdWatermarkConfigResponses,
   GetApiSellerDocumentsData,
   GetApiSellerDocumentsPricingHintData,
   GetApiSellerDocumentsPricingHintErrors,
@@ -602,6 +605,7 @@ import type {
   PostApiOrdersByIdCancelErrors,
   PostApiOrdersByIdCancelResponses,
   PostApiOrdersByIdPayWalletData,
+  PostApiOrdersByIdPayWalletErrors,
   PostApiOrdersByIdPayWalletResponses,
   PostApiOrdersData,
   PostApiOrdersErrors,
@@ -628,6 +632,9 @@ import type {
   PostApiSellerDocumentsByIdPreviewRasterData,
   PostApiSellerDocumentsByIdPreviewRasterErrors,
   PostApiSellerDocumentsByIdPreviewRasterResponses,
+  PostApiSellerDocumentsByIdWatermarkConfigData,
+  PostApiSellerDocumentsByIdWatermarkConfigErrors,
+  PostApiSellerDocumentsByIdWatermarkConfigResponses,
   PostApiSellerDocumentsData,
   PostApiSellerDocumentsErrors,
   PostApiSellerDocumentsResponses,
@@ -725,6 +732,9 @@ import type {
   PutApiSellerDocumentsByIdListedMainFileErrors,
   PutApiSellerDocumentsByIdListedMainFileResponses,
   PutApiSellerDocumentsByIdResponses,
+  PutApiSellerDocumentsByIdWatermarkConfigData,
+  PutApiSellerDocumentsByIdWatermarkConfigErrors,
+  PutApiSellerDocumentsByIdWatermarkConfigResponses,
   PutApiSellerPayoutAccountData,
   PutApiSellerPayoutAccountErrors,
   PutApiSellerPayoutAccountResponses,
@@ -3189,10 +3199,14 @@ export const postApiOrdersByIdCancel = <ThrowOnError extends boolean = false>(
 
 export const postApiOrdersByIdPayWallet = <ThrowOnError extends boolean = false>(
   options: Options<PostApiOrdersByIdPayWalletData, ThrowOnError>,
-): RequestResult<PostApiOrdersByIdPayWalletResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  PostApiOrdersByIdPayWalletResponses,
+  PostApiOrdersByIdPayWalletErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).post<
     PostApiOrdersByIdPayWalletResponses,
-    unknown,
+    PostApiOrdersByIdPayWalletErrors,
     ThrowOnError
   >({ url: '/api/orders/{id}/pay-wallet', ...options });
 
@@ -3753,6 +3767,59 @@ export const postApiSellerDocumentsByIdPreviewRaster = <ThrowOnError extends boo
     PostApiSellerDocumentsByIdPreviewRasterErrors,
     ThrowOnError
   >({ url: '/api/seller/documents/{id}/preview-raster', ...options });
+
+export const getApiSellerDocumentsByIdWatermarkConfig = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiSellerDocumentsByIdWatermarkConfigData, ThrowOnError>,
+): RequestResult<
+  GetApiSellerDocumentsByIdWatermarkConfigResponses,
+  GetApiSellerDocumentsByIdWatermarkConfigErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiSellerDocumentsByIdWatermarkConfigResponses,
+    GetApiSellerDocumentsByIdWatermarkConfigErrors,
+    ThrowOnError
+  >({ url: '/api/seller/documents/{id}/watermark-config', ...options });
+
+export const postApiSellerDocumentsByIdWatermarkConfig = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiSellerDocumentsByIdWatermarkConfigData, ThrowOnError>,
+): RequestResult<
+  PostApiSellerDocumentsByIdWatermarkConfigResponses,
+  PostApiSellerDocumentsByIdWatermarkConfigErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiSellerDocumentsByIdWatermarkConfigResponses,
+    PostApiSellerDocumentsByIdWatermarkConfigErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/documents/{id}/watermark-config',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const putApiSellerDocumentsByIdWatermarkConfig = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiSellerDocumentsByIdWatermarkConfigData, ThrowOnError>,
+): RequestResult<
+  PutApiSellerDocumentsByIdWatermarkConfigResponses,
+  PutApiSellerDocumentsByIdWatermarkConfigErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    PutApiSellerDocumentsByIdWatermarkConfigResponses,
+    PutApiSellerDocumentsByIdWatermarkConfigErrors,
+    ThrowOnError
+  >({
+    url: '/api/seller/documents/{id}/watermark-config',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const postApiSellerDocumentsByIdGeneratePreview = <ThrowOnError extends boolean = false>(
   options: Options<PostApiSellerDocumentsByIdGeneratePreviewData, ThrowOnError>,

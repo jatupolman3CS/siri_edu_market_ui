@@ -975,3 +975,115 @@ describe('SellerUploadPage — document versioning (document-versioning v1 §4/�
   });
 });
 
+/**
+ * document-rejection-reason v1 §4 — AC-10/AC-11/AC-12: the edit-mode rejection banner on
+ * `upload.page.html`. `rawDoc` carries `rejectionReason`/`rejectedAt` directly — these two fields
+ * are now real properties on the generated `SellerDocumentResponse` (post SDK regen), and
+ * `mapSellerDocument` reads them off the response with plain property access, no cast.
+ */
+describe('SellerUploadPage — rejection reason banner (document-rejection-reason v1 §4)', () => {
+  function renderForRejection(rawDocOverrides: Record<string, unknown> = {}) {
+    const rawDoc = {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      price: 300,
+      status: 'rejected',
+      ...rawDocOverrides,
+    };
+    const doc = mapSellerDocument(rawDoc as SellerDocumentResponse);
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async () => {},
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) },
+        },
+        {
+          provide: CatalogService,
+          useValue: { loadCategories: () => {}, getCategoryById: () => undefined },
+        },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance };
+  }
+
+  async function settleLoad(fixture: { detectChanges: () => void }): Promise<void> {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+  }
+
+  it('AC-10: shows the rejection banner with the reason and rejectedAt when editing a rejected document', async () => {
+    const { fixture, component } = renderForRejection({
+      rejectionReason: 'ภาพหน้าปกไม่ตรงกับเนื้อหาเอกสาร',
+      rejectedAt: '2026-09-10T08:00:00Z',
+    });
+    await settleLoad(fixture);
+
+    expect(component.editDocument()?.rejectionReason).toBe('ภาพหน้าปกไม่ตรงกับเนื้อหาเอกสาร');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('เอกสารนี้ไม่ผ่านการตรวจ');
+    expect(text).toContain('เหตุผล: ภาพหน้าปกไม่ตรงกับเนื้อหาเอกสาร');
+    expect(text).toContain('ตรวจเมื่อ');
+  });
+
+  it('AC-11: does not show the banner for a document that is not rejected', async () => {
+    const { fixture } = renderForRejection({
+      status: 'approved',
+      rejectionReason: 'เหตุผลเก่าที่ค้างอยู่',
+    });
+    await settleLoad(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('เอกสารนี้ไม่ผ่านการตรวจ');
+    expect(text).not.toContain('เหตุผลเก่าที่ค้างอยู่');
+  });
+
+  it('AC-11/AC-12: a rejected document with no rejectionReason renders no banner and does not throw', async () => {
+    const { fixture } = renderForRejection({
+      rejectionReason: null,
+      rejectedAt: null,
+    });
+
+    await expect(settleLoad(fixture)).resolves.toBeUndefined();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('เอกสารนี้ไม่ผ่านการตรวจ');
+  });
+
+  it('AC-12: rejectedAt undefined does not throw and hides the "ตรวจเมื่อ" line', async () => {
+    const { fixture, component } = renderForRejection({
+      rejectionReason: 'ต้องแก้คำอธิบาย',
+      rejectedAt: undefined,
+    });
+    await settleLoad(fixture);
+
+    expect(component.editDocument()?.rejectionReason).toBe('ต้องแก้คำอธิบาย');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('เหตุผล: ต้องแก้คำอธิบาย');
+    expect(text).not.toContain('ตรวจเมื่อ');
+  });
+});
+

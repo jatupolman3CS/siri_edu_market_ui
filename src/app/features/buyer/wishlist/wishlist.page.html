@@ -40,7 +40,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div class="document-card-grid">
           @for (doc of wishlist.items(); track doc.id) {
             <div class="relative">
               @if (doc.hasPriceDropped) {
@@ -50,7 +50,7 @@
                   🔻 ราคาลดแล้ว!
                 </span>
               }
-              <app-document-card [doc]="doc" />
+              <app-document-card [doc]="doc" density="compact" />
             </div>
           }
         </div>

@@ -301,19 +301,13 @@ export const routes: Routes = [
       },
       {
         path: 'pdf-preview',
-        loadComponent: () =>
-          import('./features/seller/pdf-preview-upload/pdf-preview-upload.page').then(
-            (m) => m.PdfPreviewUploadPage,
-          ),
-        title: 'พรีวิว PDF — Siri Studio',
+        redirectTo: 'documents',
+        pathMatch: 'full',
       },
       {
         path: 'documents/:id/watermark',
-        loadComponent: () =>
-          import('./features/seller/watermark-editor/watermark-editor.page').then(
-            (m) => m.WatermarkEditorPage,
-          ),
-        title: 'จัดการลายน้ำ — Siri Studio',
+        redirectTo: 'watermark',
+        pathMatch: 'full',
       },
       {
         path: 'watermark',
@@ -423,11 +417,8 @@ export const routes: Routes = [
       },
       {
         path: 'documents/:id/watermark',
-        loadComponent: () =>
-          import('./features/seller/watermark-editor/watermark-editor.page').then(
-            (m) => m.WatermarkEditorPage,
-          ),
-        title: 'จัดการลายน้ำ — Admin',
+        redirectTo: 'documents',
+        pathMatch: 'full',
       },
       {
         path: 'approval',

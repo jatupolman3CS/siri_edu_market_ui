@@ -150,6 +150,29 @@ describe('NotificationFeedService', () => {
     });
   });
 
+  describe('fetchRecentForToast', () => {
+    it('fetches page 1 scoped to the given audience without touching items/previewItems', async () => {
+      stubRoute('GET', '/api/notifications/feed', pagedResponse([feedItemBody({ id: 'a' })]));
+      const { service } = buildService();
+
+      const result = await service.fetchRecentForToast(10, 'seller');
+
+      expect(result.map((i) => i.id)).toEqual(['a']);
+      expect(requests.at(-1)?.query.get('audience')).toBe('seller');
+      expect(requests.at(-1)?.query.get('PageSize')).toBe('10');
+      expect(service.items()).toEqual([]);
+      expect(service.previewItems()).toEqual([]);
+    });
+
+    it('reports the error via ApiFailureReporter and rethrows on failure', async () => {
+      stubRoute('GET', '/api/notifications/feed', { title: 'Server Error', status: 500 }, 500);
+      const { service, apiFail } = buildService();
+
+      await expect(service.fetchRecentForToast(10)).rejects.toBeDefined();
+      expect(apiFail.report).toHaveBeenCalledWith('โหลดการแจ้งเตือนใหม่', expect.anything());
+    });
+  });
+
   describe('refreshUnreadCount', () => {
     it('sets unreadCount from the server response', async () => {
       stubRoute('GET', '/api/notifications/feed/unread-count', { count: 4 });

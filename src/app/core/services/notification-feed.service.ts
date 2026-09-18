@@ -371,6 +371,24 @@ export class NotificationFeedService {
     }));
   }
 
+  /**
+   * notification-toast v1 — dedicated fetch for `NotificationToastService`'s "did anything
+   * new arrive" poller. Deliberately bypasses `_items`/`_previewItems` so polling for a toast
+   * never clobbers state the bell dropdown or the history page is rendering from.
+   */
+  async fetchRecentForToast(
+    size: number,
+    audience?: NotificationAudience,
+  ): Promise<NotificationFeedItemResponse[]> {
+    try {
+      const data = await this.fetchFeedPage(1, size, audience);
+      return data.items;
+    } catch (e) {
+      this.apiFail.report('โหลดการแจ้งเตือนใหม่', e);
+      throw e;
+    }
+  }
+
   private async fetchFeedPage(
     page: number,
     pageSize: number,

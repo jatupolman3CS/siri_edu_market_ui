@@ -83,9 +83,9 @@
         <!-- Items in bundle -->
         <section>
           <h2 class="section-title mb-6">เอกสารที่อยู่ในแพ็กเกจ</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="document-card-grid">
             @for (doc of items(); track doc.id) {
-              <app-document-card [doc]="doc" />
+              <app-document-card [doc]="doc" density="compact" />
             }
           </div>
         </section>

@@ -169,9 +169,9 @@
 
           <div class="mt-8">
             <app-section-header title="เอกสารที่เกี่ยวข้องกับสอบของคุณ" />
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="document-card-grid">
               @for (doc of examCountdown.docs(); track doc.id) {
-                <app-document-card [doc]="doc" />
+                <app-document-card [doc]="doc" density="compact" />
               }
             </div>
             @if (examCountdown.hasMoreDocs()) {
@@ -239,9 +239,9 @@
             </button>
           </app-empty-state>
         } @else {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div class="document-card-grid">
             @for (doc of catalog.freeResources().slice(0, 3); track doc.id) {
-              <app-document-card [doc]="doc" />
+              <app-document-card [doc]="doc" density="compact" />
             }
           </div>
         }
@@ -296,10 +296,10 @@
           [title]="recommendedTitle()"
           [subtitle]="catalog.recommendedReason()"
         />
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="document-card-grid">
           @for (doc of catalog.recommended(); track doc.id) {
             <div>
-              <app-document-card [doc]="doc" />
+              <app-document-card [doc]="doc" density="compact" />
               @if (recommendedExplanationFor(doc.id); as explanation) {
                 <p class="text-xs text-ink-muted mt-1">{{ explanation.reason }}</p>
               }
@@ -377,9 +377,9 @@
         subtitle="เอกสารที่ผู้ใช้เลือกซื้อมากที่สุดในช่วง 7 วันที่ผ่านมา"
         link="/marketplace"
       />
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="document-card-grid">
         @for (doc of catalog.trending().slice(0, 4); track doc.id) {
-          <app-document-card [doc]="doc" />
+          <app-document-card [doc]="doc" density="compact" />
         }
       </div>
     </section>
@@ -418,9 +418,9 @@
           subtitle="เอกสารที่เราคัดมาแล้วว่าคุณภาพเยี่ยม"
           link="/marketplace"
         />
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="document-card-grid">
           @for (doc of catalog.editorsPicks().slice(0, 3); track doc.id) {
-            <app-document-card [doc]="doc" />
+            <app-document-card [doc]="doc" density="compact" />
           }
         </div>
       </section>
@@ -472,9 +472,9 @@
         title="เอกสารเพิ่งเข้าตลาดเมื่อเร็วๆ นี้"
         link="/marketplace"
       />
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="document-card-grid">
         @for (doc of catalog.newArrivals().slice(0, 4); track doc.id) {
-          <app-document-card [doc]="doc" />
+          <app-document-card [doc]="doc" density="compact" />
         }
       </div>
     </section>

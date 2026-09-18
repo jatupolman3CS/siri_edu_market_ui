@@ -158,9 +158,9 @@
             } @else {
               <section>
                 <h2 class="section-title mb-4">เอกสารทั้งหมดของร้าน</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="document-card-grid">
                   @for (doc of sellerDocs(); track doc.id) {
-                    <app-document-card [doc]="doc" />
+                    <app-document-card [doc]="doc" density="compact" />
                   }
                 </div>
               </section>
@@ -181,17 +181,17 @@
             @if (sellerFree().length === 0) {
               <app-empty-state emoji="🎁" title="ผู้ขายนี้ยังไม่มีเอกสารฟรี" />
             } @else {
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div class="document-card-grid">
                 @for (doc of sellerFree(); track doc.id) {
-                  <app-document-card [doc]="doc" />
+                  <app-document-card [doc]="doc" density="compact" />
                 }
               </div>
             }
           }
           @case ('top') {
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="document-card-grid">
               @for (doc of sellerTop(); track doc.id) {
-                <app-document-card [doc]="doc" />
+                <app-document-card [doc]="doc" density="compact" />
               }
             </div>
           }

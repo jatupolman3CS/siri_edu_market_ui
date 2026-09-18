@@ -838,7 +838,7 @@
           <section class="mt-12">
             <h2 class="section-title mb-2">มักซื้อคู่กับเอกสารนี้</h2>
             <p class="section-subtitle mb-6">ผู้ที่ซื้อเอกสารนี้มักซื้อเอกสารเหล่านี้ด้วย</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="document-card-grid">
               @if (boughtTogetherLoading()) {
                 @for (i of [1, 2, 3, 4, 5, 6]; track i) {
                   <div class="card-soft overflow-hidden animate-pulse" aria-hidden="true">
@@ -855,7 +855,7 @@
                     <span class="absolute top-3 right-3 z-10 pill bg-pink-600 text-white shadow-soft text-[11px]">
                       ซื้อคู่กันแล้ว {{ item.coPurchaseCount }} ครั้ง
                     </span>
-                    <app-document-card [doc]="item.document" />
+                    <app-document-card [doc]="item.document" density="compact" />
                   </div>
                 }
               }
@@ -875,9 +875,9 @@
                 ดูร้านทั้งหมด →
               </a>
             </header>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="document-card-grid">
               @for (r of moreFromSeller(); track r.id) {
-                <app-document-card [doc]="r" />
+                <app-document-card [doc]="r" density="compact" />
               }
             </div>
           </section>
@@ -887,9 +887,9 @@
         @if (related().length) {
           <section class="mt-12">
             <h2 class="section-title mb-6">เอกสารที่เกี่ยวข้อง</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="document-card-grid">
               @for (r of related(); track r.id) {
-                <app-document-card [doc]="r" />
+                <app-document-card [doc]="r" density="compact" />
               }
             </div>
           </section>

@@ -130,6 +130,13 @@ function render(opts: {
   });
 
   const fixture = TestBed.createComponent(SellerEarningsPage);
+  const modal = fixture.debugElement.injector.get(NzModalService);
+  if (modal) {
+    vi.spyOn(modal, 'confirm').mockImplementation(((cfg: unknown) => {
+      modalCalls.push(cfg as Record<string, unknown>);
+      return {} as never;
+    }) as typeof modal.confirm);
+  }
   fixture.detectChanges();
   return { fixture, fakeSeller, modalCalls, messages };
 }

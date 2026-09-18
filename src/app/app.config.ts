@@ -19,6 +19,7 @@ import th from '@angular/common/locales/th';
 import { th_TH, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { provideNzConfig } from 'ng-zorro-antd/core/config';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { FormsModule } from '@angular/forms';
 
 import { routes } from './app.routes';
@@ -66,7 +67,7 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     { provide: LOCALE_ID, useValue: 'th-TH' },
-    importProvidersFrom(FormsModule, NzIconModule),
+    importProvidersFrom(FormsModule, NzIconModule, NzModalModule),
   ],
 };
 

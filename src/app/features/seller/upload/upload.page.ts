@@ -1,6 +1,6 @@
-import { SlicePipe } from '@angular/common';
+import { DatePipe, SlicePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
@@ -14,6 +14,8 @@ import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '
 import { DocumentItem, DocumentPricingHint, SellerDocumentVersionInfo, WatermarkCapability } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { AuthService, CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
+import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
+import { postApiSellerDocumentWatermarkConfig } from '../../../core/api/seller-watermark.api';
 import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
@@ -54,8 +56,10 @@ type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
     CdkDropList,
     CdkDrag,
     SlicePipe,
+    DatePipe,
     ImgFallbackDirective,
     NzModalModule,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './upload.page.html',
@@ -71,6 +75,11 @@ export class SellerUploadPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
+  private readonly watermarkTemplates = inject(SellerWatermarkTemplateService);
+
+  readonly watermarkTemplate = computed(() =>
+    this.watermarkTemplates.loadOrDefault(this.auth.user()?.id),
+  );
 
   readonly editId = signal<string>('');
   readonly isEditMode = computed(() => !!this.editId());
@@ -188,6 +197,11 @@ export class SellerUploadPage {
   constructor() {
     this.catalog.loadCategories();
     this.platformStats.loadStats();
+
+    const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
+    this.watermark.set(tpl.enabled);
+    this.previewWatermarkSubtitle.set(tpl.previewWatermarkSubtitle);
+    this.previewWatermarkFontFamily.set(tpl.previewWatermarkFontFamily);
 
     this.route.queryParamMap.subscribe((q) => {
       const id = q.get('id') ?? '';
@@ -703,6 +717,7 @@ export class SellerUploadPage {
             this.message.error('กรุณาเลือกไฟล์เอกสารและรอให้อัปโหลดเสร็จก่อน');
             return;
           }
+          const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
           const createBody: Parameters<typeof this.seller.createDocument>[0] = {
             title: this.title().trim(),
             shortDescription: this.shortDescription().trim(),
@@ -722,8 +737,8 @@ export class SellerUploadPage {
             standards: [],
             watermarkEnabled: this.watermark(),
             language: this.language(),
-            previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
-            previewWatermarkFontFamily: this.previewWatermarkFontFamily().trim(),
+            previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim(),
+            previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),
             originalPrice: this.isFree() ? 0 : this.originalPrice(),
             discountExpiresAt:
               this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
@@ -749,13 +764,21 @@ export class SellerUploadPage {
                 fileStorageKey: uploaded.key,
                 watermarkEnabled: this.watermark(),
                 previewPages: this.previewPages(),
-                previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
-                previewWatermarkFontFamily: this.previewWatermarkFontFamily().trim(),
+                previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim(),
+                previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),
                 previewStorageKey: null,
                 pages: this.pages(),
                 fileSize: this.fileSizeLabel().trim() || undefined,
               },
             });
+
+            if (tpl.config) {
+              try {
+                await postApiSellerDocumentWatermarkConfig(doc.id, tpl.config);
+              } catch {
+                // silent fallback if endpoint fails
+              }
+            }
           }
 
           this.message.success('ส่งเข้าพิจารณาเรียบร้อย');

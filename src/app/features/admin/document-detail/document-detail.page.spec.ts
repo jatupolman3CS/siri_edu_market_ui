@@ -80,6 +80,7 @@ function render(uploadFile: (file: File) => Promise<UploadResponse>) {
   const fakeAdmin: Partial<AdminService> = {
     adminCategories: signal<Category[]>([]),
     refreshAdminCategories: async () => {},
+    getFileDownloadUrl: vi.fn(async () => null),
   };
 
   TestBed.configureTestingModule({
@@ -254,5 +255,20 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
     expect(body.galleryItems?.[0].id).toBe('g1');
     expect(body.galleryItems?.[0].imageStorageKey).toBe('gallery/img1.jpg');
     expect(body.galleryItems?.[0].imageStorageKey).not.toContain('http');
+  });
+
+  it('downloadMainFile() opens window with resolved download URL', async () => {
+    stubLoad();
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const { component } = render(async () => {
+      throw new Error('upload should not be called');
+    });
+    await settle();
+
+    await component.downloadMainFile();
+    expect(openSpy).toHaveBeenCalled();
+    const openedUrl = openSpy.mock.calls[0][0] as string;
+    expect(openedUrl).toContain('orig/main.pdf');
+    openSpy.mockRestore();
   });
 });

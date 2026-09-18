@@ -100,8 +100,8 @@ describe('AppHeaderComponent — mobile nav toggle (bug #1)', () => {
     const text = panel.textContent ?? '';
     expect(text).toContain('ตลาด');
     expect(text).toContain('หมวดหมู่');
-    expect(text).toContain('แพ็กเกจ');
-    expect(text).toContain('ฟรี');
+    expect(panel.querySelector('a[routerLink="/bundles"]')).toBeNull();
+    expect(panel.querySelector('a[routerLink="/free"]')).toBeNull();
     expect(text).toContain('เข้าสู่ระบบ');
   });
 
@@ -180,17 +180,16 @@ describe('AppHeaderComponent search submission', () => {
     expect(fixture.componentInstance.query()).toBe('');
   });
 
-  it('subnavItems groups /marketplace, /bundles, and /free together next to each other', () => {
+  it('keeps package and free links out of the header navigation', () => {
     const fixture = render();
     const hrefs = fixture.componentInstance.subnavItems().map((i) => i.href);
     expect(hrefs).not.toContain('/categories');
     expect(hrefs).toContain('/');
     expect(hrefs).toContain('/marketplace');
-    expect(hrefs).toContain('/bundles');
-    expect(hrefs).toContain('/free');
-    const marketIndex = hrefs.indexOf('/marketplace');
-    expect(hrefs[marketIndex + 1]).toBe('/bundles');
-    expect(hrefs[marketIndex + 2]).toBe('/free');
+    expect(hrefs).not.toContain('/bundles');
+    expect(hrefs).not.toContain('/free');
+    expect(fixture.componentInstance.navItems().map((i) => i.href)).not.toContain('/bundles');
+    expect(fixture.componentInstance.navItems().map((i) => i.href)).not.toContain('/free');
   });
 
   it('does not render a dead help center / faq link in the topbar', () => {
