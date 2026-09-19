@@ -36,7 +36,7 @@
       @if (isOwned()) {
         <span class="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold inline-flex items-center gap-1">
           <app-icon name="check" [size]="11" />
-          เป็นเจ้าของแล้ว
+          {{ 'documentCard.owned' | trans }}
         </span>
       } @else {
         <button
@@ -153,14 +153,14 @@
             <!-- seller-ads-promotion v1 DEC-9: must be visible without hover — never hidden behind hover-only affordances. -->
             <span
               class="pill bg-ink text-white shadow-soft"
-              title="ผู้ขายจ่ายค่าโปรโมตเพื่อให้เอกสารนี้แสดงบนสุด"
+              [title]="'documentCard.sponsoredTooltip' | trans"
             >
-              📢 โฆษณา
+              📢 {{ 'documentCard.sponsored' | trans }}
             </span>
           }
           @if (doc().isFree) {
             <span class="pill bg-emerald-500 text-white shadow-soft">
-              🆓 ฟรี
+              🆓 {{ 'common.free' | trans }}
             </span>
           } @else if (doc().discountPercent) {
             <span class="pill bg-pink-500 text-white shadow-soft">
@@ -169,7 +169,7 @@
           }
           @if (doc().isBestseller) {
             <span class="pill bg-amber-400 text-amber-900 shadow-soft">
-              ⭐ ขายดี
+              ⭐ {{ 'documentCard.bestseller' | trans }}
             </span>
           }
           @if (doc().isEditorsPick) {
@@ -191,7 +191,7 @@
           [class.!text-pink-500]="wishlist.has(doc().id)"
           [class.text-ink-soft]="!wishlist.has(doc().id)"
           (click)="toggleWishlist($event)"
-          [attr.aria-label]="wishlist.has(doc().id) ? 'นำออกจากรายการโปรด' : 'เพิ่มลงรายการโปรด'"
+          [attr.aria-label]="wishlist.has(doc().id) ? ('documentCard.removeFromWishlist' | trans) : ('documentCard.addToWishlist' | trans)"
         >
           @if (wishlist.has(doc().id)) {
             <app-icon name="heart-fill" [size]="18" />
@@ -207,7 +207,7 @@
           (click)="openQuickView($event)"
         >
           <app-icon name="eye" [size]="12" />
-          ดูเร็วๆ
+          {{ 'documentCard.quickView' | trans }}
         </button>
 
         <!-- Watermark indicator (only on left bottom for paid) -->
@@ -256,7 +256,7 @@
         <div class="flex items-end justify-between mt-2">
           <div class="flex items-baseline gap-2">
             @if (doc().isFree) {
-              <span class="text-lg font-extrabold text-emerald-600">ฟรี</span>
+              <span class="text-lg font-extrabold text-emerald-600">{{ 'common.free' | trans }}</span>
             } @else {
               <span class="text-lg font-extrabold text-ink">
                 {{ doc().price | thb }}
@@ -274,7 +274,7 @@
             [class.!bg-pink-500]="inCart()"
             [class.!text-white]="inCart()"
             [class.!border-pink-500]="inCart()"
-            [attr.aria-label]="inCart() ? 'In cart' : 'Add to cart'"
+            [attr.aria-label]="inCart() ? ('documentCard.inCart' | trans) : ('documentCard.addToCart' | trans)"
             (click)="addToCart($event)"
           >
             @if (inCart()) {

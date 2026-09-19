@@ -3,10 +3,10 @@
         <div class="card-soft">
           <app-empty-state
             emoji="🏪"
-            title="บัญชีนี้ยังไม่มีร้านค้า"
-            description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
+            [title]="'seller.noShopTitle' | trans"
+            [description]="'seller.noShopDesc' | trans"
           >
-            <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+            <a routerLink="/become-seller" class="btn-pink mt-2">{{ 'seller.openShopCta' | trans }}</a>
           </app-empty-state>
         </div>
       } @else {
@@ -15,19 +15,19 @@
         <div>
           <span class="pill-pink mb-3">
             <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-            สวัสดี ผู้ขาย — Siri Studio
+            {{ 'seller.greeting' | trans }}
           </span>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">ภาพรวมร้านของคุณ</h1>
-          <p class="text-sm text-ink-soft">สรุปยอดขาย รายได้ และสถิติเอกสารของคุณภายในเดือนนี้</p>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">{{ 'seller.overviewTitle' | trans }}</h1>
+          <p class="text-sm text-ink-soft">{{ 'seller.overviewSubtitle' | trans }}</p>
         </div>
         <div class="flex flex-wrap gap-3">
           <button type="button" class="btn-ghost !px-3.5 !py-2 text-sm flex items-center gap-1.5" (click)="openFeedbackModal()">
             <app-icon name="flag" [size]="16" />
-            แจ้งปัญหา / ข้อเสนอแนะ
+            {{ 'seller.reportFeedback' | trans }}
           </button>
           <a routerLink="/seller/upload" class="btn-pink">
             <app-icon name="upload" [size]="16" />
-            อัปโหลดเอกสาร
+            {{ 'seller.uploadDocCta' | trans }}
           </a>
           <!-- G-05: the "AI ช่วยเขียน" button pointed at /seller/ai, which is no longer routed. -->
         </div>
@@ -44,29 +44,29 @@
       <!-- Stats -->
       <section class="grid grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 mb-8">
         <app-stat-card
-          label="รายได้เดือนนี้"
+          [label]="'seller.monthlyRevenue' | trans"
           [value]="seller.stats().monthlyRevenue | thb"
           icon="💰"
           [trend]="revenueTrendDisplay()"
         />
         <app-stat-card
-          label="ดาวน์โหลด"
+          [label]="'seller.monthlyDownloads' | trans"
           [value]="(seller.stats().monthlyDownloads | compact) + ''"
           icon="⬇️"
         />
         <app-stat-card
-          label="ฟอลโลเวอร์"
+          [label]="'seller.followers' | trans"
           [value]="(seller.stats().followerCount | compact) + ''"
           icon="💗"
           [trend]="'+' + seller.stats().newFollowersThisMonth"
-          trendLabel="ในเดือนนี้"
+          [trendLabel]="'seller.thisMonth' | trans"
         />
         <app-stat-card
-          label="คะแนนเฉลี่ย"
+          [label]="'seller.averageRating' | trans"
           [value]="seller.stats().averageRating + ' ★'"
           icon="⭐"
           [trend]="ratingTrendDisplay()"
-          trendLabel="vs เดือนก่อน"
+          [trendLabel]="'seller.vsLastMonth' | trans"
         />
       </section>
 
@@ -75,12 +75,12 @@
         <section class="lg:col-span-2 min-w-0 card-tile">
           <header class="flex items-end justify-between mb-6">
             <div>
-              <h2 class="text-lg font-bold text-ink">รายได้ 6 เดือนล่าสุด</h2>
-              <p class="text-xs text-ink-muted mt-1">สรุปรายได้รายเดือน (THB)</p>
+              <h2 class="text-lg font-bold text-ink">{{ 'seller.recent6MonthsRevenue' | trans }}</h2>
+              <p class="text-xs text-ink-muted mt-1">{{ 'seller.monthlyRevenueSummary' | trans }}</p>
             </div>
             <div class="text-right">
               <div class="text-2xl font-extrabold text-ink">{{ seller.stats().totalRevenue | thb }}</div>
-              <div class="text-xs text-ink-muted">รายได้รวมตั้งแต่เริ่มต้น</div>
+              <div class="text-xs text-ink-muted">{{ 'seller.allTimeRevenue' | trans }}</div>
             </div>
           </header>
 

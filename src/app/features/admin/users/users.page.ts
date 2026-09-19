@@ -9,6 +9,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
+
 @Component({
   selector: 'app-admin-users',
   standalone: true,
@@ -20,6 +23,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     ThbPipe,
     DatePipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './users.page.html',
@@ -27,6 +31,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 })
 export class AdminUsersPage {
   private readonly admin = inject(AdminService);
+  readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(20);
@@ -43,27 +48,27 @@ export class AdminUsersPage {
   readonly totalPages = signal(0);
   readonly loading = signal(false);
 
-  readonly roles = [
-    { value: '', label: 'ทั้งหมด' },
-    { value: 'buyer', label: 'ผู้ซื้อ' },
-    { value: 'seller', label: 'ผู้ขาย' },
-    { value: 'admin', label: 'ผู้ดูแลระบบ' },
-  ];
+  readonly roles = computed(() => [
+    { value: '', label: this.translation.t('common.roles.all') },
+    { value: 'buyer', label: this.translation.t('common.roles.buyer') },
+    { value: 'seller', label: this.translation.t('common.roles.seller') },
+    { value: 'admin', label: this.translation.t('common.roles.admin') },
+  ]);
 
-  readonly statuses = [
-    { value: '', label: 'ทั้งหมด' },
-    { value: 'active', label: 'ปกติ' },
-    { value: 'suspended', label: 'ระงับชั่วคราว' },
-    { value: 'banned', label: 'แบนถาวร' },
-  ];
+  readonly statuses = computed(() => [
+    { value: '', label: this.translation.t('common.userStatuses.all') },
+    { value: 'active', label: this.translation.t('common.userStatuses.active') },
+    { value: 'suspended', label: this.translation.t('common.userStatuses.suspended') },
+    { value: 'banned', label: this.translation.t('common.userStatuses.banned') },
+  ]);
 
-  readonly sorts: Array<{ value: AdminUsersSort; label: string }> = [
-    { value: 'newest', label: 'ใหม่สุด' },
-    { value: 'oldest', label: 'เก่าสุด' },
-    { value: 'most_spent', label: 'ซื้อมากสุด' },
-    { value: 'most_earned', label: 'ขายมากสุด' },
-    { value: 'name_asc', label: 'ชื่อ A-Z' },
-  ];
+  readonly sorts = computed<Array<{ value: AdminUsersSort; label: string }>>(() => [
+    { value: 'newest', label: this.translation.t('common.userSorts.newest') },
+    { value: 'oldest', label: this.translation.t('common.userSorts.oldest') },
+    { value: 'most_spent', label: this.translation.t('common.userSorts.mostSpent') },
+    { value: 'most_earned', label: this.translation.t('common.userSorts.mostEarned') },
+    { value: 'name_asc', label: this.translation.t('common.userSorts.nameAsc') },
+  ]);
 
   readonly totalPagesSafe = computed(() => Math.max(1, this.totalPages() || 1));
 
@@ -110,9 +115,9 @@ export class AdminUsersPage {
 
   getRoleLabel(role: string): string {
     switch (role.toLowerCase()) {
-      case 'buyer': return 'ผู้ซื้อ';
-      case 'seller': return 'ผู้ขาย';
-      case 'admin': return 'ผู้ดูแลระบบ';
+      case 'buyer': return this.translation.t('common.roles.buyer');
+      case 'seller': return this.translation.t('common.roles.seller');
+      case 'admin': return this.translation.t('common.roles.admin');
       default: return role;
     }
   }
@@ -133,11 +138,11 @@ export class AdminUsersPage {
   getStatusLabel(status: AdminUserAccountStatus): string {
     switch (status) {
       case 'active':
-        return 'ปกติ';
+        return this.translation.t('common.userStatuses.active');
       case 'suspended':
-        return 'ระงับชั่วคราว';
+        return this.translation.t('common.userStatuses.suspended');
       case 'banned':
-        return 'แบนถาวร';
+        return this.translation.t('common.userStatuses.banned');
       default:
         return status;
     }

@@ -1,8 +1,8 @@
 <div class="max-w-7xl">
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">อนุมัติเอกสาร</h1>
+        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.approvalTitle' | trans }}</h1>
         <p class="text-sm text-ink-soft">
-          ตรวจสอบเอกสารที่ผู้ขายส่งเข้ามา ก่อนเผยแพร่บนตลาด
+          {{ 'admin.approvalSubtitle' | trans }}
         </p>
       </header>
 
@@ -10,7 +10,7 @@
         <!-- List -->
         <div class="lg:col-span-5 space-y-3 min-h-0">
           <div class="text-sm text-ink-muted mb-2">
-            <b class="text-ink">{{ pending().length }}</b> รายการรอตรวจสอบ
+            <b class="text-ink">{{ pending().length }}</b> {{ 'admin.pendingQueue' | trans: { count: '' } }}
           </div>
 
           <div class="card-soft p-4">
@@ -20,7 +20,7 @@
                   class="input-soft !py-2 !pl-10"
                   [value]="titleQuery()"
                   (input)="titleQuery.set(($any($event.target).value ?? ''))"
-                  placeholder="หัวข้อเอกสาร"
+                  [placeholder]="'admin.docTitleSearch' | trans"
                 />
                 <div class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
                   <app-icon name="search" [size]="16" />
@@ -31,14 +31,14 @@
                   class="input-soft !py-2"
                   [value]="sellerNameQuery()"
                   (input)="sellerNameQuery.set(($any($event.target).value ?? ''))"
-                  placeholder="ชื่อผู้ขาย"
+                  [placeholder]="'admin.sellerNameSearch' | trans"
                 />
               </div>
 
               <div class="sm:col-span-2">
                 <div class="flex items-end justify-between gap-3">
                   <div class="flex-1 min-w-0">
-                    <label class="block text-[11px] text-ink-muted mb-1">วันที่โพสต์</label>
+                    <label class="block text-[11px] text-ink-muted mb-1">{{ 'admin.postedDate' | trans }}</label>
                     <div class="flex items-center gap-2">
                       <input
                         class="input-soft !py-2 flex-1"
@@ -46,7 +46,7 @@
                         [value]="postedFrom()"
                         (input)="postedFrom.set(($any($event.target).value ?? ''))"
                       />
-                      <span class="text-ink-muted text-xs select-none">ถึง</span>
+                      <span class="text-ink-muted text-xs select-none">{{ 'admin.to' | trans }}</span>
                       <input
                         class="input-soft !py-2 flex-1"
                         type="date"
@@ -61,17 +61,17 @@
 
             <div class="flex items-center justify-end gap-2 mt-3">
               <button type="button" class="btn-ghost" (click)="resetSearch()">
-                ล้างค่า
+                {{ 'admin.resetFilters' | trans }}
               </button>
               <button type="button" class="btn-ghost" (click)="runSearch()">
-                รีเฟรช
+                {{ 'admin.refresh' | trans }}
               </button>
             </div>
           </div>
 
           <div class="max-h-[calc(100vh-260px)] overflow-auto pr-1 space-y-3">
           @if (pending().length === 0) {
-            <app-empty-state emoji="🌿" title="ไม่มีเอกสารรออนุมัติ" description="ทุกอย่างเรียบร้อย!" />
+            <app-empty-state emoji="🌿" [title]="'admin.noPending' | trans" [description]="'admin.allClear' | trans" />
           } @else {
             @for (d of pending(); track d.id) {
               <button

@@ -1,35 +1,36 @@
 import { Injectable, inject } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
-
-const FALLBACK = 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';
+import { TranslationService } from '../i18n';
 
 /**
- * แจ้งเตือนแบบรวมศูนย์เมื่อคำขอไป backend / OpenAPI client ล้มเหลว
- *
- * AUD-013: รองรับ shape ProblemDetails (ASP.NET Core) แบบ camelCase รวมถึง
- *  - `detail` / `title` / `message`
- *  - `errors: { field: [msg, ...] }` (ModelState validation)
- *  - `errors: [...]` (legacy array form)
- *  - HTTP `status` / `statusCode` (เพิ่ม prefix [HTTP code] เพื่อ debug ง่าย)
+ * แจ้งเตือนแบบรวมศูนย์เมื่อคำขอไป backend / OpenAPI client ล้มเหลว (รองรับ 2 ภาษา)
  */
 @Injectable({ providedIn: 'root' })
 export class ApiFailureReporter {
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService, { optional: true });
 
-  /** context = ข้อความสั้นๆ ภาษาไทย เช่น "โหลดตะกร้า" */
+  private get fallbackText(): string {
+    return this.translation?.currentLang() === 'en'
+      ? 'Unable to connect to the server'
+      : 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';
+  }
+
+  /** context = ข้อความสั้นๆ หรือ translation key เช่น "โหลดตะกร้า" หรือ "common.errors.loadCart" */
   report(context: string, error?: unknown): void {
     const detail = this.formatDetail(error);
+    const localizedContext = this.translation?.t(context) || context;
     if (typeof this.message?.error === 'function') {
-      this.message.error(detail ? `${context} — ${detail}` : context);
+      this.message.error(detail ? `${localizedContext} — ${detail}` : localizedContext);
     }
   }
 
   formatDetail(error: unknown): string {
-    if (error == null) return FALLBACK;
+    if (error == null) return this.fallbackText;
     if (typeof error === 'string') return error;
-    if (error instanceof Error) return error.message || FALLBACK;
+    if (error instanceof Error) return error.message || this.fallbackText;
 
-    if (typeof error !== 'object') return FALLBACK;
+    if (typeof error !== 'object') return this.fallbackText;
 
     const o = error as Record<string, unknown>;
 
@@ -59,6 +60,15 @@ export class ApiFailureReporter {
       }
     }
 
+    // Check machine-readable error code mapping
+    const code = o['code'];
+    if (typeof code === 'string' && code && this.translation) {
+      const localizedCodeMsg = this.translation.t(`errors.${code}`);
+      if (localizedCodeMsg && localizedCodeMsg !== `errors.${code}`) {
+        return localizedCodeMsg;
+      }
+    }
+
     const detail = o['detail'];
     if (typeof detail === 'string' && detail) return detail;
     const title = o['title'];
@@ -69,6 +79,6 @@ export class ApiFailureReporter {
     const status = (o['status'] ?? o['statusCode']) as number | undefined;
     if (typeof status === 'number') return `HTTP ${status}`;
 
-    return FALLBACK;
+    return this.fallbackText;
   }
 }

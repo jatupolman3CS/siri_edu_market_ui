@@ -25,7 +25,7 @@
         }
         <span class="text-pink-200">|</span>
         <span class="hidden lg:inline text-ink-muted/80">
-          ศูนย์รวมเอกสารการศึกษา ข้อสอบ สรุปบทเรียน และสื่อการสอนคุณภาพสูง
+          {{ 'header.topbarSlogan' | trans }}
         </span>
       </div>
 
@@ -91,7 +91,7 @@
                 type="button"
                 (click)="clearQuery()"
                 class="p-1.5 mr-1 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-pink-100 cursor-pointer"
-                title="ล้างคำค้นหา"
+                [title]="'header.clearSearch' | trans"
               >
                 <app-icon name="close" [size]="14" />
               </button>
@@ -111,8 +111,8 @@
 
         <!-- Trending / Quick Search Keywords (Under Search Input like Shopee) -->
         <div class="flex items-center gap-2 mt-1.5 overflow-x-auto no-scrollbar text-xs">
-          <span class="text-ink-muted text-[11px] shrink-0">ค้นหายอดนิยม:</span>
-          @for (kw of quickSearches; track kw) {
+          <span class="text-ink-muted text-[11px] shrink-0">{{ 'header.popularSearches' | trans }}:</span>
+          @for (kw of quickSearches(); track kw) {
             <button
               type="button"
               (click)="searchTag(kw)"
@@ -237,7 +237,7 @@
               <li nz-menu-item (click)="go('/account/feedback')" class="!rounded-xl">
                 <span class="flex items-center gap-2 text-ink">
                   <app-icon name="flag" [size]="16" />
-                  แจ้งปัญหา / ข้อเสนอแนะ
+                  {{ 'header.feedback' | trans }}
                 </span>
               </li>
               @if (auth.isSeller() || auth.isAdmin()) {
@@ -310,7 +310,7 @@
               type="button"
               (click)="clearQuery()"
               class="p-1 mr-1 text-ink-muted hover:text-ink transition-colors cursor-pointer"
-              title="ล้างคำค้นหา"
+              [title]="'header.clearSearch' | trans"
             >
               <app-icon name="close" [size]="12" />
             </button>
@@ -325,8 +325,8 @@
       </form>
       <!-- Mobile Trending Quick Tags -->
       <div class="flex items-center gap-1.5 mt-1.5 overflow-x-auto no-scrollbar text-xs">
-        <span class="text-ink-muted text-[10px] shrink-0">ฮิต:</span>
-        @for (kw of quickSearches; track kw) {
+        <span class="text-ink-muted text-[10px] shrink-0">{{ 'header.hot' | trans }}:</span>
+        @for (kw of quickSearches(); track kw) {
           <button
             type="button"
             (click)="searchTag(kw)"
@@ -438,7 +438,7 @@
             class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
             (click)="closeMobileMenu()"
           >
-            แจ้งปัญหา / ข้อเสนอแนะ
+            {{ 'header.feedback' | trans }}
           </a>
           @if (auth.isSeller() || auth.isAdmin()) {
             <a

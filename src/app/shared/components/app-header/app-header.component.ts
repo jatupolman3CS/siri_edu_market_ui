@@ -67,15 +67,11 @@ export class AppHeaderComponent {
   readonly query = signal<string>('');
 
   /** Trending / popular search tags displayed below the prominent search bar */
-  readonly quickSearches = [
-    'สรุปชีวะ',
-    'ข้อสอบ ก.พ.',
-    'Portfolio',
-    'คณิต ม.ปลาย',
-    'ใบงานปฐมวัย',
-    'TOEIC',
-    'เทมเพลต',
-  ];
+  readonly quickSearches = computed<string[]>(() => {
+    return this.translation.currentLang() === 'th'
+      ? ['สรุปชีวะ', 'ข้อสอบ ก.พ.', 'Portfolio', 'คณิต ม.ปลาย', 'ใบงานปฐมวัย', 'TOEIC', 'เทมเพลต']
+      : ['Biology Notes', 'Civil Service Exam', 'Portfolio', 'High School Math', 'Worksheets', 'TOEIC', 'Templates'];
+  });
 
   /**
    * Q-bugfix item 1: below the `md` breakpoint the desktop `<nav>` and the "เข้าสู่ระบบ" link

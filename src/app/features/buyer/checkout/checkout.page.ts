@@ -46,6 +46,9 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
  * payment with `stripe.confirmCardPayment` directly. The "new card" path is unchanged except for
  * an added "บันทึกบัตรนี้ไว้..." checkbox and a best-effort save-the-card call after payment.
  */
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
+
 @Component({
   selector: 'app-buyer-checkout',
   standalone: true,
@@ -56,6 +59,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     EmptyStateComponent,
     ImgFallbackDirective,
     SavedCardsComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './checkout.page.html',
@@ -63,6 +67,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 })
 export class BuyerCheckoutPage implements OnDestroy {
   readonly cart = inject(CartService);
+  readonly translation = inject(TranslationService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly orders = inject(OrderService);

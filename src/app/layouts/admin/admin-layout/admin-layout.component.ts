@@ -81,48 +81,33 @@ export class AdminLayoutComponent {
       exact?: boolean;
       badge?: string;
     }>
-  >(() => {
-    const isTh = this.translation.currentLang() === 'th';
-    return [
-      { label: isTh ? 'ภาพรวม' : 'Overview', href: '/admin', icon: 'dashboard' as const, exact: true },
-      { label: isTh ? 'จัดการเอกสาร' : 'Documents', href: '/admin/documents', icon: 'doc' as const },
-      { label: isTh ? 'อนุมัติเอกสาร' : 'Document Approval', href: '/admin/approval', icon: 'shield' as const },
-      { label: isTh ? 'ธุรกรรม' : 'Transactions', href: '/admin/transactions', icon: 'wallet' as const },
-      { label: isTh ? 'ผู้ใช้ทั้งหมด' : 'Users', href: '/admin/users', icon: 'user' as const },
-      { label: isTh ? 'ผู้ขาย' : 'Sellers', href: '/admin/sellers', icon: 'user' as const },
-      // GAP-02: seller payout queue.
-      { label: isTh ? 'รายงานเอกสาร' : 'Reports', href: '/admin/reports', icon: 'flag' as const },
-      {
-        label: isTh ? 'ข้อเสนอแนะผู้ใช้' : 'User Feedback',
-        href: '/admin/feedback',
-        icon: 'flag' as const,
-        badge: this.newFeedbackCount() > 0 ? String(this.newFeedbackCount()) : undefined,
-      },
-      { label: isTh ? 'ถอนเงินผู้ขาย' : 'Seller Payouts', href: '/admin/payouts', icon: 'wallet' as const },
-      // referral-program v2 §4.1: affiliate links management
-      { label: isTh ? 'ลิงก์พันธมิตร' : 'Affiliates', href: '/admin/affiliates', icon: 'chart' as const },
-      // seller-ads-promotion v1 §4.1: all-campaigns queue + placement price/capacity editor.
-      { label: isTh ? 'โฆษณา' : 'Ads', href: '/admin/ads', icon: 'flag' as const },
-      // GAP-01: review queue for buyers applying to sell.
-      { label: isTh ? 'ใบสมัครผู้ขาย' : 'Seller Applications', href: '/admin/seller-applications', icon: 'shield' as const },
-      { label: isTh ? 'หมวดหมู่' : 'Categories', href: '/admin/categories', icon: 'tag' as const },
-      // crm-core v1 §4.1: CRM overview — segments, top search terms, top category facets.
-      { label: isTh ? 'CRM' : 'CRM', href: '/admin/crm', icon: 'chart' as const },
-      // ml-embedding-recommendations v1 §4.2: read-only "bought together" job monitoring card.
-      { label: isTh ? 'คำแนะนำสินค้า (ML)' : 'ML Recommendations', href: '/admin/ml-recommendations', icon: 'sparkle' as const },
-      // announcement-popup v1 §4: CRUD for the buyer-facing popup announcements.
-      { label: isTh ? 'ประกาศข่าวสาร' : 'Announcements', href: '/admin/announcements', icon: 'bell' as const },
-      // notification-master-config v1 §0.4 root cause #4: this used to link to the buyer
-      // route `/notifications`, which threw the admin out of the admin layout.
-      { label: isTh ? 'การแจ้งเตือน' : 'Notifications', href: '/admin/notifications', icon: 'bell' as const },
-      // notification-master-config v1 §4.1: master config for every notification event.
-      { label: isTh ? 'ตั้งค่าการแจ้งเตือน' : 'Notification Config', href: '/admin/notification-config', icon: 'gear' as const },
-      { label: isTh ? 'ตั้งค่าแพลตฟอร์ม' : 'Settings', href: '/admin/settings', icon: 'gear' as const },
-      { label: isTh ? 'ประวัติการทำงาน' : 'Audit Logs', href: '/admin/audit', icon: 'doc' as const },
-      // category-content-auto-generation v1 §4: trigger/inspect the document auto-generation job.
-      { label: isTh ? 'สร้างเอกสารอัตโนมัติ' : 'Auto Generation', href: '/admin/document-generation', icon: 'sparkle' as const },
-      // exam-hub-landing-pages v1 §4: CMS management for the 4 exam hub pages.
-      { label: isTh ? 'จัดการเนื้อหา Exam Hub' : 'Exam Hub CMS', href: '/admin/exam-hub', icon: 'doc' as const },
-    ];
-  });
+  >(() => [
+    { label: this.translation.t('admin.nav.dashboard'), href: '/admin', icon: 'dashboard' as const, exact: true },
+    { label: this.translation.t('admin.nav.documents'), href: '/admin/documents', icon: 'doc' as const },
+    { label: this.translation.t('admin.nav.approval'), href: '/admin/approval', icon: 'shield' as const },
+    { label: this.translation.t('admin.nav.transactions'), href: '/admin/transactions', icon: 'wallet' as const },
+    { label: this.translation.t('admin.nav.users'), href: '/admin/users', icon: 'user' as const },
+    { label: this.translation.t('admin.nav.sellers'), href: '/admin/sellers', icon: 'user' as const },
+    { label: this.translation.t('admin.nav.reports'), href: '/admin/reports', icon: 'flag' as const },
+    {
+      label: this.translation.t('admin.nav.feedback'),
+      href: '/admin/feedback',
+      icon: 'flag' as const,
+      badge: this.newFeedbackCount() > 0 ? String(this.newFeedbackCount()) : undefined,
+    },
+    { label: this.translation.t('admin.nav.payouts'), href: '/admin/payouts', icon: 'wallet' as const },
+    { label: this.translation.t('admin.nav.affiliates'), href: '/admin/affiliates', icon: 'chart' as const },
+    { label: this.translation.t('admin.nav.ads'), href: '/admin/ads', icon: 'flag' as const },
+    { label: this.translation.t('admin.nav.sellerApplications'), href: '/admin/seller-applications', icon: 'shield' as const },
+    { label: this.translation.t('admin.nav.categories'), href: '/admin/categories', icon: 'tag' as const },
+    { label: this.translation.t('admin.nav.crm'), href: '/admin/crm', icon: 'chart' as const },
+    { label: this.translation.t('admin.nav.mlRecommendations'), href: '/admin/ml-recommendations', icon: 'sparkle' as const },
+    { label: this.translation.t('admin.nav.announcements'), href: '/admin/announcements', icon: 'bell' as const },
+    { label: this.translation.t('admin.nav.notifications'), href: '/admin/notifications', icon: 'bell' as const },
+    { label: this.translation.t('admin.nav.notificationConfig'), href: '/admin/notification-config', icon: 'gear' as const },
+    { label: this.translation.t('admin.nav.settings'), href: '/admin/settings', icon: 'gear' as const },
+    { label: this.translation.t('admin.nav.auditLogs'), href: '/admin/audit', icon: 'doc' as const },
+    { label: this.translation.t('admin.nav.documentGeneration'), href: '/admin/document-generation', icon: 'sparkle' as const },
+    { label: this.translation.t('admin.nav.examHub'), href: '/admin/exam-hub', icon: 'doc' as const },
+  ]);
 }

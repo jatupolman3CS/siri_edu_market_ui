@@ -1,7 +1,13 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeEn from '@angular/common/locales/en';
+import localeTh from '@angular/common/locales/th';
 import { NzI18nService, en_US, th_TH } from 'ng-zorro-antd/i18n';
 import { th } from './translations/th';
 import { en } from './translations/en';
+
+registerLocaleData(localeEn);
+registerLocaleData(localeTh);
 
 export type AppLanguage = 'th' | 'en';
 

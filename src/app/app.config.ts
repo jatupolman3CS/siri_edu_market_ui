@@ -5,7 +5,8 @@ import {
   importProvidersFrom,
   LOCALE_ID,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, TitleStrategy } from '@angular/router';
+import { I18nTitleStrategy } from './core/i18n';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -67,6 +68,7 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     { provide: LOCALE_ID, useValue: 'th-TH' },
+    { provide: TitleStrategy, useClass: I18nTitleStrategy },
     importProvidersFrom(FormsModule, NzIconModule, NzModalModule),
   ],
 };

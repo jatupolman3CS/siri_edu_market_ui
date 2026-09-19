@@ -10,7 +10,7 @@ describe('app.routes — 404 route title (bug #7)', () => {
     const wildcard = routes.find((r) => r.path === '**');
 
     expect(wildcard).toBeTruthy();
-    expect(wildcard?.title).toBe('ไม่พบหน้านี้ — SIRIEDUMARKET');
+    expect(wildcard?.title).toBe('routes.notFound');
   });
 });
 

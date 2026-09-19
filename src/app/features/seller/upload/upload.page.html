@@ -1,10 +1,10 @@
 <div class="max-w-6xl">
       <header class="mb-6">
         <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">
-          {{ isEditMode() ? 'แก้ไขเอกสาร' : 'อัปโหลดเอกสารใหม่' }}
+          {{ isEditMode() ? ('seller.editDoc' | trans) : ('seller.uploadNewDoc' | trans) }}
         </h1>
         <p class="text-sm text-ink-soft">
-          {{ isEditMode() ? 'อัปเดตรายละเอียดเอกสารของคุณ' : 'ทำตาม 4 ขั้นตอนเพื่อเผยแพร่เอกสารของคุณบน SIRIEDUMARKET' }}
+          {{ isEditMode() ? ('seller.editDesc' | trans) : ('seller.uploadDesc' | trans) }}
         </p>
       </header>
 
@@ -29,7 +29,7 @@
 
       <!-- Steps -->
       <ol class="flex items-start justify-between mb-8 gap-1">
-        @for (s of steps; track s.no; let i = $index) {
+        @for (s of steps(); track s.no; let i = $index) {
           <li class="flex items-center" [class.flex-1]="i < 3">
             <button
               type="button"

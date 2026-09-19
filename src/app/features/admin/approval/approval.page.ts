@@ -12,6 +12,8 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { FileNamePipe } from '../../../shared/pipes/file-name.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-admin-approval',
   standalone: true,
@@ -24,6 +26,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     ThbPipe,
     FileNamePipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './approval.page.html',

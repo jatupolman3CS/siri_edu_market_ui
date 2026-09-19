@@ -5,7 +5,7 @@
         <header class="flex items-center justify-between">
           <app-logo />
           <a routerLink="/" class="text-xs text-ink-muted hover:text-pink-600">
-            ← กลับสู่หน้าตลาด
+            ← {{ 'nav.backToMarket' | trans }}
           </a>
         </header>
 
@@ -55,7 +55,7 @@
               } @else {
                 <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
               }
-              <div class="text-xs text-pink-100">เอกสาร</div>
+              <div class="text-xs text-pink-100">{{ 'auth.docsCount' | trans }}</div>
             </div>
             <div>
               @if (platformStats.stats(); as ps) {
@@ -63,12 +63,12 @@
               } @else {
                 <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
               }
-              <div class="text-xs text-pink-100">ครีเอเตอร์</div>
+              <div class="text-xs text-pink-100">{{ 'auth.creatorsCount' | trans }}</div>
             </div>
             @if (platformStats.stats()?.positiveReviewPercent; as positivePercent) {
               <div>
                 <div class="text-3xl font-extrabold">{{ positivePercent | number:'1.0-0' }}%</div>
-                <div class="text-xs text-pink-100">รีวิวบวก</div>
+                <div class="text-xs text-pink-100">{{ 'auth.positiveReviews' | trans }}</div>
               </div>
             }
           </div>

@@ -45,6 +45,9 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
 
 type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
+
 @Component({
   selector: 'app-seller-upload',
   standalone: true,
@@ -60,6 +63,7 @@ type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
     ImgFallbackDirective,
     NzModalModule,
     RouterLink,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './upload.page.html',
@@ -70,6 +74,7 @@ export class SellerUploadPage {
 
   readonly catalog = inject(CatalogService);
   readonly platformStats = inject(PlatformStatsService);
+  readonly translation = inject(TranslationService);
   private readonly seller = inject(SellerService);
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
@@ -85,12 +90,12 @@ export class SellerUploadPage {
   readonly editId = signal<string>('');
   readonly isEditMode = computed(() => !!this.editId());
 
-  readonly steps = [
-    { no: 1, label: 'อัปโหลด' },
-    { no: 2, label: 'รายละเอียด' },
-    { no: 3, label: 'ตั้งราคา' },
-    { no: 4, label: 'ตรวจสอบ' },
-  ];
+  readonly steps = computed(() => [
+    { no: 1, label: this.translation.t('seller.uploadStep1') },
+    { no: 2, label: this.translation.t('seller.uploadStep2') },
+    { no: 3, label: this.translation.t('seller.uploadStep3') },
+    { no: 4, label: this.translation.t('seller.uploadStep4') },
+  ]);
 
   readonly formats = ['PDF', 'DOCX', 'PPTX', 'XLSX', 'ZIP'];
 

@@ -20,6 +20,8 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { FeedbackModalComponent } from '../../../shared/components/feedback-modal/feedback-modal.component';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-seller-dashboard',
   standalone: true,
@@ -35,6 +37,7 @@ import { FeedbackModalComponent } from '../../../shared/components/feedback-moda
     DatePipe,
     ImgFallbackDirective,
     FeedbackModalComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',

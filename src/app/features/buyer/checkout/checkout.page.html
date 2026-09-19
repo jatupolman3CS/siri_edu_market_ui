@@ -4,21 +4,21 @@
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-      <span>ชำระเงิน</span>
+      <span>{{ 'checkout.title' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">ชำระเงิน</h1>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'checkout.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">
-      ตรวจสอบรายการและเลือกวิธีการชำระเงินที่คุณสะดวก
+      {{ 'checkout.subtitle' | trans }}
     </p>
   </header>
 
       @if (cart.count() === 0) {
         <app-empty-state
           emoji="🛍️"
-          title="ตะกร้าของคุณว่างอยู่"
-          description="กลับไปเลือกซื้อเอกสารกันก่อน"
+          [title]="'checkout.emptyTitle' | trans"
+          [description]="'checkout.emptyDesc' | trans"
         >
-          <a routerLink="/marketplace" class="btn-pink mt-4">เลือกเอกสาร</a>
+          <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'checkout.browseDocs' | trans }}</a>
         </app-empty-state>
       } @else {
         <div class="grid lg:grid-cols-3 gap-6">
@@ -28,7 +28,7 @@
             <section class="card-soft p-6">
               <h2 class="text-lg font-bold text-ink mb-4 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-xs font-bold flex items-center justify-center">1</span>
-                รายการสินค้า
+                {{ 'checkout.step1Title' | trans }}
               </h2>
               <ul class="flex flex-col gap-3">
                 @for (item of cart.items(); track item.document.id) {
@@ -42,7 +42,7 @@
                     <div class="flex-1 min-w-0">
                       <div class="text-xs text-ink-muted">{{ item.document.seller.studioName }}</div>
                       <div class="text-sm font-bold text-ink line-clamp-1">{{ item.document.title }}</div>
-                      <div class="text-xs text-ink-muted mt-0.5 uppercase">{{ item.document.format }} · {{ item.document.pages }} หน้า</div>
+                      <div class="text-xs text-ink-muted mt-0.5 uppercase">{{ item.document.format }} · {{ item.document.pages }} {{ 'common.pages' | trans }}</div>
                     </div>
                     <div class="text-right">
                       <div class="text-base font-bold text-pink-600">{{ item.document.price | thb }}</div>
@@ -50,7 +50,7 @@
                         class="text-xs text-ink-muted hover:text-rose-500 mt-1"
                         (click)="cart.remove(item.document.id)"
                       >
-                        ลบ
+                        {{ 'common.delete' | trans }}
                       </button>
                     </div>
                   </li>
@@ -63,17 +63,16 @@
             <section class="card-soft p-6">
               <h2 class="text-lg font-bold text-ink mb-4 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-xs font-bold flex items-center justify-center">2</span>
-                ชำระเงิน
+                {{ 'checkout.step2Title' | trans }}
               </h2>
 
               <!-- D-08: no publishable key on the server means no payment is possible. Say so
                    here, before the buyer creates an order that cannot be paid. -->
               @if (paymentsUnavailable()) {
                 <div class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed">
-                  <p class="font-bold mb-1">ตอนนี้ยังชำระเงินไม่ได้</p>
+                  <p class="font-bold mb-1">{{ 'checkout.payUnavailableTitle' | trans }}</p>
                   <p>
-                    ระบบชำระเงินยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์ (ยังไม่ได้ตั้งค่า Stripe)
-                    จึงยังสร้างคำสั่งซื้อแบบเสียเงินไม่ได้ — เอกสารที่ราคา 0 บาท ยังหยิบเข้าคลังได้ตามปกติ
+                    {{ 'checkout.payUnavailableDesc' | trans }}
                   </p>
                 </div>
               } @else {
@@ -93,7 +92,7 @@
                   <div class="flex items-center justify-between gap-2">
                     <span class="flex items-center gap-2 text-sm font-semibold text-ink">
                       <app-icon name="wallet" [size]="18" />
-                      จ่ายด้วยกระเป๋าเงิน
+                      {{ 'checkout.payWithWallet' | trans }}
                     </span>
                     <span class="text-sm font-bold text-ink">
                       @if (wallet.summary()?.balance != null) {
@@ -105,26 +104,26 @@
                   </div>
                   @if (isWalletInsufficient()) {
                     <p class="text-xs text-rose-600 mt-2">
-                      ยอดเงินไม่พอ (คงเหลือ {{ wallet.summary()?.balance ?? 0 | thb }})
+                      {{ 'checkout.insufficientBalance' | trans: { balance: (wallet.summary()?.balance ?? 0 | thb) } }}
                       <a
                         routerLink="/wallet"
                         class="underline font-semibold"
                         (click)="$event.stopPropagation()"
-                      >เติมเงิน</a>
+                      >{{ 'checkout.topUp' | trans }}</a>
                     </p>
                   }
                 </button>
 
                 @if (payWithWallet()) {
                   <p class="text-sm text-ink-soft leading-relaxed mb-4">
-                    ชำระด้วยยอดเงินคงเหลือในกระเป๋าเงินทันทีเมื่อกด «ยืนยันการชำระเงิน»
+                    {{ 'checkout.walletDeductImmediate' | trans }}
                   </p>
                   <button
                     type="button"
                     class="text-xs text-pink-600 hover:underline mb-4"
                     (click)="selectCard()"
                   >
-                    ใช้บัตรแทน
+                    {{ 'checkout.useCardInstead' | trans }}
                   </button>
                 } @else {
                   <!-- saved-credit-cards v1 §4: only shows a picker at all when the buyer has
@@ -139,21 +138,21 @@
                         (change)="saveNewCard.set($any($event.target).checked)"
                         class="w-4 h-4 accent-pink-500"
                       />
-                      บันทึกบัตรนี้ไว้สำหรับชำระเงินครั้งถัดไป
+                      {{ 'checkout.saveCardNextTime' | trans }}
                     </label>
                     <p class="text-xs text-ink-muted mb-4">
-                      เลือกวิธีชำระเงินที่ต้องการในกล่องด้านล่าง แล้วกด «ยืนยันการชำระเงิน»
+                      {{ 'checkout.selectPaymentMethodHint' | trans }}
                     </p>
                   } @else {
                     <p class="text-sm text-ink-soft leading-relaxed mb-4">
-                      ชำระด้วยบัตรที่เลือกไว้ทันทีเมื่อกด «ยืนยันการชำระเงิน»
+                      {{ 'checkout.payWithCardImmediate' | trans }}
                     </p>
                   }
 
                   @if (busy() && !paymentReady() && selectedSavedCardId() === 'new') {
                     <div class="py-10 flex flex-col items-center justify-center text-center gap-2 text-ink-muted">
                       <div class="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p class="text-sm font-medium text-ink">กำลังเปิดช่องทางการชำระเงิน…</p>
+                      <p class="text-sm font-medium text-ink">{{ 'checkout.openingGateway' | trans }}</p>
                     </div>
                   }
 
@@ -168,30 +167,30 @@
           <!-- Summary -->
           <aside class="lg:col-span-1">
             <div class="card-soft p-6 sticky top-[88px]">
-              <h2 class="text-base font-bold text-ink mb-4">สรุปการสั่งซื้อ</h2>
+              <h2 class="text-base font-bold text-ink mb-4">{{ 'checkout.summaryTitle' | trans }}</h2>
               <dl class="space-y-2 text-sm">
                 <div class="flex justify-between text-ink-soft">
-                  <dt>ยอดสินค้า ({{ cart.count() }})</dt>
+                  <dt>{{ 'checkout.subtotalItems' | trans: { count: cart.count() } }}</dt>
                   <dd>{{ cart.subtotal() | thb }}</dd>
                 </div>
                 @if (cart.savings() > 0) {
                   <div class="flex justify-between text-emerald-600">
-                    <dt>ส่วนลดสะสม</dt>
+                    <dt>{{ 'checkout.savings' | trans }}</dt>
                     <dd>- {{ cart.savings() | thb }}</dd>
                   </div>
                 }
                 @if (referralDiscount() > 0) {
                   <div class="flex justify-between text-emerald-600">
-                    <dt>ส่วนลดแนะนำเพื่อน</dt>
+                    <dt>{{ 'checkout.referralDiscount' | trans }}</dt>
                     <dd>- {{ referralDiscount() | thb }}</dd>
                   </div>
                 }
                 <div class="flex justify-between text-ink-soft">
-                  <dt>VAT (รวมในราคาแล้ว)</dt>
+                  <dt>{{ 'checkout.vatIncluded' | trans }}</dt>
                   <dd>{{ cart.vatIncluded() | thb }}</dd>
                 </div>
                 <div class="border-t border-line pt-3 flex justify-between text-base font-bold text-ink">
-                  <dt>ยอดที่ต้องชำระ</dt>
+                  <dt>{{ 'checkout.totalDue' | trans }}</dt>
                   <dd class="text-pink-600">{{ payableTotal() | thb }}</dd>
                 </div>
               </dl>
@@ -204,7 +203,7 @@
                     class="text-xs text-pink-600 hover:text-pink-700 font-medium cursor-pointer"
                     (click)="showReferralInput.set(true)"
                   >
-                    มีโค้ดแนะนำเพื่อน?
+                    {{ 'checkout.hasReferralCode' | trans }}
                   </button>
                 } @else {
                   <div class="space-y-1.5">
@@ -212,16 +211,16 @@
                       type="text"
                       [value]="referralCode()"
                       (input)="onReferralCodeInput($any($event.target).value)"
-                      placeholder="กรอกโค้ดแนะนำเพื่อน"
+                      [placeholder]="'checkout.enterReferralCode' | trans"
                       class="w-full text-xs px-3 py-2 border border-line rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-pink-500"
                       [disabled]="busy() || paymentReady()"
                     />
                     @if (validatingReferral()) {
-                      <p class="text-[11px] text-ink-muted">กำลังตรวจสอบโค้ด…</p>
+                      <p class="text-[11px] text-ink-muted">{{ 'checkout.validatingCode' | trans }}</p>
                     } @else if (referralValidation(); as v) {
                       @if (v.valid) {
                         <p class="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                          <span>✓</span> ใช้โค้ดนี้ได้ ลด 20 บาท
+                          <span>✓</span> {{ 'checkout.codeApplied' | trans }}
                         </p>
                       } @else if (v.reasonText) {
                         <p class="text-[11px] text-rose-500 font-medium">
@@ -241,7 +240,7 @@
                       [disabled]="busy() || paymentReady()"
                       class="w-4 h-4 accent-pink-500 rounded"
                     />
-                    <span>ใช้เครดิตแนะนำเพื่อน ({{ referral.summary()?.unusedCreditTotal ?? 0 }} บาท)</span>
+                    <span>{{ 'checkout.useReferralCredit' | trans: { amount: referral.summary()?.unusedCreditTotal ?? 0 } }}</span>
                   </label>
                 }
               </div>
@@ -253,11 +252,11 @@
               >
                 <app-icon name="lock" [size]="16" />
                 @if (paymentsUnavailable()) {
-                  ยังชำระเงินไม่ได้
+                  {{ 'checkout.payUnavailableBtn' | trans }}
                 } @else if (busy()) {
-                  {{ paymentReady() ? 'กำลังยืนยัน…' : 'กำลังเปิดการชำระเงิน…' }}
+                  {{ paymentReady() ? ('checkout.confirming' | trans) : ('checkout.openingPayment' | trans) }}
                 } @else {
-                  ยืนยันการชำระเงิน
+                  {{ 'checkout.confirmPayment' | trans }}
                 }
               </button>
 
@@ -270,8 +269,8 @@
               }
 
               <p class="text-[11px] text-ink-muted text-center mt-3 leading-relaxed">
-                เมื่อกดยืนยัน คุณยอมรับ <a href="#" class="text-pink-600">เงื่อนไขการใช้งาน</a>
-                และ <a href="#" class="text-pink-600">นโยบายความเป็นส่วนตัว</a>
+                {{ 'checkout.termsNotice' | trans }} <a href="#" class="text-pink-600">{{ 'checkout.termsLink' | trans }}</a>
+                {{ 'auth.and' | trans }} <a href="#" class="text-pink-600">{{ 'checkout.privacyLink' | trans }}</a>
               </p>
 
               <div class="grid grid-cols-3 gap-2 mt-5 pt-5 border-t border-line text-center text-xs">
@@ -279,19 +278,19 @@
                   <span class="text-pink-500">
                     <app-icon name="lock" [size]="16" />
                   </span>
-                  <span class="text-ink-muted">SSL Secure</span>
+                  <span class="text-ink-muted">{{ 'checkout.sslSecure' | trans }}</span>
                 </div>
                 <div class="flex flex-col items-center gap-1">
                   <span class="text-pink-500">
                     <app-icon name="shield" [size]="16" />
                   </span>
-                  <span class="text-ink-muted">Watermarked</span>
+                  <span class="text-ink-muted">{{ 'checkout.watermarked' | trans }}</span>
                 </div>
                 <div class="flex flex-col items-center gap-1">
                   <span class="text-pink-500">
                     <app-icon name="download" [size]="16" />
                   </span>
-                  <span class="text-ink-muted">Instant DL</span>
+                  <span class="text-ink-muted">{{ 'checkout.instantDl' | trans }}</span>
                 </div>
               </div>
             </div>

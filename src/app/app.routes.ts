@@ -16,7 +16,7 @@ export const routes: Routes = [
         path: '',
         loadComponent: () =>
           import('./features/buyer/home/home.page').then((m) => m.BuyerHomePage),
-        title: 'SIRIEDUMARKET — เอกสารคุณภาพ จากครีเอเตอร์ตัวจริง',
+        title: 'routes.home',
       },
       {
         path: 'marketplace',
@@ -24,7 +24,7 @@ export const routes: Routes = [
           import('./features/buyer/marketplace/marketplace.page').then(
             (m) => m.BuyerMarketplacePage,
           ),
-        title: 'ตลาดเอกสาร — SIRIEDUMARKET',
+        title: 'routes.marketplace',
       },
       {
         path: 'categories',
@@ -32,7 +32,7 @@ export const routes: Routes = [
           import('./features/buyer/categories/categories.page').then(
             (m) => m.BuyerCategoriesPage,
           ),
-        title: 'หมวดหมู่ — SIRIEDUMARKET',
+        title: 'routes.categories',
       },
       {
         path: 'category/:slug',
@@ -54,7 +54,7 @@ export const routes: Routes = [
           import('./features/buyer/bundles/bundles.page').then(
             (m) => m.BuyerBundlesPage,
           ),
-        title: 'แพ็กเกจ — SIRIEDUMARKET',
+        title: 'routes.bundles',
       },
       {
         path: 'bundle/:id',
@@ -67,7 +67,7 @@ export const routes: Routes = [
         path: 'free',
         loadComponent: () =>
           import('./features/buyer/free/free.page').then((m) => m.BuyerFreePage),
-        title: 'เอกสารฟรี — SIRIEDUMARKET',
+        title: 'routes.free',
       },
       {
         path: 'store/:id',
@@ -84,7 +84,7 @@ export const routes: Routes = [
           import('./features/buyer/wishlist/wishlist.page').then(
             (m) => m.BuyerWishlistPage,
           ),
-        title: 'รายการโปรด — SIRIEDUMARKET',
+        title: 'routes.wishlist',
       },
       // exam-hub-landing-pages v1 §4: 4 dedicated landing pages for national exam hubs.
       {
@@ -92,28 +92,28 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
         data: { examType: 'tcas' },
-        title: 'TCAS — ระบบคัดเลือกเข้ามหาวิทยาลัย — SIRIEDUMARKET',
+        title: 'routes.tcas',
       },
       {
         path: 'tgat-tpat',
         loadComponent: () =>
           import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
         data: { examType: 'tgat-tpat' },
-        title: 'TGAT/TPAT — SIRIEDUMARKET',
+        title: 'routes.tgatTpat',
       },
       {
         path: 'a-level',
         loadComponent: () =>
           import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
         data: { examType: 'a-level' },
-        title: 'A-Level — SIRIEDUMARKET',
+        title: 'routes.aLevel',
       },
       {
         path: 'onet',
         loadComponent: () =>
           import('./features/buyer/exam-hub/exam-hub.page').then((m) => m.ExamHubPage),
         data: { examType: 'onet' },
-        title: 'O-NET — SIRIEDUMARKET',
+        title: 'routes.onet',
       },
 
       // Protected — require auth
@@ -124,7 +124,7 @@ export const routes: Routes = [
           import('./features/buyer/become-seller/become-seller.page').then(
             (m) => m.BecomeSellerPage,
           ),
-        title: 'เปิดร้านขายเอกสาร — SIRIEDUMARKET',
+        title: 'routes.becomeSeller',
       },
       {
         path: 'library',
@@ -133,7 +133,7 @@ export const routes: Routes = [
           import('./features/buyer/library/library.page').then(
             (m) => m.BuyerLibraryPage,
           ),
-        title: 'คลังของฉัน — SIRIEDUMARKET',
+        title: 'routes.library',
       },
       // F-07: a buyer's own account page. Until now the only way to reach
       // PUT /api/me/profile was /seller/settings, behind the seller guard.
@@ -142,7 +142,7 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/buyer/account/account.page').then((m) => m.AccountPage),
-        title: 'บัญชีของฉัน — SIRIEDUMARKET',
+        title: 'routes.account',
       },
       // subscription-membership v2 §4: "สมัครสมาชิกรายเดือน" — choose categories, see the
       // running total, subscribe.
@@ -153,7 +153,7 @@ export const routes: Routes = [
           import('./features/buyer/subscribe/subscribe.page').then(
             (m) => m.BuyerSubscribePage,
           ),
-        title: 'สมัครสมาชิกรายเดือน — SIRIEDUMARKET',
+        title: 'routes.subscriptionCheckout',
       },
       // subscription-membership v2 §4: current subscription status + cancel.
       {
@@ -163,7 +163,7 @@ export const routes: Routes = [
           import('./features/buyer/account-subscription/account-subscription.page').then(
             (m) => m.AccountSubscriptionPage,
           ),
-        title: 'สมาชิกรายเดือน — SIRIEDUMARKET',
+        title: 'routes.subscription',
       },
       // subscription-membership v2 §4: history of documents accessed via subscription.
       {
@@ -173,7 +173,7 @@ export const routes: Routes = [
           import(
             './features/buyer/account-subscription/subscription-access-history.page'
           ).then((m) => m.SubscriptionAccessHistoryPage),
-        title: 'ประวัติการเข้าถึงเอกสาร — SIRIEDUMARKET',
+        title: 'routes.accessLogs',
       },
       // system-feedback v1 §4.3: buyer-facing feedback & bug report history.
       {
@@ -183,7 +183,7 @@ export const routes: Routes = [
           import('./features/buyer/feedback/feedback.page').then(
             (m) => m.BuyerFeedbackPage,
           ),
-        title: 'แจ้งปัญหา / ข้อเสนอแนะ — SIRIEDUMARKET',
+        title: 'routes.feedback',
       },
       // crm-core v1 §4.1: "ความเป็นส่วนตัวของฉัน" — view/opt-out/delete the CRM data the platform
       // has learned from this buyer's view/search/purchase behaviour (§3.1–§3.3, PDPA §8.5).
@@ -194,7 +194,7 @@ export const routes: Routes = [
           import('./features/buyer/account-privacy/account-privacy.page').then(
             (m) => m.AccountPrivacyPage,
           ),
-        title: 'ความเป็นส่วนตัวของฉัน — SIRIEDUMARKET',
+        title: 'routes.privacy',
       },
       // buyer-wallet v1 §4.1: "กระเป๋าเงินของฉัน"
       {
@@ -204,7 +204,7 @@ export const routes: Routes = [
           import('./features/buyer/wallet/wallet.page').then(
             (m) => m.WalletPage,
           ),
-        title: 'กระเป๋าเงิน SIRIEDUMARKET — SIRIEDUMARKET',
+        title: 'routes.wallet',
       },
       {
         path: 'checkout',
@@ -213,7 +213,7 @@ export const routes: Routes = [
           import('./features/buyer/checkout/checkout.page').then(
             (m) => m.BuyerCheckoutPage,
           ),
-        title: 'ชำระเงิน — SIRIEDUMARKET',
+        title: 'routes.checkout',
       },
       {
         path: 'orders',
@@ -222,7 +222,7 @@ export const routes: Routes = [
           import('./features/buyer/orders/orders.page').then(
             (m) => m.BuyerOrdersPage,
           ),
-        title: 'ประวัติคำสั่งซื้อ — SIRIEDUMARKET',
+        title: 'routes.orders',
       },
       {
         path: 'orders/:id',
@@ -231,7 +231,7 @@ export const routes: Routes = [
           import('./features/buyer/order-detail/order-detail.page').then(
             (m) => m.BuyerOrderDetailPage,
           ),
-        title: 'รายละเอียดคำสั่งซื้อ — SIRIEDUMARKET',
+        title: 'routes.orderDetail',
       },
       // follow-store-notifications v1 §4: in-app notification history for follow-store alerts.
       // notification-master-config v1 §4.1: scoped to the buyer audience — seller/admin have
@@ -244,7 +244,7 @@ export const routes: Routes = [
             (m) => m.NotificationsPage,
           ),
         data: { audience: 'buyer' },
-        title: 'การแจ้งเตือน — SIRIEDUMARKET',
+        title: 'routes.notifications',
       },
       // registration-onboarding v1 §4: onboarding flow for new accounts.
       {
@@ -254,7 +254,7 @@ export const routes: Routes = [
           import('./features/onboarding/role-select/role-select.page').then(
             (m) => m.RoleSelectPage,
           ),
-        title: 'เริ่มต้นการใช้งาน — SIRIEDUMARKET',
+        title: 'routes.onboarding',
       },
       {
         path: 'onboarding/interests',
@@ -263,7 +263,7 @@ export const routes: Routes = [
           import('./features/onboarding/interest-select/interest-select.page').then(
             (m) => m.InterestSelectPage,
           ),
-        title: 'เลือกความสนใจ — SIRIEDUMARKET',
+        title: 'routes.interests',
       },
     ],
   },
@@ -283,7 +283,7 @@ export const routes: Routes = [
           import('./features/seller/dashboard/dashboard.page').then(
             (m) => m.SellerDashboardPage,
           ),
-        title: 'Siri Studio — Dashboard',
+        title: 'routes.sellerDashboard',
       },
       {
         path: 'documents',
@@ -310,7 +310,7 @@ export const routes: Routes = [
           import('./features/seller/watermark-editor/watermark-editor.page').then(
             (m) => m.WatermarkEditorPage,
           ),
-        title: 'จัดการลายน้ำเอกสาร — Siri Studio',
+        title: 'routes.sellerWatermarkDoc',
       },
       {
         path: 'watermark',
@@ -318,7 +318,7 @@ export const routes: Routes = [
           import('./features/seller/watermark-editor/watermark-editor.page').then(
             (m) => m.WatermarkEditorPage,
           ),
-        title: 'จัดการลายน้ำ — Siri Studio',
+        title: 'routes.sellerWatermark',
       },
       // G-05: /seller/ai is gone — route, page, service method, endpoint and SDK helper all
       // removed in the dead-code sweep. It never called a language model: it concatenated
@@ -354,7 +354,7 @@ export const routes: Routes = [
         path: 'ads',
         loadComponent: () =>
           import('./features/seller/ads/ads.page').then((m) => m.SellerAdsPage),
-        title: 'โปรโมตเอกสารของคุณ — Siri Studio',
+        title: 'routes.sellerAds',
       },
       {
         path: 'reviews',
@@ -379,7 +379,7 @@ export const routes: Routes = [
             (m) => m.SellerNotificationsPage,
           ),
         data: { audience: 'seller' },
-        title: 'การแจ้งเตือนของร้าน — Siri Studio',
+        title: 'routes.sellerNotifications',
       },
     ],
   },
@@ -400,7 +400,7 @@ export const routes: Routes = [
           import('./features/admin/dashboard/dashboard.page').then(
             (m) => m.AdminDashboardPage,
           ),
-        title: 'Admin — SIRIEDUMARKET',
+        title: 'routes.adminOverview',
       },
       {
         path: 'documents',
@@ -408,7 +408,7 @@ export const routes: Routes = [
           import('./features/admin/documents/documents.page').then(
             (m) => m.AdminDocumentsPage,
           ),
-        title: 'จัดการเอกสาร — Admin',
+        title: 'routes.adminDocuments',
       },
       {
         path: 'documents/:id',
@@ -416,7 +416,7 @@ export const routes: Routes = [
           import('./features/admin/document-detail/document-detail.page').then(
             (m) => m.AdminDocumentDetailPage,
           ),
-        title: 'รายละเอียดเอกสาร — Admin',
+        title: 'routes.adminDocumentDetail',
       },
       {
         path: 'approval',
@@ -438,7 +438,7 @@ export const routes: Routes = [
           import('./features/admin/users/users.page').then(
             (m) => m.AdminUsersPage,
           ),
-        title: 'ผู้ใช้ทั้งหมด — Admin',
+        title: 'routes.adminUsers',
       },
       {
         path: 'users/:userId',
@@ -446,7 +446,7 @@ export const routes: Routes = [
           import('./features/admin/user-detail/user-detail.page').then(
             (m) => m.AdminUserDetailPage,
           ),
-        title: 'รายละเอียดผู้ใช้ — Admin',
+        title: 'routes.adminUserDetail',
       },
       {
         path: 'sellers',
@@ -474,7 +474,7 @@ export const routes: Routes = [
           import('./features/admin/feedback/feedback-admin.page').then(
             (m) => m.AdminFeedbackPage,
           ),
-        title: 'แจ้งปัญหา / ข้อเสนอแนะ — Admin',
+        title: 'routes.adminFeedback',
       },
       {
         path: 'payouts',
@@ -490,14 +490,14 @@ export const routes: Routes = [
           import('./features/admin/affiliates/affiliates.page').then(
             (m) => m.AdminAffiliatesPage,
           ),
-        title: 'จัดการลิงก์พันธมิตร — Admin',
+        title: 'routes.adminAffiliates',
       },
       // seller-ads-promotion v1 §4.1: all-campaigns queue + stop + placement price/capacity editor.
       {
         path: 'ads',
         loadComponent: () =>
           import('./features/admin/ads/ads-admin.page').then((m) => m.AdsAdminPage),
-        title: 'จัดการโฆษณา — Admin',
+        title: 'routes.adminAds',
       },
       {
         path: 'seller-applications',
@@ -520,7 +520,7 @@ export const routes: Routes = [
           import('./features/admin/subscriptions-admin/subscriptions-admin.page').then(
             (m) => m.AdminSubscriptionsPage,
           ),
-        title: 'สมาชิกรายเดือน — Admin',
+        title: 'routes.adminSubscriptions',
       },
       // crm-core v1 §4.1/§4.4: CRM overview + segment membership + one user's read-only
       // interest/segment breakdown (`CrmUserPanelComponent` — also the F-08 embed point, §4.4).
@@ -528,7 +528,7 @@ export const routes: Routes = [
         path: 'crm',
         loadComponent: () =>
           import('./features/admin/crm-admin/crm-admin.page').then((m) => m.CrmAdminPage),
-        title: 'CRM — Admin',
+        title: 'routes.adminCrm',
       },
       {
         path: 'crm/segments/:code',
@@ -536,13 +536,13 @@ export const routes: Routes = [
           import('./features/admin/crm-admin/crm-segment-users.page').then(
             (m) => m.CrmSegmentUsersPage,
           ),
-        title: 'สมาชิกของกลุ่ม — CRM Admin',
+        title: 'routes.adminCrmSegment',
       },
       {
         path: 'crm/users/:id',
         loadComponent: () =>
           import('./features/admin/crm-admin/crm-user.page').then((m) => m.CrmUserPage),
-        title: 'โปรไฟล์ CRM ผู้ใช้ — Admin',
+        title: 'routes.adminCrmProfile',
       },
       // crm-targeted-document-alerts v2 §4.1 (F-12, ข้อ 11): overview of the CRM-targeted
       // document alert queue — admin-only, no seller/buyer surface (§0.5 decision 7).
@@ -552,7 +552,7 @@ export const routes: Routes = [
           import('./features/admin/crm-admin/crm-document-alerts-admin.page').then(
             (m) => m.CrmDocumentAlertsAdminPage,
           ),
-        title: 'การแจ้งเตือนเอกสารตรงความสนใจ — Admin',
+        title: 'routes.adminInterests',
       },
       {
         path: 'settings',
@@ -568,7 +568,7 @@ export const routes: Routes = [
           import('./features/admin/announcements-admin/announcements-admin.page').then(
             (m) => m.AnnouncementsAdminPage,
           ),
-        title: 'จัดการประกาศข่าวสาร — Admin',
+        title: 'routes.adminAnnouncements',
       },
       // category-content-auto-generation v1: trigger/inspect the document auto-generation job —
       // generated documents land in the existing /admin/approval queue automatically.
@@ -578,7 +578,7 @@ export const routes: Routes = [
           import('./features/admin/document-generation/document-generation.page').then(
             (m) => m.AdminDocumentGenerationPage,
           ),
-        title: 'สร้างเอกสารอัตโนมัติ — Admin',
+        title: 'routes.adminDocGeneration',
       },
       // exam-hub-landing-pages v1 §4: CMS management for the 4 exam hub pages.
       {
@@ -587,7 +587,7 @@ export const routes: Routes = [
           import('./features/admin/exam-hub/exam-hub-admin.page').then(
             (m) => m.ExamHubAdminPage,
           ),
-        title: 'จัดการเนื้อหาหน้า Exam Hub — Admin',
+        title: 'routes.adminExamHub',
       },
       // notification-master-config v1 §4.1 (AC-7): admin notification history, inside the
       // admin layout — the sidebar entry used to link to the buyer `/notifications` route.
@@ -598,7 +598,7 @@ export const routes: Routes = [
             (m) => m.AdminNotificationsPage,
           ),
         data: { audience: 'admin' },
-        title: 'การแจ้งเตือนของผู้ดูแลระบบ — Admin',
+        title: 'routes.adminNotifications',
       },
       // notification-master-config v1 §3.7/§4.1: the master switchboard — which of the 18 catalog
       // events the platform sends, and over which channels (อีเมล / LINE / ในระบบ).
@@ -608,7 +608,7 @@ export const routes: Routes = [
           import('./features/admin/notification-config/notification-config-admin.page').then(
             (m) => m.NotificationConfigAdminPage,
           ),
-        title: 'ตั้งค่าการแจ้งเตือนของระบบ — Admin',
+        title: 'routes.adminNotificationConfig',
       },
       // ml-embedding-recommendations v1 §4.2: read-only "สถานะระบบแนะนำสินค้า (Bought Together)"
       // monitoring card — light, single-module, not a full page.
@@ -618,7 +618,7 @@ export const routes: Routes = [
           import('./features/admin/ml-recommendations/ml-recommendations-admin.page').then(
             (m) => m.MlRecommendationsAdminPage,
           ),
-        title: 'สถานะระบบแนะนำสินค้า — Admin',
+        title: 'routes.adminMlRecommendations',
       },
     ],
   },
@@ -629,14 +629,14 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/login/login.page').then((m) => m.AuthLoginPage),
-    title: 'เข้าสู่ระบบ — SIRIEDUMARKET',
+    title: 'routes.signIn',
   },
   {
     path: 'auth/register',
     canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/register/register.page').then((m) => m.AuthRegisterPage),
-    title: 'สมัครสมาชิก — SIRIEDUMARKET',
+    title: 'routes.register',
   },
   {
     path: 'auth/verify-email',
@@ -644,7 +644,7 @@ export const routes: Routes = [
       import('./features/auth/verify-email/verify-email.page').then(
         (m) => m.AuthVerifyEmailPage,
       ),
-    title: 'ยืนยันอีเมล — SIRIEDUMARKET',
+    title: 'routes.verifyEmail',
   },
   {
     // external-login-and-mail-config v1 §4.1: LINE Login redirects the whole page back here with
@@ -655,7 +655,7 @@ export const routes: Routes = [
       import('./features/auth/line-callback/line-callback.page').then(
         (m) => m.AuthLineCallbackPage,
       ),
-    title: 'เข้าสู่ระบบด้วย LINE — SIRIEDUMARKET',
+    title: 'routes.lineCallback',
   },
   {
     path: 'auth/forgot-password',
@@ -664,7 +664,7 @@ export const routes: Routes = [
       import('./features/auth/forgot-password/forgot-password.page').then(
         (m) => m.AuthForgotPasswordPage,
       ),
-    title: 'ลืมรหัสผ่าน — SIRIEDUMARKET',
+    title: 'routes.forgotPassword',
   },
   {
     // GAP-03: opened from the emailed link, so it must stay reachable while signed out.
@@ -673,7 +673,7 @@ export const routes: Routes = [
       import('./features/auth/reset-password/reset-password.page').then(
         (m) => m.AuthResetPasswordPage,
       ),
-    title: 'ตั้งรหัสผ่านใหม่ — SIRIEDUMARKET',
+    title: 'routes.resetPassword',
   },
 
   // ========= 404 =========
@@ -684,6 +684,6 @@ export const routes: Routes = [
     path: '**',
     loadComponent: () =>
       import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),
-    title: 'ไม่พบหน้านี้ — SIRIEDUMARKET',
+    title: 'routes.notFound',
   },
 ];
