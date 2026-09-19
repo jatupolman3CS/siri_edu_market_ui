@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import type { SellerWatermarkConfigRequest } from '../api/seller-watermark.api';
+import type { SellerWatermarkConfigRequest } from '../api';
 
 export interface SellerWatermarkTemplate {
   enabled: boolean;

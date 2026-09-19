@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
@@ -17,10 +17,10 @@ import { PageHeroComponent } from '../../../shared/components/page-hero/page-her
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
+import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
-import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-buyer-library',
@@ -35,10 +35,10 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     IconComponent,
     EmptyStateComponent,
     StatCardComponent,
+    DocumentCardComponent,
     ThbPipe,
     TimeAgoPipe,
     CompactPipe,
-    ImgFallbackDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './library.page.html',
@@ -50,6 +50,19 @@ export class BuyerLibraryPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+
+  /**
+   * Client-side search box next to the filter tabs — filters the already-loaded page of
+   * `library.library()` by title, no API call. Server-side tab filtering (`setLibraryFilter`)
+   * is unrelated and still re-queries the API as before.
+   */
+  readonly searchQuery = signal('');
+
+  readonly filteredLibrary = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) return this.library.library();
+    return this.library.library().filter((item) => item.document.title.toLowerCase().includes(q));
+  });
 
   /**
    * watermark-completion v1 §4.4: the download itself is unchanged — this wrapper only surfaces

@@ -206,69 +206,100 @@
                   เลือกได้หลายรูป (สูงสุด {{ maxGalleryImages }} รูป) — รูปแรกคือปกการ์ด ลากลำดับด้วยปุ่มเลื่อนขึ้น/ลง — JPG/PNG แนะนำ 4:5
                 </p>
 
-                @if (galleryUploading()) {
-                  <p class="text-sm text-pink-600 font-semibold mb-3">กำลังอัปโหลดรูป…</p>
-                }
-
-                @if (galleryItems().length > 0) {
-                  <ul
-                    cdkDropList
-                    [cdkDropListData]="galleryItems()"
-                    (cdkDropListDropped)="onGalleryDrop($event)"
-                    class="space-y-3 mb-4"
+                <!-- cover-image-mode v1 §1/§4 (AC-01): choose custom upload vs. an
+                     auto-generated cover rendered from the document's first page. -->
+                <div class="flex gap-2 mb-4">
+                  <button
+                    type="button"
+                    class="btn-ghost !py-1.5 !px-3 text-xs"
+                    [class.btn-primary]="coverImageMode() === 'custom'"
+                    (click)="coverImageMode.set('custom')"
                   >
-                    @for (item of galleryItems(); track $index; let i = $index) {
-                      <li
-                        cdkDrag
-                        class="flex items-center gap-3 p-3 rounded-2xl border border-pink-200 bg-pink-50/50"
-                      >
-                        <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-white flex-shrink-0 border border-line">
-                          <img appImgFallback [src]="item.previewUrl" alt="" class="w-full h-full object-cover" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          @if (i === 0) {
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">ปกหลัก</span>
-                          } @else {
-                            <span class="text-[10px] text-ink-muted">ลำดับ {{ i + 1 }}</span>
-                          }
-                          <div class="text-[10px] text-ink-muted mt-1">ลากเพื่อเรียงลำดับ</div>
-                        </div>
-                        <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" title="ลบ">
-                          <app-icon name="trash" [size]="16" />
-                        </button>
-                      </li>
-                    }
-                  </ul>
-                }
-
-                @if (galleryItems().length < maxGalleryImages) {
-                  <label
-                    class="block border-2 border-dashed border-pink-200 rounded-3xl p-5 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
-                    [class.pointer-events-none]="galleryUploading()"
-                    [class.opacity-60]="galleryUploading()"
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      class="hidden"
-                      [disabled]="galleryUploading()"
-                      (change)="onGalleryFiles($event)"
-                    />
-                    <div class="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-3">
-                      <app-icon name="upload" [size]="22" />
-                    </div>
-                    <div class="text-sm font-bold text-ink">
-                      {{ galleryItems().length ? 'เพิ่มรูป' : 'คลิกเพื่อเลือกรูป' }}
-                    </div>
-                    <div class="text-xs text-ink-muted mt-1">เลือกได้หลายไฟล์พร้อมกัน</div>
-                  </label>
-                }
-
-                @if (galleryItems().length > 0) {
-                  <button type="button" class="btn-ghost text-xs mt-3 !text-red-600" (click)="resetGallery()">
-                    ล้างรูปทั้งหมด
+                    อัปโหลดรูปปกเอง
                   </button>
+                  <button
+                    type="button"
+                    class="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    [class.btn-primary]="coverImageMode() === 'auto'"
+                    [disabled]="!coverAutoModeAvailable()"
+                    [title]="!coverAutoModeAvailable() ? 'ใช้ได้เฉพาะเอกสาร PDF ที่อัปโหลดไฟล์แล้ว' : ''"
+                    (click)="coverImageMode() !== 'auto' && coverAutoModeAvailable() && coverImageMode.set('auto')"
+                  >
+                    สร้างรูปปกจากเอกสารอัตโนมัติ
+                  </button>
+                </div>
+
+                @if (coverImageMode() === 'auto') {
+                  <div class="rounded-2xl border border-pink-200 bg-pink-50/50 p-4 text-sm text-ink-muted mb-4">
+                    <p class="font-semibold text-ink mb-1">ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ</p>
+                    <p>ระบบจะใช้หน้าแรกของเอกสารที่คุณอัปโหลด พร้อมลายน้ำตามที่ตั้งไว้ เป็นรูปปกให้อัตโนมัติ</p>
+                    <p class="text-xs mt-1">ตัวอย่างจริงจะแสดงหลังบันทึก — เปิดหน้านี้อีกครั้งเพื่อดูรูปปกที่สร้างแล้ว</p>
+                  </div>
+                } @else {
+                  @if (galleryUploading()) {
+                    <p class="text-sm text-pink-600 font-semibold mb-3">กำลังอัปโหลดรูป…</p>
+                  }
+
+                  @if (galleryItems().length > 0) {
+                    <ul
+                      cdkDropList
+                      [cdkDropListData]="galleryItems()"
+                      (cdkDropListDropped)="onGalleryDrop($event)"
+                      class="space-y-3 mb-4"
+                    >
+                      @for (item of galleryItems(); track $index; let i = $index) {
+                        <li
+                          cdkDrag
+                          class="flex items-center gap-3 p-3 rounded-2xl border border-pink-200 bg-pink-50/50"
+                        >
+                          <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-white flex-shrink-0 border border-line">
+                            <img appImgFallback [src]="item.previewUrl" alt="" class="w-full h-full object-cover" />
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            @if (i === 0) {
+                              <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">ปกหลัก</span>
+                            } @else {
+                              <span class="text-[10px] text-ink-muted">ลำดับ {{ i + 1 }}</span>
+                            }
+                            <div class="text-[10px] text-ink-muted mt-1">ลากเพื่อเรียงลำดับ</div>
+                          </div>
+                          <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" title="ลบ">
+                            <app-icon name="trash" [size]="16" />
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  @if (galleryItems().length < maxGalleryImages) {
+                    <label
+                      class="block border-2 border-dashed border-pink-200 rounded-3xl p-5 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
+                      [class.pointer-events-none]="galleryUploading()"
+                      [class.opacity-60]="galleryUploading()"
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        class="hidden"
+                        [disabled]="galleryUploading()"
+                        (change)="onGalleryFiles($event)"
+                      />
+                      <div class="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-3">
+                        <app-icon name="upload" [size]="22" />
+                      </div>
+                      <div class="text-sm font-bold text-ink">
+                        {{ galleryItems().length ? 'เพิ่มรูป' : 'คลิกเพื่อเลือกรูป' }}
+                      </div>
+                      <div class="text-xs text-ink-muted mt-1">เลือกได้หลายไฟล์พร้อมกัน</div>
+                    </label>
+                  }
+
+                  @if (galleryItems().length > 0) {
+                    <button type="button" class="btn-ghost text-xs mt-3 !text-red-600" (click)="resetGallery()">
+                      ล้างรูปทั้งหมด
+                    </button>
+                  }
                 }
               </div>
 

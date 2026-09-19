@@ -3,15 +3,14 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../../../core/services';
 import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
-import type { SellerWatermarkConfigRequest } from '../../../core/api/seller-watermark.api';
+import type { SellerWatermarkConfigRequest } from '../../../core/api';
 import { WatermarkEditorPage } from './watermark-editor.page';
 
-// `getApiSellerDocumentWatermarkConfig`/`postApiSellerDocumentWatermarkConfig` are plain
-// functions imported directly (no DI) — Angular's unit-test system rejects `vi.mock` for
-// relative imports ("Please use Angular TestBed for mocking dependencies"), so — same pattern
-// already used by `admin/document-detail.page.spec.ts` for its own direct API-function calls —
-// this stubs the underlying `globalThis.fetch` that the generated SDK client ultimately calls,
-// and lets the real request/response mapping run end-to-end.
+// `SellerWatermarkService` (real, non-mocked instance via `providedIn: 'root'`) calls the
+// generated SDK, which ultimately calls `fetch` — rather than mocking the service itself, this
+// stubs the underlying `globalThis.fetch` (same pattern already used by
+// `admin/document-detail.page.spec.ts` for its own direct API-function calls) and lets the real
+// request/response mapping run end-to-end.
 type Route = { status?: number; body: unknown };
 
 let routes: Map<string, Route>;

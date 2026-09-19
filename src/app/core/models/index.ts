@@ -216,6 +216,13 @@ export interface DocumentItem {
   gallerySlots?: { id: string; imageUrl: string; imageStorageKey: string }[];
   /** Total gallery images available (may exceed `gallery.length` on list views). */
   galleryCount?: number;
+  /**
+   * cover-image-mode v1 §4: `'auto'` = the platform renders + watermarks the document's first
+   * page as the cover instead of a seller-uploaded image; absent/`undefined` behaves as
+   * `'custom'` (today's behavior) — kept optional so existing mocks/fixtures without this field
+   * keep working.
+   */
+  coverImageMode?: 'custom' | 'auto';
   price: number;            // 0 = Free
   originalPrice?: number;
   discountPercent?: number;

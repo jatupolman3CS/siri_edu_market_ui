@@ -33,20 +33,27 @@
         {{ doc().format }}
       </span>
 
-      <button
-        type="button"
-        class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-colors duration-200"
-        [class.text-pink-500]="wishlist.has(doc().id)"
-        [class.text-ink-soft]="!wishlist.has(doc().id)"
-        [attr.aria-label]="'documentCard.wishlistAria' | trans"
-        (click)="toggleWishlist($event)"
-      >
-        @if (wishlist.has(doc().id)) {
-          <app-icon name="heart-fill" [size]="16" />
-        } @else {
-          <app-icon name="heart" [size]="16" />
-        }
-      </button>
+      @if (isOwned()) {
+        <span class="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold inline-flex items-center gap-1">
+          <app-icon name="check" [size]="11" />
+          เป็นเจ้าของแล้ว
+        </span>
+      } @else {
+        <button
+          type="button"
+          class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-colors duration-200"
+          [class.text-pink-500]="wishlist.has(doc().id)"
+          [class.text-ink-soft]="!wishlist.has(doc().id)"
+          [attr.aria-label]="'documentCard.wishlistAria' | trans"
+          (click)="toggleWishlist($event)"
+        >
+          @if (wishlist.has(doc().id)) {
+            <app-icon name="heart-fill" [size]="16" />
+          } @else {
+            <app-icon name="heart" [size]="16" />
+          }
+        </button>
+      }
     </a>
 
     <div class="p-3.5 pt-3 flex flex-col gap-1.5 flex-1">
@@ -71,33 +78,35 @@
         }
       </div>
 
-      <div class="mt-auto pt-1 flex items-center justify-between">
-        <div class="flex items-baseline gap-1.5">
-          @if (doc().isFree) {
-            <span class="text-[15px] font-extrabold text-ink">{{ 'documentCard.free' | trans }}</span>
-          } @else {
-            <span class="text-[15px] font-extrabold text-ink">{{ doc().price | thb }}</span>
-            @if (doc().originalPrice) {
-              <span class="text-[11px] text-ink-muted line-through">{{ doc().originalPrice! | thb }}</span>
+      @if (!isOwned()) {
+        <div class="mt-auto pt-1 flex items-center justify-between">
+          <div class="flex items-baseline gap-1.5">
+            @if (doc().isFree) {
+              <span class="text-[15px] font-extrabold text-ink">{{ 'documentCard.free' | trans }}</span>
+            } @else {
+              <span class="text-[15px] font-extrabold text-ink">{{ doc().price | thb }}</span>
+              @if (doc().originalPrice) {
+                <span class="text-[11px] text-ink-muted line-through">{{ doc().originalPrice! | thb }}</span>
+              }
             }
-          }
+          </div>
+          <button
+            type="button"
+            class="w-9 h-9 rounded-full border border-line bg-white text-ink-soft hover:border-pink-500 flex items-center justify-center transition-colors duration-200"
+            [class.!bg-pink-500]="inCart()"
+            [class.!border-pink-500]="inCart()"
+            [class.!text-white]="inCart()"
+            [attr.aria-label]="'documentCard.addToCartAria' | trans"
+            (click)="addToCart($event)"
+          >
+            @if (inCart()) {
+              <app-icon name="check" [size]="16" />
+            } @else {
+              <app-icon name="cart" [size]="16" />
+            }
+          </button>
         </div>
-        <button
-          type="button"
-          class="w-9 h-9 rounded-full border border-line bg-white text-ink-soft hover:border-pink-500 flex items-center justify-center transition-colors duration-200"
-          [class.!bg-pink-500]="inCart()"
-          [class.!border-pink-500]="inCart()"
-          [class.!text-white]="inCart()"
-          [attr.aria-label]="'documentCard.addToCartAria' | trans"
-          (click)="addToCart($event)"
-        >
-          @if (inCart()) {
-            <app-icon name="check" [size]="16" />
-          } @else {
-            <app-icon name="cart" [size]="16" />
-          }
-        </button>
-      </div>
+      }
     </div>
   </article>
 } @else {

@@ -1130,3 +1130,444 @@ describe('SellerUploadPage — rejection reason banner (document-rejection-reaso
   });
 });
 
+/**
+ * cover-image-mode v1 §1/§4 — the "รูปปกและแกลเลอรี" custom-vs-auto toggle on the upload page.
+ * `coverImageMode` is a real field on `CreateDocumentRequest`/`UpdateDocumentRequest`/
+ * `SellerDocumentResponse` post-SDK-regen (generated as a bare `string`, not a literal union —
+ * see `readSellerCoverImageMode` in `mappers.ts`) — raw response objects below are still built
+ * untyped + `as SellerDocumentResponse` cast at the `mapSellerDocument` call site, matching the
+ * other loosely-typed fixtures already in this file (see the discount-urgency/rejection-reason
+ * describe blocks above), and `component.submit()`'s outgoing bodies are read back with a local
+ * structural probe (`CoverModeBodyProbe` below) purely for convenient dot access.
+ */
+describe('SellerUploadPage — cover image mode (cover-image-mode v1 §1/§4)', () => {
+  function getCoverModeButtons(fixture: { nativeElement: unknown }) {
+    const buttons = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ) as HTMLButtonElement[];
+    const customBtn = buttons.find((b) => b.textContent?.trim() === 'อัปโหลดรูปปกเอง');
+    const autoBtn = buttons.find((b) => b.textContent?.trim() === 'สร้างรูปปกจากเอกสารอัตโนมัติ');
+    return { customBtn, autoBtn };
+  }
+
+  function renderForCoverEdit(rawDocOverrides: Record<string, unknown> = {}) {
+    const updateDocumentCalls: { id: string; body: UpdateSellerDocumentRequest }[] = [];
+    const rawDoc = {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      price: 300,
+      format: 'pdf',
+      ...rawDocOverrides,
+    };
+    const doc = mapSellerDocument(rawDoc as SellerDocumentResponse);
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async (id: string, body: UpdateSellerDocumentRequest) => {
+        updateDocumentCalls.push({ id, body });
+      },
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) },
+        },
+        {
+          provide: CatalogService,
+          useValue: { loadCategories: () => {}, getCategoryById: () => undefined },
+        },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, updateDocumentCalls };
+  }
+
+  /**
+   * Narrow structural probe over the outgoing request bodies — lets assertions use plain dot
+   * access instead of index-signature bracket access (`noPropertyAccessFromIndexSignature`),
+   * and covers `galleryItems`/`galleryImageUrls` which only exist on `UpdateDocumentRequest`
+   * (not on `CreateDocumentRequest`, whose follow-up PUT is captured via raw `fetch` instead).
+   */
+  type CoverModeBodyProbe = {
+    coverImageMode?: string;
+    galleryItems?: unknown[];
+    galleryImageUrls?: unknown[];
+  };
+
+  function renderForCoverCreate() {
+    const createDocumentCalls: { body: CoverModeBodyProbe }[] = [];
+    const fakeSellerForCreate: Partial<SellerService> = {
+      createDocument: async (req) => {
+        createDocumentCalls.push({ body: req as unknown as CoverModeBodyProbe });
+        return { id: 'doc-new', slug: 'doc-new', title: req.title ?? '' } as SellerDocumentResponse;
+      },
+      refreshDocuments: async () => {},
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+        {
+          provide: CatalogService,
+          useValue: { loadCategories: () => {}, getCategoryById: () => undefined },
+        },
+        { provide: SellerService, useValue: fakeSellerForCreate },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, createDocumentCalls };
+  }
+
+  async function settleLoad(fixture: { detectChanges: () => void }): Promise<void> {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+  }
+
+  function fillRequiredFields(component: SellerUploadPage): void {
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+  }
+
+  function makeGalleryItem(key: string) {
+    return {
+      id: null,
+      key,
+      publicUrl: `https://cdn.example.test/${key}`,
+      previewUrl: `https://cdn.example.test/${key}`,
+    };
+  }
+
+  /**
+   * cover-image-mode v1 §4/AC-05 (create-mode branch only): `putApiSellerDocumentsById` is
+   * called directly in the create-mode follow-up PUT (bypassing `SellerService`, so it isn't a
+   * TestBed-injectable dependency), and Angular's vitest unit-test system blocks `vi.mock` for
+   * *any* relative-path import ("Please use Angular TestBed for mocking dependencies") — and
+   * `audit:guard` separately forbids `features/**` from importing `core/api/client.gen`/
+   * `sdk.gen` directly even from a spec file. Spying on the global `fetch` (not a module import
+   * at all) sidesteps both: it returns a synthetic successful response instead of hitting a
+   * real (absent) backend, and reading the request's already-JSON-serialized body is actually
+   * the most faithful check for AC-05's "omit the field from the wire, not send `[]`" wording.
+   */
+  function captureNextPutBody() {
+    let captured: CoverModeBodyProbe | undefined;
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request = input instanceof Request ? input : new Request(input, init);
+        if (request.method === 'PUT' && captured === undefined) {
+          const text = await request.text();
+          captured = text ? (JSON.parse(text) as CoverModeBodyProbe) : undefined;
+        }
+        return new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      });
+    return {
+      get: () => captured,
+      restore: () => fetchSpy.mockRestore(),
+    };
+  }
+
+  async function flushCreateModeSubmit(): Promise<void> {
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+    // The mocked `fetch`'s `Request#text()` resolves via a real (macrotask) tick in this
+    // environment, not a plain microtask — a couple of `setTimeout(0)` round-trips give it
+    // room to finish before assertions run.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it('AC-01: defaults to custom mode on a fresh (create-mode) page, both toggle buttons rendered', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+
+    expect(component.coverImageMode()).toBe('custom');
+    const { customBtn, autoBtn } = getCoverModeButtons(fixture);
+    expect(customBtn).toBeTruthy();
+    expect(autoBtn).toBeTruthy();
+  });
+
+  it('AC-02(a): auto mode unavailable in create mode with no file selected at all', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+
+    expect(component.coverAutoModeAvailable()).toBe(false);
+    fixture.detectChanges();
+    expect(getCoverModeButtons(fixture).autoBtn?.disabled).toBe(true);
+  });
+
+  it('AC-02(b): auto mode unavailable in create mode when the selected file is not a PDF', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.docx'));
+
+    expect(component.coverAutoModeAvailable()).toBe(false);
+  });
+
+  it('AC-02: auto mode becomes available in create mode once a .pdf file is selected', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.pdf'));
+
+    expect(component.coverAutoModeAvailable()).toBe(true);
+    fixture.detectChanges();
+    expect(getCoverModeButtons(fixture).autoBtn?.disabled).toBe(false);
+  });
+
+  it('AC-02(a): auto mode unavailable in edit mode before the document has finished loading', () => {
+    const { component } = renderForCoverEdit({ format: 'pdf' });
+    // Deliberately not awaiting settleLoad() — editDocument() is still null at this point.
+    expect(component.coverAutoModeAvailable()).toBe(false);
+  });
+
+  it('AC-02(b): auto mode unavailable in edit mode when the loaded document is not a PDF', async () => {
+    const { fixture, component } = renderForCoverEdit({ format: 'docx' });
+    await settleLoad(fixture);
+
+    expect(component.coverAutoModeAvailable()).toBe(false);
+  });
+
+  it('AC-02: auto mode available in edit mode when the loaded document is a PDF', async () => {
+    const { fixture, component } = renderForCoverEdit({ format: 'pdf' });
+    await settleLoad(fixture);
+
+    expect(component.coverAutoModeAvailable()).toBe(true);
+  });
+
+  it('AC-02: a newly selected non-PDF file overrides an already-PDF loaded document, disabling auto mode', async () => {
+    const { fixture, component } = renderForCoverEdit({ format: 'pdf' });
+    await settleLoad(fixture);
+    component.upload.set({ key: 'seller-1/new.docx', publicUrl: 'https://cdn.example.test/new.docx' });
+    component.file.set(new File(['x'], 'new.docx'));
+
+    expect(component.coverAutoModeAvailable()).toBe(false);
+  });
+
+  it('AC-02: a newly selected PDF file overrides an already non-PDF loaded document, enabling auto mode', async () => {
+    const { fixture, component } = renderForCoverEdit({ format: 'docx' });
+    await settleLoad(fixture);
+    component.upload.set({ key: 'seller-1/new.pdf', publicUrl: 'https://cdn.example.test/new.pdf' });
+    component.file.set(new File(['x'], 'new.pdf'));
+
+    expect(component.coverAutoModeAvailable()).toBe(true);
+  });
+
+  it('AC-03: selecting auto mode hides the upload box/gallery list/clear-all button and shows the info box', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.pdf'));
+    component.galleryItems.set([makeGalleryItem('k1')]);
+    component.coverImageMode.set('auto');
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ล้างรูปทั้งหมด');
+    expect(text).not.toContain('ปกหลัก');
+    expect(text).not.toContain('คลิกเพื่อเลือกรูป');
+    expect(text).not.toContain('เพิ่มรูป');
+    expect(text).toContain('ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ');
+    expect(text).toContain('ตัวอย่างจริงจะแสดงหลังบันทึก');
+  });
+
+  it('AC-04: custom mode (default) keeps the existing upload box/gallery list/clear-all button unchanged', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.galleryItems.set([makeGalleryItem('k1')]);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ล้างรูปทั้งหมด');
+    expect(text).toContain('ปกหลัก');
+    expect(text).toContain('เพิ่มรูป');
+    expect(text).not.toContain('ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ');
+  });
+
+  it('clicking the auto toggle does nothing while it is disabled (no file selected)', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    const { autoBtn } = getCoverModeButtons(fixture);
+
+    autoBtn?.click();
+
+    expect(component.coverImageMode()).toBe('custom');
+  });
+
+  it('clicking the auto toggle switches mode once a .pdf file is selected', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.pdf'));
+    fixture.detectChanges();
+    const { autoBtn } = getCoverModeButtons(fixture);
+
+    autoBtn?.click();
+
+    expect(component.coverImageMode()).toBe('auto');
+  });
+
+  it('AC-05: edit mode + custom sends coverImageMode "custom" with galleryItems included', async () => {
+    const { fixture, component, updateDocumentCalls } = renderForCoverEdit();
+    await settleLoad(fixture);
+    fillRequiredFields(component);
+    component.galleryItems.set([makeGalleryItem('k1')]);
+    component.coverImageMode.set('custom');
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const body = updateDocumentCalls[0].body as unknown as {
+      coverImageMode?: string;
+      galleryItems?: unknown[];
+    };
+    expect(body.coverImageMode).toBe('custom');
+    expect(body.galleryItems).toHaveLength(1);
+  });
+
+  it('AC-05: edit mode + auto sends coverImageMode "auto" and omits galleryItems entirely (not [])', async () => {
+    const { fixture, component, updateDocumentCalls } = renderForCoverEdit({ format: 'pdf' });
+    await settleLoad(fixture);
+    fillRequiredFields(component);
+    component.galleryItems.set([]);
+    component.coverImageMode.set('auto');
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const body = updateDocumentCalls[0].body as unknown as CoverModeBodyProbe;
+    expect(body.coverImageMode).toBe('auto');
+    expect('galleryItems' in body).toBe(false);
+  });
+
+  it('AC-05: create mode + custom sends coverImageMode "custom" on both createDocument and the follow-up PUT, galleryImageUrls included', async () => {
+    const { component, createDocumentCalls } = renderForCoverCreate();
+    const putCapture = captureNextPutBody();
+    try {
+      fillRequiredFields(component);
+      component.file.set(new File(['x'], 'notes.pdf'));
+      component.upload.set({ key: 'seller-1/notes.pdf', publicUrl: 'https://cdn.example.test/notes.pdf' });
+      component.galleryItems.set([makeGalleryItem('k1')]);
+      component.coverImageMode.set('custom');
+
+      component.submit();
+      await flushCreateModeSubmit();
+
+      expect(createDocumentCalls).toHaveLength(1);
+      expect(createDocumentCalls[0].body.coverImageMode).toBe('custom');
+
+      const putBody = putCapture.get();
+      expect(putBody).toBeDefined();
+      expect(putBody?.coverImageMode).toBe('custom');
+      expect(putBody?.galleryImageUrls).toHaveLength(1);
+    } finally {
+      putCapture.restore();
+    }
+  });
+
+  it('AC-05: create mode + auto sends coverImageMode "auto" and omits galleryImageUrls entirely on both calls', async () => {
+    const { component, createDocumentCalls } = renderForCoverCreate();
+    const putCapture = captureNextPutBody();
+    try {
+      fillRequiredFields(component);
+      component.file.set(new File(['x'], 'notes.pdf'));
+      component.upload.set({ key: 'seller-1/notes.pdf', publicUrl: 'https://cdn.example.test/notes.pdf' });
+      component.galleryItems.set([]);
+      component.coverImageMode.set('auto');
+
+      component.submit();
+      await flushCreateModeSubmit();
+
+      expect(createDocumentCalls).toHaveLength(1);
+      expect(createDocumentCalls[0].body.coverImageMode).toBe('auto');
+
+      const putBody = putCapture.get();
+      expect(putBody).toBeDefined();
+      expect(putBody?.coverImageMode).toBe('auto');
+      expect(putBody && 'galleryImageUrls' in putBody).toBe(false);
+    } finally {
+      putCapture.restore();
+    }
+  });
+
+  it('AC-06: step1NextDisabled is false in auto mode with an empty gallery, once other create-mode conditions pass', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.pdf'));
+    component.upload.set({ key: 'seller-1/notes.pdf', publicUrl: 'https://cdn.example.test/notes.pdf' });
+    component.coverImageMode.set('auto');
+    component.galleryItems.set([]);
+
+    expect(component.step1NextDisabled()).toBe(false);
+  });
+
+  it('AC-06 regression: step1NextDisabled stays true in custom mode with an empty gallery', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.pdf'));
+    component.upload.set({ key: 'seller-1/notes.pdf', publicUrl: 'https://cdn.example.test/notes.pdf' });
+    component.coverImageMode.set('custom');
+    component.galleryItems.set([]);
+
+    expect(component.step1NextDisabled()).toBe(true);
+  });
+
+  it('AC-07: loading a document saved with coverImageMode "auto" restores auto mode and hides the upload UI immediately', async () => {
+    const { fixture, component } = renderForCoverEdit({
+      format: 'pdf',
+      coverImageMode: 'auto',
+      galleryItems: [
+        {
+          id: 'g1',
+          imageUrl: 'https://cdn.example.test/auto-cover.jpg',
+          imageStorageKey: 'seller-1/gallery/auto-cover.jpg',
+        },
+      ],
+    });
+    await settleLoad(fixture);
+
+    expect(component.coverImageMode()).toBe('auto');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ล้างรูปทั้งหมด');
+    expect(text).not.toContain('คลิกเพื่อเลือกรูป');
+    expect(text).toContain('ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ');
+  });
+});
+

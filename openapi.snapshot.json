@@ -13409,6 +13409,86 @@
         }
       }
     },
+    "/api/orders/{id}/pay-wallet": {
+      "post": {
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/orders/{id}": {
       "get": {
         "tags": [
@@ -16136,6 +16216,262 @@
         }
       }
     },
+    "/api/seller/documents/{id}/watermark-config": {
+      "get": {
+        "tags": [
+          "SellerDocuments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SellerDocuments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "SellerDocuments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/seller/documents/{id}/generate-preview": {
       "post": {
         "tags": [
@@ -18134,342 +18470,6 @@
           },
           "403": {
             "description": "Forbidden",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/orders/{id}/pay-wallet": {
-      "post": {
-        "tags": [
-          "Order"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/seller/documents/{id}/watermark-config": {
-      "get": {
-        "tags": [
-          "SellerDocuments"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "SellerDocuments"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "SellerDocuments"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SellerWatermarkConfigRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SellerWatermarkConfigResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
             "content": {
               "text/plain": {
                 "schema": {
@@ -22110,6 +22110,10 @@
           "discountExpiresAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "coverImageMode": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -25955,6 +25959,9 @@
           },
           "imageStorageKey": {
             "type": "string"
+          },
+          "isAutoGeneratedCover": {
+            "type": "boolean"
           }
         }
       },
@@ -26107,6 +26114,12 @@
             "type": "string",
             "nullable": true
           },
+          "previewRasterUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "categoryIds": {
             "type": "array",
             "items": {
@@ -26172,6 +26185,9 @@
           "rejectedAt": {
             "type": "string",
             "nullable": true
+          },
+          "coverImageMode": {
+            "type": "string"
           }
         }
       },
@@ -26656,6 +26672,122 @@
           "directPercent": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "SellerWatermarkConfigRequest": {
+        "type": "object",
+        "properties": {
+          "watermarkEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "previewWatermarkSubtitle": {
+            "maxLength": 256,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkFontFamily": {
+            "maxLength": 128,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkPosition": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkOpacity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "previewWatermarkColor": {
+            "maxLength": 32,
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkRotation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "previewWatermarkFontSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "personalizedWatermarkPosition": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "personalizedWatermarkTemplate": {
+            "maxLength": 512,
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SellerWatermarkConfigResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "watermarkEnabled": {
+            "type": "boolean"
+          },
+          "previewWatermarkSubtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkFontFamily": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewWatermarkPosition": {
+            "type": "string"
+          },
+          "previewWatermarkOpacity": {
+            "type": "number",
+            "format": "double"
+          },
+          "previewWatermarkColor": {
+            "type": "string"
+          },
+          "previewWatermarkRotation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "previewWatermarkFontSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "personalizedWatermarkPosition": {
+            "type": "string"
+          },
+          "personalizedWatermarkTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewImageUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasMainFile": {
+            "type": "boolean"
           }
         }
       },
@@ -27566,6 +27698,10 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "coverImageMode": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -28108,122 +28244,6 @@
             "format": "double"
           },
           "hasPriceDropped": {
-            "type": "boolean"
-          }
-        }
-      },
-      "SellerWatermarkConfigRequest": {
-        "type": "object",
-        "properties": {
-          "watermarkEnabled": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "previewWatermarkSubtitle": {
-            "maxLength": 256,
-            "type": "string",
-            "nullable": true
-          },
-          "previewWatermarkFontFamily": {
-            "maxLength": 128,
-            "type": "string",
-            "nullable": true
-          },
-          "previewWatermarkPosition": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
-          },
-          "previewWatermarkOpacity": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "previewWatermarkColor": {
-            "maxLength": 32,
-            "type": "string",
-            "nullable": true
-          },
-          "previewWatermarkRotation": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "previewWatermarkFontSize": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "personalizedWatermarkPosition": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
-          },
-          "personalizedWatermarkTemplate": {
-            "maxLength": 512,
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "SellerWatermarkConfigResponse": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "format": {
-            "type": "string"
-          },
-          "watermarkEnabled": {
-            "type": "boolean"
-          },
-          "previewWatermarkSubtitle": {
-            "type": "string",
-            "nullable": true
-          },
-          "previewWatermarkFontFamily": {
-            "type": "string",
-            "nullable": true
-          },
-          "previewWatermarkPosition": {
-            "type": "string"
-          },
-          "previewWatermarkOpacity": {
-            "type": "number",
-            "format": "double"
-          },
-          "previewWatermarkColor": {
-            "type": "string"
-          },
-          "previewWatermarkRotation": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "previewWatermarkFontSize": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "personalizedWatermarkPosition": {
-            "type": "string"
-          },
-          "personalizedWatermarkTemplate": {
-            "type": "string",
-            "nullable": true
-          },
-          "previewImageUrls": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "hasMainFile": {
             "type": "boolean"
           }
         }

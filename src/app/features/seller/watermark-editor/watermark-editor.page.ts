@@ -11,12 +11,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../../../core/services';
 import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
-import {
-  getApiSellerDocumentWatermarkConfig,
-  postApiSellerDocumentWatermarkConfig,
-  type SellerWatermarkConfigRequest,
-} from '../../../core/api/seller-watermark.api';
-import { unwrapSdkResult } from '../../../core/services/api-result';
+import { SellerWatermarkService } from '../../../core/services/seller-watermark.service';
+import type { SellerWatermarkConfigRequest } from '../../../core/api';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 export interface PositionOption {
@@ -37,6 +33,7 @@ export interface PositionOption {
 export class WatermarkEditorPage {
   private readonly auth = inject(AuthService);
   private readonly templates = inject(SellerWatermarkTemplateService);
+  private readonly watermarkService = inject(SellerWatermarkService);
   private readonly message = inject(NzMessageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -177,10 +174,9 @@ export class WatermarkEditorPage {
    */
   private async loadDocumentConfig(id: string): Promise<void> {
     try {
-      const result = await getApiSellerDocumentWatermarkConfig(id);
-      const data = unwrapSdkResult(result);
+      const data = await this.watermarkService.getConfig(id);
       this.documentTitle.set(data.title ?? '');
-      this.watermarkEnabled.set(data.watermarkEnabled);
+      this.watermarkEnabled.set(data.watermarkEnabled ?? true);
       this.watermarkText.set(data.previewWatermarkSubtitle ?? '');
       this.previewWatermarkFontFamily.set(data.previewWatermarkFontFamily ?? 'Noto Sans Thai');
       this.watermarkPosition.set(data.previewWatermarkPosition ?? 'center-diagonal');
@@ -245,8 +241,7 @@ export class WatermarkEditorPage {
       personalizedWatermarkTemplate: this.downloadWatermarkTemplate().trim(),
     };
     try {
-      const result = await postApiSellerDocumentWatermarkConfig(id, body);
-      unwrapSdkResult(result);
+      await this.watermarkService.saveConfig(id, body);
       this.message.success('บันทึกลายน้ำของเอกสารนี้เรียบร้อยแล้ว');
     } catch {
       this.message.error('บันทึกลายน้ำของเอกสารนี้ไม่สำเร็จ กรุณาลองใหม่');

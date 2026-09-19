@@ -15,7 +15,7 @@ import { DocumentItem, DocumentPricingHint, SellerDocumentVersionInfo, Watermark
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { AuthService, CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
-import { postApiSellerDocumentWatermarkConfig } from '../../../core/api/seller-watermark.api';
+import { SellerWatermarkService } from '../../../core/services/seller-watermark.service';
 import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
@@ -76,6 +76,7 @@ export class SellerUploadPage {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly watermarkTemplates = inject(SellerWatermarkTemplateService);
+  private readonly watermarkService = inject(SellerWatermarkService);
 
   readonly watermarkTemplate = computed(() =>
     this.watermarkTemplates.loadOrDefault(this.auth.user()?.id),
@@ -114,6 +115,12 @@ export class SellerUploadPage {
 
   readonly galleryItems = signal<GalleryItem[]>([]);
   readonly galleryUploading = signal<boolean>(false);
+  /**
+   * cover-image-mode v1 §1/§4 (AC-01): `'custom'` = seller uploads the cover (today's
+   * behavior, always the default) — `'auto'` = system renders a watermarked cover from the
+   * document's first page instead.
+   */
+  readonly coverImageMode = signal<'custom' | 'auto'>('custom');
   readonly watermark = signal<boolean>(true);
   /**
    * watermark-completion v1 §3.4/§4.3: watermark state as the backend resolved it for this
@@ -278,6 +285,9 @@ export class SellerUploadPage {
     );
     this.pages.set(doc.pages ?? 0);
     this.fileSizeLabel.set(doc.fileSize ?? '');
+    // cover-image-mode v1 §4 (AC-07): restore the mode the document was actually saved with —
+    // absent/unrecognized value defaults to 'custom' (today's behavior).
+    this.coverImageMode.set(doc.coverImageMode ?? 'custom');
     if (doc.gallerySlots?.length) {
       this.galleryItems.set(
         doc.gallerySlots.map((g) => {
@@ -524,6 +534,32 @@ export class SellerUploadPage {
     this.fileSizeLabel.set('');
   }
 
+  /**
+   * cover-image-mode v1 §4: same filename→format guessing logic `submit()` already used
+   * inline (extension matched case-insensitively against `formats`, `'pdf'` fallback when
+   * unrecognized) — factored out so `coverAutoModeAvailable` can reuse it. Returns `undefined`
+   * only when there is no filename to guess from at all.
+   */
+  private guessFormatFromFileName(name: string | undefined): string | undefined {
+    if (!name) return undefined;
+    const ext = name.split('.').pop()?.toLowerCase();
+    return (this.formats.find((x) => x.toLowerCase() === ext) ?? 'PDF').toLowerCase();
+  }
+
+  /**
+   * cover-image-mode v1 §4 (AC-02): the "auto cover" option is only offered for a PDF main
+   * file. Create mode guesses from the just-selected file; edit mode prefers a newly selected
+   * file's guessed format over the already-loaded document's saved format.
+   */
+  readonly coverAutoModeAvailable = computed(() => {
+    const fmt = this.isEditMode()
+      ? this.upload()
+        ? this.guessFormatFromFileName(this.file()?.name)
+        : this.editDocument()?.format
+      : this.guessFormatFromFileName(this.file()?.name);
+    return fmt === 'pdf';
+  });
+
   private static formatFileSize(bytes: number): string {
     if (!bytes || bytes <= 0) return '';
     const u = ['B', 'KB', 'MB', 'GB'];
@@ -542,7 +578,10 @@ export class SellerUploadPage {
 
   readonly step1NextDisabled = computed(() => {
     const g = this.galleryItems();
-    if (g.length === 0 || this.galleryUploading()) return true;
+    // cover-image-mode v1 §4 (AC-06): auto mode never needs an uploaded gallery image.
+    if ((this.coverImageMode() !== 'auto' && g.length === 0) || this.galleryUploading()) {
+      return true;
+    }
     if (this.isEditMode()) {
       return this.mainFiles().length === 0 || this.mainFilesLoading();
     }
@@ -682,7 +721,9 @@ export class SellerUploadPage {
       const f = this.file();
       const uploaded = this.upload();
       const gallery = this.galleryItems();
-      if (gallery.length === 0) {
+      // cover-image-mode v1 §4/AC-05: the "must upload a cover" rule only applies in 'custom'
+      // mode — 'auto' generates its own cover from the document, so an empty gallery is fine.
+      if (this.coverImageMode() === 'custom' && gallery.length === 0) {
         this.message.error('กรุณาอัปโหลดรูปปกอย่างน้อย 1 รูป');
         return;
       }
@@ -717,6 +758,7 @@ export class SellerUploadPage {
       try {
         if (this.isEditMode()) {
           const id = this.editId();
+          const coverImageMode = this.coverImageMode();
           const editBody: UpdateSellerDocumentRequest = {
             title: this.title().trim(),
             shortDescription: this.shortDescription().trim(),
@@ -725,7 +767,6 @@ export class SellerUploadPage {
             categoryIds,
             isFree: this.isFree(),
             language: this.language(),
-            galleryItems: galleryItemsPayload,
             watermarkEnabled: this.watermark(),
             previewPages: this.previewPages(),
             previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
@@ -735,14 +776,17 @@ export class SellerUploadPage {
             originalPrice: this.isFree() ? 0 : this.originalPrice(),
             discountExpiresAt:
               this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
+            // cover-image-mode v1 §4/AC-05: always sent.
+            coverImageMode,
           };
+          // cover-image-mode v1 §4/AC-05: 'auto' omits galleryItems entirely (not `[]`) — the
+          // backend must not touch the gallery it manages itself in that mode (spec §3.2.1).
+          if (coverImageMode !== 'auto') {
+            editBody.galleryItems = galleryItemsPayload;
+          }
           if (uploaded && f) {
             editBody.fileStorageKey = uploaded.key;
-            editBody.format = (
-              this.formats.find(
-                (x) => x.toLowerCase() === f.name.split('.').pop()?.toLowerCase(),
-              ) ?? 'PDF'
-            ).toLowerCase();
+            editBody.format = this.guessFormatFromFileName(f.name) ?? 'pdf';
             editBody.previewStorageKey = null;
           }
           await this.seller.updateDocument(id, editBody);
@@ -754,7 +798,7 @@ export class SellerUploadPage {
           const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
           if (tpl.config) {
             try {
-              await postApiSellerDocumentWatermarkConfig(id, tpl.config);
+              await this.watermarkService.saveConfig(id, tpl.config);
             } catch {
               this.message.error('บันทึกการตั้งค่าลายน้ำไม่สำเร็จ กรุณาลองใหม่');
             }
@@ -767,6 +811,7 @@ export class SellerUploadPage {
             return;
           }
           const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
+          const coverImageMode = this.coverImageMode();
           const createBody: Parameters<typeof this.seller.createDocument>[0] = {
             title: this.title().trim(),
             shortDescription: this.shortDescription().trim(),
@@ -775,11 +820,7 @@ export class SellerUploadPage {
             categoryIds,
             isFree: this.isFree(),
             subcategoryId: null,
-            format: (
-              this.formats.find(
-                (x) => x.toLowerCase() === f.name.split('.').pop()?.toLowerCase(),
-              ) ?? 'PDF'
-            ).toLowerCase(),
+            format: this.guessFormatFromFileName(f.name) ?? 'pdf',
             tags: this.tags(),
             gradeLevels: [],
             resourceType: 'lesson-summary',
@@ -791,6 +832,8 @@ export class SellerUploadPage {
             originalPrice: this.isFree() ? 0 : this.originalPrice(),
             discountExpiresAt:
               this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
+            // cover-image-mode v1 §4/AC-05: always sent.
+            coverImageMode,
           };
           const doc = await this.seller.createDocument(createBody);
 
@@ -806,24 +849,30 @@ export class SellerUploadPage {
           }
 
           if (doc?.id) {
+            const putBody: UpdateSellerDocumentRequest = {
+              fileStorageKey: uploaded.key,
+              watermarkEnabled: this.watermark(),
+              previewPages: this.previewPages(),
+              previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim(),
+              previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),
+              previewStorageKey: null,
+              pages: this.pages(),
+              fileSize: this.fileSizeLabel().trim() || undefined,
+              // cover-image-mode v1 §4/AC-05: always sent.
+              coverImageMode,
+            };
+            // cover-image-mode v1 §4/AC-05: 'auto' omits galleryImageUrls entirely (not `[]`).
+            if (coverImageMode !== 'auto') {
+              putBody.galleryImageUrls = galleryImageUrls;
+            }
             await putApiSellerDocumentsById({
               path: { id: doc.id },
-              body: {
-                galleryImageUrls,
-                fileStorageKey: uploaded.key,
-                watermarkEnabled: this.watermark(),
-                previewPages: this.previewPages(),
-                previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim(),
-                previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),
-                previewStorageKey: null,
-                pages: this.pages(),
-                fileSize: this.fileSizeLabel().trim() || undefined,
-              },
+              body: putBody,
             });
 
             if (tpl.config) {
               try {
-                await postApiSellerDocumentWatermarkConfig(doc.id, tpl.config);
+                await this.watermarkService.saveConfig(doc.id, tpl.config);
               } catch {
                 // silent fallback if endpoint fails
               }

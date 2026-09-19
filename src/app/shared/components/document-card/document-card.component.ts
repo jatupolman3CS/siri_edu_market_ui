@@ -39,6 +39,12 @@ export class DocumentCardComponent {
 
   readonly doc = input.required<DocumentItem>();
   readonly density = input<'default' | 'compact'>('default');
+  /**
+   * my-library-card-reuse v1: when true (buyer's "คลังของฉัน"), the cover shows the green
+   * "เป็นเจ้าของแล้ว" ownership badge instead of the wishlist button, and the price/cart footer
+   * row is hidden — the calling page (library) renders its own owned-only actions below the card.
+   */
+  readonly isOwned = input<boolean>(false);
 
   /** marketplace-redesign v1 §Screens 4 — compact card's resource-type chip, no emoji. */
   resourceTypeLabel(): string {

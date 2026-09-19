@@ -161,6 +161,17 @@ function readIsFree(d: { isFree?: boolean | null; price?: number | null } | null
 }
 
 /**
+ * cover-image-mode v1 §3.3/§4: `SellerDocumentResponse.coverImageMode` is generated as a bare
+ * `string` (backend DTO field is a plain `string?`, not an OpenAPI enum), so this narrows it to
+ * the closed set the UI actually understands — same pattern as {@link toWatermarkCapability}
+ * below. Anything other than `'auto'` (including absent/unknown) resolves to `'custom'`, which
+ * matches the backend's own default (§3.1).
+ */
+function readSellerCoverImageMode(d: { coverImageMode?: string | null }): 'custom' | 'auto' {
+  return d.coverImageMode === 'auto' ? 'auto' : 'custom';
+}
+
+/**
  * document-faq-tab v1.1 §3.2: `MarketplaceDocumentDetailResponse.faqCount` / `.qnaCount` are
  * always emitted by the backend now — read them directly rather than deriving from
  * `qna.length` (a truncated array must never make the badge count lie).
@@ -996,6 +1007,9 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     // document-rejection-reason v1 §4: real SDK fields (post regen) — no cast needed.
     rejectionReason: d.rejectionReason ?? null,
     rejectedAt: d.rejectedAt ?? null,
+    // cover-image-mode v1 §4: real SDK field, narrowed to the closed set (see
+    // `readSellerCoverImageMode`).
+    coverImageMode: readSellerCoverImageMode(d),
   };
 }
 

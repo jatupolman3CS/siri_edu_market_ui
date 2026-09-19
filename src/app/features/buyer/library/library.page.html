@@ -75,8 +75,8 @@
         </div>
       </section>
 
-      <!-- Tabs -->
-      <div class="flex items-center gap-2 mb-6">
+      <!-- Tabs + search -->
+      <div class="flex items-center gap-2 mb-6 flex-wrap">
         @for (t of tabs; track t.value) {
           <button
             class="px-4 py-2.5 rounded-full text-sm font-medium transition-colors"
@@ -91,6 +91,13 @@
             {{ t.label }}
           </button>
         }
+        <input
+          type="search"
+          class="input-soft ml-auto !w-auto min-w-[220px] text-sm"
+          placeholder="ค้นหาเอกสารของฉัน..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
       </div>
 
       @if (library.library().length === 0) {
@@ -107,64 +114,45 @@
             <a routerLink="/marketplace" class="btn-pink mt-4">เริ่มเลือกซื้อ</a>
           </app-empty-state>
         }
+      } @else if (filteredLibrary().length === 0) {
+        <app-empty-state
+          emoji="🔍"
+          title="ไม่พบเอกสารที่ค้นหา"
+          description="ลองค้นหาด้วยคำอื่นดูนะคะ"
+        />
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (item of library.library(); track item.document.id) {
+          @for (item of filteredLibrary(); track item.document.id) {
             <article class="card-soft overflow-hidden flex flex-col">
-              <div class="relative aspect-[4/3] bg-pink-50">
-                <img
-                  appImgFallback
-                  [src]="item.document.cover"
-                  [alt]="item.document.title"
-                  class="absolute inset-0 w-full h-full object-cover"
-                />
-                <span
-                  class="absolute top-3 left-3 pill bg-white/90 backdrop-blur uppercase text-[10px] font-bold text-ink"
-                >
-                  {{ item.document.format }}
-                </span>
-                <span
-                  class="absolute top-3 right-3 pill bg-emerald-500 text-white shadow-soft"
-                >
-                  <app-icon name="check" [size]="11" />
-                  เป็นเจ้าของแล้ว
-                </span>
+              <app-document-card [doc]="item.document" density="compact" [isOwned]="true" />
+
+              <div class="p-5 pt-3 flex flex-col gap-2">
                 @if (item.hasNewVersion) {
-                  <span
-                    class="absolute top-10 right-3 pill bg-rose-500 text-white shadow-soft"
-                  >
+                  <span class="pill bg-rose-500 text-white shadow-soft w-fit">
                     มีเวอร์ชันใหม่
                   </span>
                 }
+                @if (item.hasNewVersion && item.latestChangeNote) {
+                  <p class="text-xs text-rose-600 bg-rose-50 rounded-lg p-2 line-clamp-2">
+                    {{ item.latestChangeNote }}
+                  </p>
+                }
                 @if (item.isReviewed) {
-                  <span class="absolute bottom-3 left-3 pill bg-amber-400 text-white shadow-soft">
+                  <span class="pill bg-amber-400 text-white shadow-soft w-fit">
                     <app-icon name="star" [size]="11" />
                     รีวิวแล้ว
                   </span>
                 }
+
                 @if (item.isRead) {
-                  <button type="button" class="absolute bottom-3 right-3 pill bg-sky-500 text-white shadow-soft" (click)="library.toggleRead(item.document.id, false)">
+                  <button type="button" class="pill bg-sky-500 text-white shadow-soft w-fit" (click)="library.toggleRead(item.document.id, false)">
                     <app-icon name="check" [size]="11" />
                     อ่านแล้ว
                   </button>
                 } @else {
-                  <button type="button" class="absolute bottom-3 right-3 pill bg-white/90 backdrop-blur text-ink-soft" (click)="library.toggleRead(item.document.id, true)">
+                  <button type="button" class="pill bg-pink-50 text-ink-soft w-fit" (click)="library.toggleRead(item.document.id, true)">
                     ทำเครื่องหมายว่าอ่านแล้ว
                   </button>
-                }
-              </div>
-              <div class="p-5 flex flex-col gap-2 flex-1">
-                <span class="text-[11px] text-ink-muted">
-                  {{ item.document.seller.studioName }}
-                </span>
-                <h3 class="text-base font-bold text-ink leading-snug line-clamp-2">
-                  {{ item.document.title }}
-                </h3>
-
-                @if (item.hasNewVersion && item.latestChangeNote) {
-                  <p class="text-xs text-rose-600 bg-rose-50 rounded-lg p-2 mt-1 line-clamp-2">
-                    {{ item.latestChangeNote }}
-                  </p>
                 }
 
                 <button

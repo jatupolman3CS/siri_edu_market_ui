@@ -41,3 +41,4 @@ export * from './affiliate.service';
 export * from './wallet.service';
 export * from './seo-meta.service';
 export * from './seller-watermark-template.service';
+export * from './seller-watermark.service';
