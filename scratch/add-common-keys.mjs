@@ -5,26 +5,24 @@ const thPath = path.resolve('src/app/core/i18n/translations/th.ts');
 const enPath = path.resolve('src/app/core/i18n/translations/en.ts');
 
 const extraTh = {
-  seller: {
-    conversionCol: 'อัตราคอนเวอร์ชัน',
-  },
-  watermark: {
-    previewModeText: 'โหมดตัวอย่าง SIRI EDUMARKET',
-  },
   common: {
-    of: 'ของ',
+    edit: 'แก้ไข',
+    delete: 'ลบ',
+    deleteImage: 'ลบรูปนี้',
+  },
+  product: {
+    preview: 'ตัวอย่างเอกสาร',
   }
 };
 
 const extraEn = {
-  seller: {
-    conversionCol: 'Conversion Rate',
-  },
-  watermark: {
-    previewModeText: 'SIRI EDUMARKET PREVIEW MODE',
-  },
   common: {
-    of: 'for',
+    edit: 'Edit',
+    delete: 'Delete',
+    deleteImage: 'Delete Image',
+  },
+  product: {
+    preview: 'Document Preview',
   }
 };
 
@@ -47,4 +45,4 @@ const enObj = JSON.parse(fs.readFileSync(enPath, 'utf8').replace("import { Trans
 deepMerge(enObj, extraEn);
 fs.writeFileSync(enPath, `import { TranslationKeys } from './th';\n\nexport const en: TranslationKeys = ${JSON.stringify(enObj, null, 2)};\n`, 'utf8');
 
-console.log('Successfully added final keys to th.ts and en.ts');
+console.log('Successfully added common.edit, common.delete, common.deleteImage, product.preview to th.ts & en.ts');

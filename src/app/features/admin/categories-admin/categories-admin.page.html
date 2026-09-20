@@ -27,10 +27,10 @@
               <tr class="border-t border-line hover:bg-pink-50/40">
                 <td class="px-5 py-3 whitespace-nowrap">
                   <div class="flex items-center gap-1">
-                    <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="openEditCategory(c)">
+                    <button type="button" class="btn-icon !w-8 !h-8" [title]="'common.edit' | trans" (click)="openEditCategory(c)">
                       <app-icon name="edit" [size]="14" />
                     </button>
-                    <button type="button" class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500" title="ลบ" (click)="removeCategory(c)">
+                    <button type="button" class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500" [title]="'common.delete' | trans" (click)="removeCategory(c)">
                       <app-icon name="trash" [size]="14" />
                     </button>
                   </div>
@@ -107,13 +107,13 @@
                               <span class="pill-pink text-[10px] shrink-0">{{ s.documentCount }} {{ 'admin.categoriesAdmin.colDocs' | trans }}</span>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                              <button type="button" class="btn-icon !w-7 !h-7" title="แก้ไข" (click)="openEditSubcategory(c, s)">
+                              <button type="button" class="btn-icon !w-7 !h-7" [title]="'common.edit' | trans" (click)="openEditSubcategory(c, s)">
                                 <app-icon name="edit" [size]="12" />
                               </button>
                               <button
                                 type="button"
                                 class="btn-icon !w-7 !h-7 hover:!bg-rose-50 hover:!text-rose-500"
-                                title="ลบ"
+                                [title]="'common.delete' | trans"
                                 (click)="confirmDeleteSubcategory(c.id, s)"
                               >
                                 <app-icon name="trash" [size]="12" />

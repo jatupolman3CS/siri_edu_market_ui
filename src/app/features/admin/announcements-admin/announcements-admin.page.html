@@ -26,13 +26,13 @@
           <tr class="border-t border-line hover:bg-pink-50/40">
             <td class="px-5 py-3 whitespace-nowrap">
               <div class="flex items-center gap-1">
-                <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="openEdit(a)">
+                <button type="button" class="btn-icon !w-8 !h-8" [title]="'common.edit' | trans" (click)="openEdit(a)">
                   <app-icon name="edit" [size]="14" />
                 </button>
                 <button
                   type="button"
                   class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500"
-                  title="ลบ"
+                  [title]="'common.delete' | trans"
                   (click)="confirmDelete(a)"
                 >
                   <app-icon name="trash" [size]="14" />
@@ -173,7 +173,7 @@
               <button
                 type="button"
                 class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500 shrink-0"
-                title="ลบรูปนี้"
+                [title]="'common.deleteImage' | trans"
                 (click)="removeImageRow(row.key)"
               >
                 <app-icon name="trash" [size]="14" />

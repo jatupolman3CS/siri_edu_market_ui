@@ -1,0 +1,896 @@
+[
+  {
+    "key": "auth.resetLinkSentNotice",
+    "file": "src\\app\\features\\auth\\forgot-password\\forgot-password.page.html",
+    "line": 56,
+    "snippet": "54:         <h1 class=\"text-2xl font-extrabold text-ink mb-2\">{{ 'auth.checkYourEmail' | trans }}</h1>\r\n55:         <p class=\"text-sm text-ink-soft mb-6 max-w-sm mx-auto\">\r\n56:           {{ 'auth.resetLinkSentNotice' | trans:{ email: email() } }}\r\n57:         </p>\r\n58:         <div class=\"flex flex-col gap-3 max-w-xs mx-auto\">\r"
+  },
+  {
+    "key": "auth.sendFailed",
+    "file": "src\\app\\features\\auth\\forgot-password\\forgot-password.page.ts",
+    "line": 34,
+    "snippet": "32:       const r = await this.auth.requestPasswordReset(this.email());\r\n33:       if (!r.ok) {\r\n34:         this.error.set(r.error ?? this.i18n.t('auth.sendFailed'));\r\n35:         return;\r\n36:       }\r"
+  },
+  {
+    "key": "auth.pleaseEnterValidEmail",
+    "file": "src\\app\\features\\auth\\line-callback\\line-callback.page.ts",
+    "line": 85,
+    "snippet": "83:     const email = this.retryEmail().trim();\r\n84:     if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\r\n85:       this.retryEmailError.set(this.translation.t('auth.pleaseEnterValidEmail'));\r\n86:       return;\r\n87:     }\r"
+  },
+  {
+    "key": "auth.afterLoginRedirect",
+    "file": "src\\app\\features\\auth\\login\\login.page.html",
+    "line": 116,
+    "snippet": "114:         @if (returnUrl() !== '/') {\r\n115:           <p class=\"text-[11px] text-ink-muted text-center mt-4\">\r\n116:             {{ 'auth.afterLoginRedirect' | trans }}\r\n117:             <code class=\"text-pink-600\">{{ returnUrl() }}</code>\r\n118:           </p>\r"
+  },
+  {
+    "key": "auth.cancel",
+    "file": "src\\app\\features\\auth\\login\\login.page.html",
+    "line": 156,
+    "snippet": "154:             (click)=\"lineModalVisible.set(false)\"\r\n155:           >\r\n156:             {{ 'auth.cancel' | trans }}\r\n157:           </button>\r\n158:           <button\r"
+  },
+  {
+    "key": "auth.continue",
+    "file": "src\\app\\features\\auth\\login\\login.page.html",
+    "line": 163,
+    "snippet": "161:             (click)=\"confirmLineEmail()\"\r\n162:           >\r\n163:             {{ 'auth.continue' | trans }}\r\n164:           </button>\r\n165:         </div>\r"
+  },
+  {
+    "key": "auth.welcomeBackToast",
+    "file": "src\\app\\features\\auth\\login\\login.page.ts",
+    "line": 61,
+    "snippet": "59:       return;\r\n60:     }\r\n61:     this.message.success(this.translation.t('auth.welcomeBackToast'));\r\n62:     this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));\r\n63:   }\r"
+  },
+  {
+    "key": "auth.socialLoginSuccess",
+    "file": "src\\app\\features\\auth\\login\\login.page.ts",
+    "line": 105,
+    "snippet": "103:         return;\r\n104:       }\r\n105:       this.message.success(this.translation.t('auth.socialLoginSuccess', { provider: provider.toUpperCase() }));\r\n106:       this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));\r\n107:     })();\r"
+  },
+  {
+    "key": "auth.retypePasswordPlaceholder",
+    "file": "src\\app\\features\\auth\\register\\register.page.html",
+    "line": 123,
+    "snippet": "121:             name=\"confirmPassword\"\r\n122:             class=\"input-soft !pl-12\"\r\n123:             [placeholder]=\"'auth.retypePasswordPlaceholder' | trans\"\r\n124:             autocomplete=\"new-password\"\r\n125:             required\r"
+  },
+  {
+    "key": "auth.artTitleResetPassword",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 2,
+    "snippet": "1: <app-auth-layout\n2:   [artTitle]=\"'auth.artTitleResetPassword' | trans\"\n3:   [artDescription]=\"'auth.artDescResetPassword' | trans\"\n4: >"
+  },
+  {
+    "key": "auth.artDescResetPassword",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 3,
+    "snippet": "1: <app-auth-layout\n2:   [artTitle]=\"'auth.artTitleResetPassword' | trans\"\n3:   [artDescription]=\"'auth.artDescResetPassword' | trans\"\n4: >\n5:   <div class=\"max-w-md w-full mx-auto\">"
+  },
+  {
+    "key": "auth.atLeast8Chars",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 9,
+    "snippet": "7:       <h1 class=\"text-3xl font-extrabold text-ink mb-2 leading-tight\">{{ 'auth.resetPasswordTitle' | trans }}</h1>\n8:       <p class=\"text-sm text-ink-soft mb-8\">\n9:         {{ 'auth.atLeast8Chars' | trans }}\n10:       </p>\n11: "
+  },
+  {
+    "key": "auth.invalidTokenNotice",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 14,
+    "snippet": "12:       @if (!token()) {\n13:         <div class=\"px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 text-sm mb-6\">\n14:           {{ 'auth.invalidTokenNotice' | trans }}\n15:           <a routerLink=\"/auth/forgot-password\" class=\"font-bold underline\">{{ 'auth.requestNewLink' | trans }}</a>\n16:         </div>"
+  },
+  {
+    "key": "auth.requestNewLink",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 15,
+    "snippet": "13:         <div class=\"px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 text-sm mb-6\">\n14:           {{ 'auth.invalidTokenNotice' | trans }}\n15:           <a routerLink=\"/auth/forgot-password\" class=\"font-bold underline\">{{ 'auth.requestNewLink' | trans }}</a>\n16:         </div>\n17:       }"
+  },
+  {
+    "key": "auth.newPasswordLabel",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 21,
+    "snippet": "19:       <form (ngSubmit)=\"onSubmit()\" class=\"space-y-5\">\n20:         <div>\n21:           <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'auth.newPasswordLabel' | trans }}</label>\n22:           <div class=\"relative\">\n23:             <span class=\"absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted\">"
+  },
+  {
+    "key": "auth.confirmNewPasswordLabel",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 39,
+    "snippet": "37: \n38:         <div>\n39:           <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'auth.confirmNewPasswordLabel' | trans }}</label>\n40:           <div class=\"relative\">\n41:             <span class=\"absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted\">"
+  },
+  {
+    "key": "auth.saving",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 63,
+    "snippet": "61: \n62:         <button type=\"submit\" class=\"btn-pink w-full !py-3.5\" [disabled]=\"submitting()\">\n63:           {{ submitting() ? ('auth.saving' | trans) : ('auth.saveNewPassword' | trans) }}\n64:         </button>\n65:       </form>"
+  },
+  {
+    "key": "auth.saveNewPassword",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 63,
+    "snippet": "61: \n62:         <button type=\"submit\" class=\"btn-pink w-full !py-3.5\" [disabled]=\"submitting()\">\n63:           {{ submitting() ? ('auth.saving' | trans) : ('auth.saveNewPassword' | trans) }}\n64:         </button>\n65:       </form>"
+  },
+  {
+    "key": "auth.resetPasswordDoneTitle",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 77,
+    "snippet": "75:           ✓\n76:         </div>\n77:         <h1 class=\"text-2xl font-extrabold text-ink mb-2\">{{ 'auth.resetPasswordDoneTitle' | trans }}</h1>\n78:         <p class=\"text-sm text-ink-soft mb-6 max-w-sm mx-auto\">\n79:           {{ 'auth.resetPasswordDoneDesc' | trans }}"
+  },
+  {
+    "key": "auth.resetPasswordDoneDesc",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.html",
+    "line": 79,
+    "snippet": "77:         <h1 class=\"text-2xl font-extrabold text-ink mb-2\">{{ 'auth.resetPasswordDoneTitle' | trans }}</h1>\n78:         <p class=\"text-sm text-ink-soft mb-6 max-w-sm mx-auto\">\n79:           {{ 'auth.resetPasswordDoneDesc' | trans }}\n80:         </p>\n81:         <div class=\"max-w-xs mx-auto\">"
+  },
+  {
+    "key": "auth.resetPasswordLinkInvalid",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.ts",
+    "line": 47,
+    "snippet": "45: \r\n46:     if (!this.token()) {\r\n47:       this.error.set(this.translation.t('auth.resetPasswordLinkInvalid'));\r\n48:       return;\r\n49:     }\r"
+  },
+  {
+    "key": "auth.resetPasswordFailed",
+    "file": "src\\app\\features\\auth\\reset-password\\reset-password.page.ts",
+    "line": 59,
+    "snippet": "57:       );\r\n58:       if (!result.ok) {\r\n59:         this.error.set(result.error ?? this.translation.t('auth.resetPasswordFailed'));\r\n60:         return;\r\n61:       }\r"
+  },
+  {
+    "key": "auth.emailRequiredToVerify",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 123,
+    "snippet": "121:     const email = this.targetEmail;\r\n122:     if (!email) {\r\n123:       this.error.set(this.translation.t('auth.emailRequiredToVerify'));\r\n124:       return;\r\n125:     }\r"
+  },
+  {
+    "key": "auth.otpInvalidOrExpired",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 133,
+    "snippet": "131: \r\n132:     if (!r.ok) {\r\n133:       this.error.set(r.error ?? this.translation.t('auth.otpInvalidOrExpired'));\r\n134:       return;\r\n135:     }\r"
+  },
+  {
+    "key": "auth.verifySuccessWelcome",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 137,
+    "snippet": "135:     }\r\n136: \r\n137:     this.message.success(this.translation.t('auth.verifySuccessWelcome'));\r\n138:     await this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));\r\n139:   }\r"
+  },
+  {
+    "key": "auth.verifyLinkInvalidOrExpired",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 148,
+    "snippet": "146:     this.loading.set(false);\r\n147:     if (!r.ok) {\r\n148:       this.error.set(r.error ?? this.translation.t('auth.verifyLinkInvalidOrExpired'));\r\n149:       return;\r\n150:     }\r"
+  },
+  {
+    "key": "auth.specifyEmailForOtp",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 158,
+    "snippet": "156:     const email = this.targetEmail;\r\n157:     if (!email) {\r\n158:       this.message.error(this.translation.t('auth.specifyEmailForOtp'));\r\n159:       return;\r\n160:     }\r"
+  },
+  {
+    "key": "auth.otpResentSuccess",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 164,
+    "snippet": "162:     const r = await this.auth.sendOtp(email);\r\n163:     if (r.ok) {\r\n164:       this.message.success(r.message || this.translation.t('auth.otpResentSuccess'));\r\n165:       this.error.set('');\r\n166:       this.otpDigits.set(['', '', '', '', '', '']);\r"
+  },
+  {
+    "key": "auth.resendOtpFailed",
+    "file": "src\\app\\features\\auth\\verify-email\\verify-email.page.ts",
+    "line": 174,
+    "snippet": "172:       this.focusInput(0);\r\n173:     } else {\r\n174:       this.message.error(this.translation.t('auth.resendOtpFailed'));\r\n175:     }\r\n176:   }\r"
+  },
+  {
+    "key": "becomeSeller.heroEyebrow",
+    "file": "src\\app\\features\\buyer\\become-seller\\become-seller.page.html",
+    "line": 3,
+    "snippet": "1: <div class=\"max-w-7xl mx-auto px-4 lg:px-6 py-8\">\n2:   <app-page-hero\n3:     [eyebrow]=\"'becomeSeller.heroEyebrow' | trans\"\n4:     [title]=\"'becomeSeller.title' | trans\"\n5:     [description]=\"'becomeSeller.desc' | trans\""
+  },
+  {
+    "key": "becomeSeller.title",
+    "file": "src\\app\\features\\buyer\\become-seller\\become-seller.page.html",
+    "line": 4,
+    "snippet": "2:   <app-page-hero\n3:     [eyebrow]=\"'becomeSeller.heroEyebrow' | trans\"\n4:     [title]=\"'becomeSeller.title' | trans\"\n5:     [description]=\"'becomeSeller.desc' | trans\"\n6:   />"
+  },
+  {
+    "key": "becomeSeller.desc",
+    "file": "src\\app\\features\\buyer\\become-seller\\become-seller.page.html",
+    "line": 5,
+    "snippet": "3:     [eyebrow]=\"'becomeSeller.heroEyebrow' | trans\"\n4:     [title]=\"'becomeSeller.title' | trans\"\n5:     [description]=\"'becomeSeller.desc' | trans\"\n6:   />\n7: "
+  },
+  {
+    "key": "becomeSeller.submitting",
+    "file": "src\\app\\features\\buyer\\become-seller\\become-seller.page.html",
+    "line": 97,
+    "snippet": "95:         @if (canSubmit()) {\n96:           <button type=\"submit\" class=\"btn-pink w-full !py-3.5\" [disabled]=\"submitting()\">\n97:             {{ submitting() ? ('becomeSeller.submitting' | trans) : ('becomeSeller.submitBtn' | trans) }}\n98:           </button>\n99:         }"
+  },
+  {
+    "key": "becomeSeller.submitBtn",
+    "file": "src\\app\\features\\buyer\\become-seller\\become-seller.page.html",
+    "line": 97,
+    "snippet": "95:         @if (canSubmit()) {\n96:           <button type=\"submit\" class=\"btn-pink w-full !py-3.5\" [disabled]=\"submitting()\">\n97:             {{ submitting() ? ('becomeSeller.submitting' | trans) : ('becomeSeller.submitBtn' | trans) }}\n98:           </button>\n99:         }"
+  },
+  {
+    "key": "bundleDetail.breadcrumbHome",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 5,
+    "snippet": "3:     <!-- Breadcrumb -->\n4:     <nav class=\"flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap\">\n5:       <a routerLink=\"/\" class=\"hover:text-pink-600\">{{ 'bundleDetail.breadcrumbHome' | trans }}</a>\n6:       <app-icon name=\"chevron-right\" [size]=\"14\" />\n7:       <a routerLink=\"/bundles\" class=\"hover:text-pink-600\">{{ 'bundleDetail.breadcrumbBundles' | trans }}</a>"
+  },
+  {
+    "key": "bundleDetail.tag",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 19,
+    "snippet": "17:           <div class=\"absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent\"></div>\n18:           <span class=\"absolute top-4 left-4 pill bg-violet-500 text-white shadow-soft\">\n19:             {{ 'bundleDetail.tag' | trans }}\n20:           </span>\n21:           @if (savingsPercent() > 0) {"
+  },
+  {
+    "key": "bundleDetail.savePercent",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 23,
+    "snippet": "21:           @if (savingsPercent() > 0) {\n22:             <span class=\"absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft\">\n23:               {{ 'bundleDetail.savePercent' | trans:{ percent: savingsPercent() } }}\n24:             </span>\n25:           }"
+  },
+  {
+    "key": "bundleDetail.reviewsCount",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 39,
+    "snippet": "37:         <div class=\"flex items-center gap-4 mb-5 text-sm\">\n38:           <span class=\"text-pink-600 font-bold\">★ {{ b.rating }}</span>\n39:           <span class=\"text-ink-muted\">{{ 'bundleDetail.reviewsCount' | trans:{ count: b.reviewCount } }}</span>\n40:           <span class=\"text-ink-muted\">·</span>\n41:           <span class=\"inline-flex items-center gap-1 text-ink-soft\">"
+  },
+  {
+    "key": "bundleDetail.downloadsCount",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 43,
+    "snippet": "41:           <span class=\"inline-flex items-center gap-1 text-ink-soft\">\n42:             <app-icon name=\"download\" [size]=\"14\" />\n43:             {{ 'bundleDetail.downloadsCount' | trans:{ count: (b.downloads | compact) } }}\n44:           </span>\n45:         </div>"
+  },
+  {
+    "key": "bundleDetail.addAllToCart",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 62,
+    "snippet": "60:             <button class=\"btn-pink !py-3.5\" (click)=\"addAllToCart()\">\n61:               <app-icon name=\"cart\" [size]=\"16\" />\n62:               {{ 'bundleDetail.addAllToCart' | trans }}\n63:             </button>\n64:             <button class=\"btn-ghost\" (click)=\"addAllToCart()\">"
+  },
+  {
+    "key": "bundleDetail.buyNow",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 65,
+    "snippet": "63:             </button>\n64:             <button class=\"btn-ghost\" (click)=\"addAllToCart()\">\n65:               {{ 'bundleDetail.buyNow' | trans }}\n66:             </button>\n67:           </div>"
+  },
+  {
+    "key": "bundleDetail.viewStore",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 76,
+    "snippet": "74:             </div>\n75:             <a [routerLink]=\"['/store', b.seller.id]\" class=\"ml-auto text-xs text-pink-600 font-bold hover:underline\">\n76:               {{ 'bundleDetail.viewStore' | trans }}\n77:             </a>\n78:           </div>"
+  },
+  {
+    "key": "bundleDetail.notFoundTitle",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 97,
+    "snippet": "95:     <app-empty-state\n96:       emoji=\"📦\"\n97:       [title]=\"'bundleDetail.notFoundTitle' | trans\"\n98:       [description]=\"'bundleDetail.notFoundDesc' | trans\"\n99:     >"
+  },
+  {
+    "key": "bundleDetail.notFoundDesc",
+    "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html",
+    "line": 98,
+    "snippet": "96:       emoji=\"📦\"\n97:       [title]=\"'bundleDetail.notFoundTitle' | trans\"\n98:       [description]=\"'bundleDetail.notFoundDesc' | trans\"\n99:     >\n100:       <a routerLink=\"/bundles\" class=\"btn-pink mt-4\">{{ 'bundleDetail.backToBundles' | trans }}</a>"
+  },
+  {
+    "key": "product.followSuccess",
+    "file": "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts",
+    "line": 274,
+    "snippet": "272:       this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);\r\n273:       if (isNowFollowing) {\r\n274:         this.message.success(this.translation.t('product.followSuccess', { name: d.seller.studioName }));\r\n275:       } else {\r\n276:         this.message.info(this.translation.t('product.unfollowSuccess', { name: d.seller.studioName }));\r"
+  },
+  {
+    "key": "product.unfollowSuccess",
+    "file": "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts",
+    "line": 276,
+    "snippet": "274:         this.message.success(this.translation.t('product.followSuccess', { name: d.seller.studioName }));\r\n275:       } else {\r\n276:         this.message.info(this.translation.t('product.unfollowSuccess', { name: d.seller.studioName }));\r\n277:       }\r\n278:     }\r"
+  },
+  {
+    "key": "storefront.manageStore",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.html",
+    "line": 58,
+    "snippet": "56:                 >\n57:                   <app-icon name=\"package\" [size]=\"16\" />\n58:                   {{ 'storefront.manageStore' | trans }}\n59:                 </a>\n60:               } @else {"
+  },
+  {
+    "key": "storefront.following",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.html",
+    "line": 69,
+    "snippet": "67:                   @if (isFollowing()) {\n68:                     <app-icon name=\"check\" [size]=\"16\" />\n69:                     {{ 'storefront.following' | trans }}\n70:                   } @else {\n71:                     <app-icon name=\"plus\" [size]=\"16\" />"
+  },
+  {
+    "key": "storefront.statDocs",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.html",
+    "line": 86,
+    "snippet": "84:           <dl class=\"mt-6 pt-5 border-t border-line grid grid-cols-2 md:grid-cols-5 gap-4 text-center\">\n85:             <div>\n86:               <dt class=\"text-[11px] text-ink-muted uppercase tracking-wider\">{{ 'storefront.statDocs' | trans }}</dt>\n87:               <dd class=\"text-2xl font-extrabold text-ink mt-1\">{{ s.totalDocuments }}</dd>\n88:             </div>"
+  },
+  {
+    "key": "storefront.hoursUnit",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.html",
+    "line": 103,
+    "snippet": "101:             <div>\n102:               <dt class=\"text-[11px] text-ink-muted uppercase tracking-wider\">{{ 'storefront.statAvgResponse' | trans }}</dt>\n103:               <dd class=\"text-2xl font-extrabold text-ink mt-1\">{{ 'storefront.hoursUnit' | trans:{ hours: s.responseHours ?? 0 } }}</dd>\n104:             </div>\n105:           </dl>"
+  },
+  {
+    "key": "storefront.notFoundTitle",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.html",
+    "line": 204,
+    "snippet": "202:         <app-empty-state\n203:           emoji=\"🏪\"\n204:           [title]=\"'storefront.notFoundTitle' | trans\"\n205:           [description]=\"'storefront.notFoundDesc' | trans\"\n206:         >"
+  },
+  {
+    "key": "storefront.notFoundDesc",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.html",
+    "line": 205,
+    "snippet": "203:           emoji=\"🏪\"\n204:           [title]=\"'storefront.notFoundTitle' | trans\"\n205:           [description]=\"'storefront.notFoundDesc' | trans\"\n206:         >\n207:           <a routerLink=\"/marketplace\" class=\"btn-pink mt-4\">{{ 'storefront.backToMarketplace' | trans }}</a>"
+  },
+  {
+    "key": "storefront.tabAll",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.ts",
+    "line": 112,
+    "snippet": "110: \n111:   readonly tabs = computed(() => [\n112:     { value: 'all' as const, label: this.i18n.t('storefront.tabAll'), count: this.sellerDocs().length },\n113:     { value: 'bundles' as const, label: this.i18n.t('storefront.tabBundles'), count: this.sellerBundles().length },\n114:     { value: 'free' as const, label: this.i18n.t('storefront.tabFree'), count: this.sellerFree().length },"
+  },
+  {
+    "key": "storefront.tabFree",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.ts",
+    "line": 114,
+    "snippet": "112:     { value: 'all' as const, label: this.i18n.t('storefront.tabAll'), count: this.sellerDocs().length },\n113:     { value: 'bundles' as const, label: this.i18n.t('storefront.tabBundles'), count: this.sellerBundles().length },\n114:     { value: 'free' as const, label: this.i18n.t('storefront.tabFree'), count: this.sellerFree().length },\n115:     { value: 'top' as const, label: this.i18n.t('storefront.tabTop'), count: null },\n116:   ]);"
+  },
+  {
+    "key": "storefront.followSuccess",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.ts",
+    "line": 176,
+    "snippet": "174:       this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);\n175:       if (isNowFollowing) {\n176:         this.message.success(this.i18n.t('storefront.followSuccess', { name: seller.studioName ?? '' }));\n177:       } else {\n178:         this.message.info(this.i18n.t('storefront.unfollowSuccess', { name: seller.studioName ?? '' }));"
+  },
+  {
+    "key": "storefront.unfollowSuccess",
+    "file": "src\\app\\features\\buyer\\storefront\\storefront.page.ts",
+    "line": 178,
+    "snippet": "176:         this.message.success(this.i18n.t('storefront.followSuccess', { name: seller.studioName ?? '' }));\n177:       } else {\n178:         this.message.info(this.i18n.t('storefront.unfollowSuccess', { name: seller.studioName ?? '' }));\n179:       }\n180:     }"
+  },
+  {
+    "key": "wallet.paymentConfirmFailed",
+    "file": "src\\app\\features\\buyer\\wallet\\wallet.page.ts",
+    "line": 208,
+    "snippet": "206: \r\n207:       if (result.error) {\r\n208:         this.message.error(result.error.message ?? this.translation.t('wallet.paymentConfirmFailed'));\r\n209:         return;\r\n210:       }\r"
+  },
+  {
+    "key": "wallet.statusCancelled",
+    "file": "src\\app\\features\\buyer\\wallet\\wallet.page.ts",
+    "line": 315,
+    "snippet": "313:         return this.translation.t('wallet.statusFailed');\r\n314:       case 'cancelled':\r\n315:         return this.translation.t('wallet.statusCancelled');\r\n316:       default:\r\n317:         return status;\r"
+  },
+  {
+    "key": "onboarding.customizeInterests",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 7,
+    "snippet": "5:       <div class=\"inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold\">\n6:         <span>✨</span>\n7:         <span>{{ 'onboarding.customizeInterests' | trans }}</span>\n8:       </div>\n9:       <button"
+  },
+  {
+    "key": "onboarding.skipForNow",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 15,
+    "snippet": "13:         class=\"text-sm font-medium text-ink-muted hover:text-ink transition-colors disabled:opacity-50\"\n14:       >\n15:         {{ 'onboarding.skipForNow' | trans }}\n16:       </button>\n17:     </div>"
+  },
+  {
+    "key": "onboarding.interestTitle",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 21,
+    "snippet": "19:     <div class=\"text-center mb-10\">\n20:       <h1 class=\"text-3xl sm:text-4xl font-extrabold text-ink mb-3\">\n21:         {{ 'onboarding.interestTitle' | trans }}\n22:       </h1>\n23:       <p class=\"text-base text-ink-soft max-w-lg mx-auto\">"
+  },
+  {
+    "key": "onboarding.interestSubtitle",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 24,
+    "snippet": "22:       </h1>\n23:       <p class=\"text-base text-ink-soft max-w-lg mx-auto\">\n24:         {{ 'onboarding.interestSubtitle' | trans }}\n25:       </p>\n26:     </div>"
+  },
+  {
+    "key": "onboarding.loadingCategories",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 31,
+    "snippet": "29:     @if (categoriesState().status === 'loading' && categories().length === 0) {\n30:       <div class=\"py-12 flex justify-center items-center text-ink-muted text-sm\">\n31:         {{ 'onboarding.loadingCategories' | trans }}\n32:       </div>\n33:     } @else {"
+  },
+  {
+    "key": "onboarding.saving",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 68,
+    "snippet": "66:       >\n67:         @if (submitting()) {\n68:           {{ 'onboarding.saving' | trans }}\n69:         } @else {\n70:           {{ 'onboarding.complete' | trans }} @if (selectedCategoryIds().length > 0) { ({{ selectedCategoryIds().length }}) }"
+  },
+  {
+    "key": "onboarding.complete",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.html",
+    "line": 70,
+    "snippet": "68:           {{ 'onboarding.saving' | trans }}\n69:         } @else {\n70:           {{ 'onboarding.complete' | trans }} @if (selectedCategoryIds().length > 0) { ({{ selectedCategoryIds().length }}) }\n71:         }\n72:       </button>"
+  },
+  {
+    "key": "onboarding.saveInterestsFailed",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.ts",
+    "line": 56,
+    "snippet": "54:       const res = await this.onboardingService.updateInterests(this.selectedCategoryIds());\n55:       if (!res.ok) {\n56:         this.message.error(res.error ?? this.translation.t('onboarding.saveInterestsFailed'));\n57:         return;\n58:       }"
+  },
+  {
+    "key": "onboarding.skipFailed",
+    "file": "src\\app\\features\\onboarding\\interest-select\\interest-select.page.ts",
+    "line": 72,
+    "snippet": "70:       const res = await this.onboardingService.skip();\n71:       if (!res.ok) {\n72:         this.message.error(res.error ?? this.translation.t('onboarding.skipFailed'));\n73:         return;\n74:       }"
+  },
+  {
+    "key": "onboarding.welcomeBadge",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 5,
+    "snippet": "3:     <div class=\"inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold mb-4\">\n4:       <span>🌸</span>\n5:       <span>{{ 'onboarding.welcomeBadge' | trans }}</span>\n6:     </div>\n7: "
+  },
+  {
+    "key": "onboarding.roleTitle",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 9,
+    "snippet": "7: \n8:     <h1 class=\"text-3xl sm:text-4xl font-extrabold text-ink mb-3\">\n9:       {{ 'onboarding.roleTitle' | trans }}\n10:     </h1>\n11:     <p class=\"text-base text-ink-soft mb-10 max-w-lg mx-auto\">"
+  },
+  {
+    "key": "onboarding.roleSubtitle",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 12,
+    "snippet": "10:     </h1>\n11:     <p class=\"text-base text-ink-soft mb-10 max-w-lg mx-auto\">\n12:       {{ 'onboarding.roleSubtitle' | trans }}\n13:     </p>\n14: "
+  },
+  {
+    "key": "onboarding.buyerCardTitle",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 27,
+    "snippet": "25:           </div>\n26:           <h2 class=\"text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors\">\n27:             {{ 'onboarding.buyerCardTitle' | trans }}\n28:           </h2>\n29:           <p class=\"text-sm text-ink-soft leading-relaxed\">"
+  },
+  {
+    "key": "onboarding.buyerCardDesc",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 30,
+    "snippet": "28:           </h2>\n29:           <p class=\"text-sm text-ink-soft leading-relaxed\">\n30:             {{ 'onboarding.buyerCardDesc' | trans }}\n31:           </p>\n32:         </div>"
+  },
+  {
+    "key": "onboarding.buyerCardAction",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 34,
+    "snippet": "32:         </div>\n33:         <div class=\"mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform\">\n34:           <span>{{ 'onboarding.buyerCardAction' | trans }}</span>\n35:           <span class=\"ml-1\">→</span>\n36:         </div>"
+  },
+  {
+    "key": "onboarding.sellerCardTitle",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 51,
+    "snippet": "49:           </div>\n50:           <h2 class=\"text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors\">\n51:             {{ 'onboarding.sellerCardTitle' | trans }}\n52:           </h2>\n53:           <p class=\"text-sm text-ink-soft leading-relaxed\">"
+  },
+  {
+    "key": "onboarding.sellerCardDesc",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 54,
+    "snippet": "52:           </h2>\n53:           <p class=\"text-sm text-ink-soft leading-relaxed\">\n54:             {{ 'onboarding.sellerCardDesc' | trans }}\n55:           </p>\n56:         </div>"
+  },
+  {
+    "key": "onboarding.sellerCardAction",
+    "file": "src\\app\\features\\onboarding\\role-select\\role-select.page.html",
+    "line": 58,
+    "snippet": "56:         </div>\n57:         <div class=\"mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform\">\n58:           <span>{{ 'onboarding.sellerCardAction' | trans }}</span>\n59:           <span class=\"ml-1\">→</span>\n60:         </div>"
+  },
+  {
+    "key": "shared.announcementPopup.defaultTitle",
+    "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.html",
+    "line": 16,
+    "snippet": "14:       </span>\n15:       <span class=\"font-bold text-ink text-base md:text-lg truncate\">\n16:         {{ popup.current()?.title || ('shared.announcementPopup.defaultTitle' | trans) }}\n17:       </span>\n18:     </div>"
+  },
+  {
+    "key": "shared.announcementPopup.prevImage",
+    "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.html",
+    "line": 48,
+    "snippet": "46:               type=\"button\"\n47:               class=\"absolute top-1/2 left-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95\"\n48:               [attr.aria-label]=\"'shared.announcementPopup.prevImage' | trans\"\n49:               (click)=\"prevImage()\"\n50:             >"
+  },
+  {
+    "key": "shared.announcementPopup.nextImage",
+    "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.html",
+    "line": 56,
+    "snippet": "54:               type=\"button\"\n55:               class=\"absolute top-1/2 right-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95\"\n56:               [attr.aria-label]=\"'shared.announcementPopup.nextImage' | trans\"\n57:               (click)=\"nextImage()\"\n58:             >"
+  },
+  {
+    "key": "shared.announcementPopup.goToImage",
+    "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.html",
+    "line": 72,
+    "snippet": "70:                       : 'h-2 w-2 rounded-full bg-white/50 hover:bg-white/80 transition-all duration-200'\n71:                   \"\n72:                   [attr.aria-label]=\"'shared.announcementPopup.goToImage' | trans: { number: i + 1 }\"\n73:                   [attr.aria-current]=\"i === currentImageIndex() ? 'true' : null\"\n74:                   (click)=\"goToImage(i)\""
+  },
+  {
+    "key": "shared.announcementPopup.dontShowAgain",
+    "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.html",
+    "line": 94,
+    "snippet": "92:             class=\"w-4 h-4 rounded border-line text-pink-500 focus:ring-pink-300 accent-pink-500 cursor-pointer\"\n93:           />\n94:           <span>{{ 'shared.announcementPopup.dontShowAgain' | trans }}</span>\n95:         </label>\n96: "
+  },
+  {
+    "key": "shared.announcementPopup.viewDetail",
+    "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.html",
+    "line": 104,
+    "snippet": "102:               (click)=\"onImageClick(announcement.images[currentImageIndex()])\"\n103:             >\n104:               {{ 'shared.announcementPopup.viewDetail' | trans }}\n105:               <app-icon name=\"arrow-right\" [size]=\"14\" />\n106:             </button>"
+  },
+  {
+    "key": "shared.changePassword.title",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.html",
+    "line": 7,
+    "snippet": "5:     </div>\n6:     <div>\n7:       <h2 class=\"text-lg font-bold text-ink mb-1\">{{ 'shared.changePassword.title' | trans }}</h2>\n8:       <p class=\"text-xs text-ink-muted\">\n9:         {{ 'shared.changePassword.subtitle' | trans }}"
+  },
+  {
+    "key": "shared.changePassword.subtitle",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.html",
+    "line": 9,
+    "snippet": "7:       <h2 class=\"text-lg font-bold text-ink mb-1\">{{ 'shared.changePassword.title' | trans }}</h2>\n8:       <p class=\"text-xs text-ink-muted\">\n9:         {{ 'shared.changePassword.subtitle' | trans }}\n10:       </p>\n11:     </div>"
+  },
+  {
+    "key": "shared.changePassword.currentPassword",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.html",
+    "line": 16,
+    "snippet": "14:   <div class=\"grid sm:grid-cols-3 gap-4\">\n15:     <div>\n16:       <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'shared.changePassword.currentPassword' | trans }}</label>\n17:       <input\n18:         type=\"password\""
+  },
+  {
+    "key": "shared.changePassword.newPassword",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.html",
+    "line": 27,
+    "snippet": "25:     </div>\n26:     <div>\n27:       <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'shared.changePassword.newPassword' | trans }}</label>\n28:       <input\n29:         type=\"password\""
+  },
+  {
+    "key": "shared.changePassword.confirmPassword",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.html",
+    "line": 39,
+    "snippet": "37:     </div>\n38:     <div>\n39:       <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'shared.changePassword.confirmPassword' | trans }}</label>\n40:       <input\n41:         type=\"password\""
+  },
+  {
+    "key": "shared.changePassword.currentPasswordRequired",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.ts",
+    "line": 40,
+    "snippet": "38:   /** Mirrors the server's rules. The server checks every one of them regardless. */\n39:   validationError(): string | null {\n40:     if (!this.currentPassword) return this.translation.t('shared.changePassword.currentPasswordRequired');\n41:     if (this.newPassword.length < 8) return this.translation.t('shared.changePassword.minLength');\n42:     if (this.newPassword === this.currentPassword) return this.translation.t('shared.changePassword.notSameAsCurrent');"
+  },
+  {
+    "key": "shared.changePassword.minLength",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.ts",
+    "line": 41,
+    "snippet": "39:   validationError(): string | null {\n40:     if (!this.currentPassword) return this.translation.t('shared.changePassword.currentPasswordRequired');\n41:     if (this.newPassword.length < 8) return this.translation.t('shared.changePassword.minLength');\n42:     if (this.newPassword === this.currentPassword) return this.translation.t('shared.changePassword.notSameAsCurrent');\n43:     if (this.newPassword !== this.confirmPassword) return this.translation.t('shared.changePassword.confirmMismatch');"
+  },
+  {
+    "key": "shared.changePassword.notSameAsCurrent",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.ts",
+    "line": 42,
+    "snippet": "40:     if (!this.currentPassword) return this.translation.t('shared.changePassword.currentPasswordRequired');\n41:     if (this.newPassword.length < 8) return this.translation.t('shared.changePassword.minLength');\n42:     if (this.newPassword === this.currentPassword) return this.translation.t('shared.changePassword.notSameAsCurrent');\n43:     if (this.newPassword !== this.confirmPassword) return this.translation.t('shared.changePassword.confirmMismatch');\n44:     return null;"
+  },
+  {
+    "key": "shared.changePassword.confirmMismatch",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.ts",
+    "line": 43,
+    "snippet": "41:     if (this.newPassword.length < 8) return this.translation.t('shared.changePassword.minLength');\n42:     if (this.newPassword === this.currentPassword) return this.translation.t('shared.changePassword.notSameAsCurrent');\n43:     if (this.newPassword !== this.confirmPassword) return this.translation.t('shared.changePassword.confirmMismatch');\n44:     return null;\n45:   }"
+  },
+  {
+    "key": "shared.changePassword.successRelogin",
+    "file": "src\\app\\shared\\components\\change-password\\change-password.component.ts",
+    "line": 66,
+    "snippet": "64:       this.newPassword = '';\n65:       this.confirmPassword = '';\n66:       this.message.success(this.translation.t('shared.changePassword.successRelogin'));\n67:       void this.router.navigate(['/auth/login']);\n68:     } catch {"
+  },
+  {
+    "key": "shared.feedbackModal.title",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 14,
+    "snippet": "12:         <app-icon name=\"flag\" [size]=\"18\" />\n13:       </span>\n14:       <span class=\"font-bold text-ink text-base md:text-lg\">{{ 'shared.feedbackModal.title' | trans }}</span>\n15:     </div>\n16:   </ng-template>"
+  },
+  {
+    "key": "shared.feedbackModal.type",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 22,
+    "snippet": "20:       <!-- Type -->\n21:       <div>\n22:         <label class=\"text-xs font-semibold text-ink-soft mb-1.5 block\">{{ 'shared.feedbackModal.type' | trans }}</label>\n23:         <select class=\"input-soft\" [(ngModel)]=\"type\" name=\"type\">\n24:           @for (opt of types(); track opt.value) {"
+  },
+  {
+    "key": "shared.feedbackModal.titleLabel",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 32,
+    "snippet": "30:       <!-- Subject -->\n31:       <div>\n32:         <label class=\"text-xs font-semibold text-ink-soft mb-1.5 block\">{{ 'shared.feedbackModal.titleLabel' | trans }}</label>\n33:         <input\n34:           type=\"text\""
+  },
+  {
+    "key": "shared.feedbackModal.titlePlaceholder",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 39,
+    "snippet": "37:           [(ngModel)]=\"subject\"\n38:           name=\"subject\"\n39:           [placeholder]=\"'shared.feedbackModal.titlePlaceholder' | trans\"\n40:         />\n41:         <div class=\"flex justify-end mt-1\">"
+  },
+  {
+    "key": "shared.feedbackModal.detailLabel",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 48,
+    "snippet": "46:       <!-- Details -->\n47:       <div>\n48:         <label class=\"text-xs font-semibold text-ink-soft mb-1.5 block\">{{ 'shared.feedbackModal.detailLabel' | trans }}</label>\n49:         <textarea\n50:           class=\"input-soft\""
+  },
+  {
+    "key": "shared.feedbackModal.detailPlaceholder",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 55,
+    "snippet": "53:           [(ngModel)]=\"details\"\n54:           name=\"details\"\n55:           [placeholder]=\"'shared.feedbackModal.detailPlaceholder' | trans\"\n56:         ></textarea>\n57:         <div class=\"flex justify-end mt-1\">"
+  },
+  {
+    "key": "shared.feedbackModal.screenshot",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 64,
+    "snippet": "62:       <!-- Attachments -->\n63:       <div>\n64:         <label class=\"text-xs font-semibold text-ink-soft mb-1.5 block\">{{ 'shared.feedbackModal.screenshot' | trans }}</label>\n65:         <p class=\"text-[11px] text-ink-muted mb-2\">{{ 'shared.feedbackModal.attachmentsNote' | trans }}</p>\n66: "
+  },
+  {
+    "key": "shared.feedbackModal.attachmentsNote",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 65,
+    "snippet": "63:       <div>\n64:         <label class=\"text-xs font-semibold text-ink-soft mb-1.5 block\">{{ 'shared.feedbackModal.screenshot' | trans }}</label>\n65:         <p class=\"text-[11px] text-ink-muted mb-2\">{{ 'shared.feedbackModal.attachmentsNote' | trans }}</p>\n66: \n67:         <div class=\"flex flex-wrap gap-2 mb-2\">"
+  },
+  {
+    "key": "shared.feedbackModal.addPhoto",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 84,
+    "snippet": "82:             <label class=\"w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center text-ink-muted cursor-pointer transition-colors\">\n83:               <app-icon name=\"plus\" [size]=\"20\" />\n84:               <span class=\"text-[10px] mt-1\">{{ 'shared.feedbackModal.addPhoto' | trans }}</span>\n85:               <input\n86:                 type=\"file\""
+  },
+  {
+    "key": "shared.feedbackModal.pdpaNotice",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 99,
+    "snippet": "97:       <!-- PDPA Note -->\n98:       <div class=\"p-3 bg-amber-50 rounded-lg border border-amber-200/60 text-amber-800 text-xs leading-relaxed\">\n99:         {{ 'shared.feedbackModal.pdpaNotice' | trans }}\n100:       </div>\n101:     </div>"
+  },
+  {
+    "key": "shared.feedbackModal.submitToTeam",
+    "file": "src\\app\\shared\\components\\feedback-modal\\feedback-modal.component.html",
+    "line": 115,
+    "snippet": "113:         (click)=\"submit()\"\n114:       >\n115:         {{ sending() ? ('common.saving' | trans) : ('shared.feedbackModal.submitToTeam' | trans) }}\n116:       </button>\n117:     </div>"
+  },
+  {
+    "key": "shared.notifications.newBadge",
+    "file": "src\\app\\shared\\components\\notification-bell\\notification-bell.component.html",
+    "line": 60,
+    "snippet": "58:         @if (unreadCount() > 0) {\n59:           <span class=\"pill-pink text-[10px] !py-0 !px-2 font-bold\">\n60:             {{ 'shared.notifications.newBadge' | trans: { count: unreadCount() } }}\n61:           </span>\n62:         }"
+  },
+  {
+    "key": "shared.notifications.noNotifsSub",
+    "file": "src\\app\\shared\\components\\notification-bell\\notification-bell.component.html",
+    "line": 84,
+    "snippet": "82:           </div>\n83:           <p class=\"text-sm font-medium text-ink-muted\">{{ 'shared.notifications.noNotifs' | trans }}</p>\n84:           <p class=\"text-xs text-ink-muted/80 mt-0.5\">{{ 'shared.notifications.noNotifsSub' | trans }}</p>\n85:         </li>\n86:       } @else {"
+  },
+  {
+    "key": "shared.notifications.viewAll",
+    "file": "src\\app\\shared\\components\\notification-bell\\notification-bell.component.html",
+    "line": 152,
+    "snippet": "150:         class=\"inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline transition-all\"\n151:       >\n152:         <span>{{ 'shared.notifications.viewAll' | trans }}</span>\n153:         <app-icon name=\"arrow-right\" [size]=\"12\" />\n154:       </a>"
+  },
+  {
+    "key": "shared.pagination.selectPerPageAria",
+    "file": "src\\app\\shared\\components\\pagination\\pagination.component.html",
+    "line": 21,
+    "snippet": "19:           [value]=\"pageSize()\"\n20:           (change)=\"onPageSizeChange($event)\"\n21:           [attr.aria-label]=\"'shared.pagination.selectPerPageAria' | trans\"\n22:         >\n23:           @for (opt of pageSizeOptions(); track opt) {"
+  },
+  {
+    "key": "shared.pagination.prevAria",
+    "file": "src\\app\\shared\\components\\pagination\\pagination.component.html",
+    "line": 40,
+    "snippet": "38:         [disabled]=\"page() <= 1\"\n39:         (click)=\"prev()\"\n40:         [attr.aria-label]=\"'shared.pagination.prevAria' | trans\"\n41:       >\n42:         <app-icon name=\"arrow-left\" [size]=\"14\" />"
+  },
+  {
+    "key": "shared.pagination.nextAria",
+    "file": "src\\app\\shared\\components\\pagination\\pagination.component.html",
+    "line": 76,
+    "snippet": "74:         [disabled]=\"page() >= computedTotalPages()\"\n75:         (click)=\"next()\"\n76:         [attr.aria-label]=\"'shared.pagination.nextAria' | trans\"\n77:       >\n78:         <span class=\"hidden sm:inline\">{{ 'shared.pagination.next' | trans }}</span>"
+  },
+  {
+    "key": "shared.payoutAccount.accountNamePlaceholder",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.html",
+    "line": 46,
+    "snippet": "44:             (ngModelChange)=\"accountHolderName.set($event)\"\n45:             name=\"accountHolderName\"\n46:             [placeholder]=\"'shared.payoutAccount.accountNamePlaceholder' | trans\"\n47:             maxlength=\"200\"\n48:           />"
+  },
+  {
+    "key": "shared.payoutAccount.bank",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.html",
+    "line": 56,
+    "snippet": "54:         @if (accountTypeSelection() === 'bank') {\n55:           <div>\n56:             <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'shared.payoutAccount.bank' | trans }}</label>\n57:             <select\n58:               class=\"input-soft cursor-pointer\""
+  },
+  {
+    "key": "shared.payoutAccount.selectBank",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.html",
+    "line": 63,
+    "snippet": "61:               name=\"bankCode\"\n62:             >\n63:               <option value=\"\">{{ 'shared.payoutAccount.selectBank' | trans }}</option>\n64:               @for (bank of banks; track bank.code) {\n65:                 <option [value]=\"bank.code\">{{ ('banks.' + bank.code) | trans }}</option>"
+  },
+  {
+    "key": "shared.payoutAccount.accountNumber",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.html",
+    "line": 74,
+    "snippet": "72: \n73:           <div>\n74:             <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'shared.payoutAccount.accountNumber' | trans }}</label>\n75:             <input\n76:               class=\"input-soft\""
+  },
+  {
+    "key": "shared.payoutAccount.accountNumberDigitsHint",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.html",
+    "line": 80,
+    "snippet": "78:               (ngModelChange)=\"accountNumber.set($event)\"\n79:               name=\"accountNumber\"\n80:               [placeholder]=\"'shared.payoutAccount.accountNumberDigitsHint' | trans\"\n81:               maxlength=\"20\"\n82:               inputmode=\"numeric\""
+  },
+  {
+    "key": "shared.payoutAccount.uploading",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.html",
+    "line": 126,
+    "snippet": "124:               <p class=\"text-xs text-ink-muted mt-2\">{{ 'shared.payoutAccount.qrImageHint' | trans }}</p>\n125:               @if (qrUploading()) {\n126:                 <p class=\"text-xs text-ink-soft mt-1\">{{ 'shared.payoutAccount.uploading' | trans }}</p>\n127:               }\n128:               @if (promptPayQrImageUrl()) {"
+  },
+  {
+    "key": "shared.payoutAccount.accountHolderNameRequired",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.ts",
+    "line": 214,
+    "snippet": "212:   private validate(): boolean {\r\n213:     const errors: FieldErrors = { ...NO_FIELD_ERRORS };\r\n214:     if (!this.accountHolderName().trim()) errors.accountHolderName = this.translation.t('shared.payoutAccount.accountHolderNameRequired');\r\n215: \r\n216:     if (this.accountTypeSelection() === 'bank') {\r"
+  },
+  {
+    "key": "shared.payoutAccount.bankRequired",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.ts",
+    "line": 217,
+    "snippet": "215: \r\n216:     if (this.accountTypeSelection() === 'bank') {\r\n217:       if (!this.bankCode()) errors.bankCode = this.translation.t('shared.payoutAccount.bankRequired');\r\n218:       const digits = this.accountNumber().replace(/[\\s-]/g, '');\r\n219:       if (!/^\\d{10,15}$/.test(digits)) {\r"
+  },
+  {
+    "key": "shared.payoutAccount.accountNumberInvalid",
+    "file": "src\\app\\shared\\components\\payout-account-form\\payout-account-form.component.ts",
+    "line": 220,
+    "snippet": "218:       const digits = this.accountNumber().replace(/[\\s-]/g, '');\r\n219:       if (!/^\\d{10,15}$/.test(digits)) {\r\n220:         errors.accountNumber = this.translation.t('shared.payoutAccount.accountNumberInvalid');\r\n221:       }\r\n222:     } else if (this.promptPayTypeSelection() === 'qr_code') {\r"
+  },
+  {
+    "key": "shared.profileEditor.title",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 7,
+    "snippet": "5:     </div>\n6:     <div>\n7:       <h2 class=\"text-lg font-bold text-ink mb-1\">{{ 'shared.profileEditor.title' | trans }}</h2>\n8:       <p class=\"text-xs text-ink-muted\">{{ 'shared.profileEditor.subtitle' | trans }}</p>\n9:     </div>"
+  },
+  {
+    "key": "shared.profileEditor.subtitle",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 8,
+    "snippet": "6:     <div>\n7:       <h2 class=\"text-lg font-bold text-ink mb-1\">{{ 'shared.profileEditor.title' | trans }}</h2>\n8:       <p class=\"text-xs text-ink-muted\">{{ 'shared.profileEditor.subtitle' | trans }}</p>\n9:     </div>\n10:   </div>"
+  },
+  {
+    "key": "shared.profileEditor.profileImageAlt",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 19,
+    "snippet": "17:         [src]=\"avatarSrc()\"\n18:         class=\"w-24 h-24 rounded-[1.75rem] object-cover ring-4 ring-pink-100 transition-opacity group-hover:opacity-80\"\n19:         [alt]=\"'shared.profileEditor.profileImageAlt' | trans\"\n20:       />\n21:       <span"
+  },
+  {
+    "key": "shared.profileEditor.uploadProfileImage",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 30,
+    "snippet": "28:       <label class=\"btn-ghost !py-2 !px-4 text-sm cursor-pointer w-fit\">\n29:         <input type=\"file\" accept=\"image/*\" class=\"hidden\" (change)=\"onAvatarSelected($event)\" />\n30:         @if (avatarUploading()) { {{ 'common.loading' | trans }} } @else { {{ 'shared.profileEditor.uploadProfileImage' | trans }} }\n31:       </label>\n32:       <p class=\"text-xs text-ink-muted max-w-xs\">{{ 'shared.profileEditor.supportedFormats' | trans }}</p>"
+  },
+  {
+    "key": "shared.profileEditor.supportedFormats",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 32,
+    "snippet": "30:         @if (avatarUploading()) { {{ 'common.loading' | trans }} } @else { {{ 'shared.profileEditor.uploadProfileImage' | trans }} }\n31:       </label>\n32:       <p class=\"text-xs text-ink-muted max-w-xs\">{{ 'shared.profileEditor.supportedFormats' | trans }}</p>\n33:     </div>\n34:   </div>"
+  },
+  {
+    "key": "shared.profileEditor.displayName",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 38,
+    "snippet": "36:   <div class=\"grid gap-4\" [class.sm:grid-cols-2]=\"!!secondaryLabel()\">\n37:     <div>\n38:       <label class=\"text-xs font-semibold text-ink-soft mb-2 block\">{{ 'shared.profileEditor.displayName' | trans }}</label>\n39:       <input\n40:         class=\"input-soft\""
+  },
+  {
+    "key": "shared.profileEditor.saveProfile",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.html",
+    "line": 61,
+    "snippet": "59:     <button type=\"button\" class=\"btn-pink !px-7\" [disabled]=\"saving()\" (click)=\"save()\">\n60:       <app-icon name=\"check\" [size]=\"16\" />\n61:       {{ saving() ? ('common.saving' | trans) : ('shared.profileEditor.saveProfile' | trans) }}\n62:     </button>\n63:   </div>"
+  },
+  {
+    "key": "shared.profileEditor.invalidImageType",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.ts",
+    "line": 62,
+    "snippet": "60:     if (!file) return;\n61:     if (!file.type.startsWith('image/')) {\n62:       this.message.warning(this.translation.t('shared.profileEditor.invalidImageType'));\n63:       return;\n64:     }"
+  },
+  {
+    "key": "shared.profileEditor.uploadSuccess",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.ts",
+    "line": 77,
+    "snippet": "75:         }),\n76:       );\n77:       this.message.success(this.translation.t('shared.profileEditor.uploadSuccess'));\n78:     } catch {\n79:       /* reported by MeService through ApiFailureReporter */"
+  },
+  {
+    "key": "shared.profileEditor.saveSuccess",
+    "file": "src\\app\\shared\\components\\profile-editor\\profile-editor.component.ts",
+    "line": 92,
+    "snippet": "90:         next: () => {\n91:           this.saving.set(false);\n92:           this.message.success(this.translation.t('shared.profileEditor.saveSuccess'));\n93:         },\n94:         error: () => {"
+  },
+  {
+    "key": "shared.quickView.bestseller",
+    "file": "src\\app\\shared\\components\\quick-view-modal\\quick-view-modal.component.html",
+    "line": 30,
+    "snippet": "28:                 }\n29:                 @if (d.isBestseller) {\n30:                   <span class=\"pill bg-amber-400 text-amber-900\">⭐ {{ 'shared.quickView.bestseller' | trans }}</span>\n31:                 }\n32:               </div>"
+  },
+  {
+    "key": "shared.quickView.aiSummary",
+    "file": "src\\app\\shared\\components\\quick-view-modal\\quick-view-modal.component.html",
+    "line": 67,
+    "snippet": "65:                   <div class=\"flex items-center gap-1.5 text-xs font-bold text-pink-600 mb-2\">\n66:                     <app-icon name=\"sparkle\" [size]=\"12\" />\n67:                     {{ 'shared.quickView.aiSummary' | trans }}\n68:                   </div>\n69:                   <ul class=\"space-y-1.5\">"
+  },
+  {
+    "key": "shared.quickView.previewPages",
+    "file": "src\\app\\shared\\components\\quick-view-modal\\quick-view-modal.component.html",
+    "line": 99,
+    "snippet": "97:                 <div class=\"flex items-center gap-2\">\n98:                   <app-icon name=\"eye\" [size]=\"14\" className=\"text-pink-500\" />\n99:                   <span class=\"text-ink-soft\">{{ 'shared.quickView.previewPages' | trans: { count: d.previewPages } }}</span>\n100:                 </div>\n101:               </dl>"
+  },
+  {
+    "key": "shared.quickView.inCart",
+    "file": "src\\app\\shared\\components\\quick-view-modal\\quick-view-modal.component.html",
+    "line": 132,
+    "snippet": "130:                   <button class=\"btn-pink flex-1\" disabled>\n131:                     <app-icon name=\"check\" [size]=\"16\" />\n132:                     {{ 'shared.quickView.inCart' | trans }}\n133:                   </button>\n134:                 } @else {"
+  },
+  {
+    "key": "shared.quickView.viewFull",
+    "file": "src\\app\\shared\\components\\quick-view-modal\\quick-view-modal.component.html",
+    "line": 145,
+    "snippet": "143:                   (click)=\"quickView.close()\"\n144:                 >\n145:                   {{ 'shared.quickView.viewFull' | trans }}\n146:                   <app-icon name=\"arrow-right\" [size]=\"14\" />\n147:                 </a>"
+  },
+  {
+    "key": "shared.reportDocument.describePlaceholder",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.html",
+    "line": 53,
+    "snippet": "51:           [(ngModel)]=\"details\"\n52:           name=\"details\"\n53:           [placeholder]=\"'shared.reportDocument.describePlaceholder' | trans\"\n54:         ></textarea>\n55:         <p class=\"text-[11px] text-ink-muted mt-1\">{{ 'shared.reportDocument.max500Chars' | trans }}</p>"
+  },
+  {
+    "key": "shared.reportDocument.max500Chars",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.html",
+    "line": 55,
+    "snippet": "53:           [placeholder]=\"'shared.reportDocument.describePlaceholder' | trans\"\n54:         ></textarea>\n55:         <p class=\"text-[11px] text-ink-muted mt-1\">{{ 'shared.reportDocument.max500Chars' | trans }}</p>\n56:       </div>\n57:     </div>"
+  },
+  {
+    "key": "shared.reportDocument.submitting",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.html",
+    "line": 71,
+    "snippet": "69:         (click)=\"submit()\"\n70:       >\n71:         {{ sending() ? ('shared.reportDocument.submitting' | trans) : ('shared.reportDocument.submitReport' | trans) }}\n72:       </button>\n73:     </div>"
+  },
+  {
+    "key": "shared.reportDocument.submitReport",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.html",
+    "line": 71,
+    "snippet": "69:         (click)=\"submit()\"\n70:       >\n71:         {{ sending() ? ('shared.reportDocument.submitting' | trans) : ('shared.reportDocument.submitReport' | trans) }}\n72:       </button>\n73:     </div>"
+  },
+  {
+    "key": "shared.reportDocument.categories.copyright",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 35,
+    "snippet": "33: \n34:   readonly categories = computed(() => [\n35:     { value: 'copyright', label: this.translation.t('shared.reportDocument.categories.copyright') },\n36:     { value: 'inappropriate', label: this.translation.t('shared.reportDocument.categories.inappropriate') },\n37:     { value: 'inaccurate', label: this.translation.t('shared.reportDocument.categories.inaccurate') },"
+  },
+  {
+    "key": "shared.reportDocument.categories.inappropriate",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 36,
+    "snippet": "34:   readonly categories = computed(() => [\n35:     { value: 'copyright', label: this.translation.t('shared.reportDocument.categories.copyright') },\n36:     { value: 'inappropriate', label: this.translation.t('shared.reportDocument.categories.inappropriate') },\n37:     { value: 'inaccurate', label: this.translation.t('shared.reportDocument.categories.inaccurate') },\n38:     { value: 'other', label: this.translation.t('shared.reportDocument.categories.other') },"
+  },
+  {
+    "key": "shared.reportDocument.categories.inaccurate",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 37,
+    "snippet": "35:     { value: 'copyright', label: this.translation.t('shared.reportDocument.categories.copyright') },\n36:     { value: 'inappropriate', label: this.translation.t('shared.reportDocument.categories.inappropriate') },\n37:     { value: 'inaccurate', label: this.translation.t('shared.reportDocument.categories.inaccurate') },\n38:     { value: 'other', label: this.translation.t('shared.reportDocument.categories.other') },\n39:   ]);"
+  },
+  {
+    "key": "shared.reportDocument.categories.other",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 38,
+    "snippet": "36:     { value: 'inappropriate', label: this.translation.t('shared.reportDocument.categories.inappropriate') },\n37:     { value: 'inaccurate', label: this.translation.t('shared.reportDocument.categories.inaccurate') },\n38:     { value: 'other', label: this.translation.t('shared.reportDocument.categories.other') },\n39:   ]);\n40: "
+  },
+  {
+    "key": "shared.reportDocument.describeRequired",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 60,
+    "snippet": "58:     const details = this.details.trim();\n59:     if (details.length === 0) {\n60:       this.message.warning(this.translation.t('shared.reportDocument.describeRequired'));\n61:       return;\n62:     }"
+  },
+  {
+    "key": "shared.reportDocument.submittedSuccess",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 70,
+    "snippet": "68:       this.open.set(false);\n69:       this.sent.set(true);\n70:       this.message.success(this.translation.t('shared.reportDocument.submittedSuccess'));\n71:     } catch (e) {\n72:       const status = (e as { status?: number; statusCode?: number } | null)?.status"
+  },
+  {
+    "key": "shared.reportDocument.alreadyReportedInfo",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 77,
+    "snippet": "75:         this.open.set(false);\n76:         this.sent.set(true);\n77:         this.message.info(this.translation.t('shared.reportDocument.alreadyReportedInfo'));\n78:       } else {\n79:         this.message.error(this.translation.t('shared.reportDocument.submitFailed'));"
+  },
+  {
+    "key": "shared.reportDocument.submitFailed",
+    "file": "src\\app\\shared\\components\\report-document\\report-document.component.ts",
+    "line": 79,
+    "snippet": "77:         this.message.info(this.translation.t('shared.reportDocument.alreadyReportedInfo'));\n78:       } else {\n79:         this.message.error(this.translation.t('shared.reportDocument.submitFailed'));\n80:       }\n81:     } finally {"
+  },
+  {
+    "key": "shared.savedCards.saveCard",
+    "file": "src\\app\\shared\\components\\saved-cards\\saved-cards.component.html",
+    "line": 75,
+    "snippet": "73:         <div class=\"flex gap-2\">\n74:           <button type=\"button\" class=\"btn-pink\" [disabled]=\"busy()\" (click)=\"confirmAddCard()\">\n75:             {{ 'shared.savedCards.saveCard' | trans }}\n76:           </button>\n77:           <button type=\"button\" class=\"btn-ghost\" [disabled]=\"busy()\" (click)=\"closeAddCard()\">"
+  },
+  {
+    "key": "shared.savedCards.savedSuccess",
+    "file": "src\\app\\shared\\components\\saved-cards\\saved-cards.component.ts",
+    "line": 103,
+    "snippet": "101:       }\n102: \n103:       this.message.success(this.translation.t('shared.savedCards.savedSuccess'));\n104:       this.closeAddCard();\n105:       await this.paymentMethods.refreshList();"
+  },
+  {
+    "key": "shared.savedCards.confirmRemoveTitle",
+    "file": "src\\app\\shared\\components\\saved-cards\\saved-cards.component.ts",
+    "line": 126,
+    "snippet": "124:   confirmRemove(card: SavedPaymentMethod): void {\n125:     this.modal.confirm({\n126:       nzTitle: this.translation.t('shared.savedCards.confirmRemoveTitle'),\n127:       nzContent: this.translation.t('shared.savedCards.confirmRemoveContent'),\n128:       nzOkText: this.translation.t('shared.savedCards.remove'),"
+  },
+  {
+    "key": "shared.savedCards.confirmRemoveContent",
+    "file": "src\\app\\shared\\components\\saved-cards\\saved-cards.component.ts",
+    "line": 127,
+    "snippet": "125:     this.modal.confirm({\n126:       nzTitle: this.translation.t('shared.savedCards.confirmRemoveTitle'),\n127:       nzContent: this.translation.t('shared.savedCards.confirmRemoveContent'),\n128:       nzOkText: this.translation.t('shared.savedCards.remove'),\n129:       nzOkDanger: true,"
+  }
+]

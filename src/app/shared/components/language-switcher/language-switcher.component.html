@@ -15,17 +15,14 @@
   [class.hover:bg-white/20]="theme() === 'dark'"
   [attr.aria-label]="translation.t('header.switchLanguage')"
 >
-  <span class="text-sm leading-none">{{ translation.currentLang() === 'th' ? '🇹🇭' : '🇬🇧' }}</span>
-  <span class="font-bold">
-    {{ translation.currentLang() === 'th' ? translation.t('header.langTh') : translation.t('header.langEn') }}
-  </span>
+  <span class="font-bold">{{ translation.currentLang() === 'th' ? 'TH' : 'EN' }}</span>
   <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
   </svg>
 </button>
 
 <nz-dropdown-menu #langMenu="nzDropdownMenu">
-  <ul nz-menu class="!rounded-2xl !p-1.5 !shadow-popover !border !border-line min-w-[140px]">
+  <ul nz-menu class="!rounded-2xl !p-1.5 !shadow-popover !border !border-line min-w-[88px]">
     <li
       nz-menu-item
       (click)="setLanguage('th')"
@@ -34,8 +31,7 @@
       [class.!text-pink-600]="translation.currentLang() === 'th'"
       [class.!font-bold]="translation.currentLang() === 'th'"
     >
-      <span class="text-base leading-none">🇹🇭</span>
-      <span>{{ translation.t('header.langTh') }}</span>
+      <span>TH</span>
       @if (translation.currentLang() === 'th') {
         <span class="ml-auto text-pink-600 font-bold">✓</span>
       }
@@ -48,8 +44,7 @@
       [class.!text-pink-600]="translation.currentLang() === 'en'"
       [class.!font-bold]="translation.currentLang() === 'en'"
     >
-      <span class="text-base leading-none">🇬🇧</span>
-      <span>{{ translation.t('header.langEn') }}</span>
+      <span>EN</span>
       @if (translation.currentLang() === 'en') {
         <span class="ml-auto text-pink-600 font-bold">✓</span>
       }

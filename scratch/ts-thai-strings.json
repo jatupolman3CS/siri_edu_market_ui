@@ -1,0 +1,507 @@
+[
+  {
+    "file": "src\\app\\core\\guards\\role.guard.ts",
+    "line": 39,
+    "text": "คุณต้องเป็นผู้ขายเพื่อเข้าถึงส่วนนี้"
+  },
+  {
+    "file": "src\\app\\core\\guards\\role.guard.ts",
+    "line": 40,
+    "text": "ใบสมัครเปิดร้านของคุณกำลังรอทีมงานตรวจสอบ ยังเข้าใช้งานเมนูผู้ขายไม่ได้"
+  },
+  {
+    "file": "src\\app\\core\\guards\\role.guard.ts",
+    "line": 41,
+    "text": "ใบสมัครเปิดร้านของคุณไม่ผ่านการตรวจสอบ กรุณาแก้ไขข้อมูลแล้วส่งใหม่"
+  },
+  {
+    "file": "src\\app\\core\\guards\\role.guard.ts",
+    "line": 42,
+    "text": "คุณยังไม่ได้เปิดร้าน กรุณาสมัครเปิดร้านก่อนเข้าใช้งานเมนูผู้ขาย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 737,
+    "text": "ธนาคารกรุงเทพ"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 738,
+    "text": "ธนาคารกสิกรไทย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 739,
+    "text": "ธนาคารกรุงไทย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 740,
+    "text": "ธนาคารไทยพาณิชย์"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 741,
+    "text": "ธนาคารกรุงศรีอยุธยา"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 742,
+    "text": "ธนาคารทหารไทยธนชาต"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 743,
+    "text": "ธนาคารซีไอเอ็มบีไทย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 744,
+    "text": "ธนาคารยูโอบี"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 745,
+    "text": "ธนาคารออมสิน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 746,
+    "text": "ธนาคารอาคารสงเคราะห์"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 747,
+    "text": "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 748,
+    "text": "ธนาคารเกียรตินาคินภัทร"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 749,
+    "text": "ธนาคารทิสโก้"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 750,
+    "text": "ธนาคารแลนด์ แอนด์ เฮ้าส์"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 751,
+    "text": "ธนาคารไอซีบีซี (ไทย)"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 752,
+    "text": "ธนาคารพัฒนาวิสาหกิจขนาดกลางและขนาดย่อมแห่งประเทศไทย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 852,
+    "text": "ตั้งค่าบัญชีรับเงิน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 854,
+    "text": "ตั้งค่าบัญชีรับเงิน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 859,
+    "text": "อัปโหลดรูปโปรไฟล์ร้าน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 861,
+    "text": "อัปโหลดรูปโปรไฟล์"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 866,
+    "text": "อัปโหลดเอกสารอย่างน้อย 3 ชิ้น"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 868,
+    "text": "อัปโหลดเอกสาร"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 965,
+    "text": "อนุบาล"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 966,
+    "text": "ป.1-3"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 967,
+    "text": "ป.4-6"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 968,
+    "text": "ม.1-3"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 969,
+    "text": "ม.4-6"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 970,
+    "text": "มหาวิทยาลัย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 971,
+    "text": "ผู้ใหญ่ / ทำงาน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 972,
+    "text": "ทุกระดับ"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 976,
+    "text": "สรุปบทเรียน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 977,
+    "text": "แบบฝึกหัด"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 978,
+    "text": "แผนการสอน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 980,
+    "text": "บัตรคำ"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 981,
+    "text": "ข้อสอบฝึก"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 982,
+    "text": "เทมเพลต"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 983,
+    "text": "พรีเซนเทชัน"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 984,
+    "text": "ชีทสรุป"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 985,
+    "text": "งานวิจัย"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 986,
+    "text": "คู่มือ"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 987,
+    "text": "หนังสือฝึกหัด"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 988,
+    "text": "แพ็กเกจ"
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 1298,
+    "text": "สสวท."
+  },
+  {
+    "file": "src\\app\\core\\models\\index.ts",
+    "line": 1309,
+    "text": "สสวท."
+  },
+  {
+    "file": "src\\app\\core\\services\\ads.service.ts",
+    "line": 244,
+    "text": "ราคาเปลี่ยนแปลง"
+  },
+  {
+    "file": "src\\app\\core\\services\\api-failure-reporter.service.ts",
+    "line": 14,
+    "text": "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\bundle.service.ts",
+    "line": 43,
+    "text": "โหลดแพ็กเกจไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\bundle.service.ts",
+    "line": 77,
+    "text": "ค้นหาแพ็กเกจไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\bundle.service.ts",
+    "line": 145,
+    "text": "โหลดแพ็กเกจไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\bundle.service.ts",
+    "line": 180,
+    "text": "โหลดรายละเอียดแพ็กเกจไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 342,
+    "text": "โหลดรายการเอกสารไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 490,
+    "text": "ค้นหาเอกสารไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 490,
+    "text": "โหลดรายการเอกสารไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 508,
+    "text": "โหลดหมวดหมู่ไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 542,
+    "text": "โหลดเอกสารฟรีไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 563,
+    "text": "โหลดเอกสารฟรีไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 644,
+    "text": "โหลดรายละเอียดหมวดหมู่ไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 688,
+    "text": "โหลดเอกสารในหมวดหมู่ไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 752,
+    "text": "ไม่พบเอกสารนี้"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 756,
+    "text": "โหลดรายละเอียดเอกสารไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 1083,
+    "text": "โหลดข้อมูลผู้ขายไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\catalog.service.ts",
+    "line": 1392,
+    "text": "โหลดเอกสารของร้านไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\loyalty.service.ts",
+    "line": 38,
+    "text": "โหลดคะแนนสะสมไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\loyalty.service.ts",
+    "line": 60,
+    "text": "โหลดคะแนนสะสมไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\loyalty.service.ts",
+    "line": 73,
+    "text": "โหลดคะแนนสะสมไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-context.service.ts",
+    "line": 65,
+    "text": "การแจ้งเตือนของฉัน"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-context.service.ts",
+    "line": 66,
+    "text": "การแจ้งเตือนของร้าน"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-context.service.ts",
+    "line": 67,
+    "text": "การแจ้งเตือนของผู้ดูแลระบบ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 165,
+    "text": "รีวิว"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 169,
+    "text": "ตอบกลับ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 173,
+    "text": "อนุมัติแล้ว"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 177,
+    "text": "ไม่ผ่านการอนุมัติ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 177,
+    "text": "ไม่อนุมัติ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 181,
+    "text": "รอการตรวจสอบ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 181,
+    "text": "รออนุมัติ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 185,
+    "text": "ประกาศ"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 185,
+    "text": "ข่าวสาร"
+  },
+  {
+    "file": "src\\app\\core\\services\\notification-feed.service.ts",
+    "line": 189,
+    "text": "ผลงานใหม่"
+  },
+  {
+    "file": "src\\app\\core\\services\\onboarding.service.ts",
+    "line": 35,
+    "text": "ดึงข้อมูล Onboarding"
+  },
+  {
+    "file": "src\\app\\core\\services\\onboarding.service.ts",
+    "line": 48,
+    "text": "บันทึกหมวดหมู่ที่สนใจ"
+  },
+  {
+    "file": "src\\app\\core\\services\\onboarding.service.ts",
+    "line": 50,
+    "text": "บันทึกหมวดหมู่ไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\onboarding.service.ts",
+    "line": 59,
+    "text": "ข้าม Onboarding"
+  },
+  {
+    "file": "src\\app\\core\\services\\onboarding.service.ts",
+    "line": 61,
+    "text": "ข้ามขั้นตอนไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\platform-stats.service.ts",
+    "line": 48,
+    "text": "โหลดสถิติแพลตฟอร์มไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\referral.service.ts",
+    "line": 57,
+    "text": "กรุณากรอกโค้ดแนะนำเพื่อน"
+  },
+  {
+    "file": "src\\app\\core\\services\\seller-watermark-template.service.ts",
+    "line": 24,
+    "text": "เอกสารนี้ได้รับสิทธิ์การใช้งานโดย {email} เมื่อ {date} (รหัสตรวจสอบ: {token}) ห้ามทำซ้ำ ดัดแปลง หรือเผยแพร่ต่อ"
+  },
+  {
+    "file": "src\\app\\core\\services\\server-pager.ts",
+    "line": 71,
+    "text": "โหลดข้อมูลไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 29,
+    "text": "โหลดรายการโปรดไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 110,
+    "text": "โหลดรายการโปรดไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 129,
+    "text": "ลบออกจากรายการโปรดแล้ว"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 132,
+    "text": "ลบออกจากรายการโปรดไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 142,
+    "text": "เพิ่มในรายการโปรดแล้ว"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 146,
+    "text": "เพิ่มในรายการโปรดไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 169,
+    "text": "ล้างรายการโปรดแล้ว"
+  },
+  {
+    "file": "src\\app\\core\\services\\wishlist.service.ts",
+    "line": 172,
+    "text": "ล้างรายการโปรดไม่สำเร็จ"
+  },
+  {
+    "file": "src\\app\\features\\auth\\line-callback\\line-callback.page.ts",
+    "line": 34,
+    "text": "อีเมล"
+  },
+  {
+    "file": "src\\app\\shared\\pipes\\thb.pipe.ts",
+    "line": 13,
+    "text": "฿0"
+  }
+]

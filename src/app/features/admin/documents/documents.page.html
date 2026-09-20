@@ -138,7 +138,7 @@
               <div class="font-bold text-ink text-sm line-clamp-1">{{ d.title }}</div>
               <div class="text-xs text-ink-muted line-clamp-1">{{ d.shortDescription }}</div>
               @if (d.isFeatured) {
-                <span class="pill-pink text-[10px] mt-1">Featured</span>
+                <span class="pill-pink text-[10px] mt-1">{{ 'admin.featured' | trans }}</span>
               }
               @if (d.openReportCount > 0) {
                 <span class="pill-amber text-[10px] mt-1 ml-1">{{ 'admin.reportBadge' | trans: { count: d.openReportCount } }}</span>

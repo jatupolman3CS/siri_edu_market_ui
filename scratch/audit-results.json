@@ -1,0 +1,15 @@
+{
+  "stats": {
+    "thKeysCount": 3530,
+    "enKeysCount": 3530,
+    "uniqueKeysUsedInCode": 2757,
+    "usedKeysMissingInTh": 0,
+    "usedKeysMissingInEn": 0,
+    "thKeysMissingInEnDict": 0,
+    "enKeysMissingInThDict": 0
+  },
+  "missingInTh": [],
+  "missingInEn": [],
+  "thKeysMissingInEnDict": [],
+  "enKeysMissingInThDict": []
+}

@@ -60,6 +60,8 @@ export function notificationsRouteFor(audience: NotificationAudience): string {
  * other layout. Re-checking here is what makes AC-6 ("URL ปลายทางต้องไม่ขึ้นต้นด้วย /seller")
  * hold regardless of what is already sitting in `NOTIFICATION_FEED_ITEM`.
  */
+import { TranslationService } from '../i18n';
+
 /** Spec §4.2 — page heading per audience. */
 const NOTIFICATION_HEADINGS: Readonly<Record<NotificationAudience, string>> = {
   buyer: 'การแจ้งเตือนของฉัน',
@@ -67,7 +69,15 @@ const NOTIFICATION_HEADINGS: Readonly<Record<NotificationAudience, string>> = {
   admin: 'การแจ้งเตือนของผู้ดูแลระบบ',
 };
 
-export function notificationHeadingFor(audience: NotificationAudience): string {
+export function notificationHeadingFor(audience: NotificationAudience, translation?: TranslationService | null): string {
+  if (translation) {
+    const keyMap: Record<NotificationAudience, string> = {
+      buyer: 'notifications.myNotifs',
+      seller: 'notifications.sellerNotifs',
+      admin: 'notifications.adminNotifs',
+    };
+    return translation.t(keyMap[audience]);
+  }
   return NOTIFICATION_HEADINGS[audience];
 }
 

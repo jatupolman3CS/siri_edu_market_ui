@@ -91,13 +91,13 @@
             <label class="block text-xs text-ink-muted mb-1">{{ 'seller.languageLabel' | trans }}</label>
             <select class="input-soft w-full !py-2" [ngModel]="doc()!.language" (ngModelChange)="patchDoc({ language: $event })">
               <option value="th">{{ 'admin.thaiLanguageOption' | trans }}</option>
-              <option value="en">English (en)</option>
+              <option value="en">{{ 'admin.englishLanguageOption' | trans }}</option>
             </select>
           </div>
           <div class="sm:col-span-2 flex flex-wrap gap-6">
             <div class="flex items-center gap-2 text-sm">
               <nz-switch [ngModel]="doc()!.isFeatured" (ngModelChange)="patchDoc({ isFeatured: $event })" />
-              Featured
+              {{ 'admin.featured' | trans }}
             </div>
             <div class="flex items-center gap-2 text-sm">
               <nz-switch [ngModel]="doc()!.isFree" (ngModelChange)="patchDoc({ isFree: $event })" />

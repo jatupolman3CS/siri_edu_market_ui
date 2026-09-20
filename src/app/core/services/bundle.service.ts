@@ -27,10 +27,12 @@ import {
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager } from './infinite-pager';
 import { createServerPager } from './server-pager';
+import { TranslationService } from '../i18n';
 
 @Injectable({ providedIn: 'root' })
 export class BundleService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _bundlesState = signal<ActionState>(idleActionState());
   /** Q-04: full-detail bundles keyed by id — the only cache with a real `documents` array. */
@@ -40,7 +42,7 @@ export class BundleService {
 
   private readonly pager = createInfinitePager<Bundle>({
     pageSize: 12,
-    errorMessage: 'โหลดแพ็กเกจไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.loadBundleFailed'),
     fetch: async (Page, PageSize) => {
       const result = await getApiMarketplaceBundles({ query: { Page, PageSize } });
       const data = unwrapSdkResult(result);
@@ -74,7 +76,7 @@ export class BundleService {
   private readonly searchPager = createServerPager<Bundle, string>({
     pageSize: 24,
     pageSizeOptions: [12, 20, 24, 40, 48],
-    errorMessage: 'ค้นหาแพ็กเกจไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.searchBundleFailed'),
     fetch: async (page, pageSize, q) => {
       const term = q?.trim();
       const result = await getApiMarketplaceBundles({
@@ -142,7 +144,7 @@ export class BundleService {
       this._bundlesState.set(idleActionState());
     } catch (e) {
       this.apiFail.report('errors.context.loadBundles', e);
-      this._bundlesState.set(errorActionState('โหลดแพ็กเกจไม่สำเร็จ'));
+      this._bundlesState.set(errorActionState(this.translation.t('errors.loadBundleFailed')));
     }
   }
 
@@ -177,7 +179,7 @@ export class BundleService {
         this._bundleDetailState.set(idleActionState());
       } catch (e) {
         this.apiFail.report('errors.context.loadBundleDetail', e);
-        this._bundleDetailState.set(errorActionState('โหลดรายละเอียดแพ็กเกจไม่สำเร็จ'));
+        this._bundleDetailState.set(errorActionState(this.translation.t('errors.loadBundleDetailFailed')));
       }
     })();
   }

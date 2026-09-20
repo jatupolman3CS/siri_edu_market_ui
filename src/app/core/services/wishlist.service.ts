@@ -17,10 +17,12 @@ import {
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager } from './infinite-pager';
+import { TranslationService } from '../i18n';
 
 @Injectable({ providedIn: 'root' })
 export class WishlistService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _state = signal<ActionState>(idleActionState());
 
@@ -107,7 +109,7 @@ export class WishlistService {
       this._state.set(idleActionState());
     } catch (e) {
       this.apiFail.report('errors.context.loadWishlist', e);
-      this._state.set(errorActionState('โหลดรายการโปรดไม่สำเร็จ'));
+      this._state.set(errorActionState(this.translation.t('wishlist.loadFailed')));
     }
   }
 
@@ -126,10 +128,10 @@ export class WishlistService {
       void (async () => {
         try {
           await deleteApiWishlistByDocumentId({ path: { documentId: doc.id } });
-          this._state.set(successActionState('ลบออกจากรายการโปรดแล้ว'));
+          this._state.set(successActionState(this.translation.t('wishlist.removedSuccess')));
           await this.refresh();
         } catch {
-          this._state.set(errorActionState('ลบออกจากรายการโปรดไม่สำเร็จ'));
+          this._state.set(errorActionState(this.translation.t('wishlist.removeFailed')));
         }
       })();
       return false;
@@ -139,11 +141,11 @@ export class WishlistService {
     void (async () => {
       try {
         await postApiWishlist({ body: { documentId: doc.id } });
-        this._state.set(successActionState('เพิ่มในรายการโปรดแล้ว'));
+        this._state.set(successActionState(this.translation.t('wishlist.addedSuccess')));
         await this.refresh();
       } catch (e) {
         this.apiFail.report('errors.context.addToWishlist', e);
-        this._state.set(errorActionState('เพิ่มในรายการโปรดไม่สำเร็จ'));
+        this._state.set(errorActionState(this.translation.t('wishlist.addFailed')));
       }
     })();
     return true;
@@ -166,10 +168,10 @@ export class WishlistService {
     void (async () => {
       try {
         await deleteApiWishlist();
-        this._state.set(successActionState('ล้างรายการโปรดแล้ว'));
+        this._state.set(successActionState(this.translation.t('wishlist.clearedSuccess')));
       } catch (e) {
         this.apiFail.report('errors.context.clearWishlist', e);
-        this._state.set(errorActionState('ล้างรายการโปรดไม่สำเร็จ'));
+        this._state.set(errorActionState(this.translation.t('wishlist.clearFailed')));
       }
     })();
   }

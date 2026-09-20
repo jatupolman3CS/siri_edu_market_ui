@@ -1,33 +1,35 @@
 @if (terms().length > 0) {
-  <div class="flex flex-wrap items-center gap-2">
+  <div class="flex flex-wrap items-center gap-2 min-w-0">
     @if (label()) {
-      <span class="text-xs text-ink-muted mr-1">{{ label() }}</span>
+      <span class="text-xs text-ink-muted mr-1 shrink-0">{{ label() }}</span>
     }
     @for (t of terms(); track t.term) {
       <a
         [routerLink]="['/marketplace']"
         [queryParams]="{ q: t.term }"
-        class="pill-soft hover:!bg-white hover:!border-pink-300 hover:!text-pink-600"
+        class="pill-soft max-w-[11rem] min-w-0 hover:!bg-white hover:!border-pink-300 hover:!text-pink-600"
+        [title]="t.term"
       >
-        {{ t.term }}
+        <span class="block min-w-0 truncate">{{ t.term }}</span>
         @if (t.isRising) {
-          <span [title]="'shared.notificationSettings.risingTrend' | trans">🔥</span>
+          <span class="shrink-0" [title]="'shared.notificationSettings.risingTrend' | trans">🔥</span>
         }
       </a>
     }
   </div>
 } @else if (fallbackTerms().length > 0) {
-  <div class="flex flex-wrap items-center gap-2">
+  <div class="flex flex-wrap items-center gap-2 min-w-0">
     @if (label()) {
-      <span class="text-xs text-ink-muted mr-1">{{ label() }}</span>
+      <span class="text-xs text-ink-muted mr-1 shrink-0">{{ label() }}</span>
     }
     @for (q of fallbackTerms(); track q) {
       <a
         [routerLink]="['/marketplace']"
         [queryParams]="{ q }"
-        class="pill-soft hover:!bg-white hover:!border-pink-300 hover:!text-pink-600"
+        class="pill-soft max-w-[11rem] min-w-0 hover:!bg-white hover:!border-pink-300 hover:!text-pink-600"
+        [title]="q"
       >
-        {{ q }}
+        <span class="block min-w-0 truncate">{{ q }}</span>
       </a>
     }
   </div>

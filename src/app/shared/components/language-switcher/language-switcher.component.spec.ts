@@ -26,22 +26,18 @@ describe('LanguageSwitcherComponent', () => {
     try { window?.localStorage?.clear?.(); } catch {}
   });
 
-  it('renders language dropdown trigger button showing ไทย when current language is th', () => {
-    const el: HTMLElement = fixture.nativeElement;
-    const button = el.querySelector('button');
+  it('renders language dropdown trigger button showing TH when current language is th', () => {
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button');
     expect(button).toBeTruthy();
-    expect(button?.textContent).toContain('ไทย');
-    expect(button?.textContent).toContain('🇹🇭');
+    expect(button?.textContent).toContain('TH');
   });
 
-  it('displays English when language is switched to en', () => {
+  it('displays EN when language is switched to en', () => {
     translation.setLanguage('en');
     fixture.detectChanges();
 
-    const el: HTMLElement = fixture.nativeElement;
-    const button = el.querySelector('button');
-    expect(button?.textContent).toContain('English');
-    expect(button?.textContent).toContain('🇬🇧');
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button');
+    expect(button?.textContent).toContain('EN');
   });
 
   it('switches language when setLanguage is called', () => {
@@ -71,11 +67,11 @@ describe('LanguageSwitcherComponent', () => {
     expect(translation.currentLang()).toBe('en');
 
     const button = (fixture.nativeElement as HTMLElement).querySelector('button');
-    expect(button?.textContent).toContain('English');
+    expect(button?.textContent).toContain('EN');
 
     component.setLanguage('th');
     fixture.detectChanges();
     expect(translation.currentLang()).toBe('th');
-    expect(button?.textContent).toContain('ไทย');
+    expect(button?.textContent).toContain('TH');
   });
 });

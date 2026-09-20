@@ -1,0 +1,1342 @@
+{
+  "hardcodedHtmlThaiCount": 15,
+  "hardcodedHtmlEnglishCount": 6,
+  "hardcodedTsThaiCount": 244,
+  "hardcodedHtmlThai": [
+    {
+      "file": "src\\app\\features\\admin\\notification-config\\notification-config-admin.page.html",
+      "line": 148,
+      "text": "[attr.aria-label]=\"('admin.notifConfig.headThrottle' | trans) + ' ของ ' + item.label\""
+    },
+    {
+      "file": "src\\app\\features\\admin\\notification-config\\notification-config-admin.page.html",
+      "line": 167,
+      "text": "[attr.aria-label]=\"('admin.notifConfig.headDailyCap' | trans) + ' ของ ' + item.label\""
+    },
+    {
+      "file": "src\\app\\features\\admin\\settings-admin\\settings-admin.page.html",
+      "line": 80,
+      "text": "may pick on `/seller` — saved by the shared \"บันทึกการเปลี่ยนแปลง\" button below, only"
+    },
+    {
+      "file": "src\\app\\features\\admin\\settings-admin\\settings-admin.page.html",
+      "line": 170,
+      "text": "\"บันทึกการเปลี่ยนแปลง\" button below — only the controls touched here are sent (§3.2). -->"
+    },
+    {
+      "file": "src\\app\\features\\admin\\settings-admin\\settings-admin.page.html",
+      "line": 264,
+      "text": "on flip, no batched \"บันทึกการเปลี่ยนแปลง\" for this section. -->"
+    },
+    {
+      "file": "src\\app\\features\\admin\\user-detail\\user-detail.page.html",
+      "line": 88,
+      "text": "<span class=\"font-bold text-amber-700 ml-1\">{{ u.suspendedUntil | date: 'dd MMM yyyy HH:mm' }} น.</span>"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\checkout\\checkout.page.html",
+      "line": 130,
+      "text": "≥1 saved card — \"ใช้บัตรใหม่\" is always one of the options once it does. -->"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.html",
+      "line": 98,
+      "text": "viewports; the search form + trust stats above stay untouched (§4.3 \"คงกล่องค้นหาหลัก"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.html",
+      "line": 215,
+      "text": "<!-- marketplace-home-redesign v2 §1 ข้อ 5/6 / §4.3: Free Strip + Bundles Strip ย้ายขึ้นมาอยู่ติด"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.html",
+      "line": 216,
+      "text": "hero แทนที่พื้นที่ hero ที่หายไป — เนื้อหา/การ fetch เดิม (catalog.freeResources() /"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.html",
+      "line": 313,
+      "text": "§1 ข้อ 7/§4.3: เลื่อนแนวนอนได้จริงแทน static grid เดิม (เนื้อหาการ์ดไม่เปลี่ยน) ===================== -->"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.html",
+      "line": 354,
+      "text": "from marketplace.page.html by marketplace-home-redesign v2 §1 ข้อ 8/§4.3 ===================== -->"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.html",
+      "line": 517,
+      "text": "<div class=\"text-3xl font-extrabold text-ink mb-1\">฿38,240</div>"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\library\\library.page.html",
+      "line": 35,
+      "text": "error copy, and \"ดูประวัติคะแนน\" button that the generic stat card doesn't support. -->"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\order-detail\\order-detail.page.html",
+      "line": 44,
+      "text": "arrived yet. Saying \"รอชำระเงิน\" here would read as \"your payment failed\". -->"
+    }
+  ],
+  "hardcodedHtmlEnglish": [
+    {
+      "file": "src\\app\\features\\admin\\documents\\documents.page.html",
+      "line": 141,
+      "text": "<span class=\"pill-pink text-[10px] mt-1\">Featured</span>",
+      "extracted": "Featured"
+    },
+    {
+      "file": "src\\app\\features\\seller\\dashboard\\dashboard.page.html",
+      "line": 168,
+      "text": "<th class=\"py-2 px-2 font-semibold text-right\">Conversion</th>",
+      "extracted": "Conversion"
+    },
+    {
+      "file": "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html",
+      "line": 428,
+      "text": "<span>SIRI EDUMARKET PREVIEW MODE</span>",
+      "extracted": "SIRI EDUMARKET PREVIEW MODE"
+    },
+    {
+      "file": "src\\app\\layouts\\admin\\admin-layout\\admin-layout.component.html",
+      "line": 16,
+      "text": "<div class=\"text-sm font-extrabold\">ADMIN PANEL</div>",
+      "extracted": "ADMIN PANEL"
+    },
+    {
+      "file": "src\\app\\layouts\\admin\\admin-layout\\admin-layout.component.html",
+      "line": 77,
+      "text": "<div class=\"text-[10px] text-pink-300 truncate uppercase tracking-wider\">Admin</div>",
+      "extracted": "Admin"
+    },
+    {
+      "file": "src\\app\\layouts\\seller\\seller-layout\\seller-layout.component.html",
+      "line": 67,
+      "text": "<div class=\"text-xs text-ink-muted truncate\">Siri Studio</div>",
+      "extracted": "Siri Studio"
+    }
+  ],
+  "hardcodedTsThai": [
+    {
+      "file": "src\\app\\core\\api\\sdk-auth-bridge.ts",
+      "line": 20,
+      "text": "* admin-user-management §4.6 (ข): and an account-restricted handler, so a 403 saying the"
+    },
+    {
+      "file": "src\\app\\core\\api-mappers\\mappers.ts",
+      "line": 1411,
+      "text": "* `ExamCountdownSettingResponse` yet (round 1, `docs/contracts/exam-countdown-mode.md` §4 \"การแบ่งงาน\"),"
+    },
+    {
+      "file": "src\\app\\core\\api-runtime.ts",
+      "line": 283,
+      "text": "* admin-user-management §4.6 (ข): a 403 whose ProblemDetails `code` says the account was"
+    },
+    {
+      "file": "src\\app\\core\\guards\\role.guard.ts",
+      "line": 39,
+      "text": "notSeller: 'คุณต้องเป็นผู้ขายเพื่อเข้าถึงส่วนนี้',"
+    },
+    {
+      "file": "src\\app\\core\\guards\\role.guard.ts",
+      "line": 40,
+      "text": "pending: 'ใบสมัครเปิดร้านของคุณกำลังรอทีมงานตรวจสอบ ยังเข้าใช้งานเมนูผู้ขายไม่ได้',"
+    },
+    {
+      "file": "src\\app\\core\\guards\\role.guard.ts",
+      "line": 41,
+      "text": "rejected: 'ใบสมัครเปิดร้านของคุณไม่ผ่านการตรวจสอบ กรุณาแก้ไขข้อมูลแล้วส่งใหม่',"
+    },
+    {
+      "file": "src\\app\\core\\interceptors\\unauthorized.interceptor.ts",
+      "line": 23,
+      "text": "* admin-user-management §4.6 (ค): a 403 with account_suspended / account_banned terminates"
+    },
+    {
+      "file": "src\\app\\core\\models\\crm.model.ts",
+      "line": 165,
+      "text": "* §3.3 `AdminCrmDocumentAlertDocumentResponse` — one row of the \"เอกสารล่าสุดที่ถูกดันเข้าหาผู้ที่สนใจ\""
+    },
+    {
+      "file": "src\\app\\core\\models\\discovery.model.ts",
+      "line": 16,
+      "text": "* with (§3.3 \"ประกาศ supersede\"). `RecommendationStrategy` stays a plain string at the OpenAPI"
+    },
+    {
+      "file": "src\\app\\core\\models\\discovery.model.ts",
+      "line": 17,
+      "text": "* level (`RecommendationStrategy` backend-side is a `static class`, not an enum — §0 ข้อ 2)."
+    },
+    {
+      "file": "src\\app\\core\\models\\discovery.model.ts",
+      "line": 67,
+      "text": "* (parallel array to `items`, joined client-side on `documentId` — see §3.3's \"ทำไมถึงใช้ parallel"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 76,
+      "text": "* outright (that would silently render \"0 หมวดย่อย\" as if it were a real, verified count)."
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 737,
+      "text": "{ code: 'BBL', name: 'ธนาคารกรุงเทพ' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 738,
+      "text": "{ code: 'KBANK', name: 'ธนาคารกสิกรไทย' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 740,
+      "text": "{ code: 'SCB', name: 'ธนาคารไทยพาณิชย์' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 741,
+      "text": "{ code: 'BAY', name: 'ธนาคารกรุงศรีอยุธยา' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 743,
+      "text": "{ code: 'CIMBT', name: 'ธนาคารซีไอเอ็มบีไทย' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 745,
+      "text": "{ code: 'GSB', name: 'ธนาคารออมสิน' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 746,
+      "text": "{ code: 'GHB', name: 'ธนาคารอาคารสงเคราะห์' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 747,
+      "text": "{ code: 'BAAC', name: 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 749,
+      "text": "{ code: 'TISCO', name: 'ธนาคารทิสโก้' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 750,
+      "text": "{ code: 'LHBANK', name: 'ธนาคารแลนด์ แอนด์ เฮ้าส์' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 751,
+      "text": "{ code: 'ICBCT', name: 'ธนาคารไอซีบีซี (ไทย)' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 752,
+      "text": "{ code: 'SME', name: 'ธนาคารพัฒนาวิสาหกิจขนาดกลางและขนาดย่อมแห่งประเทศไทย' },"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 852,
+      "text": "label: 'ตั้งค่าบัญชีรับเงิน',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 854,
+      "text": "actionLabel: 'ตั้งค่าบัญชีรับเงิน',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 859,
+      "text": "label: 'อัปโหลดรูปโปรไฟล์ร้าน',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 861,
+      "text": "actionLabel: 'อัปโหลดรูปโปรไฟล์',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 866,
+      "text": "label: 'อัปโหลดเอกสารอย่างน้อย 3 ชิ้น',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 868,
+      "text": "actionLabel: 'อัปโหลดเอกสาร',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 965,
+      "text": "'kindergarten': 'อนุบาล',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 967,
+      "text": "'primary-late': 'ป.4-6',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 968,
+      "text": "'secondary-early': 'ม.1-3',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 970,
+      "text": "'university': 'มหาวิทยาลัย',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 972,
+      "text": "'all-ages': 'ทุกระดับ',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 976,
+      "text": "'lesson-summary': 'สรุปบทเรียน',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 978,
+      "text": "'lesson-plan': 'แผนการสอน',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 980,
+      "text": "'flashcard': 'บัตรคำ',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 981,
+      "text": "'practice-test': 'ข้อสอบฝึก',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 983,
+      "text": "'presentation': 'พรีเซนเทชัน',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 985,
+      "text": "'thesis': 'งานวิจัย',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 987,
+      "text": "'workbook': 'หนังสือฝึกหัด',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 1312,
+      "text": "| 'สสวท.'"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 1323,
+      "text": "'สสวท.',"
+    },
+    {
+      "file": "src\\app\\core\\models\\index.ts",
+      "line": 1379,
+      "text": "* §3.1 `AdminUserListItemResponse`, mirrored 1:1 (§4.5: \"ห้ามมี field ที่ backend ไม่มี\")."
+    },
+    {
+      "file": "src\\app\\core\\services\\admin.service.ts",
+      "line": 1168,
+      "text": "* The date inputs are plain `yyyy-MM-dd`; `to` is pushed to the end of that day so \"ถึง 27"
+    },
+    {
+      "file": "src\\app\\core\\services\\ads.service.ts",
+      "line": 100,
+      "text": "* §4.3: \"ยิงครั้งเดียวต่อผลลัพธ์หนึ่งชุด\" — keyed off the *identity* of the result-set array a"
+    },
+    {
+      "file": "src\\app\\core\\services\\ads.service.ts",
+      "line": 244,
+      "text": "if (msg?.includes('ราคาเปลี่ยนแปลง')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\api-failure-reporter.service.ts",
+      "line": 6,
+      "text": "* แจ้งเตือนแบบรวมศูนย์เมื่อคำขอไป backend / OpenAPI client ล้มเหลว (รองรับ 2 ภาษา)"
+    },
+    {
+      "file": "src\\app\\core\\services\\api-failure-reporter.service.ts",
+      "line": 14,
+      "text": "return this.translation?.t('errors.networkError') ?? 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';"
+    },
+    {
+      "file": "src\\app\\core\\services\\api-result.ts",
+      "line": 19,
+      "text": "* can show something more helpful than \"เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ\"."
+    },
+    {
+      "file": "src\\app\\core\\services\\api-result.ts",
+      "line": 55,
+      "text": "* admin-user-management v2 §4.6 (ง): the SDK throws the ProblemDetails payload itself, but"
+    },
+    {
+      "file": "src\\app\\core\\services\\auth.service.ts",
+      "line": 94,
+      "text": "* \"เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ\" toast for a signed-in user on nearly every page load. Resolving"
+    },
+    {
+      "file": "src\\app\\core\\services\\auth.service.ts",
+      "line": 119,
+      "text": "* admin-user-management v2 §4.6 (ก): sticky until the next successful sign-in — a concurrent"
+    },
+    {
+      "file": "src\\app\\core\\services\\auth.service.ts",
+      "line": 121,
+      "text": "* cleared once `navigate()` resolves, so the generic \"กรุณาเข้าสู่ระบบ…\" toast of an in-flight"
+    },
+    {
+      "file": "src\\app\\core\\services\\auth.service.ts",
+      "line": 285,
+      "text": "* admin-user-management §4.6 (ก): after a 403 account_suspended / account_banned:"
+    },
+    {
+      "file": "src\\app\\core\\services\\bundle.service.ts",
+      "line": 72,
+      "text": "* marketplace-home-redesign v2 §4.2 (round 2 — SDK wired): tab \"แพ็กเกจ\" ในหน้า marketplace —"
+    },
+    {
+      "file": "src\\app\\core\\services\\bundle.service.ts",
+      "line": 73,
+      "text": "* pager ใหม่แยกจาก `pager`/`featured()` ด้านบนโดยสิ้นเชิง (ห้ามใช้ตัวเดียวกัน จะกระทบ home strip /"
+    },
+    {
+      "file": "src\\app\\core\\services\\bundle.service.ts",
+      "line": 74,
+      "text": "* `/bundles`). Backend extend `GET /api/marketplace/bundles` เพิ่ม `Q`/`Sort` แล้ว (gate 1 ผ่าน) —"
+    },
+    {
+      "file": "src\\app\\core\\services\\bundle.service.ts",
+      "line": 75,
+      "text": "* `Sort` ไม่ส่งค่าเลย ปล่อยให้ backend fallback เป็น `\"newest\"` เอง (ตาม spec §3.1 — tab นี้ไม่มี"
+    },
+    {
+      "file": "src\\app\\core\\services\\bundle.service.ts",
+      "line": 117,
+      "text": "* last-used term so infinite-scroll \"โหลดเพิ่มเติม\" calls with `page > 1` don't need to repeat"
+    },
+    {
+      "file": "src\\app\\core\\services\\bundle.service.ts",
+      "line": 222,
+      "text": "* reason the seller needs to read — \"ราคาต้องถูกกว่าผลรวมราคาปกติ\" and the like — and"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 61,
+      "text": "* so long phrases like \"ใบงานเรื่องร่างกาย\" can match documents where the words"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 142,
+      "text": "* failure — showing the generic \"ลองใหม่อีกครั้ง\" retry alongside it promises a retry that can"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 216,
+      "text": "* ผลลัพธ์ของหน้าปัจจุบันเท่านั้น (ไม่สะสมข้ามหน้าเหมือน catalogPager/freePager) — กรองซ้ำฝั่ง client"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 217,
+      "text": "* เฉพาะกรณี multi-select เกิน 1 ค่าต่อ dimension ที่ /marketplace/search รับได้แค่ค่าเดียว"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 218,
+      "text": "* (ตรรกะเดียวกับที่ `filtered()` เดิมใช้กับ branch 'search') — กรองเฉพาะ \"หน้านี้\" ไม่ใช่ทั้งชุด"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 261,
+      "text": "/** เหมือน infinite-pager.ts's loadMore() — กลืน rejection ไว้ (createServerPager.executeFetch rethrow)"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 262,
+      "text": "*  เพราะ error ถูกบันทึกใน marketplacePager.state ให้ template อ่านอยู่แล้ว ผู้เรียกเป็น fire-and-forget */"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 342,
+      "text": "this._catalogState.set(errorActionState('โหลดรายการเอกสารไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 490,
+      "text": "useSearch ? 'ค้นหาเอกสารไม่สำเร็จ' : 'โหลดรายการเอกสารไม่สำเร็จ',"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 508,
+      "text": "this._categoriesState.set(errorActionState('โหลดหมวดหมู่ไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 542,
+      "text": "this._freeState.set(errorActionState('โหลดเอกสารฟรีไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 563,
+      "text": "this._freeState.set(errorActionState('โหลดเอกสารฟรีไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 569,
+      "text": "* personalized-recommendations v1 §4: home-page \"แนะนำสำหรับคุณ\" module. Fixed-size (not paged —"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 574,
+      "text": "* Error → same `ApiFailureReporter` convention as the rest of this service (§4 \"การตัดสินใจ:"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 644,
+      "text": "errorActionState('โหลดรายละเอียดหมวดหมู่ไม่สำเร็จ'),"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 688,
+      "text": "errorActionState('โหลดเอกสารในหมวดหมู่ไม่สำเร็จ'),"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 752,
+      "text": "this._documentDetailState.set(errorActionState('ไม่พบเอกสารนี้'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 756,
+      "text": "this._documentDetailState.set(errorActionState('โหลดรายละเอียดเอกสารไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 762,
+      "text": "* seller-analytics-insights v1 §4 \"การแบ่งงาน\" (รอบสอง): fire-and-forget view-tracking call for"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 812,
+      "text": "* personalized-recommendations v1 §4: home-page \"แนะนำสำหรับคุณ\" module. Not derived from"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 841,
+      "text": "* tolerate that (§3.3 \"ต้องทนกรณีหาไม่เจอ\"), never treat it as an error."
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 1083,
+      "text": "this._sellerProfileState.set(errorActionState('โหลดข้อมูลผู้ขายไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 1392,
+      "text": "errorActionState('โหลดเอกสารของร้านไม่สำเร็จ'),"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 1494,
+      "text": "* crm-driven-discovery v1 §4.2: \"ค่าที่ไม่รู้จักจาก backend → map เป็น 'popular-fallback'\" — keeps"
+    },
+    {
+      "file": "src\\app\\core\\services\\catalog.service.ts",
+      "line": 1505,
+      "text": "* card in a template — §3.3 \"สร้าง Map ครั้งเดียวตอน map response ห้าม find() ใน template\")."
+    },
+    {
+      "file": "src\\app\\core\\services\\crm.service.ts",
+      "line": 491,
+      "text": "* §3.4 `GET /api/admin/crm/demand-gaps` — \"คำค้นที่หาแล้วไม่เจอ (30 วันล่าสุด)\" table on"
+    },
+    {
+      "file": "src\\app\\core\\services\\discovery.service.ts",
+      "line": 38,
+      "text": "* terms (ข้อ 13) + the \"ยังไม่ได้ค้นหาอะไรเลย\" discovery block (ข้อ 14). The 3rd piece of the"
+    },
+    {
+      "file": "src\\app\\core\\services\\discovery.service.ts",
+      "line": 39,
+      "text": "* contract (ข้อ 16 — the `/recommended` relevance gate) stays inside `CatalogService`, which"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 24,
+      "text": "* \"โหมดใกล้สอบ\", shared by the homepage banner+grid (`home.page.ts`) and the permanent settings"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 32,
+      "text": "* การตัดสินใจที่ 3 / §3.1: the backend never computes them, only the raw `examDate`. Every caller"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 51,
+      "text": "* เอกสารที่กรองตาม `examType` ปัจจุบัน — reuse `getApiMarketplaceSearch` ตรง ๆ (endpoint เดิม, มี"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 52,
+      "text": "* อยู่แล้วในระบบก่อนสเปกนี้) ไม่มี endpoint ใหม่สำหรับ grid นี้เลย (§0 ข้อ 3, การตัดสินใจที่ 1/2)."
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 81,
+      "text": "* `GET /api/me/exam-countdown` (§3.1). 404 (ยังไม่เคยตั้งค่า) = ไม่ใช่ error state ปกติ — set"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 83,
+      "text": "* ต้อง guard ด้วย `auth.isAuthenticated()` ก่อนเสมอ (§0 ข้อ 11) — service นี้ไม่ guard เอง."
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 121,
+      "text": "* `PUT /api/me/exam-countdown` (§3.2, upsert). สำเร็จแล้ว `isEnabled=true` เสมอ (§0 การตัดสินใจที่"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 122,
+      "text": "* 5) — ฝั่ง backend เป็นคนบังคับ ไม่ใช่ frontend. `400` (ประเภทสอบ/วันสอบไม่ถูกต้อง) คืน"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 123,
+      "text": "* `{ ok:false, error }` ให้ฟอร์มแสดง inline (ไม่ toast — ตาม §4 ของสเปก) เหมือน pattern"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 150,
+      "text": "* `PATCH /api/me/exam-countdown/enabled` (§3.3). ไม่แตะ `examType`/`examDate` — component ไม่ต้อง"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 151,
+      "text": "* toast เอง เพราะการเปลี่ยน `setting().isEnabled` ทำให้ banner หายไปเองผ่าน signal reactivity"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 166,
+      "text": "* `DELETE /api/me/exam-countdown` (§3.4) — idempotent เสมอ (`204` ทั้งกรณีมี/ไม่มีแถวอยู่ก่อน) จึง"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 167,
+      "text": "* เคลียร์ local state ให้เป็น `null` ได้ตรง ๆ หลังเรียกสำเร็จเสมอ."
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 182,
+      "text": "* §3.2's `400` ผ่าน controller's `catch (ArgumentException) { BadRequest(new { message }) }` —"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 183,
+      "text": "* plain body ไม่มี `status`/`statusCode`/`title`/`code` เลย เหมือน `PayoutAccountService`'s `PUT`"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 184,
+      "text": "* `400` (verified ต่อ backend เดียวกัน, pattern เดียวกันเป๊ะ) — ต่างจาก 401 ที่ผ่าน"
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 204,
+      "text": "* browser's local calendar date (not UTC) because that is what the person reading \"เหลืออีก N วัน\""
+    },
+    {
+      "file": "src\\app\\core\\services\\exam-countdown.service.ts",
+      "line": 206,
+      "text": "* backend, §0 ข้อ 6), so midnight-local of both dates is the only meaningful comparison."
+    },
+    {
+      "file": "src\\app\\core\\services\\google-oauth-config.service.ts",
+      "line": 33,
+      "text": "* and stayed enabled, and the D-08 \"(ยังไม่ได้ตั้งค่า)\" label never appeared. Pressing it starts"
+    },
+    {
+      "file": "src\\app\\core\\services\\library.service.ts",
+      "line": 87,
+      "text": "* library-is-reviewed v1: tab \"ทั้งหมด\" / \"ยังไม่ได้รีวิว\" must re-query the API instead of"
+    },
+    {
+      "file": "src\\app\\core\\services\\library.service.ts",
+      "line": 190,
+      "text": "* AC-9: switching the \"ยังไม่ได้รีวิว\" tab must re-fetch page 1, never `Array.filter()` the"
+    },
+    {
+      "file": "src\\app\\core\\services\\library.service.ts",
+      "line": 278,
+      "text": "* history for the \"ดูสิ่งที่อัปเดต\" link on a library item (`404` when the buyer has no"
+    },
+    {
+      "file": "src\\app\\core\\services\\line-notification.service.ts",
+      "line": 20,
+      "text": "* service-as-store for \"เชื่อมต่อ LINE\" on `/seller/settings`, via"
+    },
+    {
+      "file": "src\\app\\core\\services\\line-notification.service.ts",
+      "line": 40,
+      "text": "*    (`{\"message\":\"บริการเชื่อมต่อ LINE ยังไม่เปิดใช้งานบนระบบนี้\"}`, HTTP 503, **no**"
+    },
+    {
+      "file": "src\\app\\core\\services\\line-notification.service.ts",
+      "line": 45,
+      "text": "*    generic \"เชื่อมต่อ LINE ไม่สำเร็จ\" toast."
+    },
+    {
+      "file": "src\\app\\core\\services\\line-notification.service.ts",
+      "line": 116,
+      "text": "* \"เชื่อมต่อ LINE ไม่สำเร็จ\" toast."
+    },
+    {
+      "file": "src\\app\\core\\services\\line-oauth.service.ts",
+      "line": 31,
+      "text": "* external-login-and-mail-config v1 §4.1/§4.2 — the browser half of \"เข้าสู่ระบบด้วย LINE\"."
+    },
+    {
+      "file": "src\\app\\core\\services\\loyalty.service.ts",
+      "line": 17,
+      "text": "* loyalty-points v1 (docs/contracts/loyalty-points.md §4) — service-as-store for the \"คะแนนสะสม\""
+    },
+    {
+      "file": "src\\app\\core\\services\\loyalty.service.ts",
+      "line": 38,
+      "text": "errorMessage: 'โหลดคะแนนสะสมไม่สำเร็จ',"
+    },
+    {
+      "file": "src\\app\\core\\services\\loyalty.service.ts",
+      "line": 60,
+      "text": "this._state.set(errorActionState('โหลดคะแนนสะสมไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\loyalty.service.ts",
+      "line": 73,
+      "text": "this._state.set(errorActionState('โหลดคะแนนสะสมไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-config.service.ts",
+      "line": 15,
+      "text": "* platform sends at all, and over which channels (อีเมล / LINE / ในระบบ)."
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-config.service.ts",
+      "line": 72,
+      "text": "* expected 400/404 (ข้อความจาก body) from a 403 (`ไม่มีสิทธิ์เข้าถึง`) — see §4.2 and the fe-3"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-config.service.ts",
+      "line": 160,
+      "text": "* (e.g. \"การแจ้งเตือนนี้ไม่รองรับช่องทาง LINE\")."
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-config.service.ts",
+      "line": 206,
+      "text": "* status — the thing that separates \"ไม่มีสิทธิ์\" (403) from the body's own sentence (400/404) — is"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-context.service.ts",
+      "line": 9,
+      "text": "* Root cause #1/#2 of \"อยู่หน้าผู้ซื้อแล้วกดแจ้งเตือนแล้วกระโดดไปหน้าผู้ขาย\": the feed has no"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-context.service.ts",
+      "line": 56,
+      "text": "* Spec §3.2 \"กฎ linkUrl\" applied a second time on the client (root cause #3)."
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-context.service.ts",
+      "line": 60,
+      "text": "* other layout. Re-checking here is what makes AC-6 (\"URL ปลายทางต้องไม่ขึ้นต้นด้วย /seller\")"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-context.service.ts",
+      "line": 67,
+      "text": "buyer: 'การแจ้งเตือนของฉัน',"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-context.service.ts",
+      "line": 68,
+      "text": "seller: 'การแจ้งเตือนของร้าน',"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-context.service.ts",
+      "line": 69,
+      "text": "admin: 'การแจ้งเตือนของผู้ดูแลระบบ',"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 129,
+      "text": "* Thai title contains \"รีวิว\", which the old `normKey === 'review' || title.includes('รีวิว')`"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 165,
+      "text": "if (normKey === 'review' || normTitle.includes('รีวิว')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 169,
+      "text": "if (normKey === 'reviewreply' || normTitle.includes('ตอบกลับ')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 173,
+      "text": "if (normKey === 'documentapproved' || normTitle.includes('อนุมัติแล้ว')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 177,
+      "text": "if (normKey === 'documentrejected' || normTitle.includes('ไม่ผ่านการอนุมัติ') || normTitle.includes('ไม่อนุมัติ')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 181,
+      "text": "if (normKey === 'documentpendingapproval' || normTitle.includes('รอการตรวจสอบ') || normTitle.includes('รออนุมัติ')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 185,
+      "text": "if (normKey === 'announcement' || normTitle.includes('ประกาศ') || normTitle.includes('ข่าวสาร')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 189,
+      "text": "if (normKey === 'newdocumentalert' || normKey === 'documentpublished' || normTitle.includes('ผลงานใหม่')) {"
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-feed.service.ts",
+      "line": 225,
+      "text": "* the \"กระโดดข้าม layout\" bug."
+    },
+    {
+      "file": "src\\app\\core\\services\\notification-toast.service.ts",
+      "line": 55,
+      "text": "* Feature request: \"เมื่อมีการแจ้งเตือนเข้ามาอยากให้มี popup ... เด้งขึ้นด้านขวามือ\" — a"
+    },
+    {
+      "file": "src\\app\\core\\services\\onboarding.service.ts",
+      "line": 35,
+      "text": "this.apiFail.report('ดึงข้อมูล Onboarding', e);"
+    },
+    {
+      "file": "src\\app\\core\\services\\onboarding.service.ts",
+      "line": 48,
+      "text": "this.apiFail.report('บันทึกหมวดหมู่ที่สนใจ', e);"
+    },
+    {
+      "file": "src\\app\\core\\services\\onboarding.service.ts",
+      "line": 50,
+      "text": "return { ok: false, error: msg || 'บันทึกหมวดหมู่ไม่สำเร็จ' };"
+    },
+    {
+      "file": "src\\app\\core\\services\\onboarding.service.ts",
+      "line": 59,
+      "text": "this.apiFail.report('ข้าม Onboarding', e);"
+    },
+    {
+      "file": "src\\app\\core\\services\\onboarding.service.ts",
+      "line": 61,
+      "text": "return { ok: false, error: msg || 'ข้ามขั้นตอนไม่สำเร็จ' };"
+    },
+    {
+      "file": "src\\app\\core\\services\\payment-method.service.ts",
+      "line": 23,
+      "text": "* for \"บัตรที่บันทึกไว้\" on `/account` (manage mode) and embedded in `/checkout` (select mode),"
+    },
+    {
+      "file": "src\\app\\core\\services\\payment-method.service.ts",
+      "line": 32,
+      "text": "*  - `refreshList()` toasts \"โหลดรายการบัตรไม่สำเร็จ\" itself (no caller-level toast for a list load)."
+    },
+    {
+      "file": "src\\app\\core\\services\\payment-method.service.ts",
+      "line": 68,
+      "text": "* the explicit \"บันทึกบัตร\" action in manage mode, §4 manage-flow step 2)."
+    },
+    {
+      "file": "src\\app\\core\\services\\payout-account.service.ts",
+      "line": 21,
+      "text": "* §3.1, §4) — service-as-store for \"บัญชีรับเงิน\" on `/seller` (Studio Mode settings), via"
+    },
+    {
+      "file": "src\\app\\core\\services\\payout-account.service.ts",
+      "line": 32,
+      "text": "*    \"กำลังโหลด…\" text (see component doc comment) rather than showing stale/fake data. A"
+    },
+    {
+      "file": "src\\app\\core\\services\\payout-account.service.ts",
+      "line": 38,
+      "text": "*    \"บันทึกบัญชีรับเงินไม่สำเร็จ\" toast for that case."
+    },
+    {
+      "file": "src\\app\\core\\services\\payout-account.service.ts",
+      "line": 40,
+      "text": "*    `revealed()` after the call and toasts \"แสดงเลขบัญชีไม่สำเร็จ\" itself (covers the expected"
+    },
+    {
+      "file": "src\\app\\core\\services\\payout-account.service.ts",
+      "line": 97,
+      "text": "* (`{\"message\":\"ธนาคารไม่ถูกต้อง\"}`, HTTP 400, **no** `status`/`statusCode`/`title`/`code`"
+    },
+    {
+      "file": "src\\app\\core\\services\\payout-account.service.ts",
+      "line": 135,
+      "text": "* in the DB regardless of what a stale caller might send (§3.13 \"ส่ง field ของอีกประเภทมาด้วย\")."
+    },
+    {
+      "file": "src\\app\\core\\services\\platform-stats.service.ts",
+      "line": 48,
+      "text": "this._statsState.set(errorActionState('โหลดสถิติแพลตฟอร์มไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\referral.service.ts",
+      "line": 57,
+      "text": "return { valid: false, reasonText: 'กรุณากรอกโค้ดแนะนำเพื่อน' };"
+    },
+    {
+      "file": "src\\app\\core\\services\\seller-watermark-template.service.ts",
+      "line": 24,
+      "text": "'เอกสารนี้ได้รับสิทธิ์การใช้งานโดย {email} เมื่อ {date} (รหัสตรวจสอบ: {token}) ห้ามทำซ้ำ ดัดแปลง หรือเผยแพร่ต่อ',"
+    },
+    {
+      "file": "src\\app\\core\\services\\seller.service.ts",
+      "line": 174,
+      "text": "* couldn't parse `PLATFORM_SETTING.PayoutSchedule` (§3.5), which hides the \"โอนรอบถัดไป\" line"
+    },
+    {
+      "file": "src\\app\\core\\services\\seller.service.ts",
+      "line": 482,
+      "text": "* history for the \"ดูประวัติเวอร์ชัน\" link on the edit-document page."
+    },
+    {
+      "file": "src\\app\\core\\services\\seller.service.ts",
+      "line": 556,
+      "text": "* No `apiFail`/error toast on purpose (§4 \"การตัดสินใจ: ไม่ toast ตอน error\") — this is a"
+    },
+    {
+      "file": "src\\app\\core\\services\\server-pager.ts",
+      "line": 71,
+      "text": "state.set(errorActionState(opts.errorMessage ?? 'โหลดข้อมูลไม่สำเร็จ'));"
+    },
+    {
+      "file": "src\\app\\core\\services\\wishlist.service.ts",
+      "line": 31,
+      "text": "errorMessage: 'โหลดรายการโปรดไม่สำเร็จ',"
+    },
+    {
+      "file": "src\\app\\core\\util\\saved-card.util.ts",
+      "line": 4,
+      "text": "* saved-credit-cards v1 §4 step 5: \"บัตรหมดอายุ\" is computed client-side only — the backend never"
+    },
+    {
+      "file": "src\\app\\features\\admin\\ads\\ads-admin.page.ts",
+      "line": 49,
+      "text": "* admin \"โฆษณา\" page — all-campaigns queue + stop, and the placement price/capacity/switch editor."
+    },
+    {
+      "file": "src\\app\\features\\admin\\announcements-admin\\announcements-admin.page.ts",
+      "line": 195,
+      "text": "* §4: \"เพิ่มรูป\" is the only image-related action button — it both picks file(s) and uploads"
+    },
+    {
+      "file": "src\\app\\features\\admin\\approval\\approval.page.ts",
+      "line": 201,
+      "text": "* F-xx: \"ไฟล์ขาย\"/\"ไฟล์หลัก\" are protected document files — they 404 on a direct `<a href>`"
+    },
+    {
+      "file": "src\\app\\features\\admin\\crm-admin\\crm-admin.page.ts",
+      "line": 14,
+      "text": "* crm-core v1 §3.4, §4.1, §4.3 (`docs/contracts/crm-core.md`) — \"CRM — ภาพรวมลูกค้า\":"
+    },
+    {
+      "file": "src\\app\\features\\admin\\crm-admin\\crm-admin.page.ts",
+      "line": 22,
+      "text": "* crm-driven-discovery v1 §3.4/§4.1/§4.3 (F-10, ข้อ 13): also loads+renders the \"คำค้นที่หาแล้ว"
+    },
+    {
+      "file": "src\\app\\features\\admin\\crm-admin\\crm-document-alerts-admin.page.ts",
+      "line": 15,
+      "text": "* F-12, ข้อ 11) — \"การแจ้งเตือนเอกสารตรงความสนใจ\": 6 stat cards + a table of the most recently"
+    },
+    {
+      "file": "src\\app\\features\\admin\\crm-admin\\crm-segment-users.page.ts",
+      "line": 11,
+      "text": "* crm-core v1 §3.5, §4.1, §4.4 (`docs/contracts/crm-core.md`) — \"สมาชิกของกลุ่ม {code}\":"
+    },
+    {
+      "file": "src\\app\\features\\admin\\ml-recommendations\\ml-recommendations-admin.page.ts",
+      "line": 11,
+      "text": "* — \"สถานะระบบแนะนำสินค้า (Bought Together)\": a light, single-module, read-only monitoring card"
+    },
+    {
+      "file": "src\\app\\features\\admin\\notification-config\\notification-config-admin.page.ts",
+      "line": 70,
+      "text": "* switchboard the user asked for (\"อยากให้สามารถ Config ได้ด้วยว่าแต่ละการแจ้งเตือนจะส่งไปที่"
+    },
+    {
+      "file": "src\\app\\features\\admin\\notification-config\\notification-config-admin.page.ts",
+      "line": 292,
+      "text": "* that explains it (e.g. \"การแจ้งเตือนนี้ไม่รองรับช่องทาง LINE\"). Dropping that sentence would"
+    },
+    {
+      "file": "src\\app\\features\\admin\\payouts\\payouts.page.ts",
+      "line": 43,
+      "text": "* automatic verification, manual override, a \"ยกเลิกแล้ว\" filter tab, and the next-payout-round"
+    },
+    {
+      "file": "src\\app\\features\\admin\\settings-admin\\settings-admin.page.ts",
+      "line": 264,
+      "text": "* the raw (trimmed) input goes out as typed. An empty list is a real answer — \"ไม่พบรหัสสำเนานี้"
+    },
+    {
+      "file": "src\\app\\features\\auth\\line-callback\\line-callback.page.ts",
+      "line": 34,
+      "text": "() => this.error().includes('อีเมล') || this.error().toLowerCase().includes('email'),"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-privacy\\account-privacy.page.ts",
+      "line": 16,
+      "text": "* crm-core v1 §3.1–§3.3, §4.1, §4.3 (`docs/contracts/crm-core.md`) — \"ความเป็นส่วนตัวของฉัน\":"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 14,
+      "text": "* — สถานะสมาชิกปัจจุบัน (หมวดที่ครอบคลุม, ราคา/เดือน, วันต่ออายุ/สิ้นสุด), ปุ่มยกเลิกพร้อม dialog ยืนยัน."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 15,
+      "text": "* `GET /api/me/subscription` คืน **404** เมื่อไม่มีสมาชิก (v3 แก้จาก v2 ที่ระบุ 204 ผิด — ดู §3.4) →"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 16,
+      "text": "* `SubscriptionService.loadCurrent()` แปลง 404 นั้นเป็น `current()===null` เฉย ๆ (ดู class doc ของ"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 17,
+      "text": "* `SubscriptionService`) → แสดง empty state ชวนไปหน้า `/subscribe`."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 19,
+      "text": "* `Status=Incomplete` (รอชำระเงิน — ผู้ใช้เพิ่งสมัครแต่การยืนยัน PaymentIntent ที่หน้า `/subscribe`"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 20,
+      "text": "* ยังไม่เสร็จ เช่น ปิดหน้าต่าง 3-D Secure ไปกลางคัน หรือรีเฟรชหน้าไปเสียก่อน) แสดงคำอธิบายแยกแทน"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 21,
+      "text": "* `renewalLabel()` ปกติ — **ไม่มีปุ่ม \"ลองชำระเงินอีกครั้ง\" ที่หน้านี้โดยเจตนา**: §3.4 ระบุชัดว่า"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 22,
+      "text": "* `paymentHints.clientSecret` เป็น `null` เสมอจาก `GET` (ไม่ถูก serve ซ้ำ เหมือน"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 23,
+      "text": "* `OrderPaymentHintsResponse` เดิม) จึงไม่มี `clientSecret` ให้ resume การยืนยันจากหน้านี้ได้เลยตาม"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\account-subscription.page.ts",
+      "line": 25,
+      "text": "* auto-void แล้วสมัครใหม่ทีหลัง ถ้าต้องการปุ่ม resume จริงต้องขยาย contract ก่อน (ดู PR/gate report)."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\account-subscription\\subscription-access-history.page.ts",
+      "line": 12,
+      "text": "* list of documents accessed via subscription, badge \"ยังเข้าถึงได้\"/\"หมดสิทธิ์แล้ว\" per"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.ts",
+      "line": 55,
+      "text": "* rendered \"0 เอกสารในแพ็กเกจ\" for every bundle."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.ts",
+      "line": 62,
+      "text": "* inconsistent bundle (`price > originalPrice`) can't render a negative \"ประหยัด -฿350\"."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\categories\\categories.page.ts",
+      "line": 23,
+      "text": "* real-data-stats v1 §4.4: \"กว่า N หมวดหมู่หลัก แตกย่อยเป็น M หมวดย่อย …\" — same computation as"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\categories\\categories.page.ts",
+      "line": 26,
+      "text": "* fabricated \"0 หมวดย่อย\"."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\checkout\\checkout.page.ts",
+      "line": 47,
+      "text": "* an added \"บันทึกบัตรนี้ไว้...\" checkbox and a best-effort save-the-card call after payment."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts",
+      "line": 114,
+      "text": "* \"ประหยัด N%\" badges (cover pill + price card) get a real number instead of rendering blank."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts",
+      "line": 156,
+      "text": "* subscription-membership v2 §4: third buy-button state — \"ดาวน์โหลด (สิทธิ์สมาชิก)\" — shown"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts",
+      "line": 195,
+      "text": "* real-data-stats v1 §4.5 (Group A — no backend needed): \"สรุป N ข้อโดย AI\" reads"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts",
+      "line": 605,
+      "text": "* ml-embedding-recommendations v1 §3.1/§4.3: loads \"มักซื้อคู่กับเอกสารนี้\" non-blocking —"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.ts",
+      "line": 99,
+      "text": "* \"กว่า N เอกสารใน M หมวดหมู่หลัก แตกย่อยเป็น K หมวดย่อย\" — `totalDocs`/`mainCount` are derived"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.ts",
+      "line": 103,
+      "text": "* would silently sum to `0` and render the misleading \"แตกย่อยเป็น 0 หมวดย่อย\"."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.ts",
+      "line": 130,
+      "text": "* \"ประหยัดได้สูงสุด N%\" (bundles strip subtitle) — Group A: computed from the bundles actually"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\home\\home.page.ts",
+      "line": 148,
+      "text": "/** ส่วนแบ่งเริ่มต้นของผู้ขาย (Seller CTA copy) — fallback 90 while stats() hasn't loaded, same"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 40,
+      "text": "* marketplace-home-redesign v2 §1 ข้อ 8 / §4.2: หน้านี้เหลือ view เดียว (chip หมวดหมู่ + sidebar"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 41,
+      "text": "* filter + grid ผลลัพธ์เสมอ) — `view`/`listMode()`/`goToBrowse()`/rails \"มาใหม่\"/\"ยอดนิยม\"/\"ฟรี\"/"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 42,
+      "text": "* CRM discovery block/ปุ่ม \"ดูทั้งหมด\" ปิดท้าย ถูกตัดออกทั้งหมด (CRM discovery ย้ายไป home.page.ts)."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 90,
+      "text": "* \"กว่า 12,000 เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ\" was a hardcoded number, same figure the"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 92,
+      "text": "* \"กว่า N เอกสาร\" clause entirely while stats haven't loaded yet, rather than showing a stale"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 95,
+      "text": "* marketplace-redesign v1 dropped the hero banner from the template (§Overview \"ตัดออก\"), but"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 212,
+      "text": "* \"ถ้า `DocumentItem` มี field ที่บอกว่ามีตัวอย่างให้อ่านฟรี (preview pages) ให้รวมเอกสารเหล่านั้น"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 213,
+      "text": "* ด้วย โดยเรียงฟรีก่อน\". Merges `catalog.freeResources()` (`isFree`) with the rest of"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 216,
+      "text": "* Still the \"ฟรี\" tab badge's source of truth post-redesign (marketplace-home-redesign v2 §4.2"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 458,
+      "text": "* marketplace-redesign v1 §Overview \"ตัดออก\": the page's own duplicate search box is gone"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 599,
+      "text": "* \"แพ็กเกจ\" search fetch (page 1) with the search box's *current* term — not re-fetched on every"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts",
+      "line": 600,
+      "text": "* keystroke (§4.2 \"หลีกเลี่ยงยิง request คู่ขนานทุก keystroke\"), only on entering the tab."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\subscribe\\subscribe.page.ts",
+      "line": 17,
+      "text": "* subscription-membership v3 §4 (docs/contracts/subscription-membership.md): \"สมัครสมาชิกรายเดือน\""
+    },
+    {
+      "file": "src\\app\\features\\buyer\\subscribe\\subscribe.page.ts",
+      "line": 24,
+      "text": "* **not** a completed subscription. §4: \"Stripe Elements สำหรับ subscription ใช้ `clientSecret` ของ"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\subscribe\\subscribe.page.ts",
+      "line": 29,
+      "text": "* instead of asking again. \"สมัครสมาชิกสำเร็จ\" is only ever shown, and the buyer only ever"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\subscribe\\subscribe.page.ts",
+      "line": 71,
+      "text": "* เฉพาะหมวดที่แอดมินตั้งราคาไว้แล้วและยังเปิดใช้งาน — หมวดที่ `subscriptionMonthlyPrice` เป็น"
+    },
+    {
+      "file": "src\\app\\features\\buyer\\subscribe\\subscribe.page.ts",
+      "line": 72,
+      "text": "* `null`/`undefined` สมัครไม่ได้ (§0 ข้อ 1: ไม่มีการ seed ราคาเริ่มต้นให้เลย)."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\subscribe\\subscribe.page.ts",
+      "line": 161,
+      "text": "* to retry without ever having seen a false \"สมัครสมาชิกสำเร็จ\"."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\wallet\\wallet.page.ts",
+      "line": 25,
+      "text": "* buyer-wallet v1 (docs/contracts/buyer-wallet.md §4.3) — \"กระเป๋าเงินของฉัน\" page."
+    },
+    {
+      "file": "src\\app\\features\\buyer\\wallet\\wallet.page.ts",
+      "line": 28,
+      "text": "* mounts Stripe Payment Element reusing checkout pattern, and displays ledger history with \"โหลดเพิ่ม\"."
+    },
+    {
+      "file": "src\\app\\features\\seller\\ads\\ads.page.ts",
+      "line": 72,
+      "text": "* seller's \"โปรโมตเอกสาร\" page. Balance card + campaign list read `AdsService`/`SellerService`"
+    },
+    {
+      "file": "src\\app\\features\\seller\\dashboard\\dashboard.page.ts",
+      "line": 111,
+      "text": "* QA fix: \"ขอถอนเงินทันที\" used to have no click handler at all — enabled at ฿0 balance,"
+    },
+    {
+      "file": "src\\app\\features\\seller\\notifications\\notifications.page.ts",
+      "line": 10,
+      "text": "* F-06 the seller sidebar's \"การแจ้งเตือน\" link and the bell's \"ดูทั้งหมด\" both pointed at"
+    },
+    {
+      "file": "src\\app\\features\\seller\\qna\\qna.page.ts",
+      "line": 46,
+      "text": "* Local draft for \"ลำดับการแสดง\" per question id, seeded from the loaded item's"
+    },
+    {
+      "file": "src\\app\\features\\seller\\settings\\settings.page.ts",
+      "line": 14,
+      "text": "* seller-payout-account-self-service v1: the \"บัญชีรับเงิน\" section used to be a static"
+    },
+    {
+      "file": "src\\app\\features\\seller\\settings\\settings.page.ts",
+      "line": 18,
+      "text": "* line-notification-channel v1 (docs/contracts/line-notification-channel.md §5): \"เชื่อมต่อ LINE\""
+    },
+    {
+      "file": "src\\app\\features\\seller\\upload\\upload.page.ts",
+      "line": 189,
+      "text": "* (\"ตั้งราคา\") — `null` while loading, not-yet-fetched, or on a failed request (AC-8/AC-10"
+    },
+    {
+      "file": "src\\app\\shared\\components\\announcement-popup\\announcement-popup.component.ts",
+      "line": 152,
+      "text": "* If \"ไม่ต้องแสดงอีก\" is checked, persists dismissal to sessionStorage for the entire session."
+    },
+    {
+      "file": "src\\app\\shared\\components\\app-header\\app-header.component.ts",
+      "line": 73,
+      "text": "* Q-bugfix item 1: below the `md` breakpoint the desktop `<nav>` and the \"เข้าสู่ระบบ\" link"
+    },
+    {
+      "file": "src\\app\\shared\\components\\bundle-card\\bundle-card.component.ts",
+      "line": 26,
+      "text": "* (`price > originalPrice`) render a negative \"− ฿-350\" savings line instead of hiding it."
+    },
+    {
+      "file": "src\\app\\shared\\components\\discovery-rail\\discovery-rail.component.ts",
+      "line": 10,
+      "text": "* `/marketplace` \"ยังไม่ได้ค้นหาอะไรเลย\" discovery block. Renders `title`/`reason` straight from"
+    },
+    {
+      "file": "src\\app\\shared\\components\\discovery-rail\\discovery-rail.component.ts",
+      "line": 12,
+      "text": "* items (§3.2 \"section ที่หาเอกสารได้ < 3 ชิ้น ต้องถูกตัดทิ้ง\" — this component enforces the same"
+    },
+    {
+      "file": "src\\app\\shared\\components\\document-card\\document-card.component.ts",
+      "line": 50,
+      "text": "* my-library-card-reuse v1: when true (buyer's \"คลังของฉัน\"), the cover shows the green"
+    },
+    {
+      "file": "src\\app\\shared\\components\\marketplace-rail\\marketplace-rail.component.ts",
+      "line": 7,
+      "text": "* marketplace-redesign v1 §Screens 2 \"Rail (ทำซ้ำ 3 ครั้ง)\" — one curated rail on the `/marketplace`"
+    },
+    {
+      "file": "src\\app\\shared\\components\\notification-bell\\notification-bell.component.ts",
+      "line": 40,
+      "text": "* Every layout embeds this same component, which is exactly why the \"กระโดดข้าม layout\" bug"
+    },
+    {
+      "file": "src\\app\\shared\\components\\popular-search-chips\\popular-search-chips.component.ts",
+      "line": 7,
+      "text": "* crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.1/§4.3 — the \"คำค้นยอดนิยม\""
+    },
+    {
+      "file": "src\\app\\shared\\components\\popular-search-chips\\popular-search-chips.component.ts",
+      "line": 9,
+      "text": "* `/marketplace` discovery block (label \"คนอื่นกำลังค้นหา:\", §3.2 `DiscoveryResponse.popularTerms`)."
+    },
+    {
+      "file": "src\\app\\shared\\components\\popular-search-chips\\popular-search-chips.component.ts",
+      "line": 12,
+      "text": "* badge marks `isRising` terms (`title=\"มาแรงในสัปดาห์นี้\"`, §4.3 — \"ห้ามเขียนข้อความบอกว่าชิปถูก"
+    },
+    {
+      "file": "src\\app\\shared\\components\\popular-search-chips\\popular-search-chips.component.ts",
+      "line": 15,
+      "text": "* hardcoded `quickSearches` there (AC-26 \"ห้ามแสดงแถวชิปว่าง\"); marketplace's discovery block"
+    },
+    {
+      "file": "src\\app\\shared\\components\\recommendation-trace-panel\\recommendation-trace-panel.component.ts",
+      "line": 10,
+      "text": "* crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.5/§4.3 — \"ทำไมระบบถึง"
+    },
+    {
+      "file": "src\\app\\shared\\pipes\\thb.pipe.ts",
+      "line": 13,
+      "text": "if (value == null || isNaN(value)) return withSymbol ? '฿0' : '0';"
+    },
+    {
+      "file": "src\\app\\shared\\pipes\\thb.pipe.ts",
+      "line": 19,
+      "text": "return withSymbol ? `฿${formatted}` : formatted;"
+    }
+  ]
+}

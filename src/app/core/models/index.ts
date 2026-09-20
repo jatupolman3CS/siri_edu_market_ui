@@ -988,6 +988,20 @@ export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
   'bundle': 'แพ็กเกจ',
 };
 
+export function getGradeLevelLabel(level: GradeLevel, translation?: { t(path: string): string } | null): string {
+  if (translation) {
+    return translation.t(`gradeLevels.${level}`);
+  }
+  return GRADE_LEVEL_LABELS[level] || level;
+}
+
+export function getResourceTypeLabel(type: ResourceType, translation?: { t(path: string): string } | null): string {
+  if (translation) {
+    return translation.t(`resourceTypes.${type}`);
+  }
+  return RESOURCE_TYPE_LABELS[type] || type;
+}
+
 export const RESOURCE_TYPE_ICONS: Record<ResourceType, string> = {
   'lesson-summary': '📝',
   'worksheet': '✏️',
