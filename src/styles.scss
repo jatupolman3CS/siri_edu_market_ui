@@ -384,7 +384,9 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 
 /* Modal Confirm & Alert Dialogs (Delete/Confirm/Warning Popups) */
 .ant-modal-confirm .ant-modal-content {
-  padding: 1.75rem !important;
+  padding: 1.75rem 2rem 1.75rem 1.75rem !important;
+  border-radius: 1.75rem !important;
+  position: relative !important;
 }
 
 .ant-modal-confirm .ant-modal-body {
@@ -392,21 +394,28 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 }
 
 .ant-modal-confirm-body {
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 1.15rem !important;
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) !important;
+  column-gap: 1.15rem !important;
+  row-gap: 0.35rem !important;
+  align-items: start !important;
+  padding-right: 2.5rem !important; /* Prevents text from colliding with close button (X) */
 }
 
 .ant-modal-confirm-body > .anticon {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
   font-size: 22px !important;
   margin-right: 0 !important;
   flex-shrink: 0 !important;
   width: 48px !important;
   height: 48px !important;
+  min-width: 48px !important;
   border-radius: 9999px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  margin-top: 2px !important;
 }
 
 .ant-modal-confirm-confirm .ant-modal-confirm-body > .anticon-question-circle,
@@ -435,18 +444,35 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 }
 
 .ant-modal-confirm-body .ant-modal-confirm-title {
-  font-size: 1.15rem !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  font-size: 1.2rem !important;
   font-weight: 700 !important;
   color: var(--ink) !important;
   line-height: 1.4 !important;
   font-family: inherit !important;
+  display: block !important;
+  word-break: break-word !important;
 }
 
 .ant-modal-confirm-body .ant-modal-confirm-content {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
   font-size: 0.925rem !important;
   color: var(--ink-soft) !important;
-  margin-top: 0.5rem !important;
+  margin-top: 0.25rem !important;
   line-height: 1.6 !important;
+  display: block !important;
+  word-break: break-word !important;
+}
+
+.ant-modal-confirm-body:not(:has(> .anticon)) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.ant-modal-confirm-body:not(:has(> .anticon)) .ant-modal-confirm-title,
+.ant-modal-confirm-body:not(:has(> .anticon)) .ant-modal-confirm-content {
+  grid-column: 1 !important;
 }
 
 .ant-modal-confirm-btns {
@@ -776,6 +802,28 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 
   .ant-modal-confirm .ant-modal-content {
     padding: 1.25rem !important;
+  }
+
+  .ant-modal-confirm-body {
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    column-gap: 0.875rem !important;
+    row-gap: 0.25rem !important;
+    padding-right: 2rem !important;
+  }
+
+  .ant-modal-confirm-body > .anticon {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    font-size: 18px !important;
+  }
+
+  .ant-modal-confirm-body .ant-modal-confirm-title {
+    font-size: 1.05rem !important;
+  }
+
+  .ant-modal-confirm-body .ant-modal-confirm-content {
+    font-size: 0.85rem !important;
   }
 
   /* NG-ZORRO Drawer — full-width and padded on mobile */
