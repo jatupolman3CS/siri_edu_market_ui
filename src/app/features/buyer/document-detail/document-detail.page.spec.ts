@@ -110,6 +110,8 @@ function buildCatalog(doc: DocumentItem | undefined) {
     // ml-embedding-recommendations v1 §4.3: "มักซื้อคู่กับเอกสารนี้" — non-blocking, resolves []
     // by default so every existing spec in this file keeps rendering exactly as before.
     loadBoughtTogether: vi.fn(async (): Promise<BoughtTogetherItem[]> => []),
+    // pdf-preview-popup-and-i18n-fix v1 §4: stub so openPreview(true) on PDF docs doesn't error
+    loadDocumentPreviewPdf: vi.fn(async () => new Blob(['%PDF-1.4'], { type: 'application/pdf' })),
   };
 }
 
@@ -1193,6 +1195,56 @@ describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
     expect(scripts.length).toBe(1);
     const data = JSON.parse((scripts[0] as HTMLScriptElement).text) as Record<string, unknown>;
     expect(data['sku']).toBe('doc-b');
+  });
+});
+
+/**
+ * pdf-preview-popup-and-i18n-fix v1 §4 — AC-9/AC-10/AC-11/AC-12:
+ * openPreview(true) on a PDF-format document must open the PDF iframe modal (not the JPEG gallery).
+ */
+describe('BuyerDocumentDetailPage — PDF preview modal (pdf-preview-popup-and-i18n-fix v1)', () => {
+  async function renderWithPdfDoc() {
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const pdfBlob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
+    const fakeCatalog = {
+      ...buildCatalog(doc),
+      loadDocumentPreviewPdf: vi.fn(async () => pdfBlob),
+    };
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, fakeCatalog };
+  }
+
+  it('opens the PDF modal (not the JPEG gallery) when openPreview(true) is called on a PDF doc', async () => {
+    const { component } = await renderWithPdfDoc();
+
+    expect(component.showPdfPreviewModal()).toBe(false);
+    expect(component.showPreviewGallery()).toBe(false);
+
+    component.openPreview(true);
+    await settle();
+
+    expect(component.showPdfPreviewModal()).toBe(true);
+    expect(component.showPreviewGallery()).toBe(false);
   });
 });
 

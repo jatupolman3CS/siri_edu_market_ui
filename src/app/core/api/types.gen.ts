@@ -1155,6 +1155,11 @@ export type DownloadTokenResponse = {
   watermarkNotice?: string | null;
 };
 
+export type EntityTagHeaderValue = {
+  tag?: StringSegment;
+  isWeak?: boolean;
+};
+
 export type ExamCountdownSettingResponse = {
   examType: string;
   examDate: string;
@@ -1184,6 +1189,14 @@ export type FeedbackAttachmentResponse = {
   url?: string;
   contentType?: string;
   sizeBytes?: number;
+};
+
+export type FileResult = {
+  contentType?: string | null;
+  fileDownloadName?: string | null;
+  lastModified?: string | null;
+  entityTag?: EntityTagHeaderValue | null;
+  enableRangeProcessing?: boolean;
 };
 
 export type ForgotPasswordRequest = {
@@ -2520,6 +2533,14 @@ export type StoreSectionResponse = {
   name?: string;
   sortOrder?: number;
   documentIds?: Array<string>;
+};
+
+export type StringSegment = {
+  buffer?: string | null;
+  offset?: number;
+  length?: number;
+  value?: string | null;
+  hasValue?: boolean;
 };
 
 export type StripePublicConfigResponse = {
@@ -6302,6 +6323,43 @@ export type GetApiMarketplaceDocumentsByIdPreviewResponses = {
 
 export type GetApiMarketplaceDocumentsByIdPreviewResponse =
   GetApiMarketplaceDocumentsByIdPreviewResponses[keyof GetApiMarketplaceDocumentsByIdPreviewResponses];
+
+export type GetApiMarketplaceDocumentsByIdPreviewPdfData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/marketplace/documents/{id}/preview-pdf';
+};
+
+export type GetApiMarketplaceDocumentsByIdPreviewPdfErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Internal Server Error
+   */
+  500: Blob | File;
+};
+
+export type GetApiMarketplaceDocumentsByIdPreviewPdfError =
+  GetApiMarketplaceDocumentsByIdPreviewPdfErrors[keyof GetApiMarketplaceDocumentsByIdPreviewPdfErrors];
+
+export type GetApiMarketplaceDocumentsByIdPreviewPdfResponses = {
+  /**
+   * OK
+   */
+  200: FileResult;
+};
+
+export type GetApiMarketplaceDocumentsByIdPreviewPdfResponse =
+  GetApiMarketplaceDocumentsByIdPreviewPdfResponses[keyof GetApiMarketplaceDocumentsByIdPreviewPdfResponses];
 
 export type GetApiMarketplaceDocumentsByIdRelatedData = {
   body?: never;

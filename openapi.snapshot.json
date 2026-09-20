@@ -8973,6 +8973,62 @@
         }
       }
     },
+    "/api/marketplace/documents/{id}/preview-pdf": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/pdf": {}
+            }
+          }
+        }
+      }
+    },
     "/api/marketplace/documents/{id}/related": {
       "get": {
         "tags": [
@@ -22491,6 +22547,17 @@
           }
         }
       },
+      "EntityTagHeaderValue": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "$ref": "#/components/schemas/StringSegment"
+          },
+          "isWeak": {
+            "type": "boolean"
+          }
+        }
+      },
       "ExamCountdownSettingResponse": {
         "required": [
           "examType",
@@ -22588,6 +22655,36 @@
           "sizeBytes": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "FileResult": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileDownloadName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "entityTag": {
+            "type": "object",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EntityTagHeaderValue"
+              }
+            ],
+            "nullable": true
+          },
+          "enableRangeProcessing": {
+            "type": "boolean"
           }
         }
       },
@@ -27077,6 +27174,30 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        }
+      },
+      "StringSegment": {
+        "type": "object",
+        "properties": {
+          "buffer": {
+            "type": "string",
+            "nullable": true
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "length": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasValue": {
+            "type": "boolean"
           }
         }
       },

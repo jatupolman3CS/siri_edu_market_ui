@@ -222,6 +222,9 @@ import type {
   GetApiMarketplaceDocumentsByIdErrors,
   GetApiMarketplaceDocumentsByIdPreviewData,
   GetApiMarketplaceDocumentsByIdPreviewErrors,
+  GetApiMarketplaceDocumentsByIdPreviewPdfData,
+  GetApiMarketplaceDocumentsByIdPreviewPdfErrors,
+  GetApiMarketplaceDocumentsByIdPreviewPdfResponses,
   GetApiMarketplaceDocumentsByIdPreviewResponses,
   GetApiMarketplaceDocumentsByIdRelatedData,
   GetApiMarketplaceDocumentsByIdRelatedResponses,
@@ -2412,6 +2415,19 @@ export const getApiMarketplaceDocumentsByIdPreview = <ThrowOnError extends boole
     GetApiMarketplaceDocumentsByIdPreviewErrors,
     ThrowOnError
   >({ url: '/api/marketplace/documents/{id}/preview', ...options });
+
+export const getApiMarketplaceDocumentsByIdPreviewPdf = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiMarketplaceDocumentsByIdPreviewPdfData, ThrowOnError>,
+): RequestResult<
+  GetApiMarketplaceDocumentsByIdPreviewPdfResponses,
+  GetApiMarketplaceDocumentsByIdPreviewPdfErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiMarketplaceDocumentsByIdPreviewPdfResponses,
+    GetApiMarketplaceDocumentsByIdPreviewPdfErrors,
+    ThrowOnError
+  >({ url: '/api/marketplace/documents/{id}/preview-pdf', ...options });
 
 export const getApiMarketplaceDocumentsByIdRelated = <ThrowOnError extends boolean = false>(
   options: Options<GetApiMarketplaceDocumentsByIdRelatedData, ThrowOnError>,

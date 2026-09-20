@@ -29,6 +29,7 @@ import {
   getApiMarketplaceDocumentsById,
   getApiMarketplaceDocumentsByIdBoughtTogether,
   getApiMarketplaceDocumentsByIdPreview,
+  getApiMarketplaceDocumentsByIdPreviewPdf,
   getApiMarketplaceDocumentsByIdRelated,
   getApiMarketplaceFree,
   getApiMarketplaceRecommended,
@@ -1444,6 +1445,18 @@ export class CatalogService {
    */
   async loadDocumentPreview(documentId: string): Promise<MarketplaceDocumentPreviewResponse> {
     return unwrapSdkResult(await getApiMarketplaceDocumentsByIdPreview({ path: { id: documentId } }));
+  }
+
+  /**
+   * pdf-preview-popup-and-i18n-fix v1 §4: fetches the watermarked preview PDF blob.
+   *
+   * @hey-api/client-fetch uses `parseAs:'auto'` and routes `Content-Type: application/pdf`
+   * (starts with "application/") to `response.blob()` at runtime — so `result.data` IS a
+   * `Blob` even though TypeScript infers `FileResult` from the generated schema.
+   */
+  async loadDocumentPreviewPdf(documentId: string): Promise<Blob> {
+    const result = await getApiMarketplaceDocumentsByIdPreviewPdf({ path: { id: documentId } });
+    return result.data as unknown as Blob;
   }
 
   async askDocumentQuestion(documentId: string, question: string): Promise<void> {

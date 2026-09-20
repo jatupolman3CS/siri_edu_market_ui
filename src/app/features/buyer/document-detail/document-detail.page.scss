@@ -1,3 +1,29 @@
+/* ─── PDF preview modal (native iframe, on-demand watermarked PDF) ─── */
+
+.pdf-preview-overlay {
+  @apply fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4;
+}
+
+.pdf-preview-container {
+  @apply relative bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col;
+  width: min(900px, 100%);
+  height: min(90vh, 900px);
+}
+
+.pdf-preview-header {
+  @apply flex items-center justify-between px-5 py-3 border-b border-line bg-white;
+}
+
+.pdf-preview-iframe {
+  @apply flex-1 w-full;
+  border: none;
+  min-height: 0;
+}
+
+.pdf-preview-loading {
+  @apply flex-1 flex items-center justify-center;
+}
+
 /* ─── Preview modal (marketplace document JPEG pages, server watermarked) ─── */
 
 .preview-modal-overlay {

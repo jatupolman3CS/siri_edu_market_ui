@@ -888,6 +888,37 @@
           </section>
         }
 
+        @if (showPdfPreviewModal()) {
+          <div
+            class="pdf-preview-overlay"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="'product.previewModalTitle' | trans"
+            (click)="closePdfPreviewModal()"
+          >
+            <div class="pdf-preview-container" (click)="$event.stopPropagation()">
+              <header class="pdf-preview-header">
+                <span class="text-sm font-bold text-ink">{{ 'product.previewModalTitle' | trans }}</span>
+                <button type="button" class="btn-ghost !py-2 !px-4 text-sm" (click)="closePdfPreviewModal()">
+                  {{ 'product.close' | trans }}
+                </button>
+              </header>
+              @if (previewPdfLoading()) {
+                <div class="pdf-preview-loading">
+                  <span class="text-sm text-ink-muted">{{ 'product.loading' | trans }}</span>
+                </div>
+              } @else if (previewPdfUrl()) {
+                <iframe
+                  [src]="previewPdfUrl()"
+                  class="pdf-preview-iframe"
+                  title="ตัวอย่างเอกสาร"
+                  frameborder="0"
+                ></iframe>
+              }
+            </div>
+          </div>
+        }
+
         @if (showPreviewGallery()) {
           <div
             class="preview-modal-overlay"

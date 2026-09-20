@@ -11,6 +11,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
@@ -92,11 +93,17 @@ export class BuyerDocumentDetailPage {
   private readonly message = inject(NzMessageService);
   private readonly seo = inject(SeoMetaService);
 
+  private readonly sanitizer = inject(DomSanitizer);
+
   readonly id = signal<string>('');
   readonly selectedImage = signal<number>(0);
   readonly preview = signal<MarketplaceDocumentPreviewResponse | null>(null);
   readonly previewLoading = signal<boolean>(false);
   readonly showPreviewGallery = signal<boolean>(false);
+  readonly showPdfPreviewModal = signal<boolean>(false);
+  readonly previewPdfUrl = signal<SafeResourceUrl | null>(null);
+  readonly previewPdfLoading = signal<boolean>(false);
+  private readonly _previewPdfBlobUrl = signal<string | null>(null);
 
   readonly doc = computed(() => this.catalog.getById(this.id()));
 
@@ -291,9 +298,18 @@ export class BuyerDocumentDetailPage {
     this.showPreviewGallery.set(false);
   }
 
+  closePdfPreviewModal(): void {
+    const blobUrl = this._previewPdfBlobUrl();
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+    this._previewPdfBlobUrl.set(null);
+    this.previewPdfUrl.set(null);
+    this.showPdfPreviewModal.set(false);
+  }
+
   @HostListener('document:keydown.escape')
   onEscapeCloseGallery(): void {
     if (this.showPreviewGallery()) this.closePreviewGallery();
+    if (this.showPdfPreviewModal()) this.closePdfPreviewModal();
   }
 
   constructor() {
@@ -361,7 +377,7 @@ export class BuyerDocumentDetailPage {
     });
     effect((onCleanup) => {
       if (typeof document === 'undefined') return;
-      if (!this.showPreviewGallery()) return;
+      if (!this.showPreviewGallery() && !this.showPdfPreviewModal()) return;
       document.body.style.overflow = 'hidden';
       onCleanup(() => {
         document.body.style.overflow = '';
@@ -458,6 +474,29 @@ export class BuyerDocumentDetailPage {
     if (!id || !d) return;
     if ((d.previewPages ?? 0) <= 0) {
       this.message.info(this.translation.t('product.noPreviewYet'));
+      return;
+    }
+
+    if (d.format === 'pdf' && forceModal) {
+      if (this.previewPdfLoading()) return;
+      void (async () => {
+        this.previewPdfLoading.set(true);
+        try {
+          const blob = await this.catalog.loadDocumentPreviewPdf(id);
+          const blobUrl = URL.createObjectURL(blob);
+          this._previewPdfBlobUrl.set(blobUrl);
+          const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+          this.previewPdfUrl.set(safeUrl);
+          this.showPdfPreviewModal.set(true);
+        } catch {
+          this.message.error(this.translation.t('product.downloadError'));
+        } finally {
+          this.previewPdfLoading.set(false);
+        }
+      })();
+      return;
+    }
+    if (d.format === 'pdf' && !forceModal) {
       return;
     }
 

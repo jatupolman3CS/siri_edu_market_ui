@@ -633,4 +633,29 @@ describe('WatermarkEditorPage', () => {
       expect(stamp?.style.fontSize).toBe('20px');
     });
   });
+
+  /**
+   * pdf-preview-popup-and-i18n-fix v1 §4 — AC-1/AC-2:
+   * download position radio options must show translated label/description text,
+   * not raw seller.* key strings.
+   */
+  describe('(i18n) download positions section — no raw seller. keys rendered', () => {
+    beforeEach(async () => {
+      await setup(null);
+      component.activeTab.set('personalized');
+      fixture.detectChanges();
+    });
+
+    it('renders no element whose text content starts with "seller." in the download positions section', () => {
+      const root = fixture.nativeElement as HTMLElement;
+      const leafTexts = Array.from(root.querySelectorAll('*'))
+        .filter((el: Element) => el.children.length === 0)
+        .map((el: Element) => (el.textContent ?? '').trim())
+        .filter((t) => t.length > 0);
+
+      for (const text of leafTexts) {
+        expect(text).not.toMatch(/^seller\./);
+      }
+    });
+  });
 });
