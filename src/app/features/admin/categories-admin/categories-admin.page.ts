@@ -206,10 +206,10 @@ export class AdminCategoriesPage {
   removeCategory(c: Category): void {
     this.modal.confirm({
       nzTitle: this.translation.t('admin.categories.confirmDeleteTitle'),
-      nzContent: `ลบหมวด "${c.name}" ?`,
-      nzOkText: this.translation.t('common.delete') || 'ลบ',
+      nzContent: this.translation.t('admin.confirmDeleteCategory', { name: c.name }),
+      nzOkText: this.translation.t('common.delete'),
       nzOkDanger: true,
-      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: () => this.doRemoveCategory(c),
     });
   }
@@ -361,10 +361,10 @@ export class AdminCategoriesPage {
   confirmDeleteSubcategory(categoryId: string, sub: SubcategoryAdmin): void {
     this.modal.confirm({
       nzTitle: this.translation.t('admin.categories.confirmDeleteSubTitle'),
-      nzContent: `ยืนยันลบหมวดย่อย "${sub.name}" หรือไม่? การกระทำนี้ย้อนกลับไม่ได้`,
-      nzOkText: this.translation.t('common.delete') || 'ลบ',
+      nzContent: this.translation.t('admin.confirmDeleteSubcategory', { name: sub.name }),
+      nzOkText: this.translation.t('common.delete'),
       nzOkDanger: true,
-      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: () => this.deleteSubcategory(categoryId, sub),
     });
   }

@@ -1,0 +1,481 @@
+{
+  "seller.editBundle": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:24"
+  ],
+  "seller.bundleTitleLabel": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:28"
+  ],
+  "seller.bundleTitlePlaceholder": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:34"
+  ],
+  "seller.bundleDescLabel": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:40"
+  ],
+  "seller.bundleDescPlaceholder": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:46"
+  ],
+  "seller.selectDocs": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:52"
+  ],
+  "seller.selectedDocsRequirement": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:54"
+  ],
+  "seller.bundlePrice": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:92"
+  ],
+  "seller.coverOptional": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:105"
+  ],
+  "seller.coverPlaceholder": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:112"
+  ],
+  "seller.totalOriginalPrice": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:122"
+  ],
+  "seller.buyerSaves": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:127"
+  ],
+  "seller.noBundles": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:154"
+  ],
+  "seller.noBundlesDesc": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:155"
+  ],
+  "seller.cannotDeleteTooltip": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:180"
+  ],
+  "seller.cannotDeleteDesc": [
+    "src\\app\\features\\seller\\bundles\\bundles.page.html:191"
+  ],
+  "seller.noSalesYet": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:112"
+  ],
+  "seller.noSalesYetDesc": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:113"
+  ],
+  "seller.viewsCol": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:166"
+  ],
+  "seller.trafficSearch": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:221"
+  ],
+  "seller.trafficCategory": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:233"
+  ],
+  "seller.trafficDirect": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:245"
+  ],
+  "seller.statusApproved": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:292",
+    "src\\app\\features\\seller\\documents\\documents.page.ts:123"
+  ],
+  "seller.calcPerMonthNet": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.html:394"
+  ],
+  "seller.noWithdrawBalance": [
+    "src\\app\\features\\seller\\dashboard\\dashboard.page.ts:117"
+  ],
+  "seller.searchDocsPlaceholder": [
+    "src\\app\\features\\seller\\documents\\documents.page.html:31"
+  ],
+  "seller.noDocsFilterEmpty": [
+    "src\\app\\features\\seller\\documents\\documents.page.html:51"
+  ],
+  "seller.viewAria": [
+    "src\\app\\features\\seller\\documents\\documents.page.html:72"
+  ],
+  "seller.editAria": [
+    "src\\app\\features\\seller\\documents\\documents.page.html:75"
+  ],
+  "seller.watermarkAria": [
+    "src\\app\\features\\seller\\documents\\documents.page.html:78"
+  ],
+  "seller.deleteAria": [
+    "src\\app\\features\\seller\\documents\\documents.page.html:82"
+  ],
+  "seller.statusDraft": [
+    "src\\app\\features\\seller\\documents\\documents.page.ts:129"
+  ],
+  "seller.qnaTitle": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:4"
+  ],
+  "seller.qnaSubtitle": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:5"
+  ],
+  "seller.showAll": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:9"
+  ],
+  "seller.unansweredOnly": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:9"
+  ],
+  "seller.noQuestions": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:23"
+  ],
+  "seller.statusUnanswered": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:40"
+  ],
+  "seller.statusAnswered": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:44"
+  ],
+  "seller.yourAnswer": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:53"
+  ],
+  "seller.yourAnswerDesc": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:61"
+  ],
+  "seller.aiDrafting": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:69"
+  ],
+  "seller.aiDraftBtn": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:71"
+  ],
+  "seller.answerPlaceholder": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:80"
+  ],
+  "seller.submitAnswer": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:89"
+  ],
+  "seller.editAnswer": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:97"
+  ],
+  "seller.pinFaq": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:115"
+  ],
+  "seller.displayOrder": [
+    "src\\app\\features\\seller\\qna\\qna.page.html:119"
+  ],
+  "seller.hoursUnit": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:40"
+  ],
+  "seller.reviewedDoc": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:88"
+  ],
+  "seller.viewDoc": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:99"
+  ],
+  "seller.sellerReply": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:129"
+  ],
+  "seller.editReplyTitle": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:151"
+  ],
+  "seller.replyBuyerTitle": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:151"
+  ],
+  "seller.buyerWillBeNotified": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:152"
+  ],
+  "seller.replySubmitting": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:178"
+  ],
+  "seller.saveEditReply": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:181"
+  ],
+  "seller.sendReply": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:181"
+  ],
+  "seller.replyCta": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.html:197"
+  ],
+  "seller.pleaseEnterReply": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.ts:162"
+  ],
+  "seller.replySuccess": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.ts:185"
+  ],
+  "seller.replyFailed": [
+    "src\\app\\features\\seller\\reviews\\reviews.page.ts:190"
+  ],
+  "seller.settingsDesc": [
+    "src\\app\\features\\seller\\settings\\settings.page.html:4"
+  ],
+  "seller.shopNameFromSystem": [
+    "src\\app\\features\\seller\\settings\\settings.page.html:7"
+  ],
+  "seller.loadingFileList": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:155"
+  ],
+  "seller.sellingBadge": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:176"
+  ],
+  "seller.autoCoverTooltip": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:225"
+  ],
+  "seller.uploadingImages": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:240"
+  ],
+  "seller.orderIndex": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:262"
+  ],
+  "seller.deleteTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:266"
+  ],
+  "seller.clickToSelectImages": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:292"
+  ],
+  "seller.pageCountPlaceholder": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:396"
+  ],
+  "seller.mainFileSizeNotice": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:399"
+  ],
+  "seller.docInfoStepTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:415"
+  ],
+  "seller.fillDetailsForSales": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:417"
+  ],
+  "seller.aiAutoFillBoxTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:426"
+  ],
+  "seller.aiAutoFillBoxDesc": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:427"
+  ],
+  "seller.aiAnalyzing": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:437"
+  ],
+  "seller.aiPrefillBtn": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:440"
+  ],
+  "seller.docTitleLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:448"
+  ],
+  "seller.docTitlePlaceholder": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:455"
+  ],
+  "seller.shortDescLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:462"
+  ],
+  "seller.aiWriteBtn": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:469"
+  ],
+  "seller.shortDescPlaceholder": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:476"
+  ],
+  "seller.fullDescLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:482"
+  ],
+  "seller.aiExpandBtn": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:489"
+  ],
+  "seller.fullDescPlaceholder": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:497"
+  ],
+  "seller.selectMultipleCategories": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:505"
+  ],
+  "seller.selectCategoryPlaceholder": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:516"
+  ],
+  "seller.langThai": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:566"
+  ],
+  "seller.tagsLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:574"
+  ],
+  "seller.tagsPlaceholder": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:589"
+  ],
+  "seller.freeDocLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:639"
+  ],
+  "seller.zeroEarningsDesc": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:642"
+  ],
+  "seller.originalPriceLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:662"
+  ],
+  "seller.loadingCompetitorHint": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:705"
+  ],
+  "seller.colDocPrice": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:783"
+  ],
+  "seller.priceFree": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:786"
+  ],
+  "seller.colDocFee": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:798"
+  ],
+  "seller.freeDocFeeNotice": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:799"
+  ],
+  "seller.colDocFileSize": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:827"
+  ],
+  "seller.updateFileModalTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:882"
+  ],
+  "seller.minorUpdateTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:905"
+  ],
+  "seller.minorUpdateDesc": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:907"
+  ],
+  "seller.majorUpdateTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:925"
+  ],
+  "seller.majorUpdateDesc": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:927"
+  ],
+  "seller.updateSummaryLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:936",
+    "src\\app\\features\\seller\\upload\\upload.page.html:944"
+  ],
+  "seller.versionHistoryModalTitle": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:955"
+  ],
+  "seller.versionNumberLabel": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:969"
+  ],
+  "seller.notifiedBuyersCount": [
+    "src\\app\\features\\seller\\upload\\upload.page.html:976"
+  ],
+  "seller.docLoadFailed": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:245"
+  ],
+  "seller.serverUploadSuccess": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:351"
+  ],
+  "seller.sellingFileChanged": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:415"
+  ],
+  "seller.sellingFileSet": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:417"
+  ],
+  "seller.uploadImageFailed": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:478",
+    "src\\app\\features\\seller\\upload\\upload.page.ts:488"
+  ],
+  "seller.aiPrefillFailed": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:674"
+  ],
+  "seller.aiFallbackShortDesc": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:714"
+  ],
+  "seller.aiFallbackFullDesc": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:718"
+  ],
+  "seller.aiWritingSuccess": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:721"
+  ],
+  "seller.requireCoverImage": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:732"
+  ],
+  "seller.requireFieldsError": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:751"
+  ],
+  "seller.saveWatermarkConfigFailed": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:808"
+  ],
+  "seller.saveDocSuccess": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:812"
+  ],
+  "seller.requireDocFileError": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:815"
+  ],
+  "seller.docSubmitSuccess": [
+    "src\\app\\features\\seller\\upload\\upload.page.ts:887"
+  ],
+  "seller.loadingWatermarkSettings": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:5"
+  ],
+  "seller.backToDocList": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:11"
+  ],
+  "seller.savingWatermark": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:22",
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:646"
+  ],
+  "seller.watermarkTemplateSystem": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:30"
+  ],
+  "seller.shopTemplateWatermarkDesc": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:37"
+  ],
+  "seller.goToUploadNewDoc": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:49"
+  ],
+  "seller.watermarkTextPlaceholder": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:101"
+  ],
+  "seller.savingTemplate": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:255"
+  ],
+  "seller.saveWatermarkTemplate": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:261"
+  ],
+  "seller.templateWatermarkNotice": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:269"
+  ],
+  "seller.livePreviewPageAlt": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:304"
+  ],
+  "seller.page1": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:429"
+  ],
+  "seller.personalizedSubtitle": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:453"
+  ],
+  "seller.downloadPosition": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:461"
+  ],
+  "seller.stampTemplate": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:489"
+  ],
+  "seller.clickToInsertVar": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:490"
+  ],
+  "seller.varBuyerEmail": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:500"
+  ],
+  "seller.varForensicToken": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:507"
+  ],
+  "seller.varDownloadDate": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:514"
+  ],
+  "seller.varPlatform": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:521"
+  ],
+  "seller.downloadTextPlaceholder": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:529"
+  ],
+  "seller.watermarkFont": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:538"
+  ],
+  "seller.savePersonalizedSettings": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:652"
+  ],
+  "seller.buyerSimulator": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:664"
+  ],
+  "seller.buyerSimulatorDesc": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:666"
+  ],
+  "seller.simBuyerEmail": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:673"
+  ],
+  "seller.simForensicToken": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:682"
+  ],
+  "seller.stampedTextPreview": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:695"
+  ],
+  "seller.realDocPreview": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:775",
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:780"
+  ],
+  "seller.docPreviewWatermarkAlt": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.html:791"
+  ],
+  "seller.defaultPersonalizedText": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.ts:90"
+  ],
+  "seller.saveTemplateSuccess": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.ts:313"
+  ],
+  "seller.saveTemplateFailed": [
+    "src\\app\\features\\seller\\watermark-editor\\watermark-editor.page.ts:315"
+  ]
+}

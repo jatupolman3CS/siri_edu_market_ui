@@ -136,7 +136,7 @@ export class AdminTransactionsPage {
     } catch (e) {
       // The server's message names the actual reason — already refunded, never paid, or the
       // seller has already drawn this money — and that is what the admin needs to read.
-      this.apiFail.report('คืนเงิน', e);
+      this.apiFail.report(this.i18n.t('admin.errRefund'), e);
     } finally {
       this.refundingId.set(null);
     }

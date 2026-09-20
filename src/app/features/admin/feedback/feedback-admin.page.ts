@@ -240,7 +240,7 @@ export class AdminFeedbackPage {
       nzContent: this.translation.t('admin.feedback.confirmDeleteContent'),
       nzOkText: this.translation.t('admin.feedback.confirmDeleteOk'),
       nzOkDanger: true,
-      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: async () => {
         this.busyDeleteId.set(id);
         try {

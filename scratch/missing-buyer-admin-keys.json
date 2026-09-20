@@ -1,0 +1,517 @@
+{
+  "becomeSeller.alreadySellerTitle": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:14"
+  ],
+  "becomeSeller.alreadySellerDesc": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:15"
+  ],
+  "becomeSeller.goToDashboard": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:16"
+  ],
+  "becomeSeller.pendingTitle": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:26"
+  ],
+  "becomeSeller.pendingDesc": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:28"
+  ],
+  "becomeSeller.rejectedTitle": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:40"
+  ],
+  "becomeSeller.rejectedReason": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:43"
+  ],
+  "becomeSeller.rejectedHint": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:46"
+  ],
+  "becomeSeller.studioNameLabel": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:54"
+  ],
+  "becomeSeller.studioNamePlaceholder": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:60"
+  ],
+  "becomeSeller.bioLabel": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:68"
+  ],
+  "becomeSeller.bioPlaceholder": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:74"
+  ],
+  "becomeSeller.specialtiesLabel": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:82"
+  ],
+  "becomeSeller.specialtiesHint": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:83"
+  ],
+  "becomeSeller.specialtiesPlaceholder": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.html:90"
+  ],
+  "becomeSeller.studioNameRequired": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.ts:64"
+  ],
+  ",": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.ts:71"
+  ],
+  "becomeSeller.submitSuccess": [
+    "Buyer | src\\app\\features\\buyer\\become-seller\\become-seller.page.ts:82"
+  ],
+  "bundleDetail.breadcrumbBundles": [
+    "Buyer | src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:7"
+  ],
+  "bundleDetail.itemsInBundle": [
+    "Buyer | src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:30"
+  ],
+  "bundleDetail.savingsBanner": [
+    "Buyer | src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:55"
+  ],
+  "bundleDetail.itemsTitle": [
+    "Buyer | src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:85"
+  ],
+  "bundleDetail.backToBundles": [
+    "Buyer | src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:100"
+  ],
+  "slug": [
+    "Buyer | src\\app\\features\\buyer\\category-detail\\category-detail.page.ts:104",
+    "Buyer | src\\app\\features\\buyer\\category-detail\\category-detail.page.ts:106"
+  ],
+  "sub": [
+    "Buyer | src\\app\\features\\buyer\\category-detail\\category-detail.page.ts:117"
+  ],
+  "new": [
+    "Buyer | src\\app\\features\\buyer\\checkout\\checkout.page.ts:340"
+  ],
+  "#stripe-payment-element": [
+    "Buyer | src\\app\\features\\buyer\\checkout\\checkout.page.ts:512"
+  ],
+  "product.loginToFollow": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:251"
+  ],
+  "product.cannotFollowOwn": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:257"
+  ],
+  "product.loginToBuy": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:383"
+  ],
+  "product.loginToDownload": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:394",
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:414"
+  ],
+  "product.downloadError": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:500"
+  ],
+  "product.questionTooShort": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:528"
+  ],
+  "product.questionSubmitted": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:537"
+  ],
+  "product.questionSubmitFailed": [
+    "Buyer | src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:539"
+  ],
+  "home.recentlyViewedEyebrow": [
+    "Buyer | src\\app\\features\\buyer\\home\\home.page.html:271"
+  ],
+  "home.recentlyViewedTitle": [
+    "Buyer | src\\app\\features\\buyer\\home\\home.page.html:272",
+    "Buyer | src\\app\\features\\buyer\\marketplace\\marketplace.page.html:14"
+  ],
+  "home.clearRecent": [
+    "Buyer | src\\app\\features\\buyer\\home\\home.page.html:274",
+    "Buyer | src\\app\\features\\buyer\\marketplace\\marketplace.page.html:17"
+  ],
+  "home.editorsPicksEyebrow": [
+    "Buyer | src\\app\\features\\buyer\\home\\home.page.html:416"
+  ],
+  "home.editorsPicksTitle": [
+    "Buyer | src\\app\\features\\buyer\\home\\home.page.html:417"
+  ],
+  "home.editorsPicksSubtitle": [
+    "Buyer | src\\app\\features\\buyer\\home\\home.page.html:418"
+  ],
+  "subcategory": [
+    "Buyer | src\\app\\features\\buyer\\marketplace\\marketplace.page.ts:393"
+  ],
+  "tab": [
+    "Buyer | src\\app\\features\\buyer\\marketplace\\marketplace.page.ts:394"
+  ],
+  "storefront.loadingTitle": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:3"
+  ],
+  "storefront.loadingDesc": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:3"
+  ],
+  "storefront.byOwner": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:40"
+  ],
+  "storefront.followStore": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:72"
+  ],
+  "storefront.safetyNotice": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:78"
+  ],
+  "storefront.statSales": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:90"
+  ],
+  "storefront.statRating": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:94"
+  ],
+  "storefront.statFollowers": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:98"
+  ],
+  "storefront.statAvgResponse": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:102"
+  ],
+  "storefront.emptyDocs": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:157"
+  ],
+  "storefront.allStoreDocs": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:160"
+  ],
+  "storefront.emptyBundles": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:171"
+  ],
+  "storefront.emptyFree": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:182"
+  ],
+  "storefront.backToMarketplace": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.html:207"
+  ],
+  "storefront.tabBundles": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.ts:113"
+  ],
+  "storefront.tabTop": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.ts:115"
+  ],
+  "storefront.loginToFollow": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.ts:160"
+  ],
+  "storefront.cannotFollowSelf": [
+    "Buyer | src\\app\\features\\buyer\\storefront\\storefront.page.ts:166"
+  ],
+  "wallet.topUpCreateFailed": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:157"
+  ],
+  "wallet.paymentSystemLoadFailed": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:172"
+  ],
+  "wallet.stripeScriptFailed": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:235"
+  ],
+  "wallet.stripeKeyNotConfigured": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:240"
+  ],
+  "#wallet-stripe-payment-element": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:250"
+  ],
+  "wallet.topUpSuccess": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:281"
+  ],
+  "wallet.topUpProcessing": [
+    "Buyer | src\\app\\features\\buyer\\wallet\\wallet.page.ts:283"
+  ],
+  "admin.loadingFullDetails": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:159"
+  ],
+  "admin.detailsToPublish": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:193"
+  ],
+  "admin.listingCoverAndGallery": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:201",
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:217"
+  ],
+  "admin.sellingOriginalFile": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:239"
+  ],
+  "admin.sellingFileNotice": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:241"
+  ],
+  "admin.watermarkPolicyNotice": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:245"
+  ],
+  "admin.viewDocument": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:256"
+  ],
+  "admin.noMainFileStorageKey": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:269"
+  ],
+  "admin.allUploadedMainFiles": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:275"
+  ],
+  "admin.openView": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:296"
+  ],
+  "admin.gradeLevelColon": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:318"
+  ],
+  "admin.standardExamColon": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:324"
+  ],
+  "admin.detectedRiskFlags": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:391"
+  ],
+  "admin.selectDocToReviewTitle": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:456"
+  ],
+  "admin.selectDocToReviewDesc": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:457"
+  ],
+  "admin.rejectModalTitle": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:467"
+  ],
+  "admin.rejectWarningText": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:478"
+  ],
+  "admin.rejectReasonPlaceholder": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:491"
+  ],
+  "admin.confirmRejectBtn": [
+    "Admin | src\\app\\features\\admin\\approval\\approval.page.html:511"
+  ],
+  "code": [
+    "Admin | src\\app\\features\\admin\\crm-admin\\crm-segment-users.page.ts:31"
+  ],
+  "admin.backToCrmOverview": [
+    "Admin | src\\app\\features\\admin\\crm-admin\\crm-user.page.html:3"
+  ],
+  "admin.dashboardTitle": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:3"
+  ],
+  "admin.dashboardSubtitle": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:5"
+  ],
+  "admin.statGmvMonth": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:12"
+  ],
+  "admin.statPlatformFee": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:18"
+  ],
+  "admin.statSuccessfulTx": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:24"
+  ],
+  "admin.statRefunds": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:29"
+  ],
+  "admin.pendingDocsCardTitle": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:41"
+  ],
+  "admin.viewAllArrow": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:47",
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:103"
+  ],
+  "admin.systemStatusTitle": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:75"
+  ],
+  "admin.allServicesHealthy": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:76"
+  ],
+  "admin.recentTransactionsTitle": [
+    "Admin | src\\app\\features\\admin\\dashboard\\dashboard.page.html:101"
+  ],
+  "admin.docDetailTitle": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:7"
+  ],
+  "admin.noDocsFound": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:17",
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:173"
+  ],
+  "admin.mainInfo": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:21"
+  ],
+  "admin.titleColon": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:24"
+  ],
+  "admin.shortDescColon": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:28"
+  ],
+  "admin.descriptionColon": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:32"
+  ],
+  "admin.categoriesMultiple": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:48"
+  ],
+  "admin.subcategoryOptional": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:67"
+  ],
+  "admin.resourceType": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:71"
+  ],
+  "admin.thaiLanguageOption": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:93"
+  ],
+  "admin.removeTagAria": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:117"
+  ],
+  "admin.tagInputPlaceholder": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:122"
+  ],
+  "admin.addTagBtn": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:123"
+  ],
+  "admin.extraGradeLevelsLabel": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:140"
+  ],
+  "admin.extraGradeLevelsPlaceholder": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:141"
+  ],
+  "admin.standardExamLabel": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:144"
+  ],
+  "admin.extraStandardsLabel": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:157"
+  ],
+  "admin.filesAndStorage": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:164"
+  ],
+  "admin.galleryUploadDesc": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:169"
+  ],
+  "admin.noImagesPlaceholder": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:209"
+  ],
+  "admin.mainDocFile": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:213"
+  ],
+  "admin.uploadMainFile": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:216"
+  ],
+  "admin.openDownloadFile": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:225"
+  ],
+  "admin.noFileToDownload": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:228"
+  ],
+  "admin.storageKeyPlaceholder": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:234"
+  ],
+  "admin.previewFile": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:238"
+  ],
+  "admin.uploadPreview": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:241"
+  ],
+  "admin.orPasteKeySelf": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:244"
+  ],
+  "admin.previewPages": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:259"
+  ],
+  "admin.reportsModeration": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:281"
+  ],
+  "admin.resolveAllPendingReports": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:283"
+  ],
+  "admin.newReportReasonPlaceholder": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:287"
+  ],
+  "admin.addReportBtn": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:288"
+  ],
+  "admin.resolveReportBtn": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:298"
+  ],
+  "admin.resolvedAtLabel": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:300"
+  ],
+  "admin.noReports": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:304"
+  ],
+  "admin.recentAudit": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:310"
+  ],
+  "admin.noAuditLogs": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.html:321"
+  ],
+  "admin.pleaseSpecifyReason": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.ts:358"
+  ],
+  "admin.reportAddedSuccess": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.ts:368"
+  ],
+  "admin.chooseImageForCover": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.ts:418"
+  ],
+  "admin.coverUploadedNotice": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.ts:430"
+  ],
+  "admin.mainFileUploadedNotice": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.ts:515"
+  ],
+  "admin.previewFileUploadedNotice": [
+    "Admin | src\\app\\features\\admin\\document-detail\\document-detail.page.ts:530"
+  ],
+  "admin.manageDocsTitle": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:3"
+  ],
+  "admin.manageDocsSubtitle": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:4"
+  ],
+  "admin.searchLabel": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:9",
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:75"
+  ],
+  "admin.searchTitleDescPlaceholder": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:13"
+  ],
+  "admin.formatLabel": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:28"
+  ],
+  "admin.sellerNameLabel": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:40"
+  ],
+  "admin.dateFromLabel": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:46"
+  ],
+  "admin.dateToLabel": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:50"
+  ],
+  "admin.featuredOnly": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:64"
+  ],
+  "admin.hasPendingReports": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:68"
+  ],
+  "admin.selectedItemsCount": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:85"
+  ],
+  "admin.bulkRejectReasonPlaceholder": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:88"
+  ],
+  "admin.bulkApprove": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:93"
+  ],
+  "admin.bulkReject": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:94"
+  ],
+  "admin.bulkSetFeatured": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:95"
+  ],
+  "admin.bulkUnsetFeatured": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:96"
+  ],
+  "admin.colStars": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:116"
+  ],
+  "admin.colDownloads": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:117"
+  ],
+  "admin.viewDetailAria": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:133"
+  ],
+  "admin.reportBadge": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.html:144"
+  ],
+  "admin.allStatuses": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.ts:83"
+  ],
+  "admin.allFormats": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.ts:91"
+  ],
+  "admin.sortPriceDesc": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.ts:103"
+  ],
+  "admin.selectAtLeastOneDoc": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.ts:210"
+  ],
+  "admin.specifyBulkRejectReason": [
+    "Admin | src\\app\\features\\admin\\documents\\documents.page.ts:214"
+  ]
+}

@@ -1,0 +1,390 @@
+{
+  "admin.loadingFullDetails": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:159"
+  ],
+  "admin.detailsToPublish": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:193"
+  ],
+  "admin.listingCoverAndGallery": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:201",
+    "src\\app\\features\\admin\\approval\\approval.page.html:217"
+  ],
+  "admin.sellingOriginalFile": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:239"
+  ],
+  "admin.sellingFileNotice": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:241"
+  ],
+  "admin.watermarkPolicyNotice": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:245"
+  ],
+  "admin.viewDocument": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:256"
+  ],
+  "admin.noMainFileStorageKey": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:269"
+  ],
+  "admin.allUploadedMainFiles": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:275"
+  ],
+  "admin.openView": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:296"
+  ],
+  "admin.gradeLevelColon": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:318"
+  ],
+  "admin.standardExamColon": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:324"
+  ],
+  "admin.detectedRiskFlags": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:391"
+  ],
+  "admin.selectDocToReviewTitle": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:456"
+  ],
+  "admin.selectDocToReviewDesc": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:457"
+  ],
+  "admin.rejectWarningText": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:478"
+  ],
+  "admin.confirmRejectBtn": [
+    "src\\app\\features\\admin\\approval\\approval.page.html:511"
+  ],
+  "code": [
+    "src\\app\\features\\admin\\crm-admin\\crm-segment-users.page.ts:31"
+  ],
+  "admin.backToCrmOverview": [
+    "src\\app\\features\\admin\\crm-admin\\crm-user.page.html:3"
+  ],
+  "admin.dashboardTitle": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:3"
+  ],
+  "admin.dashboardSubtitle": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:5"
+  ],
+  "admin.statGmvMonth": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:12"
+  ],
+  "admin.statPlatformFee": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:18"
+  ],
+  "admin.statSuccessfulTx": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:24"
+  ],
+  "admin.statRefunds": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:29"
+  ],
+  "admin.pendingDocsCardTitle": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:41"
+  ],
+  "admin.viewAllArrow": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:47",
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:103"
+  ],
+  "admin.systemStatusTitle": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:75"
+  ],
+  "admin.allServicesHealthy": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:76"
+  ],
+  "admin.recentTransactionsTitle": [
+    "src\\app\\features\\admin\\dashboard\\dashboard.page.html:101"
+  ],
+  "admin.noDocsFound": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:17",
+    "src\\app\\features\\admin\\documents\\documents.page.html:173"
+  ],
+  "admin.mainInfo": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:21"
+  ],
+  "admin.titleColon": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:24"
+  ],
+  "admin.shortDescColon": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:28"
+  ],
+  "admin.descriptionColon": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:32"
+  ],
+  "admin.categoriesMultiple": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:48"
+  ],
+  "admin.subcategoryOptional": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:67"
+  ],
+  "admin.resourceType": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:71"
+  ],
+  "admin.thaiLanguageOption": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:93"
+  ],
+  "admin.removeTagAria": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:117"
+  ],
+  "admin.tagInputPlaceholder": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:122"
+  ],
+  "admin.addTagBtn": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:123"
+  ],
+  "admin.extraGradeLevelsLabel": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:140"
+  ],
+  "admin.extraGradeLevelsPlaceholder": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:141"
+  ],
+  "admin.standardExamLabel": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:144"
+  ],
+  "admin.extraStandardsLabel": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:157"
+  ],
+  "admin.filesAndStorage": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:164"
+  ],
+  "admin.galleryUploadDesc": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:169"
+  ],
+  "admin.noImagesPlaceholder": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:209"
+  ],
+  "admin.mainDocFile": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:213"
+  ],
+  "admin.uploadMainFile": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:216"
+  ],
+  "admin.openDownloadFile": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:225"
+  ],
+  "admin.noFileToDownload": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:228"
+  ],
+  "admin.storageKeyPlaceholder": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:234"
+  ],
+  "admin.previewFile": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:238"
+  ],
+  "admin.uploadPreview": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:241"
+  ],
+  "admin.orPasteKeySelf": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:244"
+  ],
+  "admin.previewPages": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:259"
+  ],
+  "admin.reportsModeration": [
+    "src\\app\\features\\admin\\document-detail\\document-detail.page.html:281"
+  ],
+  "userId": [
+    "src\\app\\features\\admin\\user-detail\\user-detail.page.ts:101"
+  ],
+  "becomeSeller.alreadySellerTitle": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:14"
+  ],
+  "becomeSeller.alreadySellerDesc": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:15"
+  ],
+  "becomeSeller.goToDashboard": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:16"
+  ],
+  "becomeSeller.pendingTitle": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:26"
+  ],
+  "becomeSeller.pendingDesc": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:28"
+  ],
+  "becomeSeller.rejectedTitle": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:40"
+  ],
+  "becomeSeller.rejectedReason": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:43"
+  ],
+  "becomeSeller.rejectedHint": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:46"
+  ],
+  "becomeSeller.studioNameLabel": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:54"
+  ],
+  "becomeSeller.studioNamePlaceholder": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:60"
+  ],
+  "becomeSeller.bioLabel": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:68"
+  ],
+  "becomeSeller.bioPlaceholder": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:74"
+  ],
+  "becomeSeller.specialtiesLabel": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:82"
+  ],
+  "becomeSeller.specialtiesHint": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:83"
+  ],
+  "becomeSeller.specialtiesPlaceholder": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.html:90"
+  ],
+  "becomeSeller.studioNameRequired": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.ts:64"
+  ],
+  ",": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.ts:71"
+  ],
+  "becomeSeller.submitSuccess": [
+    "src\\app\\features\\buyer\\become-seller\\become-seller.page.ts:82"
+  ],
+  "bundleDetail.breadcrumbBundles": [
+    "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:7"
+  ],
+  "bundleDetail.itemsInBundle": [
+    "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:30"
+  ],
+  "bundleDetail.savingsBanner": [
+    "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:55"
+  ],
+  "bundleDetail.itemsTitle": [
+    "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:85"
+  ],
+  "bundleDetail.backToBundles": [
+    "src\\app\\features\\buyer\\bundle-detail\\bundle-detail.page.html:100"
+  ],
+  "slug": [
+    "src\\app\\features\\buyer\\category-detail\\category-detail.page.ts:104",
+    "src\\app\\features\\buyer\\category-detail\\category-detail.page.ts:106"
+  ],
+  "sub": [
+    "src\\app\\features\\buyer\\category-detail\\category-detail.page.ts:117"
+  ],
+  "new": [
+    "src\\app\\features\\buyer\\checkout\\checkout.page.ts:340"
+  ],
+  "#stripe-payment-element": [
+    "src\\app\\features\\buyer\\checkout\\checkout.page.ts:512"
+  ],
+  "product.loginToFollow": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:251"
+  ],
+  "product.cannotFollowOwn": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:257"
+  ],
+  "product.loginToBuy": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:383"
+  ],
+  "product.loginToDownload": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:394",
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:414"
+  ],
+  "product.downloadError": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:500"
+  ],
+  "product.questionTooShort": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:528"
+  ],
+  "product.questionSubmitted": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:537"
+  ],
+  "product.questionSubmitFailed": [
+    "src\\app\\features\\buyer\\document-detail\\document-detail.page.ts:539"
+  ],
+  "home.recentlyViewedEyebrow": [
+    "src\\app\\features\\buyer\\home\\home.page.html:271"
+  ],
+  "home.recentlyViewedTitle": [
+    "src\\app\\features\\buyer\\home\\home.page.html:272",
+    "src\\app\\features\\buyer\\marketplace\\marketplace.page.html:14"
+  ],
+  "home.clearRecent": [
+    "src\\app\\features\\buyer\\home\\home.page.html:274",
+    "src\\app\\features\\buyer\\marketplace\\marketplace.page.html:17"
+  ],
+  "home.editorsPicksEyebrow": [
+    "src\\app\\features\\buyer\\home\\home.page.html:416"
+  ],
+  "home.editorsPicksTitle": [
+    "src\\app\\features\\buyer\\home\\home.page.html:417"
+  ],
+  "home.editorsPicksSubtitle": [
+    "src\\app\\features\\buyer\\home\\home.page.html:418"
+  ],
+  "subcategory": [
+    "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts:393"
+  ],
+  "tab": [
+    "src\\app\\features\\buyer\\marketplace\\marketplace.page.ts:394"
+  ],
+  "storefront.loadingTitle": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:3"
+  ],
+  "storefront.loadingDesc": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:3"
+  ],
+  "storefront.byOwner": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:40"
+  ],
+  "storefront.followStore": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:72"
+  ],
+  "storefront.safetyNotice": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:78"
+  ],
+  "storefront.statSales": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:90"
+  ],
+  "storefront.statRating": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:94"
+  ],
+  "storefront.statFollowers": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:98"
+  ],
+  "storefront.statAvgResponse": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:102"
+  ],
+  "storefront.emptyDocs": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:157"
+  ],
+  "storefront.allStoreDocs": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:160"
+  ],
+  "storefront.emptyBundles": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:171"
+  ],
+  "storefront.emptyFree": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:182"
+  ],
+  "storefront.backToMarketplace": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.html:207"
+  ],
+  "storefront.tabBundles": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.ts:113"
+  ],
+  "storefront.tabTop": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.ts:115"
+  ],
+  "storefront.loginToFollow": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.ts:160"
+  ],
+  "storefront.cannotFollowSelf": [
+    "src\\app\\features\\buyer\\storefront\\storefront.page.ts:166"
+  ],
+  "wallet.topUpCreateFailed": [
+    "src\\app\\features\\buyer\\wallet\\wallet.page.ts:157"
+  ],
+  "wallet.paymentSystemLoadFailed": [
+    "src\\app\\features\\buyer\\wallet\\wallet.page.ts:172"
+  ],
+  "wallet.stripeScriptFailed": [
+    "src\\app\\features\\buyer\\wallet\\wallet.page.ts:235"
+  ],
+  "wallet.stripeKeyNotConfigured": [
+    "src\\app\\features\\buyer\\wallet\\wallet.page.ts:240"
+  ],
+  "wallet.topUpSuccess": [
+    "src\\app\\features\\buyer\\wallet\\wallet.page.ts:281"
+  ],
+  "wallet.topUpProcessing": [
+    "src\\app\\features\\buyer\\wallet\\wallet.page.ts:283"
+  ]
+}

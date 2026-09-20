@@ -223,9 +223,9 @@ export class NotificationConfigAdminPage {
   confirmReset(item: NotificationEventConfigItem): void {
     this.modal.confirm({
       nzTitle: this.translation.t('admin.notifConfig.confirmResetTitle'),
-      nzContent: `คืนค่าการตั้งค่าของ "${item.label}" กลับเป็นค่าเริ่มต้นของระบบหรือไม่?`,
+      nzContent: this.translation.t('admin.confirmResetConfig', { label: item.label }),
       nzOkText: this.translation.t('admin.notifConfig.confirmResetOk'),
-      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: () => this.reset(item),
     });
   }

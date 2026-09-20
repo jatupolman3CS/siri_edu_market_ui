@@ -279,10 +279,10 @@ export class AnnouncementsAdminPage {
   confirmDelete(a: AnnouncementAdmin): void {
     this.modal.confirm({
       nzTitle: this.translation.t('admin.announcements.confirmDeleteTitle'),
-      nzContent: `ยืนยันลบประกาศ "${a.title}" หรือไม่? การกระทำนี้ย้อนกลับไม่ได้`,
-      nzOkText: this.translation.t('common.delete') || 'ลบ',
+      nzContent: this.translation.t('admin.confirmDeleteAnnouncement', { title: a.title }),
+      nzOkText: this.translation.t('common.delete'),
       nzOkDanger: true,
-      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: () => this.remove(a.id),
     });
   }

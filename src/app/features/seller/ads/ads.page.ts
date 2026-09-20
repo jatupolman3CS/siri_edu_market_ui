@@ -184,12 +184,12 @@ export class SellerAdsPage {
   });
 
   readonly submitDisabledReason = computed<string | null>(() => {
-    if (this.submitting()) return 'กำลังส่ง...';
-    if (!this.selectedDocumentId()) return 'กรุณาเลือกเอกสาร';
+    if (this.submitting()) return this.translation.t('sellerAds.submitting');
+    if (!this.selectedDocumentId()) return this.translation.t('sellerAds.selectDocument');
     const q = this.quote();
     if (!q) return null;
-    if (q.fullDates.length > 0) return 'ช่วงวันที่เลือกมีวันที่เต็มแล้ว กรุณาเลือกวันอื่น';
-    if (!q.canAfford) return 'ยอดคงเหลือไม่พอ กรุณาเลือกช่วงเวลาที่สั้นลงหรือรอรายได้เข้าเพิ่ม';
+    if (q.fullDates.length > 0) return this.translation.t('sellerAds.datesFullyBooked');
+    if (!q.canAfford) return this.translation.t('sellerAds.insufficientBalance');
     return null;
   });
 
@@ -240,14 +240,14 @@ export class SellerAdsPage {
     const estimated = this.estimateRefund(campaign);
     const content =
       estimated > 0
-        ? `ยกเลิกแคมเปญนี้? คุณจะได้รับเงินคืน ${formatBaht(estimated)} บาท สำหรับวันที่ยังไม่ได้ใช้`
-        : 'แคมเปญนี้จะสิ้นสุดวันนี้ จึงไม่มีเงินคืน';
+        ? this.translation.t('sellerAds.cancelConfirmWithRefund', { amount: formatBaht(estimated) })
+        : this.translation.t('sellerAds.cancelConfirmNoRefund');
     this.modal.confirm({
-      nzTitle: 'ยกเลิกแคมเปญโฆษณา',
+      nzTitle: this.translation.t('sellerAds.cancelTitle'),
       nzContent: content,
-      nzOkText: 'ยืนยันยกเลิก',
+      nzOkText: this.translation.t('sellerAds.cancelConfirmOk'),
       nzOkDanger: true,
-      nzCancelText: 'ปิด',
+      nzCancelText: this.translation.t('common.close'),
       nzOnOk: () => this.doCancel(campaign.id),
     });
   }
@@ -276,7 +276,7 @@ export class SellerAdsPage {
     try {
       const result = await this.ads.cancelCampaign(campaignId);
       if (result.ok) {
-        this.message.success(`ยกเลิกแคมเปญเรียบร้อย คืนเงิน ${formatBaht(result.campaign.refundedAmount)} บาท`);
+        this.message.success(this.translation.t('sellerAds.cancelSuccess', { amount: formatBaht(result.campaign.refundedAmount) }));
         void this.refresh();
         void this.seller.loadEarnings();
       } else if (result.message) {
@@ -428,7 +428,7 @@ export class SellerAdsPage {
         expectedTotalAmount: q.totalAmount,
       });
       if (result.ok) {
-        this.message.success('สร้างแคมเปญโฆษณาเรียบร้อย');
+        this.message.success(this.translation.t('sellerAds.createSuccess'));
         this.closeForm();
         void this.refresh();
         void this.seller.loadEarnings();

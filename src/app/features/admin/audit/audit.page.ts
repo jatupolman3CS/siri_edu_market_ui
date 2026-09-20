@@ -155,7 +155,7 @@ export class AdminAuditPage {
         } else if (typeof val === 'boolean') {
           valueStr = val ? this.translation.t('admin.audit.boolTrue') : this.translation.t('admin.audit.boolFalse');
         } else if (typeof val === 'number' && (key.toLowerCase().includes('price') || key.toLowerCase().includes('amount'))) {
-          valueStr = `${val.toLocaleString()} บาท`;
+          valueStr = `${val.toLocaleString()} ${this.translation.t('common.baht')}`;
         } else if (typeof val === 'object') {
           valueStr = JSON.stringify(val);
         } else {

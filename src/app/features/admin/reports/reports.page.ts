@@ -79,7 +79,7 @@ export class AdminReportsPage {
       this.reports.set(paged.items ?? []);
       this.total.set(paged.totalCount ?? 0);
     } catch (e) {
-      this.apiFail.report('โหลดรายงานเอกสาร', e);
+      this.apiFail.report(this.translation.t('admin.errLoadReports'), e);
       this.reports.set([]);
       this.total.set(0);
     } finally {
@@ -93,10 +93,10 @@ export class AdminReportsPage {
     this.busyId.set(report.id);
     try {
       await this.admin.resolveDocumentReport(report.documentId, report.id);
-      this.message.success('ปิดรายงานเรียบร้อย');
+      this.message.success(this.translation.t('admin.closeReportSuccess'));
       await this.reload();
     } catch (e) {
-      this.apiFail.report('ปิดรายงาน', e);
+      this.apiFail.report(this.translation.t('admin.errCloseReport'), e);
     } finally {
       this.busyId.set(null);
     }

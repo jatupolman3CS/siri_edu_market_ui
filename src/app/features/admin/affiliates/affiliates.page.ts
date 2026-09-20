@@ -141,11 +141,11 @@ export class AdminAffiliatesPage {
               : it,
           ),
         );
-        this.message.success('บันทึกการตั้งค่าสำเร็จ');
+        this.message.success(this.translation.t('admin.affiliatesSaveSuccess'));
         this.closeSettingsModal();
       }
     } catch {
-      this.message.error('บันทึกการตั้งค่าไม่สำเร็จ');
+      this.message.error(this.translation.t('admin.affiliatesSaveFailed'));
     } finally {
       this.savingSettings.set(false);
     }
