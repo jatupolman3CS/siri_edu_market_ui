@@ -1,11 +1,11 @@
 <div class="space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-extrabold text-ink">สมาชิกรายเดือน</h1>
-      <p class="text-sm text-ink-soft">รายการสมาชิกรายเดือนทั้งหมดในระบบ (อ่านอย่างเดียว)</p>
+      <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.subscriptionsAdmin.title' | trans }}</h1>
+      <p class="text-sm text-ink-soft">{{ 'admin.subscriptionsAdmin.desc' | trans }}</p>
     </div>
     <button class="btn-ghost" [disabled]="loading()" (click)="reload()">
-      {{ loading() ? 'กำลังโหลด…' : 'รีเฟรช' }}
+      {{ loading() ? ('admin.subscriptionsAdmin.loading' | trans) : ('admin.subscriptionsAdmin.refresh' | trans) }}
     </button>
   </header>
 
@@ -23,12 +23,12 @@
   </div>
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'admin.subscriptionsAdmin.loading' | trans }}</div>
   } @else if (items().length === 0) {
     <app-empty-state
       emoji="🧾"
-      title="ไม่มีรายการสมาชิก"
-      description="เมื่อมีผู้สมัครสมาชิกรายเดือน รายการจะแสดงที่นี่"
+      [title]="'admin.subscriptionsAdmin.empty' | trans"
+      [description]="'admin.subscriptionsAdmin.emptyDesc' | trans"
     />
   } @else {
     <div class="card-soft p-6">
@@ -36,12 +36,12 @@
         <table class="w-full min-w-[820px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-4 py-3 font-semibold">ผู้สมัคร</th>
-              <th class="px-4 py-3 font-semibold">หมวดหมู่</th>
-              <th class="px-4 py-3 font-semibold">ราคา/เดือน</th>
-              <th class="px-4 py-3 font-semibold">รอบบิลปัจจุบัน</th>
-              <th class="px-4 py-3 font-semibold">สถานะ</th>
-              <th class="px-4 py-3 font-semibold">สมัครเมื่อ</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.subscriptionsAdmin.colSubscriber' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.subscriptionsAdmin.colCategories' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.subscriptionsAdmin.colPrice' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.subscriptionsAdmin.colPeriod' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.subscriptionsAdmin.colStatus' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.subscriptionsAdmin.colCreatedAt' | trans }}</th>
             </tr>
           </thead>
           <tbody>
@@ -52,7 +52,7 @@
                   <div class="text-xs text-ink-muted">{{ s.buyerEmail }}</div>
                 </td>
                 <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">
-                  {{ s.categoryIds.length }} หมวด
+                  {{ s.categoryIds.length }} {{ 'admin.subscriptionsAdmin.categoryUnit' | trans }}
                 </td>
                 <td class="px-4 py-3 text-sm font-bold text-ink whitespace-nowrap">
                   {{ s.monthlyPrice | thb }}
@@ -61,7 +61,7 @@
                   {{ s.currentPeriodStart | date: 'd MMM yyyy' }} –
                   {{ s.currentPeriodEnd | date: 'd MMM yyyy' }}
                   @if (s.cancelAtPeriodEnd) {
-                    <span class="text-rose-500">(ยกเลิกแล้ว)</span>
+                    <span class="text-rose-500">({{ 'admin.subscriptionsAdmin.cancelled' | trans }})</span>
                   }
                 </td>
                 <td class="px-4 py-3">

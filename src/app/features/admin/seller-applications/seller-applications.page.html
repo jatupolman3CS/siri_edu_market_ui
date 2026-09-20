@@ -1,21 +1,21 @@
 <div class="space-y-6">
   <header class="flex items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-extrabold text-ink">ใบสมัครผู้ขาย</h1>
-      <p class="text-sm text-ink-soft">อนุมัติเพื่อเปลี่ยนบัญชีผู้ซื้อให้เป็นผู้ขาย</p>
+      <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.sellerApps.title' | trans }}</h1>
+      <p class="text-sm text-ink-soft">{{ 'admin.sellerApps.desc' | trans }}</p>
     </div>
     <button class="btn-ghost" [disabled]="loading()" (click)="reload()">
-      {{ loading() ? 'กำลังโหลด…' : 'รีเฟรช' }}
+      {{ loading() ? ('admin.sellerApps.loading' | trans) : ('admin.sellerApps.refresh' | trans) }}
     </button>
   </header>
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (items().length === 0) {
     <app-empty-state
       emoji="📋"
-      title="ไม่มีใบสมัครรอตรวจสอบ"
-      description="เมื่อมีผู้ซื้อสมัครเป็นผู้ขาย ใบสมัครจะแสดงที่นี่"
+      [title]="'admin.sellerApps.empty' | trans"
+      [description]="'admin.sellerApps.emptyDesc' | trans"
     />
   } @else {
     <div class="space-y-4">
@@ -28,7 +28,7 @@
                 {{ item.ownerName }} · {{ item.email }}
               </p>
               @if (item.appliedAt) {
-                <p class="text-xs text-ink-muted mt-1">สมัครเมื่อ {{ item.appliedAt | date: 'medium' }}</p>
+                <p class="text-xs text-ink-muted mt-1">{{ 'admin.sellerApps.appliedAt' | trans }} {{ item.appliedAt | date: 'medium' }}</p>
               }
             </div>
 
@@ -39,14 +39,14 @@
                   [disabled]="busyUserId() === item.userId"
                   (click)="approve(item.userId!)"
                 >
-                  อนุมัติ
+                  {{ 'admin.sellerApps.approve' | trans }}
                 </button>
                 <button
                   class="btn-ghost !py-2 !px-4 text-sm"
                   [disabled]="busyUserId() === item.userId"
                   (click)="startReject(item.userId!)"
                 >
-                  ปฏิเสธ
+                  {{ 'admin.sellerApps.reject' | trans }}
                 </button>
               </div>
             }
@@ -69,14 +69,14 @@
           @if (rejectingUserId() === item.userId) {
             <div class="mt-5 pt-5 border-t border-line space-y-3">
               <label class="text-xs font-semibold text-ink-soft block">
-                เหตุผลที่ปฏิเสธ (ผู้สมัครจะเห็นข้อความนี้)
+                {{ 'admin.sellerApps.rejectReasonLabel' | trans }}
               </label>
               <textarea
                 [(ngModel)]="rejectReason"
                 name="rejectReason"
                 rows="3"
                 class="input-soft"
-                placeholder="เช่น ชื่อร้านซ้ำกับร้านอื่น กรุณาเปลี่ยนแล้วส่งใหม่"
+                [placeholder]="'admin.sellerApps.rejectPlaceholder' | trans"
                 maxlength="1024"
               ></textarea>
               <div class="flex gap-2">
@@ -85,9 +85,9 @@
                   [disabled]="busyUserId() === item.userId"
                   (click)="confirmReject(item.userId!)"
                 >
-                  ยืนยันการปฏิเสธ
+                  {{ 'admin.sellerApps.confirmReject' | trans }}
                 </button>
-                <button class="btn-ghost !py-2 !px-4 text-sm" (click)="cancelReject()">ยกเลิก</button>
+                <button class="btn-ghost !py-2 !px-4 text-sm" (click)="cancelReject()">{{ 'admin.sellerApps.cancelBtn' | trans }}</button>
               </div>
             </div>
           }

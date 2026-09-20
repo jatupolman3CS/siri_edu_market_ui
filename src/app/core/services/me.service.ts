@@ -40,7 +40,7 @@ export class MeService {
         this.injector.get(AuthService).syncUserFromProfile(p);
       }),
       catchError((e) => {
-        this.apiFail.report('โหลดโปรไฟล์', e);
+        this.apiFail.report('errors.context.loadProfile', e);
         return throwError(() => e);
       }),
       finalize(() => {
@@ -67,7 +67,7 @@ export class MeService {
         this.injector.get(AuthService).syncUserFromProfile(p);
       }),
       catchError((e) => {
-        this.apiFail.report('บันทึกโปรไฟล์', e);
+        this.apiFail.report('errors.context.saveProfile', e);
         return throwError(() => e);
       }),
     );
@@ -86,7 +86,7 @@ export class MeService {
       const result = await postApiFilesUpload({ body: { file } });
       return unwrapSdkResult(result);
     } catch (e) {
-      this.apiFail.report('อัปโหลดรูปโปรไฟล์', e);
+      this.apiFail.report('errors.context.uploadProfilePicture', e);
       throw e;
     }
   }

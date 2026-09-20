@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { PopularSearchTerm } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.1/§4.3 — the "คำค้นยอดนิยม"
@@ -18,12 +19,12 @@ import type { PopularSearchTerm } from '../../../core/models';
 @Component({
   selector: 'app-popular-search-chips',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './popular-search-chips.component.html',
 })
 export class PopularSearchChipsComponent {
   readonly terms = input<PopularSearchTerm[]>([]);
-  readonly fallbackTerms = input<string[]>([]);
+  readonly fallbackTerms = input<readonly string[]>([]);
   readonly label = input<string>('');
 }

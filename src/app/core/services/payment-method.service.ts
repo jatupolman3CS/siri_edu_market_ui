@@ -10,6 +10,7 @@ import {
 } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import {
   errorActionState,
   idleActionState,
@@ -38,6 +39,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class PaymentMethodService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _list = signal<SavedPaymentMethod[]>([]);
   private readonly _state = signal<ActionState>(idleActionState());
@@ -54,9 +56,9 @@ export class PaymentMethodService {
       this._list.set((data ?? []).map(mapSavedPaymentMethod));
       this._state.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดรายการบัตร', e);
+      this.apiFail.report('errors.context.loadSavedCards', e);
       this._list.set([]);
-      this._state.set(errorActionState('โหลดรายการบัตรไม่สำเร็จ'));
+      this._state.set(errorActionState(this.translation.t('payment.loadCardsFailed')));
     }
   }
 
@@ -85,7 +87,7 @@ export class PaymentMethodService {
       const data = unwrapSdkResult(result);
       return mapSavedPaymentMethod(data);
     } catch (e) {
-      this.apiFail.report('ตั้งบัตรหลัก', e);
+      this.apiFail.report('errors.context.setDefaultCard', e);
       return null;
     }
   }

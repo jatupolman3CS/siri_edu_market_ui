@@ -11,9 +11,7 @@ export class ApiFailureReporter {
   private readonly translation = inject(TranslationService, { optional: true });
 
   private get fallbackText(): string {
-    return this.translation?.currentLang() === 'en'
-      ? 'Unable to connect to the server'
-      : 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';
+    return this.translation?.t('errors.networkError') ?? 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';
   }
 
   /** context = ข้อความสั้นๆ หรือ translation key เช่น "โหลดตะกร้า" หรือ "common.errors.loadCart" */

@@ -5,7 +5,7 @@
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-      <span>🎯 สนามสอบ</span>
+      <span>{{ 'examHub.tag' | trans }}</span>
     </div>
     <h1 class="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight mb-1.5">
       {{ page()?.title }}
@@ -24,7 +24,7 @@
         <div class="card-soft p-5 border border-pink-100/60 bg-gradient-to-br from-white to-pink-50/20">
           <div class="flex items-center gap-2 text-pink-600 font-bold text-sm mb-2">
             <span>📅</span>
-            <span>กำหนดการสอบ</span>
+            <span>{{ 'examHub.schedule' | trans }}</span>
           </div>
           <p class="text-sm text-ink-soft whitespace-pre-line leading-relaxed">
             {{ page()?.examDateInfo }}
@@ -36,7 +36,7 @@
         <div class="card-soft p-5 border border-purple-100/60 bg-gradient-to-br from-white to-purple-50/20">
           <div class="flex items-center gap-2 text-purple-600 font-bold text-sm mb-2">
             <app-icon name="chart" [size]="16" />
-            <span>เกณฑ์คะแนน</span>
+            <span>{{ 'examHub.scoreCriteria' | trans }}</span>
           </div>
           <p class="text-sm text-ink-soft whitespace-pre-line leading-relaxed">
             {{ page()?.scoreCriteriaInfo }}
@@ -48,7 +48,7 @@
         <div class="card-soft p-5 border border-indigo-100/60 bg-gradient-to-br from-white to-indigo-50/20">
           <div class="flex items-center gap-2 text-indigo-600 font-bold text-sm mb-2">
             <app-icon name="sparkle" [size]="16" />
-            <span>เทรนด์ข้อสอบ</span>
+            <span>{{ 'examHub.examTrends' | trans }}</span>
           </div>
           <p class="text-sm text-ink-soft whitespace-pre-line leading-relaxed">
             {{ page()?.trendInfo }}
@@ -63,32 +63,32 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold text-ink flex items-center gap-2">
         <app-icon name="doc" [size]="20" className="text-pink-500" />
-        <span>เอกสารสำหรับสนามสอบนี้</span>
+        <span>{{ 'examHub.docsHeading' | trans }}</span>
       </h2>
       @if (docs().length > 0) {
         <span class="text-xs text-ink-muted">
-          {{ docs().length }} รายการ
+          {{ 'examHub.itemsUnit' | trans:{ count: docs().length } }}
         </span>
       }
     </div>
 
     @if (docsState().status === 'loading' && docs().length === 0) {
-      <app-empty-state emoji="⏳" title="กำลังโหลดเอกสาร…" description="รอสักครู่นะคะ" />
+      <app-empty-state emoji="⏳" [title]="'examHub.loadingDocs' | trans" [description]="'common.pleaseWait' | trans" />
     } @else if (docsState().status === 'error' && docs().length === 0) {
       <app-empty-state
         emoji="⚠️"
-        title="โหลดข้อมูลไม่สำเร็จ"
-        description="ไม่สามารถโหลดเอกสารได้ โปรดลองอีกครั้ง"
+        [title]="'common.loadFailed' | trans"
+        [description]="'examHub.loadErrorDesc' | trans"
       >
-        <button class="btn-pink mt-4" (click)="retry()">ลองใหม่อีกครั้ง</button>
+        <button class="btn-pink mt-4" (click)="retry()">{{ 'common.retry' | trans }}</button>
       </app-empty-state>
     } @else if (docs().length === 0) {
       <app-empty-state
         emoji="📚"
-        title="ยังไม่มีเอกสารสำหรับสนามสอบนี้ในตอนนี้"
-        description="ลองกลับมาดูใหม่ภายหลัง หรือค้นหาเอกสารอื่นในตลาดเอกสารนะคะ"
+        [title]="'examHub.emptyDocsTitle' | trans"
+        [description]="'examHub.emptyDocsDesc' | trans"
       >
-        <a routerLink="/marketplace" class="btn-pink mt-4">ไปที่ตลาดเอกสาร</a>
+        <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'examHub.goToMarketplace' | trans }}</a>
       </app-empty-state>
     } @else {
       <div class="document-card-grid">
@@ -106,9 +106,9 @@
             [disabled]="docsState().status === 'loading'"
           >
             @if (docsState().status === 'loading') {
-              <span>กำลังโหลด…</span>
+              <span>{{ 'common.loading' | trans }}</span>
             } @else {
-              <span>โหลดเพิ่ม</span>
+              <span>{{ 'home.loadMore' | trans }}</span>
             }
           </button>
         </div>

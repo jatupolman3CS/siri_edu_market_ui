@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-pagination',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pagination.component.html',
   styleUrl: './pagination.component.scss',

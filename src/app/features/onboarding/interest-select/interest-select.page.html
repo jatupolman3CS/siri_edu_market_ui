@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-8">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold">
         <span>✨</span>
-        <span>ปรับแต่งความสนใจ</span>
+        <span>{{ 'onboarding.customizeInterests' | trans }}</span>
       </div>
       <button
         type="button"
@@ -12,23 +12,23 @@
         [disabled]="submitting()"
         class="text-sm font-medium text-ink-muted hover:text-ink transition-colors disabled:opacity-50"
       >
-        ข้ามไปก่อน
+        {{ 'onboarding.skipForNow' | trans }}
       </button>
     </div>
 
     <div class="text-center mb-10">
       <h1 class="text-3xl sm:text-4xl font-extrabold text-ink mb-3">
-        เลือกหมวดหมู่วิชาที่คุณสนใจ
+        {{ 'onboarding.interestTitle' | trans }}
       </h1>
       <p class="text-base text-ink-soft max-w-lg mx-auto">
-        เลือกวิชาหรือหัวข้อที่คุณต้องการ เพื่อให้เราแนะนำเอกสารและข้อสอบที่ตรงใจคุณมากที่สุด (เลือกได้มากกว่า 1 ข้อ)
+        {{ 'onboarding.interestSubtitle' | trans }}
       </p>
     </div>
 
     <!-- Category Pills Grid -->
     @if (categoriesState().status === 'loading' && categories().length === 0) {
       <div class="py-12 flex justify-center items-center text-ink-muted text-sm">
-        กำลังโหลดหมวดหมู่...
+        {{ 'onboarding.loadingCategories' | trans }}
       </div>
     } @else {
       <div class="flex flex-wrap justify-center gap-3 mb-10">
@@ -65,9 +65,9 @@
         class="w-full sm:w-auto px-8 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-semibold text-sm shadow-sm hover:shadow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         @if (submitting()) {
-          กำลังบันทึก...
+          {{ 'onboarding.saving' | trans }}
         } @else {
-          เสร็จสิ้น @if (selectedCategoryIds().length > 0) { ({{ selectedCategoryIds().length }}) }
+          {{ 'onboarding.complete' | trans }} @if (selectedCategoryIds().length > 0) { ({{ selectedCategoryIds().length }}) }
         }
       </button>
 
@@ -77,7 +77,7 @@
         [disabled]="submitting()"
         class="w-full sm:w-auto px-6 py-3 rounded-xl text-ink-soft hover:text-ink font-medium text-sm transition-colors disabled:opacity-60"
       >
-        ข้ามไปก่อน
+        {{ 'onboarding.skipForNow' | trans }}
       </button>
     </div>
   </div>

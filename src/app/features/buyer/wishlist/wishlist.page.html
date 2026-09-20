@@ -1,71 +1,71 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-      <app-page-hero
-        eyebrow="รายการโปรด"
-        title="เก็บไว้ดูทีหลังได้เลย 💗"
-        description="เอกสารที่คุณกดหัวใจไว้ — รอลดราคา หรือซื้อตอนพร้อม"
-      />
+  <app-page-hero
+    [eyebrow]="'wishlist.heroEyebrow' | trans"
+    [title]="'wishlist.heroTitle' | trans"
+    [description]="'wishlist.heroDesc' | trans"
+  />
 
-      @if (wishlist.state().status === 'loading') {
-        <app-empty-state emoji="⏳" title="กำลังโหลดรายการโปรด…" description="รอสักครู่นะคะ" />
-      } @else if (wishlist.state().status === 'error') {
-        <app-empty-state emoji="⚠️" title="โหลดรายการโปรดไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
-          <button class="btn-pink mt-4" type="button" (click)="wishlist.refresh()">
-            ลองใหม่
-          </button>
-        </app-empty-state>
-      } @else if (wishlist.count() === 0) {
-        <app-empty-state
-          emoji="💗"
-          title="ยังไม่มีรายการโปรด"
-          description="กดหัวใจที่การ์ดเอกสารเพื่อบันทึกไว้ดูภายหลัง"
-        >
-          <a routerLink="/marketplace" class="btn-pink mt-4">เลือกชมเอกสาร</a>
-        </app-empty-state>
-      } @else {
-        <!-- Toolbar -->
-        <div class="flex items-center justify-between mb-6">
-          <div class="text-sm text-ink-soft">
-            <b class="text-ink">{{ wishlist.count() }}</b> รายการ —
-            มูลค่ารวม <b class="text-pink-600">{{ totalValue() | thb }}</b>
-          </div>
-          <div class="flex gap-2">
-            <button class="btn-pink !py-2 text-sm" (click)="addAllToCart()">
-              <app-icon name="cart" [size]="14" />
-              เพิ่มทั้งหมดลงตะกร้า
-            </button>
-            <button class="btn-ghost !py-2 text-sm" (click)="confirmClear()">
-              <app-icon name="trash" [size]="14" />
-              ล้างทั้งหมด
-            </button>
-          </div>
-        </div>
+  @if (wishlist.state().status === 'loading') {
+    <app-empty-state emoji="⏳" [title]="'wishlist.loading' | trans" [description]="'common.pleaseWait' | trans" />
+  } @else if (wishlist.state().status === 'error') {
+    <app-empty-state emoji="⚠️" [title]="'wishlist.loadFailed' | trans" [description]="'common.retry' | trans">
+      <button class="btn-pink mt-4" type="button" (click)="wishlist.refresh()">
+        {{ 'common.retry' | trans }}
+      </button>
+    </app-empty-state>
+  } @else if (wishlist.count() === 0) {
+    <app-empty-state
+      emoji="💗"
+      [title]="'wishlist.emptyTitle' | trans"
+      [description]="'wishlist.emptyDesc' | trans"
+    >
+      <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'wishlist.exploreMarket' | trans }}</a>
+    </app-empty-state>
+  } @else {
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="text-sm text-ink-soft">
+        <b class="text-ink">{{ wishlist.count() }}</b> {{ 'wishlist.itemsUnit' | trans }} —
+        {{ 'wishlist.totalValue' | trans }} <b class="text-pink-600">{{ totalValue() | thb }}</b>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn-pink !py-2 text-sm" (click)="addAllToCart()">
+          <app-icon name="cart" [size]="14" />
+          {{ 'wishlist.addAllToCart' | trans }}
+        </button>
+        <button class="btn-ghost !py-2 text-sm" (click)="confirmClear()">
+          <app-icon name="trash" [size]="14" />
+          {{ 'wishlist.clearAll' | trans }}
+        </button>
+      </div>
+    </div>
 
-        <div class="document-card-grid">
-          @for (doc of wishlist.items(); track doc.id) {
-            <div class="relative">
-              @if (doc.hasPriceDropped) {
-                <span
-                  class="absolute top-3 left-3 z-20 pill bg-pink-500 text-white shadow-soft text-[10px] font-bold"
-                >
-                  🔻 ราคาลดแล้ว!
-                </span>
-              }
-              <app-document-card [doc]="doc" density="compact" />
-            </div>
-          }
-        </div>
-
-        @if (wishlist.hasMore()) {
-          <div class="flex justify-center mt-6">
-            <button
-              type="button"
-              class="btn-pink"
-              (click)="wishlist.loadMore()"
-              [disabled]="wishlist.state().status === 'loading'"
+    <div class="document-card-grid">
+      @for (doc of wishlist.items(); track doc.id) {
+        <div class="relative">
+          @if (doc.hasPriceDropped) {
+            <span
+              class="absolute top-3 left-3 z-20 pill bg-pink-500 text-white shadow-soft text-[10px] font-bold"
             >
-              โหลดเพิ่ม
-            </button>
-          </div>
-        }
+              {{ 'wishlist.priceDropped' | trans }}
+            </span>
+          }
+          <app-document-card [doc]="doc" density="compact" />
+        </div>
       }
     </div>
+
+    @if (wishlist.hasMore()) {
+      <div class="flex justify-center mt-6">
+        <button
+          type="button"
+          class="btn-pink"
+          (click)="wishlist.loadMore()"
+          [disabled]="wishlist.state().status === 'loading'"
+        >
+          {{ 'home.loadMore' | trans }}
+        </button>
+      </div>
+    }
+  }
+</div>

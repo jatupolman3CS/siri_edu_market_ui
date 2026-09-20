@@ -1,3 +1,5 @@
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../core/services';
@@ -10,6 +12,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [
+    TranslatePipe,
     RouterLink,
     StatCardComponent,
     ThbPipe,
@@ -21,6 +24,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
   styleUrl: './dashboard.page.scss',
 })
 export class AdminDashboardPage {
+  readonly translation = inject(TranslationService);
   readonly admin = inject(AdminService);
 
   /** Service status from the API (Database / Storage / API). Falls back to a single "API: ok" line. */
@@ -30,8 +34,8 @@ export class AdminDashboardPage {
     return [{ name: 'API', status: 'ok', message: undefined as string | undefined }];
   });
 
-  // ===== real-data-stats v1 §3.6/§4.7: trend badges (GMV/ค่าธรรมเนียม/คืนเงิน) =====
-  // "ธุรกรรมสำเร็จ" intentionally gets no trend badge — no field exists for it (§4.7).
+  // ===== real-data-stats v1 §3.6/§4.7: trend badges (GMV/fees/refunds) =====
+  // Successful transactions intentionally get no trend badge — no field exists for it (§4.7).
   private formatTrendPercent(v: number | null): string | null {
     if (v == null) return null;
     return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
@@ -64,11 +68,11 @@ export class AdminDashboardPage {
 
   statusLabel(s: string): string {
     return {
-      fulfilled: 'สำเร็จ',
-      paid: 'ชำระแล้ว',
-      awaiting_payment: 'รอชำระ',
-      refunded: 'คืนเงิน',
-      cancelled: 'ยกเลิก',
+      fulfilled: 'admin.txStatusFulfilled',
+      paid: 'admin.txStatusPaid',
+      awaiting_payment: 'admin.txStatusAwaitingPayment',
+      refunded: 'admin.txStatusRefunded',
+      cancelled: 'admin.txStatusCancelled',
     }[s] ?? s;
   }
 }

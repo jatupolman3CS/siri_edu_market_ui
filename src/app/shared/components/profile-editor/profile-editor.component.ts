@@ -4,22 +4,18 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { firstValueFrom } from 'rxjs';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { MeService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 /**
  * F-07: display name plus avatar, shared by /account and /seller/settings.
- *
- * Buyers previously had no way to change either: the only page that called
- * `PUT /api/me/profile` was /seller/settings, which sits behind the seller guard. Rather than
- * copy that page's profile block into a new one, it moved here and both pages use it — so a fix
- * to the upload flow, or to the "save the name alongside the avatar" ordering below, only has
- * to be made once.
  */
 @Component({
   selector: 'app-profile-editor',
   standalone: true,
-  imports: [FormsModule, IconComponent, ImgFallbackDirective],
+  imports: [FormsModule, IconComponent, ImgFallbackDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-editor.component.html',
   styles: [':host { display: block; }'],
@@ -27,27 +23,14 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 export class ProfileEditorComponent {
   private readonly me = inject(MeService);
   private readonly message = inject(NzMessageService);
+  readonly translation = inject(TranslationService);
 
   /** Shown read-only beside the name. Sellers pass their studio name; buyers pass nothing. */
   readonly secondaryLabel = input<string>('');
   readonly secondaryLabelText = input<string>('');
 
-  /**
-   * QA fix: these used to be plain (non-signal) fields set from an RxJS `subscribe()` callback.
-   * A component whose host template passes it no input bindings (e.g. `AccountPage`, which
-   * mounts `<app-profile-editor />` with nothing dynamic) had no reactive trigger telling
-   * zoneless change detection to re-check this OnPush view once the async `GET /api/me/profile`
-   * resolved, so the name/avatar stayed blank until something else happened to refresh the page.
-   * `/seller/settings` only "worked" by accident, because its own template reads
-   * `[secondaryLabel]="studioLabel()"` — an unrelated signal whose change happens to force this
-   * child to be re-checked. Signals make the component correct on its own, regardless of the host.
-   */
   readonly displayName = signal('');
   readonly avatarUrl = signal('');
-  /**
-   * storage-key-persistence v1 §4.1: the bare object-storage key, kept separate from `avatarUrl`
-   * (display-only) — this is what must round-trip back into `updateProfile()`, never the URL.
-   */
   readonly avatarStorageKey = signal('');
 
   readonly saving = signal(false);
@@ -65,8 +48,6 @@ export class ProfileEditorComponent {
         this.loaded.set(true);
       },
       error: () => {
-        // MeService has already reported through ApiFailureReporter. The form stays editable so
-        // a transient failure does not lock the user out of their own profile.
         this.loaded.set(true);
       },
     });
@@ -78,28 +59,22 @@ export class ProfileEditorComponent {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      this.message.warning('กรุณาเลือกไฟล์รูปภาพ (JPG/PNG/WebP)');
+      this.message.warning(this.translation.t('shared.profileEditor.invalidImageType'));
       return;
     }
 
     this.avatarUploading.set(true);
     try {
       const data = await this.me.uploadAvatar(file);
-      // image-upload-optimization v1 §4: avatar has no separate "original" column to keep, so
-      // the optimized URL (when the backend produced one) replaces publicUrl outright — both
-      // for what renders here and for what gets persisted.
       this.avatarUrl.set(data.optimizedUrl ?? data.publicUrl);
-      // storage-key-persistence v1 §4.1: persist the bare key from UploadResponse, never a URL.
       this.avatarStorageKey.set(data.optimizedKey ?? data.key);
-      // The name goes up with it: PUT /api/me/profile replaces the profile, so sending the
-      // avatar alone would blank a name the user had typed but not yet saved.
       await firstValueFrom(
         this.me.updateProfile({
           name: this.displayName(),
           avatarStorageKey: this.avatarStorageKey(),
         }),
       );
-      this.message.success('อัปโหลดรูปโปรไฟล์และบันทึกแล้ว');
+      this.message.success(this.translation.t('shared.profileEditor.uploadSuccess'));
     } catch {
       /* reported by MeService through ApiFailureReporter */
     } finally {
@@ -109,18 +84,14 @@ export class ProfileEditorComponent {
 
   save(): void {
     this.saving.set(true);
-    // storage-key-persistence v1 §4.1 (bug fix): resubmit `avatarStorageKey`, never `avatarUrl` —
-    // `avatarUrl` is a resolved display URL and would corrupt the stored key on every edit that
-    // doesn't touch the avatar.
     this.me
       .updateProfile({ name: this.displayName(), avatarStorageKey: this.avatarStorageKey() })
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.message.success('บันทึกโปรไฟล์แล้ว');
+          this.message.success(this.translation.t('shared.profileEditor.saveSuccess'));
         },
         error: () => {
-          // Left visible rather than swallowed: the user needs to know the name did not save.
           this.saving.set(false);
         },
       });

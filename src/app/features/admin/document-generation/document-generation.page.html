@@ -1,8 +1,8 @@
 <div class="space-y-6">
   <header>
-    <h1 class="text-3xl font-extrabold text-ink mb-1">สร้างเอกสารอัตโนมัติ</h1>
+    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.docGen.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">
-      สแกนหมวดหมู่แล้วสร้างเอกสาร PDF อัตโนมัติ — เอกสารที่ได้จะเข้าคิว "อนุมัติเอกสาร" เสมอ
+      {{ 'admin.docGen.desc' | trans }}
     </p>
   </header>
 
@@ -10,26 +10,26 @@
   <section class="card-soft p-5 flex items-center justify-between gap-4 flex-wrap">
     <div>
       <div class="text-sm font-bold text-ink">
-        สถานะ: {{ toggleEnabled() ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}
+        {{ 'admin.docGen.statusText' | trans }} {{ toggleEnabled() ? ('admin.docGen.statusEnabled' | trans) : ('admin.docGen.statusDisabled' | trans) }}
       </div>
       <p class="text-xs text-ink-muted mt-1">
-        งานเบื้องหลังที่สแกนหมวดหมู่และสร้างเอกสารอัตโนมัติทุก 24 ชั่วโมง
+        {{ 'admin.docGen.jobDesc' | trans }}
       </p>
     </div>
     <a routerLink="/admin/settings" class="btn-ghost !py-2 !px-4 text-sm">
-      ไปที่หน้าตั้งค่าเพื่อเปิด/ปิด
+      {{ 'admin.docGen.settingsLink' | trans }}
     </a>
   </section>
 
   <!-- ส่วนสั่งสร้าง -->
   <section class="card-soft p-6 space-y-4">
-    <h2 class="text-lg font-bold text-ink">สั่งสร้างเอกสาร</h2>
+    <h2 class="text-lg font-bold text-ink">{{ 'admin.docGen.runTitle' | trans }}</h2>
 
     <div>
-      <label class="text-xs font-semibold text-ink-soft mb-2 block">เลือกหมวดหมู่</label>
+      <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.docGen.categoryLabel' | trans }}</label>
       <select class="input-soft w-full sm:w-96 !py-2" [ngModel]="selectedCategoryId() ?? ''"
         (ngModelChange)="selectCategory($event)" [disabled]="submitting()">
-        <option value="">-- เลือกหมวดหมู่ --</option>
+        <option value="">{{ 'admin.docGen.categoryDefault' | trans }}</option>
         @for (c of categories(); track c.categoryId) {
         <option [value]="c.categoryId">{{ c.name }}</option>
         }
@@ -37,18 +37,18 @@
     </div>
 
     @if (categoriesLoading()) {
-    <div class="text-sm text-ink-muted">กำลังโหลดหมวดหมู่…</div>
+    <div class="text-sm text-ink-muted">{{ 'admin.docGen.loadingCategories' | trans }}</div>
     } @else if (categories().length === 0) {
-    <div class="text-sm text-ink-muted">ยังไม่มีข้อมูลหมวดหมู่</div>
+    <div class="text-sm text-ink-muted">{{ 'admin.docGen.noCategories' | trans }}</div>
     } @else {
     <ul class="flex flex-wrap gap-2">
       @for (c of categories(); track c.categoryId) {
       <li class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-line text-xs">
         <span class="text-ink">{{ c.name }}</span>
         @if (c.hasGeneratedDocument) {
-        <span class="pill-green !px-2 !py-0.5">มีเอกสารแล้ว</span>
+        <span class="pill-green !px-2 !py-0.5">{{ 'admin.docGen.hasDoc' | trans }}</span>
         } @else {
-        <span class="pill-soft !px-2 !py-0.5">ยังไม่มี</span>
+        <span class="pill-soft !px-2 !py-0.5">{{ 'admin.docGen.noDoc' | trans }}</span>
         }
       </li>
       }
@@ -58,10 +58,10 @@
     <div class="flex flex-wrap gap-3">
       <button class="btn-pink !py-2 !px-5 text-sm" type="button" [disabled]="!canRunSelected()"
         (click)="runForSelectedCategory()">
-        สร้างเฉพาะหมวดนี้
+        {{ 'admin.docGen.runSelected' | trans }}
       </button>
       <button class="btn-ghost !py-2 !px-5 text-sm" type="button" [disabled]="!canRunSweep()" (click)="runSweep()">
-        สแกนและสร้างหมวดที่ยังไม่มี (ทั้งหมด)
+        {{ 'admin.docGen.runSweep' | trans }}
       </button>
     </div>
 
@@ -74,12 +74,12 @@
 
   <!-- ตารางประวัติการรัน -->
   <section class="card-soft p-6 space-y-4">
-    <h2 class="text-lg font-bold text-ink">ประวัติการรัน</h2>
+    <h2 class="text-lg font-bold text-ink">{{ 'admin.docGen.historyTitle' | trans }}</h2>
 
     @if (runsLoading()) {
-    <div class="text-sm text-ink-muted">กำลังโหลด…</div>
+    <div class="text-sm text-ink-muted">{{ 'admin.docGen.historyLoading' | trans }}</div>
     } @else if (runs().length === 0) {
-    <app-empty-state emoji="🗂️" title="ยังไม่เคยมีการรันงานนี้" />
+    <app-empty-state emoji="🗂️" [title]="'admin.docGen.historyEmpty' | trans" />
     } @else {
     <ul class="flex flex-col gap-3">
       @for (r of runs(); track r.id) {
@@ -92,12 +92,11 @@
               <span class="text-xs text-ink-muted">· {{ runTypeLabel(r.triggeredBy) }}</span>
             </div>
             <p class="text-sm text-ink mt-1.5">
-              สแกน {{ r.categoriesScanned }} หมวดหมู่ · สร้างสำเร็จ {{ r.documentsGenerated }} รายการ
-              · ล้มเหลว {{ r.failureCount }} รายการ
+              {{ r.categoriesScanned }} {{ 'admin.categoriesAdmin.title' | trans }} · {{ r.documentsGenerated }} {{ 'common.items' | trans }} · {{ r.failureCount }} {{ 'common.items' | trans }}
             </p>
           </div>
           <button class="btn-ghost !py-1.5 !px-4 text-xs" type="button" (click)="toggleExpandRun(r.id)">
-            {{ expandedRunId() === r.id ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด' }}
+            {{ expandedRunId() === r.id ? ('admin.docGen.hideDetails' | trans) : ('admin.docGen.viewDetails' | trans) }}
           </button>
         </div>
 
@@ -117,7 +116,7 @@
             }
           </ul>
           } @else {
-          <p class="text-xs text-ink-muted">ไม่มีเอกสารที่สร้างสำเร็จใน run นี้</p>
+          <p class="text-xs text-ink-muted">{{ 'admin.docGen.noSuccessful' | trans }}</p>
           }
         </div>
         }
@@ -134,7 +133,7 @@
 
   <!-- หมายเหตุท้ายหน้า -->
   <p class="text-xs text-ink-muted text-center">
-    เอกสารที่สร้างจะถูกส่งเข้าคิว "อนุมัติเอกสาร" เสมอ ·
-    <a routerLink="/admin/approval" class="text-pink-600 font-semibold">ไปที่หน้าอนุมัติเอกสาร</a>
+    {{ 'admin.docGen.footnote' | trans }} ·
+    <a routerLink="/admin/approval" class="text-pink-600 font-semibold">{{ 'admin.docGen.approvalLink' | trans }}</a>
   </p>
 </div>

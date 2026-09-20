@@ -64,7 +64,7 @@ export class NotificationService {
         const data = unwrapSdkResult(result);
         this._settings.set(data.map(normalizeSetting));
       } catch (e) {
-        this.apiFail.report('โหลดการตั้งค่าแจ้งเตือน', e);
+        this.apiFail.report('errors.context.loadNotificationSettings', e);
       }
     })();
   }
@@ -77,7 +77,7 @@ export class NotificationService {
       map((settings) => settings.map(normalizeSetting)),
       tap((s) => this._settings.set(s)),
       catchError((e) => {
-        this.apiFail.report('บันทึกการตั้งค่าแจ้งเตือน', e);
+        this.apiFail.report('errors.context.saveNotificationSettings', e);
         return throwError(() => e);
       }),
     );

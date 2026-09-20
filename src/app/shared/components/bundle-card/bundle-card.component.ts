@@ -6,11 +6,12 @@ import { ThbPipe } from '../../pipes/thb.pipe';
 import { CompactPipe } from '../../pipes/compact.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-bundle-card',
   standalone: true,
-  imports: [RouterLink, ThbPipe, CompactPipe, IconComponent, ImgFallbackDirective],
+  imports: [RouterLink, ThbPipe, CompactPipe, IconComponent, ImgFallbackDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundle-card.component.html',
   styleUrl: './bundle-card.component.scss',

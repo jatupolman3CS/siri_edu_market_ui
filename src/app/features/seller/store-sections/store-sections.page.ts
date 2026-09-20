@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import type { StoreSectionResponse } from '../../../core/api';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -17,7 +19,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 @Component({
   selector: 'app-seller-store-sections',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmptyStateComponent, IconComponent, NzModalModule],
+  imports: [CommonModule, FormsModule, TranslatePipe, EmptyStateComponent, IconComponent, NzModalModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './store-sections.page.html',
 })
@@ -25,6 +27,7 @@ export class SellerStoreSectionsPage {
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
+  private readonly translation = inject(TranslationService);
   readonly seller = inject(SellerService);
 
   readonly sections = signal<StoreSectionResponse[]>([]);
@@ -51,7 +54,7 @@ export class SellerStoreSectionsPage {
     try {
       this.sections.set(await this.seller.listStoreSections());
     } catch (e) {
-      this.apiFail.report('โหลดหมวดหน้าร้าน', e);
+      this.apiFail.report(this.translation.t('seller.sectionsMgmt.errLoad'), e);
       this.sections.set([]);
     } finally {
       this.loading.set(false);
@@ -99,7 +102,7 @@ export class SellerStoreSectionsPage {
   async save(): Promise<void> {
     const name = this.name().trim();
     if (!name) {
-      this.message.warning('กรุณาตั้งชื่อหมวด');
+      this.message.warning(this.translation.t('seller.sectionsMgmt.missingName'));
       return;
     }
     if (this.saving()) return;
@@ -114,11 +117,11 @@ export class SellerStoreSectionsPage {
 
       await this.seller.saveStoreSection(this.editingId(), body);
 
-      this.message.success('บันทึกหมวดเรียบร้อย');
+      this.message.success(this.translation.t('seller.sectionsMgmt.saveSuccess'));
       this.cancel();
       await this.reload();
     } catch (e) {
-      this.apiFail.report('บันทึกหมวดหน้าร้าน', e);
+      this.apiFail.report(this.translation.t('seller.sectionsMgmt.errSave'), e);
     } finally {
       this.saving.set(false);
     }
@@ -127,11 +130,11 @@ export class SellerStoreSectionsPage {
   confirmRemove(section: StoreSectionResponse): void {
     if (this.saving() || !section.id) return;
     this.modal.confirm({
-      nzTitle: 'ยืนยันการลบหมวด',
-      nzContent: `ต้องการลบหมวด "${section.name ?? ''}" ใช่ไหม?`,
-      nzOkText: 'ลบ',
+      nzTitle: this.translation.t('seller.sectionsMgmt.confirmDeleteTitle'),
+      nzContent: this.translation.t('seller.sectionsMgmt.confirmDeleteContent', { name: section.name ?? '' }),
+      nzOkText: this.translation.t('common.delete'),
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: () => this.remove(section.id!),
     });
   }
@@ -141,10 +144,10 @@ export class SellerStoreSectionsPage {
     this.saving.set(true);
     try {
       await this.seller.deleteStoreSection(sectionId);
-      this.message.success('ลบหมวดเรียบร้อย');
+      this.message.success(this.translation.t('seller.sectionsMgmt.deleteSuccess'));
       await this.reload();
     } catch (e) {
-      this.apiFail.report('ลบหมวดหน้าร้าน', e);
+      this.apiFail.report(this.translation.t('seller.sectionsMgmt.errDelete'), e);
     } finally {
       this.saving.set(false);
     }

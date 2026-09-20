@@ -4,13 +4,13 @@
       <app-icon name="bell" [size]="18" />
     </div>
     <div>
-      <h2 class="text-lg font-bold text-ink mb-1">การแจ้งเตือน</h2>
-      <p class="text-xs text-ink-muted">เลือกว่าจะให้เราส่งอีเมลแจ้งเตือนเรื่องไหนบ้าง</p>
+      <h2 class="text-lg font-bold text-ink mb-1">{{ 'shared.notificationSettings.title' | trans }}</h2>
+      <p class="text-xs text-ink-muted">{{ 'shared.notificationSettings.subtitle' | trans }}</p>
     </div>
   </div>
 
   @if (notifications.settings().length === 0) {
-    <p class="text-sm text-ink-soft">ยังไม่มีรายการตั้งค่าจากเซิร์ฟเวอร์</p>
+    <p class="text-sm text-ink-soft">{{ 'shared.notificationSettings.emptyFromServer' | trans }}</p>
   } @else {
     <div class="card-tile-body space-y-5">
       @for (group of groups(); track group.audience) {

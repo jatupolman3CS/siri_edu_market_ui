@@ -22,15 +22,16 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
 import { PopularSearchChipsComponent } from '../../../shared/components/popular-search-chips/popular-search-chips.component';
 import { DiscoveryRailComponent } from '../../../shared/components/discovery-rail/discovery-rail.component';
-import { TranslatePipe } from '../../../core/i18n';
+import { TranslatePipe, TranslationService } from '../../../core/i18n';
+import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import type { RecommendationExplanation, RecommendationStrategy } from '../../../core/models';
 
 /** crm-driven-discovery v1 §3.3/§4.3: strategy → section title map (ห้าม hardcode subtitle ฝั่ง UI อีก — subtitle มาจาก `strategyReason` ของ backend เท่านั้น). */
 const RECOMMENDED_STRATEGY_TITLES: Record<RecommendationStrategy, string> = {
-  'crm-personalized': 'เลือกมาให้คุณโดยเฉพาะ',
-  'purchase-history': 'ต่อยอดจากเอกสารที่คุณเคยซื้อ',
-  'declared-interest': 'จากหมวดที่คุณเลือกไว้',
-  'popular-fallback': 'ยอดนิยมตอนนี้',
+  'crm-personalized': 'home.recommendedStrategyCrm',
+  'purchase-history': 'home.recommendedStrategyPurchase',
+  'declared-interest': 'home.recommendedStrategyInterest',
+  'popular-fallback': 'home.recommendedStrategyPopular',
 };
 
 /** crm-driven-discovery v1 §4.3: "ระหว่างโหลด...นานสุด 3 วินาที จากนั้นถ้ายังไม่มีข้อมูลให้ซ่อนบล็อก". */
@@ -53,6 +54,7 @@ const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
     PopularSearchChipsComponent,
     DiscoveryRailComponent,
     TranslatePipe,
+    ThbPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',
@@ -66,6 +68,7 @@ export class BuyerHomePage {
   readonly auth = inject(AuthService);
   readonly examCountdown = inject(ExamCountdownService);
   readonly discovery = inject(DiscoveryService);
+  readonly translation = inject(TranslationService);
   private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
   private readonly destroyRef = inject(DestroyRef);
@@ -113,9 +116,14 @@ export class BuyerHomePage {
     const mainCount = this.categoriesMainCount();
     if (mainCount === 0) return '';
     const totalDocsText = this.compactPipe.transform(this.categoriesTotalDocs());
-    const base = `กว่า ${totalDocsText} เอกสารใน ${mainCount} หมวดหมู่หลัก`;
-    if (!this.categoriesSubCountKnown()) return base;
-    return `${base} แตกย่อยเป็น ${this.categoriesSubCount()} หมวดย่อย`;
+    if (!this.categoriesSubCountKnown()) {
+      return this.translation.t('home.categoriesSubtitleBase', { total: totalDocsText, count: mainCount });
+    }
+    return this.translation.t('home.categoriesSubtitleWithSub', {
+      total: totalDocsText,
+      count: mainCount,
+      sub: this.categoriesSubCount(),
+    });
   });
 
   /**
@@ -131,9 +139,10 @@ export class BuyerHomePage {
     return percents.length ? Math.max(0, ...percents) : 0;
   });
   readonly bundlesSubtitle = computed(() => {
-    const base = 'ครีเอเตอร์รวมเอกสารที่เข้ากันให้แล้ว';
     const max = this.maxBundleSavePercent();
-    return max > 0 ? `${base} ประหยัดได้สูงสุด ${max}%` : base;
+    return max > 0
+      ? this.translation.t('home.bundlesSubtitleWithDiscount', { max })
+      : this.translation.t('home.bundlesSubtitleBase');
   });
 
   /** ส่วนแบ่งเริ่มต้นของผู้ขาย (Seller CTA copy) — fallback 90 while stats() hasn't loaded, same
@@ -145,9 +154,10 @@ export class BuyerHomePage {
   // ===== crm-driven-discovery v1 §3.3/§4.3 (supersedes personalized-recommendations v1 §4) =====
 
   /** หัวข้อของ section "แนะนำสำหรับคุณ" — เปลี่ยนตาม `strategy` ที่ backend เลือก (§4.3 table). */
-  readonly recommendedTitle = computed(
-    () => RECOMMENDED_STRATEGY_TITLES[this.catalog.recommendedStrategy() ?? 'popular-fallback'],
-  );
+  readonly recommendedTitle = computed(() => {
+    const key = RECOMMENDED_STRATEGY_TITLES[this.catalog.recommendedStrategy() ?? 'popular-fallback'];
+    return this.translation.t(key as any);
+  });
 
   /** ใต้การ์ดแต่ละใบ: บรรทัดเหตุผลรายชิ้น — `undefined` เมื่อไม่มี explanation ของเอกสารนั้น (ต้องทนกรณีหาไม่เจอ, §3.3). */
   recommendedExplanationFor(documentId: string): RecommendationExplanation | undefined {
@@ -175,32 +185,26 @@ export class BuyerHomePage {
     return d.sections.length > 0 || d.popularTerms.length > 0;
   });
 
-  readonly quickSearches = [
-    'สรุปคณิตม.ปลาย',
-    'Pitch Deck',
-    'TOEIC',
-    'Resume',
-    'งานวิจัย',
-  ];
+  readonly quickSearches = computed(() => this.translation.list('home.quickSearchItems'));
 
   readonly howItWorks = [
     {
       no: '1',
       emoji: '🔍',
-      title: 'ค้นหาเอกสารที่ใช่',
-      desc: 'กรองหมวดหมู่ ระดับชั้น และคะแนนรีวิว เลือกเอกสารที่ตรงกับความต้องการของคุณ พร้อมพรีวิวก่อนซื้อ',
+      titleKey: 'home.step1Title',
+      descKey: 'home.step1Desc',
     },
     {
       no: '2',
       emoji: '💳',
-      title: 'ชำระอย่างปลอดภัย',
-      desc: 'ชำระผ่าน PromptPay / บัตรเครดิต ไฟล์มีลายน้ำเฉพาะคุณ ดาวน์โหลดได้ทันทีหลังชำระเงิน',
+      titleKey: 'home.step2Title',
+      descKey: 'home.step2Desc',
     },
     {
       no: '3',
       emoji: '📚',
-      title: 'เก็บไว้ในคลังของคุณ',
-      desc: 'ดาวน์โหลดได้ตลอดเวลาในคลังเอกสารส่วนตัว และให้คะแนน + รีวิวเพื่อช่วยผู้ซื้อท่านอื่น',
+      titleKey: 'home.step3Title',
+      descKey: 'home.step3Desc',
     },
   ];
 

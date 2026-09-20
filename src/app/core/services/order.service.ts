@@ -7,6 +7,7 @@ import {
   type ActionState,
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n/translation.service';
 import {
   getApiOrdersById,
   getApiOrdersByIdSimilarDocuments,
@@ -66,6 +67,7 @@ export type CreateOrderOutcome =
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _checkoutState = signal<ActionState>(idleActionState());
   readonly checkoutState = this._checkoutState.asReadonly();
@@ -98,7 +100,7 @@ export class OrderService {
       });
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);
-      this._checkoutState.set(successActionState('สร้างคำสั่งซื้อสำเร็จ'));
+      this._checkoutState.set(successActionState(this.translation.t('checkout.orderCreated')));
       return { ok: true, order };
     } catch (e) {
       const status = extractStatus(e);
@@ -107,7 +109,7 @@ export class OrderService {
         // rather than assuming. Falling back to already-owned keeps older API builds working.
         const code = extractCode(e);
         if (code === 'pending_order_exists') {
-          const message = extractMessage(e) ?? 'คุณมีคำสั่งซื้อที่ยังไม่ได้ชำระเงินสำหรับเอกสารเหล่านี้อยู่แล้ว';
+          const message = extractMessage(e) ?? this.translation.t('checkout.duplicateOrder');
           this._checkoutState.set(errorActionState(message));
           return { ok: false, pendingOrder: true, status, message };
         }
@@ -117,19 +119,18 @@ export class OrderService {
         // something they do not and send them to an empty library.
         if (code === 'payment_needs_review') {
           const message =
-            extractMessage(e) ??
-            'ชำระเงินสำเร็จแล้ว แต่ระบบยังจับคู่การชำระเงินกับคำสั่งซื้อไม่สำเร็จ ทีมงานกำลังตรวจสอบ กรุณาอย่าชำระเงินซ้ำ';
+            extractMessage(e) ?? this.translation.t('checkout.paymentMatchFailed');
           this._checkoutState.set(errorActionState(message));
           return { ok: false, paymentNeedsReview: true, status, message };
         }
 
         this._checkoutState.set(
-          errorActionState('มีบางรายการที่คุณเป็นเจ้าของอยู่แล้ว'),
+          errorActionState(this.translation.t('checkout.alreadyOwnsItems')),
         );
         return { ok: false, alreadyOwned: true, status, message: 'already_owned' };
       }
-      this.apiFail.report('สร้างคำสั่งซื้อ', e);
-      this._checkoutState.set(errorActionState('สร้างคำสั่งซื้อไม่สำเร็จ'));
+      this.apiFail.report('errors.context.createOrder', e);
+      this._checkoutState.set(errorActionState(this.translation.t('checkout.orderCreateFailed')));
       return { ok: false, status, message: extractMessage(e) };
     }
   }
@@ -147,7 +148,7 @@ export class OrderService {
       this._detail.set(order);
       return order;
     } catch (e) {
-      this.apiFail.report('โหลดรายละเอียดคำสั่งซื้อ', e);
+      this.apiFail.report('errors.context.loadOrderDetail', e);
       this._detail.set(null);
       return null;
     }
@@ -169,9 +170,9 @@ export class OrderService {
       this._similar.set((data.items ?? []).map(mapOrderSimilarDocument));
       this._similarState.set(successActionState());
     } catch (e) {
-      this.apiFail.report('โหลดเอกสารที่คล้ายกัน', e);
+      this.apiFail.report('errors.context.loadSimilarDocuments', e);
       this._similar.set([]);
-      this._similarState.set(errorActionState('โหลดเอกสารที่คล้ายกันไม่สำเร็จ'));
+      this._similarState.set(errorActionState(this.translation.t('orders.loadSimilarFailed')));
     }
   }
 
@@ -186,7 +187,7 @@ export class OrderService {
       this._detail.set(order);
       return order;
     } catch (e) {
-      this.apiFail.report('ยกเลิกคำสั่งซื้อ', e);
+      this.apiFail.report('errors.context.cancelOrder', e);
       return null;
     }
   }
@@ -201,7 +202,7 @@ export class OrderService {
       this._detail.set(order);
       return order;
     } catch (e) {
-      this.apiFail.report('ชำระเงินด้วยกระเป๋าเงิน', e);
+      this.apiFail.report('errors.context.payWithWallet', e);
       return null;
     }
   }

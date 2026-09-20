@@ -106,7 +106,7 @@ export class WishlistService {
       await this.pager.loadFirst();
       this._state.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดรายการโปรด', e);
+      this.apiFail.report('errors.context.loadWishlist', e);
       this._state.set(errorActionState('โหลดรายการโปรดไม่สำเร็จ'));
     }
   }
@@ -142,7 +142,7 @@ export class WishlistService {
         this._state.set(successActionState('เพิ่มในรายการโปรดแล้ว'));
         await this.refresh();
       } catch (e) {
-        this.apiFail.report('เพิ่มในรายการโปรด', e);
+        this.apiFail.report('errors.context.addToWishlist', e);
         this._state.set(errorActionState('เพิ่มในรายการโปรดไม่สำเร็จ'));
       }
     })();
@@ -155,7 +155,7 @@ export class WishlistService {
         await deleteApiWishlistByDocumentId({ path: { documentId: id } });
         await this.refresh();
       } catch (e) {
-        this.apiFail.report('ลบออกจากรายการโปรด', e);
+        this.apiFail.report('errors.context.removeFromWishlist', e);
       }
     })();
   }
@@ -168,7 +168,7 @@ export class WishlistService {
         await deleteApiWishlist();
         this._state.set(successActionState('ล้างรายการโปรดแล้ว'));
       } catch (e) {
-        this.apiFail.report('ล้างรายการโปรด', e);
+        this.apiFail.report('errors.context.clearWishlist', e);
         this._state.set(errorActionState('ล้างรายการโปรดไม่สำเร็จ'));
       }
     })();

@@ -17,7 +17,10 @@
                 <div class="text-[10px] uppercase tracking-[0.2em] text-pink-300 mt-1">SIRIEDUMARKET</div>
               </div>
             </div>
-            <app-notification-bell variant="icon" theme="dark" />
+            <div class="flex items-center gap-1.5">
+              <app-language-switcher variant="dropdown" theme="dark" />
+              <app-notification-bell variant="icon" theme="dark" />
+            </div>
           </div>
 
           <div class="mt-2.5 pl-1">
@@ -86,7 +89,8 @@
             <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500"></span>
             <span class="text-sm font-bold">ADMIN</span>
           </div>
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2">
+            <app-language-switcher variant="dropdown" theme="dark" />
             <app-notification-bell variant="icon" theme="dark" />
             <a routerLink="/" class="text-xs text-pink-200">{{ 'nav.backToMarket' | trans }}</a>
             <button

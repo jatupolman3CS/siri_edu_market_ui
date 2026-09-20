@@ -50,6 +50,8 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-buyer-document-detail',
@@ -68,6 +70,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     CompactPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-detail.page.html',
@@ -79,6 +82,7 @@ export class BuyerDocumentDetailPage {
   readonly wishlist = inject(WishlistService);
   readonly follow = inject(FollowService);
   readonly library = inject(LibraryService);
+  readonly translation = inject(TranslationService);
   private readonly auth = inject(AuthService);
   private readonly bundles = inject(BundleService);
   private readonly recent = inject(RecentlyViewedService);
@@ -244,13 +248,13 @@ export class BuyerDocumentDetailPage {
     if (!d?.seller?.id) return;
 
     if (!this.auth.isAuthenticated()) {
-      this.message.warning('กรุณาเข้าสู่ระบบเพื่อติดตามร้านค้า');
+      this.message.warning(this.translation.t('product.loginToFollow'));
       this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
 
     if (this.isOwner()) {
-      this.message.info('คุณไม่สามารถติดตามร้านค้าของตัวเองได้');
+      this.message.info(this.translation.t('product.cannotFollowOwn'));
       return;
     }
 
@@ -260,9 +264,9 @@ export class BuyerDocumentDetailPage {
     if (wasFollowing !== isNowFollowing) {
       this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);
       if (isNowFollowing) {
-        this.message.success(`เริ่มติดตาม ${d.seller.studioName} แล้ว 💗`);
+        this.message.success(this.translation.t('product.followSuccess', { name: d.seller.studioName }));
       } else {
-        this.message.info(`เลิกติดตาม ${d.seller.studioName}`);
+        this.message.info(this.translation.t('product.unfollowSuccess', { name: d.seller.studioName }));
       }
     }
   }
@@ -367,7 +371,7 @@ export class BuyerDocumentDetailPage {
 
   buyNow(id: string): void {
     if (this.owned()) {
-      this.message.info('คุณมีเอกสารนี้อยู่ในคลังแล้ว');
+      this.message.info(this.translation.t('product.inLibrary'));
       this.router.navigate(['/library']);
       return;
     }
@@ -376,7 +380,7 @@ export class BuyerDocumentDetailPage {
       if (d) this.cart.add(d);
     }
     if (!this.auth.isAuthenticated()) {
-      this.message.warning('กรุณาเข้าสู่ระบบก่อนทำการชำระเงิน');
+      this.message.warning(this.translation.t('product.loginToBuy'));
       this.router.navigate(['/auth/login'], {
         queryParams: { returnUrl: '/checkout' },
       });
@@ -387,7 +391,7 @@ export class BuyerDocumentDetailPage {
 
   downloadFree(): void {
     if (!this.auth.isAuthenticated()) {
-      this.message.warning('กรุณาเข้าสู่ระบบเพื่อดาวน์โหลดและบันทึกในคลังของคุณ');
+      this.message.warning(this.translation.t('product.loginToDownload'));
       this.router.navigate(['/auth/login'], {
         queryParams: { returnUrl: this.router.url },
       });
@@ -407,7 +411,7 @@ export class BuyerDocumentDetailPage {
    */
   downloadViaSubscription(): void {
     if (!this.auth.isAuthenticated()) {
-      this.message.warning('กรุณาเข้าสู่ระบบเพื่อดาวน์โหลดและบันทึกในคลังของคุณ');
+      this.message.warning(this.translation.t('product.loginToDownload'));
       this.router.navigate(['/auth/login'], {
         queryParams: { returnUrl: this.router.url },
       });
@@ -453,7 +457,7 @@ export class BuyerDocumentDetailPage {
     const d = this.doc();
     if (!id || !d) return;
     if ((d.previewPages ?? 0) <= 0) {
-      this.message.info('เอกสารนี้ยังไม่เปิดพรีวิว');
+      this.message.info(this.translation.t('product.noPreviewYet'));
       return;
     }
 
@@ -483,17 +487,17 @@ export class BuyerDocumentDetailPage {
           }
           if (d.format && d.format !== 'pdf') {
             this.message.info(
-              `เอกสารนี้เป็นไฟล์ประเภท ${d.format.toUpperCase()} สามารถดูเนื้อหาตัวอย่างได้ในแท็บพรีวิว`,
+              this.translation.t('product.noRasterDesc'),
             );
           } else {
             this.message.warning(
-              'ยังไม่มีพรีวิวภาพพร้อมลายน้ำสำหรับเอกสารนี้ — ระบบกำลังเตรียมตัวอย่างพรีวิว',
+              this.translation.t('product.generatingPreview'),
             );
           }
         }
       } catch {
         if (forceModal) {
-          this.message.error('โหลดพรีวิวไม่สำเร็จ');
+          this.message.error(this.translation.t('product.downloadError'));
         }
       } finally {
         this.previewLoading.set(false);
@@ -521,7 +525,7 @@ export class BuyerDocumentDetailPage {
 
     const question = this.newQuestion().trim();
     if (question.length < 5) {
-      this.message.warning('กรุณาพิมพ์คำถามอย่างน้อย 5 ตัวอักษร');
+      this.message.warning(this.translation.t('product.questionTooShort'));
       return;
     }
 
@@ -530,9 +534,9 @@ export class BuyerDocumentDetailPage {
       await this.catalog.askDocumentQuestion(documentId, question);
       this.newQuestion.set('');
       this.questionSent.set(true);
-      this.message.success('ส่งคำถามเรียบร้อย ผู้ขายจะตอบกลับเร็ว ๆ นี้');
+      this.message.success(this.translation.t('product.questionSubmitted'));
     } catch {
-      this.message.error('ส่งคำถามไม่สำเร็จ กรุณาลองใหม่');
+      this.message.error(this.translation.t('product.questionSubmitFailed'));
     } finally {
       this.askingQuestion.set(false);
     }

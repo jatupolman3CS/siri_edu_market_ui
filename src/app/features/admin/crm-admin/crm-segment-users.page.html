@@ -1,28 +1,28 @@
 <div class="space-y-6">
   <header class="flex items-center gap-3">
-    <a routerLink="/admin/crm" class="text-sm text-pink-600 hover:underline">‹ กลับไปภาพรวม CRM</a>
+    <a routerLink="/admin/crm" class="text-sm text-pink-600 hover:underline">{{ 'admin.crmSegment.back' | trans }}</a>
   </header>
 
   <div>
-    <h1 class="text-2xl font-extrabold text-ink">สมาชิกของกลุ่ม: {{ code() }}</h1>
-    <p class="text-sm text-ink-soft">ตัวอย่างสมาชิกของกลุ่มนี้ เพื่อตรวจสอบว่าระบบจัดกลุ่มถูกต้อง (อ่านอย่างเดียว)</p>
+    <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.crmSegment.title' | trans }} {{ code() }}</h1>
+    <p class="text-sm text-ink-soft">{{ 'admin.crmSegment.desc' | trans }}</p>
   </div>
 
   @if (crm.segmentUsersLoading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (crm.segmentUsers().length === 0) {
-    <app-empty-state emoji="👥" title="ยังไม่มีข้อมูล" description="ยังไม่มีผู้ใช้ในกลุ่มนี้" />
+    <app-empty-state emoji="👥" [title]="'admin.crmSegment.empty' | trans" [description]="'admin.crmSegment.emptyDesc' | trans" />
   } @else {
     <div class="card-soft p-6">
       <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
         <table class="w-full min-w-[720px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-4 py-3 font-semibold">ผู้ใช้</th>
-              <th class="px-4 py-3 font-semibold">ความมั่นใจ</th>
-              <th class="px-4 py-3 font-semibold">หมวดที่สนใจสูงสุด</th>
-              <th class="px-4 py-3 font-semibold">เคลื่อนไหวล่าสุด</th>
-              <th class="px-4 py-3 font-semibold">เข้ากลุ่มเมื่อ</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colUser' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colConfidence' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colTopCategory' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colLastActivity' | trans }}</th>
+              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colJoinedAt' | trans }}</th>
             </tr>
           </thead>
           <tbody>

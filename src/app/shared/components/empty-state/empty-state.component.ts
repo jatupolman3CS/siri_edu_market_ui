@@ -8,7 +8,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   styleUrl: './empty-state.component.scss',
 })
 export class EmptyStateComponent {
-  readonly emoji = input<string>('🌸');
-  readonly title = input<string>('ยังไม่มีข้อมูล');
-  readonly description = input<string>('');
+  readonly emoji = input<string>('📭');
+  readonly title = input.required<string>();
+  readonly description = input<string>();
 }

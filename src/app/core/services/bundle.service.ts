@@ -101,7 +101,7 @@ export class BundleService {
 
   setBundleResultsPageSize(size: number): void {
     void this.searchPager.onPageSizeChange(size).catch((e) => {
-      this.apiFail.report('ค้นหาแพ็กเกจ', e);
+      this.apiFail.report('errors.context.searchBundles', e);
     });
   }
 
@@ -122,7 +122,7 @@ export class BundleService {
         await this.searchPager.onPageChange(page);
       }
     } catch (e) {
-      this.apiFail.report('ค้นหาแพ็กเกจ', e);
+      this.apiFail.report('errors.context.searchBundles', e);
     }
   }
 
@@ -141,7 +141,7 @@ export class BundleService {
       await this.pager.loadFirst();
       this._bundlesState.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดแพ็กเกจ', e);
+      this.apiFail.report('errors.context.loadBundles', e);
       this._bundlesState.set(errorActionState('โหลดแพ็กเกจไม่สำเร็จ'));
     }
   }
@@ -176,7 +176,7 @@ export class BundleService {
         this._bundleDocuments.update((map) => new Map(map).set(id, documents));
         this._bundleDetailState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดรายละเอียดแพ็กเกจ', e);
+        this.apiFail.report('errors.context.loadBundleDetail', e);
         this._bundleDetailState.set(errorActionState('โหลดรายละเอียดแพ็กเกจไม่สำเร็จ'));
       }
     })();
@@ -249,7 +249,7 @@ export class BundleService {
       const data = unwrapSdkResult(result);
       return (data.items ?? []).map(mapBundle);
     } catch (e) {
-      this.apiFail.report('โหลดแพ็กเกจที่มีเอกสารนี้', e);
+      this.apiFail.report('errors.context.loadBundlesForDocument', e);
       return [];
     }
   }

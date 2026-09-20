@@ -749,7 +749,7 @@ describe('CatalogService — loadRecommended (personalized-recommendations v1, r
 
     expect(catalog.recommended()).toEqual([]);
     expect(catalog.recommendedStrategy()).toBeNull();
-    expect(reporter.report).toHaveBeenCalledWith('โหลดคำแนะนำสำหรับคุณ', expect.anything());
+    expect(reporter.report).toHaveBeenCalledWith('errors.context.loadRecommendations', expect.anything());
   });
 
   it('a later failed reload clears out a previously-successful recommendation list', async () => {

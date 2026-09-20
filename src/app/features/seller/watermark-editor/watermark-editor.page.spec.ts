@@ -55,6 +55,11 @@ describe('WatermarkEditorPage', () => {
       previewWatermarkRotation: number;
       personalizedWatermarkPosition: string;
       personalizedWatermarkTemplate: string;
+      personalizedWatermarkFontFamily?: string;
+      personalizedWatermarkColor?: string;
+      personalizedWatermarkOpacity?: number;
+      personalizedWatermarkRotation?: number;
+      personalizedWatermarkFontSize?: number;
     };
   };
 
@@ -103,6 +108,11 @@ describe('WatermarkEditorPage', () => {
     previewWatermarkFontSize: 30,
     personalizedWatermarkPosition: 'header',
     personalizedWatermarkTemplate: 'ดาวน์โหลดโดย {email}',
+    personalizedWatermarkFontFamily: 'Kanit',
+    personalizedWatermarkColor: '#654321',
+    personalizedWatermarkOpacity: 0.6,
+    personalizedWatermarkRotation: 15,
+    personalizedWatermarkFontSize: 24,
     previewImageUrls: [],
     hasMainFile: true,
   };
@@ -206,6 +216,22 @@ describe('WatermarkEditorPage', () => {
       expect(component.downloadWatermarkTemplate()).toBe('เอกสารนี้ของ {email} {token}');
     });
 
+    // watermark-completion v5 §3.12.1/§4.9: the 5 new personalized style signals must default to
+    // the exact values the backend falls back to when the config columns are null, so an
+    // untouched document renders identically to what the backend will actually stamp.
+    it('should default the 5 new personalized style signals to the backend fallback values', () => {
+      expect(component.downloadWatermarkFontFamily()).toBe('Noto Sans Thai');
+      expect(component.downloadWatermarkColor()).toBe('#b41e1e');
+      expect(component.downloadWatermarkOpacity()).toBe(35);
+      expect(component.downloadWatermarkFontSize()).toBe(16);
+      expect(component.downloadWatermarkRotation()).toBe(-30);
+    });
+
+    it('should update the personalized color via setDownloadColor', () => {
+      component.setDownloadColor('#4F46E5');
+      expect(component.downloadWatermarkColor()).toBe('#4F46E5');
+    });
+
     it('should compute personalized download text replacing {email}, {token}, {date}, and {platform}', () => {
       component.simBuyerEmail.set('test.buyer@edu.ac.th');
       component.simToken.set('SEC-TEST-999');
@@ -231,6 +257,25 @@ describe('WatermarkEditorPage', () => {
       expect(saved).not.toBeNull();
       expect(saved?.previewWatermarkSubtitle).toBe('CUSTOM SELLER WATERMARK');
       expect(saved?.config.previewWatermarkPosition).toBe('bottom-right');
+    });
+
+    // watermark-completion v5 §3.12.2/§4.9: the 5 new personalized style fields must also be
+    // persisted into the local template config (used to seed new documents), same as the
+    // existing personalizedWatermarkPosition/Template fields already are.
+    it('should save the 5 new personalized style fields into the local watermark template', () => {
+      component.downloadWatermarkFontFamily.set('Prompt');
+      component.downloadWatermarkColor.set('#4F46E5');
+      component.downloadWatermarkOpacity.set(70);
+      component.downloadWatermarkFontSize.set(20);
+      component.downloadWatermarkRotation.set(45);
+      component.saveConfig();
+
+      const saved = storedTemplate;
+      expect(saved?.config.personalizedWatermarkFontFamily).toBe('Prompt');
+      expect(saved?.config.personalizedWatermarkColor).toBe('#4F46E5');
+      expect(saved?.config.personalizedWatermarkOpacity).toBeCloseTo(0.7);
+      expect(saved?.config.personalizedWatermarkFontSize).toBe(20);
+      expect(saved?.config.personalizedWatermarkRotation).toBe(45);
     });
 
     // AC-06: template mode must never call the document watermark-config endpoints.
@@ -272,6 +317,31 @@ describe('WatermarkEditorPage', () => {
       expect(component.watermarkRotation()).toBe(10);
       expect(component.downloadWatermarkPosition()).toBe('header');
       expect(component.downloadWatermarkTemplate()).toBe('ดาวน์โหลดโดย {email}');
+      // watermark-completion v5 §3.12.2/§4.9: the 5 new personalized style fields map from the
+      // GET response into their signals the same way the existing web-preview fields do.
+      expect(component.downloadWatermarkFontFamily()).toBe('Kanit');
+      expect(component.downloadWatermarkColor()).toBe('#654321');
+      expect(component.downloadWatermarkOpacity()).toBe(60);
+      expect(component.downloadWatermarkFontSize()).toBe(24);
+      expect(component.downloadWatermarkRotation()).toBe(15);
+    });
+
+    // watermark-completion v5 §3.12.1/§4.9: when the backend response has the 5 new fields
+    // absent/null (not-yet-configured document), the signals fall back to the same backend
+    // default values used for a brand-new config, not `undefined`/`NaN`.
+    it('should fall back to backend default values when the 5 new personalized fields are absent from the GET response', async () => {
+      const { personalizedWatermarkFontFamily, personalizedWatermarkColor, personalizedWatermarkOpacity, personalizedWatermarkRotation, personalizedWatermarkFontSize, ...rest } = sampleDocumentConfig;
+      stubRoute('GET', watermarkConfigPath('doc-1'), rest);
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+
+      expect(component.downloadWatermarkFontFamily()).toBe('Noto Sans Thai');
+      expect(component.downloadWatermarkColor()).toBe('#b41e1e');
+      expect(component.downloadWatermarkOpacity()).toBe(35);
+      expect(component.downloadWatermarkFontSize()).toBe(16);
+      expect(component.downloadWatermarkRotation()).toBe(-30);
     });
 
     it('should show a loading state until GET resolves', async () => {
@@ -331,6 +401,39 @@ describe('WatermarkEditorPage', () => {
       expect(fakeRouter.navigate).not.toHaveBeenCalled();
     });
 
+    // watermark-completion v5 §3.12.2/§4.9: the 5 new personalized style fields must be included
+    // in the POST body sent to `postApiSellerDocumentsByIdWatermarkConfig`, using the loaded
+    // values from GET when untouched by the seller (mirrors the previewWatermarkOpacity
+    // round-trip assertion above).
+    it('should include the 5 new personalized style fields in the POST body', async () => {
+      stubRoute('GET', watermarkConfigPath('doc-1'), sampleDocumentConfig);
+      stubRoute('POST', watermarkConfigPath('doc-1'), sampleDocumentConfig);
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+
+      component.downloadWatermarkFontFamily.set('Prompt');
+      component.downloadWatermarkColor.set('#4F46E5');
+      component.downloadWatermarkOpacity.set(70);
+      component.downloadWatermarkFontSize.set(20);
+      component.downloadWatermarkRotation.set(45);
+      component.saveConfig();
+      await settle();
+
+      const postCalls = requests.filter(
+        (r) => r.method === 'POST' && r.path === watermarkConfigPath('doc-1'),
+      );
+      expect(postCalls.length).toBe(1);
+      const sentBody = JSON.parse(postCalls[0].body) as SellerWatermarkConfigRequest;
+      expect(sentBody.personalizedWatermarkFontFamily).toBe('Prompt');
+      expect(sentBody.personalizedWatermarkColor).toBe('#4F46E5');
+      // opacity round-trips as a 0-1 fraction on the wire, same convention as previewWatermarkOpacity.
+      expect(sentBody.personalizedWatermarkOpacity).toBeCloseTo(0.7);
+      expect(sentBody.personalizedWatermarkFontSize).toBe(20);
+      expect(sentBody.personalizedWatermarkRotation).toBe(45);
+    });
+
     it('should show an error toast and keep the form values when POST fails', async () => {
       stubRoute('GET', watermarkConfigPath('doc-1'), sampleDocumentConfig);
       stubRoute('POST', watermarkConfigPath('doc-1'), { title: 'save failed' }, 500);
@@ -348,6 +451,186 @@ describe('WatermarkEditorPage', () => {
       );
       expect(component.watermarkText()).toBe('SHOULD SURVIVE FAILURE');
       expect(component.saving()).toBe(false);
+    });
+
+    // Real-preview fix, case (a): hasMainFile=true + non-empty previewImageUrls renders the
+    // real-preview affordance, and opening it shows the modal with the URLs resolved via
+    // `resolvePublicUrl` (absolute https URLs round-trip unchanged).
+    it('should render the real-preview thumbnail grid and open the modal with resolved URLs', async () => {
+      const rasterUrls = [
+        'https://cdn.example.com/previews/doc-1-page-1.jpg',
+        'https://cdn.example.com/previews/doc-1-page-2.jpg',
+      ];
+      stubRoute('GET', watermarkConfigPath('doc-1'), {
+        ...sampleDocumentConfig,
+        hasMainFile: true,
+        previewImageUrls: rasterUrls,
+      });
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+
+      expect(component.hasRealPreview()).toBe(true);
+      expect(component.previewImageUrls()).toEqual(rasterUrls);
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.textContent).toContain('ตัวอย่างจริงบนเว็บไซต์');
+      expect(el.textContent).not.toContain('ยังไม่มีตัวอย่างจริง');
+
+      component.openRealPreview();
+      fixture.detectChanges();
+
+      expect(component.showPreviewGallery()).toBe(true);
+      const modalImages = Array.from(
+        el.querySelectorAll<HTMLImageElement>('.preview-modal-content img'),
+      ).map((img) => img.src);
+      expect(modalImages).toEqual(rasterUrls);
+    });
+
+    // Real-preview fix, case (b): hasMainFile=false (or an empty previewImageUrls) shows the
+    // informative message instead of the thumbnail grid.
+    it('should show the "not generated yet" notice when hasMainFile is false', async () => {
+      stubRoute('GET', watermarkConfigPath('doc-1'), {
+        ...sampleDocumentConfig,
+        hasMainFile: false,
+        previewImageUrls: [],
+      });
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+
+      expect(component.hasRealPreview()).toBe(false);
+      expect(component.showRealPreviewEmptyNotice()).toBe(true);
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.textContent).toContain('ยังไม่มีตัวอย่างจริง');
+      expect(el.querySelectorAll('.preview-modal-content')).toHaveLength(0);
+    });
+
+    it('should show the "not generated yet" notice when previewImageUrls is empty even with a main file', async () => {
+      stubRoute('GET', watermarkConfigPath('doc-1'), {
+        ...sampleDocumentConfig,
+        hasMainFile: true,
+        previewImageUrls: [],
+      });
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+
+      expect(component.hasRealPreview()).toBe(false);
+      expect(component.showRealPreviewEmptyNotice()).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('ยังไม่มีตัวอย่างจริง');
+    });
+  });
+
+  // Real-preview fix, case (c): template mode (no `:id`) never renders the real-preview section,
+  // regardless of what the loaded config would say — there is no `getConfig()` call at all in
+  // this mode, so `hasMainFile`/`previewImageUrls` stay at their initial empty defaults.
+  describe('real preview — template mode never renders it', () => {
+    it('should not render the real-preview section in template mode', async () => {
+      await setup(null);
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+
+      expect(component.documentId()).toBeNull();
+      expect(component.hasRealPreview()).toBe(false);
+      expect(component.showRealPreviewEmptyNotice()).toBe(false);
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.textContent).not.toContain('ตัวอย่างจริงบนเว็บไซต์');
+      expect(el.textContent).not.toContain('ยังไม่มีตัวอย่างจริง');
+    });
+  });
+
+  // watermark-completion v5 §4.9: the personalized tab's 5 new style controls exist and the Buyer
+  // Simulator reacts live to them, mirroring the "web-preview" tab's own established pattern.
+  // Load/save wiring against the real SDK is covered separately above (document-mode GET/POST
+  // and template-mode local-storage save tests).
+  describe('personalized watermark style controls (watermark-completion v5 §4.9)', () => {
+    beforeEach(async () => {
+      await setup(null);
+      component.activeTab.set('personalized');
+      fixture.detectChanges();
+    });
+
+    function findByText(selector: string, text: string): Element | undefined {
+      const el: HTMLElement = fixture.nativeElement;
+      return Array.from(el.querySelectorAll(selector)).find((node) =>
+        node.textContent?.includes(text),
+      );
+    }
+
+    it('should render a font family select populated from previewWatermarkFontOptions', () => {
+      const el: HTMLElement = fixture.nativeElement;
+      const select = el.querySelector<HTMLSelectElement>('select');
+      expect(select).not.toBeNull();
+      const optionValues = Array.from(select?.querySelectorAll('option') ?? []).map(
+        (o) => o.value,
+      );
+      expect(optionValues).toEqual(component.previewWatermarkFontOptions);
+    });
+
+    it('should render opacity/font-size/rotation range sliders for the personalized tab', () => {
+      const el: HTMLElement = fixture.nativeElement;
+      const ranges = Array.from(el.querySelectorAll<HTMLInputElement>('input[type="range"]'));
+      // one set on 'web-preview' (not rendered while personalized is active) — this tab renders
+      // exactly opacity + fontSize + rotation = 3 sliders of its own.
+      expect(ranges.length).toBe(3);
+    });
+
+    it("should show the diagonal-only hint when position isn't diagonal, and hide it when it is", () => {
+      component.downloadWatermarkPosition.set('footer');
+      fixture.detectChanges();
+      expect(findByText('p', 'มีผลเฉพาะตำแหน่งพาดเฉียงกลางหน้า')).toBeTruthy();
+
+      component.downloadWatermarkPosition.set('diagonal');
+      fixture.detectChanges();
+      expect(findByText('p', 'มีผลเฉพาะตำแหน่งพาดเฉียงกลางหน้า')).toBeFalsy();
+    });
+
+    it('should reflect downloadWatermarkColor/Opacity live on the footer buyer-simulator stamp', () => {
+      component.downloadWatermarkPosition.set('footer');
+      component.downloadWatermarkColor.set('#4F46E5');
+      component.downloadWatermarkOpacity.set(70);
+      fixture.detectChanges();
+
+      const stamp = findByText('span.font-mono', component.simulatedDownloadText()) as
+        | HTMLElement
+        | undefined;
+      expect(stamp).toBeTruthy();
+      expect(stamp?.style.color).toBe('rgb(79, 70, 229)');
+      expect(stamp?.style.opacity).toBe('0.7');
+    });
+
+    it('should reflect downloadWatermarkRotation live via transform on the diagonal buyer-simulator stamp', () => {
+      component.downloadWatermarkPosition.set('diagonal');
+      component.downloadWatermarkRotation.set(45);
+      fixture.detectChanges();
+
+      const stamp = findByText('span.font-mono', component.simulatedDownloadText()) as
+        | HTMLElement
+        | undefined;
+      expect(stamp).toBeTruthy();
+      expect(stamp?.style.transform).toBe('rotate(45deg)');
+    });
+
+    it('should reflect downloadWatermarkFontSize live via font-size on the buyer-simulator stamp', () => {
+      component.downloadWatermarkPosition.set('footer');
+      component.downloadWatermarkFontSize.set(40);
+      fixture.detectChanges();
+
+      const stamp = findByText('span.font-mono', component.simulatedDownloadText()) as
+        | HTMLElement
+        | undefined;
+      expect(stamp).toBeTruthy();
+      expect(stamp?.style.fontSize).toBe('20px');
     });
   });
 });

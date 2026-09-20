@@ -6,6 +6,7 @@ import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { AdsService, CatalogService, SellerService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import type {
   AdsAvailability,
   AdsCampaign,
@@ -18,22 +19,23 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
-/** §4.4: campaign status → Thai label. */
-const STATUS_LABELS: Record<string, string> = {
-  scheduled: 'รอเริ่ม',
-  active: 'กำลังแสดง',
-  completed: 'สิ้นสุดแล้ว',
-  cancelled: 'ยกเลิกแล้ว',
-  stopped: 'ถูกระงับ',
+/** §4.4: campaign status → translation key. */
+const STATUS_KEY_MAP: Record<string, string> = {
+  scheduled: 'sellerAds.statusScheduled',
+  active: 'sellerAds.statusActive',
+  completed: 'sellerAds.statusCompleted',
+  cancelled: 'sellerAds.statusCancelled',
+  stopped: 'sellerAds.statusStopped',
 };
 
-/** §4.4: stop reason → Thai label. */
-const STOP_REASON_LABELS: Record<string, string> = {
-  admin_stopped: 'ผู้ดูแลระบบระงับ',
-  account_suspended: 'บัญชีถูกระงับ',
-  document_unavailable: 'เอกสารไม่พร้อมแสดง',
-  seller_cancelled: 'ยกเลิกโดยผู้ขาย',
+/** §4.4: stop reason → translation key. */
+const STOP_REASON_KEY_MAP: Record<string, string> = {
+  admin_stopped: 'sellerAds.statusAdminStopped',
+  account_suspended: 'sellerAds.statusAccountSuspended',
+  document_unavailable: 'sellerAds.statusDocumentUnavailable',
+  seller_cancelled: 'sellerAds.statusSellerCancelled',
 };
 
 /** §3.2 caps a single availability request at 90 days — comfortably under that. */
@@ -87,6 +89,7 @@ function formatBaht(v: number): string {
     PaginationComponent,
     ImgFallbackDirective,
     ThbPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ads.page.html',
@@ -98,6 +101,7 @@ export class SellerAdsPage {
   private readonly catalog = inject(CatalogService);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
+  private readonly translation = inject(TranslationService);
 
   // ───────────────────────── list ─────────────────────────
 
@@ -111,21 +115,26 @@ export class SellerAdsPage {
 
   readonly availableBalance = computed(() => this.seller.earnings()?.availableBalance ?? 0);
 
-  readonly statusFilterOptions: { value: string; label: string }[] = [
-    { value: 'all', label: 'ทั้งหมด' },
-    { value: 'scheduled', label: STATUS_LABELS['scheduled'] ?? '' },
-    { value: 'active', label: STATUS_LABELS['active'] ?? '' },
-    { value: 'completed', label: STATUS_LABELS['completed'] ?? '' },
-    { value: 'cancelled', label: STATUS_LABELS['cancelled'] ?? '' },
-    { value: 'stopped', label: STATUS_LABELS['stopped'] ?? '' },
-  ];
+  get statusFilterOptions(): { value: string; label: string }[] {
+    return [
+      { value: 'all', label: this.translation.t('common.all') },
+      { value: 'scheduled', label: this.translation.t('sellerAds.statusScheduled') },
+      { value: 'active', label: this.translation.t('sellerAds.statusActive') },
+      { value: 'completed', label: this.translation.t('sellerAds.statusCompleted') },
+      { value: 'cancelled', label: this.translation.t('sellerAds.statusCancelled') },
+      { value: 'stopped', label: this.translation.t('sellerAds.statusStopped') },
+    ];
+  }
 
   statusLabel(status: string): string {
-    return STATUS_LABELS[status] ?? status;
+    const key = STATUS_KEY_MAP[status];
+    return key ? this.translation.t(key) : status;
   }
 
   stopReasonLabel(reason: string | null): string | null {
-    return reason ? (STOP_REASON_LABELS[reason] ?? reason) : null;
+    if (!reason) return null;
+    const key = STOP_REASON_KEY_MAP[reason];
+    return key ? this.translation.t(key) : reason;
   }
 
   canCancel(c: AdsCampaign): boolean {

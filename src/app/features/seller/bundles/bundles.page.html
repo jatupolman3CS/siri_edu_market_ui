@@ -1,67 +1,63 @@
 <div class="max-w-6xl space-y-6">
   @if (sellerProfileRequired()) {
     <div class="card-soft">
-      <app-empty-state
-        emoji="🏪"
-        title="บัญชีนี้ยังไม่มีร้านค้า"
-        description="สมัครเป็นผู้ขายก่อนถึงจะสร้างแพ็กเกจได้"
-      >
-        <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+      <app-empty-state emoji="🏪" [title]="'seller.noShopTitle' | trans" [description]="'seller.noShopDesc' | trans">
+        <a routerLink="/become-seller" class="btn-pink mt-2">{{ 'seller.openShopCta' | trans }}</a>
       </app-empty-state>
     </div>
   } @else {
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">แพ็กเกจของฉัน</h1>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.bundlesTitle' | trans }}</h1>
       <p class="text-sm text-ink-soft">
-        จัดเอกสารที่อนุมัติแล้วเป็นชุด แล้วตั้งราคาให้ถูกกว่าซื้อแยก
+        {{ 'seller.bundlesSubtitle' | trans }}
       </p>
     </div>
     @if (!formOpen()) {
-      <button class="btn-pink !py-2 !px-5 text-sm" (click)="startCreate()">สร้างแพ็กเกจใหม่</button>
+      <button class="btn-pink !py-2 !px-5 text-sm" (click)="startCreate()">{{ 'seller.createBundle' | trans }}</button>
     }
   </header>
 
   @if (formOpen()) {
     <section class="card-tile space-y-5">
       <h2 class="text-lg font-bold text-ink">
-        {{ editingId() ? 'แก้ไขแพ็กเกจ' : 'สร้างแพ็กเกจใหม่' }}
+        {{ editingId() ? ('seller.editBundle' | trans) : ('seller.createBundle' | trans) }}
       </h2>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อแพ็กเกจ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.bundleTitleLabel' | trans }}</label>
         <input
           type="text"
           [(ngModel)]="title"
           name="title"
           class="input-soft"
-          placeholder="เช่น ชุดข้อสอบคณิต ป.6 ครบเทอม"
+          [placeholder]="'seller.bundleTitlePlaceholder' | trans"
           maxlength="500"
         />
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-2 block">คำอธิบาย</label>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.bundleDescLabel' | trans }}</label>
         <textarea
           [(ngModel)]="description"
           name="description"
           class="input-soft"
           rows="3"
-          placeholder="บอกผู้ซื้อว่าแพ็กเกจนี้เหมาะกับใคร และได้อะไรบ้าง"
+          [placeholder]="'seller.bundleDescPlaceholder' | trans"
         ></textarea>
       </div>
 
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          เลือกเอกสารในแพ็กเกจ
+          {{ 'seller.selectDocs' | trans }}
           <span class="font-normal text-ink-muted">
-            ({{ selectedDocumentIds().length }} รายการ · ต้องมีอย่างน้อย 2)
+            {{ 'seller.selectedDocsRequirement' | trans: { count: selectedDocumentIds().length } }}
           </span>
         </label>
 
         @if (candidates().length === 0) {
           <p class="text-sm text-ink-muted">
-            ยังไม่มีเอกสารที่อนุมัติแล้ว — ใส่ในแพ็กเกจได้เฉพาะเอกสารที่ผ่านการอนุมัติ
+            {{ 'seller.noApprovedDocs' | trans }}
           </p>
         } @else {
           <ul class="max-h-72 overflow-y-auto border border-line rounded-2xl divide-y divide-line">
@@ -93,7 +89,7 @@
 
       <div class="grid sm:grid-cols-2 gap-4">
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคาแพ็กเกจ (บาท)</label>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.bundlePrice' | trans }}</label>
           <input
             type="number"
             [(ngModel)]="price"
@@ -106,14 +102,14 @@
         </div>
         <div>
           <label class="text-xs font-semibold text-ink-soft mb-2 block">
-            รูปหน้าปก (ไม่ใส่ก็ได้)
+            {{ 'seller.coverOptional' | trans }}
           </label>
           <input
             type="text"
             [(ngModel)]="coverUrl"
             name="coverUrl"
             class="input-soft"
-            placeholder="ไม่ใส่จะใช้รูปของเอกสารชิ้นแรก"
+            [placeholder]="'seller.coverPlaceholder' | trans"
             maxlength="1024"
           />
         </div>
@@ -123,12 +119,12 @@
            visible rather than something they hit as a rejection. -->
       <div class="rounded-2xl bg-pink-50/60 px-4 py-3 text-sm space-y-1">
         <p class="text-ink-soft">
-          ราคาปกติรวม
+          {{ 'seller.totalOriginalPrice' | trans }}
           <span class="font-bold text-ink">{{ originalPrice() | thb }}</span>
         </p>
         @if (savingAmount() > 0) {
           <p class="text-pink-700 font-semibold">
-            ผู้ซื้อประหยัด {{ savingAmount() | thb }} ({{ savingPercent() }}%)
+            {{ 'seller.buyerSaves' | trans: { amount: (savingAmount() | thb), percent: savingPercent() } }}
           </p>
         }
         @if (validationError(); as problem) {
@@ -142,21 +138,21 @@
           [disabled]="saving() || !!validationError()"
           (click)="save()"
         >
-          {{ saving() ? 'กำลังบันทึก…' : 'บันทึก' }}
+          {{ saving() ? ('seller.savingDots' | trans) : ('common.save' | trans) }}
         </button>
-        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">ยกเลิก</button>
+        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">{{ 'common.cancel' | trans }}</button>
       </div>
     </section>
   }
 
   @if (loading()) {
-    <div class="card-tile text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-tile text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (bundles().length === 0) {
     <div class="card-soft">
       <app-empty-state
         emoji="📦"
-        title="ยังไม่มีแพ็กเกจ"
-        description="รวมเอกสารที่ขายดีเป็นชุด แล้วตั้งราคาให้คุ้มกว่าซื้อแยก"
+        [title]="'seller.noBundles' | trans"
+        [description]="'seller.noBundlesDesc' | trans"
       />
     </div>
   } @else {
@@ -167,34 +163,32 @@
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-bold text-ink line-clamp-2">{{ bundle.title }}</h3>
               <p class="text-xs text-ink-muted">
-                {{ bundle.items?.length ?? 0 }} เอกสาร ·
+                {{ bundle.items?.length ?? 0 }} {{ 'common.items' | trans }} ·
                 <span class="font-semibold text-ink">{{ bundle.price ?? 0 | thb }}</span>
                 <span class="line-through ml-1">{{ bundle.originalPrice ?? 0 | thb }}</span>
-                · ดาวน์โหลด {{ bundle.downloadCount ?? 0 }} ครั้ง
+                · {{ 'common.downloads' | trans }} {{ bundle.downloadCount ?? 0 }}
               </p>
             </div>
             <div class="flex gap-2 shrink-0">
               <button class="btn-ghost !py-1.5 !px-4 text-xs" (click)="startEdit(bundle)">
-                แก้ไข
+                {{ 'common.edit' | trans }}
               </button>
               <button
                 class="btn-ghost !py-1.5 !px-4 text-xs"
                 [disabled]="saving() || bundle.canDelete === false"
                 [title]="
-                  bundle.canDelete === false
-                    ? 'ลบไม่ได้เพราะมีคำสั่งซื้อที่อ้างถึงแพ็กเกจนี้แล้ว'
-                    : ''
+                  bundle.canDelete === false ? ('seller.cannotDeleteTooltip' | trans) : ''
                 "
                 (click)="remove(bundle)"
               >
-                ลบ
+                {{ 'common.delete' | trans }}
               </button>
             </div>
           </div>
 
           @if (bundle.canDelete === false) {
             <p class="text-xs text-ink-muted mt-2">
-              มีคำสั่งซื้ออ้างถึงแพ็กเกจนี้แล้ว จึงลบไม่ได้ — แก้ราคาหรือรายการข้างในแทนได้
+              {{ 'seller.cannotDeleteDesc' | trans }}
             </p>
           }
 

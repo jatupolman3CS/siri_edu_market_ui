@@ -18,6 +18,7 @@ import {
 } from '../api-mappers/mappers';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n/translation.service';
 import {
   errorActionState,
   idleActionState,
@@ -57,6 +58,7 @@ export type AdminSubscriptionStatusFilter =
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _current = signal<Subscription | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
@@ -86,8 +88,8 @@ export class SubscriptionService {
         this._state.set(idleActionState());
         return;
       }
-      this._state.set(errorActionState('โหลดข้อมูลสมาชิกไม่สำเร็จ'));
-      this.apiFail.report('โหลดข้อมูลสมาชิก', e);
+      this._state.set(errorActionState(this.translation.t('accountSubscription.loadFailed')));
+      this.apiFail.report('errors.context.loadMembership', e);
     }
   }
 
@@ -100,7 +102,7 @@ export class SubscriptionService {
       const data = unwrapSdkResult(await postApiMeSubscription({ body: { categoryIds } }));
       const sub = mapSubscription(data);
       this._current.set(sub);
-      this._createState.set(successActionState('สมัครสมาชิกสำเร็จ'));
+      this._createState.set(successActionState(this.translation.t('subscribe.successToast')));
       return sub;
     } catch (e) {
       const message = this.apiFail.formatDetail(e);
@@ -117,7 +119,7 @@ export class SubscriptionService {
     try {
       const data = unwrapSdkResult(await postApiMeSubscriptionCancel());
       this._current.set(mapSubscription(data));
-      this._cancelState.set(successActionState('ยกเลิกการสมัครสมาชิกเรียบร้อย'));
+      this._cancelState.set(successActionState(this.translation.t('accountSubscription.cancelSuccessToast')));
     } catch (e) {
       const message = this.apiFail.formatDetail(e);
       this._cancelState.set(errorActionState(message));
@@ -132,7 +134,7 @@ export class SubscriptionService {
   private readonly accessHistoryPagerInstance: ServerPager<SubscriptionAccessHistoryItem> =
     createServerPager<SubscriptionAccessHistoryItem>({
       pageSize: 20,
-      errorMessage: 'โหลดประวัติการเข้าถึงเอกสารไม่สำเร็จ',
+      errorMessage: this.translation.t('subscriptionAccessHistory.loadFailed'),
       fetch: async (page, pageSize) => {
         const data = unwrapSdkResult(
           await getApiMeSubscriptionAccessHistory({
@@ -161,7 +163,7 @@ export class SubscriptionService {
     try {
       await this.accessHistoryPagerInstance.reloadFromPage1();
     } catch (e) {
-      this.apiFail.report('โหลดประวัติการเข้าถึงเอกสาร', e);
+      this.apiFail.report('errors.context.loadAccessHistory', e);
     }
   }
 
@@ -169,7 +171,7 @@ export class SubscriptionService {
     try {
       await this.accessHistoryPagerInstance.onPageChange(page);
     } catch (e) {
-      this.apiFail.report('โหลดประวัติการเข้าถึงเอกสาร', e);
+      this.apiFail.report('errors.context.loadAccessHistory', e);
     }
   }
 
@@ -177,7 +179,7 @@ export class SubscriptionService {
     try {
       await this.accessHistoryPagerInstance.onPageSizeChange(size);
     } catch (e) {
-      this.apiFail.report('โหลดประวัติการเข้าถึงเอกสาร', e);
+      this.apiFail.report('errors.context.loadAccessHistory', e);
     }
   }
 
@@ -204,7 +206,7 @@ export class SubscriptionService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.apiFail.report('โหลดรายการสมาชิกทั้งหมด', e);
+      this.apiFail.report('errors.context.listAdminSubscriptions', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }

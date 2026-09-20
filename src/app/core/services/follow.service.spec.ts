@@ -89,7 +89,7 @@ describe('FollowService', () => {
 
     expect(result).toBe(false);
     expect(service.isFollowing('seller-1')).toBe(false);
-    expect(apiFailSpy.report).toHaveBeenCalledWith('ติดตามร้าน', expect.anything());
+    expect(apiFailSpy.report).toHaveBeenCalledWith('errors.context.followSeller', expect.anything());
   });
 
   it('should toggle from followed to unfollowed successfully', async () => {
@@ -114,7 +114,7 @@ describe('FollowService', () => {
 
     expect(result).toBe(true);
     expect(service.isFollowing('seller-1')).toBe(true);
-    expect(apiFailSpy.report).toHaveBeenCalledWith('เลิกติดตามร้าน', expect.anything());
+    expect(apiFailSpy.report).toHaveBeenCalledWith('errors.context.unfollowSeller', expect.anything());
   });
 
   it('should hydrate follow status from API when seller is followed', async () => {

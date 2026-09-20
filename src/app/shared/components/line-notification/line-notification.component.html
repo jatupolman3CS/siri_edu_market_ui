@@ -4,8 +4,8 @@
       <app-icon name="globe" [size]="18" />
     </div>
     <div>
-      <h2 class="text-lg font-bold text-ink mb-1">เชื่อมต่อ LINE</h2>
-      <p class="text-xs text-ink-muted">รับการแจ้งเตือนผ่าน LINE นอกเหนือจากอีเมล</p>
+      <h2 class="text-lg font-bold text-ink mb-1">{{ 'shared.lineNotification.title' | trans }}</h2>
+      <p class="text-xs text-ink-muted">{{ 'shared.lineNotification.subtitle' | trans }}</p>
     </div>
   </div>
 
@@ -15,27 +15,26 @@
       {{ loadError() }}
     </div>
   } @else if (!status()) {
-    <p class="text-sm text-ink-soft">กำลังโหลด…</p>
+    <p class="text-sm text-ink-soft">{{ 'common.loading' | trans }}</p>
   } @else if (!status()!.isAvailable) {
-    <p class="text-sm text-ink-soft">ฟีเจอร์นี้ยังไม่เปิดใช้งาน</p>
+    <p class="text-sm text-ink-soft">{{ 'shared.lineNotification.featureUnavailable' | trans }}</p>
   } @else {
     @switch (status()!.status) {
       @case ('NotConnected') {
-        <p class="text-sm text-ink-soft mb-4">เชื่อมต่อบัญชี LINE ของคุณเพื่อรับการแจ้งเตือนแบบเรียลไทม์</p>
+        <p class="text-sm text-ink-soft mb-4">{{ 'shared.lineNotification.notConnectedNotice' | trans }}</p>
         <button type="button" class="btn-pink !px-7" [disabled]="busy()" (click)="connect()">
-          {{ busy() ? 'กำลังเชื่อมต่อ…' : 'เชื่อมต่อ LINE' }}
+          {{ busy() ? ('shared.lineNotification.connecting' | trans) : ('shared.lineNotification.connectBtn' | trans) }}
         </button>
       }
       @case ('Disconnected') {
         <div class="px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 text-sm flex items-start gap-2 mb-4">
           <app-icon name="flag" [size]="14" />
           <span>
-            การเชื่อมต่อ LINE ของคุณหยุดทำงาน (คุณอาจเลิกติดตามหรือบล็อกบัญชี LINE ทางการของเรา)
-            กรุณาเชื่อมต่อใหม่
+            {{ 'shared.lineNotification.disconnectedNotice' | trans }}
           </span>
         </div>
         <button type="button" class="btn-pink !px-7" [disabled]="busy()" (click)="connect()">
-          {{ busy() ? 'กำลังเชื่อมต่อ…' : 'เชื่อมต่อใหม่' }}
+          {{ busy() ? ('shared.lineNotification.connecting' | trans) : ('shared.lineNotification.reconnectBtn' | trans) }}
         </button>
       }
       @case ('Connected') {
@@ -44,16 +43,16 @@
             <app-icon name="check" [size]="16" />
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-xs text-ink-muted">เชื่อมต่อแล้ว</div>
+            <div class="text-xs text-ink-muted">{{ 'shared.lineNotification.connectedBadge' | trans }}</div>
             <div class="text-sm font-semibold text-ink">{{ status()!.lineDisplayName }}</div>
           </div>
           <button type="button" class="btn-ghost !px-5" [disabled]="busy()" (click)="confirmDisconnect()">
-            ยกเลิกการเชื่อมต่อ
+            {{ 'shared.lineNotification.disconnectBtn' | trans }}
           </button>
         </div>
 
         @if (settings().length === 0) {
-          <p class="text-sm text-ink-soft">ยังไม่มีรายการตั้งค่าจากเซิร์ฟเวอร์</p>
+          <p class="text-sm text-ink-soft">{{ 'shared.lineNotification.noServerSettings' | trans }}</p>
         } @else {
           <div class="space-y-2.5">
             @for (n of settings(); track n.key) {

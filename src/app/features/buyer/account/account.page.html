@@ -4,10 +4,10 @@
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-      <span>บัญชีผู้ใช้</span>
+      <span>{{ 'account.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">บัญชีของฉัน</h1>
-    <p class="text-sm sm:text-base text-ink-soft">แก้ไขโปรไฟล์ และเลือกว่าจะรับอีเมลแจ้งเตือนเรื่องไหนบ้าง</p>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'account.title' | trans }}</h1>
+    <p class="text-sm sm:text-base text-ink-soft">{{ 'account.desc' | trans }}</p>
   </header>
 
   <div class="grid lg:grid-cols-[17rem_minmax(0,1fr)] gap-6 items-start">
@@ -60,9 +60,9 @@
           <div>
             <div class="flex items-center gap-2 text-ink-muted text-xs font-semibold mb-1">
               <app-icon name="wallet" [size]="16" />
-              <span>กระเป๋าเงิน SIRIEDUMARKET</span>
+              <span>{{ 'account.walletCardTitle' | trans }}</span>
             </div>
-            <div class="text-xs text-ink-muted mb-2">ยอดคงเหลือในกระเป๋าเงิน</div>
+            <div class="text-xs text-ink-muted mb-2">{{ 'account.walletBalanceLabel' | trans }}</div>
             <div class="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
               @if (wallet.summary()?.balance != null) {
                 {{ wallet.summary()!.balance | thb }}
@@ -76,7 +76,7 @@
             class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-sm transition-colors"
           >
             <app-icon name="plus" [size]="16" />
-            <span>เติมเงิน / จัดการ</span>
+            <span>{{ 'account.walletManageBtn' | trans }}</span>
           </a>
         </div>
       </section>
@@ -91,8 +91,8 @@
       <app-exam-countdown-form class="block" />
 
       <section class="card-soft p-6" id="shortcuts">
-        <h2 class="text-lg font-bold text-ink mb-1">ทางลัด</h2>
-        <p class="text-xs text-ink-muted mb-5">ของที่คุณซื้อและเก็บไว้</p>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'account.shortcutsTitle' | trans }}</h2>
+        <p class="text-xs text-ink-muted mb-5">{{ 'account.shortcutsDesc' | trans }}</p>
 
         <ul class="grid sm:grid-cols-3 gap-3">
           @for (shortcut of shortcuts; track shortcut.href) {

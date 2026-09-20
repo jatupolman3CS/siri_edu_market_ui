@@ -8,6 +8,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { FeedbackModalComponent } from '../../../shared/components/feedback-modal/feedback-modal.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 import type {
   FeedbackStatus,
   FeedbackType,
@@ -25,6 +26,7 @@ import type {
     PaginationComponent,
     FeedbackModalComponent,
     IconComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './feedback.page.html',
@@ -34,6 +36,7 @@ export class BuyerFeedbackPage {
   private readonly feedbackService = inject(FeedbackService);
   private readonly auth = inject(AuthService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly i18n = inject(TranslationService);
 
   readonly items = signal<MyFeedbackListItemResponse[]>([]);
   readonly loading = signal(false);
@@ -47,39 +50,37 @@ export class BuyerFeedbackPage {
   readonly loadingDetails = signal<Set<string>>(new Set());
 
   readonly statusTabs = [
-    { value: 'all', label: 'ทั้งหมด' },
-    { value: 'new', label: 'เรื่องใหม่' },
-    { value: 'in_progress', label: 'กำลังดำเนินการ' },
-    { value: 'resolved', label: 'แก้ไขแล้ว' },
-    { value: 'closed', label: 'ปิดเรื่อง' },
+    { value: 'all', labelKey: 'feedback.statusAll' },
+    { value: 'new', labelKey: 'feedback.statusNew' },
+    { value: 'in_progress', labelKey: 'feedback.statusInProgress' },
+    { value: 'resolved', labelKey: 'feedback.statusResolved' },
+    { value: 'closed', labelKey: 'feedback.statusClosed' },
   ];
-
-  readonly statusLabels: Record<string, string> = {
-    new: 'เรื่องใหม่',
-    in_progress: 'กำลังดำเนินการ',
-    resolved: 'แก้ไขแล้ว',
-    closed: 'ปิดเรื่อง',
-  };
-
-  readonly typeLabels: Record<string, string> = {
-    bug: 'แจ้งบั๊ก/ข้อผิดพลาด',
-    suggestion: 'ข้อเสนอแนะ',
-    usability: 'ปัญหาการใช้งาน',
-    other: 'อื่น ๆ',
-  };
 
   constructor() {
     void this.reload();
   }
 
   statusLabel(s: string | undefined): string {
-    if (!s) return 'ไม่ระบุ';
-    return this.statusLabels[s] ?? s;
+    if (!s) return this.i18n.t('feedback.unspecified');
+    const keyMap: Record<string, string> = {
+      new: 'feedback.statusNew',
+      in_progress: 'feedback.statusInProgress',
+      resolved: 'feedback.statusResolved',
+      closed: 'feedback.statusClosed',
+    };
+    return keyMap[s] ? this.i18n.t(keyMap[s] as any) : s;
   }
 
   typeLabel(t: string | undefined): string {
-    if (!t) return 'ไม่ระบุ';
-    return this.typeLabels[t] ?? t;
+    if (!t) return this.i18n.t('feedback.unspecified');
+    const keyMap: Record<string, string> = {
+      bug: 'feedback.typeBug',
+      suggestion: 'feedback.typeSuggestion',
+      usability: 'feedback.typeUsability',
+      other: 'feedback.typeOther',
+    };
+    return keyMap[t] ? this.i18n.t(keyMap[t] as any) : t;
   }
 
   setStatus(s: string): void {
@@ -107,7 +108,7 @@ export class BuyerFeedbackPage {
       this.items.set(res.items ?? []);
       this.total.set(res.totalCount ?? 0);
     } catch (e) {
-      this.apiFail.report('โหลดรายการแจ้งปัญหา', e);
+      this.apiFail.report(this.i18n.t('systemContent.loadFeedbackList'), e);
       this.items.set([]);
       this.total.set(0);
     } finally {
@@ -138,7 +139,7 @@ export class BuyerFeedbackPage {
         map.set(id, detail);
         this.detailsMap.set(map);
       } catch (e) {
-        this.apiFail.report('โหลดรายละเอียด', e);
+        this.apiFail.report(this.i18n.t('systemContent.loadDetails'), e);
       } finally {
         const done = new Set(this.loadingDetails());
         done.delete(id);

@@ -1,19 +1,15 @@
 <div class="max-w-6xl">
       @if (seller.sellerProfileRequired()) {
         <div class="card-soft">
-          <app-empty-state
-            emoji="🏪"
-            title="ร้านนี้ยังไม่มีร้านค้า"
-            description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้"
-          >
-            <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+          <app-empty-state emoji="🏪" [title]="'seller.noShopTitleEarnings' | trans" [description]="'seller.noShopDesc' | trans">
+            <a routerLink="/become-seller" class="btn-pink mt-2">{{ 'seller.openShopCta' | trans }}</a>
           </app-empty-state>
         </div>
       } @else {
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">รีวิวลูกค้า</h1>
+        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.reviewsTitle' | trans }}</h1>
         <p class="text-sm text-ink-soft">
-          ความคิดเห็นและคะแนนจากผู้ที่ซื้อเอกสารของคุณ
+          {{ 'seller.reviewsSubtitle' | trans }}
         </p>
       </header>
 
@@ -30,27 +26,27 @@
               [showValue]="false"
             />
             <div class="text-sm text-ink-muted mt-2">
-              จาก {{ seller.stats().totalReviews }} รีวิว
+              {{ 'seller.fromTotalReviews' | trans: { count: seller.stats().totalReviews } }}
             </div>
           </div>
           <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-emerald-600">{{ reviewStats().positivePct }}%</div>
-              <div class="text-xs text-ink-muted mt-1">รีวิวบวก (4★+)</div>
+              <div class="text-xs text-ink-muted mt-1">{{ 'seller.positiveReviews' | trans }}</div>
             </div>
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-pink-600">
                 @if (reviewStats().avgHours != null) {
-                  {{ reviewStats().avgHours!.toFixed(1) }} ชม.
+                  {{ reviewStats().avgHours!.toFixed(1) }} {{ 'seller.hoursUnit' | trans }}
                 } @else {
                   —
                 }
               </div>
-              <div class="text-xs text-ink-muted mt-1">เวลาตอบกลับเฉลี่ย</div>
+              <div class="text-xs text-ink-muted mt-1">{{ 'seller.avgReplyTime' | trans }}</div>
             </div>
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-ink">{{ reviewStats().replyPct }}%</div>
-              <div class="text-xs text-ink-muted mt-1">ตอบรีวิวแล้ว</div>
+              <div class="text-xs text-ink-muted mt-1">{{ 'seller.repliedPct' | trans }}</div>
             </div>
           </div>
         </div>
@@ -61,8 +57,8 @@
         <div class="card-soft">
           <app-empty-state
             emoji="⭐"
-            title="ยังไม่มีรีวิวในรายการนี้"
-            description="รีวิวจากลูกค้าจะแสดงที่นี่หลังมีคนซื้อและให้คะแนนเอกสารของคุณ"
+            [title]="'seller.noReviews' | trans"
+            [description]="'seller.noReviewsDesc' | trans"
           />
         </div>
       } @else {
@@ -89,7 +85,7 @@
                   }
                   <div class="min-w-0">
                     <div class="text-[11px] font-medium text-ink-muted flex items-center gap-1">
-                      <span>เอกสารที่รีวิว:</span>
+                      <span>{{ 'seller.reviewedDoc' | trans }}</span>
                     </div>
                     <div class="text-xs font-bold text-ink group-hover:text-pink-600 transition-colors truncate">
                       {{ rv.docTitle }}
@@ -100,7 +96,7 @@
                   [routerLink]="['/document', rv.documentSlug || rv.documentId || rv.id]"
                   class="text-[11px] font-semibold text-pink-600 hover:text-pink-700 flex items-center gap-1 flex-shrink-0"
                 >
-                  <span>ดูเอกสาร</span>
+                  <span>{{ 'seller.viewDoc' | trans }}</span>
                   <app-icon name="arrow-right" [size]="12" />
                 </a>
               </div>
@@ -130,7 +126,7 @@
                     <div class="mt-3.5 p-3.5 rounded-xl bg-pink-50/70 border border-pink-100 flex flex-col gap-1.5">
                       <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
-                          <span class="text-[11px] font-bold text-pink-700 bg-pink-100 px-2 py-0.5 rounded-md">คำตอบจากผู้ขาย</span>
+                          <span class="text-[11px] font-bold text-pink-700 bg-pink-100 px-2 py-0.5 rounded-md">{{ 'seller.sellerReply' | trans }}</span>
                           @if (rv.sellerRepliedAt) {
                             <span class="text-[11px] text-ink-muted">{{ rv.sellerRepliedAt | timeAgo }}</span>
                           }
@@ -141,7 +137,7 @@
                           class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1"
                         >
                           <app-icon name="edit" [size]="12" />
-                          <span>แก้ไข</span>
+                          <span>{{ 'common.edit' | trans }}</span>
                         </button>
                       </div>
                       <p class="text-xs sm:text-sm text-ink-soft whitespace-pre-wrap leading-relaxed">{{ rv.sellerReplyText }}</p>
@@ -152,13 +148,13 @@
                   @if (replyingReviewId() === rv.id) {
                     <div class="mt-3.5 p-4 rounded-xl bg-slate-50 border border-line flex flex-col gap-2.5">
                       <div class="text-xs font-bold text-ink flex items-center justify-between">
-                        <span>{{ rv.sellerReplyText ? 'แก้ไขคำตอบกลับของคุณ' : 'ตอบกลับรีวิวลูกค้า' }}</span>
-                        <span class="text-[11px] font-normal text-ink-muted">ผู้ซื้อจะได้รับการแจ้งเตือน</span>
+                        <span>{{ rv.sellerReplyText ? ('seller.editReplyTitle' | trans) : ('seller.replyBuyerTitle' | trans) }}</span>
+                        <span class="text-[11px] font-normal text-ink-muted">{{ 'seller.buyerWillBeNotified' | trans }}</span>
                       </div>
                       <textarea
                         rows="3"
                         class="w-full text-sm p-3 rounded-xl border border-line focus:ring-2 focus:ring-pink-500 focus:outline-none bg-white resize-none"
-                        placeholder="พิมพ์คำตอบกลับของคุณถึงลูกค้า (เช่น ขอบคุณสำหรับคำติชมและรีวิวนะครับ...)"
+                        [placeholder]="'seller.replyPlaceholder' | trans"
                         [value]="replyDraft()"
                         (input)="replyDraft.set($any($event.target).value)"
                         [disabled]="replySubmitting()"
@@ -170,7 +166,7 @@
                           class="btn-ghost text-xs !px-4 !py-1.5"
                           [disabled]="replySubmitting()"
                         >
-                          ยกเลิก
+                          {{ 'common.cancel' | trans }}
                         </button>
                         <button
                           type="button"
@@ -179,10 +175,10 @@
                           [disabled]="replySubmitting() || !replyDraft().trim()"
                         >
                           @if (replySubmitting()) {
-                            <span>กำลังส่ง...</span>
+                            <span>{{ 'seller.replySubmitting' | trans }}</span>
                           } @else {
                             <app-icon name="check" [size]="14" />
-                            <span>{{ rv.sellerReplyText ? 'บันทึกการแก้ไข' : 'ส่งคำตอบกลับ' }}</span>
+                            <span>{{ rv.sellerReplyText ? ('seller.saveEditReply' | trans) : ('seller.sendReply' | trans) }}</span>
                           }
                         </button>
                       </div>
@@ -198,7 +194,7 @@
                         class="text-xs text-pink-600 font-bold hover:underline flex items-center gap-1"
                       >
                         <app-icon name="mail" [size]="13" />
-                        <span>ตอบกลับรีวิวลูกค้า →</span>
+                        <span>{{ 'seller.replyCta' | trans }}</span>
                       </button>
                     </div>
                   }

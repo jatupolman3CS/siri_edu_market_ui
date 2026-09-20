@@ -12,16 +12,20 @@ import { AuthService } from '../../../core/services';
 import { AuthLayoutComponent } from '../../../layouts/auth/auth-layout/auth-layout.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-auth-verify-email',
   standalone: true,
-  imports: [RouterLink, FormsModule, AuthLayoutComponent, IconComponent],
+  imports: [RouterLink, FormsModule, AuthLayoutComponent, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './verify-email.page.html',
   styleUrl: './verify-email.page.scss',
 })
 export class AuthVerifyEmailPage {
   readonly auth = inject(AuthService);
+  readonly translation = inject(TranslationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly message = inject(NzMessageService);
@@ -110,13 +114,13 @@ export class AuthVerifyEmailPage {
   async submitOtp(): Promise<void> {
     const code = this.otpDigits().join('').trim();
     if (code.length !== 6 || !/^\d{6}$/.test(code)) {
-      this.error.set('กรุณากรอกรหัส OTP ให้ครบ 6 หลัก');
+      this.error.set(this.translation.t('auth.otpRequired6Digits'));
       return;
     }
 
     const email = this.targetEmail;
     if (!email) {
-      this.error.set('กรุณาระบุอีเมลที่ต้องการยืนยัน');
+      this.error.set(this.translation.t('auth.emailRequiredToVerify'));
       return;
     }
 
@@ -126,11 +130,11 @@ export class AuthVerifyEmailPage {
     this.loading.set(false);
 
     if (!r.ok) {
-      this.error.set(r.error ?? 'รหัส OTP ไม่ถูกต้องหรือหมดอายุแล้ว');
+      this.error.set(r.error ?? this.translation.t('auth.otpInvalidOrExpired'));
       return;
     }
 
-    this.message.success('ยืนยันตัวตนสำเร็จ ยินดีต้อนรับสู่ SIRIEDUMARKET 🎉');
+    this.message.success(this.translation.t('auth.verifySuccessWelcome'));
     await this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
   }
 
@@ -141,23 +145,23 @@ export class AuthVerifyEmailPage {
     const r = await this.auth.verifyEmail(token, email);
     this.loading.set(false);
     if (!r.ok) {
-      this.error.set(r.error ?? 'ลิงก์ยืนยันไม่ถูกต้องหรือหมดอายุ');
+      this.error.set(r.error ?? this.translation.t('auth.verifyLinkInvalidOrExpired'));
       return;
     }
-    this.message.success('ยินดีต้อนรับสู่ SIRIEDUMARKET 🎉');
+    this.message.success(this.translation.t('auth.verifySuccessWelcome'));
     await this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
   }
 
   async resend(): Promise<void> {
     const email = this.targetEmail;
     if (!email) {
-      this.message.error('กรุณาระบุอีเมลเพื่อส่งรหัส OTP');
+      this.message.error(this.translation.t('auth.specifyEmailForOtp'));
       return;
     }
 
     const r = await this.auth.sendOtp(email);
     if (r.ok) {
-      this.message.success(r.message || 'ส่งรหัส OTP ใหม่ไปทางอีเมลแล้ว — กรุณาตรวจสอบกล่องจดหมาย');
+      this.message.success(r.message || this.translation.t('auth.otpResentSuccess'));
       this.error.set('');
       this.otpDigits.set(['', '', '', '', '', '']);
       this.cooldown.set(60);
@@ -167,7 +171,7 @@ export class AuthVerifyEmailPage {
       }, 1000);
       this.focusInput(0);
     } else {
-      this.message.error('ส่งรหัส OTP อีกครั้งไม่สำเร็จ');
+      this.message.error(this.translation.t('auth.resendOtpFailed'));
     }
   }
 }

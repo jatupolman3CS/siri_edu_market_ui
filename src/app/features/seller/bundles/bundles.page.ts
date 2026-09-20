@@ -10,6 +10,8 @@ import { extractErrorCode, extractErrorStatus } from '../../../core/services/api
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 /**
@@ -28,7 +30,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 @Component({
   selector: 'app-seller-bundles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent, IconComponent, PaginationComponent, ThbPipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, EmptyStateComponent, IconComponent, PaginationComponent, ThbPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundles.page.html',
 })
@@ -36,6 +38,7 @@ export class SellerBundlesPage {
   private readonly bundleService = inject(BundleService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly bundles = signal<SellerBundleResponse[]>([]);
   readonly candidates = signal<SellerBundleItemResponse[]>([]);
@@ -88,12 +91,12 @@ export class SellerBundlesPage {
    * server still checks all of them — this is a courtesy, not the enforcement.
    */
   readonly validationError = computed<string | null>(() => {
-    if (!this.title().trim()) return 'กรุณาตั้งชื่อแพ็กเกจ';
-    if (!this.description().trim()) return 'กรุณาใส่คำอธิบายแพ็กเกจ';
-    if (this.selectedDocumentIds().length < 2) return 'เลือกเอกสารอย่างน้อย 2 ชิ้น';
+    if (!this.title().trim()) return this.translation.t('seller.bundlesMgmt.missingTitle');
+    if (!this.description().trim()) return this.translation.t('seller.bundlesMgmt.missingDescription');
+    if (this.selectedDocumentIds().length < 2) return this.translation.t('seller.bundlesMgmt.minDocs');
     const price = this.price() ?? 0;
-    if (price <= 0) return 'ราคาแพ็กเกจต้องมากกว่า 0';
-    if (price >= this.originalPrice()) return 'ราคาแพ็กเกจต้องถูกกว่าผลรวมราคาปกติ';
+    if (price <= 0) return this.translation.t('seller.bundlesMgmt.invalidPrice');
+    if (price >= this.originalPrice()) return this.translation.t('seller.bundlesMgmt.priceTooHigh');
     return null;
   });
 
@@ -119,7 +122,7 @@ export class SellerBundlesPage {
       if (extractErrorStatus(e) === 403 && extractErrorCode(e) === 'seller_profile_required') {
         this.sellerProfileRequired.set(true);
       } else {
-        this.apiFail.report('โหลดแพ็กเกจของฉัน', e);
+        this.apiFail.report(this.translation.t('seller.bundlesMgmt.errLoad'), e);
       }
       this.bundles.set([]);
     } finally {
@@ -194,11 +197,11 @@ export class SellerBundlesPage {
         price: this.price() ?? 0,
         documentIds: this.selectedDocumentIds(),
       });
-      this.message.success('บันทึกแพ็กเกจเรียบร้อย');
+      this.message.success(this.translation.t('seller.bundlesMgmt.saveSuccess'));
       this.cancel();
       await this.reload();
     } catch (e) {
-      this.apiFail.report('บันทึกแพ็กเกจ', e);
+      this.apiFail.report(this.translation.t('seller.bundlesMgmt.errSave'), e);
     } finally {
       this.saving.set(false);
     }
@@ -209,17 +212,17 @@ export class SellerBundlesPage {
 
     // The server refuses this too; the disabled button and this guard only save the round trip.
     if (bundle.canDelete === false) {
-      this.message.warning('ลบไม่ได้เพราะมีคำสั่งซื้อที่อ้างถึงแพ็กเกจนี้แล้ว');
+      this.message.warning(this.translation.t('seller.bundlesMgmt.cannotDelete'));
       return;
     }
 
     this.saving.set(true);
     try {
       await this.bundleService.deleteMyBundle(bundle.id);
-      this.message.success('ลบแพ็กเกจเรียบร้อย');
+      this.message.success(this.translation.t('seller.bundlesMgmt.deleteSuccess'));
       await this.reload();
     } catch (e) {
-      this.apiFail.report('ลบแพ็กเกจ', e);
+      this.apiFail.report(this.translation.t('seller.bundlesMgmt.errDelete'), e);
     } finally {
       this.saving.set(false);
     }

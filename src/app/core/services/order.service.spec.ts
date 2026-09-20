@@ -244,6 +244,6 @@ describe('OrderService.loadSimilar — order-similar-documents v1', () => {
 
     expect(service.similar()).toEqual([]);
     expect(service.similarState().status).toBe('error');
-    expect(apiFail.report).toHaveBeenCalledWith('โหลดเอกสารที่คล้ายกัน', expect.anything());
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadSimilarDocuments', expect.anything());
   });
 });

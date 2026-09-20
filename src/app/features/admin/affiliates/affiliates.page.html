@@ -1,23 +1,23 @@
 <div class="space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-ink tracking-tight">จัดการลิงก์พันธมิตร</h1>
+      <h1 class="text-2xl font-bold text-ink tracking-tight">{{ 'admin.affiliatesAdmin.title' | trans }}</h1>
       <p class="text-sm text-ink-muted mt-1">
-        ตรวจสอบและกำหนดค่านายหน้าสำหรับผู้ใช้ในระบบ
+        {{ 'admin.affiliatesAdmin.desc' | trans }}
       </p>
     </div>
   </div>
 
   @if (loading() && !items().length) {
     <div class="card-soft p-12 text-center text-sm text-ink-muted">
-      กำลังโหลดข้อมูล…
+      {{ 'common.loading' | trans }}
     </div>
   } @else if (!items().length) {
     <div class="card-soft p-12">
       <app-empty-state
         emoji="🔗"
-        title="ยังไม่มีข้อมูลลิงก์พันธมิตร"
-        description="เมื่อมีผู้ใช้งานสร้างหรือแชร์ลิงก์พันธมิตร ข้อมูลจะแสดงที่นี่"
+        [title]="'admin.affiliatesAdmin.empty' | trans"
+        [description]="'admin.affiliatesAdmin.emptyDesc' | trans"
       />
     </div>
   } @else {
@@ -26,14 +26,14 @@
         <table class="w-full text-left text-sm">
           <thead>
             <tr class="border-b border-line text-xs font-semibold text-ink-muted">
-              <th class="pb-3 pr-4">ผู้ใช้</th>
-              <th class="pb-3 px-4">โค้ด</th>
-              <th class="pb-3 px-4 text-center">อัตราคอมมิชชัน</th>
-              <th class="pb-3 px-4 text-center">สถานะ</th>
-              <th class="pb-3 px-4 text-right">คลิก</th>
-              <th class="pb-3 px-4 text-right">ยอดขาย</th>
-              <th class="pb-3 px-4 text-right">คอมมิชชันสะสม</th>
-              <th class="pb-3 pl-4 text-right">การจัดการ</th>
+              <th class="pb-3 pr-4">{{ 'admin.affiliatesAdmin.colUser' | trans }}</th>
+              <th class="pb-3 px-4">{{ 'admin.affiliatesAdmin.colCode' | trans }}</th>
+              <th class="pb-3 px-4 text-center">{{ 'admin.affiliatesAdmin.colCommissionRate' | trans }}</th>
+              <th class="pb-3 px-4 text-center">{{ 'admin.affiliatesAdmin.colStatus' | trans }}</th>
+              <th class="pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colClicks' | trans }}</th>
+              <th class="pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colSales' | trans }}</th>
+              <th class="pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colCommissionEarned' | trans }}</th>
+              <th class="pb-3 pl-4 text-right">{{ 'admin.affiliatesAdmin.colActions' | trans }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
@@ -58,9 +58,9 @@
                 </td>
                 <td class="py-3.5 px-4 text-center">
                   @if (item.isActive) {
-                    <span class="pill pill-green">เปิดใช้งาน</span>
+                    <span class="pill pill-green">{{ 'admin.affiliatesAdmin.enabled' | trans }}</span>
                   } @else {
-                    <span class="pill pill-rose">ปิดใช้งาน</span>
+                    <span class="pill pill-rose">{{ 'admin.affiliatesAdmin.disabled' | trans }}</span>
                   }
                 </td>
                 <td class="py-3.5 px-4 text-right font-medium text-ink">
@@ -80,7 +80,7 @@
                       [disabled]="busyId() === item.userId"
                       (click)="toggleActive(item)"
                     >
-                      {{ item.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                      {{ item.isActive ? ('admin.affiliatesAdmin.toggleDisabled' | trans) : ('admin.affiliatesAdmin.toggleEnabled' | trans) }}
                     </button>
                   </div>
                 </td>
@@ -105,18 +105,18 @@
   <!-- Modal แก้ไขอัตราคอมมิชชันเฉพาะราย -->
   <nz-modal
     [nzVisible]="!!editingAffiliate()"
-    [nzTitle]="'ตั้งค่าพันธมิตร: ' + (editingAffiliate()?.displayName || editingAffiliate()?.email || '')"
+    [nzTitle]="('admin.affiliatesAdmin.settingsTitle' | trans) + ': ' + (editingAffiliate()?.displayName || editingAffiliate()?.email || '')"
     (nzOnCancel)="closeSettingsModal()"
     (nzOnOk)="saveSettings()"
     [nzOkLoading]="savingSettings()"
-    [nzOkText]="'บันทึก'"
-    [nzCancelText]="'ยกเลิก'"
+    [nzOkText]="'common.save' | trans"
+    [nzCancelText]="'common.cancel' | trans"
   >
     <ng-container *nzModalContent>
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-ink mb-1.5">
-            อัตราคอมมิชชันเฉพาะราย (%)
+            {{ 'admin.affiliatesAdmin.commissionLabel' | trans }}
           </label>
           <input
             type="number"
@@ -126,10 +126,10 @@
             class="input-soft !rounded-xl text-sm"
             [ngModel]="rateOverrideInput()"
             (ngModelChange)="rateOverrideInput.set($event)"
-            placeholder="เว้นว่างเพื่อใช้อัตรากลาง"
+            [placeholder]="'admin.affiliatesAdmin.commissionPlaceholder' | trans"
           />
           <p class="text-xs text-ink-muted mt-1.5">
-            เว้นว่างเพื่อใช้อัตรากลางของระบบ
+            {{ 'admin.affiliatesAdmin.commissionHint' | trans }}
           </p>
         </div>
       </div>

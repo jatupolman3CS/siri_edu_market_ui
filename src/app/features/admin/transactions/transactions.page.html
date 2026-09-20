@@ -1,29 +1,29 @@
 <div class="max-w-7xl">
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">ธุรกรรมและการชำระเงิน</h1>
+        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.transactions.title' | trans }}</h1>
         <p class="text-sm text-ink-soft">
-          ตรวจสอบประวัติการชำระเงินและสถานะคำสั่งซื้อ
+          {{ 'admin.transactions.subtitle' | trans }}
         </p>
       </header>
 
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <app-stat-card
-          label="รายได้รวม (เดือน)"
+          [label]="'admin.transactions.statRevenue' | trans"
           [value]="admin.totalRevenue() | thb"
           icon="💎"
         />
         <app-stat-card
-          label="ค่าธรรมเนียม"
+          [label]="'admin.transactions.statFees' | trans"
           [value]="admin.totalFees() | thb"
           icon="💰"
         />
         <app-stat-card
-          label="สำเร็จ"
+          [label]="'admin.transactions.statSuccess' | trans"
           [value]="admin.successCount() + ''"
           icon="✅"
         />
         <app-stat-card
-          label="คืนเงิน"
+          [label]="'admin.transactions.statRefunded' | trans"
           [value]="admin.refundCount() + ''"
           icon="↩️"
         />
@@ -38,7 +38,7 @@
           <input
             type="search"
             [(ngModel)]="search"
-            placeholder="ค้นหาเลขคำสั่งซื้อ ผู้ซื้อ หรือเอกสาร…"
+            [placeholder]="'admin.transactions.searchPlaceholder' | trans"
             class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
           />
         </div>
@@ -54,7 +54,7 @@
               [class.border-line]="status() !== s.value"
               (click)="status.set(s.value)"
             >
-              {{ s.label }}
+              {{ s.key | trans }}
             </button>
           }
         </div>
@@ -65,16 +65,16 @@
         <table class="w-full min-w-[840px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-5 py-3 font-semibold">เลขที่</th>
-              <th class="px-5 py-3 font-semibold">ผู้ซื้อ</th>
-              <th class="px-5 py-3 font-semibold">ผู้ขาย</th>
-              <th class="px-5 py-3 font-semibold">เอกสาร</th>
-              <th class="px-5 py-3 font-semibold text-right">ยอด</th>
-              <th class="px-5 py-3 font-semibold text-right">ค่าธรรมเนียม</th>
-              <th class="px-5 py-3 font-semibold">วิธีชำระ</th>
-              <th class="px-5 py-3 font-semibold">สถานะ</th>
-              <th class="px-5 py-3 font-semibold whitespace-nowrap">เวลา</th>
-              <th class="px-5 py-3 font-semibold whitespace-nowrap">จัดการ</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colOrderNumber' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colBuyer' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colSeller' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colDocument' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'admin.transactions.colAmount' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'admin.transactions.colFee' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colPaymentMethod' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colStatus' | trans }}</th>
+              <th class="px-5 py-3 font-semibold whitespace-nowrap">{{ 'admin.transactions.colTime' | trans }}</th>
+              <th class="px-5 py-3 font-semibold whitespace-nowrap">{{ 'admin.transactions.colActions' | trans }}</th>
             </tr>
           </thead>
           <tbody>
@@ -101,21 +101,21 @@
                   @if (canRefund(t.status)) {
                     @if (confirmingId() === t.id) {
                       <div class="flex items-center gap-2">
-                        <span class="text-[11px] text-rose-600">เพิกถอนคลังด้วย?</span>
+                        <span class="text-[11px] text-rose-600">{{ 'admin.transactions.revokeLibraryConfirm' | trans }}</span>
                         <button
                           class="btn-pink !py-1 !px-3 text-[11px]"
                           [disabled]="refundingId() === t.id"
                           (click)="refund(t.id)"
                         >
-                          {{ refundingId() === t.id ? 'กำลังคืน…' : 'ยืนยัน' }}
+                          {{ refundingId() === t.id ? ('admin.transactions.processingRefund' | trans) : ('admin.transactions.confirmRefund' | trans) }}
                         </button>
                         <button class="btn-ghost !py-1 !px-3 text-[11px]" (click)="cancelRefund()">
-                          ยกเลิก
+                          {{ 'admin.transactions.cancelRefund' | trans }}
                         </button>
                       </div>
                     } @else {
                       <button class="btn-ghost !py-1 !px-3 text-[11px]" (click)="askToRefund(t.id)">
-                        คืนเงิน
+                        {{ 'admin.transactions.refundBtn' | trans }}
                       </button>
                     }
                   }
@@ -124,7 +124,7 @@
             } @empty {
               <tr>
                 <td colspan="10" class="px-5 py-10 text-center text-ink-muted text-sm">
-                  ไม่พบรายการธุรกรรม
+                  {{ 'admin.transactions.empty' | trans }}
                 </td>
               </tr>
             }

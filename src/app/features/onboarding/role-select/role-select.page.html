@@ -2,14 +2,14 @@
   <div class="max-w-2xl w-full text-center">
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold mb-4">
       <span>🌸</span>
-      <span>ยินดีต้อนรับสู่ SIRIEDUMARKET</span>
+      <span>{{ 'onboarding.welcomeBadge' | trans }}</span>
     </div>
 
     <h1 class="text-3xl sm:text-4xl font-extrabold text-ink mb-3">
-      คุณอยากใช้ SIRIEDUMARKET เพื่ออะไร?
+      {{ 'onboarding.roleTitle' | trans }}
     </h1>
     <p class="text-base text-ink-soft mb-10 max-w-lg mx-auto">
-      เลือกเป้าหมายการใช้งานของคุณเพื่อเริ่มต้นประสบการณ์การเรียนรู้ที่ดีที่สุด
+      {{ 'onboarding.roleSubtitle' | trans }}
     </p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
@@ -24,14 +24,14 @@
             📚
           </div>
           <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors">
-            หาซื้อเอกสาร
+            {{ 'onboarding.buyerCardTitle' | trans }}
           </h2>
           <p class="text-sm text-ink-soft leading-relaxed">
-            ค้นหาข้อสอบ ใบงาน สรุปบทเรียน และเอกสารการเรียนคุณภาพจากคุณครูและครีเอเตอร์ทั่วประเทศ
+            {{ 'onboarding.buyerCardDesc' | trans }}
           </p>
         </div>
         <div class="mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform">
-          <span>เริ่มต้นเลือกความสนใจ</span>
+          <span>{{ 'onboarding.buyerCardAction' | trans }}</span>
           <span class="ml-1">→</span>
         </div>
       </button>
@@ -48,14 +48,14 @@
             💼
           </div>
           <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors">
-            ลงขายผลงาน
+            {{ 'onboarding.sellerCardTitle' | trans }}
           </h2>
           <p class="text-sm text-ink-soft leading-relaxed">
-            สร้างรายได้จากเอกสารการสอน ข้อสอบ และผลงานของคุณ เปิดร้านค้าและเข้าถึงผู้เรียนได้ง่ายๆ
+            {{ 'onboarding.sellerCardDesc' | trans }}
           </p>
         </div>
         <div class="mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform">
-          <span>สมัครเป็นผู้ขาย</span>
+          <span>{{ 'onboarding.sellerCardAction' | trans }}</span>
           <span class="ml-1">→</span>
         </div>
       </button>

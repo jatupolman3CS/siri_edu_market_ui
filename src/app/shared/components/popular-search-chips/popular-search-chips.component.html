@@ -11,7 +11,7 @@
       >
         {{ t.term }}
         @if (t.isRising) {
-          <span title="มาแรงในสัปดาห์นี้">🔥</span>
+          <span [title]="'shared.notificationSettings.risingTrend' | trans">🔥</span>
         }
       </a>
     }

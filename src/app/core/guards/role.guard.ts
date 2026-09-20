@@ -3,6 +3,7 @@ import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../services';
 import { SellerApplicationService } from '../services/seller-application.service';
+import { TranslationService } from '../i18n/translation.service';
 
 /**
  * Guard that requires the active user to have the `admin` role.
@@ -13,16 +14,17 @@ export const adminGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const message = inject(NzMessageService);
+  const translation = inject(TranslationService);
 
   if (!auth.isAuthenticated() || !auth.accessToken()) {
-    message.warning('กรุณาเข้าสู่ระบบเพื่อเข้าถึงส่วนนี้');
+    message.warning(translation.t('roleGuard.loginRequiredToAccess'));
     return router.createUrlTree(['/auth/login'], {
       queryParams: { returnUrl: state.url },
     });
   }
 
   if (!auth.isAdmin()) {
-    message.error('คุณไม่มีสิทธิ์เข้าถึงส่วนนี้');
+    message.error(translation.t('roleGuard.noPermission'));
     return router.createUrlTree(['/']);
   }
 
@@ -65,9 +67,10 @@ export const sellerGuard: CanActivateFn = async (
   const router = inject(Router);
   const message = inject(NzMessageService);
   const applications = inject(SellerApplicationService);
+  const translation = inject(TranslationService);
 
   if (!auth.isAuthenticated() || !auth.accessToken()) {
-    message.warning('กรุณาเข้าสู่ระบบเพื่อเข้าถึงส่วนนี้');
+    message.warning(translation.t('roleGuard.loginRequiredToAccess'));
     return router.createUrlTree(['/auth/login'], {
       queryParams: { returnUrl: state.url },
     });
@@ -78,7 +81,7 @@ export const sellerGuard: CanActivateFn = async (
   if (auth.isAdmin()) return true;
 
   const blockedFromSellerArea = (): UrlTree => {
-    message.error(SELLER_GUARD_MESSAGES.notSeller);
+    message.error(translation.t('roleGuard.notSellerYet'));
     return router.createUrlTree(['/']);
   };
 
@@ -95,16 +98,16 @@ export const sellerGuard: CanActivateFn = async (
       return auth.isSeller() ? true : blockedFromSellerArea();
 
     case 'pending':
-      message.warning(SELLER_GUARD_MESSAGES.pending);
+      message.warning(translation.t('roleGuard.sellerApplicationPending'));
       return router.createUrlTree(['/become-seller']);
 
     case 'rejected':
-      message.error(SELLER_GUARD_MESSAGES.rejected);
+      message.error(translation.t('roleGuard.sellerApplicationRejected'));
       return router.createUrlTree(['/become-seller']);
 
     case 'none':
     default:
-      message.warning(SELLER_GUARD_MESSAGES.none);
+      message.warning(translation.t('roleGuard.noShopYet'));
       return router.createUrlTree(['/become-seller']);
   }
 };

@@ -7,37 +7,14 @@ import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { LineNotificationService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 
-/**
- * line-notification-channel v1 (docs/contracts/line-notification-channel.md §3, §5) — "เชื่อมต่อ
- * LINE" section on `/seller/settings`, own component + own service (`LineNotificationService`),
- * same pattern as `payout-account-form.component.ts`. **Not** shared with `/account` —
- * `notification-settings.component.ts` stays email-only, untouched (§5).
- *
- * States rendered (§5):
- *  - `status() === null` → "กำลังโหลด…" (initial fetch hasn't resolved yet), same convention as
- *    `PayoutAccountFormComponent`.
- *  - `state().status === 'error'` → inline failure banner (`loadError()`), same split as
- *    `PayoutAccountFormComponent.loadError()`.
- *  - `status()!.isAvailable === false` → "ฟีเจอร์นี้ยังไม่เปิดใช้งาน" notice, no buttons (§1 item 8).
- *  - `status()!.status === 'NotConnected'` → "เชื่อมต่อ LINE" button only, no toggles.
- *  - `status()!.status === 'Connected'` → `lineDisplayName` + "ยกเลิกการเชื่อมต่อ" (confirm dialog
- *    before the real `DELETE`) + 5 per-category toggles (icon mapping reused verbatim from
- *    `notification-settings.component.html`, §5).
- *  - `status()!.status === 'Disconnected'` → warning banner + "เชื่อมต่อใหม่" button (calls the
- *    same `connect()` as NotConnected — no separate endpoint, §5), no toggles.
- *
- * notification-master-config v1 §3.6 / AC-20: a key the master config locks (`isLocked`) renders
- * disabled with its Thai `lockReason`, and never travels in the `PUT` — identical treatment to
- * `notification-settings.component.ts`, which owns the email half of the same catalog. Without it
- * a seller would see a live LINE switch for an event an admin already switched off platform-wide,
- * flip it, and get nothing.
- */
 @Component({
   selector: 'app-line-notification',
   standalone: true,
-  imports: [FormsModule, NzModalModule, NzSwitchModule, NzTooltipModule, IconComponent],
+  imports: [FormsModule, NzModalModule, NzSwitchModule, NzTooltipModule, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './line-notification.component.html',
   styleUrl: './line-notification.component.scss',
@@ -48,11 +25,11 @@ export class LineNotificationComponent {
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
+  readonly translation = inject(TranslationService);
 
   readonly status = this.lineNotification.status;
   readonly settings = this.lineNotification.settings;
 
-  /** True while connect()/disconnect() is in flight — guards the relevant buttons against double-clicks. */
   readonly busy = signal(false);
 
   readonly loadError = computed(() => {
@@ -64,19 +41,17 @@ export class LineNotificationComponent {
     this.lineNotification.loadStatus();
     this.lineNotification.loadSettings();
 
-    // §5: read `?line=connected|cancelled|error` on mount, toast accordingly, then clear it so a
-    // refresh doesn't re-show the same toast.
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const line = params.get('line');
       if (!line) return;
 
       if (line === 'connected') {
-        this.message.success('เชื่อมต่อ LINE สำเร็จ');
+        this.message.success(this.translation.t('shared.lineNotification.connectedSuccess'));
         this.lineNotification.loadStatus();
       } else if (line === 'cancelled') {
-        this.message.info('ยกเลิกการเชื่อมต่อ LINE');
+        this.message.info(this.translation.t('shared.lineNotification.cancelledInfo'));
       } else if (line === 'error') {
-        this.message.error('เชื่อมต่อ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        this.message.error(this.translation.t('shared.lineNotification.connectFailed'));
       }
 
       void this.router.navigate([], {
@@ -87,18 +62,13 @@ export class LineNotificationComponent {
     });
   }
 
-  /**
-   * "เชื่อมต่อ LINE" / "เชื่อมต่อใหม่" — both call `POST connect` then full-page navigate (§5).
-   * A `503` (LINE not configured on this server, §3.1) carries its own backend message
-   * (`result.error`) shown verbatim instead of the generic failure toast.
-   */
   async connect(): Promise<void> {
     if (this.busy()) return;
     this.busy.set(true);
     try {
       const result = await this.lineNotification.connect();
       if (!result.ok) {
-        this.message.error(result.error ?? 'เชื่อมต่อ LINE ไม่สำเร็จ');
+        this.message.error(result.error ?? this.translation.t('shared.lineNotification.connectFailedShort'));
         return;
       }
       this.lineNotification.redirectToLine(result.authorizeUrl);
@@ -109,11 +79,11 @@ export class LineNotificationComponent {
 
   confirmDisconnect(): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันยกเลิกการเชื่อมต่อ LINE',
-      nzContent: 'คุณจะไม่ได้รับการแจ้งเตือนผ่าน LINE จนกว่าจะเชื่อมต่อใหม่',
-      nzOkText: 'ยกเลิกการเชื่อมต่อ',
+      nzTitle: this.translation.t('shared.lineNotification.confirmDisconnectTitle'),
+      nzContent: this.translation.t('shared.lineNotification.confirmDisconnectContent'),
+      nzOkText: this.translation.t('shared.lineNotification.disconnectBtn'),
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: () => this.disconnect(),
     });
   }
@@ -123,28 +93,21 @@ export class LineNotificationComponent {
     try {
       const ok = await this.lineNotification.disconnect();
       if (ok) {
-        this.message.success('ยกเลิกการเชื่อมต่อ LINE แล้ว');
+        this.message.success(this.translation.t('shared.lineNotification.disconnectSuccess'));
         this.lineNotification.loadStatus();
       } else {
-        this.message.error('ยกเลิกการเชื่อมต่อ LINE ไม่สำเร็จ');
+        this.message.error(this.translation.t('shared.lineNotification.disconnectFailed'));
       }
     } finally {
       this.busy.set(false);
     }
   }
 
-  /**
-   * §5: the endpoint replaces the whole set, so every key has to go up on every toggle — mirrors
-   * `notification-settings.component.ts.toggle()` exactly, its locked-key rule included: §3.6 says
-   * the API drops a locked key silently, so sending one would make the request claim something
-   * the seller never asked for (and cannot ask for).
-   */
   toggle(key: string | undefined, enabled: boolean): void {
     if (!key) return;
 
     const settings = this.settings();
     const target = settings.find((setting) => setting.key === key);
-    // §3.6: a locked key is not the seller's to change.
     if (!target || target.isLocked) return;
 
     const map: Record<string, boolean> = {};
@@ -155,10 +118,7 @@ export class LineNotificationComponent {
     }
 
     void this.lineNotification.updateSettings({ settings: map }).then((ok) => {
-      // On failure: no toast here — same convention as `notification-settings.component.ts`,
-      // which only toasts success and leaves the failure path silent at the component layer too
-      // (there is nothing actionable to show beyond "try the switch again").
-      if (ok) this.message.success('อัปเดตการแจ้งเตือน LINE แล้ว');
+      if (ok) this.message.success(this.translation.t('shared.lineNotification.updatedSuccess'));
     });
   }
 }

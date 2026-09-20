@@ -23,6 +23,7 @@ import { LineOauthService } from './line-oauth.service';
 import { OauthClientsService } from './oauth-clients.service';
 import { CartService } from './cart.service';
 import { WishlistService } from './wishlist.service';
+import { TranslationService } from '../i18n/translation.service';
 
 const STORAGE_KEY = 'siriedu.auth';
 const PENDING_KEY = 'siriedu.auth.pending';
@@ -66,6 +67,7 @@ export class AuthService {
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
   private readonly googleOauth = inject(GoogleOauthService);
   private readonly googleOauthConfig = inject(GoogleOauthConfigService);
   /**
@@ -271,7 +273,7 @@ export class AuthService {
     if (this._redirectingToLogin) return;
     this._redirectingToLogin = true;
     this.signOut();
-    this.message.warning('กรุณาเข้าสู่ระบบเพื่อทำรายการต่อ');
+    this.message.warning(this.translation.t('auth.loginRequired'));
     void this.router.navigate(['/auth/login'], {
       queryParams: { returnUrl },
     }).then(() => {
@@ -295,7 +297,7 @@ export class AuthService {
     this._accountRestricted = true;
     this._redirectingToLogin = true;
     this.signOut();
-    this.message.warning(message || 'บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+    this.message.warning(message || this.translation.t('auth.accountSuspended'));
     void this.router.navigate(['/auth/login']).then(() => {
       this._redirectingToLogin = false;
     });
@@ -306,10 +308,10 @@ export class AuthService {
   /** Sign in with email + password — calls API, falls back to mock on failure */
   async signIn(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
     if (!email || !password) {
-      return { ok: false, error: 'กรุณากรอกอีเมลและรหัสผ่าน' };
+      return { ok: false, error: this.translation.t('auth.fillEmailAndPassword') };
     }
     if (password.length < 6) {
-      return { ok: false, error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
+      return { ok: false, error: this.translation.t('auth.shortLoginPassword') };
     }
     try {
       const result = await postApiAuthLogin({ body: { email, password } });
@@ -331,12 +333,12 @@ export class AuthService {
       this.reloadCartAndWishlistAfterSignIn();
       return { ok: true };
     } catch (e) {
-      this.apiFail.report('เข้าสู่ระบบ', e);
+      this.apiFail.report('auth.context.signIn', e);
       const code = extractErrorCode(e);
       if (code === 'account_suspended' || code === 'account_banned') {
         return { ok: false, error: this.apiFail.formatDetail(e) };
       }
-      return { ok: false, error: 'เข้าสู่ระบบไม่สำเร็จ' };
+      return { ok: false, error: this.translation.t('auth.loginFailed') };
     }
   }
 
@@ -349,24 +351,23 @@ export class AuthService {
     acceptTerms: boolean;
   }): Promise<{ ok: boolean; error?: string }> {
     if (!input.acceptTerms) {
-      return { ok: false, error: 'กรุณายอมรับเงื่อนไขก่อนสมัคร' };
+      return { ok: false, error: this.translation.t('auth.acceptTerms') };
     }
     if (!input.name.trim()) {
-      return { ok: false, error: 'กรุณากรอกชื่อ' };
+      return { ok: false, error: this.translation.t('auth.fillName') };
     }
     if (!this.isValidEmail(input.email)) {
-      return { ok: false, error: 'อีเมลไม่ถูกต้อง' };
+      return { ok: false, error: this.translation.t('auth.invalidEmail') };
     }
     const passwordPolicyPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
     if (input.password.length < 8 || !passwordPolicyPattern.test(input.password)) {
       return {
         ok: false,
-        error:
-          'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลขอย่างน้อยอย่างละ 1 ตัว',
+        error: this.translation.t('auth.passwordRequirements'),
       };
     }
     if (input.password !== input.confirmPassword) {
-      return { ok: false, error: 'รหัสผ่านยืนยันไม่ตรงกัน' };
+      return { ok: false, error: this.translation.t('auth.passwordMismatch') };
     }
     try {
       const result = await postApiAuthRegister({
@@ -383,8 +384,8 @@ export class AuthService {
       // instead of promising an inbox nothing was sent to.
       this._verificationNotice.set(unwrapSdkResult(result).message ?? '');
     } catch (e) {
-      this.apiFail.report('สมัครสมาชิก', e);
-      return { ok: false, error: 'สมัครสมาชิกไม่สำเร็จ' };
+      this.apiFail.report('auth.context.register', e);
+      return { ok: false, error: this.translation.t('auth.registerFailed') };
     }
     const pending: PendingAuth = {
       email: input.email,
@@ -404,7 +405,7 @@ export class AuthService {
   async verifyEmail(tokenOrCode: string, email?: string): Promise<{ ok: boolean; error?: string }> {
     const trimmed = (tokenOrCode ?? '').trim();
     if (!trimmed) {
-      return { ok: false, error: 'กรุณากรอกรหัสยืนยัน' };
+      return { ok: false, error: this.translation.t('auth.fillVerifyCode') };
     }
     const targetEmail = email?.trim() || this._pending()?.email;
     try {
@@ -438,7 +439,7 @@ export class AuthService {
     } catch {
       return {
         ok: false,
-        error: 'รหัส OTP หรือลิงก์ยืนยันไม่ถูกต้อง หรือหมดอายุแล้ว',
+        error: this.translation.t('auth.invalidOtpOrLink'),
       };
     }
   }
@@ -450,10 +451,10 @@ export class AuthService {
     const trimmedOtp = (otp ?? '').trim();
     const targetEmail = email?.trim() || this._pending()?.email;
     if (!trimmedOtp || !/^\d{6}$/.test(trimmedOtp)) {
-      return { ok: false, error: 'กรุณากรอกรหัส OTP 6 หลัก' };
+      return { ok: false, error: this.translation.t('auth.fillOtp6Digits') };
     }
     if (!targetEmail) {
-      return { ok: false, error: 'ไม่พบอีเมลสำหรับยืนยัน กรุณากรอกอีเมล' };
+      return { ok: false, error: this.translation.t('auth.emailNotFoundForVerify') };
     }
     return this.verifyEmail(trimmedOtp, targetEmail);
   }
@@ -464,7 +465,7 @@ export class AuthService {
   async sendOtp(email?: string): Promise<{ ok: boolean; message?: string }> {
     const targetEmail = email?.trim() || this._pending()?.email;
     if (!targetEmail || !this.isValidEmail(targetEmail)) {
-      return { ok: false, message: 'กรุณาระบุอีเมลที่ถูกต้อง' };
+      return { ok: false, message: this.translation.t('auth.fillValidEmail') };
     }
     let message = '';
     try {
@@ -472,7 +473,7 @@ export class AuthService {
       message = unwrapSdkResult(result).message ?? '';
       this._verificationNotice.set(message);
     } catch (e) {
-      this.apiFail.report('ขอรหัส OTP อีกครั้ง', e);
+      this.apiFail.report('auth.context.resendOtp', e);
       return { ok: false };
     }
     return { ok: true, message };
@@ -503,7 +504,7 @@ export class AuthService {
       try {
         await this.googleOauthConfig.ensureLoaded();
         if (!this.googleOauthConfig.getClientId()) {
-          return { ok: false, error: 'ยังไม่ได้ตั้งค่า Google OAuth' };
+          return { ok: false, error: this.translation.t('auth.googleOauthNotConfigured') };
         }
         const { code, redirectUri } = await this.googleOauth.requestAuthorizationCode();
         const result = await postApiAuthExternalByProvider({
@@ -514,9 +515,9 @@ export class AuthService {
         this.applyExternalSession(unwrapSdkResult(result), 'google');
         return { ok: true };
       } catch (e) {
-        this.apiFail.report('เข้าสู่ระบบด้วย Google', e);
+        this.apiFail.report('auth.context.signInGoogle', e);
         const msg = e instanceof Error ? e.message : '';
-        return { ok: false, error: msg || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ' };
+        return { ok: false, error: msg || this.translation.t('auth.googleLoginFailed') };
       }
     }
 
@@ -524,13 +525,13 @@ export class AuthService {
       await this.oauthClients.ensureLoaded();
       const channelId = this.oauthClients.lineLoginChannelId();
       if (!channelId) {
-        return { ok: false, error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE' };
+        return { ok: false, error: this.translation.t('auth.lineLoginNotEnabled') };
       }
       const started = options?.email
         ? this.lineOauth.startSignIn(options.returnUrl ?? '/', options.email)
         : this.lineOauth.startSignIn(options?.returnUrl ?? '/');
       if (!started) {
-        return { ok: false, error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วย LINE' };
+        return { ok: false, error: this.translation.t('auth.lineLoginNotEnabled') };
       }
       // §4.1: the browser is on its way to access.line.me. Resolving here would let the caller
       // flash a "สำเร็จ" toast (or drop its loading state) over a page that is already leaving.
@@ -544,7 +545,7 @@ export class AuthService {
     // looked like a real login attempt. The button stays hidden until the OAuth app exists.
     return {
       ok: false,
-      error: 'ยังไม่เปิดให้เข้าสู่ระบบด้วยช่องทางนี้',
+      error: this.translation.t('auth.providerNotEnabled'),
     };
   }
 
@@ -567,11 +568,11 @@ export class AuthService {
     email?: string;
   }): Promise<{ ok: boolean; error?: string; returnUrl?: string }> {
     if (!input.code) {
-      return { ok: false, error: 'ไม่พบรหัสยืนยันจาก LINE กรุณาลองใหม่อีกครั้ง' };
+      return { ok: false, error: this.translation.t('auth.lineCodeNotFound') };
     }
     const pending = this.lineOauth.consumeState(input.state);
     if (!pending) {
-      return { ok: false, error: 'คำขอเข้าสู่ระบบไม่ถูกต้องหรือหมดอายุ กรุณาลองใหม่อีกครั้ง' };
+      return { ok: false, error: this.translation.t('auth.lineStateInvalid') };
     }
     const resolvedEmail = (input.email ?? pending.email)?.trim() || undefined;
     try {
@@ -592,7 +593,7 @@ export class AuthService {
         ok: false,
         // §4.3: a 4xx from this endpoint is already a Thai sentence written for the end user
         // (§3.2's table), so it is shown verbatim rather than replaced by a generic line.
-        error: AuthService.userFacingProblemDetail(e) ?? 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+        error: AuthService.userFacingProblemDetail(e) ?? this.translation.t('auth.lineLoginFailed'),
       };
     }
   }
@@ -606,7 +607,7 @@ export class AuthService {
         try {
           await postApiAuthLogout({ body: { refreshToken } });
         } catch (e) {
-          this.apiFail.report('ออกจากระบบ (เซิร์ฟเวอร์)', e);
+          this.apiFail.report('auth.context.signOut', e);
         }
       })();
     }
@@ -633,14 +634,14 @@ export class AuthService {
    */
   async requestPasswordReset(email: string): Promise<{ ok: boolean; error?: string }> {
     if (!this.isValidEmail(email)) {
-      return { ok: false, error: 'อีเมลไม่ถูกต้อง' };
+      return { ok: false, error: this.translation.t('auth.invalidEmail') };
     }
     try {
       await postApiAuthForgotPassword({ body: { email } });
       return { ok: true };
     } catch (e) {
-      this.apiFail.report('ขอลิงก์ตั้งรหัสผ่านใหม่', e);
-      return { ok: false, error: 'ส่งลิงก์ไม่สำเร็จ กรุณาลองใหม่' };
+      this.apiFail.report('auth.context.requestPasswordReset', e);
+      return { ok: false, error: this.translation.t('auth.resetLinkFailed') };
     }
   }
 
@@ -651,10 +652,10 @@ export class AuthService {
     confirmPassword: string,
   ): Promise<{ ok: boolean; error?: string }> {
     if (password.length < 8) {
-      return { ok: false, error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
+      return { ok: false, error: this.translation.t('auth.shortResetPassword') };
     }
     if (password !== confirmPassword) {
-      return { ok: false, error: 'รหัสผ่านยืนยันไม่ตรงกัน' };
+      return { ok: false, error: this.translation.t('auth.passwordMismatch') };
     }
     try {
       await postApiAuthResetPassword({ body: { token, password, confirmPassword } });
@@ -667,10 +668,10 @@ export class AuthService {
       }
       return { ok: true };
     } catch (e) {
-      this.apiFail.report('ตั้งรหัสผ่านใหม่', e);
+      this.apiFail.report('auth.context.resetPassword', e);
       return {
         ok: false,
-        error: 'ลิงก์ไม่ถูกต้องหรือหมดอายุแล้ว กรุณาขอลิงก์ใหม่',
+        error: this.translation.t('auth.resetLinkInvalid'),
       };
     }
   }
@@ -889,7 +890,7 @@ export class AuthService {
     try {
       await postApiAuthChangePassword({ body: request, throwOnError: true });
     } catch (e) {
-      this.apiFail.report('เปลี่ยนรหัสผ่าน', e);
+      this.apiFail.report('auth.context.changePassword', e);
       throw e;
     }
 
@@ -988,7 +989,7 @@ export class AuthService {
     const now = Date.now();
     if (now - lastActive > MAX_INACTIVITY_MS) {
       this.signOut();
-      this.message.warning('เซสชันหมดอายุเนื่องจากไม่มีการใช้งานเกิน 7 วัน กรุณาเข้าสู่ระบบใหม่');
+      this.message.warning(this.translation.t('auth.sessionExpired'));
       void this.router.navigate(['/auth/login']);
       return;
     }

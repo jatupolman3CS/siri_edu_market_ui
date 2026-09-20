@@ -511,6 +511,30 @@ describe('brand asset fallbacks', () => {
 });
 
 /**
+ * marketplace-cover-preview-count v1 §0 item 6 / AC-14 (docs/contracts/marketplace-cover-preview-count.md)
+ * — `mapDocument()` used to hardcode `previewPages: 0`, which is why the "ลองฟรี" badge on the
+ * compact document card never showed even for documents with real free previews. Wired round:
+ * `previewPages` is now a real field on the generated `MarketplaceDocumentResponse` type (SDK
+ * regenerated against the backend that sends it).
+ */
+describe('mapDocument (marketplace-cover-preview-count v1 AC-14 — previewPages)', () => {
+  it('reads previewPages from the response once the backend sends it', () => {
+    const doc = mapDocument({
+      id: 'doc-1',
+      previewPages: 4,
+    } as MarketplaceDocumentResponse);
+
+    expect(doc.previewPages).toBe(4);
+  });
+
+  it('defaults to 0 when the backend omits it', () => {
+    const doc = mapDocument({ id: 'doc-1' } as MarketplaceDocumentResponse);
+
+    expect(doc.previewPages).toBe(0);
+  });
+});
+
+/**
  * real-data-stats v1 §3.1 (round 2 — SDK wired) — `CategoryResponse.subcategoryCount` (active
  * subcategory count, computed server-side, 1 query, no N+1).
  */

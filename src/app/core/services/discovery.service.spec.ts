@@ -137,7 +137,7 @@ describe('DiscoveryService — loadPopularTerms() (§3.1, round 2)', () => {
     expect(service.popularTerms()).toEqual([]);
     expect(service.popularPersonalized()).toBe(false);
     expect(service.popularTermsState()).toEqual({ status: 'idle' });
-    expect(apiFail.report).toHaveBeenCalledWith('โหลดคำค้นยอดนิยม', expect.anything());
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadPopularSearches', expect.anything());
   });
 
   it('§4.2 client cache: a second loadPopularTerms() within 5 minutes does not re-fetch', async () => {
@@ -266,7 +266,7 @@ describe('DiscoveryService — loadDiscovery() (§3.2, round 2)', () => {
 
     expect(service.discovery()).toBeNull();
     expect(service.discoveryState()).toEqual({ status: 'idle' });
-    expect(apiFail.report).toHaveBeenCalledWith('โหลดคำแนะนำสำหรับหน้าที่ยังไม่ได้ค้นหา', expect.anything());
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadDiscovery', expect.anything());
   });
 
   it('§4.2 client cache: a second loadDiscovery() within 5 minutes does not re-fetch', async () => {

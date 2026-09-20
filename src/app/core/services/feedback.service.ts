@@ -54,7 +54,7 @@ export class FeedbackService {
       const data = unwrapSdkResult(res);
       return { key: data.key };
     } catch (e) {
-      this.apiFail.report('อัปโหลดไฟล์แนบ', e);
+      this.apiFail.report('errors.context.uploadAttachment', e);
       throw e;
     }
   }

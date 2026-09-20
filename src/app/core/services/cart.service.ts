@@ -12,6 +12,7 @@ import {
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { TranslationService } from '../i18n/translation.service';
 
 interface CartTotals {
   subtotal: number;
@@ -24,6 +25,7 @@ export class CartService {
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
+  private readonly translation = inject(TranslationService);
 
   private readonly _items = signal<CartItem[]>([]);
   private readonly _drawerOpen = signal<boolean>(false);
@@ -136,7 +138,7 @@ export class CartService {
           total: data.total ?? 0,
         });
       } catch (e) {
-        this.apiFail.report('โหลดตะกร้า', e);
+        this.apiFail.report('errors.context.loadCart', e);
       }
     })();
   }
@@ -163,11 +165,11 @@ export class CartService {
           this._items.update((items) =>
             items.filter((i) => i.document.id !== document.id),
           );
-          this.message.warning('คุณเป็นเจ้าของเอกสารนี้แล้ว');
+          this.message.warning(this.translation.t('cart.alreadyOwnsDocument'));
           this.router.navigate(['/library']);
           return;
         }
-        this.apiFail.report('เพิ่มลงตะกร้า', e);
+        this.apiFail.report('errors.context.addToCart', e);
       }
     })();
     return true;
@@ -187,11 +189,11 @@ export class CartService {
       const status = (e as { status?: number; response?: { status?: number } })?.status
         ?? (e as { response?: { status?: number } })?.response?.status;
       if (status === 409) {
-        this.message.warning('คุณเป็นเจ้าของเอกสารบางรายการในแพ็กเกจนี้แล้ว');
+        this.message.warning(this.translation.t('cart.alreadyOwnsSomeBundleItems'));
         void this.router.navigate(['/library']);
         return { ok: false, alreadyOwned: true };
       }
-      this.apiFail.report('เพิ่มแพ็กเกจลงตะกร้า', e);
+      this.apiFail.report('errors.context.addBundleToCart', e);
       return { ok: false };
     }
   }
@@ -207,7 +209,7 @@ export class CartService {
         await deleteApiCartItemsByDocumentId({ path: { documentId } });
         this.loadCart();
       } catch (e) {
-        this.apiFail.report('ลบออกจากตะกร้า', e);
+        this.apiFail.report('errors.context.removeFromCart', e);
       }
     })();
   }
@@ -219,7 +221,7 @@ export class CartService {
       try {
         await deleteApiCart();
       } catch (e) {
-        this.apiFail.report('ล้างตะกร้า', e);
+        this.apiFail.report('errors.context.clearCart', e);
       }
     })();
   }

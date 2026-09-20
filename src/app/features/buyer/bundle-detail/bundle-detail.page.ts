@@ -19,6 +19,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-bundle-detail',
@@ -31,6 +32,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     ThbPipe,
     CompactPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundle-detail.page.html',

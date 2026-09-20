@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -10,19 +10,7 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import type { CrmSignalCounts } from '../../../core/models';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
-
-/** `/account/privacy` §4.3 signal-count row labels — not locked copy, spec only fixes section headings. */
-const SIGNAL_COUNT_LABELS: Record<keyof CrmSignalCounts, string> = {
-  documentViews: 'เปิดดูเอกสาร',
-  searches: 'ค้นหา',
-  purchases: 'ซื้อแล้ว',
-  subscriptionAccesses: 'เข้าถึงผ่านสมาชิกรายเดือน',
-  wishlistItems: 'รายการโปรด',
-  cartItems: 'อยู่ในตะกร้า',
-  sellerFollows: 'ติดตามร้าน',
-  reviews: 'รีวิว',
-  declaredInterests: 'ความสนใจที่เลือกเอง',
-};
+import { TranslatePipe, TranslationService } from '../../../core/i18n';
 
 /**
  * crm-core v1 §3.1–§3.3, §4.1, §4.3 (`docs/contracts/crm-core.md`) — "ความเป็นส่วนตัวของฉัน":
@@ -47,6 +35,7 @@ const SIGNAL_COUNT_LABELS: Record<keyof CrmSignalCounts, string> = {
     NzTooltipModule,
     IconComponent,
     EmptyStateComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account-privacy.page.html',
@@ -56,13 +45,22 @@ export class AccountPrivacyPage {
   private readonly modal = inject(NzModalService);
   private readonly message = inject(NzMessageService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly i18n = inject(TranslationService);
 
   readonly togglingTracking = signal(false);
   readonly deleting = signal(false);
 
-  readonly signalCountRows: { key: keyof CrmSignalCounts; label: string }[] = (
-    Object.keys(SIGNAL_COUNT_LABELS) as (keyof CrmSignalCounts)[]
-  ).map((key) => ({ key, label: SIGNAL_COUNT_LABELS[key] }));
+  readonly signalCountRows = computed<{ key: keyof CrmSignalCounts; label: string }[]>(() => [
+    { key: 'documentViews', label: this.i18n.t('accountPrivacy.signalViews') },
+    { key: 'searches', label: this.i18n.t('accountPrivacy.signalSearches') },
+    { key: 'purchases', label: this.i18n.t('accountPrivacy.signalPurchases') },
+    { key: 'subscriptionAccesses', label: this.i18n.t('accountPrivacy.signalSubscriptions') },
+    { key: 'wishlistItems', label: this.i18n.t('accountPrivacy.signalWishlist') },
+    { key: 'cartItems', label: this.i18n.t('accountPrivacy.signalCart') },
+    { key: 'sellerFollows', label: this.i18n.t('accountPrivacy.signalFollows') },
+    { key: 'reviews', label: this.i18n.t('accountPrivacy.signalReviews') },
+    { key: 'declaredInterests', label: this.i18n.t('accountPrivacy.signalInterests') },
+  ]);
 
   constructor() {
     void this.load();
@@ -72,7 +70,7 @@ export class AccountPrivacyPage {
     try {
       await this.crm.loadMine();
     } catch (e) {
-      this.apiFail.report('โหลดข้อมูลความเป็นส่วนตัวของฉัน', e);
+      this.apiFail.report(this.i18n.t('accountPrivacy.errLoad'), e);
     }
   }
 
@@ -82,7 +80,7 @@ export class AccountPrivacyPage {
     try {
       await this.crm.setTracking(enabled);
     } catch (e) {
-      this.apiFail.report('เปลี่ยนการตั้งค่าการติดตาม', e);
+      this.apiFail.report(this.i18n.t('accountPrivacy.errToggle'), e);
     } finally {
       this.togglingTracking.set(false);
     }
@@ -91,12 +89,11 @@ export class AccountPrivacyPage {
   /** §4.3 ปุ่ม "ลบข้อมูลพฤติกรรมของฉัน" — always confirms first (AC-22), never a native `confirm()`. */
   confirmDelete(): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันการลบข้อมูล',
-      nzContent:
-        'ระบบจะลบประวัติการเปิดดูและการค้นหาที่ใช้วิเคราะห์ความสนใจทั้งหมด การแนะนำเอกสารจะกลับไปเป็นแบบทั่วไปจนกว่าจะมีข้อมูลใหม่',
-      nzOkText: 'ลบข้อมูล',
+      nzTitle: this.i18n.t('accountPrivacy.confirmTitle'),
+      nzContent: this.i18n.t('accountPrivacy.confirmContent'),
+      nzOkText: this.i18n.t('accountPrivacy.confirmOk'),
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.i18n.t('accountPrivacy.confirmCancel'),
       nzOnOk: () => this.doDelete(),
     });
   }
@@ -105,9 +102,9 @@ export class AccountPrivacyPage {
     this.deleting.set(true);
     try {
       await this.crm.deleteMyData();
-      this.message.success('ลบข้อมูลเรียบร้อยแล้ว');
+      this.message.success(this.i18n.t('accountPrivacy.deleteSuccessToast'));
     } catch (e) {
-      this.apiFail.report('ลบข้อมูลพฤติกรรมของฉัน', e);
+      this.apiFail.report(this.i18n.t('accountPrivacy.errDelete'), e);
     } finally {
       this.deleting.set(false);
     }

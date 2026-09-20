@@ -1,3 +1,5 @@
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -37,6 +39,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   selector: 'app-admin-documents',
   standalone: true,
   imports: [
+    TranslatePipe,
     FormsModule,
     RouterLink,
     DecimalPipe,
@@ -51,6 +54,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   styleUrl: './documents.page.scss',
 })
 export class AdminDocumentsPage {
+  readonly translation = inject(TranslationService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
 
@@ -76,15 +80,15 @@ export class AdminDocumentsPage {
   readonly selectedIds = signal<Set<string>>(new Set());
 
   readonly statuses = [
-    { value: 'all', label: 'ทุกสถานะ' },
-    { value: 'draft', label: 'ฉบับร่าง' },
-    { value: 'pending', label: 'รออนุมัติ' },
-    { value: 'approved', label: 'อนุมัติแล้ว' },
-    { value: 'rejected', label: 'ปฏิเสธ' },
+    { value: 'all', label: this.translation.t('admin.allStatuses') },
+    { value: 'draft', label: this.translation.t('admin.statusDraft') },
+    { value: 'pending', label: this.translation.t('admin.statusPending') },
+    { value: 'approved', label: this.translation.t('admin.statusApproved') },
+    { value: 'rejected', label: this.translation.t('admin.statusRejected') },
   ];
 
   readonly formats = [
-    { value: '', label: 'ทุกรูปแบบ' },
+    { value: '', label: this.translation.t('admin.allFormats') },
     { value: 'pdf', label: 'PDF' },
     { value: 'docx', label: 'Word' },
     { value: 'pptx', label: 'PowerPoint' },
@@ -93,10 +97,10 @@ export class AdminDocumentsPage {
   ];
 
   readonly sorts = [
-    { value: 'Newest', label: 'ใหม่สุด' },
-    { value: 'Oldest', label: 'เก่าสุด' },
-    { value: 'PriceAsc', label: 'ราคาต่ำ → สูง' },
-    { value: 'PriceDesc', label: 'ราคาสูง → ต่ำ' },
+    { value: 'Newest', label: this.translation.t('admin.sortNewest') },
+    { value: 'Oldest', label: this.translation.t('admin.sortOldest') },
+    { value: 'PriceAsc', label: this.translation.t('admin.sortPriceAsc') },
+    { value: 'PriceDesc', label: this.translation.t('admin.sortPriceDesc') },
   ];
 
   private readonly sortKeyToApi: Record<string, AdminDocumentsSort> = {
@@ -150,7 +154,7 @@ export class AdminDocumentsPage {
       this.totalCount.set(data.totalCount ?? 0);
       this.totalPages.set(data.totalPages ?? 0);
     } catch (e) {
-      this.apiFail.report('โหลดรายการเอกสาร (แอดมิน)', e);
+      this.apiFail.report('Load admin documents', e);
       this.items.set([]);
     } finally {
       this.loading.set(false);
@@ -203,11 +207,11 @@ export class AdminDocumentsPage {
   async runBulk(action: string): Promise<void> {
     const ids = [...this.selectedIds()];
     if (!ids.length) {
-      this.message.warning('เลือกเอกสารอย่างน้อย 1 รายการ');
+      this.message.warning(this.translation.t('admin.selectAtLeastOneDoc'));
       return;
     }
     if (action === 'reject' && !this.bulkReason().trim()) {
-      this.message.warning('กรุณาระบุเหตุผลการปฏิเสธ');
+      this.message.warning(this.translation.t('admin.specifyBulkRejectReason'));
       return;
     }
     try {
@@ -219,24 +223,24 @@ export class AdminDocumentsPage {
         },
       });
       const data = unwrapSdkResult(result);
-      this.message.success(`ดำเนินการแล้ว ${data.processedCount} รายการ`);
+      this.message.success(this.translation.t('admin.bulkProcessedSuccess', { count: data.processedCount ?? 0 }));
       if (data.failedIds?.length) {
-        this.message.warning(`ไม่สำเร็จ ${data.failedIds.length} รายการ`);
+        this.message.warning(this.translation.t('admin.bulkFailedPartial', { count: data.failedIds.length }));
       }
       this.selectedIds.set(new Set());
       await this.fetchList();
     } catch (e) {
-      this.apiFail.report('ดำเนินการกลุ่ม', e);
+      this.apiFail.report('Run bulk action', e);
     }
   }
 
   statusLabel(s: string): string {
     return (
       {
-        draft: 'ร่าง',
-        pending: 'รออนุมัติ',
-        approved: 'อนุมัติ',
-        rejected: 'ปฏิเสธ',
+        draft: this.translation.t('admin.statusDraft'),
+        pending: this.translation.t('admin.statusPending'),
+        approved: this.translation.t('admin.statusApproved'),
+        rejected: this.translation.t('admin.statusRejected'),
       }[s] ?? s
     );
   }

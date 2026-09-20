@@ -1,6 +1,6 @@
 @if (sellerLoading()) {
   <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
-    <app-empty-state emoji="⏳" title="กำลังโหลด…" description="รอสักครู่นะคะ" />
+    <app-empty-state emoji="⏳" [title]="'storefront.loadingTitle' | trans" [description]="'storefront.loadingDesc' | trans" />
   </div>
 } @else if (seller(); as s) {
       <!-- Banner -->
@@ -37,7 +37,7 @@
                   <span class="pill-pink !text-[10px]">{{ b }}</span>
                 }
               </div>
-              <p class="text-sm text-ink-muted mb-3">โดย {{ s.ownerName }} · เข้าร่วม {{ joinedYear() }}</p>
+              <p class="text-sm text-ink-muted mb-3">{{ 'storefront.byOwner' | trans:{ owner: s.ownerName ?? '', year: joinedYear() } }}</p>
               <p class="text-sm text-ink-soft max-w-2xl mb-4 leading-relaxed">{{ s.bio }}</p>
 
               <div class="flex flex-wrap gap-2">
@@ -55,7 +55,7 @@
                   class="btn-ghost !py-3 flex items-center justify-center gap-2 transition-all font-semibold"
                 >
                   <app-icon name="package" [size]="16" />
-                  จัดการหน้าร้านของคุณ
+                  {{ 'storefront.manageStore' | trans }}
                 </a>
               } @else {
                 <button
@@ -66,16 +66,16 @@
                 >
                   @if (isFollowing()) {
                     <app-icon name="check" [size]="16" />
-                    กำลังติดตาม
+                    {{ 'storefront.following' | trans }}
                   } @else {
                     <app-icon name="plus" [size]="16" />
-                    ติดตามร้าน
+                    {{ 'storefront.followStore' | trans }}
                   }
                 </button>
               }
               <p class="text-[11px] text-ink-muted leading-relaxed text-center px-1">
                 <app-icon name="lock" [size]="11" className="text-pink-500" />
-                การซื้อขายและสอบถามทำผ่านระบบในเว็บเท่านั้น
+                {{ 'storefront.safetyNotice' | trans }}
               </p>
             </div>
           </div>
@@ -83,24 +83,24 @@
           <!-- Stats strip -->
           <dl class="mt-6 pt-5 border-t border-line grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
             <div>
-              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">เอกสาร</dt>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statDocs' | trans }}</dt>
               <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.totalDocuments }}</dd>
             </div>
             <div>
-              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">ขายแล้ว</dt>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statSales' | trans }}</dt>
               <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.totalSales | compact }}</dd>
             </div>
             <div>
-              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">คะแนน</dt>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statRating' | trans }}</dt>
               <dd class="text-2xl font-extrabold text-pink-600 mt-1">{{ s.rating }} ★</dd>
             </div>
             <div>
-              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">ฟอลโลเวอร์</dt>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statFollowers' | trans }}</dt>
               <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.followerCount | compact }}</dd>
             </div>
             <div>
-              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">ตอบกลับเฉลี่ย</dt>
-              <dd class="text-2xl font-extrabold text-ink mt-1">{{ s.responseHours }} ชม.</dd>
+              <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statAvgResponse' | trans }}</dt>
+              <dd class="text-2xl font-extrabold text-ink mt-1">{{ 'storefront.hoursUnit' | trans:{ hours: s.responseHours ?? 0 } }}</dd>
             </div>
           </dl>
         </header>
@@ -108,8 +108,8 @@
         <!-- Sales-by-month chart (seller-pricing-and-storefront-stats v1 §3.3/§4) -->
         @if (totalUnitsSoldInWindow() > 0) {
           <section class="card-soft p-6 mb-8">
-            <h2 class="text-lg font-bold text-ink mb-1">ยอดขายรายเดือน</h2>
-            <p class="text-xs text-ink-muted mb-5">จำนวนเอกสารที่ขายได้ 6 เดือนล่าสุด</p>
+            <h2 class="text-lg font-bold text-ink mb-1">{{ 'storefront.monthlySales' | trans }}</h2>
+            <p class="text-xs text-ink-muted mb-5">{{ 'storefront.monthlySalesDesc' | trans }}</p>
             <div class="overflow-x-auto -mx-2">
               <div class="grid grid-cols-6 gap-3 items-end h-40 min-w-[320px] px-2">
                 @for (m of salesByMonth(); track m.month) {
@@ -154,10 +154,10 @@
         @switch (tab()) {
           @case ('all') {
             @if (sellerDocs().length === 0) {
-              <app-empty-state emoji="📚" title="ยังไม่มีเอกสารในร้านนี้" />
+              <app-empty-state emoji="📚" [title]="'storefront.emptyDocs' | trans" />
             } @else {
               <section>
-                <h2 class="section-title mb-4">เอกสารทั้งหมดของร้าน</h2>
+                <h2 class="section-title mb-4">{{ 'storefront.allStoreDocs' | trans }}</h2>
                 <div class="document-card-grid">
                   @for (doc of sellerDocs(); track doc.id) {
                     <app-document-card [doc]="doc" density="compact" />
@@ -168,7 +168,7 @@
           }
           @case ('bundles') {
             @if (sellerBundles().length === 0) {
-              <app-empty-state emoji="📦" title="ยังไม่มีแพ็กเกจในร้านนี้" />
+              <app-empty-state emoji="📦" [title]="'storefront.emptyBundles' | trans" />
             } @else {
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 @for (b of sellerBundles(); track b.id) {
@@ -179,7 +179,7 @@
           }
           @case ('free') {
             @if (sellerFree().length === 0) {
-              <app-empty-state emoji="🎁" title="ผู้ขายนี้ยังไม่มีเอกสารฟรี" />
+              <app-empty-state emoji="🎁" [title]="'storefront.emptyFree' | trans" />
             } @else {
               <div class="document-card-grid">
                 @for (doc of sellerFree(); track doc.id) {
@@ -201,10 +201,10 @@
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
         <app-empty-state
           emoji="🏪"
-          title="ไม่พบร้านนี้"
-          description="ร้านที่คุณค้นหาอาจถูกปิดหรือถูกลบ"
+          [title]="'storefront.notFoundTitle' | trans"
+          [description]="'storefront.notFoundDesc' | trans"
         >
-          <a routerLink="/marketplace" class="btn-pink mt-4">กลับหน้าตลาด</a>
+          <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'storefront.backToMarketplace' | trans }}</a>
         </app-empty-state>
       </div>
     }

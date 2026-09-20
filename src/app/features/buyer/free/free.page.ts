@@ -4,6 +4,7 @@ import { DocumentCardComponent } from '../../../shared/components/document-card/
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-free',
@@ -13,6 +14,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
     EmptyStateComponent,
     IconComponent,
     CompactPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './free.page.html',

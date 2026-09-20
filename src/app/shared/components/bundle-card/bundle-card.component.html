@@ -20,14 +20,14 @@
             </span>
             @if (savingsPercent() >= 20) {
               <span class="pill bg-pink-500 text-white shadow-soft">
-                ประหยัด {{ savingsPercent() }}%
+                {{ 'bundleDetail.savePercent' | trans:{ percent: savingsPercent() } }}
               </span>
             }
           </div>
 
           <!-- Item count -->
           <div class="absolute bottom-3 left-3 pill bg-white/90 backdrop-blur text-ink text-xs font-bold">
-            {{ bundle().documentIds.length }} เอกสารในแพ็กเกจ
+            {{ 'bundleDetail.itemsInBundle' | trans:{ count: bundle().documentIds.length } }}
           </div>
         </div>
 

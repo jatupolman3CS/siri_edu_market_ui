@@ -5,17 +5,19 @@ import { PageHeroComponent } from '../../../shared/components/page-hero/page-her
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-categories',
   standalone: true,
-  imports: [RouterLink, PageHeroComponent, IconComponent, EmptyStateComponent, CompactPipe],
+  imports: [RouterLink, PageHeroComponent, IconComponent, EmptyStateComponent, CompactPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories.page.html',
   styleUrl: './categories.page.scss',
 })
 export class BuyerCategoriesPage {
   readonly catalog = inject(CatalogService);
+  private readonly i18n = inject(TranslationService);
 
   /**
    * real-data-stats v1 §4.4: "กว่า N หมวดหมู่หลัก แตกย่อยเป็น M หมวดย่อย …" — same computation as
@@ -32,10 +34,10 @@ export class BuyerCategoriesPage {
   );
   readonly heroDescription = computed(() => {
     const mainCount = this.mainCount();
-    const tail = 'ครอบคลุมการศึกษา ธุรกิจ ไอที ดีไซน์ และอีกมากมาย';
-    if (mainCount === 0) return `สำรวจเอกสารในทุกหมวดหมู่ ${tail}`;
-    const sub = this.subCountKnown() ? ` แตกย่อยเป็น ${this.subCount()} หมวดย่อย` : '';
-    return `กว่า ${mainCount} หมวดหมู่หลัก${sub} ${tail}`;
+    if (mainCount === 0) return this.i18n.t('categories.heroDescEmpty');
+    return this.subCountKnown()
+      ? this.i18n.t('categories.heroDescWithSub', { mainCount, subCount: this.subCount() })
+      : this.i18n.t('categories.heroDescBase', { mainCount });
   });
 
   constructor() {

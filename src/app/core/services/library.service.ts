@@ -19,6 +19,7 @@ import {
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { createInfinitePager } from './infinite-pager';
+import { TranslationService } from '../i18n/translation.service';
 
 export type LibraryFilter = 'all' | 'unreviewed' | 'unread';
 
@@ -75,6 +76,7 @@ export interface SubmitReviewResponse {
 export class LibraryService {
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly auth = inject(AuthService);
+  private readonly translation = inject(TranslationService);
 
   private readonly _state = signal<ActionState>(idleActionState());
   private _refreshOnceAttempted = false;
@@ -97,7 +99,7 @@ export class LibraryService {
 
   private readonly libraryPager = createInfinitePager<LibraryItem>({
     pageSize: 24,
-    errorMessage: 'โหลดคลังของฉันไม่สำเร็จ',
+    errorMessage: this.translation.t('library.loadFailed'),
     fetch: async (Page, PageSize) => {
       // TODO(contract): wire unreadOnly after SDK regen
       const queryPayload: Record<string, unknown> = {
@@ -122,7 +124,7 @@ export class LibraryService {
 
   private readonly ordersPager = createInfinitePager<Order>({
     pageSize: 20,
-    errorMessage: 'โหลดคำสั่งซื้อไม่สำเร็จ',
+    errorMessage: this.translation.t('orders.loadFailed'),
     fetch: async (Page, PageSize) => {
       const result = await getApiOrders({
         query: {
@@ -169,7 +171,7 @@ export class LibraryService {
     if (!this.auth.accessToken()) {
       if (this.auth.isAuthenticated()) {
         this._state.set(
-          errorActionState('เซสชันไม่สมบูรณ์ — กรุณาออกจากระบบแล้วเข้าใหม่'),
+          errorActionState(this.translation.t('library.sessionIncomplete')),
         );
       }
       return;
@@ -179,8 +181,8 @@ export class LibraryService {
       await this.libraryPager.loadFirst();
       this._state.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดคลังของฉัน', e);
-      this._state.set(errorActionState('โหลดคลังของฉันไม่สำเร็จ'));
+      this.apiFail.report('errors.context.loadLibrary', e);
+      this._state.set(errorActionState(this.translation.t('library.loadFailed')));
     }
   }
 
@@ -219,7 +221,7 @@ export class LibraryService {
     try {
       await this.ordersPager.loadFirst();
     } catch (e) {
-      this.apiFail.report('โหลดคำสั่งซื้อ', e);
+      this.apiFail.report('errors.context.loadOrders', e);
     }
   }
 
@@ -244,7 +246,7 @@ export class LibraryService {
     try {
       const result = await postApiLibraryByDocumentIdDownload({ path: { documentId } });
       const data = unwrapSdkResult(result);
-      this._state.set(successActionState('ดาวน์โหลดเรียบร้อย'));
+      this._state.set(successActionState(this.translation.t('library.downloadSuccess')));
 
       // document-versioning v1 §4.2: update local state optimistically
       this.libraryPager.updateItems((items) =>
@@ -265,8 +267,8 @@ export class LibraryService {
         watermarkNotice: (data?.watermarkNotice ?? '').trim() || null,
       };
     } catch (e) {
-      this.apiFail.report('ขอดาวน์โหลดเอกสาร', e);
-      this._state.set(errorActionState('ดาวน์โหลดไม่สำเร็จ'));
+      this.apiFail.report('errors.context.downloadDocument', e);
+      this._state.set(errorActionState(this.translation.t('library.downloadFailed')));
       return null;
     }
   }
@@ -282,7 +284,7 @@ export class LibraryService {
       const data = unwrapSdkResult(result);
       return (data ?? []).map(mapBuyerDocumentVersion);
     } catch (e) {
-      this.apiFail.report('โหลดประวัติเวอร์ชัน', e);
+      this.apiFail.report('errors.context.loadVersionHistory', e);
       return [];
     }
   }
@@ -292,7 +294,7 @@ export class LibraryService {
 
   async submitReview(documentId: string, request: SubmitReviewRequest): Promise<SubmitReviewResponse | null> {
     if (!this.auth.accessToken()) {
-      this._reviewState.set(errorActionState('กรุณาเข้าสู่ระบบก่อนรีวิว'));
+      this._reviewState.set(errorActionState(this.translation.t('library.loginBeforeReview')));
       return null;
     }
 
@@ -314,11 +316,11 @@ export class LibraryService {
       }
 
       const data: SubmitReviewResponse = await response.json();
-      this._reviewState.set(successActionState('รีวิวสำเร็จ ขอบคุณค่ะ!'));
+      this._reviewState.set(successActionState(this.translation.t('library.reviewSuccess')));
       return data;
     } catch (e) {
-      this.apiFail.report('ส่งรีวิว', e);
-      this._reviewState.set(errorActionState('ส่งรีวิวไม่สำเร็จ'));
+      this.apiFail.report('errors.context.submitReview', e);
+      this._reviewState.set(errorActionState(this.translation.t('library.reviewFailed')));
       return null;
     }
   }
@@ -351,7 +353,7 @@ export class LibraryService {
       });
 
       if (!response.ok) {
-        throw new Error('อัปเดตสถานะการอ่านไม่สำเร็จ');
+        throw new Error('Update read status failed');
       }
 
       const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
@@ -367,7 +369,7 @@ export class LibraryService {
         ),
       );
     } catch (e) {
-      this.apiFail.report('อัปเดตสถานะการอ่านไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.updateReadStatus', e);
     }
   }
 }

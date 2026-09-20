@@ -22,12 +22,12 @@
               />
               <div class="absolute top-4 left-4 flex flex-col gap-2">
                 @if (d.isFree) {
-                  <span class="pill bg-emerald-500 text-white">🆓 ฟรี</span>
+                  <span class="pill bg-emerald-500 text-white">🆓 {{ 'common.free' | trans }}</span>
                 } @else if (d.discountPercent) {
                   <span class="pill bg-pink-500 text-white">-{{ d.discountPercent }}%</span>
                 }
                 @if (d.isBestseller) {
-                  <span class="pill bg-amber-400 text-amber-900">⭐ ขายดี</span>
+                  <span class="pill bg-amber-400 text-amber-900">⭐ {{ 'shared.quickView.bestseller' | trans }}</span>
                 }
               </div>
             </div>
@@ -64,7 +64,7 @@
                 <div class="card-cream p-4 mb-4">
                   <div class="flex items-center gap-1.5 text-xs font-bold text-pink-600 mb-2">
                     <app-icon name="sparkle" [size]="12" />
-                    AI สรุป
+                    {{ 'shared.quickView.aiSummary' | trans }}
                   </div>
                   <ul class="space-y-1.5">
                     @for (s of d.aiSummary!.slice(0, 2); track s) {
@@ -85,7 +85,7 @@
                 <div class="flex items-center gap-2">
                   <app-icon name="globe" [size]="14" className="text-pink-500" />
                   <span class="text-ink-soft">
-                    {{ d.language === 'th' ? 'ไทย' : 'English' }}
+                    {{ d.language === 'th' ? ('header.langTh' | trans) : ('header.langEn' | trans) }}
                   </span>
                 </div>
                 @for (g of d.gradeLevels.slice(0, 2); track g) {
@@ -96,14 +96,14 @@
                 }
                 <div class="flex items-center gap-2">
                   <app-icon name="eye" [size]="14" className="text-pink-500" />
-                  <span class="text-ink-soft">พรีวิว {{ d.previewPages }} หน้า</span>
+                  <span class="text-ink-soft">{{ 'shared.quickView.previewPages' | trans: { count: d.previewPages } }}</span>
                 </div>
               </dl>
 
               <!-- Price -->
               <div class="flex items-baseline gap-2 mb-5">
                 @if (d.isFree) {
-                  <span class="text-3xl font-extrabold text-emerald-600">ฟรี</span>
+                  <span class="text-3xl font-extrabold text-emerald-600">{{ 'common.free' | trans }}</span>
                 } @else {
                   <span class="text-3xl font-extrabold text-ink">{{ d.price | thb }}</span>
                   @if (d.originalPrice) {
@@ -118,7 +118,7 @@
                   class="btn-icon"
                   [class.!text-pink-500]="wishlist.has(d.id)"
                   (click)="wishlist.toggle(d)"
-                  title="รายการโปรด"
+                  [title]="'nav.wishlist' | trans"
                 >
                   @if (wishlist.has(d.id)) {
                     <app-icon name="heart-fill" [size]="18" />
@@ -129,12 +129,12 @@
                 @if (cart.has(d.id)) {
                   <button class="btn-pink flex-1" disabled>
                     <app-icon name="check" [size]="16" />
-                    อยู่ในตะกร้าแล้ว
+                    {{ 'shared.quickView.inCart' | trans }}
                   </button>
                 } @else {
                   <button class="btn-pink flex-1" (click)="addToCart()">
                     <app-icon name="cart" [size]="16" />
-                    เพิ่มลงตะกร้า
+                    {{ 'cart.addToCart' | trans }}
                   </button>
                 }
                 <a
@@ -142,7 +142,7 @@
                   class="btn-ghost"
                   (click)="quickView.close()"
                 >
-                  ดูเต็ม
+                  {{ 'shared.quickView.viewFull' | trans }}
                   <app-icon name="arrow-right" [size]="14" />
                 </a>
               </div>

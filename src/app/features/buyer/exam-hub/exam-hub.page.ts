@@ -12,6 +12,7 @@ import type { ExamHubType } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { TranslatePipe } from '../../../core/i18n';
 
 /**
  * exam-hub-landing-pages v1 (docs/contracts/exam-hub-landing-pages.md §4, §6)
@@ -25,6 +26,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
     DocumentCardComponent,
     EmptyStateComponent,
     IconComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './exam-hub.page.html',

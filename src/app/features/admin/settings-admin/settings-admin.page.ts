@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import {
@@ -11,6 +12,7 @@ import {
   type SystemConfigJobToggle,
   type WatermarkPolicy,
 } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /**
@@ -58,7 +60,7 @@ const RETENTION_DAYS_MAX = 3650;
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
-  imports: [FormsModule, IconComponent, DecimalPipe, DatePipe, NzSwitchModule],
+  imports: [FormsModule, IconComponent, DecimalPipe, DatePipe, NzSwitchModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-admin.page.html',
   styleUrl: './settings-admin.page.scss',
@@ -66,6 +68,7 @@ const RETENTION_DAYS_MAX = 3650;
 export class AdminSettingsPage {
   readonly admin = inject(AdminService);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly form = signal<PlatformSettings>({
     feeRatePercent: 10,
@@ -108,18 +111,22 @@ export class AdminSettingsPage {
   /** jobKey currently mid-PUT — disables that row's switch and guards against double-click. */
   readonly savingJobKey = signal<string | null>(null);
 
-  readonly gateways = [
-    { name: 'Stripe', icon: '💳', note: 'บัตรเครดิต / PromptPay / wallet — เปิดปิดที่ Stripe Dashboard' },
-    { name: 'GB Prime Pay', icon: '🏦', note: 'PromptPay QR และ Internet Banking' },
-    { name: 'TrueMoney Wallet', icon: '👛', note: 'หักจาก e-Wallet' },
-  ];
+  get gateways(): { name: string; icon: string; note: string }[] {
+    return [
+      { name: 'Stripe', icon: '💳', note: this.translation.t('admin.settingsAdmin.gatewayStripeNote') },
+      { name: 'GB Prime Pay', icon: '🏦', note: this.translation.t('admin.settingsAdmin.gatewayGbNote') },
+      { name: 'TrueMoney Wallet', icon: '👛', note: this.translation.t('admin.settingsAdmin.gatewayTrueMoneyNote') },
+    ];
+  }
 
   /** watermark-completion v1 §4.1 — labels are fixed by the spec, values by §2.2. */
-  readonly watermarkPolicies: { value: WatermarkPolicy; label: string }[] = [
-    { value: 'seller_choice', label: 'ให้ผู้ขายเลือกเอง' },
-    { value: 'required_when_supported', label: 'บังคับเมื่อไฟล์รองรับ' },
-    { value: 'required_always', label: 'บังคับทุกกรณี' },
-  ];
+  get watermarkPolicies(): { value: WatermarkPolicy; label: string }[] {
+    return [
+      { value: 'seller_choice', label: this.translation.t('admin.settingsAdmin.watermarkPolicySellerChoice') },
+      { value: 'required_when_supported', label: this.translation.t('admin.settingsAdmin.watermarkPolicyRequired') },
+      { value: 'required_always', label: this.translation.t('admin.settingsAdmin.watermarkPolicyAlways') },
+    ];
+  }
 
   readonly retentionDaysMin = RETENTION_DAYS_MIN;
   readonly retentionDaysMax = RETENTION_DAYS_MAX;
@@ -131,11 +138,13 @@ export class AdminSettingsPage {
   /** `false` until a lookup has come back, so the empty table and "not found" stay distinct. */
   readonly copySearched = signal(false);
 
-  readonly schedules = [
-    { value: 'monthly-15', label: 'ทุกวันที่ 15 ของเดือน' },
-    { value: 'monthly-end', label: 'ทุกสิ้นเดือน' },
-    { value: 'weekly-wed', label: 'ทุกสัปดาห์ (พุธ)' },
-  ];
+  get schedules(): { value: string; label: string }[] {
+    return [
+      { value: 'monthly-15', label: this.translation.t('admin.settingsAdmin.scheduleMonthly15') },
+      { value: 'monthly-end', label: this.translation.t('admin.settingsAdmin.scheduleMonthlyEnd') },
+      { value: 'weekly-wed', label: this.translation.t('admin.settingsAdmin.scheduleWeeklyWed') },
+    ];
+  }
 
   constructor() {
     void this.reload();
@@ -232,7 +241,7 @@ export class AdminSettingsPage {
     const body = this.buildSettingsUpdate();
     const days = body.watermarkCopyRetentionDays;
     if (days !== undefined && (days < RETENTION_DAYS_MIN || days > RETENTION_DAYS_MAX)) {
-      this.message.error(`เก็บไฟล์สำเนาได้ระหว่าง ${RETENTION_DAYS_MIN} ถึง ${RETENTION_DAYS_MAX} วัน`);
+      this.message.error(this.translation.t('admin.settingsAdmin.retentionDaysError', { min: RETENTION_DAYS_MIN, max: RETENTION_DAYS_MAX }));
       return;
     }
     this.saving.set(true);
@@ -240,7 +249,7 @@ export class AdminSettingsPage {
       await this.admin.saveSettings(body);
       this.touchedWatermarkKeys.set(new Set());
       this.touchedPayoutMethodKeys.set(new Set());
-      this.message.success('บันทึกการตั้งค่าเรียบร้อย');
+      this.message.success(this.translation.t('admin.settingsAdmin.saveSuccess'));
     } catch {
       // apiFail already toasted by AdminService
     } finally {
@@ -258,7 +267,7 @@ export class AdminSettingsPage {
   async searchWatermarkCopy(): Promise<void> {
     const token = this.copyToken().trim();
     if (!token) {
-      this.message.warning('กรุณากรอกรหัสสำเนาก่อนค้นหา');
+      this.message.warning(this.translation.t('admin.settingsAdmin.copySearchRequired'));
       return;
     }
     if (this.copySearching()) return;
@@ -280,9 +289,9 @@ export class AdminSettingsPage {
   accessSourceLabel(source: string): string {
     switch (source) {
       case 'purchase':
-        return 'ซื้อ';
+        return this.translation.t('admin.settingsAdmin.accessSourcePurchase');
       case 'subscription':
-        return 'สมาชิก';
+        return this.translation.t('admin.settingsAdmin.accessSourceSubscription');
       default:
         return source || '-';
     }
@@ -292,13 +301,13 @@ export class AdminSettingsPage {
   watermarkModeLabel(mode: string): string {
     switch (mode) {
       case 'raster':
-        return 'ประทับในหน้า PDF';
+        return this.translation.t('admin.settingsAdmin.watermarkModeRaster');
       case 'ooxml':
-        return 'ประทับในไฟล์ Office';
+        return this.translation.t('admin.settingsAdmin.watermarkModeOoxml');
       case 'repack':
-        return 'แนบไฟล์รหัสสำเนาใน ZIP';
+        return this.translation.t('admin.settingsAdmin.watermarkModeRepack');
       default:
-        return 'ไม่มีลายน้ำ';
+        return this.translation.t('admin.settingsAdmin.watermarkModeNone');
     }
   }
 
@@ -306,23 +315,23 @@ export class AdminSettingsPage {
   failureReasonLabel(reason: string): string {
     switch (reason) {
       case 'disabled_by_seller':
-        return 'ผู้ขายปิดลายน้ำ';
+        return this.translation.t('admin.settingsAdmin.failureReasonDisabledBySeller');
       case 'unsupported_format':
-        return 'ฟอร์แมตนี้ประทับลายน้ำไม่ได้';
+        return this.translation.t('admin.settingsAdmin.failureReasonUnsupportedFormat');
       case 'format_mismatch':
-        return 'นามสกุลไฟล์ไม่ตรงกับฟอร์แมตที่บันทึกไว้';
+        return this.translation.t('admin.settingsAdmin.failureReasonFormatMismatch');
       case 'too_many_pages':
-        return 'จำนวนหน้ามากเกินกำหนด';
+        return this.translation.t('admin.settingsAdmin.failureReasonTooManyPages');
       case 'source_too_large':
-        return 'ไฟล์ต้นฉบับใหญ่เกินกำหนด';
+        return this.translation.t('admin.settingsAdmin.failureReasonSourceTooLarge');
       case 'render_timeout':
-        return 'ประทับไม่ทันเวลาที่กำหนด';
+        return this.translation.t('admin.settingsAdmin.failureReasonRenderTimeout');
       case 'render_error':
-        return 'ประทับลายน้ำไม่สำเร็จ';
+        return this.translation.t('admin.settingsAdmin.failureReasonRenderError');
       case 'missing_source':
-        return 'ไม่พบไฟล์ต้นฉบับ';
+        return this.translation.t('admin.settingsAdmin.failureReasonMissingSource');
       case 'forensic_disabled':
-        return 'ปิดการฝังรหัสสำเนารายผู้ซื้อ';
+        return this.translation.t('admin.settingsAdmin.failureReasonForensicDisabled');
       default:
         return reason;
     }
@@ -338,7 +347,7 @@ export class AdminSettingsPage {
     this.savingJobKey.set(item.jobKey);
     try {
       await this.admin.updateJobToggle(item.jobKey, enabled);
-      this.message.success('อัปเดตสถานะงานเรียบร้อย');
+      this.message.success(this.translation.t('admin.settingsAdmin.updateJobSuccess'));
     } catch {
       // apiFail already toasted by AdminService
     } finally {

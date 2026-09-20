@@ -1,33 +1,33 @@
 <div class="max-w-6xl">
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">ภาพรวมแพลตฟอร์ม</h1>
+        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.dashboardTitle' | trans }}</h1>
         <p class="text-sm text-ink-soft">
-          ตรวจสอบสถานะระบบ ยอดขายรวม และเอกสารที่รออนุมัติ
+          {{ 'admin.dashboardSubtitle' | trans }}
         </p>
       </header>
 
       <!-- Stats -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <app-stat-card
-          label="GMV เดือนนี้"
+          [label]="'admin.statGmvMonth' | trans"
           [value]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb"
           icon="💎"
           [trend]="revenueTrendDisplay()"
         />
         <app-stat-card
-          label="ค่าธรรมเนียม"
+          [label]="'admin.statPlatformFee' | trans"
           [value]="(admin.dashboard()?.totalFees ?? admin.totalFees()) | thb"
           icon="💰"
           [trend]="feesTrendDisplay()"
         />
         <app-stat-card
-          label="ธุรกรรมสำเร็จ"
-          [value]="(admin.dashboard()?.successCount ?? admin.successCount()) + ' รายการ'"
+          [label]="'admin.statSuccessfulTx' | trans"
+          [value]="(admin.dashboard()?.successCount ?? admin.successCount()) + ('seller.itemsCount' | trans: { count: '' }).replace('()', '')"
           icon="✅"
         />
         <app-stat-card
-          label="คืนเงิน"
-          [value]="(admin.dashboard()?.refundCount ?? admin.refundCount()) + ' รายการ'"
+          [label]="'admin.statRefunds' | trans"
+          [value]="(admin.dashboard()?.refundCount ?? admin.refundCount()) + ('seller.itemsCount' | trans: { count: '' }).replace('()', '')"
           icon="↩️"
           [trend]="refundTrendDisplay()"
         />
@@ -38,13 +38,13 @@
         <section class="lg:col-span-2 card-soft p-6">
           <header class="flex items-center justify-between mb-5">
             <div>
-              <h2 class="text-lg font-bold text-ink">เอกสารที่รออนุมัติ</h2>
+              <h2 class="text-lg font-bold text-ink">{{ 'admin.pendingDocsCardTitle' | trans }}</h2>
               <p class="text-xs text-ink-muted mt-1">
-                {{ admin.pendingDocuments().length }} รายการ
+                {{ 'seller.itemsCount' | trans: { count: admin.pendingDocuments().length } }}
               </p>
             </div>
             <a routerLink="/admin/approval" class="text-sm text-pink-600 hover:underline font-semibold">
-              ดูทั้งหมด →
+              {{ 'admin.viewAllArrow' | trans }}
             </a>
           </header>
 
@@ -63,7 +63,7 @@
                   </div>
                 </div>
                 <a [routerLink]="['/admin/approval']" class="btn-pink !py-2 !px-4 text-xs">
-                  ตรวจสอบ
+                  {{ 'admin.approval' | trans }}
                 </a>
               </li>
             }
@@ -72,8 +72,8 @@
 
         <!-- System health -->
         <section class="card-soft p-6">
-          <h2 class="text-lg font-bold text-ink mb-1">สถานะระบบ</h2>
-          <p class="text-xs text-ink-muted mb-5">ทุกบริการทำงานปกติ</p>
+          <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.systemStatusTitle' | trans }}</h2>
+          <p class="text-xs text-ink-muted mb-5">{{ 'admin.allServicesHealthy' | trans }}</p>
           <ul class="space-y-3">
             @for (s of services(); track s.name) {
               <li class="flex items-center gap-3">
@@ -86,7 +86,7 @@
                 <div class="flex-1">
                   <div class="text-sm font-medium text-ink">{{ s.name }}</div>
                   <div class="text-xs text-ink-muted">
-                    {{ s.message || (s.status === 'ok' ? 'ทำงานปกติ' : s.status) }}
+                    {{ s.message || (s.status === 'ok' ? ('admin.statusOperational' | trans) : s.status) }}
                   </div>
                 </div>
               </li>
@@ -98,9 +98,9 @@
       <!-- Recent transactions -->
       <section class="card-soft p-6 mt-6">
         <header class="flex items-center justify-between mb-5">
-          <h2 class="text-lg font-bold text-ink">ธุรกรรมล่าสุด</h2>
+          <h2 class="text-lg font-bold text-ink">{{ 'admin.recentTransactionsTitle' | trans }}</h2>
           <a routerLink="/admin/transactions" class="text-sm text-pink-600 hover:underline font-semibold">
-            ดูทั้งหมด →
+            {{ 'admin.viewAllArrow' | trans }}
           </a>
         </header>
 
@@ -108,11 +108,11 @@
         <table class="w-full min-w-[560px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-5 py-3 font-semibold">เลขคำสั่งซื้อ</th>
-              <th class="px-5 py-3 font-semibold">ผู้ซื้อ</th>
-              <th class="px-5 py-3 font-semibold">เอกสาร</th>
-              <th class="px-5 py-3 font-semibold">ยอด</th>
-              <th class="px-5 py-3 font-semibold">สถานะ</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.colOrderNumber' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.colBuyer' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.colDoc' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.colAmount' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.colStatus' | trans }}</th>
             </tr>
           </thead>
           <tbody>

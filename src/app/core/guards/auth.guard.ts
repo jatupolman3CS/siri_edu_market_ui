@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../services';
+import { TranslationService } from '../i18n';
 
 /**
  * Guard that requires the user to be authenticated.
@@ -11,10 +12,11 @@ export const authGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const message = inject(NzMessageService);
+  const translation = inject(TranslationService);
 
   if (auth.isAuthenticated() && !!auth.accessToken()) return true;
 
-  message.warning('กรุณาเข้าสู่ระบบเพื่อทำรายการต่อ');
+  message.warning(translation.t('common.loginRequired'));
   return router.createUrlTree(['/auth/login'], {
     queryParams: { returnUrl: state.url },
   });

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router } from '@angular/router';
 import { OnboardingService } from '../../../core/services/onboarding.service';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 /**
  * registration-onboarding v1 §4.1: initial role selection screen.
  * Buyer path leads to category interest selection; seller path skips onboarding
@@ -10,7 +12,7 @@ import { OnboardingService } from '../../../core/services/onboarding.service';
 @Component({
   selector: 'app-role-select',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './role-select.page.html',
   styleUrls: ['./role-select.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

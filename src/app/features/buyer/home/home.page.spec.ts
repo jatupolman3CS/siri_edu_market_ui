@@ -445,7 +445,7 @@ describe('BuyerHomePage — "ฮิตตอนนี้:" chips (crm-driven-dis
 
     const page = fixture.componentInstance;
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    for (const q of page.quickSearches) {
+    for (const q of page.quickSearches()) {
       expect(text).toContain(q);
     }
   });

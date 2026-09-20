@@ -8,6 +8,8 @@ import type { SellerQnaItem } from '../../../core/models';
 import { SellerService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 /**
  * GAP-06: the seller's inbox for questions asked on their listings. The QNA table was
@@ -19,7 +21,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 @Component({
   selector: 'app-seller-qna',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule, NzSwitchModule, NzTooltipModule, EmptyStateComponent],
+  imports: [CommonModule, DatePipe, FormsModule, NzSwitchModule, NzTooltipModule, EmptyStateComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './qna.page.html',
 })
@@ -27,6 +29,7 @@ export class SellerQnaPage {
   private readonly seller = inject(SellerService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly items = signal<SellerQnaItem[]>([]);
   readonly loading = signal<boolean>(false);
@@ -66,10 +69,10 @@ export class SellerQnaPage {
     this.savingFaqId.set(q.id);
     try {
       await this.seller.setQnaFaq(q.id, isFaq, this.sortOrderFor(q));
-      this.message.success(isFaq ? 'ปักหมุดเป็น FAQ แล้ว' : 'ถอนหมุด FAQ แล้ว');
+      this.message.success(isFaq ? this.translation.t('seller.faqPinned') : this.translation.t('seller.faqUnpinned'));
       await this.reload();
     } catch (e) {
-      this.apiFail.report('อัปเดต FAQ ไม่สำเร็จ', e);
+      this.apiFail.report(this.translation.t('systemContent.updateFaq'), e);
     } finally {
       this.savingFaqId.set(null);
     }
@@ -85,7 +88,7 @@ export class SellerQnaPage {
     try {
       this.items.set(await this.seller.listQuestions(this.unansweredOnly()));
     } catch (e) {
-      this.apiFail.report('โหลดคำถามจากผู้ซื้อ', e);
+      this.apiFail.report(this.translation.t('systemContent.loadBuyerQuestions'), e);
       this.items.set([]);
     } finally {
       this.loading.set(false);
@@ -111,12 +114,12 @@ export class SellerQnaPage {
       const draft = await this.seller.draftQnaAnswer(questionId);
       if (draft?.trim()) {
         this.answerText.set(draft.trim());
-        this.message.success('AI ช่วยร่างคำตอบเรียบร้อย คุณสามารถแก้ไขเพิ่มเติมได้');
+        this.message.success(this.translation.t('seller.aiDraftSuccess'));
       } else {
-        this.message.warning('ไม่สามารถสร้างร่างคำตอบได้ในขณะนี้');
+        this.message.warning(this.translation.t('seller.aiDraftFailed'));
       }
     } catch (e) {
-      this.apiFail.report('ร่างคำตอบด้วย AI', e);
+      this.apiFail.report(this.translation.t('systemContent.draftAiAnswer'), e);
     } finally {
       this.draftingAi.set(false);
     }
@@ -125,7 +128,7 @@ export class SellerQnaPage {
   async submitAnswer(questionId: string): Promise<void> {
     const answer = this.answerText().trim();
     if (!answer) {
-      this.message.warning('กรุณาพิมพ์คำตอบ');
+      this.message.warning(this.translation.t('seller.pleaseEnterAnswer'));
       return;
     }
     if (this.submitting()) return;
@@ -133,11 +136,11 @@ export class SellerQnaPage {
     this.submitting.set(true);
     try {
       await this.seller.answerQuestion(questionId, answer);
-      this.message.success('ตอบคำถามเรียบร้อย');
+      this.message.success(this.translation.t('seller.answerSuccess'));
       this.cancelAnswer();
       await this.reload();
     } catch (e) {
-      this.apiFail.report('ตอบคำถาม', e);
+      this.apiFail.report(this.translation.t('systemContent.answerQuestion'), e);
     } finally {
       this.submitting.set(false);
     }

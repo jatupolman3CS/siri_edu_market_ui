@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CrmService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 
@@ -21,7 +22,7 @@ const DAY_OPTIONS = [7, 14, 30] as const;
 @Component({
   selector: 'app-crm-document-alerts-admin',
   standalone: true,
-  imports: [RouterLink, DatePipe, EmptyStateComponent, StatCardComponent],
+  imports: [RouterLink, DatePipe, EmptyStateComponent, StatCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-document-alerts-admin.page.html',
 })
@@ -40,7 +41,7 @@ export class CrmDocumentAlertsAdminPage {
     try {
       await this.crm.loadDocumentAlerts(this.days());
     } catch (e) {
-      this.apiFail.report('โหลดการแจ้งเตือนเอกสารตรงความสนใจ', e);
+      this.apiFail.report('errors.context.loadDocumentAlerts', e);
     }
   }
 

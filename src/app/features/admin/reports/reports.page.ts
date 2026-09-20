@@ -5,8 +5,10 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminOpenReportResponse } from '../../../core/api';
 import { AdminService } from '../../../core/services/admin.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * F-09 (N-05): one place to read document reports.
@@ -18,7 +20,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterLink, EmptyStateComponent, PaginationComponent],
+  imports: [CommonModule, DatePipe, RouterLink, EmptyStateComponent, PaginationComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reports.page.html',
 })
@@ -26,6 +28,7 @@ export class AdminReportsPage {
   private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly reports = signal<AdminOpenReportResponse[]>([]);
   readonly loading = signal(false);
@@ -35,11 +38,11 @@ export class AdminReportsPage {
   readonly pageSize = signal(10);
   readonly total = signal(0);
 
-  readonly categoryLabels: Record<string, string> = {
-    copyright: 'ละเมิดลิขสิทธิ์',
-    inappropriate: 'เนื้อหาไม่เหมาะสม',
-    inaccurate: 'ข้อมูลผิด',
-    other: 'อื่น ๆ',
+  private readonly categoryKeyMap: Record<string, string> = {
+    copyright: 'admin.reports.typeCopyright',
+    inappropriate: 'admin.reports.typeInappropriate',
+    inaccurate: 'admin.reports.typeInaccurate',
+    other: 'admin.reports.typeOther',
   };
 
   constructor() {
@@ -47,8 +50,9 @@ export class AdminReportsPage {
   }
 
   categoryLabel(category: string | undefined): string {
-    if (!category) return 'ไม่ระบุ';
-    return this.categoryLabels[category] ?? category;
+    if (!category) return this.translation.t('admin.reports.typeUnspecified');
+    const key = this.categoryKeyMap[category];
+    return key ? this.translation.t(key) : category;
   }
 
   setOpenOnly(next: boolean): void {

@@ -12,6 +12,7 @@ import {
 } from '../api';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import { errorActionState, idleActionState, loadingActionState, type ActionState } from './action-state';
 
 /**
@@ -46,6 +47,7 @@ import { errorActionState, idleActionState, loadingActionState, type ActionState
 @Injectable({ providedIn: 'root' })
 export class LineNotificationService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _status = signal<LineConnectionStatus | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
@@ -64,8 +66,8 @@ export class LineNotificationService {
         this._status.set(mapLineConnectionStatus(data));
         this._state.set(idleActionState());
       } catch (e) {
-        this._state.set(errorActionState('โหลดสถานะการเชื่อมต่อ LINE ไม่สำเร็จ'));
-        this.apiFail.report('โหลดสถานะการเชื่อมต่อ LINE', e);
+        this._state.set(errorActionState(this.translation.t('lineNotification.loadStatusFailed')));
+        this.apiFail.report('errors.context.loadLineStatus', e);
       }
     })();
   }
@@ -86,7 +88,7 @@ export class LineNotificationService {
         const data = unwrapSdkResult(await getApiNotificationsLineSettings());
         this._settings.set(data.map(normalizeSetting));
       } catch (e) {
-        this.apiFail.report('โหลดการตั้งค่าแจ้งเตือน LINE', e);
+        this.apiFail.report('errors.context.loadLineSettings', e);
       }
     })();
   }

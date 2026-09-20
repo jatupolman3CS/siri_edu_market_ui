@@ -5,10 +5,13 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import type { AdminAffiliateSummary } from '../../../core/models';
 import { AdminService } from '../../../core/services/admin.service';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * referral-program v2 §3.10 / §3.11 / §4.1:
@@ -25,6 +28,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
     EmptyStateComponent,
     IconComponent,
     ThbPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './affiliates.page.html',
@@ -33,6 +37,8 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 export class AdminAffiliatesPage {
   private readonly admin = inject(AdminService);
   private readonly message = inject(NzMessageService);
+  private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -58,8 +64,8 @@ export class AdminAffiliatesPage {
       this.page.set(res.page ?? p);
       this.pageSize.set(res.pageSize ?? this.pageSize());
       this.total.set(res.totalCount ?? 0);
-    } catch {
-      this.message.error('โหลดข้อมูลลิงก์พันธมิตรไม่สำเร็จ');
+    } catch (e) {
+      this.apiFail.report('errors.context.loadAffiliates', e);
     } finally {
       this.loading.set(false);
     }
@@ -89,10 +95,14 @@ export class AdminAffiliatesPage {
         this.items.update((list) =>
           list.map((it) => (it.userId === item.userId ? { ...it, isActive: nextState } : it)),
         );
-        this.message.success(nextState ? 'เปิดใช้งานสำเร็จ' : 'ปิดใช้งานสำเร็จ');
+        this.message.success(
+          nextState
+            ? this.translation.t('admin.affiliates.enableSuccess')
+            : this.translation.t('admin.affiliates.disableSuccess'),
+        );
       }
     } catch {
-      this.message.error('บันทึกสถานะไม่สำเร็จ');
+      this.message.error(this.translation.t('admin.affiliates.saveFailed'));
     } finally {
       this.busyId.set(null);
     }

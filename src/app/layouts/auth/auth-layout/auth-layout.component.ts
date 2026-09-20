@@ -7,11 +7,12 @@ import { PlatformStatsService } from '../../../core/services';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: true,
-  imports: [RouterLink, LogoComponent, GlobalLoaderComponent, CompactPipe, DecimalPipe, TranslatePipe],
+  imports: [RouterLink, LogoComponent, GlobalLoaderComponent, CompactPipe, DecimalPipe, TranslatePipe, LanguageSwitcherComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './auth-layout.component.html',
   styleUrl: './auth-layout.component.scss',

@@ -11,6 +11,7 @@ import type { SavedPaymentMethod } from '../../../core/models';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
+import { TranslatePipe, TranslationService } from '../../../core/i18n';
 
 /**
  * subscription-membership v3 §4 (docs/contracts/subscription-membership.md): "สมัครสมาชิกรายเดือน"
@@ -33,7 +34,7 @@ import { loadStripeScript } from '../../../core/util/load-stripe-script';
 @Component({
   selector: 'app-buyer-subscribe',
   standalone: true,
-  imports: [RouterLink, ThbPipe, IconComponent],
+  imports: [RouterLink, ThbPipe, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subscribe.page.html',
   styleUrl: './subscribe.page.scss',
@@ -46,6 +47,7 @@ export class BuyerSubscribePage {
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
   private readonly message = inject(NzMessageService);
+  private readonly i18n = inject(TranslationService);
 
   readonly selectedCategoryIds = signal<string[]>([]);
   readonly submitting = signal(false);
@@ -108,12 +110,12 @@ export class BuyerSubscribePage {
   /** §4: ไม่เรียก create endpoint เลยจนกว่าจะมีบัตร — กัน 400 ที่เดาได้ล่วงหน้าอยู่แล้ว. */
   async subscribe(): Promise<void> {
     if (!this.hasSavedCard()) {
-      this.message.warning('กรุณาเพิ่มบัตรเครดิต/เดบิตก่อนสมัครสมาชิก');
+      this.message.warning(this.i18n.t('subscribe.needCardToast'));
       return;
     }
     const categoryIds = this.selectedCategoryIds();
     if (categoryIds.length === 0) {
-      this.message.warning('กรุณาเลือกหมวดหมู่ที่ต้องการ');
+      this.message.warning(this.i18n.t('subscribe.selectCategoryToast'));
       return;
     }
     if (this.submitting() || this.pendingClientSecret()) return;
@@ -126,7 +128,7 @@ export class BuyerSubscribePage {
         // Defensive only — §3.3 step 7 always returns a `clientSecret` on create. Nothing left to
         // confirm client-side if it is somehow absent, so there is nothing dishonest about the
         // success toast here.
-        this.message.success('สมัครสมาชิกสำเร็จ');
+        this.message.success(this.i18n.t('subscribe.successToast'));
         void this.router.navigateByUrl('/account/subscription');
         return;
       }
@@ -134,7 +136,7 @@ export class BuyerSubscribePage {
       await this.confirmSubscriptionPayment(clientSecret);
     } catch {
       const state = this.subscription.createState();
-      this.message.error(state.status === 'error' ? state.message : 'สมัครสมาชิกไม่สำเร็จ — ลองใหม่อีกครั้ง');
+      this.message.error(state.status === 'error' ? state.message : this.i18n.t('subscribe.failedToast'));
     } finally {
       this.submitting.set(false);
     }
@@ -161,7 +163,7 @@ export class BuyerSubscribePage {
   private async confirmSubscriptionPayment(clientSecret: string): Promise<void> {
     const card = this.cardUsedForSubscribe();
     if (!card) {
-      this.message.error('ไม่พบบัตรที่ใช้สมัครสมาชิก — โปรดตรวจสอบสถานะที่หน้าสมาชิกอีกครั้ง');
+      this.message.error(this.i18n.t('subscribe.noCardFoundToast'));
       this.paymentFailed.set(true);
       return;
     }
@@ -171,11 +173,11 @@ export class BuyerSubscribePage {
       await loadStripeScript();
       const stripeFactory = window.Stripe;
       if (!stripeFactory) {
-        throw new Error('โหลด Stripe.js ไม่สำเร็จ');
+        throw new Error(this.i18n.t('checkout.stripeLoadFailed'));
       }
       const publishableKey = await this.orders.getStripePublishableKey();
       if (!publishableKey) {
-        throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
+        throw new Error(this.i18n.t('checkout.stripeKeyMissing'));
       }
 
       const stripe = stripeFactory(publishableKey);
@@ -184,24 +186,24 @@ export class BuyerSubscribePage {
       });
 
       if (result.error) {
-        this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ — กรุณาลองอีกครั้ง');
+        this.message.error(result.error.message ?? this.i18n.t('subscribe.confirmFailedRetryToast'));
         this.paymentFailed.set(true);
         return;
       }
       if (result.paymentIntent?.status !== 'succeeded') {
         // e.g. the buyer closed the 3-D Secure challenge before it finished — Stripe.js resolves
         // without an `error` here, but the payment is not done either. Never a false success.
-        this.message.warning('การชำระเงินยังไม่เสร็จสมบูรณ์ — กรุณาลองยืนยันการชำระเงินอีกครั้ง');
+        this.message.warning(this.i18n.t('subscribe.incompletePaymentToast'));
         this.paymentFailed.set(true);
         return;
       }
 
       this.pendingClientSecret.set(null);
       this.paymentFailed.set(false);
-      this.message.success('สมัครสมาชิกสำเร็จ');
+      this.message.success(this.i18n.t('subscribe.successToast'));
       await this.ngZone.run(() => this.router.navigateByUrl('/account/subscription'));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'ยืนยันการชำระเงินไม่สำเร็จ';
+      const msg = e instanceof Error ? e.message : this.i18n.t('subscribe.confirmFailedToast');
       this.message.error(msg);
       this.paymentFailed.set(true);
     } finally {

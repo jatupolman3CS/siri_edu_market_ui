@@ -1,3 +1,5 @@
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -40,7 +42,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 
 const GRADE_PRESET_KEYS = Object.keys(GRADE_LEVEL_LABELS) as GradeLevel[];
 
-const STANDARD_PRESETS = ['O-NET', 'TGAT', 'TPAT', 'GAT', 'PAT', 'สสวท.', 'A-Level', 'IELTS', 'TOEFL'];
+const STANDARD_PRESETS = ['O-NET', 'TGAT', 'TPAT', 'GAT', 'PAT', 'IPST', 'A-Level', 'IELTS', 'TOEFL'];
 
 const MAX_GALLERY_IMAGES = 10;
 // image-upload-optimization v1 §4: previewUrl is what <img> renders (optimizedUrl when the
@@ -54,6 +56,7 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
   selector: 'app-admin-document-detail',
   standalone: true,
   imports: [
+    TranslatePipe,
     FormsModule,
     RouterLink,
     NzCheckboxModule,
@@ -70,6 +73,7 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
   styleUrl: './document-detail.page.scss',
 })
 export class AdminDocumentDetailPage {
+  readonly translation = inject(TranslationService);
   /** For template: resolve cover and other stored URLs against API base / R2 rules. */
   readonly resolvePublicUrl = resolvePublicUrl;
 
@@ -105,10 +109,10 @@ export class AdminDocumentDetailPage {
   readonly galleryUploading = signal(false);
 
   readonly docStatuses = [
-    { value: 'draft', label: 'ฉบับร่าง' },
-    { value: 'pending', label: 'รออนุมัติ' },
-    { value: 'approved', label: 'อนุมัติแล้ว' },
-    { value: 'rejected', label: 'ปฏิเสธ' },
+    { value: 'draft', label: this.translation.t('admin.statusDraft') },
+    { value: 'pending', label: this.translation.t('admin.statusPending') },
+    { value: 'approved', label: this.translation.t('admin.statusApproved') },
+    { value: 'rejected', label: this.translation.t('admin.statusRejected') },
   ];
 
   readonly formatOptions = [
@@ -217,7 +221,7 @@ export class AdminDocumentDetailPage {
       this.parseStandardsFromDoc(d.standards);
       this.reports.set(unwrapSdkResult(rRes) ?? []);
     } catch (e) {
-      this.apiFail.report('โหลดรายละเอียดเอกสาร', e);
+      this.apiFail.report('Load document details', e);
       this.doc.set(null);
     } finally {
       this.loading.set(false);
@@ -330,10 +334,10 @@ export class AdminDocumentDetailPage {
           );
         }
       }
-      this.message.success('บันทึกแล้ว');
+      this.message.success(this.translation.t('admin.savedSuccess'));
       await this.loadReportsOnly();
     } catch (e) {
-      this.apiFail.report('บันทึกเอกสาร', e);
+      this.apiFail.report('Save document', e);
     } finally {
       this.saving.set(false);
     }
@@ -351,7 +355,7 @@ export class AdminDocumentDetailPage {
   async addReport(): Promise<void> {
     const reason = this.newReportReason().trim();
     if (!reason) {
-      this.message.warning('กรุณาระบุเหตุผล');
+      this.message.warning(this.translation.t('admin.pleaseSpecifyReason'));
       return;
     }
     try {
@@ -361,10 +365,10 @@ export class AdminDocumentDetailPage {
       });
       unwrapSdkResult(result);
       this.newReportReason.set('');
-      this.message.success('เพิ่มรายงานแล้ว');
+      this.message.success(this.translation.t('admin.reportAddedSuccess'));
       await this.load();
     } catch (e) {
-      this.apiFail.report('เพิ่มรายงาน', e);
+      this.apiFail.report('Add report', e);
     }
   }
 
@@ -377,7 +381,7 @@ export class AdminDocumentDetailPage {
       if (result.error) throw result.error;
       await this.load();
     } catch (e) {
-      this.apiFail.report('ปิดรายงาน', e);
+      this.apiFail.report('Resolve report', e);
     }
   }
 
@@ -387,10 +391,10 @@ export class AdminDocumentDetailPage {
         path: { id: this.documentId },
       });
       const n = unwrapSdkResult(result);
-      this.message.success(`ปิดรายงานแล้ว ${n} รายการ`);
+      this.message.success(this.translation.t('admin.reportsResolvedCount', { count: n }));
       await this.load();
     } catch (e) {
-      this.apiFail.report('ปิดรายงานทั้งหมด', e);
+      this.apiFail.report('Resolve all reports', e);
     }
   }
 
@@ -411,7 +415,7 @@ export class AdminDocumentDetailPage {
     const file = input.files?.[0];
     input.value = '';
     if (!file || !file.type.startsWith('image/')) {
-      this.message.warning('เลือกไฟล์รูปภาพสำหรับปก');
+      this.message.warning(this.translation.t('admin.chooseImageForCover'));
       return;
     }
     this.coverUploading.set(true);
@@ -423,7 +427,7 @@ export class AdminDocumentDetailPage {
         { id: null, key: data.key, publicUrl, previewUrl },
         ...list.slice(0, MAX_GALLERY_IMAGES - 1),
       ]);
-      this.message.success('อัปโหลดรูปปกแล้ว — กดบันทึกเพื่อยืนยัน');
+      this.message.success(this.translation.t('admin.coverUploadedNotice'));
     } finally {
       this.coverUploading.set(false);
     }
@@ -453,7 +457,7 @@ export class AdminDocumentDetailPage {
           /* SellerService already toasted */
         }
       }
-      if (added) this.message.success(`อัปโหลดรูปแล้ว ${added} รูป — กดบันทึกเพื่อยืนยัน`);
+      if (added) this.message.success(this.translation.t('admin.imagesUploadedCountNotice', { count: added }));
     } finally {
       this.galleryUploading.set(false);
     }
@@ -477,7 +481,7 @@ export class AdminDocumentDetailPage {
   }
 
   /**
-   * The "ไฟล์เอกสารหลัก" link is a protected document file — it 404s on a direct `<a href>`
+   * The main document file link is a protected document file — it 404s on a direct `<a href>`
    * link because the browser navigation carries no JWT. `hasMainFile` stays synchronous (the
    * template still gates the link on "is there a key at all"); the actual download URL is
    * fetched on click through `AdminService.getFileDownloadUrl`, which calls the authenticated
@@ -508,7 +512,7 @@ export class AdminDocumentDetailPage {
         fileStorageKey: data.key,
         fileSize: AdminDocumentDetailPage.formatFileSize(file.size),
       });
-      this.message.success('อัปโหลดไฟล์หลักแล้ว — กดบันทึกเพื่อยืนยัน');
+      this.message.success(this.translation.t('admin.mainFileUploadedNotice'));
     } finally {
       this.mainFileUploading.set(false);
     }
@@ -523,7 +527,7 @@ export class AdminDocumentDetailPage {
     try {
       const data = await this.seller.uploadFile(file);
       this.patchDoc({ previewStorageKey: data.key });
-      this.message.success('อัปโหลดไฟล์ตัวอย่างแล้ว — กดบันทึกเพื่อยืนยัน');
+      this.message.success(this.translation.t('admin.previewFileUploadedNotice'));
     } finally {
       this.previewUploading.set(false);
     }

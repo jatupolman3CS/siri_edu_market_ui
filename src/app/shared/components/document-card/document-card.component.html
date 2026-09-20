@@ -9,15 +9,29 @@
     <a
       [routerLink]="['/document', doc().id]"
       (click)="onSponsoredNavigate()"
+      (mouseenter)="startCycle()"
+      (mouseleave)="stopCycle()"
       class="relative block aspect-[4/5] bg-gradient-pink overflow-hidden"
     >
       <img
         appImgFallback
-        [src]="doc().cover"
+        [src]="displayedCoverUrl()"
         [alt]="doc().title"
         class="absolute inset-0 w-full h-full object-cover"
         loading="lazy"
       />
+
+      @if (doc().gallery.length > 1) {
+        <div class="absolute bottom-1.5 inset-x-0 flex justify-center gap-1 z-10">
+          @for (img of doc().gallery; track $index; let idx = $index) {
+            <span
+              class="w-1.5 h-1.5 rounded-full transition-colors"
+              [class.bg-white]="idx === activeGalleryIndex()"
+              [class.bg-white/50]="idx !== activeGalleryIndex()"
+            ></span>
+          }
+        </div>
+      }
 
       @if (doc().isFree) {
         <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold">

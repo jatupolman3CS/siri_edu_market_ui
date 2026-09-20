@@ -5,6 +5,7 @@ import { SubscriptionService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n';
 
 /**
  * subscription-membership v2 §1 AC-24 / §4: "/account/subscription/access-history" — paginated
@@ -15,7 +16,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 @Component({
   selector: 'app-buyer-subscription-access-history',
   standalone: true,
-  imports: [RouterLink, DatePipe, EmptyStateComponent, PaginationComponent, ImgFallbackDirective],
+  imports: [RouterLink, DatePipe, EmptyStateComponent, PaginationComponent, ImgFallbackDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subscription-access-history.page.html',
   styleUrl: './subscription-access-history.page.scss',

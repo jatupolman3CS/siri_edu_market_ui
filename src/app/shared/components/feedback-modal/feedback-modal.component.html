@@ -11,7 +11,7 @@
       <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary flex-shrink-0">
         <app-icon name="flag" [size]="18" />
       </span>
-      <span class="font-bold text-ink text-base md:text-lg">แจ้งปัญหา / ข้อเสนอแนะ</span>
+      <span class="font-bold text-ink text-base md:text-lg">{{ 'shared.feedbackModal.title' | trans }}</span>
     </div>
   </ng-template>
 
@@ -19,9 +19,9 @@
     <div class="space-y-4 text-sm">
       <!-- Type -->
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">ประเภท</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">{{ 'shared.feedbackModal.type' | trans }}</label>
         <select class="input-soft" [(ngModel)]="type" name="type">
-          @for (opt of types; track opt.value) {
+          @for (opt of types(); track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
           }
         </select>
@@ -29,14 +29,14 @@
 
       <!-- Subject -->
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">หัวข้อ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">{{ 'shared.feedbackModal.titleLabel' | trans }}</label>
         <input
           type="text"
           class="input-soft"
           maxlength="150"
           [(ngModel)]="subject"
           name="subject"
-          placeholder="สรุปสั้น ๆ ว่าเรื่องอะไร"
+          [placeholder]="'shared.feedbackModal.titlePlaceholder' | trans"
         />
         <div class="flex justify-end mt-1">
           <span class="text-[11px] text-ink-muted">{{ subject.length }}/150</span>
@@ -45,14 +45,14 @@
 
       <!-- Details -->
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">รายละเอียด</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">{{ 'shared.feedbackModal.detailLabel' | trans }}</label>
         <textarea
           class="input-soft"
           rows="4"
           maxlength="4000"
           [(ngModel)]="details"
           name="details"
-          placeholder="เล่าให้ละเอียดที่สุดเท่าที่ทำได้ เช่น กดปุ่มไหน แล้วเกิดอะไรขึ้น"
+          [placeholder]="'shared.feedbackModal.detailPlaceholder' | trans"
         ></textarea>
         <div class="flex justify-end mt-1">
           <span class="text-[11px] text-ink-muted">{{ details.length }}/4000</span>
@@ -61,8 +61,8 @@
 
       <!-- Attachments -->
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">แนบภาพหน้าจอ (ถ้ามี)</label>
-        <p class="text-[11px] text-ink-muted mb-2">สูงสุด 3 ไฟล์ ไฟล์ละไม่เกิน 5 MB รองรับ PNG, JPG, WEBP, GIF</p>
+        <label class="text-xs font-semibold text-ink-soft mb-1.5 block">{{ 'shared.feedbackModal.screenshot' | trans }}</label>
+        <p class="text-[11px] text-ink-muted mb-2">{{ 'shared.feedbackModal.attachmentsNote' | trans }}</p>
 
         <div class="flex flex-wrap gap-2 mb-2">
           @for (att of attachments(); track $index) {
@@ -81,7 +81,7 @@
           @if (attachments().length < 3) {
             <label class="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center text-ink-muted cursor-pointer transition-colors">
               <app-icon name="plus" [size]="20" />
-              <span class="text-[10px] mt-1">เพิ่มภาพ</span>
+              <span class="text-[10px] mt-1">{{ 'shared.feedbackModal.addPhoto' | trans }}</span>
               <input
                 type="file"
                 class="hidden"
@@ -96,7 +96,7 @@
 
       <!-- PDPA Note -->
       <div class="p-3 bg-amber-50 rounded-lg border border-amber-200/60 text-amber-800 text-xs leading-relaxed">
-        ระบบจะแนบหน้าที่คุณกำลังใช้งานและข้อมูลเบราว์เซอร์ไปด้วยเพื่อให้ทีมงานตรวจสอบได้เร็วขึ้น กรุณาอย่าใส่รหัสผ่าน เลขบัตร หรือข้อมูลส่วนตัวของผู้อื่นลงในข้อความและภาพ
+        {{ 'shared.feedbackModal.pdpaNotice' | trans }}
       </div>
     </div>
   </ng-container>
@@ -104,7 +104,7 @@
   <ng-template #modalFooter>
     <div class="flex items-center justify-end gap-2">
       <button type="button" class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">
-        ยกเลิก
+        {{ 'common.cancel' | trans }}
       </button>
       <button
         type="button"
@@ -112,7 +112,7 @@
         [disabled]="isSubmitDisabled"
         (click)="submit()"
       >
-        {{ sending() ? 'กำลังส่ง…' : 'ส่งให้ทีมงาน' }}
+        {{ sending() ? ('common.saving' | trans) : ('shared.feedbackModal.submitToTeam' | trans) }}
       </button>
     </div>
   </ng-template>

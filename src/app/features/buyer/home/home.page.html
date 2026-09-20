@@ -42,7 +42,7 @@
             <!-- Quick chips (crm-driven-discovery v1 §3.1/§4.3, ข้อ 13) -->
             <app-popular-search-chips
               [terms]="discovery.popularTerms()"
-              [fallbackTerms]="quickSearches"
+              [fallbackTerms]="quickSearches()"
               [label]="'home.trendingNow' | trans"
             />
 
@@ -86,7 +86,7 @@
                 @if (platformStats.stats()?.averageRating; as avgRating) {
                   <div>
                     <div class="text-sm font-bold text-ink">{{ avgRating | number:'1.1-1' }} ★</div>
-                    <div class="text-[11px] text-ink-muted">จาก {{ platformStats.stats()!.reviewCount | compact }} รีวิว</div>
+                    <div class="text-[11px] text-ink-muted">{{ 'home.fromReviews' | trans:{ count: (platformStats.stats()!.reviewCount | compact) } }}</div>
                   </div>
                 }
               </div>
@@ -115,7 +115,7 @@
               <div class="absolute bottom-4 left-4 w-36 rotate-[3deg] card-soft p-2.5 animate-slide-up" style="animation-delay: 200ms">
                 <img appImgFallback [src]="catalog.featured()[2]?.cover" class="w-full h-40 object-cover rounded-xl" alt="" />
                 <div class="px-1 pt-1.5 pb-0.5 text-xs font-bold text-pink-600">
-                  ฿{{ catalog.featured()[2]?.price }}
+                  {{ catalog.featured()[2]?.price | thb }}
                 </div>
               </div>
               <div class="absolute top-2 left-0 card-soft px-3 py-2 flex items-center gap-2 animate-slide-up" style="animation-delay: 350ms">
@@ -123,8 +123,8 @@
                   <app-icon name="sparkle" [size]="14" />
                 </span>
                 <div class="text-[11px]">
-                  <div class="font-bold text-ink">AI Summary</div>
-                  <div class="text-ink-muted">สรุปสินค้าให้อัตโนมัติ</div>
+                  <div class="font-bold text-ink">{{ 'home.aiSummaryTitle' | trans }}</div>
+                  <div class="text-ink-muted">{{ 'home.aiSummaryDesc' | trans }}</div>
                 </div>
               </div>
               <div class="absolute bottom-20 right-0 card-soft px-3 py-2 flex items-center gap-2 animate-slide-up" style="animation-delay: 450ms">
@@ -132,9 +132,9 @@
                   <app-icon name="package" [size]="14" />
                 </span>
                 <div class="text-[11px]">
-                  <div class="font-bold text-ink">📦 Bundles</div>
+                  <div class="font-bold text-ink">{{ 'home.bundlesTag' | trans }}</div>
                   @if (maxBundleSavePercent() > 0) {
-                    <div class="text-ink-muted">ประหยัดถึง {{ maxBundleSavePercent() }}%</div>
+                    <div class="text-ink-muted">{{ 'home.saveUpTo' | trans:{ percent: maxBundleSavePercent() } }}</div>
                   }
                 </div>
               </div>
@@ -150,14 +150,14 @@
         <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
           <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="text-sm text-ink-muted">โหมดใกล้สอบ</p>
+              <p class="text-sm text-ink-muted">{{ 'home.examMode' | trans }}</p>
               <p class="text-xl font-bold text-ink">
-                เหลืออีก {{ examDaysRemaining() }} วันก่อนสอบ {{ examCountdown.setting()?.examType }}
+                {{ 'home.examCountdownRemaining' | trans:{ days: examDaysRemaining() ?? 0, exam: (examCountdown.setting()?.examType ?? '') } }}
               </p>
             </div>
             <div class="flex gap-2">
-              <button type="button" class="btn-ghost !px-5" (click)="openExamCountdownEdit()">แก้ไขวันสอบ</button>
-              <button type="button" class="btn-ghost !px-5" (click)="examCountdown.setEnabled(false)">ปิดโหมดนี้</button>
+              <button type="button" class="btn-ghost !px-5" (click)="openExamCountdownEdit()">{{ 'home.editExamDate' | trans }}</button>
+              <button type="button" class="btn-ghost !px-5" (click)="examCountdown.setEnabled(false)">{{ 'home.disableExamMode' | trans }}</button>
             </div>
           </div>
 
@@ -168,7 +168,7 @@
           }
 
           <div class="mt-8">
-            <app-section-header title="เอกสารที่เกี่ยวข้องกับสอบของคุณ" />
+            <app-section-header [title]="'home.examDocsTitle' | trans" />
             <div class="document-card-grid">
               @for (doc of examCountdown.docs(); track doc.id) {
                 <app-document-card [doc]="doc" density="compact" />
@@ -176,19 +176,19 @@
             </div>
             @if (examCountdown.hasMoreDocs()) {
               <div class="text-center mt-6">
-                <button type="button" class="btn-ghost" (click)="examCountdown.docsPager.loadMore()">โหลดเพิ่ม</button>
+                <button type="button" class="btn-ghost" (click)="examCountdown.docsPager.loadMore()">{{ 'home.loadMore' | trans }}</button>
               </div>
             }
             <div class="text-center mt-4">
-              <a routerLink="/marketplace" class="text-sm font-bold text-pink-600 hover:underline">ดูเอกสารทั้งหมด</a>
+              <a routerLink="/marketplace" class="text-sm font-bold text-pink-600 hover:underline">{{ 'home.viewAllDocs' | trans }}</a>
             </div>
           </div>
         </section>
       } @else if (examCountdown.setting()?.isEnabled && examIsPast()) {
         <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
           <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
-            <p class="text-base font-semibold text-ink">สอบ {{ examCountdown.setting()?.examType }} ผ่านไปแล้ว</p>
-            <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">ตั้งวันสอบใหม่</button>
+            <p class="text-base font-semibold text-ink">{{ 'home.examPast' | trans:{ exam: (examCountdown.setting()?.examType ?? '') } }}</p>
+            <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">{{ 'home.setNewExamDate' | trans }}</button>
           </div>
           @if (examCountdownFormOpen()) {
             <div class="mt-4">
@@ -199,8 +199,8 @@
       } @else if (examCountdown.setting() === null && examCountdown.state().status !== 'loading') {
         <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
           <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
-            <p class="text-base font-semibold text-ink">ตั้งวันสอบของคุณ เพื่อดูเอกสารที่เกี่ยวข้องและนับถอยหลังก่อนสอบ</p>
-            <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">ตั้งวันสอบ</button>
+            <p class="text-base font-semibold text-ink">{{ 'home.setExamPrompt' | trans }}</p>
+            <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">{{ 'home.setExamDateBtn' | trans }}</button>
           </div>
           @if (examCountdownFormOpen()) {
             <div class="mt-4">
@@ -221,21 +221,21 @@
       <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-pink-50 border-emerald-200">
         <div class="flex items-end justify-between mb-6">
           <div>
-            <span class="text-xs font-semibold text-emerald-600 tracking-[0.18em] uppercase mb-2 block">🎁 ฟรี · 100%</span>
-            <h2 class="section-title">เอกสารดีๆ แจกฟรี</h2>
-            <p class="section-subtitle">ดาวน์โหลดได้ทันที ไม่ต้องสมัครสมาชิก</p>
+            <span class="text-xs font-semibold text-emerald-600 tracking-[0.18em] uppercase mb-2 block">{{ 'home.freeTag' | trans }}</span>
+            <h2 class="section-title">{{ 'home.freeTitle' | trans }}</h2>
+            <p class="section-subtitle">{{ 'home.freeSubtitle' | trans }}</p>
           </div>
           <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 group">
-            ดูทั้งหมด
+            {{ 'home.viewMore' | trans }}
             <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
         @if (catalog.catalogState().status === 'loading') {
-          <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
+          <app-empty-state emoji="⏳" [title]="'home.loadingFreeDocs' | trans" [description]="'common.pleaseWait' | trans" />
         } @else if (catalog.catalogState().status === 'error') {
-          <app-empty-state emoji="⚠️" title="โหลดเอกสารฟรีไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <app-empty-state emoji="⚠️" [title]="'home.loadFreeDocsFailed' | trans" [description]="'common.retry' | trans">
             <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
-              ลองใหม่
+              {{ 'common.retry' | trans }}
             </button>
           </app-empty-state>
         } @else {
@@ -251,8 +251,8 @@
     <!-- ===================== BUNDLES STRIP ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
       <app-section-header
-        eyebrow="แพ็กเกจ"
-        title="แพ็กเกจคุ้มค่า ประหยัดกว่าซื้อแยก"
+        [eyebrow]="'home.bundlesEyebrow' | trans"
+        [title]="'home.bundlesHeaderTitle' | trans"
         [subtitle]="bundlesSubtitle()"
         link="/bundles"
       />
@@ -268,10 +268,10 @@
       <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
         <header class="flex items-center justify-between mb-5">
           <div>
-            <span class="text-xs font-semibold text-pink-500 tracking-[0.18em] uppercase">ล่าสุด</span>
-            <h2 class="section-title">ที่คุณเพิ่งดู</h2>
+            <span class="text-xs font-semibold text-pink-500 tracking-[0.18em] uppercase">{{ 'home.recentlyViewedEyebrow' | trans }}</span>
+            <h2 class="section-title">{{ 'home.recentlyViewedTitle' | trans }}</h2>
           </div>
-          <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">ล้าง</button>
+          <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">{{ 'home.clearRecent' | trans }}</button>
         </header>
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           @for (d of recent.items().slice(0, 6); track d.id) {
@@ -292,7 +292,7 @@
     @if (catalog.recommended().length > 0) {
       <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
         <app-section-header
-          eyebrow="สำหรับคุณ"
+          [eyebrow]="'home.recommendedEyebrow' | trans"
           [title]="recommendedTitle()"
           [subtitle]="catalog.recommendedReason()"
         />
@@ -313,8 +313,8 @@
          §1 ข้อ 7/§4.3: เลื่อนแนวนอนได้จริงแทน static grid เดิม (เนื้อหาการ์ดไม่เปลี่ยน) ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
       <app-section-header
-        eyebrow="หมวดหมู่"
-        title="เลือกหมวดที่ใช่สำหรับคุณ"
+        [eyebrow]="'home.categoriesEyebrow' | trans"
+        [title]="'home.categoriesHeaderTitle' | trans"
         [subtitle]="categoriesSubtitle()"
         link="/categories"
       />
@@ -339,7 +339,7 @@
                 }
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-xs text-ink-muted">{{ cat.documentCount | compact }} เอกสาร</span>
+                <span class="text-xs text-ink-muted">{{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
                 <span class="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-pink-500 group-hover:text-white transition-all">
                   <app-icon name="arrow-right" [size]="14" />
                 </span>
@@ -372,9 +372,9 @@
     <!-- ===================== TRENDING ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
       <app-section-header
-        eyebrow="กำลังฮิต"
-        title="ดาวน์โหลดเยอะที่สุดในสัปดาห์นี้"
-        subtitle="เอกสารที่ผู้ใช้เลือกซื้อมากที่สุดในช่วง 7 วันที่ผ่านมา"
+        [eyebrow]="'home.trendingEyebrow' | trans"
+        [title]="'home.trendingTitle' | trans"
+        [subtitle]="'home.trendingSubtitle' | trans"
         link="/marketplace"
       />
       <div class="document-card-grid">
@@ -396,8 +396,8 @@
                 </span>
                 <span class="text-3xl">{{ step.emoji }}</span>
               </div>
-              <h3 class="text-lg font-bold text-ink mb-2">{{ step.title }}</h3>
-              <p class="text-sm text-ink-soft leading-relaxed">{{ step.desc }}</p>
+              <h3 class="text-lg font-bold text-ink mb-2">{{ step.titleKey | trans }}</h3>
+              <p class="text-sm text-ink-soft leading-relaxed">{{ step.descKey | trans }}</p>
               @if (i < 2) {
                 <span class="hidden md:block absolute top-6 -right-4 text-pink-300">
                   <app-icon name="arrow-right" [size]="20" />
@@ -413,9 +413,9 @@
     @if (catalog.editorsPicks().length) {
       <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
         <app-section-header
-          eyebrow="✨ Editor's Picks"
-          title="คัดเลือกโดยทีมงาน"
-          subtitle="เอกสารที่เราคัดมาแล้วว่าคุณภาพเยี่ยม"
+          [eyebrow]="'home.editorsPicksEyebrow' | trans"
+          [title]="'home.editorsPicksTitle' | trans"
+          [subtitle]="'home.editorsPicksSubtitle' | trans"
           link="/marketplace"
         />
         <div class="document-card-grid">
@@ -429,8 +429,8 @@
     <!-- ===================== FEATURED SELLERS ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
       <app-section-header
-        eyebrow="ผู้ขายแนะนำ"
-        title="ครีเอเตอร์ตัวจริง ที่ได้รับความไว้วางใจ"
+        [eyebrow]="'home.featuredSellersEyebrow' | trans"
+        [title]="'home.featuredSellersTitle' | trans"
       />
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         @for (s of featuredSellers(); track s.id) {
@@ -455,9 +455,9 @@
               <div class="flex items-center gap-3 text-xs text-ink-soft">
                 <span class="font-semibold text-pink-600">★ {{ s.rating }}</span>
                 <span>•</span>
-                <span>{{ s.totalDocuments }} เอกสาร</span>
+                <span>{{ 'home.docCount' | trans:{ count: s.totalDocuments } }}</span>
                 <span>•</span>
-                <span>{{ s.followerCount | compact }} ฟอลโลเวอร์</span>
+                <span>{{ 'home.followersCount' | trans:{ count: (s.followerCount | compact) } }}</span>
               </div>
             </div>
           </a>
@@ -468,8 +468,8 @@
     <!-- ===================== NEW ARRIVALS ===================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
       <app-section-header
-        eyebrow="มาใหม่"
-        title="เอกสารเพิ่งเข้าตลาดเมื่อเร็วๆ นี้"
+        [eyebrow]="'home.newArrivalsEyebrow' | trans"
+        [title]="'home.newArrivalsHeaderTitle' | trans"
         link="/marketplace"
       />
       <div class="document-card-grid">
@@ -500,7 +500,7 @@
               </a>
               <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/40 text-white hover:bg-white/10 transition-colors">
                 <app-icon name="play" [size]="14" />
-                ดูวิธีใช้งาน (2 นาที)
+                {{ 'home.watchHowItWorks' | trans }}
               </a>
             </div>
           </div>
@@ -512,16 +512,16 @@
                   <span class="text-pink-500">
                     <app-icon name="chart" [size]="20" />
                   </span>
-                  <span class="text-sm font-semibold text-ink">รายได้เดือนนี้</span>
+                  <span class="text-sm font-semibold text-ink">{{ 'home.monthlyRevenue' | trans }}</span>
                 </div>
                 <div class="text-3xl font-extrabold text-ink mb-1">฿38,240</div>
                 <div class="flex items-center gap-1 text-xs">
                   <span class="text-emerald-500 font-bold">+18%</span>
-                  <span class="text-ink-muted">เทียบเดือนก่อน</span>
+                  <span class="text-ink-muted">{{ 'home.vsLastMonth' | trans }}</span>
                 </div>
                 <div class="mt-4 pt-4 border-t border-line flex items-center justify-between text-xs text-ink-muted">
-                  <span>เอกสารขายดี</span>
-                  <span class="text-ink font-bold">12 เล่ม</span>
+                  <span>{{ 'home.topSellingDocs' | trans }}</span>
+                  <span class="text-ink font-bold">{{ 'home.itemsUnit' | trans:{ count: 12 } }}</span>
                 </div>
               </div>
             </div>

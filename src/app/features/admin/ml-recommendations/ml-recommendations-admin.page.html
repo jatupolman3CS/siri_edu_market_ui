@@ -1,56 +1,56 @@
 <div class="space-y-6">
   <header>
-    <h1 class="text-2xl font-extrabold text-ink">สถานะระบบแนะนำสินค้า (Bought Together)</h1>
+    <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.mlAdmin.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">
-      ตรวจสอบว่าโมเดลแนะนำ "มักซื้อคู่กับเอกสารนี้" เคยคำนวณสำเร็จหรือยัง (อ่านอย่างเดียว)
+      {{ 'admin.mlAdmin.desc' | trans }}
     </p>
   </header>
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else {
     @let ov = overview();
 
     @if (!ov?.lastComputedAt) {
       <div class="card-soft p-4 border border-amber-200 bg-amber-50 text-amber-800 text-sm">
-        <strong>ยังไม่เคยคำนวณ</strong> — ตรวจสอบว่างาน job.ml-embedding-rebuild เปิดอยู่
+        {{ 'admin.mlAdmin.neverComputedAlert' | trans }}
       </div>
     }
 
     <section class="grid grid-cols-2 lg:grid-cols-3 gap-4">
       <app-stat-card
-        label="เอกสารที่มี embedding"
-        [value]="(ov?.documentsWithEmbeddingCount ?? 0) + ' เอกสาร'"
+        [label]="'admin.mlAdmin.statEmbedDocs' | trans"
+        [value]="(ov?.documentsWithEmbeddingCount ?? 0) + ' ' + ('admin.mlAdmin.statDocUnit' | trans)"
         icon="🧬"
       />
       <app-stat-card
-        label="เอกสารที่มีคำแนะนำ"
-        [value]="(ov?.documentsWithBoughtTogetherCount ?? 0) + ' เอกสาร'"
+        [label]="'admin.mlAdmin.statRecommendDocs' | trans"
+        [value]="(ov?.documentsWithBoughtTogetherCount ?? 0) + ' ' + ('admin.mlAdmin.statDocUnit' | trans)"
         icon="🔗"
       />
       <app-stat-card
-        label="คู่คำแนะนำทั้งหมด"
-        [value]="(ov?.totalSimilarityPairs ?? 0) + ' คู่'"
+        [label]="'admin.mlAdmin.statPairs' | trans"
+        [value]="(ov?.totalSimilarityPairs ?? 0) + ' ' + ('admin.mlAdmin.statPairUnit' | trans)"
         icon="🧮"
       />
       <app-stat-card
-        label="ซื้อคู่กันเฉลี่ย"
-        [value]="((ov?.averageCoPurchaseCount ?? 0) | number: '1.1-1') + ' ครั้ง/คู่'"
+        [label]="'admin.mlAdmin.statAvgCoPurchase' | trans"
+        [value]="((ov?.averageCoPurchaseCount ?? 0) | number: '1.1-1') + ' ' + ('admin.mlAdmin.statAvgCoPurchaseUnit' | trans)"
         icon="🛒"
       />
       <app-stat-card
-        label="ขั้นต่ำซื้อคู่ที่ใช้แนะนำ"
-        [value]="(ov?.minCoPurchaseThreshold ?? 0) + ' ครั้ง'"
+        [label]="'admin.mlAdmin.statMinThreshold' | trans"
+        [value]="(ov?.minCoPurchaseThreshold ?? 0) + ' ' + ('admin.mlAdmin.statMinUnit' | trans)"
         icon="🎯"
       />
       <app-stat-card
-        label="จำนวนมิติ Embedding"
-        [value]="(ov?.embeddingDimensions ?? 0) + ' มิติ'"
+        [label]="'admin.mlAdmin.statEmbedDimensions' | trans"
+        [value]="(ov?.embeddingDimensions ?? 0) + ' ' + ('admin.mlAdmin.statDimUnit' | trans)"
         icon="📐"
       />
       <app-stat-card
-        label="คำนวณล่าสุด"
-        [value]="ov?.lastComputedAt ? ((ov!.lastComputedAt | date: 'd MMM yyyy HH:mm') ?? '') : 'ยังไม่เคยคำนวณ'"
+        [label]="'admin.mlAdmin.statLastComputed' | trans"
+        [value]="ov?.lastComputedAt ? ((ov!.lastComputedAt | date: 'd MMM yyyy HH:mm') ?? '') : ('admin.mlAdmin.neverComputedAlert' | trans)"
         icon="🕒"
       />
     </section>

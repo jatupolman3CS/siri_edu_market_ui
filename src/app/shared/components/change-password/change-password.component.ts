@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 
 /**
@@ -16,7 +18,7 @@ import { IconComponent } from '../icon/icon.component';
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './change-password.component.html',
   styles: [':host { display: block; }'],
@@ -25,6 +27,7 @@ export class ChangePasswordComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  readonly translation = inject(TranslationService);
 
   currentPassword = '';
   newPassword = '';
@@ -34,10 +37,10 @@ export class ChangePasswordComponent {
 
   /** Mirrors the server's rules. The server checks every one of them regardless. */
   validationError(): string | null {
-    if (!this.currentPassword) return 'กรุณากรอกรหัสผ่านปัจจุบัน';
-    if (this.newPassword.length < 8) return 'รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร';
-    if (this.newPassword === this.currentPassword) return 'รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม';
-    if (this.newPassword !== this.confirmPassword) return 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน';
+    if (!this.currentPassword) return this.translation.t('shared.changePassword.currentPasswordRequired');
+    if (this.newPassword.length < 8) return this.translation.t('shared.changePassword.minLength');
+    if (this.newPassword === this.currentPassword) return this.translation.t('shared.changePassword.notSameAsCurrent');
+    if (this.newPassword !== this.confirmPassword) return this.translation.t('shared.changePassword.confirmMismatch');
     return null;
   }
 
@@ -60,7 +63,7 @@ export class ChangePasswordComponent {
       this.currentPassword = '';
       this.newPassword = '';
       this.confirmPassword = '';
-      this.message.success('เปลี่ยนรหัสผ่านเรียบร้อย กรุณาเข้าสู่ระบบใหม่');
+      this.message.success(this.translation.t('shared.changePassword.successRelogin'));
       void this.router.navigate(['/auth/login']);
     } catch {
       /* reported by AuthService through ApiFailureReporter */

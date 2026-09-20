@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AnnouncementPopupService } from '../../../core/services/announcement-popup.service';
 import type { AnnouncementImage, AnnouncementPopup } from '../../../core/models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
@@ -39,7 +41,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 @Component({
   selector: 'app-announcement-popup',
   standalone: true,
-  imports: [NzModalModule, IconComponent, ImgFallbackDirective],
+  imports: [NzModalModule, IconComponent, ImgFallbackDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './announcement-popup.component.html',
   styleUrl: './announcement-popup.component.scss',
@@ -55,6 +57,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 export class AnnouncementPopupComponent {
   readonly popup = inject(AnnouncementPopupService);
   private readonly router = inject(Router);
+  readonly translation = inject(TranslationService);
 
   /** [v3] §1.10 — current image index within the current announcement, replaces `nz-carousel`. */
   private readonly imageIndex = signal(0);
@@ -160,7 +163,7 @@ export class AnnouncementPopupComponent {
 
   /** §4: every `<img>` needs a meaningful `alt` even when the admin left `altText` blank. */
   fallbackAlt(image: AnnouncementImage, index: number): string {
-    return `${this.popup.current()?.title ?? ''} - รูปที่ ${index + 1}`;
+    return `${this.popup.current()?.title ?? ''} - ${this.translation.t('shared.announcementPopup.imageNumber', { number: index + 1 })}`;
   }
 
   /**

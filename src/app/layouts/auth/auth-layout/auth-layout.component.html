@@ -4,9 +4,12 @@
       <div class="flex-1 flex flex-col px-6 lg:px-12 py-8 max-w-xl mx-auto w-full">
         <header class="flex items-center justify-between">
           <app-logo />
-          <a routerLink="/" class="text-xs text-ink-muted hover:text-pink-600">
-            ← {{ 'nav.backToMarket' | trans }}
-          </a>
+          <div class="flex items-center gap-2">
+            <app-language-switcher variant="dropdown" />
+            <a routerLink="/" class="text-xs text-ink-muted hover:text-pink-600">
+              ← {{ 'nav.backToMarket' | trans }}
+            </a>
+          </div>
         </header>
 
         <main class="flex-1 flex flex-col justify-center mt-10">

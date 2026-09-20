@@ -7,13 +7,7 @@ import { CatalogService, SubscriptionService } from '../../../core/services';
 import type { SubscriptionStatus } from '../../../core/models';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-
-const STATUS_LABELS: Record<SubscriptionStatus, string> = {
-  incomplete: 'รอชำระเงิน',
-  active: 'ใช้งานอยู่',
-  past_due: 'ค้างชำระ',
-  canceled: 'ยกเลิกแล้ว',
-};
+import { TranslatePipe, TranslationService } from '../../../core/i18n';
 
 /**
  * subscription-membership v3 §3.4/§4 (docs/contracts/subscription-membership.md): "/account/subscription"
@@ -33,7 +27,7 @@ const STATUS_LABELS: Record<SubscriptionStatus, string> = {
 @Component({
   selector: 'app-buyer-account-subscription',
   standalone: true,
-  imports: [RouterLink, NzModalModule, ThbPipe, EmptyStateComponent],
+  imports: [RouterLink, NzModalModule, ThbPipe, EmptyStateComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [DatePipe],
   templateUrl: './account-subscription.page.html',
@@ -45,6 +39,7 @@ export class AccountSubscriptionPage {
   private readonly datePipe = inject(DatePipe);
   private readonly modal = inject(NzModalService);
   private readonly message = inject(NzMessageService);
+  private readonly i18n = inject(TranslationService);
 
   readonly loaded = computed(() => this.subscription.state().status !== 'loading');
 
@@ -59,8 +54,8 @@ export class AccountSubscriptionPage {
     if (!sub) return '';
     const formatted = this.formattedDate(sub.currentPeriodEnd);
     return sub.cancelAtPeriodEnd
-      ? `จะสิ้นสุดวันที่ ${formatted}`
-      : `ต่ออายุอัตโนมัติในวันที่ ${formatted}`;
+      ? this.i18n.t('accountSubscription.endAt', { date: formatted })
+      : this.i18n.t('accountSubscription.renewAt', { date: formatted });
   });
 
   readonly canCancel = computed(() => {
@@ -83,7 +78,18 @@ export class AccountSubscriptionPage {
   }
 
   statusLabel(status: SubscriptionStatus): string {
-    return STATUS_LABELS[status] ?? status;
+    switch (status) {
+      case 'incomplete':
+        return this.i18n.t('accountSubscription.statusIncomplete');
+      case 'active':
+        return this.i18n.t('accountSubscription.statusActive');
+      case 'past_due':
+        return this.i18n.t('accountSubscription.statusPastDue');
+      case 'canceled':
+        return this.i18n.t('accountSubscription.statusCanceled');
+      default:
+        return status;
+    }
   }
 
   formattedDate(iso: string): string {
@@ -95,11 +101,13 @@ export class AccountSubscriptionPage {
     const sub = this.subscription.current();
     if (!sub) return;
     this.modal.confirm({
-      nzTitle: 'ยกเลิกการสมัครสมาชิก',
-      nzContent: `คุณจะยังใช้งานได้ถึงวันที่ ${this.formattedDate(sub.currentPeriodEnd)} หลังจากนั้นจะไม่ต่ออายุอัตโนมัติ`,
-      nzOkText: 'ยกเลิกการสมัครสมาชิก',
+      nzTitle: this.i18n.t('accountSubscription.confirmTitle'),
+      nzContent: this.i18n.t('accountSubscription.confirmContent', {
+        date: this.formattedDate(sub.currentPeriodEnd),
+      }),
+      nzOkText: this.i18n.t('accountSubscription.confirmOk'),
       nzOkDanger: true,
-      nzCancelText: 'ปิด',
+      nzCancelText: this.i18n.t('accountSubscription.confirmCancel'),
       nzOnOk: () => this.doCancel(),
     });
   }
@@ -107,10 +115,10 @@ export class AccountSubscriptionPage {
   private async doCancel(): Promise<void> {
     try {
       await this.subscription.cancel();
-      this.message.success('ยกเลิกการสมัครสมาชิกเรียบร้อย');
+      this.message.success(this.i18n.t('accountSubscription.cancelSuccessToast'));
     } catch {
       const state = this.subscription.cancelState();
-      this.message.error(state.status === 'error' ? state.message : 'ยกเลิกไม่สำเร็จ');
+      this.message.error(state.status === 'error' ? state.message : this.i18n.t('accountSubscription.cancelFailedToast'));
     }
   }
 }

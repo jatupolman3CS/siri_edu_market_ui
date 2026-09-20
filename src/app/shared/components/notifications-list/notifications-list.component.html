@@ -1,6 +1,6 @@
 <div class="max-w-3xl mx-auto px-4 lg:px-6 py-8">
   <app-page-hero
-    eyebrow="การแจ้งเตือน"
+    [eyebrow]="'shared.notifications.title' | trans"
     [title]="heading()"
     [description]="description()"
   />
@@ -13,21 +13,21 @@
         (click)="onMarkAllRead()"
       >
         <app-icon name="check" [size]="14" />
-        อ่านทั้งหมด
+        {{ 'shared.notifications.markAllRead' | trans }}
       </button>
     </div>
   }
 
   @if (feed.loading() && feed.items().length === 0) {
-    <app-empty-state emoji="⏳" title="กำลังโหลดการแจ้งเตือน…" description="รอสักครู่นะคะ" />
+    <app-empty-state emoji="⏳" [title]="'common.loading' | trans" [description]="'common.pleaseWait' | trans" />
   } @else if (feed.items().length === 0) {
     <app-empty-state
       emoji="🔔"
-      title="ยังไม่มีการแจ้งเตือน"
+      [title]="'shared.notifications.noNotifs' | trans"
       [description]="emptyDescription()"
     >
       @if (audience() === 'buyer') {
-        <a routerLink="/marketplace" class="btn-pink mt-4">ค้นหาร้านที่ชอบ</a>
+        <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'shared.notifications.lookForStores' | trans }}</a>
       }
     </app-empty-state>
   } @else {
@@ -55,7 +55,7 @@
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="text-xs font-bold px-2 py-0.5 rounded leading-none shrink-0" [class]="style.badgeClass">
-                    {{ style.label }}
+                    {{ style.label | trans }}
                   </span>
                   <p class="text-sm md:text-base text-ink leading-snug truncate" [class.font-bold]="!item.isRead" [class.font-semibold]="item.isRead">
                     {{ item.title }}
@@ -63,7 +63,7 @@
                 </div>
                 @if (!item.isRead) {
                   <span class="pill-pink text-[10px] !py-0.5 !px-2 flex-shrink-0">
-                    ใหม่
+                    {{ 'shared.notifications.newLabel' | trans }}
                   </span>
                 }
               </div>
@@ -76,7 +76,7 @@
                 </span>
 
                 <span class="text-xs font-semibold text-pink-600 inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  ดูรายละเอียด
+                  {{ 'shared.notifications.viewDetails' | trans }}
                   <app-icon name="arrow-right" [size]="12" />
                 </span>
               </div>
@@ -94,7 +94,7 @@
           (click)="loadMore()"
           [disabled]="feed.loading()"
         >
-          {{ feed.loading() ? 'กำลังโหลด…' : 'โหลดเพิ่มเติม' }}
+          {{ feed.loading() ? ('common.loading' | trans) : ('shared.notifications.loadMore' | trans) }}
         </button>
       </div>
     }

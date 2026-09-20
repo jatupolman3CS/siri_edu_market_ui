@@ -225,7 +225,7 @@ describe('LineNotificationService', () => {
 
       expect(service.state()).toEqual({ status: 'error', message: 'โหลดสถานะการเชื่อมต่อ LINE ไม่สำเร็จ' });
       expect(service.status()).toBeNull();
-      expect(apiFail.report).toHaveBeenCalledWith('โหลดสถานะการเชื่อมต่อ LINE', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadLineStatus', expect.anything());
     });
   });
 
@@ -249,7 +249,7 @@ describe('LineNotificationService', () => {
       await settle();
 
       expect(service.settings()).toEqual([]);
-      expect(apiFail.report).toHaveBeenCalledWith('โหลดการตั้งค่าแจ้งเตือน LINE', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadLineSettings', expect.anything());
     });
 
     it('§3.6: normalises isLocked/lockReason so the card can disable a locked switch', async () => {

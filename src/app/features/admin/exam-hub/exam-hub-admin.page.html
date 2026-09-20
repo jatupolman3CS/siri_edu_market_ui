@@ -1,14 +1,14 @@
 <div class="max-w-3xl">
   <header class="mb-8">
-    <h1 class="text-3xl font-extrabold text-ink mb-1">จัดการเนื้อหาหน้า Exam Hub</h1>
+    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.examHub.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">
-      ปรับแต่งเนื้อหาข้อมูลการสอบ เกณฑ์คะแนน และเทรนด์ข้อสอบสำหรับแต่ละสนามสอบ
+      {{ 'admin.examHub.desc' | trans }}
     </p>
   </header>
 
   <!-- Exam Type Selector -->
   <section class="card-soft p-6 mb-6">
-    <label class="text-sm font-bold text-ink mb-2 block">เลือกสนามสอบ</label>
+    <label class="text-sm font-bold text-ink mb-2 block">{{ 'admin.examHub.selectLabel' | trans }}</label>
     <select
       class="input-soft cursor-pointer text-sm font-medium w-full sm:w-72"
       [ngModel]="selectedExamType()"
@@ -25,19 +25,19 @@
   <section class="card-soft p-6 mb-6">
     <h2 class="text-lg font-bold text-ink mb-4 flex items-center gap-2">
       <app-icon name="edit" [size]="18" className="text-pink-500" />
-      <span>เนื้อหาสำหรับ {{ selectedExamType().toUpperCase() }}</span>
+      <span>{{ 'admin.examHub.contentFor' | trans }} {{ selectedExamType().toUpperCase() }}</span>
     </h2>
 
     <div class="space-y-5">
       <!-- Title -->
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          หัวข้อหน้า (Title) <span class="text-pink-500">*</span>
+          {{ 'admin.examHub.titleLabel' | trans }} <span class="text-pink-500">*</span>
         </label>
         <textarea
           rows="2"
           class="input-soft"
-          placeholder="เช่น TGAT/TPAT — เตรียมสอบวัดความถนัด"
+          [placeholder]="'admin.examHub.titlePlaceholder' | trans"
           [ngModel]="form().title"
           (ngModelChange)="patch('title', $event)"
           [disabled]="loading() || saving()"
@@ -47,12 +47,12 @@
       <!-- Meta Description -->
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          คำอธิบายสำหรับ SEO (Meta Description) <span class="text-pink-500">*</span>
+          {{ 'admin.examHub.metaLabel' | trans }} <span class="text-pink-500">*</span>
         </label>
         <textarea
           rows="2"
           class="input-soft"
-          placeholder="คำอธิบายสั้น ๆ ไม่เกิน 160-300 ตัวอักษร"
+          [placeholder]="'admin.examHub.metaPlaceholder' | trans"
           [ngModel]="form().metaDescription"
           (ngModelChange)="patch('metaDescription', $event)"
           [disabled]="loading() || saving()"
@@ -62,12 +62,12 @@
       <!-- Intro Text -->
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          ข้อความเกริ่นนำ (Intro Text) <span class="text-pink-500">*</span>
+          {{ 'admin.examHub.introLabel' | trans }} <span class="text-pink-500">*</span>
         </label>
         <textarea
           rows="3"
           class="input-soft"
-          placeholder="ข้อความแนะนำและเกริ่นนำด้านบนของหน้า"
+          [placeholder]="'admin.examHub.introPlaceholder' | trans"
           [ngModel]="form().introText"
           (ngModelChange)="patch('introText', $event)"
           [disabled]="loading() || saving()"
@@ -77,12 +77,12 @@
       <!-- Exam Date Info -->
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          กำหนดการสอบ (วันสอบ / ปฏิทินรับสมัคร)
+          {{ 'admin.examHub.examDateLabel' | trans }}
         </label>
         <textarea
           rows="3"
           class="input-soft"
-          placeholder="เช่น 10-12 ธันวาคม 2569 (ปล่อยว่างหากยังไม่มี)"
+          [placeholder]="'admin.examHub.examDatePlaceholder' | trans"
           [ngModel]="form().examDateInfo"
           (ngModelChange)="patch('examDateInfo', $event)"
           [disabled]="loading() || saving()"
@@ -92,12 +92,12 @@
       <!-- Score Criteria Info -->
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          เกณฑ์คะแนน (การใช้คะแนน / ค่าน้ำหนัก)
+          {{ 'admin.examHub.scoreLabel' | trans }}
         </label>
         <textarea
           rows="3"
           class="input-soft"
-          placeholder="เช่น ใช้คะแนน TGAT 20%, TPAT 30% (ปล่อยว่างหากยังไม่มี)"
+          [placeholder]="'admin.examHub.scorePlaceholder' | trans"
           [ngModel]="form().scoreCriteriaInfo"
           (ngModelChange)="patch('scoreCriteriaInfo', $event)"
           [disabled]="loading() || saving()"
@@ -107,12 +107,12 @@
       <!-- Trend Info -->
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          เทรนด์ข้อสอบ (แนวข้อสอบ / จุดที่ควรเน้น)
+          {{ 'admin.examHub.trendLabel' | trans }}
         </label>
         <textarea
           rows="3"
           class="input-soft"
-          placeholder="เช่น เน้นโจทย์สถานการณ์ประยุกต์ (ปล่อยว่างหากยังไม่มี)"
+          [placeholder]="'admin.examHub.trendPlaceholder' | trans"
           [ngModel]="form().trendInfo"
           (ngModelChange)="patch('trendInfo', $event)"
           [disabled]="loading() || saving()"
@@ -128,9 +128,9 @@
         [disabled]="loading() || saving()"
       >
         @if (saving()) {
-          <span>กำลังบันทึก…</span>
+          <span>{{ 'admin.examHub.saving' | trans }}</span>
         } @else {
-          <span>บันทึก</span>
+          <span>{{ 'admin.examHub.saveBtn' | trans }}</span>
         }
       </button>
     </div>

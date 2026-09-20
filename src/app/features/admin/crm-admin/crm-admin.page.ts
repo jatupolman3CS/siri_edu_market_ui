@@ -3,15 +3,12 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CrmService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import type { CrmSegmentKind } from '../../../core/models';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-
-const SEGMENT_KIND_LABELS: Record<CrmSegmentKind, string> = {
-  lifecycle: 'วงจรชีวิต',
-  interest: 'ความสนใจ',
-};
 
 /**
  * crm-core v1 §3.4, §4.1, §4.3 (`docs/contracts/crm-core.md`) — "CRM — ภาพรวมลูกค้า":
@@ -29,13 +26,14 @@ const SEGMENT_KIND_LABELS: Record<CrmSegmentKind, string> = {
 @Component({
   selector: 'app-crm-admin',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, EmptyStateComponent, StatCardComponent, PaginationComponent],
+  imports: [RouterLink, DatePipe, DecimalPipe, EmptyStateComponent, StatCardComponent, PaginationComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-admin.page.html',
 })
 export class CrmAdminPage {
   readonly crm = inject(CrmService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   constructor() {
     void this.load();
@@ -46,7 +44,7 @@ export class CrmAdminPage {
     try {
       await this.crm.loadOverview();
     } catch (e) {
-      this.apiFail.report('โหลดภาพรวม CRM', e);
+      this.apiFail.report('errors.context.loadCrmOverview', e);
     }
   }
 
@@ -54,7 +52,7 @@ export class CrmAdminPage {
     try {
       await this.crm.loadDemandGaps();
     } catch (e) {
-      this.apiFail.report('โหลดคำค้นที่หาแล้วไม่เจอ', e);
+      this.apiFail.report('errors.context.loadDemandGaps', e);
     }
   }
 
@@ -62,7 +60,7 @@ export class CrmAdminPage {
     try {
       await this.crm.onDemandGapsPageChange(page);
     } catch (e) {
-      this.apiFail.report('โหลดคำค้นที่หาแล้วไม่เจอ', e);
+      this.apiFail.report('errors.context.loadDemandGaps', e);
     }
   }
 
@@ -70,12 +68,12 @@ export class CrmAdminPage {
     try {
       await this.crm.onDemandGapsPageSizeChange(size);
     } catch (e) {
-      this.apiFail.report('โหลดคำค้นที่หาแล้วไม่เจอ', e);
+      this.apiFail.report('errors.context.loadDemandGaps', e);
     }
   }
 
   kindLabel(kind: CrmSegmentKind): string {
-    return SEGMENT_KIND_LABELS[kind] ?? kind;
+    return this.translation.t(`admin.crmSegmentTypes.${kind}`);
   }
 
   /** §4.3: "สัดส่วนไม่พบ" as an integer percent. */

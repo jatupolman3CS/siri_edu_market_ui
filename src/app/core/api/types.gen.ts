@@ -1349,6 +1349,7 @@ export type MarketplaceDocumentResponse = {
   coverUrl?: string;
   galleryCount?: number;
   galleryPreviewUrls?: Array<string>;
+  previewPages?: number;
   pages?: number;
   format?: string;
   isFree?: boolean;
@@ -2412,6 +2413,11 @@ export type SellerWatermarkConfigRequest = {
   previewWatermarkFontSize?: number | null;
   personalizedWatermarkPosition?: string | null;
   personalizedWatermarkTemplate?: string | null;
+  personalizedWatermarkFontFamily?: string | null;
+  personalizedWatermarkColor?: string | null;
+  personalizedWatermarkOpacity?: number | null;
+  personalizedWatermarkRotation?: number | null;
+  personalizedWatermarkFontSize?: number | null;
 };
 
 export type SellerWatermarkConfigResponse = {
@@ -2428,6 +2434,11 @@ export type SellerWatermarkConfigResponse = {
   previewWatermarkFontSize?: number | null;
   personalizedWatermarkPosition?: string;
   personalizedWatermarkTemplate?: string | null;
+  personalizedWatermarkFontFamily?: string | null;
+  personalizedWatermarkColor?: string;
+  personalizedWatermarkOpacity?: number;
+  personalizedWatermarkRotation?: number | null;
+  personalizedWatermarkFontSize?: number | null;
   previewImageUrls?: Array<string>;
   hasMainFile?: boolean;
 };

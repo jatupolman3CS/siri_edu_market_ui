@@ -142,7 +142,7 @@ describe('SellerApplicationService.resolveAccessStatus (F-03)', () => {
     const { service, apiFail } = buildService();
 
     expect(await service.resolveAccessStatus()).toBe('unavailable');
-    expect(apiFail.report).toHaveBeenCalledWith('ตรวจสอบสถานะร้านของคุณ', expect.anything());
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.checkSellerStatus', expect.anything());
   });
 
   it('caches the answer — a second navigation inside /seller sends no second request', async () => {

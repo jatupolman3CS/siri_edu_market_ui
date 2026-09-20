@@ -1,10 +1,10 @@
 <div class="max-w-4xl">
   <div class="flex items-center gap-3 mb-6">
-    <a routerLink="/admin/documents" class="btn-icon !w-9 !h-9" title="กลับ">
+    <a routerLink="/admin/documents" class="btn-icon !w-9 !h-9" [title]="'admin.back' | trans">
       <app-icon name="arrow-left" [size]="18" />
     </a>
     <div>
-      <h1 class="text-2xl font-extrabold text-ink">รายละเอียดเอกสาร</h1>
+      <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.docDetailTitle' | trans }}</h1>
       @if (doc()) {
         <p class="text-xs text-ink-muted font-mono">{{ doc()!.id }}</p>
       }
@@ -12,32 +12,32 @@
   </div>
 
   @if (loading()) {
-    <p class="text-ink-muted text-sm">กำลังโหลด…</p>
+    <p class="text-ink-muted text-sm">{{ 'common.loading' | trans }}</p>
   } @else if (!doc()) {
-    <app-empty-state emoji="😕" title="ไม่พบเอกสาร" description="อาจถูกลบหรือรหัสเอกสารไม่ถูกต้อง" />
+    <app-empty-state emoji="😕" [title]="'admin.noDocsFound' | trans" [description]="'seller.docLoadFailed' | trans" />
   } @else {
     <div class="space-y-6">
       <div class="card-soft p-5 space-y-4">
-        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">ข้อมูลหลัก</h2>
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.mainInfo' | trans }}</h2>
         <div class="grid sm:grid-cols-2 gap-3">
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-1">ชื่อ</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.titleColon' | trans }}</label>
             <input class="input-soft w-full !py-2" [ngModel]="doc()!.title" (ngModelChange)="patchDoc({ title: $event })" />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-1">คำอธิบายสั้น</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.shortDescColon' | trans }}</label>
             <input class="input-soft w-full !py-2" [ngModel]="doc()!.shortDescription" (ngModelChange)="patchDoc({ shortDescription: $event })" />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-1">รายละเอียด</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.descriptionColon' | trans }}</label>
             <textarea class="input-soft w-full min-h-[120px] !py-2" [ngModel]="doc()!.description" (ngModelChange)="patchDoc({ description: $event })"></textarea>
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">ราคา</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.colPrice' | trans }}</label>
             <input class="input-soft w-full !py-2" type="number" inputmode="decimal" min="0" step="0.01" [ngModel]="doc()!.price" (ngModelChange)="patchDoc({ price: +$event })" />
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">รูปแบบไฟล์</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.colDocFormat' | trans }}</label>
             <select class="input-soft w-full !py-2" [ngModel]="doc()!.format" (ngModelChange)="patchDoc({ format: $event })">
               @for (o of formatOptions; track o.value) {
                 <option [value]="o.value">{{ o.label }}</option>
@@ -45,7 +45,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">หมวดหมู่ (เลือกได้หลายหมวด)</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.categoriesMultiple' | trans }}</label>
             <div class="space-y-1 max-h-40 overflow-auto p-2 rounded-2xl border border-line bg-white/70">
               @for (c of admin.adminCategories(); track c.id) {
                 <label
@@ -59,16 +59,16 @@
                   <span class="text-sm">{{ c.icon }} {{ c.name }}</span>
                 </label>
               } @empty {
-                <p class="text-xs text-ink-muted px-2 py-1">ยังไม่มีหมวดหมู่</p>
+                <p class="text-xs text-ink-muted px-2 py-1">{{ 'seller.noCategories' | trans }}</p>
               }
             </div>
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">หมวดย่อย (ถ้ามี)</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.subcategoryOptional' | trans }}</label>
             <input class="input-soft w-full !py-2" [ngModel]="doc()!.subcategoryId ?? ''" (ngModelChange)="patchDoc({ subcategoryId: $event || null })" placeholder="SubcategoryId" />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-1">ประเภททรัพยากร</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.resourceType' | trans }}</label>
             <select class="input-soft w-full !py-2" [ngModel]="doc()!.resourceType" (ngModelChange)="patchDoc({ resourceType: $event })">
               @for (o of resourceTypeOptions; track o.value) {
                 <option [value]="o.value">{{ o.label }}</option>
@@ -76,11 +76,11 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">ผู้ขาย</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.colBuyer' | trans }}</label>
             <input class="input-soft w-full !py-2 opacity-70" [value]="doc()!.sellerName" disabled />
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">สถานะ</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.colStatus' | trans }}</label>
             <select class="input-soft w-full !py-2" [ngModel]="doc()!.status" (ngModelChange)="patchDoc({ status: $event })">
               @for (o of docStatuses; track o.value) {
                 <option [value]="o.value">{{ o.label }}</option>
@@ -88,9 +88,9 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">ภาษา</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'seller.languageLabel' | trans }}</label>
             <select class="input-soft w-full !py-2" [ngModel]="doc()!.language" (ngModelChange)="patchDoc({ language: $event })">
-              <option value="th">ไทย (th)</option>
+              <option value="th">{{ 'admin.thaiLanguageOption' | trans }}</option>
               <option value="en">English (en)</option>
             </select>
           </div>
@@ -101,30 +101,30 @@
             </div>
             <div class="flex items-center gap-2 text-sm">
               <nz-switch [ngModel]="doc()!.isFree" (ngModelChange)="patchDoc({ isFree: $event })" />
-              ฟรี
+              {{ 'seller.priceFree' | trans }}
             </div>
             <div class="flex items-center gap-2 text-sm">
               <nz-switch [ngModel]="doc()!.watermarkEnabled" (ngModelChange)="patchDoc({ watermarkEnabled: $event })" />
-              ลายน้ำ
+              {{ 'seller.colDocWatermark' | trans }}
             </div>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-1">แท็ก</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.tagsLabel' | trans }}</label>
             <div class="flex flex-wrap gap-2 mb-2">
               @for (t of tags(); track t) {
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-100 text-pink-900 text-xs">
                   {{ t }}
-                  <button type="button" class="text-rose-600 font-bold leading-none" (click)="removeTag(t)" aria-label="ลบแท็ก">×</button>
+                  <button type="button" class="text-rose-600 font-bold leading-none" (click)="removeTag(t)" [attr.aria-label]="'admin.removeTagAria' | trans">×</button>
                 </span>
               }
             </div>
             <div class="flex gap-2">
-              <input class="input-soft flex-1 !py-2" placeholder="พิมพ์แท็กแล้วกดเพิ่ม" [ngModel]="newTag()" (ngModelChange)="newTag.set($event)" (keydown.enter)="addTag(); $event.preventDefault()" />
-              <button type="button" class="btn-ghost text-xs whitespace-nowrap" (click)="addTag()">เพิ่มแท็ก</button>
+              <input class="input-soft flex-1 !py-2" [placeholder]="'admin.tagInputPlaceholder' | trans" [ngModel]="newTag()" (ngModelChange)="newTag.set($event)" (keydown.enter)="addTag(); $event.preventDefault()" />
+              <button type="button" class="btn-ghost text-xs whitespace-nowrap" (click)="addTag()">{{ 'admin.addTagBtn' | trans }}</button>
             </div>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-2">ระดับชั้น</label>
+            <label class="block text-xs text-ink-muted mb-2">{{ 'admin.gradeLevelLabel' | trans }}</label>
             <div class="flex flex-wrap gap-2">
               @for (g of gradePresets; track g.value) {
                 <label
@@ -137,11 +137,11 @@
                 </label>
               }
             </div>
-            <label class="block text-xs text-ink-muted mt-2 mb-1">ระดับชั้นอื่น (คั่นด้วยจุลภาค)</label>
-            <input class="input-soft w-full !py-2 text-sm" [ngModel]="extraGradeLevels()" (ngModelChange)="extraGradeLevels.set($event)" placeholder="เช่น ป.4, ม.ปลาย" />
+            <label class="block text-xs text-ink-muted mt-2 mb-1">{{ 'admin.extraGradeLevelsLabel' | trans }}</label>
+            <input class="input-soft w-full !py-2 text-sm" [ngModel]="extraGradeLevels()" (ngModelChange)="extraGradeLevels.set($event)" [placeholder]="'admin.extraGradeLevelsPlaceholder' | trans" />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-ink-muted mb-2">มาตรฐาน / สอบ</label>
+            <label class="block text-xs text-ink-muted mb-2">{{ 'admin.standardExamLabel' | trans }}</label>
             <div class="flex flex-wrap gap-2">
               @for (s of standardPresets; track s) {
                 <label
@@ -154,28 +154,28 @@
                 </label>
               }
             </div>
-            <label class="block text-xs text-ink-muted mt-2 mb-1">มาตรฐานอื่น (คั่นด้วยจุลภาค)</label>
+            <label class="block text-xs text-ink-muted mt-2 mb-1">{{ 'admin.extraStandardsLabel' | trans }}</label>
             <input class="input-soft w-full !py-2 text-sm" [ngModel]="extraStandards()" (ngModelChange)="extraStandards.set($event)" />
           </div>
         </div>
       </div>
 
       <div class="card-soft p-5 space-y-4">
-        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">ไฟล์และที่เก็บ</h2>
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.filesAndStorage' | trans }}</h2>
         <div class="grid sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2 space-y-2">
-            <label class="block text-xs text-ink-muted mb-1">รูปปกและแกลเลอรี</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.coverAndGalleryTitle' | trans }}</label>
             <p class="text-[11px] text-ink-muted">
-              อัปโหลดได้หลายรูป (สูงสุด {{ maxGalleryImages }}) — รูปแรกคือปก — ลากเพื่อเรียงลำดับ
+              {{ 'admin.galleryUploadDesc' | trans: { max: maxGalleryImages } }}
             </p>
             <div class="flex flex-wrap items-center gap-2">
               <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
                 <app-icon name="upload" [size]="14" />
-                {{ galleryUploading() ? 'กำลังอัปโหลด…' : 'เพิ่มรูป' }}
+                {{ galleryUploading() ? ('common.uploading' | trans) : ('seller.addMoreImages' | trans) }}
                 <input type="file" class="hidden" accept="image/*" multiple [disabled]="galleryUploading()" (change)="onGalleryFiles($event)" />
               </label>
               @if (galleryItems().length) {
-                <button type="button" class="btn-ghost text-xs !text-red-600" (click)="resetGallery()">ล้างทั้งหมด</button>
+                <button type="button" class="btn-ghost text-xs !text-red-600" (click)="resetGallery()">{{ 'admin.clearAll' | trans }}</button>
               }
             </div>
 
@@ -192,13 +192,13 @@
                       <img appImgFallback [src]="item.previewUrl" alt="" class="w-16 h-20 object-cover rounded-xl border border-line" />
                       <div class="flex-1 min-w-0">
                         @if (i === 0) {
-                          <div class="text-xs font-bold text-pink-600">ปกหลัก</div>
+                          <div class="text-xs font-bold text-pink-600">{{ 'seller.mainCover' | trans }}</div>
                         } @else {
-                          <div class="text-xs text-ink-muted">ลำดับ {{ i + 1 }}</div>
+                          <div class="text-xs text-ink-muted">{{ 'seller.orderIndex' | trans: { index: i + 1 } }}</div>
                         }
-                        <div class="text-[10px] text-ink-muted">ลากเพื่อเรียงลำดับ</div>
+                        <div class="text-[10px] text-ink-muted">{{ 'seller.dragToReorder' | trans }}</div>
                       </div>
-                      <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" title="ลบ">
+                      <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" [title]="'seller.deleteTitle' | trans">
                         <app-icon name="trash" [size]="16" />
                       </button>
                     </li>
@@ -206,14 +206,14 @@
                 </ul>
               </div>
             } @else {
-              <input class="input-soft w-full !py-2 text-xs font-mono" placeholder="ยังไม่มีรูป — อัปโหลดอย่างน้อย 1 รูป" disabled />
+              <input class="input-soft w-full !py-2 text-xs font-mono" [placeholder]="'admin.noImagesPlaceholder' | trans" disabled />
             }
           </div>
           <div class="sm:col-span-2 space-y-2">
-            <label class="block text-xs text-ink-muted mb-1">ไฟล์เอกสารหลัก</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.mainDocFile' | trans }}</label>
             <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
               <app-icon name="upload" [size]="14" />
-              {{ mainFileUploading() ? 'กำลังอัปโหลด…' : 'อัปโหลดไฟล์หลัก' }}
+              {{ mainFileUploading() ? ('common.uploading' | trans) : ('admin.uploadMainFile' | trans) }}
               <input type="file" class="hidden" [disabled]="mainFileUploading()" (change)="onMainFile($event)" />
             </label>
             @if (hasMainFile()) {
@@ -222,29 +222,29 @@
                 class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1 text-pink-600"
               >
                 <app-icon name="doc" [size]="14" />
-                เปิด / ดาวน์โหลดไฟล์
+                {{ 'admin.openDownloadFile' | trans }}
               </a>
             } @else {
-              <p class="text-xs text-ink-muted">ยังไม่มีไฟล์ให้ดาวน์โหลด</p>
+              <p class="text-xs text-ink-muted">{{ 'admin.noFileToDownload' | trans }}</p>
             }
             <input
               class="input-soft w-full !py-2 font-mono text-xs"
               [ngModel]="doc()!.fileStorageKey ?? ''"
               (ngModelChange)="patchDoc({ fileStorageKey: $event || null })"
-              placeholder="storage key หลังอัปโหลด หรือวาง key เอง"
+              [placeholder]="'admin.storageKeyPlaceholder' | trans"
             />
           </div>
           <div class="sm:col-span-2 space-y-2">
-            <label class="block text-xs text-ink-muted mb-1">ไฟล์ตัวอย่าง (preview)</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.previewFile' | trans }}</label>
             <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
               <app-icon name="upload" [size]="14" />
-              {{ previewUploading() ? 'กำลังอัปโหลด…' : 'อัปโหลดตัวอย่าง' }}
+              {{ previewUploading() ? ('common.uploading' | trans) : ('admin.uploadPreview' | trans) }}
               <input type="file" class="hidden" [disabled]="previewUploading()" (change)="onPreviewFile($event)" />
             </label>
-            <input class="input-soft w-full !py-2 font-mono text-xs" [ngModel]="doc()!.previewStorageKey ?? ''" (ngModelChange)="patchDoc({ previewStorageKey: $event || null })" placeholder="หรือวาง key เอง" />
+            <input class="input-soft w-full !py-2 font-mono text-xs" [ngModel]="doc()!.previewStorageKey ?? ''" (ngModelChange)="patchDoc({ previewStorageKey: $event || null })" [placeholder]="'admin.orPasteKeySelf' | trans" />
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">จำนวนหน้า</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.pageCount' | trans }}</label>
             <input
               class="input-soft w-full !py-2"
               type="number"
@@ -256,7 +256,7 @@
             />
           </div>
           <div>
-            <label class="block text-xs text-ink-muted mb-1">หน้าตัวอย่าง</label>
+            <label class="block text-xs text-ink-muted mb-1">{{ 'admin.previewPages' | trans }}</label>
             <input
               class="input-soft w-full !py-2"
               type="number"
@@ -272,20 +272,20 @@
 
       <div class="flex gap-2">
         <button type="button" class="btn-pink" [disabled]="saving()" (click)="save()">
-          @if (saving()) { กำลังบันทึก… } @else { บันทึก }
+          @if (saving()) { {{ 'common.saving' | trans }} } @else { {{ 'common.save' | trans }} }
         </button>
       </div>
 
       <div class="card-soft p-5 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <h2 class="text-sm font-bold text-ink uppercase tracking-wider">รายงาน / Moderation</h2>
+          <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.reportsModeration' | trans }}</h2>
           @if (reports().some((r) => !r.resolvedAt)) {
-            <button type="button" class="btn-ghost text-xs" (click)="resolveAllReports()">ปิดทั้งหมดที่ค้าง</button>
+            <button type="button" class="btn-ghost text-xs" (click)="resolveAllReports()">{{ 'admin.resolveAllPendingReports' | trans }}</button>
           }
         </div>
         <div class="flex gap-2 flex-wrap">
-          <input class="input-soft flex-1 min-w-[200px] !py-2" placeholder="เหตุผลรายงานใหม่" [ngModel]="newReportReason()" (ngModelChange)="newReportReason.set($event)" />
-          <button type="button" class="btn-ghost text-xs" (click)="addReport()">เพิ่มรายงาน</button>
+          <input class="input-soft flex-1 min-w-[200px] !py-2" [placeholder]="'admin.newReportReasonPlaceholder' | trans" [ngModel]="newReportReason()" (ngModelChange)="newReportReason.set($event)" />
+          <button type="button" class="btn-ghost text-xs" (click)="addReport()">{{ 'admin.addReportBtn' | trans }}</button>
         </div>
         <ul class="divide-y divide-line text-sm">
           @for (r of reports(); track r.id) {
@@ -295,19 +295,19 @@
                 <div class="text-xs text-ink-muted">{{ r.createdAt | date: 'dd MMM yyyy HH:mm' }}</div>
               </div>
               @if (!r.resolvedAt) {
-                <button type="button" class="btn-ghost text-xs" (click)="resolveReport(r.id ?? '')">ปิดรายงาน</button>
+                <button type="button" class="btn-ghost text-xs" (click)="resolveReport(r.id ?? '')">{{ 'admin.resolveReportBtn' | trans }}</button>
               } @else {
-                <span class="text-xs text-emerald-700">ปิดแล้ว {{ r.resolvedAt | date: 'dd MMM yyyy HH:mm' }}</span>
+                <span class="text-xs text-emerald-700">{{ 'admin.resolvedAtLabel' | trans: { date: (r.resolvedAt | date: 'dd MMM yyyy HH:mm') ?? '' } }}</span>
               }
             </li>
           } @empty {
-            <li class="text-ink-muted text-sm py-2">ไม่มีรายงาน</li>
+            <li class="text-ink-muted text-sm py-2">{{ 'admin.noReports' | trans }}</li>
           }
         </ul>
       </div>
 
       <div class="card-soft p-5 space-y-2">
-        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">Audit ล่าสุด</h2>
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.recentAudit' | trans }}</h2>
         <ul class="text-xs font-mono space-y-1 max-h-48 overflow-y-auto">
           @for (a of doc()!.recentAudit; track a.id) {
             <li class="border-b border-line/50 pb-1">
@@ -318,7 +318,7 @@
               }
             </li>
           } @empty {
-            <li class="text-ink-muted">ยังไม่มีบันทึก</li>
+            <li class="text-ink-muted">{{ 'admin.noAuditLogs' | trans }}</li>
           }
         </ul>
       </div>

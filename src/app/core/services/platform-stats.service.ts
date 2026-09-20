@@ -44,7 +44,7 @@ export class PlatformStatsService {
         this._loaded = true;
         this._statsState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดสถิติแพลตฟอร์ม', e);
+        this.apiFail.report('errors.context.loadPlatformStats', e);
         this._statsState.set(errorActionState('โหลดสถิติแพลตฟอร์มไม่สำเร็จ'));
       }
     })();

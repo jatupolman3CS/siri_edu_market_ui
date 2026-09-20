@@ -7,28 +7,20 @@ import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { PayoutAccountService, PlatformStatsService, SellerService, type SellerPayoutRow } from '../../../core/services';
 import { AuthService } from '../../../core/services/auth.service';
 import { resolveDownloadUrl } from '../../../core/api-runtime';
-import { THAI_BANKS, type SellerBalanceEntry } from '../../../core/models';
+import { type SellerBalanceEntry } from '../../../core/models';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 /**
  * payout-request-slip-verification v1 §4.4 / seller-ads-promotion v1 §4.4: ledger `kind` → Thai
  * label (snake_case convention matching backend SellerBalanceService.MapKind).
+ * Keys are looked up via `seller.earnings.kindLabels.<kind>` in the i18n dictionary.
  */
-const LEDGER_KIND_LABELS: Record<string, string> = {
-  opening_balance: 'ยอดยกมา',
-  order_earning: 'รายได้จากการขาย',
-  subscription_share: 'ส่วนแบ่งสมาชิกรายเดือน',
-  payout_hold: 'กันยอดเพื่อถอนเงิน',
-  payout_reversal: 'คืนยอดจากคำขอถอนเงิน',
-  order_refund: 'คืนเงินให้ผู้ซื้อ',
-  adjustment: 'ปรับยอดโดยผู้ดูแลระบบ',
-  ads_spend: 'ค่าโฆษณา',
-  ads_refund: 'คืนค่าโฆษณา',
-};
 
 function formatBaht(v: number): string {
   return v.toLocaleString('th-TH', { maximumFractionDigits: 2 });
@@ -39,6 +31,7 @@ function formatBaht(v: number): string {
   standalone: true,
   imports: [
     RouterLink,
+    TranslatePipe,
     StatCardComponent,
     EmptyStateComponent,
     IconComponent,
@@ -60,6 +53,7 @@ export class SellerEarningsPage {
   private readonly auth = inject(AuthService);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
+  private readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -108,8 +102,8 @@ export class SellerEarningsPage {
   readonly destinationMasked = computed(() => {
     const acc = this.payoutAccount.account();
     if (!acc || !acc.hasAccount) return '';
-    if (acc.accountType === 'promptpay') return `พร้อมเพย์ ${acc.promptPayMasked}`;
-    const bankName = THAI_BANKS.find((b) => b.code === acc.bankCode)?.name ?? acc.bankCode;
+    if (acc.accountType === 'promptpay') return `${this.translation.t('shared.payoutAccount.promptPay')} ${acc.promptPayMasked}`;
+    const bankName = this.translation.t(`banks.${acc.bankCode}`) || acc.bankCode;
     return `${bankName} ${acc.accountNumberMasked}`;
   });
 
@@ -121,11 +115,11 @@ export class SellerEarningsPage {
 
   /** §4.2: the 3 static reasons the "ขอถอนเงิน" button is disabled (submitting has its own label). */
   readonly disableReason = computed<string | null>(() => {
-    if (!this.hasPayoutAccount()) return 'กรุณาตั้งค่าบัญชีรับเงินก่อน';
+    if (!this.hasPayoutAccount()) return this.translation.t('seller.earnings.noPayoutAccount');
     if (this.availableBalance() < this.minPayoutAmount()) {
-      return `ยอดคงเหลือยังไม่ถึงขั้นต่ำ ${formatBaht(this.minPayoutAmount())} บาท`;
+      return this.translation.t('seller.earnings.belowMinPayout', { amount: formatBaht(this.minPayoutAmount()) });
     }
-    if (this.hasOpenRequest()) return 'คุณมีคำขอถอนเงินที่ยังดำเนินการอยู่';
+    if (this.hasOpenRequest()) return this.translation.t('seller.earnings.pendingPayoutExists');
     return null;
   });
 
@@ -135,15 +129,15 @@ export class SellerEarningsPage {
   readonly amountError = computed<string | null>(() => {
     const v = this.amount();
     if (v === null) return null;
-    if (!Number.isFinite(v) || v <= 0) return 'กรุณาระบุจำนวนเงินให้ถูกต้อง';
+    if (!Number.isFinite(v) || v <= 0) return this.translation.t('seller.earnings.invalidAmount');
     // Reject more than 2 decimal places (e.g. 100.005) without floating-point false positives.
-    if (Math.round(v * 100) / 100 !== v) return 'กรุณาระบุจำนวนเงินให้ถูกต้อง';
+    if (Math.round(v * 100) / 100 !== v) return this.translation.t('seller.earnings.invalidAmount');
     if (v < this.minPayoutAmount()) {
-      return `จำนวนเงินต้องไม่น้อยกว่า ${formatBaht(this.minPayoutAmount())} บาท`;
+      return this.translation.t('seller.earnings.amountBelowMin', { amount: formatBaht(this.minPayoutAmount()) });
     }
     const max = this.maxPayoutAmount();
-    if (max > 0 && v > max) return `จำนวนเงินต้องไม่เกิน ${formatBaht(max)} บาท`;
-    if (v > this.availableBalance()) return 'ยอดคงเหลือไม่พอ';
+    if (max > 0 && v > max) return this.translation.t('seller.earnings.amountAboveMax', { amount: formatBaht(max) });
+    if (v > this.availableBalance()) return this.translation.t('seller.earnings.insufficientBalance');
     return null;
   });
 
@@ -202,7 +196,8 @@ export class SellerEarningsPage {
   }
 
   ledgerLabel(kind: string): string {
-    return LEDGER_KIND_LABELS[kind] ?? kind;
+    const translated = this.translation.t(`seller.earnings.kindLabels.${kind}`);
+    return translated !== `seller.earnings.kindLabels.${kind}` ? translated : kind;
   }
 
   openRequest(): void {
@@ -223,7 +218,7 @@ export class SellerEarningsPage {
   async submitRequest(): Promise<void> {
     const v = this.amount();
     if (v === null || this.amountError()) {
-      this.message.warning(this.amountError() ?? 'กรุณาระบุจำนวนเงินให้ถูกต้อง');
+      this.message.warning(this.amountError() ?? this.translation.t('seller.earnings.invalidAmount'));
       return;
     }
     if (this.submitting()) return;
@@ -232,7 +227,7 @@ export class SellerEarningsPage {
     try {
       const result = await this.seller.requestPayout(v, this.note());
       if (result.ok) {
-        this.message.success('ส่งคำขอถอนเงินเรียบร้อย รอทีมงานดำเนินการ');
+        this.message.success(this.translation.t('seller.earnings.payoutRequestSent'));
         this.cancelRequest();
         void this.loadPayouts();
         void this.loadLedger();
@@ -245,11 +240,11 @@ export class SellerEarningsPage {
   /** §4.3: `NzModalService.confirm` — never the browser's native `confirm()`. */
   confirmCancel(payout: SellerPayoutRow): void {
     this.modal.confirm({
-      nzTitle: 'ยกเลิกคำขอถอนเงิน',
-      nzContent: `ยืนยันยกเลิกคำขอถอนเงิน ${formatBaht(payout.netAmount)} บาท? ยอดเงินจะกลับเข้ายอดคงเหลือทันที`,
-      nzOkText: 'ยืนยันยกเลิก',
+      nzTitle: this.translation.t('seller.earnings.cancelPayoutTitle'),
+      nzContent: this.translation.t('seller.earnings.cancelPayoutContent', { amount: formatBaht(payout.netAmount) }),
+      nzOkText: this.translation.t('seller.earnings.cancelPayoutOk'),
       nzOkDanger: true,
-      nzCancelText: 'ปิด',
+      nzCancelText: this.translation.t('common.close'),
       nzOnOk: () => this.doCancel(payout.id),
     });
   }
@@ -259,7 +254,7 @@ export class SellerEarningsPage {
     try {
       const result = await this.seller.cancelPayout(payoutId);
       if (result.ok) {
-        this.message.success('ยกเลิกคำขอถอนเงินแล้ว');
+        this.message.success(this.translation.t('seller.earnings.payoutCancelled'));
         void this.loadPayouts();
         void this.loadLedger();
       }
@@ -280,15 +275,15 @@ export class SellerEarningsPage {
   statusLabel(status: string | undefined): string {
     switch (status) {
       case 'paid':
-        return 'โอนแล้ว';
+        return this.translation.t('seller.earnings.statusPaid');
       case 'processing':
-        return 'กำลังโอน';
+        return this.translation.t('seller.earnings.statusProcessing');
       case 'failed':
-        return 'ไม่สำเร็จ';
+        return this.translation.t('seller.earnings.statusFailed');
       case 'cancelled':
-        return 'ยกเลิกแล้ว';
+        return this.translation.t('seller.earnings.statusCancelled');
       default:
-        return 'รอดำเนินการ';
+        return this.translation.t('seller.earnings.statusPending');
     }
   }
 }

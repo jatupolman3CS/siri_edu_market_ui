@@ -31,7 +31,7 @@ export class AuthForgotPasswordPage {
     try {
       const r = await this.auth.requestPasswordReset(this.email());
       if (!r.ok) {
-        this.error.set(r.error ?? 'ส่งไม่สำเร็จ');
+        this.error.set(r.error ?? this.i18n.t('auth.sendFailed'));
         return;
       }
       this.sent.set(true);

@@ -15,6 +15,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-category-detail',
@@ -27,6 +28,7 @@ import { FormsModule } from '@angular/forms';
     CompactPipe,
     DecimalPipe,
     FormsModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './category-detail.page.html',
@@ -55,10 +57,10 @@ export class BuyerCategoryDetailPage {
   });
 
   readonly sorts = [
-    { value: 'popular' as const, label: 'ความนิยม' },
-    { value: 'newest' as const, label: 'มาใหม่' },
-    { value: 'rating' as const, label: 'คะแนนรีวิว' },
-    { value: 'price-asc' as const, label: 'ราคา ต่ำ-สูง' },
+    { value: 'popular' as const, labelKey: 'categories.sortPopular' },
+    { value: 'newest' as const, labelKey: 'categories.sortNewest' },
+    { value: 'rating' as const, labelKey: 'categories.sortRating' },
+    { value: 'price-asc' as const, labelKey: 'categories.sortPriceAsc' },
   ];
 
   readonly category = computed(() =>

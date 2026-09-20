@@ -11,6 +11,8 @@ import type {
   AdminWalletSummary,
   WalletEntry,
 } from '../../../core/models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -27,6 +29,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     IconComponent,
     ThbPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-detail.page.html',
@@ -39,6 +42,7 @@ export class AdminUserDetailPage {
   private readonly auth = inject(AuthService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly user = signal<AdminUserDetail | null>(null);
   readonly loading = signal(true);
@@ -108,8 +112,7 @@ export class AdminUserDetailPage {
       const detail = await this.admin.getUser(userId);
       this.user.set(detail);
     } catch (e) {
-      this.apiFail.report('โหลดข้อมูลผู้ใช้', e);
-      this.message.error(this.apiFail.formatDetail(e));
+      this.apiFail.report('errors.context.loadUserDetail', e);
     } finally {
       this.loading.set(false);
     }
@@ -153,11 +156,11 @@ export class AdminUserDetailPage {
   getWalletKindLabel(kind: WalletEntry['kind']): string {
     switch (kind) {
       case 'topup':
-        return 'เติมเงิน';
+        return this.translation.t('admin.userDetailAdmin.walletKindTopup');
       case 'purchase':
-        return 'ซื้อเอกสาร';
+        return this.translation.t('admin.userDetailAdmin.walletKindPurchase');
       case 'refund':
-        return 'คืนเงินเข้ากระเป๋า';
+        return this.translation.t('admin.userDetailAdmin.walletKindRefund');
       default:
         return kind;
     }
@@ -184,7 +187,7 @@ export class AdminUserDetailPage {
     const reason = this.suspendReason().trim();
     const untilStr = this.suspendUntil();
     if (!reason || !untilStr) {
-      this.message.warning('กรุณากรอกเหตุผลและวันหมดอายุการระงับ');
+      this.message.warning(this.translation.t('admin.userDetailAdmin.suspendReasonRequired'));
       return;
     }
 
@@ -196,7 +199,7 @@ export class AdminUserDetailPage {
         messageToUser: this.suspendMessage().trim() || null,
       });
       this.user.set(updated);
-      this.message.success('ระงับบัญชีเรียบร้อยแล้ว');
+      this.message.success(this.translation.t('admin.userDetailAdmin.suspendSuccess'));
       this.closeSuspendModal();
     } catch (e) {
       this.message.error(this.apiFail.formatDetail(e));
@@ -221,7 +224,7 @@ export class AdminUserDetailPage {
     if (!u) return;
     const reason = this.banReason().trim();
     if (!reason) {
-      this.message.warning('กรุณากรอกเหตุผล');
+      this.message.warning(this.translation.t('admin.userDetailAdmin.reasonRequired'));
       return;
     }
 
@@ -232,7 +235,7 @@ export class AdminUserDetailPage {
         messageToUser: this.banMessage().trim() || null,
       });
       this.user.set(updated);
-      this.message.success('แบนบัญชีเรียบร้อยแล้ว');
+      this.message.success(this.translation.t('admin.userDetailAdmin.banSuccess'));
       this.closeBanModal();
     } catch (e) {
       this.message.error(this.apiFail.formatDetail(e));
@@ -256,7 +259,7 @@ export class AdminUserDetailPage {
     if (!u) return;
     const reason = this.reinstateReason().trim();
     if (!reason) {
-      this.message.warning('กรุณากรอกเหตุผล');
+      this.message.warning(this.translation.t('admin.userDetailAdmin.reasonRequired'));
       return;
     }
 
@@ -266,7 +269,7 @@ export class AdminUserDetailPage {
         reason,
       });
       this.user.set(updated);
-      this.message.success('ปลดระงับบัญชีเรียบร้อยแล้ว');
+      this.message.success(this.translation.t('admin.userDetailAdmin.reinstateSuccess'));
       this.closeReinstateModal();
     } catch (e) {
       this.message.error(this.apiFail.formatDetail(e));
@@ -277,18 +280,18 @@ export class AdminUserDetailPage {
 
   getRoleLabel(role: string): string {
     switch (role.toLowerCase()) {
-      case 'buyer': return 'ผู้ซื้อ';
-      case 'seller': return 'ผู้ขาย';
-      case 'admin': return 'ผู้ดูแลระบบ';
+      case 'buyer': return this.translation.t('admin.userDetailAdmin.roleBuyer');
+      case 'seller': return this.translation.t('admin.userDetailAdmin.roleSeller');
+      case 'admin': return this.translation.t('admin.userDetailAdmin.roleAdmin');
       default: return role;
     }
   }
 
   getActionLabel(action: string): string {
     switch (action.toLowerCase()) {
-      case 'suspend': return 'ระงับชั่วคราว';
-      case 'ban': return 'แบนถาวร';
-      case 'reinstate': return 'ปลดระงับ';
+      case 'suspend': return this.translation.t('admin.userDetailAdmin.actionSuspend');
+      case 'ban': return this.translation.t('admin.userDetailAdmin.actionBan');
+      case 'reinstate': return this.translation.t('admin.userDetailAdmin.actionReinstate');
       default: return action;
     }
   }
@@ -309,11 +312,11 @@ export class AdminUserDetailPage {
   getStatusLabel(status: AdminUserAccountStatus): string {
     switch (status) {
       case 'active':
-        return 'ปกติ';
+        return this.translation.t('admin.userDetailAdmin.statusActive');
       case 'suspended':
-        return 'ระงับชั่วคราว';
+        return this.translation.t('admin.userDetailAdmin.statusSuspended');
       case 'banned':
-        return 'แบนถาวร';
+        return this.translation.t('admin.userDetailAdmin.statusBanned');
       default:
         return status;
     }

@@ -41,7 +41,7 @@
             [(ngModel)]="name"
             name="name"
             class="input-soft !pl-12"
-            placeholder="พิชญา ภัทราวดี"
+            [placeholder]="'auth.fullNamePlaceholder' | trans"
             autocomplete="name"
             required
           />
@@ -120,7 +120,7 @@
             [(ngModel)]="confirmPassword"
             name="confirmPassword"
             class="input-soft !pl-12"
-            placeholder="พิมพ์รหัสผ่านอีกครั้ง"
+            [placeholder]="'auth.retypePasswordPlaceholder' | trans"
             autocomplete="new-password"
             required
           />
@@ -178,13 +178,13 @@
             LINE
           </div>
           <div>
-            <h3 class="font-bold text-ink text-base">เข้าสู่ระบบด้วย LINE</h3>
-            <p class="text-xs text-ink-muted">กรุณาระบุอีเมลของคุณเพื่อดำเนินการต่อ</p>
+            <h3 class="font-bold text-ink text-base">{{ 'auth.lineLoginTitle' | trans }}</h3>
+            <p class="text-xs text-ink-muted">{{ 'auth.lineSpecifyEmailToContinue' | trans }}</p>
           </div>
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1.5 block">อีเมลของคุณ</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1.5 block">{{ 'auth.yourEmail' | trans }}</label>
           <input
             type="email"
             [(ngModel)]="lineEmail"
@@ -204,14 +204,14 @@
             class="flex-1 py-2.5 rounded-full border border-line text-sm font-semibold text-ink-soft hover:bg-slate-50 transition-all"
             (click)="lineModalVisible.set(false)"
           >
-            ยกเลิก
+            {{ 'auth.cancel' | trans }}
           </button>
           <button
             type="button"
             class="flex-1 py-2.5 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white text-sm font-semibold transition-all shadow-md shadow-[#06C755]/20"
             (click)="confirmLineEmail()"
           >
-            ดำเนินการต่อ
+            {{ 'auth.continue' | trans }}
           </button>
         </div>
       </div>

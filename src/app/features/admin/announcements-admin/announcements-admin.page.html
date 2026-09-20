@@ -1,12 +1,12 @@
 <div class="max-w-5xl">
   <header class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">จัดการประกาศข่าวสาร</h1>
-      <p class="text-sm text-ink-soft">ประกาศที่เปิดใช้งานจะแสดงเป็น popup ให้ผู้เข้าชมเว็บไซต์เห็น</p>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.announcementsAdmin.title' | trans }}</h1>
+      <p class="text-sm text-ink-soft">{{ 'admin.announcementsAdmin.desc' | trans }}</p>
     </div>
     <button type="button" class="btn-pink" (click)="openCreate()">
       <app-icon name="plus" [size]="16" />
-      เพิ่มประกาศ
+      {{ 'admin.announcementsAdmin.addBtn' | trans }}
     </button>
   </header>
 
@@ -15,10 +15,10 @@
       <thead class="bg-pink-50">
         <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
           <th class="px-5 py-3 w-24"></th>
-          <th class="px-5 py-3 font-semibold">หัวข้อ</th>
-          <th class="px-5 py-3 font-semibold">สถานะ</th>
-          <th class="px-5 py-3 font-semibold text-right">รูป</th>
-          <th class="px-5 py-3 font-semibold text-right">ลำดับการแสดง</th>
+          <th class="px-5 py-3 font-semibold">{{ 'admin.announcementsAdmin.colTitle' | trans }}</th>
+          <th class="px-5 py-3 font-semibold">{{ 'admin.announcementsAdmin.colStatus' | trans }}</th>
+          <th class="px-5 py-3 font-semibold text-right">{{ 'admin.announcementsAdmin.colImages' | trans }}</th>
+          <th class="px-5 py-3 font-semibold text-right">{{ 'admin.announcementsAdmin.colOrder' | trans }}</th>
         </tr>
       </thead>
       <tbody>
@@ -57,9 +57,9 @@
           <tr>
             <td colspan="5" class="px-5 py-8 text-center text-sm text-ink-muted">
               @if (loading()) {
-                กำลังโหลด...
+                {{ 'admin.announcementsAdmin.loading' | trans }}
               } @else {
-                ยังไม่มีประกาศข่าวสาร
+                {{ 'admin.announcementsAdmin.empty' | trans }}
               }
             </td>
           </tr>
@@ -79,9 +79,9 @@
 
 <nz-modal
   [nzVisible]="formOpen()"
-  [nzTitle]="editingId() ? 'แก้ไขประกาศข่าวสาร' : 'เพิ่มประกาศข่าวสาร'"
-  nzOkText="บันทึก"
-  nzCancelText="ยกเลิก"
+  [nzTitle]="editingId() ? ('admin.announcementsAdmin.editTitle' | trans) : ('admin.announcementsAdmin.createTitle' | trans)"
+  [nzOkText]="'common.save' | trans"
+  [nzCancelText]="'common.cancel' | trans"
   [nzOkLoading]="saving()"
   [nzOkDisabled]="!formImageCountValid()"
   (nzOnOk)="save()"
@@ -90,30 +90,30 @@
   <ng-container *nzModalContent>
     <div class="space-y-4">
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">หัวข้อ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.announcementsAdmin.formTitleLabel' | trans }}</label>
         <input type="text" class="input-soft" [ngModel]="formTitle()" (ngModelChange)="formTitle.set($event)" name="formTitle" />
       </div>
 
       <div class="flex items-center gap-2">
         <nz-switch [ngModel]="formIsEnabled()" (ngModelChange)="formIsEnabled.set($event)" name="formIsEnabled" />
-        <span class="text-xs font-semibold text-ink-soft">เปิดใช้งาน</span>
+        <span class="text-xs font-semibold text-ink-soft">{{ 'admin.announcementsAdmin.formEnabled' | trans }}</span>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1 block">วันที่เริ่มแสดง</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.announcementsAdmin.formStartDate' | trans }}</label>
           <input type="date" class="input-soft !py-2" [ngModel]="formStartAt()" (ngModelChange)="formStartAt.set($event)" name="formStartAt" />
-          <p class="text-[11px] text-ink-muted mt-1">เว้นว่าง = แสดงทันที</p>
+          <p class="text-[11px] text-ink-muted mt-1">{{ 'admin.announcementsAdmin.formStartHint' | trans }}</p>
         </div>
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1 block">วันที่สิ้นสุด</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.announcementsAdmin.formEndDate' | trans }}</label>
           <input type="date" class="input-soft !py-2" [ngModel]="formEndAt()" (ngModelChange)="formEndAt.set($event)" name="formEndAt" />
-          <p class="text-[11px] text-ink-muted mt-1">เว้นว่าง = ไม่มีวันหมดอายุ</p>
+          <p class="text-[11px] text-ink-muted mt-1">{{ 'admin.announcementsAdmin.formEndHint' | trans }}</p>
         </div>
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">ลำดับการแสดง</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.announcementsAdmin.formSortOrder' | trans }}</label>
         <input
           type="number"
           class="input-soft"
@@ -125,10 +125,10 @@
 
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="text-xs font-semibold text-ink-soft block">รูปภาพประกาศ (1-10 รูป)</label>
+          <label class="text-xs font-semibold text-ink-soft block">{{ 'admin.announcementsAdmin.formImages' | trans }}</label>
           <label class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1">
             <app-icon name="upload" [size]="14" />
-            {{ formImageUploading() ? 'กำลังอัปโหลด…' : 'เพิ่มรูป' }}
+            {{ formImageUploading() ? ('admin.announcementsAdmin.formUploading' | trans) : ('admin.announcementsAdmin.formAddImage' | trans) }}
             <input
               type="file"
               class="hidden"
@@ -150,7 +150,7 @@
               <img appImgFallback [src]="row.imageUrl" alt="" class="w-16 h-16 rounded-xl object-cover shrink-0" />
               <div class="flex-1 min-w-0 space-y-2">
                 <div>
-                  <label class="text-[11px] font-semibold text-ink-soft mb-1 block">ลิงก์ (ถ้ามี)</label>
+                  <label class="text-[11px] font-semibold text-ink-soft mb-1 block">{{ 'admin.announcementsAdmin.formLinkLabel' | trans }}</label>
                   <input
                     type="text"
                     class="input-soft !py-1.5 text-xs"
@@ -160,7 +160,7 @@
                   />
                 </div>
                 <div>
-                  <label class="text-[11px] font-semibold text-ink-soft mb-1 block">คำอธิบายรูป (alt text)</label>
+                  <label class="text-[11px] font-semibold text-ink-soft mb-1 block">{{ 'admin.announcementsAdmin.formAltLabel' | trans }}</label>
                   <input
                     type="text"
                     class="input-soft !py-1.5 text-xs"
@@ -180,7 +180,7 @@
               </button>
             </li>
           } @empty {
-            <li class="text-xs text-ink-muted">ยังไม่มีรูปภาพ</li>
+            <li class="text-xs text-ink-muted">{{ 'admin.announcementsAdmin.formNoImages' | trans }}</li>
           }
         </ul>
       </div>

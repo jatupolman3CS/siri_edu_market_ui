@@ -7,6 +7,7 @@ import {
   type ActionState,
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import { unwrapSdkResult } from './api-result';
 import { mapAffiliateSummary } from '../api-mappers/mappers';
 import { getApiMeAffiliate } from '../api';
@@ -19,6 +20,7 @@ import { captureAffiliateClick } from '../util/affiliate-capture';
 @Injectable({ providedIn: 'root' })
 export class AffiliateService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _summary = signal<AffiliateSummary | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
@@ -41,9 +43,9 @@ export class AffiliateService {
       this._summary.set(data ? mapAffiliateSummary(data) : null);
       this._state.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดข้อมูลลิงก์พันธมิตร', e);
+      this.apiFail.report('errors.context.loadAffiliate', e);
       this._summary.set(null);
-      this._state.set(errorActionState('โหลดข้อมูลลิงก์พันธมิตรไม่สำเร็จ'));
+      this._state.set(errorActionState(this.translation.t('affiliate.loadFailed')));
     }
   }
 

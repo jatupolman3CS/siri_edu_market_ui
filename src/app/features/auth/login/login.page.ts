@@ -29,7 +29,7 @@ export class AuthLoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly message = inject(NzMessageService);
-  readonly i18n = inject(TranslationService);
+  readonly translation = inject(TranslationService);
 
   readonly email = signal<string>('');
   readonly password = signal<string>('');
@@ -39,7 +39,6 @@ export class AuthLoginPage {
   readonly error = signal<string>('');
 
   readonly returnUrl = signal<string>('/');
-
   readonly lineModalVisible = signal<boolean>(false);
   readonly lineEmail = signal<string>('');
   readonly lineEmailError = signal<string>('');
@@ -56,10 +55,10 @@ export class AuthLoginPage {
     const result = await this.auth.signIn(this.email(), this.password());
     this.loading.set(false);
     if (!result.ok) {
-      this.error.set(result.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
+      this.error.set(result.error ?? this.translation.t('auth.loginFailed'));
       return;
     }
-    this.message.success('ยินดีต้อนรับกลับมา 🌸');
+    this.message.success(this.translation.t('auth.welcomeBackToast'));
     this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
   }
 
@@ -77,7 +76,7 @@ export class AuthLoginPage {
   confirmLineEmail(): void {
     const mail = this.lineEmail().trim();
     if (!mail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-      this.lineEmailError.set('กรุณาระบุอีเมลที่ถูกต้อง');
+      this.lineEmailError.set(this.translation.t('auth.pleaseEnterValidEmail'));
       return;
     }
     this.lineModalVisible.set(false);
@@ -89,7 +88,7 @@ export class AuthLoginPage {
       });
       this.loading.set(false);
       if (!r.ok) {
-        this.error.set(r.error ?? 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ');
+        this.error.set(r.error ?? this.translation.t('auth.lineLoginFailed'));
       }
     })();
   }
@@ -100,10 +99,10 @@ export class AuthLoginPage {
       const r = await this.auth.signInWithProvider(provider, { returnUrl: this.returnUrl() });
       this.loading.set(false);
       if (!r.ok) {
-        this.error.set(r.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
+        this.error.set(r.error ?? this.translation.t('auth.loginFailed'));
         return;
       }
-      this.message.success(`เข้าสู่ระบบด้วย ${provider.toUpperCase()} สำเร็จ`);
+      this.message.success(this.translation.t('auth.socialLoginSuccess', { provider: provider.toUpperCase() }));
       this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
     })();
   }

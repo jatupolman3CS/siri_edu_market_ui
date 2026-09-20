@@ -5,39 +5,39 @@
     <div>
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-        <span>สมาชิก</span>
+        <span>{{ 'accountSubscription.badge' | trans }}</span>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">สมาชิกรายเดือน</h1>
-      <p class="text-sm sm:text-base text-ink-soft">ดูสถานะและจัดการสมาชิกรายเดือนของคุณ</p>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'accountSubscription.title' | trans }}</h1>
+      <p class="text-sm sm:text-base text-ink-soft">{{ 'accountSubscription.desc' | trans }}</p>
     </div>
     <a routerLink="/account/subscription/access-history" class="btn-ghost !py-2.5 whitespace-nowrap self-start sm:self-auto">
-      ประวัติการเข้าถึงเอกสาร
+      {{ 'accountSubscription.accessHistoryLink' | trans }}
     </a>
   </header>
 
   @if (!loaded()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (subscription.current(); as sub) {
     <section class="card-soft p-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold text-ink">แพ็กเกจของคุณ</h2>
+        <h2 class="text-lg font-bold text-ink">{{ 'accountSubscription.packageTitle' | trans }}</h2>
         <span class="pill-pink text-xs">{{ statusLabel(sub.status) }}</span>
       </div>
 
       <div class="mb-4">
-        <p class="text-xs font-semibold text-ink-muted mb-2">หมวดที่ครอบคลุม</p>
+        <p class="text-xs font-semibold text-ink-muted mb-2">{{ 'accountSubscription.categoriesCovered' | trans }}</p>
         <ul class="flex flex-wrap gap-2">
           @for (name of categoryNames(); track name) {
             <li class="pill-soft text-xs">{{ name }}</li>
           } @empty {
-            <li class="text-xs text-ink-muted">ไม่มีหมวดหมู่</li>
+            <li class="text-xs text-ink-muted">{{ 'accountSubscription.noCategories' | trans }}</li>
           }
         </ul>
       </div>
 
       <dl class="space-y-2 text-sm mb-4">
         <div class="flex justify-between text-ink-soft">
-          <dt>ราคา/เดือน</dt>
+          <dt>{{ 'accountSubscription.pricePerMonth' | trans }}</dt>
           <dd class="font-bold text-ink">{{ sub.monthlyPrice | thb }}</dd>
         </div>
       </dl>
@@ -46,14 +46,12 @@
         <div
           class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed mb-5"
         >
-          <p class="font-bold mb-1">การชำระเงินยังไม่เสร็จสมบูรณ์</p>
+          <p class="font-bold mb-1">{{ 'accountSubscription.incompleteTitle' | trans }}</p>
           <p class="mb-2">
-            หากคุณเพิ่งสมัครสมาชิกและกำลังยืนยันตัวตนกับธนาคาร (3-D Secure) กรุณารอสักครู่แล้วกด
-            "รีเฟรชสถานะ" อีกครั้ง หากปิดหน้าต่างยืนยันไปแล้วหรือใช้เวลานานเกินไป ระบบจะยกเลิกการสมัคร
-            นี้โดยอัตโนมัติ จากนั้นคุณจะสามารถสมัครสมาชิกใหม่ได้ที่หน้า "สมัครสมาชิกรายเดือน"
+            {{ 'accountSubscription.incompleteDesc' | trans }}
           </p>
           <button type="button" class="btn-ghost !py-2 !px-4 text-xs" (click)="refreshStatus()">
-            รีเฟรชสถานะ
+            {{ 'accountSubscription.refreshStatus' | trans }}
           </button>
         </div>
       } @else {
@@ -62,17 +60,17 @@
 
       @if (canCancel()) {
         <button type="button" class="btn-ghost w-full !py-3" (click)="confirmCancel()">
-          ยกเลิกการสมัครสมาชิก
+          {{ 'accountSubscription.cancelSubscription' | trans }}
         </button>
       }
     </section>
   } @else {
     <app-empty-state
       emoji="📦"
-      title="ยังไม่มีสมาชิกรายเดือน"
-      description="สมัครสมาชิกเพื่อดาวน์โหลดเอกสารในหมวดที่เลือกได้ไม่จำกัดตลอดรอบบิล"
+      [title]="'accountSubscription.emptyTitle' | trans"
+      [description]="'accountSubscription.emptyDesc' | trans"
     >
-      <a routerLink="/subscribe" class="btn-pink mt-4">ไปสมัครสมาชิก</a>
+      <a routerLink="/subscribe" class="btn-pink mt-4">{{ 'accountSubscription.goToSubscribe' | trans }}</a>
     </app-empty-state>
   }
 </div>

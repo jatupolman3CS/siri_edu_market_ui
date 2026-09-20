@@ -13,13 +13,13 @@
           <div class="flex items-start gap-3">
             <app-icon name="flag" [size]="20" className="inline-block text-rose-500 mt-0.5" />
             <div>
-              <h2 class="font-bold text-ink mb-1">เอกสารนี้ไม่ผ่านการตรวจ</h2>
+              <h2 class="font-bold text-ink mb-1">{{ 'seller.uploadDocRejected' | trans }}</h2>
               <p class="text-sm text-ink-soft mb-1">
-                เหตุผล: {{ editDocument()?.rejectionReason }}
+                {{ 'seller.rejectionReason' | trans: { reason: editDocument()?.rejectionReason ?? '' } }}
               </p>
               @if (editDocument()?.rejectedAt) {
                 <p class="text-xs text-ink-muted">
-                  (ตรวจเมื่อ {{ editDocument()?.rejectedAt | date }})
+                  {{ 'seller.rejectedAt' | trans: { date: (editDocument()?.rejectedAt | date) ?? '' } }}
                 </p>
               }
             </div>
@@ -84,9 +84,9 @@
           <!-- Step 1: File -->
           @if (step() === 1) {
             <section class="card-tile">
-              <h2 class="text-lg font-bold text-ink mb-1">อัปโหลดไฟล์เอกสาร</h2>
+              <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.uploadDocFileTitle' | trans }}</h2>
               <p class="text-sm text-ink-muted mb-6">
-                รองรับ PDF, DOCX, PPTX, XLSX, ZIP — ขนาดสูงสุด 200MB
+                {{ 'seller.uploadDocFileSubtitle' | trans }}
               </p>
 
               @if (!file()) {
@@ -99,8 +99,8 @@
                   >
                     <app-icon name="upload" [size]="28" />
                   </div>
-                  <h3 class="text-base font-bold text-ink mb-1">ลากไฟล์มาวาง หรือคลิกเพื่อเลือก</h3>
-                  <p class="text-xs text-ink-muted">อัปโหลดได้ทีละ 1 ไฟล์</p>
+                  <h3 class="text-base font-bold text-ink mb-1">{{ 'seller.dragDropFile' | trans }}</h3>
+                  <p class="text-xs text-ink-muted">{{ 'seller.singleFileUploadHint' | trans }}</p>
 
                   <div class="flex flex-wrap items-center justify-center gap-2 mt-5">
                     @for (f of formats; track f) {
@@ -124,7 +124,7 @@
                       </div>
                       <div class="text-xs text-emerald-600 font-bold mt-1.5">
                         <app-icon name="check" [size]="11" />
-                        อัปโหลดเรียบร้อย
+                        {{ 'seller.uploadFileCompleted' | trans }}
                       </div>
                     </div>
                     <button type="button" class="btn-icon" (click)="resetFile()">
@@ -138,9 +138,9 @@
                 <div class="mt-6 p-4 rounded-2xl border border-line bg-white/80">
                   <div class="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <h3 class="text-sm font-bold text-ink mb-1">ไฟล์หลักของรายการ</h3>
+                      <h3 class="text-sm font-bold text-ink mb-1">{{ 'seller.mainListingFile' | trans }}</h3>
                       <p class="text-xs text-ink-muted">
-                        เลือกไฟล์ที่ใช้ขาย (ไฟล์สาธารณะต่อผู้ซื้อ) — หลังอนุมัติแล้ว หากเปลี่ยนไฟล์ที่ขาย ระบบจะส่งกลับไปรอตรวจสอบอีกครั้ง
+                        {{ 'seller.mainListingFileDesc' | trans }}
                       </p>
                     </div>
                     <button
@@ -148,14 +148,14 @@
                       class="btn-ghost !py-1.5 !px-3 text-xs shrink-0"
                       (click)="openHistoryModal()"
                     >
-                      ดูประวัติเวอร์ชัน
+                      {{ 'seller.viewVersionHistory' | trans }}
                     </button>
                   </div>
                   @if (mainFilesLoading()) {
-                    <p class="text-sm text-ink-muted">กำลังโหลดรายการไฟล์…</p>
+                    <p class="text-sm text-ink-muted">{{ 'seller.loadingFileList' | trans }}</p>
                   } @else if (!mainFiles().length) {
                     <p class="text-sm text-amber-800">
-                      ยังไม่มีไฟล์หลักในระบบ — อัปโหลดไฟล์ด้านบนเพื่อเพิ่ม
+                      {{ 'seller.noMainFileYet' | trans }}
                     </p>
                   } @else {
                     <ul class="space-y-1">
@@ -173,7 +173,7 @@
                               [disabled]="listedSaving()"
                               class="accent-pink-500"
                             />
-                            <span class="text-xs font-semibold text-pink-600">ขาย</span>
+                            <span class="text-xs font-semibold text-pink-600">{{ 'seller.sellingBadge' | trans }}</span>
                           </label>
                           <span class="flex-1 min-w-0 text-sm text-ink truncate">{{
                             (m.originalFileName || m.storageKey) | fileName
@@ -187,23 +187,23 @@
                             (click)="downloadMainFile(m.id)"
                             [disabled]="listedSaving()"
                           >
-                            ดาวน์โหลด
+                            {{ 'seller.download' | trans }}
                           </button>
                         </li>
                       }
                     </ul>
                   }
                   @if (listedSaving()) {
-                    <p class="text-xs text-pink-600 mt-2">กำลังบันทึก…</p>
+                    <p class="text-xs text-pink-600 mt-2">{{ 'seller.savingDots' | trans }}</p>
                   }
                 </div>
               }
 
               <!-- Cover / gallery images (first = card cover) -->
               <div class="mt-6 pt-6 border-t border-line">
-                <h3 class="text-sm font-bold text-ink mb-1">รูปปกและแกลเลอรี</h3>
+                <h3 class="text-sm font-bold text-ink mb-1">{{ 'seller.coverAndGalleryTitle' | trans }}</h3>
                 <p class="text-xs text-ink-muted mb-4">
-                  เลือกได้หลายรูป (สูงสุด {{ maxGalleryImages }} รูป) — รูปแรกคือปกการ์ด ลากลำดับด้วยปุ่มเลื่อนขึ้น/ลง — JPG/PNG แนะนำ 4:5
+                  {{ 'seller.coverAndGalleryDesc' | trans: { max: maxGalleryImages } }}
                 </p>
 
                 <!-- cover-image-mode v1 §1/§4 (AC-01): choose custom upload vs. an
@@ -215,29 +215,29 @@
                     [class.btn-primary]="coverImageMode() === 'custom'"
                     (click)="coverImageMode.set('custom')"
                   >
-                    อัปโหลดรูปปกเอง
+                    {{ 'seller.uploadCoverManual' | trans }}
                   </button>
                   <button
                     type="button"
                     class="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                     [class.btn-primary]="coverImageMode() === 'auto'"
                     [disabled]="!coverAutoModeAvailable()"
-                    [title]="!coverAutoModeAvailable() ? 'ใช้ได้เฉพาะเอกสาร PDF ที่อัปโหลดไฟล์แล้ว' : ''"
+                    [title]="!coverAutoModeAvailable() ? ('seller.autoCoverTooltip' | trans) : ''"
                     (click)="coverImageMode() !== 'auto' && coverAutoModeAvailable() && coverImageMode.set('auto')"
                   >
-                    สร้างรูปปกจากเอกสารอัตโนมัติ
+                    {{ 'seller.generateCoverAuto' | trans }}
                   </button>
                 </div>
 
                 @if (coverImageMode() === 'auto') {
                   <div class="rounded-2xl border border-pink-200 bg-pink-50/50 p-4 text-sm text-ink-muted mb-4">
-                    <p class="font-semibold text-ink mb-1">ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ</p>
-                    <p>ระบบจะใช้หน้าแรกของเอกสารที่คุณอัปโหลด พร้อมลายน้ำตามที่ตั้งไว้ เป็นรูปปกให้อัตโนมัติ</p>
-                    <p class="text-xs mt-1">ตัวอย่างจริงจะแสดงหลังบันทึก — เปิดหน้านี้อีกครั้งเพื่อดูรูปปกที่สร้างแล้ว</p>
+                    <p class="font-semibold text-ink mb-1">{{ 'seller.useFirstPageAutoCover' | trans }}</p>
+                    <p>{{ 'seller.useFirstPageAutoCoverDesc' | trans }}</p>
+                    <p class="text-xs mt-1">{{ 'seller.previewAfterSaveDesc' | trans }}</p>
                   </div>
                 } @else {
                   @if (galleryUploading()) {
-                    <p class="text-sm text-pink-600 font-semibold mb-3">กำลังอัปโหลดรูป…</p>
+                    <p class="text-sm text-pink-600 font-semibold mb-3">{{ 'seller.uploadingImages' | trans }}</p>
                   }
 
                   @if (galleryItems().length > 0) {
@@ -257,13 +257,13 @@
                           </div>
                           <div class="flex-1 min-w-0">
                             @if (i === 0) {
-                              <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">ปกหลัก</span>
+                              <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">{{ 'seller.mainCover' | trans }}</span>
                             } @else {
-                              <span class="text-[10px] text-ink-muted">ลำดับ {{ i + 1 }}</span>
+                              <span class="text-[10px] text-ink-muted">{{ 'seller.orderIndex' | trans: { index: i + 1 } }}</span>
                             }
-                            <div class="text-[10px] text-ink-muted mt-1">ลากเพื่อเรียงลำดับ</div>
+                            <div class="text-[10px] text-ink-muted mt-1">{{ 'seller.dragToReorder' | trans }}</div>
                           </div>
-                          <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" title="ลบ">
+                          <button type="button" class="btn-icon text-red-600" (click)="removeGalleryItem(i)" [title]="'seller.deleteTitle' | trans">
                             <app-icon name="trash" [size]="16" />
                           </button>
                         </li>
@@ -289,15 +289,15 @@
                         <app-icon name="upload" [size]="22" />
                       </div>
                       <div class="text-sm font-bold text-ink">
-                        {{ galleryItems().length ? 'เพิ่มรูป' : 'คลิกเพื่อเลือกรูป' }}
+                        {{ galleryItems().length ? ('seller.addMoreImages' | trans) : ('seller.clickToSelectImages' | trans) }}
                       </div>
-                      <div class="text-xs text-ink-muted mt-1">เลือกได้หลายไฟล์พร้อมกัน</div>
+                      <div class="text-xs text-ink-muted mt-1">{{ 'seller.multiFileSelectHint' | trans }}</div>
                     </label>
                   }
 
                   @if (galleryItems().length > 0) {
                     <button type="button" class="btn-ghost text-xs mt-3 !text-red-600" (click)="resetGallery()">
-                      ล้างรูปทั้งหมด
+                      {{ 'seller.clearAllImages' | trans }}
                     </button>
                   }
                 }
@@ -324,14 +324,14 @@
                   <div>
                     <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
                       <app-icon name="shield" [size]="14" className="text-pink-500" />
-                      เปิดใช้ลายน้ำ
+                      {{ 'seller.enableWatermarkTitle' | trans }}
                     </div>
                     <div class="text-xs text-ink-muted mt-1">
-                      เพิ่ม Watermark ของผู้ซื้อในทุกหน้าของไฟล์
+                      {{ 'seller.enableWatermarkDesc' | trans }}
                     </div>
                     @if (watermarkPolicyLocked()) {
                       <div class="text-xs font-semibold text-pink-600 mt-2">
-                        ระบบกำหนดให้เอกสารทุกฉบับต้องมีลายน้ำ
+                        {{ 'seller.watermarkMandatory' | trans }}
                       </div>
                     }
                     @if (watermarkWarning(); as warning) {
@@ -352,9 +352,9 @@
                     class="w-14 input-soft !py-1.5 !px-2 text-center font-bold"
                   />
                   <div>
-                    <div class="text-sm font-semibold text-ink">หน้าพรีวิวฟรี</div>
+                    <div class="text-sm font-semibold text-ink">{{ 'seller.freePreviewPages' | trans }}</div>
                     <div class="text-xs text-ink-muted mt-1">
-                      จำนวนหน้าที่ผู้ซื้อดูได้ก่อนตัดสินใจซื้อ
+                      {{ 'seller.freePreviewPagesDesc' | trans }}
                     </div>
                   </div>
                 </label>
@@ -365,11 +365,11 @@
                 <div class="space-y-1">
                   <div class="text-xs font-bold text-ink flex items-center gap-1.5">
                     <app-icon name="shield" [size]="14" className="text-pink-600" />
-                    <span>เทมเพลตลายน้ำของร้าน:</span>
+                    <span>{{ 'seller.shopWatermarkTemplateLabel' | trans }}</span>
                     <span class="text-pink-700 font-semibold">{{ watermarkTemplate().previewWatermarkSubtitle || 'SIRI EDUMARKET PREVIEW' }}</span>
                   </div>
                   <p class="text-[11px] text-ink-muted leading-relaxed">
-                    ระบบจะนำรูปแบบและการตั้งค่าลายน้ำที่คุณกำหนดไว้ในหน้าจัดการลายน้ำมาประทับบนเอกสารฉบับนี้โดยอัตโนมัติ
+                    {{ 'seller.shopWatermarkTemplateDesc' | trans }}
                   </p>
                 </div>
                 <a
@@ -378,14 +378,14 @@
                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-pink-200 text-pink-700 hover:bg-pink-100/70 text-xs font-bold transition-all shadow-2xs whitespace-nowrap self-start sm:self-center"
                 >
                   <app-icon name="gear" [size]="14" />
-                  <span>จัดการลายน้ำ</span>
+                  <span>{{ 'seller.manageWatermarkBtn' | trans }}</span>
                   <app-icon name="arrow-right" [size]="12" />
                 </a>
               </div>
 
               <div class="mt-4">
                 <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                  จำนวนหน้าในเอกสาร <span class="text-ink-muted font-normal">(ประมาณการ — กรอกเองได้)</span>
+                  {{ 'seller.pageCountEstimated' | trans }} <span class="text-ink-muted font-normal">{{ 'seller.estimatedManual' | trans }}</span>
                 </label>
                 <input
                   type="number"
@@ -393,16 +393,16 @@
                   (ngModelChange)="pages.set(+$event || 0)"
                   min="0"
                   class="input-soft max-w-[200px]"
-                  placeholder="เช่น 80"
+                  [placeholder]="'seller.pageCountPlaceholder' | trans"
                 />
                 @if (fileSizeLabel()) {
-                  <p class="text-xs text-ink-muted mt-2">ขนาดไฟล์หลัก (อ่านจากไฟล์): {{ fileSizeLabel() }}</p>
+                  <p class="text-xs text-ink-muted mt-2">{{ 'seller.mainFileSizeNotice' | trans: { size: fileSizeLabel() } }}</p>
                 }
               </div>
 
               <div class="flex justify-end mt-8">
                 <button type="button" class="btn-pink" (click)="next()" [disabled]="step1NextDisabled()">
-                  ถัดไป
+                  {{ 'seller.nextStep' | trans }}
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
               </div>
@@ -412,9 +412,9 @@
           <!-- Step 2: Detail -->
           @if (step() === 2) {
             <section class="card-tile">
-              <h2 class="text-lg font-bold text-ink mb-1">รายละเอียดเอกสาร</h2>
+              <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.docInfoStepTitle' | trans }}</h2>
               <p class="text-sm text-ink-muted mb-6">
-                ใส่ข้อมูลให้ครบเพื่อเพิ่มโอกาสในการขาย
+                {{ 'seller.fillDetailsForSales' | trans }}
               </p>
 
               <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50 border border-pink-200 flex flex-wrap items-center justify-between gap-3">
@@ -423,8 +423,8 @@
                     <app-icon name="sparkle" [size]="20" />
                   </div>
                   <div>
-                    <div class="text-sm font-bold text-ink">ให้ AI ช่วยกรอกข้อมูลอัตโนมัติ</div>
-                    <div class="text-xs text-ink-muted">วิเคราะห์เนื้อหาไฟล์และแนะนำชื่อ, คำอธิบาย, หมวดหมู่ และแท็ก</div>
+                    <div class="text-sm font-bold text-ink">{{ 'seller.aiAutoFillBoxTitle' | trans }}</div>
+                    <div class="text-xs text-ink-muted">{{ 'seller.aiAutoFillBoxDesc' | trans }}</div>
                   </div>
                 </div>
                 <button
@@ -434,10 +434,10 @@
                   (click)="requestAiAutofill()"
                 >
                   @if (aiAutofillLoading()) {
-                    <span class="animate-spin text-xs">⏳</span> กำลังวิเคราะห์…
+                    <span class="animate-spin text-xs">⏳</span> {{ 'seller.aiAnalyzing' | trans }}
                   } @else {
                     <app-icon name="sparkle" [size]="14" />
-                    <span>เติมข้อมูลด้วย AI</span>
+                    <span>{{ 'seller.aiPrefillBtn' | trans }}</span>
                   }
                 </button>
               </div>
@@ -445,48 +445,48 @@
               <div class="space-y-5">
                 <div>
                   <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                    <span>ชื่อเอกสาร <span class="text-pink-500">*</span></span>
+                    <span>{{ 'seller.docTitleLabel' | trans }} <span class="text-pink-500">*</span></span>
                     <span class="text-ink-muted">{{ title().length }}/80</span>
                   </label>
                   <input
                     [ngModel]="title()"
                     (ngModelChange)="title.set($event)"
                     class="input-soft"
-                    placeholder="เช่น: สรุปคณิตม.ปลาย ครบ 6 บท ฉบับติวเข้ม"
+                    [placeholder]="'seller.docTitlePlaceholder' | trans"
                     maxlength="80"
                   />
                 </div>
 
                 <div>
                   <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                    <span>คำอธิบายสั้น</span>
+                    <span>{{ 'seller.shortDescLabel' | trans }}</span>
                     <button
                       type="button"
                       class="pill-pink !text-[10px] hover:!bg-pink-200"
                       (click)="aiSuggest('short')"
                     >
                       <app-icon name="sparkle" [size]="11" />
-                      AI ช่วยเขียน
+                      {{ 'seller.aiWriteBtn' | trans }}
                     </button>
                   </label>
                   <input
                     [ngModel]="shortDescription()"
                     (ngModelChange)="shortDescription.set($event)"
                     class="input-soft"
-                    placeholder="ประโยคที่จะแสดงในการ์ดเอกสาร"
+                    [placeholder]="'seller.shortDescPlaceholder' | trans"
                   />
                 </div>
 
                 <div>
                   <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                    <span>คำอธิบายเต็ม</span>
+                    <span>{{ 'seller.fullDescLabel' | trans }}</span>
                     <button
                       type="button"
                       class="pill-pink !text-[10px] hover:!bg-pink-200"
                       (click)="aiSuggest('long')"
                     >
                       <app-icon name="sparkle" [size]="11" />
-                      AI ขยายเนื้อหา
+                      {{ 'seller.aiExpandBtn' | trans }}
                     </button>
                   </label>
                   <textarea
@@ -494,15 +494,15 @@
                     (ngModelChange)="longDescription.set($event)"
                     rows="6"
                     class="input-soft"
-                    placeholder="อธิบายเนื้อหา ผู้เรียนจะได้อะไรจากเอกสารนี้ บอกจุดเด่นที่ทำให้คนซื้อ"
+                    [placeholder]="'seller.fullDescPlaceholder' | trans"
                   ></textarea>
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                      <span>หมวดหมู่ <span class="text-pink-500">*</span></span>
-                      <span class="text-ink-muted">เลือกได้หลายหมวด</span>
+                      <span>{{ 'seller.categoryLabel' | trans }} <span class="text-pink-500">*</span></span>
+                      <span class="text-ink-muted">{{ 'seller.selectMultipleCategories' | trans }}</span>
                     </label>
 
                     <!-- Selected chips + dropdown trigger -->
@@ -513,7 +513,7 @@
                         (click)="toggleCategoryDropdown()"
                       >
                         @if (selectedCategories().length === 0) {
-                          <span class="text-ink-muted">เลือกหมวดหมู่...</span>
+                          <span class="text-ink-muted">{{ 'seller.selectCategoryPlaceholder' | trans }}</span>
                         } @else {
                           @for (c of selectedCategories(); track c.id) {
                             <span class="pill-pink gap-1.5" (click)="removeCategory(c.id); $event.stopPropagation()">
@@ -548,7 +548,7 @@
                               <span class="text-sm text-ink">{{ c.icon }} {{ c.name }}</span>
                             </label>
                           } @empty {
-                            <p class="text-sm text-ink-muted px-3 py-2">ยังไม่มีหมวดหมู่</p>
+                            <p class="text-sm text-ink-muted px-3 py-2">{{ 'seller.noCategories' | trans }}</p>
                           }
                         </div>
                       }
@@ -556,14 +556,14 @@
                   </div>
                   <div>
                     <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                      ภาษา
+                      {{ 'seller.languageLabel' | trans }}
                     </label>
                     <select
                       [ngModel]="language()"
                       (ngModelChange)="language.set($event)"
                       class="input-soft cursor-pointer"
                     >
-                      <option value="th">ไทย</option>
+                      <option value="th">{{ 'seller.langThai' | trans }}</option>
                       <option value="en">English</option>
                     </select>
                   </div>
@@ -571,7 +571,7 @@
 
                 <div>
                   <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                    แท็ก
+                    {{ 'seller.tagsLabel' | trans }}
                   </label>
                   <div class="flex flex-wrap gap-2 p-3 rounded-2xl border border-line bg-white">
                     @for (t of tags(); track t) {
@@ -586,7 +586,7 @@
                       (ngModelChange)="newTag.set($event)"
                       (keydown.enter)="addTag(); $event.preventDefault()"
                       class="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
-                      placeholder="พิมพ์แท็กแล้วกด Enter"
+                      [placeholder]="'seller.tagsPlaceholder' | trans"
                     />
                   </div>
                 </div>
@@ -595,10 +595,10 @@
               <div class="flex justify-between mt-8">
                 <button type="button" class="btn-ghost" (click)="prev()">
                   <app-icon name="arrow-left" [size]="16" />
-                  ย้อนกลับ
+                  {{ 'seller.prevStep' | trans }}
                 </button>
                 <button type="button" class="btn-pink" (click)="next()">
-                  ถัดไป
+                  {{ 'seller.nextStep' | trans }}
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
               </div>
@@ -608,9 +608,9 @@
           <!-- Step 3: Pricing -->
           @if (step() === 3) {
             <section class="card-tile">
-              <h2 class="text-lg font-bold text-ink mb-1">ตั้งราคา</h2>
+              <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.pricingTitle' | trans }}</h2>
               <p class="text-sm text-ink-muted mb-6">
-                เลือกราคาที่เหมาะกับเนื้อหา — เราเก็บค่าธรรมเนียม {{ feeRatePercent() }}% ที่เหลือเป็นของคุณ
+                {{ 'seller.pricingSubtitle' | trans: { percent: feeRatePercent() } }}
               </p>
 
               <!-- Free toggle -->
@@ -626,28 +626,28 @@
                 <div>
                   <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
                     <app-icon name="sparkle" [size]="14" className="text-pink-500" />
-                    ตั้งเป็นเอกสารฟรี
+                    {{ 'seller.setAsFreeDoc' | trans }}
                   </div>
                   <p class="text-xs text-ink-muted mt-1 leading-relaxed">
-                    เมื่อเปิด: ระบบจะไม่หักค่าธรรมเนียม {{ feeRatePercent() }}% และผู้ซื้อดาวน์โหลดได้ฟรีทันที
+                    {{ 'seller.freeDocNotice' | trans: { percent: feeRatePercent() } }}
                   </p>
                 </div>
               </label>
 
               @if (isFree()) {
                 <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
-                  <div class="text-xs text-ink-muted mb-1">เอกสารฟรี</div>
-                  <div class="text-3xl font-extrabold text-pink-700">฿0</div>
+                  <div class="text-xs text-ink-muted mb-1">{{ 'seller.freeDocLabel' | trans }}</div>
+                  <div class="text-3xl font-extrabold text-pink-700">{{ 0 | thb }}</div>
                   <div class="text-xs text-ink-muted mt-2">
-                    รายได้ต่อชิ้น ฿0 / ค่าธรรมเนียมแพลตฟอร์ม ฿0
+                    {{ 'seller.zeroEarningsDesc' | trans }}
                   </div>
                 </div>
               } @else {
                 <div class="grid sm:grid-cols-2 gap-4 mb-6">
                   <div>
-                    <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคา (THB)</label>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.priceLabel' | trans }}</label>
                     <div class="relative">
-                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">฿</span>
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">THB</span>
                       <input
                         [ngModel]="price()"
                         (ngModelChange)="price.set(+$event || 0)"
@@ -659,9 +659,9 @@
                     </div>
                   </div>
                   <div>
-                    <label class="text-xs font-semibold text-ink-soft mb-2 block">ราคาเต็มก่อนลด (ขีดฆ่า - ตัวเลือก)</label>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.originalPriceLabel' | trans }}</label>
                     <div class="relative">
-                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">฿</span>
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">THB</span>
                       <input
                         [ngModel]="originalPrice()"
                         (ngModelChange)="originalPrice.set(+$event || 0)"
@@ -681,12 +681,12 @@
                       </p>
                     } @else {
                       <p class="text-xs text-ink-muted mt-1.5">
-                        ใส่เมื่อต้องการแสดงราคาขีดฆ่า (เช่น ตั้ง ฿299 เพื่อลดเหลือ ฿{{ price() }} หรือใส่ 0 หากไม่มี)
+                        {{ 'seller.originalPriceHint' | trans: { price: price() } }}
                       </p>
                     }
                   </div>
                   <div>
-                    <label class="text-xs font-semibold text-ink-soft mb-2 block">วันหมดอายุส่วนลด (option)</label>
+                    <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.discountExpiryLabel' | trans }}</label>
                     <input
                       [ngModel]="discountExpiresAt()"
                       (ngModelChange)="discountExpiresAt.set($event || '')"
@@ -694,7 +694,7 @@
                       class="input-soft"
                     />
                     <p class="text-xs text-ink-muted mt-1.5">
-                      ถ้าไม่ตั้ง ราคานี้จะลดอยู่แบบไม่มีกำหนดเวลา
+                      {{ 'seller.discountExpiryHint' | trans }}
                     </p>
                   </div>
                 </div>
@@ -702,19 +702,19 @@
                 <!-- Competitor pricing hint (seller-pricing-and-storefront-stats v1 §4) -->
                 @if (pricingHintLoading()) {
                   <div class="mb-6 p-4 rounded-2xl border border-line bg-white/70 text-xs text-ink-muted">
-                    กำลังโหลดช่วงราคาคู่แข่ง…
+                    {{ 'seller.loadingCompetitorHint' | trans }}
                   </div>
                 } @else if (pricingHint(); as hint) {
                   @if (hint.sampleSize >= 3) {
                     <div class="mb-6 p-4 rounded-2xl border border-pink-200 bg-pink-50/60">
                       <div class="text-xs font-semibold text-ink-soft mb-1.5 flex items-center gap-1.5">
                         <app-icon name="chart" [size]="13" className="text-pink-500" />
-                        ราคาคู่แข่งในหมวดเดียวกัน
+                        {{ 'seller.competitorPriceTitle' | trans }}
                       </div>
                       <div class="text-sm text-ink">
-                        เฉลี่ย <span class="font-bold text-pink-600">{{ hint.averagePrice | thb }}</span>
+                        {{ 'seller.avgPrice' | trans }} <span class="font-bold text-pink-600">{{ hint.averagePrice | thb }}</span>
                         <span class="text-ink-muted">
-                          (ช่วง {{ hint.minPrice | thb }} – {{ hint.maxPrice | thb }} จาก {{ hint.sampleSize }} รายการ)
+                          {{ 'seller.rangeCountFrom' | trans: { min: (hint.minPrice | thb), max: (hint.maxPrice | thb), count: hint.sampleSize } }}
                         </span>
                       </div>
                     </div>
@@ -723,11 +723,11 @@
 
                 <!-- Suggestion chips -->
                 <div class="mb-6">
-                  <div class="text-xs text-ink-muted mb-2">ราคาที่ผู้ขายนิยมตั้ง</div>
+                  <div class="text-xs text-ink-muted mb-2">{{ 'seller.popularPrices' | trans }}</div>
                   <div class="flex flex-wrap gap-2">
                     @for (p of [99, 199, 299, 399, 499, 690]; track p) {
                       <button type="button" class="pill-soft hover:!border-pink-300 hover:!text-pink-600" (click)="price.set(p)">
-                        ฿{{ p }}
+                        {{ p | thb }}
                       </button>
                     }
                   </div>
@@ -735,12 +735,12 @@
 
                 <!-- Earnings card -->
                 <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
-                  <div class="text-xs text-ink-muted mb-1">คุณจะได้รับต่อยอดขาย 1 ครั้ง</div>
+                  <div class="text-xs text-ink-muted mb-1">{{ 'seller.youWillReceive' | trans }}</div>
                   <div class="text-3xl font-extrabold text-pink-700">
                     {{ earnings() | thb }}
                   </div>
                   <div class="text-xs text-ink-muted mt-2">
-                    หักค่าธรรมเนียมแพลตฟอร์ม {{ fee() | thb }} ({{ feeRatePercent() }}%)
+                    {{ 'seller.afterFeeDeducted' | trans: { fee: (fee() | thb), percent: feeRatePercent() } }}
                   </div>
                 </div>
               }
@@ -748,10 +748,10 @@
               <div class="flex justify-between mt-8">
                 <button type="button" class="btn-ghost" (click)="prev()">
                   <app-icon name="arrow-left" [size]="16" />
-                  ย้อนกลับ
+                  {{ 'seller.prevStep' | trans }}
                 </button>
                 <button type="button" class="btn-pink" (click)="next()">
-                  ถัดไป
+                  {{ 'seller.nextStep' | trans }}
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
               </div>
@@ -761,70 +761,70 @@
           <!-- Step 4: Review -->
           @if (step() === 4) {
             <section class="card-tile">
-              <h2 class="text-lg font-bold text-ink mb-1">ตรวจสอบและส่งเข้าพิจารณา</h2>
+              <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.reviewTitle' | trans }}</h2>
               <p class="text-sm text-ink-muted mb-6">
-                ทีมงานจะตรวจสอบและแจ้งผลโดยเร็วที่สุด
+                {{ 'seller.reviewSubtitle' | trans }}
               </p>
 
               <ul class="divide-y divide-line">
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">ชื่อเอกสาร</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocTitle' | trans }}</span>
                   <span class="text-ink font-semibold text-right max-w-xs line-clamp-2">
                     {{ title() || '—' }}
                   </span>
                 </li>
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">หมวดหมู่</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocCategory' | trans }}</span>
                   <span class="text-ink font-semibold">
                     {{ categoryLabel() }}
                   </span>
                 </li>
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">ราคา</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocPrice' | trans }}</span>
                   <span class="text-ink font-semibold">
                     @if (isFree()) {
-                      <span class="text-emerald-600">ฟรี</span>
+                      <span class="text-emerald-600">{{ 'seller.priceFree' | trans }}</span>
                     } @else {
                       {{ price() | thb }}
                     }
                   </span>
                 </li>
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">รายได้ต่อชิ้น</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocEarning' | trans }}</span>
                   <span class="text-pink-600 font-bold">{{ earnings() | thb }}</span>
                 </li>
                 @if (isFree()) {
                   <li class="py-3 flex justify-between text-sm">
-                    <span class="text-ink-muted">ค่าธรรมเนียมระบบ</span>
-                    <span class="text-emerald-600 font-semibold">฿0 (เอกสารฟรี)</span>
+                    <span class="text-ink-muted">{{ 'seller.colDocFee' | trans }}</span>
+                    <span class="text-emerald-600 font-semibold">{{ 'seller.freeDocFeeNotice' | trans }}</span>
                   </li>
                 }
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">ลายน้ำ</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocWatermark' | trans }}</span>
                   <span class="text-ink font-semibold">
-                    {{ watermark() ? 'เปิดใช้' : 'ปิด' }}
+                    {{ watermark() ? ('seller.enabled' | trans) : ('seller.disabled' | trans) }}
                   </span>
                 </li>
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">หน้าพรีวิว</span>
-                  <span class="text-ink font-semibold">{{ previewPages() }} หน้า</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocPreviewPages' | trans }}</span>
+                  <span class="text-ink font-semibold">{{ 'seller.previewPagesCount' | trans: { count: previewPages() } }}</span>
                 </li>
                 <li class="py-3 flex justify-between text-sm items-start gap-3">
-                  <span class="text-ink-muted flex-shrink-0">เทมเพลตลายน้ำ</span>
+                  <span class="text-ink-muted flex-shrink-0">{{ 'seller.colDocWatermarkTemplate' | trans }}</span>
                   <span class="text-ink font-semibold text-right text-xs leading-snug">
                     {{ watermarkTemplate().previewWatermarkSubtitle || 'SIRI EDUMARKET PREVIEW' }}
                     <span class="block text-pink-600 font-normal mt-0.5">
-                      ตามการตั้งค่าในหน้าจัดการลายน้ำ
+                      {{ 'seller.accordingToWatermarkSettings' | trans }}
                     </span>
                   </span>
                 </li>
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">จำนวนหน้าเอกสาร</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocTotalPages' | trans }}</span>
                   <span class="text-ink font-semibold">{{ pages() || '—' }}</span>
                 </li>
                 @if (fileSizeLabel()) {
                   <li class="py-3 flex justify-between text-sm">
-                    <span class="text-ink-muted">ขนาดไฟล์</span>
+                    <span class="text-ink-muted">{{ 'seller.colDocFileSize' | trans }}</span>
                     <span class="text-ink font-semibold">{{ fileSizeLabel() }}</span>
                   </li>
                 }
@@ -833,11 +833,11 @@
               <div class="flex justify-between mt-8">
                 <button type="button" class="btn-ghost" (click)="prev()">
                   <app-icon name="arrow-left" [size]="16" />
-                  ย้อนกลับ
+                  {{ 'seller.prevStep' | trans }}
                 </button>
                 <button type="button" class="btn-pink !px-7" (click)="submit()">
                   <app-icon name="check" [size]="16" />
-                  ส่งเข้าพิจารณา
+                  {{ 'seller.submitForReview' | trans }}
                 </button>
               </div>
             </section>
@@ -849,42 +849,42 @@
           <div class="card-tile sticky top-6">
             <h3 class="text-sm font-bold text-ink mb-3 flex items-center gap-2">
               <app-icon name="sparkle" [size]="16" className="text-pink-500" />
-              เคล็ดลับการขาย
+              {{ 'seller.sellingTips' | trans }}
             </h3>
             <ul class="space-y-3 text-sm">
               <li class="flex gap-3">
                 <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-                <span class="text-ink-soft">ตั้งชื่อให้เห็นภาพและเฉพาะเจาะจง เช่น "สรุปคณิตม.6 ฉบับติวเข้ม 80 หน้า"</span>
+                <span class="text-ink-soft">{{ 'seller.tip1' | trans }}</span>
               </li>
               <li class="flex gap-3">
                 <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
-                <span class="text-ink-soft">ใช้ AI ช่วยสรุป/เขียนคำอธิบาย เพิ่มโอกาสคนกดเข้ามาดู</span>
+                <span class="text-ink-soft">{{ 'seller.tip2' | trans }}</span>
               </li>
               <li class="flex gap-3">
                 <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
-                <span class="text-ink-soft">เปิดพรีวิว 5-10% ของเล่ม ช่วยให้ผู้ซื้อตัดสินใจได้เร็ว</span>
+                <span class="text-ink-soft">{{ 'seller.tip3' | trans }}</span>
               </li>
               <li class="flex gap-3">
                 <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
-                <span class="text-ink-soft">ตั้งราคาเริ่มต้นต่ำกว่าค่าเฉลี่ย ดึง early reviews มาช่วยขาย</span>
+                <span class="text-ink-soft">{{ 'seller.tip4' | trans }}</span>
               </li>
             </ul>
 
-            <!-- G-05: the "ลองใช้ AI Assistant" link pointed at /seller/ai, which is no longer routed. -->
+            <!-- G-05: AI Assistant link pointed at /seller/ai, which is no longer routed. -->
           </div>
         </aside>
       </div>
     </div>
 
-    <!-- Modal เลือกประเภทการอัปเดตไฟล์ (Document Versioning §4.1) -->
+    <!-- Modal document versioning update type (§4.1) -->
     <nz-modal
       [nzVisible]="versionModalVisible()"
-      [nzTitle]="'อัปเดตไฟล์เอกสาร'"
+      [nzTitle]="'seller.updateFileModalTitle' | trans"
       (nzOnCancel)="cancelVersionModal()"
       (nzOnOk)="confirmVersionModal()"
       [nzOkLoading]="listedSaving()"
-      [nzOkText]="'ยืนยัน'"
-      [nzCancelText]="'ยกเลิก'"
+      [nzOkText]="'common.confirm' | trans"
+      [nzCancelText]="'common.cancel' | trans"
     >
       <ng-container *nzModalContent>
         <div class="space-y-4">
@@ -902,9 +902,9 @@
                 class="accent-pink-500 mt-1"
               />
               <div>
-                <div class="font-semibold text-sm text-ink">แก้ไขเล็กน้อย</div>
+                <div class="font-semibold text-sm text-ink">{{ 'seller.minorUpdateTitle' | trans }}</div>
                 <div class="text-xs text-ink-muted mt-0.5">
-                  ไม่แจ้งเตือนผู้ซื้อเดิม เหมาะกับการแก้คำผิด/ปรับรูปแบบเล็กน้อย
+                  {{ 'seller.minorUpdateDesc' | trans }}
                 </div>
               </div>
             </label>
@@ -922,9 +922,9 @@
                 class="accent-pink-500 mt-1"
               />
               <div>
-                <div class="font-semibold text-sm text-ink">อัปเดตเวอร์ชันใหม่</div>
+                <div class="font-semibold text-sm text-ink">{{ 'seller.majorUpdateTitle' | trans }}</div>
                 <div class="text-xs text-ink-muted mt-0.5">
-                  แจ้งเตือนผู้ซื้อเดิมทุกคนว่ามีไฟล์ใหม่ให้โหลดฟรี
+                  {{ 'seller.majorUpdateDesc' | trans }}
                 </div>
               </div>
             </label>
@@ -933,7 +933,7 @@
           @if (isNewVersionOption()) {
             <div>
               <label class="block text-xs font-semibold text-ink mb-1">
-                สรุปสิ่งที่อัปเดต (ไม่บังคับ)
+                {{ 'seller.updateSummaryLabel' | trans }}
               </label>
               <textarea
                 class="input-soft !rounded-xl text-sm"
@@ -941,7 +941,7 @@
                 maxlength="500"
                 [ngModel]="changeNoteInput()"
                 (ngModelChange)="changeNoteInput.set($event)"
-                placeholder="สรุปสิ่งที่อัปเดต (ไม่บังคับ)"
+                [placeholder]="'seller.updateSummaryLabel' | trans"
               ></textarea>
             </div>
           }
@@ -949,31 +949,31 @@
       </ng-container>
     </nz-modal>
 
-    <!-- Modal ประวัติเวอร์ชัน (Seller Document Version History §4.1) -->
+    <!-- Modal version history (§4.1) -->
     <nz-modal
       [nzVisible]="historyModalVisible()"
-      [nzTitle]="'ประวัติเวอร์ชัน'"
+      [nzTitle]="'seller.versionHistoryModalTitle' | trans"
       [nzFooter]="null"
       (nzOnCancel)="closeHistoryModal()"
     >
       <ng-container *nzModalContent>
         @if (historyLoading()) {
-          <div class="py-8 text-center text-sm text-ink-muted">กำลังโหลดประวัติเวอร์ชัน…</div>
+          <div class="py-8 text-center text-sm text-ink-muted">{{ 'seller.loadingVersionHistory' | trans }}</div>
         } @else if (!historyVersions().length) {
-          <div class="py-8 text-center text-sm text-ink-muted">ยังไม่มีประวัติเวอร์ชันสำหรับเอกสารนี้</div>
+          <div class="py-8 text-center text-sm text-ink-muted">{{ 'seller.noVersionHistory' | trans }}</div>
         } @else {
           <div class="divide-y divide-line">
             @for (v of historyVersions(); track v.versionNumber) {
               <div class="py-3 first:pt-0 last:pb-0">
                 <div class="flex items-center justify-between">
-                  <span class="font-bold text-sm text-ink">เวอร์ชัน {{ v.versionNumber }}</span>
+                  <span class="font-bold text-sm text-ink">{{ 'seller.versionNumberLabel' | trans: { version: v.versionNumber } }}</span>
                   <span class="text-xs text-ink-muted">{{ v.createdAt ? (v.createdAt | slice: 0 : 10) : '—' }}</span>
                 </div>
                 @if (v.changeNote) {
                   <p class="text-xs text-ink-soft mt-1">{{ v.changeNote }}</p>
                 }
                 @if (v.notifiedBuyerCount != null) {
-                  <p class="text-xs text-emerald-600 mt-1">แจ้งเตือนผู้ซื้อ {{ v.notifiedBuyerCount }} คน</p>
+                  <p class="text-xs text-emerald-600 mt-1">{{ 'seller.notifiedBuyersCount' | trans: { count: v.notifiedBuyerCount } }}</p>
                 }
               </div>
             }

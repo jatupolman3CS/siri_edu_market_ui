@@ -76,7 +76,7 @@ export class DiscoveryService {
       this._popularTerms.set([]);
       this._popularPersonalized.set(false);
       this._popularTermsState.set(idleActionState());
-      this.apiFail.report('โหลดคำค้นยอดนิยม', e);
+      this.apiFail.report('errors.context.loadPopularSearches', e);
     } finally {
       this._popularTermsLastLoadedAt = Date.now();
     }
@@ -102,7 +102,7 @@ export class DiscoveryService {
     } catch (e) {
       this._discovery.set(null);
       this._discoveryState.set(idleActionState());
-      this.apiFail.report('โหลดคำแนะนำสำหรับหน้าที่ยังไม่ได้ค้นหา', e);
+      this.apiFail.report('errors.context.loadDiscovery', e);
     } finally {
       this._discoveryLastLoadedAt = Date.now();
     }

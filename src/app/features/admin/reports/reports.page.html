@@ -1,9 +1,9 @@
 <div class="space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">รายงานเอกสาร</h1>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.reportsAdmin.title' | trans }}</h1>
       <p class="text-sm text-ink-soft">
-        รายงานจากผู้ซื้อและแอดมิน รวมทุกเอกสารไว้ที่เดียว
+        {{ 'admin.reportsAdmin.desc' | trans }}
       </p>
     </div>
     <div class="flex gap-2">
@@ -12,28 +12,28 @@
         [class]="openOnly() ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
         (click)="setOpenOnly(true)"
       >
-        ที่ยังเปิดอยู่
+        {{ 'admin.reportsAdmin.filterOpen' | trans }}
       </button>
       <button
         class="pill"
         [class]="!openOnly() ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
         (click)="setOpenOnly(false)"
       >
-        ทั้งหมด
+        {{ 'admin.reportsAdmin.filterAll' | trans }}
       </button>
     </div>
   </header>
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (reports().length === 0) {
     <app-empty-state
       emoji="✅"
-      title="ไม่มีรายงานค้างอยู่"
-      description="เมื่อมีผู้ซื้อรายงานเอกสาร รายการจะขึ้นที่นี่"
+      [title]="'admin.reportsAdmin.empty' | trans"
+      [description]="'admin.reportsAdmin.emptyDesc' | trans"
     />
   } @else {
-    <p class="text-xs text-ink-muted">ทั้งหมด {{ total() }} รายการ</p>
+    <p class="text-xs text-ink-muted">{{ 'common.all' | trans }} {{ total() }} {{ 'common.items' | trans }}</p>
 
     <ul class="flex flex-col gap-4">
       @for (report of reports(); track report.id) {
@@ -45,7 +45,7 @@
                   {{ categoryLabel(report.category) }}
                 </span>
                 @if (report.resolvedAt) {
-                  <span class="pill bg-emerald-50 text-emerald-700">ปิดแล้ว</span>
+                  <span class="pill bg-emerald-50 text-emerald-700">{{ 'admin.reportsAdmin.closed' | trans }}</span>
                 }
               </div>
               <a
@@ -55,7 +55,7 @@
                 {{ report.documentTitle }}
               </a>
               <p class="text-xs text-ink-muted mt-1">
-                โดย {{ report.reporterName }} ·
+                {{ 'admin.reportsAdmin.byLabel' | trans }} {{ report.reporterName }} ·
                 {{ report.createdAt | date: 'dd MMM yyyy HH:mm' }}
               </p>
             </div>
@@ -66,7 +66,7 @@
                 [disabled]="busyId() === report.id"
                 (click)="resolve(report)"
               >
-                {{ busyId() === report.id ? 'กำลังปิด…' : 'ปิดรายงาน' }}
+                {{ busyId() === report.id ? ('admin.reportsAdmin.closing' | trans) : ('admin.reportsAdmin.closeBtn' | trans) }}
               </button>
             }
           </div>

@@ -13,23 +13,26 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type PayoutFilter = 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled' | 'all';
 
 const MAX_SLIP_BYTES = 5_000_000;
 
-/** payout-request-slip-verification v1 §4.5: every `mismatchReasons`/`providerErrorCode` value. */
-const MISMATCH_REASON_LABELS: Record<string, string> = {
-  amount_mismatch: 'ยอดเงินในสลิปไม่ตรงกับคำขอ',
-  amount_unverified: 'อ่านยอดเงินจากสลิปไม่ได้',
-  name_mismatch: 'ชื่อบัญชีปลายทางไม่ตรงกับที่ผู้ขายลงทะเบียน',
-  name_unverified: 'สลิปไม่ระบุชื่อบัญชีปลายทาง',
-  receiver_account_mismatch: 'เลขบัญชีปลายทางไม่ตรงกัน',
-  receiver_account_unverified: 'สลิปไม่ระบุเลขบัญชีปลายทาง',
-  stale_slip: 'วันที่โอนไม่อยู่ในช่วงของคำขอนี้',
-  duplicate_slip: 'สลิปนี้ถูกใช้ยืนยันรายการอื่นแล้ว',
-  reference_missing: 'สลิปไม่มีเลขอ้างอิงรายการ จึงตรวจซ้ำซ้อนไม่ได้',
-  ledger_inconsistent: 'ยอดกันไว้ของรายการนี้ไม่ตรงกับระบบ กรุณาติดต่อผู้ดูแลระบบ',
+/** payout-request-slip-verification v1 §4.5: every `mismatchReasons`/`providerErrorCode` value.
+ * Maps backend reason codes to i18n keys — resolved at runtime via TranslationService. */
+const MISMATCH_REASON_KEYS: Record<string, string> = {
+  amount_mismatch: 'admin.payouts.mismatchAmountMismatch',
+  amount_unverified: 'admin.payouts.mismatchAmountUnverified',
+  name_mismatch: 'admin.payouts.mismatchNameMismatch',
+  name_unverified: 'admin.payouts.mismatchNameUnverified',
+  receiver_account_mismatch: 'admin.payouts.mismatchReceiverAccountMismatch',
+  receiver_account_unverified: 'admin.payouts.mismatchReceiverAccountUnverified',
+  stale_slip: 'admin.payouts.mismatchStaleSlip',
+  duplicate_slip: 'admin.payouts.mismatchDuplicateSlip',
+  reference_missing: 'admin.payouts.mismatchReferenceMissing',
+  ledger_inconsistent: 'admin.payouts.mismatchLedgerInconsistent',
 };
 
 /**
@@ -54,6 +57,7 @@ const MISMATCH_REASON_LABELS: Record<string, string> = {
     EmptyStateComponent,
     IconComponent,
     PaginationComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './payouts.page.html',
@@ -63,6 +67,7 @@ export class AdminPayoutsPage {
   private readonly auth = inject(AuthService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly i18n = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -81,13 +86,13 @@ export class AdminPayoutsPage {
   /** §4.5: "รอบโอนถัดไป" banner, from `GET /api/admin/settings`. */
   readonly nextPayoutDate = signal<string | null>(null);
 
-  readonly filters: { value: PayoutFilter; label: string }[] = [
-    { value: 'pending', label: 'รอดำเนินการ' },
-    { value: 'processing', label: 'กำลังโอน' },
-    { value: 'paid', label: 'โอนแล้ว' },
-    { value: 'failed', label: 'ไม่สำเร็จ' },
-    { value: 'cancelled', label: 'ยกเลิกแล้ว' },
-    { value: 'all', label: 'ทั้งหมด' },
+  readonly filters: { value: PayoutFilter; key: string }[] = [
+    { value: 'pending', key: 'admin.payouts.filterPending' },
+    { value: 'processing', key: 'admin.payouts.filterProcessing' },
+    { value: 'paid', key: 'admin.payouts.filterPaid' },
+    { value: 'failed', key: 'admin.payouts.filterFailed' },
+    { value: 'cancelled', key: 'admin.payouts.filterCancelled' },
+    { value: 'all', key: 'admin.payouts.filterAll' },
   ];
 
   // ===== §3.7/§4.5: slip upload + verification modal =====
@@ -156,7 +161,7 @@ export class AdminPayoutsPage {
       this.items.set(res.items ?? []);
       this.total.set(res.totalCount ?? 0);
     } catch (e) {
-      this.apiFail.report('โหลดรายการถอนเงิน', e);
+      this.apiFail.report('errors.context.loadPayouts', e);
       this.items.set([]);
       this.total.set(0);
     } finally {
@@ -169,10 +174,10 @@ export class AdminPayoutsPage {
     this.busyId.set(payoutId);
     try {
       await this.admin.setPayoutStatus(payoutId, status);
-      this.message.success('อัปเดตสถานะเรียบร้อย');
+      this.message.success(this.i18n.t('admin.payouts.statusUpdateSuccess'));
       await this.reload();
     } catch (e) {
-      this.apiFail.report('อัปเดตสถานะการถอนเงิน', e);
+      this.apiFail.report('errors.context.updatePayoutStatus', e);
     } finally {
       this.busyId.set(null);
     }
@@ -195,17 +200,17 @@ export class AdminPayoutsPage {
     const reason = this.failReason().trim();
     if (!payoutId) return;
     if (!reason) {
-      this.message.warning('กรุณาระบุเหตุผลที่โอนไม่สำเร็จ');
+      this.message.warning(this.i18n.t('admin.payouts.failReasonRequired'));
       return;
     }
     this.busyId.set(payoutId);
     try {
       await this.admin.setPayoutStatus(payoutId, 'failed', reason);
-      this.message.success('อัปเดตสถานะเรียบร้อย');
+      this.message.success(this.i18n.t('admin.payouts.statusUpdateSuccess'));
       this.closeFailModal();
       await this.reload();
     } catch (e) {
-      this.apiFail.report('อัปเดตสถานะการถอนเงิน', e);
+      this.apiFail.report('errors.context.updatePayoutStatus', e);
     } finally {
       this.busyId.set(null);
     }
@@ -224,7 +229,7 @@ export class AdminPayoutsPage {
       this.slips.set(list);
       this.latestResult.set(list[0] ?? null);
     } catch (e) {
-      this.apiFail.report('โหลดประวัติสลิป', e);
+      this.apiFail.report('errors.context.loadPayoutSlips', e);
     } finally {
       this.loadingSlips.set(false);
     }
@@ -251,11 +256,11 @@ export class AdminPayoutsPage {
     const isImage = file.type.startsWith('image/');
     const isPdf = file.type === 'application/pdf';
     if (!isImage && !isPdf) {
-      this.fileError.set('รองรับเฉพาะไฟล์รูปภาพหรือ PDF');
+      this.fileError.set(this.i18n.t('admin.payouts.fileTypeError'));
       return;
     }
     if (file.size > MAX_SLIP_BYTES) {
-      this.fileError.set('ไฟล์ต้องไม่เกิน 5MB');
+      this.fileError.set(this.i18n.t('admin.payouts.fileSizeError'));
       return;
     }
     this.selectedFile.set(file);
@@ -294,11 +299,11 @@ export class AdminPayoutsPage {
       this.slips.update((list) => [slip, ...list]);
       this.clearSelectedFile();
       if (slip.verificationStatus === 'matched') {
-        this.message.success('ยืนยันการโอนสำเร็จ รายการถูกปิดแล้ว');
+        this.message.success(this.i18n.t('admin.payouts.matchedResult'));
       }
       await this.reload();
     } catch (e) {
-      this.apiFail.report('อัปโหลดสลิป', e);
+      this.apiFail.report('errors.context.uploadPayoutSlip', e);
     } finally {
       this.verifying.set(false);
     }
@@ -313,11 +318,11 @@ export class AdminPayoutsPage {
       this.latestResult.set(updated);
       this.slips.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
       if (updated.verificationStatus === 'matched') {
-        this.message.success('ยืนยันการโอนสำเร็จ รายการถูกปิดแล้ว');
+        this.message.success(this.i18n.t('admin.payouts.matchedResult'));
       }
       await this.reload();
     } catch (e) {
-      this.apiFail.report('ตรวจสอบสลิปอีกครั้ง', e);
+      this.apiFail.report('errors.context.reverifyPayoutSlip', e);
     } finally {
       this.verifying.set(false);
     }
@@ -340,18 +345,18 @@ export class AdminPayoutsPage {
     if (!payout || this.manualSubmitting()) return;
     const note = this.manualNote().trim();
     if (note.length < 10) {
-      this.message.warning('ระบุเหตุผลที่ยืนยันโดยไม่ผ่านการตรวจสลิป');
+      this.message.warning(this.i18n.t('admin.payouts.manualNoteValidation'));
       return;
     }
     this.manualSubmitting.set(true);
     try {
       await this.admin.completePayoutManually(payout.id ?? '', note);
-      this.message.success('ยืนยันการโอนสำเร็จ รายการถูกปิดแล้ว');
+      this.message.success(this.i18n.t('admin.payouts.matchedResult'));
       this.closeManualModal();
       this.closeSlipModal();
       await this.reload();
     } catch (e) {
-      this.apiFail.report('ยืนยันด้วยตนเอง', e);
+      this.apiFail.report('errors.context.manualCompletePayout', e);
     } finally {
       this.manualSubmitting.set(false);
     }
@@ -383,7 +388,7 @@ export class AdminPayoutsPage {
       if (isImage || isPdf) accepted.push(file);
     }
     if (accepted.length < files.length) {
-      this.batchError.set('บางไฟล์ถูกข้าม — รองรับเฉพาะไฟล์รูปภาพหรือ PDF');
+      this.batchError.set(this.i18n.t('admin.payouts.batchFileSkipped'));
     }
     this.batchFiles.update((list) => [...list, ...accepted]);
   }
@@ -408,11 +413,11 @@ export class AdminPayoutsPage {
       this.batchResult.set(result);
       this.batchFiles.set([]);
       if (result.completedCount > 0) {
-        this.message.success(`โอนเงินสำเร็จอัตโนมัติ ${result.completedCount} รายการ`);
+        this.message.success(this.i18n.t('admin.payouts.batchCompletedSuccess', { count: result.completedCount }));
       }
       await this.reload();
     } catch (e) {
-      this.apiFail.report('อัปโหลดสลิปหลายไฟล์', e);
+      this.apiFail.report('errors.context.batchUploadSlips', e);
     } finally {
       this.batchUploading.set(false);
     }
@@ -424,22 +429,15 @@ export class AdminPayoutsPage {
   }
 
   batchStatusLabel(status: string): string {
-    switch (status) {
-      case 'matched':
-        return 'จับคู่สำเร็จ โอนเงินเรียบร้อย';
-      case 'mismatched':
-        return 'จับคู่ได้ แต่ข้อมูลไม่ตรงทั้งหมด';
-      case 'duplicate':
-        return 'สลิปซ้ำ';
-      case 'provider_error':
-        return 'ตรวจสอบไฟล์ไม่สำเร็จ';
-      case 'unreadable':
-        return 'อ่านไฟล์ไม่ได้';
-      case 'unmatched':
-        return 'ไม่พบรายการถอนเงินที่ตรงกัน';
-      default:
-        return status;
-    }
+    const keyMap: Record<string, string> = {
+      matched: 'admin.payouts.batchStatusMatchedLabel',
+      mismatched: 'admin.payouts.batchStatusMismatchedLabel',
+      duplicate: 'admin.payouts.batchStatusDuplicateLabel',
+      provider_error: 'admin.payouts.batchStatusProviderErrorLabel',
+      unreadable: 'admin.payouts.batchStatusUnreadableLabel',
+      unmatched: 'admin.payouts.batchStatusUnmatchedLabel',
+    };
+    return keyMap[status] ? this.i18n.t(keyMap[status]) : status;
   }
 
   batchStatusClass(status: string): string {
@@ -457,7 +455,8 @@ export class AdminPayoutsPage {
   // ===== Display helpers =====
 
   mismatchLabel(reason: string): string {
-    return MISMATCH_REASON_LABELS[reason] ?? reason;
+    const key = MISMATCH_REASON_KEYS[reason];
+    return key ? this.i18n.t(key) : reason;
   }
 
   slipFileUrl(slip: PayoutSlip): string {
@@ -465,7 +464,9 @@ export class AdminPayoutsPage {
   }
 
   destinationBadge(p: AdminPayoutResponse): string {
-    return p.destinationType === 'promptpay' ? 'พร้อมเพย์' : 'ธนาคาร';
+    return p.destinationType === 'promptpay'
+      ? this.i18n.t('admin.payouts.destPromptpay')
+      : this.i18n.t('admin.payouts.destBank');
   }
 
   /** §4.5: warn when the seller edited their payout account after this request was filed. */
@@ -474,37 +475,27 @@ export class AdminPayoutsPage {
   }
 
   slipStatusLabel(status: string | null | undefined): string {
-    switch (status) {
-      case 'matched':
-        return 'ตรงกัน';
-      case 'mismatched':
-        return 'ไม่ตรงกัน';
-      case 'provider_error':
-        return 'ตรวจสอบไม่สำเร็จ';
-      case 'duplicate':
-        return 'สลิปซ้ำ';
-      case 'manually_accepted':
-        return 'ยืนยันด้วยตนเอง';
-      case 'pending':
-        return 'กำลังตรวจสอบ';
-      default:
-        return 'ยังไม่มีสลิป';
-    }
+    const keyMap: Record<string, string> = {
+      matched: 'admin.payouts.slipMatched',
+      mismatched: 'admin.payouts.slipMismatched',
+      provider_error: 'admin.payouts.slipProviderError',
+      duplicate: 'admin.payouts.slipDuplicate',
+      manually_accepted: 'admin.payouts.slipManuallyAccepted',
+      pending: 'admin.payouts.slipPending',
+    };
+    const key = status ? keyMap[status] : undefined;
+    return key ? this.i18n.t(key) : this.i18n.t('admin.payouts.slipNone');
   }
 
   statusLabel(status: string | undefined): string {
-    switch (status) {
-      case 'paid':
-        return 'โอนแล้ว';
-      case 'processing':
-        return 'กำลังโอน';
-      case 'failed':
-        return 'ไม่สำเร็จ';
-      case 'cancelled':
-        return 'ยกเลิกแล้ว';
-      default:
-        return 'รอดำเนินการ';
-    }
+    const keyMap: Record<string, string> = {
+      paid: 'admin.payouts.statusPaid',
+      processing: 'admin.payouts.statusProcessing',
+      failed: 'admin.payouts.statusFailed',
+      cancelled: 'admin.payouts.statusCancelled',
+    };
+    const key = status ? keyMap[status] : undefined;
+    return key ? this.i18n.t(key) : this.i18n.t('admin.payouts.statusPending');
   }
 
   statusClass(status: string | undefined): string {

@@ -5,6 +5,7 @@ import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { AdminService, CatalogService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import {
   errorActionState,
   idleActionState,
@@ -16,6 +17,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import type { Category, SubcategoryAdmin } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** Subcategory being deleted while `subcategoryState()` is holding a 409 — see confirmDeleteSubcategory. */
 interface DeleteConflict {
@@ -56,6 +58,7 @@ function parseSubscriptionPriceInput(
     PaginationComponent,
     CompactPipe,
     ThbPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories-admin.page.html',
@@ -67,6 +70,7 @@ export class AdminCategoriesPage {
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -108,11 +112,13 @@ export class AdminCategoriesPage {
   /** Raw text, so an empty box ("close for subscription") stays distinguishable from "0". */
   readonly catPrice = signal<string>('');
 
-  readonly catNameError = computed(() => (this.catName().trim() ? '' : 'กรุณากรอกชื่อหมวดหมู่'));
+  readonly catNameError = computed(() =>
+    this.catName().trim() ? '' : this.translation.t('admin.categories.nameRequired'),
+  );
   readonly catPriceError = computed(() =>
     parseSubscriptionPriceInput(this.catPrice()).ok
       ? ''
-      : 'ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ',
+      : this.translation.t('admin.categories.priceInvalid'),
   );
   readonly categoryFormValid = computed(() => !this.catNameError() && !this.catPriceError());
 
@@ -147,12 +153,12 @@ export class AdminCategoriesPage {
 
     const name = this.catName().trim();
     if (!name) {
-      this.message.warning('กรุณากรอกชื่อหมวดหมู่');
+      this.message.warning(this.translation.t('admin.categories.nameRequired'));
       return;
     }
     const priceInput = parseSubscriptionPriceInput(this.catPrice());
     if (!priceInput.ok) {
-      this.message.warning('ราคาสมาชิกรายเดือนต้องเป็นตัวเลขไม่ติดลบ');
+      this.message.warning(this.translation.t('admin.categories.priceInvalid'));
       return;
     }
 
@@ -172,7 +178,7 @@ export class AdminCategoriesPage {
           subscriptionMonthlyPrice: priceInput.value,
         });
         this.catalog.loadCategories();
-        this.message.success('อัปเดตหมวดหมู่แล้ว');
+        this.message.success(this.translation.t('admin.categories.updateSuccess'));
       } else {
         await this.admin.createCategory({
           id: crypto.randomUUID(),
@@ -185,13 +191,13 @@ export class AdminCategoriesPage {
           subscriptionMonthlyPrice: priceInput.value,
         });
         this.catalog.loadCategories();
-        this.message.success('เพิ่มหมวดหมู่แล้ว');
+        this.message.success(this.translation.t('admin.categories.createSuccess'));
       }
       this.closeCategoryForm();
     } catch {
       // Create failures are already reported by AdminService's ApiFailureReporter; the edit path
       // has always added its own toast on top of that. The form stays open so the admin can retry.
-      if (editing) this.message.error('อัปเดตไม่สำเร็จ');
+      if (editing) this.message.error(this.translation.t('admin.categories.updateFailed'));
     } finally {
       this.catSaving.set(false);
     }
@@ -199,11 +205,11 @@ export class AdminCategoriesPage {
 
   removeCategory(c: Category): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันลบหมวดหมู่',
+      nzTitle: this.translation.t('admin.categories.confirmDeleteTitle'),
       nzContent: `ลบหมวด "${c.name}" ?`,
-      nzOkText: 'ลบ',
+      nzOkText: this.translation.t('common.delete') || 'ลบ',
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
       nzOnOk: () => this.doRemoveCategory(c),
     });
   }
@@ -212,7 +218,7 @@ export class AdminCategoriesPage {
     try {
       await this.admin.deleteCategory(c.id);
       this.catalog.loadCategories();
-      this.message.success('ลบหมวดหมู่แล้ว');
+      this.message.success(this.translation.t('admin.categories.deleteSuccess'));
     } catch {
       /* ApiFailureReporter ใน AdminService */
     }
@@ -268,7 +274,7 @@ export class AdminCategoriesPage {
       this.subcategories.update((rec) => ({ ...rec, [categoryId]: list }));
       this.subcategoryState.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดหมวดย่อย', e);
+      this.apiFail.report('errors.context.loadSubcategories', e);
       this.subcategoryState.set(idleActionState());
     }
   }
@@ -312,12 +318,12 @@ export class AdminCategoriesPage {
 
     const name = this.subName().trim();
     if (!name) {
-      this.message.warning('กรุณาตั้งชื่อหมวดย่อย');
+      this.message.warning(this.translation.t('admin.categories.subNameRequired'));
       return;
     }
     const editingId = this.editingSubcategoryId();
     if (!editingId && !this.subId().trim()) {
-      this.message.warning('กรุณากรอกรหัส (id)');
+      this.message.warning(this.translation.t('admin.categories.subIdRequired'));
       return;
     }
 
@@ -331,7 +337,7 @@ export class AdminCategoriesPage {
           isActive: this.subIsActive(),
           sortOrder: this.subSortOrder(),
         });
-        this.message.success('บันทึกหมวดย่อยเรียบร้อย');
+        this.message.success(this.translation.t('admin.categories.subSaveSuccess'));
       } else {
         await this.admin.createSubcategory(categoryId, {
           id: this.subId().trim(),
@@ -341,12 +347,12 @@ export class AdminCategoriesPage {
           isActive: this.subIsActive(),
           sortOrder: this.subSortOrder(),
         });
-        this.message.success('เพิ่มหมวดย่อยเรียบร้อย');
+        this.message.success(this.translation.t('admin.categories.subCreateSuccess'));
       }
       this.closeSubcategoryForm();
       await this.loadSubcategories(categoryId);
     } catch (e) {
-      this.apiFail.report('ดำเนินการกับหมวดย่อยไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.saveSubcategory', e);
     } finally {
       this.subSaving.set(false);
     }
@@ -354,11 +360,11 @@ export class AdminCategoriesPage {
 
   confirmDeleteSubcategory(categoryId: string, sub: SubcategoryAdmin): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันลบหมวดย่อย',
+      nzTitle: this.translation.t('admin.categories.confirmDeleteSubTitle'),
       nzContent: `ยืนยันลบหมวดย่อย "${sub.name}" หรือไม่? การกระทำนี้ย้อนกลับไม่ได้`,
-      nzOkText: 'ลบ',
+      nzOkText: this.translation.t('common.delete') || 'ลบ',
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
       nzOnOk: () => this.deleteSubcategory(categoryId, sub),
     });
   }
@@ -368,7 +374,7 @@ export class AdminCategoriesPage {
     this.subcategoryState.set(loadingActionState());
     try {
       await this.admin.deleteSubcategory(categoryId, sub.id);
-      this.message.success('ลบหมวดย่อยเรียบร้อย');
+      this.message.success(this.translation.t('admin.categories.subDeleteSuccess'));
       this.subcategoryState.set(idleActionState());
       await this.loadSubcategories(categoryId);
     } catch (e) {
@@ -393,12 +399,12 @@ export class AdminCategoriesPage {
         isActive: false,
         sortOrder: conflict.subcategory.sortOrder,
       });
-      this.message.success('บันทึกหมวดย่อยเรียบร้อย');
+      this.message.success(this.translation.t('admin.categories.subSaveSuccess'));
       this.deleteConflict.set(null);
       this.subcategoryState.set(idleActionState());
       await this.loadSubcategories(conflict.categoryId);
     } catch (e) {
-      this.apiFail.report('ดำเนินการกับหมวดย่อยไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.saveSubcategory', e);
       this.subcategoryState.set(idleActionState());
     }
   }

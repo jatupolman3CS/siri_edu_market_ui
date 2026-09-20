@@ -1,72 +1,72 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-      <app-page-hero
-        eyebrow="หมวดหมู่ทั้งหมด"
-        title="สำรวจเอกสารตามหมวดหมู่ที่คุณสนใจ"
-        [description]="heroDescription()"
-      />
+  <app-page-hero
+    [eyebrow]="'categories.heroEyebrow' | trans"
+    [title]="'categories.heroTitle' | trans"
+    [description]="heroDescription()"
+  />
 
-      @if (catalog.categoriesState().status === 'loading') {
-        <app-empty-state emoji="⏳" title="กำลังโหลดหมวดหมู่…" description="รอสักครู่นะคะ" />
-      } @else if (catalog.categoriesState().status === 'error') {
-        <app-empty-state emoji="⚠️" title="โหลดหมวดหมู่ไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
-          <button class="btn-pink mt-5" type="button" (click)="catalog.loadCategories()">
-            ลองใหม่
-          </button>
-        </app-empty-state>
-      } @else {
-      <div class="space-y-8">
-        @for (cat of catalog.categories(); track cat.id) {
-          <section class="card-soft p-6 md:p-8">
-            <header class="flex items-start gap-5 mb-6">
-              <div
-                class="w-16 h-16 rounded-3xl bg-gradient-to-br from-pink-100 to-pink-50 shadow-soft flex items-center justify-center text-3xl flex-shrink-0"
-              >
-                {{ cat.icon }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 flex-wrap">
-                  <h2 class="text-xl md:text-2xl font-extrabold text-ink">
-                    <a [routerLink]="['/category', cat.slug]" class="hover:text-pink-600">
-                      {{ cat.name }}
-                    </a>
-                  </h2>
-                  <span class="pill-soft">{{ cat.documentCount | compact }} เอกสาร</span>
-                </div>
-                <p class="text-sm text-ink-soft mt-1.5 leading-relaxed">{{ cat.description }}</p>
-              </div>
-              <a
-                [routerLink]="['/category', cat.slug]"
-                class="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-pink-600 hover:text-pink-700 group"
-              >
-                ดูทั้งหมด
-                <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
-              </a>
-            </header>
-
-            <!-- Sub-categories -->
-            @if (cat.subcategories?.length) {
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                @for (sub of cat.subcategories!; track sub.id) {
-                  <a
-                    [routerLink]="['/category', cat.slug]"
-                    [queryParams]="{ sub: sub.slug }"
-                    class="flex items-center gap-3 p-3 rounded-2xl border border-line hover:border-pink-300 hover:bg-pink-50/40 group transition-all"
-                  >
-                    <span class="w-9 h-9 rounded-xl bg-pink-50 group-hover:bg-white flex items-center justify-center text-lg flex-shrink-0">
-                      {{ sub.icon }}
-                    </span>
-                    <div class="min-w-0">
-                      <div class="text-sm font-semibold text-ink line-clamp-1 group-hover:text-pink-600">
-                        {{ sub.name }}
-                      </div>
-                      <div class="text-[11px] text-ink-muted">{{ sub.documentCount }} ชิ้น</div>
-                    </div>
+  @if (catalog.categoriesState().status === 'loading') {
+    <app-empty-state emoji="⏳" [title]="'categories.loading' | trans" [description]="'common.pleaseWait' | trans" />
+  } @else if (catalog.categoriesState().status === 'error') {
+    <app-empty-state emoji="⚠️" [title]="'categories.loadFailed' | trans" [description]="'common.retry' | trans">
+      <button class="btn-pink mt-5" type="button" (click)="catalog.loadCategories()">
+        {{ 'common.retry' | trans }}
+      </button>
+    </app-empty-state>
+  } @else {
+    <div class="space-y-8">
+      @for (cat of catalog.categories(); track cat.id) {
+        <section class="card-soft p-6 md:p-8">
+          <header class="flex items-start gap-5 mb-6">
+            <div
+              class="w-16 h-16 rounded-3xl bg-gradient-to-br from-pink-100 to-pink-50 shadow-soft flex items-center justify-center text-3xl flex-shrink-0"
+            >
+              {{ cat.icon }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-3 flex-wrap">
+                <h2 class="text-xl md:text-2xl font-extrabold text-ink">
+                  <a [routerLink]="['/category', cat.slug]" class="hover:text-pink-600">
+                    {{ cat.name }}
                   </a>
-                }
+                </h2>
+                <span class="pill-soft">{{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
               </div>
-            }
-          </section>
-        }
-      </div>
+              <p class="text-sm text-ink-soft mt-1.5 leading-relaxed">{{ cat.description }}</p>
+            </div>
+            <a
+              [routerLink]="['/category', cat.slug]"
+              class="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-pink-600 hover:text-pink-700 group"
+            >
+              {{ 'categories.viewAll' | trans }}
+              <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
+            </a>
+          </header>
+
+          <!-- Sub-categories -->
+          @if (cat.subcategories?.length) {
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              @for (sub of cat.subcategories!; track sub.id) {
+                <a
+                  [routerLink]="['/category', cat.slug]"
+                  [queryParams]="{ sub: sub.slug }"
+                  class="flex items-center gap-3 p-3 rounded-2xl border border-line hover:border-pink-300 hover:bg-pink-50/40 group transition-all"
+                >
+                  <span class="w-9 h-9 rounded-xl bg-pink-50 group-hover:bg-white flex items-center justify-center text-lg flex-shrink-0">
+                    {{ sub.icon }}
+                  </span>
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-ink line-clamp-1 group-hover:text-pink-600">
+                      {{ sub.name }}
+                    </div>
+                    <div class="text-[11px] text-ink-muted">{{ 'categories.itemsUnit' | trans:{ count: sub.documentCount } }}</div>
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        </section>
       }
     </div>
+  }
+</div>

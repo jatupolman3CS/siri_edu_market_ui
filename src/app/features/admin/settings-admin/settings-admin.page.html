@@ -1,16 +1,16 @@
 <div class="max-w-3xl">
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">ตั้งค่าแพลตฟอร์ม</h1>
-        <p class="text-sm text-ink-soft">การตั้งค่าหลักของระบบ — เปลี่ยนแปลงด้วยความระมัดระวัง</p>
+        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.settingsAdmin.title' | trans }}</h1>
+        <p class="text-sm text-ink-soft">{{ 'admin.settingsAdmin.desc' | trans }}</p>
       </header>
 
       <section class="card-soft p-6 mb-6">
-        <h2 class="text-lg font-bold text-ink mb-1">ค่าธรรมเนียมและส่วนแบ่ง</h2>
-        <p class="text-xs text-ink-muted mb-5">การคำนวณรายได้ของผู้ขาย</p>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.feeTitle' | trans }}</h2>
+        <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.feeDesc' | trans }}</p>
 
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">ค่าธรรมเนียมแพลตฟอร์ม (%)</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.feeRateLabel' | trans }}</label>
             <input
               class="input-soft"
               type="number"
@@ -22,7 +22,7 @@
             />
           </div>
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">VAT (%)</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.vatLabel' | trans }}</label>
             <input
               class="input-soft"
               type="number"
@@ -34,7 +34,7 @@
             />
           </div>
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">ขั้นต่ำการถอน (THB)</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.minPayoutLabel' | trans }}</label>
             <input
               class="input-soft"
               type="number"
@@ -45,7 +45,7 @@
             />
           </div>
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">รอบจ่ายเงิน</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.payoutScheduleLabel' | trans }}</label>
             <select
               class="input-soft cursor-pointer"
               [ngModel]="form().payoutSchedule"
@@ -60,8 +60,8 @@
       </section>
 
       <section class="card-soft p-6 mb-6">
-        <h2 class="text-lg font-bold text-ink mb-1">การชำระเงิน</h2>
-        <p class="text-xs text-ink-muted mb-5">ระบบ Payment Gateway ที่เชื่อมต่อ</p>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.paymentTitle' | trans }}</h2>
+        <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.paymentDesc' | trans }}</p>
         <ul class="space-y-3">
           @for (g of gateways; track g.name) {
             <li class="flex items-center gap-4 p-4 rounded-2xl border border-line">
@@ -70,7 +70,7 @@
                 <div class="text-sm font-bold text-ink">{{ g.name }}</div>
                 <div class="text-xs text-ink-muted">{{ g.note }}</div>
               </div>
-              <span class="pill bg-emerald-100 text-emerald-700">เชื่อมต่อแล้ว</span>
+              <span class="pill bg-emerald-100 text-emerald-700">{{ 'admin.settingsAdmin.paymentConnected' | trans }}</span>
             </li>
           }
         </ul>
@@ -80,9 +80,9 @@
            may pick on `/seller` — saved by the shared "บันทึกการเปลี่ยนแปลง" button below, only
            the switches touched here are sent (§3.2 nullable pattern). -->
       <section class="card-tile mb-6">
-        <h2 class="text-lg font-bold text-ink mb-1">ช่องทางการรับเงินของผู้ขาย</h2>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.payoutMethodTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">
-          เปิด/ปิดช่องทางที่ผู้ขายเลือกใช้รับเงินได้ในหน้าตั้งค่าบัญชีรับเงิน — ปิดช่องทางใดแล้ว ผู้ขายจะไม่เห็นตัวเลือกนั้นอีก
+          {{ 'admin.settingsAdmin.payoutMethodDesc' | trans }}
         </p>
 
         <div class="card-tile-body space-y-5">
@@ -93,7 +93,7 @@
               (ngModelChange)="patch('payoutMethodBankEnabled', $event)"
             />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-ink">บัญชีธนาคาร</div>
+              <div class="text-sm font-bold text-ink">{{ 'admin.settingsAdmin.payoutBank' | trans }}</div>
             </div>
           </div>
 
@@ -104,7 +104,7 @@
               (ngModelChange)="patch('payoutMethodPromptPayPhoneEnabled', $event)"
             />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-ink">พร้อมเพย์ (เบอร์โทรศัพท์)</div>
+              <div class="text-sm font-bold text-ink">{{ 'admin.settingsAdmin.payoutPromptPayPhone' | trans }}</div>
             </div>
           </div>
 
@@ -115,7 +115,7 @@
               (ngModelChange)="patch('payoutMethodPromptPayNationalIdEnabled', $event)"
             />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-ink">พร้อมเพย์ (เลขบัตรประชาชน)</div>
+              <div class="text-sm font-bold text-ink">{{ 'admin.settingsAdmin.payoutPromptPayNid' | trans }}</div>
             </div>
           </div>
 
@@ -126,57 +126,57 @@
               (ngModelChange)="patch('payoutMethodPromptPayQrEnabled', $event)"
             />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-ink">พร้อมเพย์ (QR Code)</div>
+              <div class="text-sm font-bold text-ink">{{ 'admin.settingsAdmin.payoutPromptPayQR' | trans }}</div>
             </div>
           </div>
         </div>
       </section>
 
       <section class="card-soft p-6 mb-6">
-        <h2 class="text-lg font-bold text-ink mb-1">การจัดเก็บไฟล์</h2>
-        <p class="text-xs text-ink-muted mb-5">Cloudflare R2 — S3-Compatible Storage</p>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.storageTitle' | trans }}</h2>
+        <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.storageDesc' | trans }}</p>
 
         @if (storage(); as s) {
           @if (s.isConfigured) {
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-3xl bg-pink-50">
               <div>
-                <dt class="text-xs text-ink-muted">Bucket</dt>
+                <dt class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.storageBucket' | trans }}</dt>
                 <dd class="text-sm font-bold text-ink mt-1 font-mono">{{ s.bucketName || '-' }}</dd>
               </div>
               <div>
-                <dt class="text-xs text-ink-muted">Region</dt>
-                <dd class="text-sm font-bold text-ink mt-1">APAC (auto)</dd>
+                <dt class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.storageRegion' | trans }}</dt>
+                <dd class="text-sm font-bold text-ink mt-1">{{ 'admin.settingsAdmin.storageRegionValue' | trans }}</dd>
               </div>
               <div>
-                <dt class="text-xs text-ink-muted">ใช้พื้นที่</dt>
-                <dd class="text-sm font-bold text-ink mt-1">{{ storageGB() }} GB</dd>
+                <dt class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.storageUsed' | trans }}</dt>
+                <dd class="text-sm font-bold text-ink mt-1">{{ storageGB() }} {{ 'admin.settingsAdmin.storageUnit' | trans }}</dd>
               </div>
               <div>
-                <dt class="text-xs text-ink-muted">เอกสารทั้งหมด</dt>
-                <dd class="text-sm font-bold text-ink mt-1">{{ s.objectCount | number }} ไฟล์</dd>
+                <dt class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.storageDocs' | trans }}</dt>
+                <dd class="text-sm font-bold text-ink mt-1">{{ s.objectCount | number }} {{ 'admin.settingsAdmin.storageFilesUnit' | trans }}</dd>
               </div>
             </dl>
           } @else {
             <div class="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-              R2 ยังไม่ได้ตั้งค่า — ใช้พื้นที่ในเครื่องอยู่
+              {{ 'admin.settingsAdmin.storageNotConfigured' | trans }}
             </div>
           }
         } @else {
-          <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">กำลังโหลดสถิติ…</div>
+          <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.storageLoading' | trans }}</div>
         }
       </section>
 
       <!-- watermark-completion v1 §4.1: platform watermark policy. Saved by the shared
            "บันทึกการเปลี่ยนแปลง" button below — only the controls touched here are sent (§3.2). -->
       <section class="card-tile mb-6">
-        <h2 class="text-lg font-bold text-ink mb-1">นโยบายลายน้ำ</h2>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.watermarkPolicyTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">
-          แพลตฟอร์มเป็นผู้กำหนดว่าไฟล์ที่ผู้ซื้อดาวน์โหลดต้องมีลายน้ำหรือไม่
+          {{ 'admin.settingsAdmin.watermarkPolicyDesc' | trans }}
         </p>
 
         <div class="card-tile-body space-y-5">
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">นโยบายลายน้ำของระบบ</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.watermarkPolicyLabel' | trans }}</label>
             <select
               name="watermark-policy"
               class="input-soft cursor-pointer"
@@ -196,7 +196,7 @@
               (ngModelChange)="patch('watermarkDefaultEnabled', $event)"
             />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-ink">เปิดลายน้ำเป็นค่าเริ่มต้นสำหรับเอกสารใหม่</div>
+              <div class="text-sm font-bold text-ink">{{ 'admin.settingsAdmin.watermarkDefaultEnabled' | trans }}</div>
             </div>
           </div>
 
@@ -207,15 +207,15 @@
               (ngModelChange)="patch('watermarkForensicEnabled', $event)"
             />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-bold text-ink">ฝังรหัสสำเนารายผู้ซื้อ (ตรวจสอบย้อนหลังได้)</div>
+              <div class="text-sm font-bold text-ink">{{ 'admin.settingsAdmin.watermarkForensicEnabled' | trans }}</div>
               <div class="text-xs text-ink-muted mt-1">
-                ปิดแล้วจะใช้ไฟล์ลายน้ำร่วมไฟล์เดียวต่อเอกสาร และจะสืบหาผู้เผยแพร่ไม่ได้
+                {{ 'admin.settingsAdmin.watermarkForensicDesc' | trans }}
               </div>
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">เก็บไฟล์สำเนาไว้กี่วัน</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.watermarkRetentionLabel' | trans }}</label>
             <input
               name="watermark-retention-days"
               class="input-soft"
@@ -227,18 +227,18 @@
               (ngModelChange)="patch('watermarkCopyRetentionDays', +$event || 0)"
             />
             <div class="text-xs text-ink-muted mt-2">
-              เลยกำหนดแล้วระบบจะลบเฉพาะไฟล์ ข้อมูลรหัสสำเนายังอยู่
+              {{ 'admin.settingsAdmin.watermarkRetentionHint' | trans }}
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-2 block">ข้อความลายน้ำเริ่มต้นของระบบ</label>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.watermarkSubtitleLabel' | trans }}</label>
             <input
               name="watermark-default-subtitle"
               class="input-soft"
               type="text"
               maxlength="256"
-              placeholder="ใช้เมื่อผู้ขายไม่ได้กรอกข้อความของตัวเอง"
+              [placeholder]="'admin.settingsAdmin.watermarkSubtitlePlaceholder' | trans"
               [ngModel]="form().watermarkDefaultSubtitle ?? ''"
               (ngModelChange)="patch('watermarkDefaultSubtitle', $event)"
             />
@@ -248,14 +248,14 @@
 
       <div class="flex justify-end gap-3">
         <button class="btn-ghost" type="button" (click)="reload()" [disabled]="saving()">
-          ยกเลิก
+          {{ 'common.cancel' | trans }}
         </button>
         <button class="btn-pink" type="button" (click)="save()" [disabled]="saving()">
           <app-icon name="check" [size]="16" />
           @if (saving()) {
-            กำลังบันทึก…
+            {{ 'admin.settingsAdmin.saving' | trans }}
           } @else {
-            บันทึกการเปลี่ยนแปลง
+            {{ 'admin.settingsAdmin.saveChanges' | trans }}
           }
         </button>
       </div>
@@ -263,13 +263,13 @@
       <!-- system-config-job-toggle v1 §4: not part of the fee/VAT form above — each row saves
            on flip, no batched "บันทึกการเปลี่ยนแปลง" for this section. -->
       <section class="card-soft p-6 mb-6 mt-6">
-        <h2 class="text-lg font-bold text-ink mb-1">งานอัตโนมัติเบื้องหลัง (Background Jobs)</h2>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.jobsTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">
-          เปิด/ปิดการทำงานของ background job แบบ runtime — มีผลภายใน ~1 นาทีโดยไม่ต้อง restart ระบบ
+          {{ 'admin.settingsAdmin.jobsDesc' | trans }}
         </p>
 
         @if (jobToggles().length === 0) {
-          <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">กำลังโหลด…</div>
+          <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.jobsLoading' | trans }}</div>
         } @else {
           <ul class="space-y-3">
             @for (job of jobToggles(); track job.jobKey) {
@@ -287,9 +287,9 @@
                   }
                   <div class="text-xs text-ink-muted mt-1">
                     @if (job.updatedAt) {
-                      แก้ไขล่าสุด {{ job.updatedAt | date: 'dd MMM yyyy HH:mm' }}
+                      {{ 'admin.settingsAdmin.jobLastUpdated' | trans }} {{ job.updatedAt | date: 'dd MMM yyyy HH:mm' }}
                     } @else {
-                      ยังไม่เคยเปลี่ยนแปลง
+                      {{ 'admin.settingsAdmin.jobNeverChanged' | trans }}
                     }
                   </div>
                 </div>
@@ -302,9 +302,9 @@
       <!-- watermark-completion v1 §4.2: forensic lookup of a WMK code found in a leaked file.
            This card is the only place `GET /api/admin/watermark-copies` is called. -->
       <section class="card-tile mb-6">
-        <h2 class="text-lg font-bold text-ink mb-1">ตรวจสอบรหัสสำเนาเอกสาร</h2>
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.watermarkCopyTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">
-          กรอกรหัสสำเนา (WMK-XXXXXXXX) ที่พบในไฟล์ เพื่อดูว่าไฟล์นั้นถูกส่งให้บัญชีใด
+          {{ 'admin.settingsAdmin.watermarkCopyDesc' | trans }}
         </p>
 
         <div class="card-tile-body">
@@ -327,9 +327,9 @@
             >
               <app-icon name="search" [size]="16" />
               @if (copySearching()) {
-                กำลังค้นหา…
+                {{ 'admin.settingsAdmin.watermarkCopySearching' | trans }}
               } @else {
-                ค้นหา
+                {{ 'admin.settingsAdmin.watermarkCopySearchBtn' | trans }}
               }
             </button>
           </div>
@@ -337,19 +337,19 @@
           @if (copySearched()) {
             @if (copyResults().length === 0) {
               <div class="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800 mt-4">
-                ไม่พบรหัสสำเนานี้ในระบบ
+                {{ 'admin.settingsAdmin.watermarkCopyNotFound' | trans }}
               </div>
             } @else {
               <div class="overflow-x-auto mt-4">
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="text-left text-xs text-ink-muted">
-                      <th class="py-2 pr-4 font-semibold">รหัสสำเนา</th>
-                      <th class="py-2 pr-4 font-semibold">เอกสาร</th>
-                      <th class="py-2 pr-4 font-semibold">ผู้รับ</th>
-                      <th class="py-2 pr-4 font-semibold">ที่มา</th>
-                      <th class="py-2 pr-4 font-semibold">สถานะลายน้ำ</th>
-                      <th class="py-2 font-semibold">ดาวน์โหลดล่าสุด</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColToken' | trans }}</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColDoc' | trans }}</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColRecipient' | trans }}</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColSource' | trans }}</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColStatus' | trans }}</th>
+                      <th class="py-2 font-semibold">{{ 'admin.settingsAdmin.watermarkColLastAccess' | trans }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -361,7 +361,7 @@
                         <td class="py-3 pr-4">
                           <div class="font-semibold text-ink">{{ row.documentTitle }}</div>
                           <div class="text-xs text-ink-muted uppercase">{{ row.documentFormat }}</div>
-                          <div class="text-xs text-ink-muted">ผู้ขาย: {{ row.sellerName }}</div>
+                          <div class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.watermarkColSeller' | trans }} {{ row.sellerName }}</div>
                         </td>
                         <td class="py-3 pr-4">
                           <div class="font-semibold text-ink">{{ row.recipientName }}</div>
@@ -374,7 +374,7 @@
                               {{ watermarkModeLabel(row.watermarkMode) }}
                             </span>
                           } @else {
-                            <span class="pill bg-amber-100 text-amber-800">ไม่ได้ประทับลายน้ำ</span>
+                            <span class="pill bg-amber-100 text-amber-800">{{ 'admin.settingsAdmin.watermarkNoApplied' | trans }}</span>
                             @if (row.failureReason) {
                               <div class="text-xs text-ink-muted mt-1">
                                 {{ failureReasonLabel(row.failureReason) }}
@@ -386,7 +386,7 @@
                           {{ row.lastAccessedAt | date: 'dd MMM yyyy HH:mm' }}
                           @if (row.purgedAt) {
                             <div class="text-xs text-ink-muted mt-1">
-                              ลบไฟล์แล้วเมื่อ {{ row.purgedAt | date: 'dd MMM yyyy' }}
+                              {{ 'admin.settingsAdmin.watermarkPurged' | trans }} {{ row.purgedAt | date: 'dd MMM yyyy' }}
                             </div>
                           }
                         </td>

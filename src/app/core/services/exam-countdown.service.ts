@@ -10,6 +10,7 @@ import {
 } from '../api';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import {
   errorActionState,
   idleActionState,
@@ -34,6 +35,7 @@ import { createInfinitePager } from './infinite-pager';
 @Injectable({ providedIn: 'root' })
 export class ExamCountdownService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _setting = signal<ExamCountdownSetting | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
@@ -68,7 +70,7 @@ export class ExamCountdownService {
         totalPages: data.totalPages,
       };
     },
-    errorMessage: 'โหลดเอกสารไม่สำเร็จ',
+    errorMessage: this.translation.t('examCountdown.loadDocsFailed'),
   });
 
   readonly docs = this.docsPager.items;
@@ -110,8 +112,8 @@ export class ExamCountdownService {
         this._state.set(idleActionState());
         return;
       }
-      this._state.set(errorActionState('โหลดข้อมูลไม่สำเร็จ'));
-      this.apiFail.report('โหลดโหมดใกล้สอบ', e);
+      this._state.set(errorActionState(this.translation.t('common.loadFailed')));
+      this.apiFail.report('errors.context.loadExamCountdown', e);
     }
   }
 
@@ -140,7 +142,7 @@ export class ExamCountdownService {
     } catch (e) {
       this._state.set(idleActionState());
       const validationMessage = ExamCountdownService.plainValidationMessage(e);
-      return { ok: false, error: validationMessage ?? 'บันทึกโหมดใกล้สอบไม่สำเร็จ' };
+      return { ok: false, error: validationMessage ?? this.translation.t('examCountdown.saveFailed') };
     }
   }
 
@@ -156,7 +158,7 @@ export class ExamCountdownService {
       );
       this._setting.set(mapExamCountdownSetting(data));
     } catch (e) {
-      this.apiFail.report('เปลี่ยนสถานะโหมดใกล้สอบ', e);
+      this.apiFail.report('errors.context.toggleExamCountdown', e);
     }
   }
 
@@ -168,7 +170,7 @@ export class ExamCountdownService {
     try {
       await deleteApiMeExamCountdown();
     } catch (e) {
-      this.apiFail.report('ล้างค่าโหมดใกล้สอบ', e);
+      this.apiFail.report('errors.context.clearExamCountdown', e);
       return;
     }
     this._setting.set(null);

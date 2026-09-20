@@ -1,63 +1,63 @@
 <div class="card-soft p-6 space-y-5">
-  <h2 class="text-lg font-bold text-ink">ทำไมระบบถึงแนะนำแบบนี้</h2>
+  <h2 class="text-lg font-bold text-ink">{{ 'shared.recommendationTrace.title' | trans }}</h2>
 
   @let trace = crm.recommendationTrace();
 
   @if (crm.loadingRecommendationTrace()) {
-    <div class="p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (!trace) {
-    <app-empty-state title="ยังไม่พบข้อมูลการวิเคราะห์คำแนะนำของผู้ใช้รายนี้" />
+    <app-empty-state [title]="'shared.recommendationTrace.empty' | trans" />
   } @else {
     @if (trace.gatePassed) {
       <div class="rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm p-4">
-        ผ่านเกณฑ์การวิเคราะห์ — ระบบแนะนำแบบเฉพาะบุคคลให้ผู้ใช้รายนี้
+        {{ 'shared.recommendationTrace.passed' | trans }}
       </div>
     } @else {
       <div class="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-sm p-4">
-        ไม่ผ่านเกณฑ์ — {{ trace.gateFailReason }}
+        {{ 'shared.recommendationTrace.failed' | trans: { reason: trace.gateFailReason ?? '' } }}
       </div>
     }
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
       <div class="rounded-2xl border border-line p-3">
-        <div class="text-xs text-ink-muted mb-1">ความมั่นใจ</div>
+        <div class="text-xs text-ink-muted mb-1">{{ 'shared.recommendationTrace.confidence' | trans }}</div>
         <div class="font-bold text-ink">
           {{ trace.interestConfidence * 100 | number: '1.0-0' }}%
-          <span class="text-ink-muted font-normal">(เกณฑ์ {{ trace.minConfidence * 100 | number: '1.0-0' }}%)</span>
+          <span class="text-ink-muted font-normal">{{ 'shared.recommendationTrace.threshold' | trans: { threshold: (trace.minConfidence * 100 | number: '1.0-0') ?? '0' } }}</span>
         </div>
       </div>
       <div class="rounded-2xl border border-line p-3">
-        <div class="text-xs text-ink-muted mb-1">ความสนใจเด่นสุด</div>
+        <div class="text-xs text-ink-muted mb-1">{{ 'shared.recommendationTrace.topInterest' | trans }}</div>
         <div class="font-bold text-ink">
           {{ trace.topFacetScore * 100 | number: '1.0-0' }}%
-          <span class="text-ink-muted font-normal">(เกณฑ์ {{ trace.minTopFacetScore * 100 | number: '1.0-0' }}%)</span>
+          <span class="text-ink-muted font-normal">{{ 'shared.recommendationTrace.threshold' | trans: { threshold: (trace.minTopFacetScore * 100 | number: '1.0-0') ?? '0' } }}</span>
         </div>
       </div>
       <div class="rounded-2xl border border-line p-3">
-        <div class="text-xs text-ink-muted mb-1">เอกสารที่ผ่านเกณฑ์</div>
+        <div class="text-xs text-ink-muted mb-1">{{ 'shared.recommendationTrace.qualifiedDocuments' | trans }}</div>
         <div class="font-bold text-ink">
-          {{ trace.qualifiedCount }} จาก {{ trace.candidateCount }} ชิ้น
-          <span class="text-ink-muted font-normal">(ต้องการ {{ trace.minQualifiedItems }})</span>
+          {{ 'shared.recommendationTrace.qualifiedCount' | trans: { qualified: trace.qualifiedCount, candidate: trace.candidateCount } }}
+          <span class="text-ink-muted font-normal">{{ 'shared.recommendationTrace.requiredCount' | trans: { required: trace.minQualifiedItems } }}</span>
         </div>
       </div>
     </div>
 
     <div class="text-sm text-ink-soft">
-      กลยุทธ์ปัจจุบัน: <span class="font-semibold text-ink">{{ trace.strategyReason }}</span>
+      {{ 'shared.recommendationTrace.currentStrategy' | trans: { strategy: trace.strategyReason } }}
     </div>
 
     <section>
-      <h3 class="text-sm font-bold text-ink mb-3">เอกสารที่พิจารณา</h3>
+      <h3 class="text-sm font-bold text-ink mb-3">{{ 'shared.recommendationTrace.consideredDocuments' | trans }}</h3>
       @if (trace.candidates.length === 0) {
-        <app-empty-state title="ยังไม่มีเอกสารที่เข้าข่ายให้วิเคราะห์" />
+        <app-empty-state [title]="'shared.recommendationTrace.noCandidates' | trans" />
       } @else {
         <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
           <table class="w-full min-w-[560px]">
             <thead class="bg-pink-50">
               <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-                <th class="px-4 py-3 font-semibold">เอกสาร</th>
-                <th class="px-4 py-3 font-semibold">คะแนนความเกี่ยวข้อง</th>
-                <th class="px-4 py-3 font-semibold">ผลการคัดเลือก</th>
+                <th class="px-4 py-3 font-semibold">{{ 'shared.recommendationTrace.documentHeader' | trans }}</th>
+                <th class="px-4 py-3 font-semibold">{{ 'shared.recommendationTrace.relevanceHeader' | trans }}</th>
+                <th class="px-4 py-3 font-semibold">{{ 'shared.recommendationTrace.resultHeader' | trans }}</th>
               </tr>
             </thead>
             <tbody>
@@ -70,7 +70,7 @@
                   <td class="px-4 py-3 text-sm text-ink-soft">{{ c.relevanceScore | number: '1.2-3' }}</td>
                   <td class="px-4 py-3 text-sm">
                     @if (c.passed) {
-                      <span class="pill bg-emerald-100 text-emerald-700">ผ่าน</span>
+                      <span class="pill bg-emerald-100 text-emerald-700">{{ 'shared.recommendationTrace.passBadge' | trans }}</span>
                     } @else {
                       <span class="text-ink-muted">{{ c.excludedReason }}</span>
                     }
@@ -80,14 +80,12 @@
                   <tr class="border-t border-line bg-pink-50/40">
                     <td colspan="3" class="px-4 py-3">
                       @if (c.matchedFacets.length === 0) {
-                        <span class="text-xs text-ink-muted">ไม่มีรายละเอียดการคิดคะแนน</span>
+                        <span class="text-xs text-ink-muted">{{ 'shared.recommendationTrace.noScoreDetails' | trans }}</span>
                       } @else {
                         <ul class="text-xs text-ink-soft space-y-1">
                           @for (m of c.matchedFacets; track m.facetType + m.facetValue) {
                             <li>
-                              {{ m.facetLabel }} · คะแนนผู้ใช้ {{ m.userScore | number: '1.0-2' }} ×
-                              น้ำหนัก {{ m.weight | number: '1.0-2' }} =
-                              {{ m.contribution | number: '1.0-4' }}
+                              {{ 'shared.recommendationTrace.userScoreLabel' | trans: { label: m.facetLabel, score: (m.userScore | number: '1.0-2') ?? '0', weight: (m.weight | number: '1.0-2') ?? '0', contribution: (m.contribution | number: '1.0-4') ?? '0' } }}
                             </li>
                           }
                         </ul>

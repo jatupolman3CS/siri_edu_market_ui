@@ -15,6 +15,8 @@ import {
   type NotificationEventConfigItem,
   type UpdateNotificationEventConfigRequest,
 } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** The five switches of one row — every one of them is a field of the §3.7 PUT body. */
@@ -37,30 +39,22 @@ export interface NotificationConfigGroup {
   items: NotificationEventConfigItem[];
 }
 
-/**
- * §3.7 group values. Unknown values (an event registered by a later wave per §3.9 before this
- * map is updated) fall back to the raw key rather than disappearing from the page.
- */
-const GROUP_LABELS: Readonly<Record<string, string>> = {
-  payout: 'การเงินและการถอนเงิน',
-  moderation: 'การตรวจสอบเอกสาร',
-  engagement: 'การมีส่วนร่วมกับร้านค้า',
-  content: 'เนื้อหาใหม่',
-  commerce: 'การซื้อขาย',
-  system: 'ระบบ',
+/** Fallback group label keys for groups not yet in i18n. */
+const GROUP_TRANSLATION_KEYS: Readonly<Record<string, string>> = {
+  payout: 'admin.notifConfig.groupPayout',
+  moderation: 'admin.notifConfig.groupModeration',
+  engagement: 'admin.notifConfig.groupEngagement',
+  content: 'admin.notifConfig.groupContent',
+  commerce: 'admin.notifConfig.groupCommerce',
+  system: 'admin.notifConfig.groupSystem',
 };
 
-/** §4.2 — audience pill copy. */
-const AUDIENCE_LABELS: Readonly<Record<NotificationAudience, string>> = {
-  buyer: 'ผู้ซื้อ',
-  seller: 'ผู้ขาย',
-  admin: 'ผู้ดูแลระบบ',
+/** §4.2 — audience pill translation keys. */
+const AUDIENCE_TRANSLATION_KEYS: Readonly<Record<NotificationAudience, string>> = {
+  buyer: 'admin.notifConfig.audienceBuyer',
+  seller: 'admin.notifConfig.audienceSeller',
+  admin: 'admin.notifConfig.audienceAdmin',
 };
-
-const SAVE_OK_MESSAGE = 'บันทึกการตั้งค่าแล้ว';
-const SAVE_FAILED_MESSAGE = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
-const THROTTLE_RANGE_MESSAGE = 'ระยะเวลาหน่วงต้องอยู่ระหว่าง 0 ถึง 10080 นาที';
-const DAILY_CAP_RANGE_MESSAGE = 'จำนวนสูงสุดต่อวันต้องอยู่ระหว่าง 0 ถึง 1000';
 
 function toInteger(value: unknown, fallback: number): number {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
@@ -90,6 +84,7 @@ function toInteger(value: unknown, fallback: number): number {
     NzModalModule,
     NzTooltipModule,
     IconComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-config-admin.page.html',
@@ -99,6 +94,7 @@ export class NotificationConfigAdminPage {
   private readonly config = inject(NotificationConfigService);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
+  private readonly translation = inject(TranslationService);
 
   readonly items = this.config.items;
   readonly loading = this.config.loading;
@@ -126,7 +122,9 @@ export class NotificationConfigAdminPage {
     for (const item of this.items()) {
       let group = byKey.get(item.group);
       if (!group) {
-        group = { key: item.group, label: GROUP_LABELS[item.group] ?? item.group, items: [] };
+        const gKey = GROUP_TRANSLATION_KEYS[item.group];
+        const gLabel = gKey ? this.translation.t(gKey) : item.group;
+        group = { key: item.group, label: gLabel, items: [] };
         byKey.set(item.group, group);
         groups.push(group);
       }
@@ -141,7 +139,8 @@ export class NotificationConfigAdminPage {
   }
 
   audienceLabel(audience: NotificationAudience): string {
-    return AUDIENCE_LABELS[audience];
+    const key = AUDIENCE_TRANSLATION_KEYS[audience];
+    return key ? this.translation.t(key) : audience;
   }
 
   isRowBusy(item: NotificationEventConfigItem): boolean {
@@ -209,11 +208,11 @@ export class NotificationConfigAdminPage {
     const dailyCapPerRecipient = this.dailyCapDraft(item);
 
     if (throttleWindowMinutes < this.throttleMin || throttleWindowMinutes > this.throttleMax) {
-      this.message.error(THROTTLE_RANGE_MESSAGE);
+      this.message.error(this.translation.t('admin.notifConfig.throttleRangeError'));
       return;
     }
     if (dailyCapPerRecipient < this.dailyCapMin || dailyCapPerRecipient > this.dailyCapMax) {
-      this.message.error(DAILY_CAP_RANGE_MESSAGE);
+      this.message.error(this.translation.t('admin.notifConfig.dailyCapRangeError'));
       return;
     }
 
@@ -223,10 +222,10 @@ export class NotificationConfigAdminPage {
   /** §6 fe-2 step 5: confirm through NzModal — never a native `confirm()`. */
   confirmReset(item: NotificationEventConfigItem): void {
     this.modal.confirm({
-      nzTitle: 'คืนค่าเริ่มต้น',
+      nzTitle: this.translation.t('admin.notifConfig.confirmResetTitle'),
       nzContent: `คืนค่าการตั้งค่าของ "${item.label}" กลับเป็นค่าเริ่มต้นของระบบหรือไม่?`,
-      nzOkText: 'คืนค่าเริ่มต้น',
-      nzCancelText: 'ยกเลิก',
+      nzOkText: this.translation.t('admin.notifConfig.confirmResetOk'),
+      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
       nzOnOk: () => this.reset(item),
     });
   }
@@ -266,7 +265,7 @@ export class NotificationConfigAdminPage {
     try {
       await this.config.update(item.eventKey, request);
       this.clearDraft(item.eventKey);
-      this.message.success(SAVE_OK_MESSAGE);
+      this.message.success(this.translation.t('admin.notifConfig.saveSuccess'));
     } catch (e) {
       this.message.error(this.failureText(e));
     } finally {
@@ -280,7 +279,7 @@ export class NotificationConfigAdminPage {
     try {
       await this.config.reset(item.eventKey);
       this.clearDraft(item.eventKey);
-      this.message.success(SAVE_OK_MESSAGE);
+      this.message.success(this.translation.t('admin.notifConfig.saveSuccess'));
     } catch (e) {
       this.message.error(this.failureText(e));
     } finally {
@@ -294,9 +293,10 @@ export class NotificationConfigAdminPage {
    * leave an admin staring at a switch that silently refuses to move, so it is appended.
    */
   private failureText(error: unknown): string {
+    const saveFailed = this.translation.t('admin.notifConfig.saveFailed');
     const detail = error instanceof Error ? error.message.trim() : '';
-    return detail && detail !== SAVE_FAILED_MESSAGE
-      ? `${SAVE_FAILED_MESSAGE} — ${detail}`
-      : SAVE_FAILED_MESSAGE;
+    return detail && detail !== saveFailed
+      ? `${saveFailed} — ${detail}`
+      : saveFailed;
   }
 }

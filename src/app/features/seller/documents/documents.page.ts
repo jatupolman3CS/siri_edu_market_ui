@@ -15,6 +15,8 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-seller-documents',
@@ -30,6 +32,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     CompactPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.page.html',
@@ -40,6 +43,7 @@ export class SellerDocumentsPage {
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
   private readonly router = inject(Router);
+  readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -54,13 +58,13 @@ export class SellerDocumentsPage {
   );
   readonly coverFallback = placeholderCoverUrl();
 
-  readonly statuses = [
-    { value: 'all' as const, label: 'ทั้งหมด' },
-    { value: 'draft' as const, label: 'ฉบับร่าง' },
-    { value: 'approved' as const, label: 'เผยแพร่แล้ว' },
-    { value: 'pending' as const, label: 'รออนุมัติ' },
-    { value: 'rejected' as const, label: 'ไม่ผ่าน' },
-  ];
+  readonly statuses = computed(() => [
+    { value: 'all' as const, label: this.translation.t('seller.statusAll') },
+    { value: 'draft' as const, label: this.translation.t('seller.statusDraftLabel') },
+    { value: 'approved' as const, label: this.translation.t('seller.statusApprovedLabel') },
+    { value: 'pending' as const, label: this.translation.t('seller.statusPendingLabel') },
+    { value: 'rejected' as const, label: this.translation.t('seller.statusRejectedLabel') },
+  ]);
 
   constructor() {
     void this.reload();
@@ -116,13 +120,13 @@ export class SellerDocumentsPage {
   statusLabel(status: string): string {
     switch ((status || '').toLowerCase()) {
       case 'approved':
-        return 'เผยแพร่';
+        return this.translation.t('seller.statusApproved');
       case 'pending':
-        return 'รออนุมัติ';
+        return this.translation.t('seller.statusPending');
       case 'rejected':
-        return 'ไม่ผ่าน';
+        return this.translation.t('seller.statusRejected');
       case 'draft':
-        return 'ฉบับร่าง';
+        return this.translation.t('seller.statusDraft');
       default:
         return status || '—';
     }
@@ -163,14 +167,14 @@ export class SellerDocumentsPage {
 
   confirmRemove(id: string, title: string): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันการลบเอกสาร',
-      nzContent: `ต้องการลบ "${title}" ใช่ไหม?`,
-      nzOkText: 'ลบ',
+      nzTitle: this.translation.t('seller.confirmDeleteTitle'),
+      nzContent: this.translation.t('seller.confirmDeleteContent', { title }),
+      nzOkText: this.translation.t('common.delete'),
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel'),
       nzOnOk: async () => {
         await this.seller.remove(id);
-        this.message.success(`ลบ "${title}" เรียบร้อย`);
+        this.message.success(this.translation.t('seller.deleteSuccess', { title }));
       },
     });
   }

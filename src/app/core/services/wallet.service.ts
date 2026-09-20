@@ -10,6 +10,7 @@ import {
 import { unwrapSdkResult } from './api-result';
 import { AuthService } from './auth.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import {
   errorActionState,
   idleActionState,
@@ -28,6 +29,7 @@ import { createInfinitePager } from './infinite-pager';
 @Injectable({ providedIn: 'root' })
 export class WalletService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
   private readonly auth = inject(AuthService);
 
   private readonly _summary = signal<WalletSummary | null>(null);
@@ -39,7 +41,7 @@ export class WalletService {
 
   private readonly ledgerPager = createInfinitePager<WalletEntry>({
     pageSize: 20,
-    errorMessage: 'โหลดประวัติยอดเงินไม่สำเร็จ',
+    errorMessage: this.translation.t('wallet.loadEntriesFailed'),
     fetch: async (Page, PageSize) => {
       const result = await getApiMeWalletEntries({ query: { Page, PageSize } });
       const data = unwrapSdkResult(result);
@@ -61,7 +63,7 @@ export class WalletService {
   async refreshSummary(): Promise<void> {
     if (!this.auth.accessToken()) {
       if (this.auth.isAuthenticated()) {
-        this._state.set(errorActionState('โหลดข้อมูลกระเป๋าเงินไม่สำเร็จ'));
+        this._state.set(errorActionState(this.translation.t('wallet.loadFailed')));
       }
       return;
     }
@@ -73,8 +75,8 @@ export class WalletService {
       this._summary.set(mapWalletSummary(data));
       this._state.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดข้อมูลกระเป๋าเงิน', e);
-      this._state.set(errorActionState('โหลดข้อมูลกระเป๋าเงินไม่สำเร็จ'));
+      this.apiFail.report('errors.context.loadWallet', e);
+      this._state.set(errorActionState(this.translation.t('wallet.loadFailed')));
     }
   }
 
@@ -83,7 +85,7 @@ export class WalletService {
     try {
       await this.ledgerPager.loadFirst();
     } catch (e) {
-      this.apiFail.report('โหลดประวัติยอดเงิน', e);
+      this.apiFail.report('errors.context.loadWalletEntries', e);
     }
   }
 
@@ -99,7 +101,7 @@ export class WalletService {
       const data = unwrapSdkResult(result);
       return mapWalletTopUp(data);
     } catch (e) {
-      this.apiFail.report('สร้างรายการเติมเงิน', e);
+      this.apiFail.report('errors.context.createTopUp', e);
       return null;
     }
   }
@@ -111,7 +113,7 @@ export class WalletService {
       const data = unwrapSdkResult(result);
       return mapWalletTopUp(data);
     } catch (e) {
-      this.apiFail.report('ตรวจสอบสถานะการเติมเงิน', e);
+      this.apiFail.report('errors.context.pollTopUp', e);
       return null;
     }
   }

@@ -6,3 +6,85 @@ input[type='range'] {
   height: 6px;
   border-radius: 3px;
 }
+
+/* ─── Real-preview modal (actual watermarked JPEG pages, server-rendered) ───
+   Same pattern as `features/buyer/document-detail/document-detail.page.scss` — kept as a
+   separate copy per this repo's templateUrl/styleUrl-per-component convention. */
+
+.preview-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+}
+
+.preview-modal-content {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 100%);
+  max-height: min(90vh, 100dvh - 2rem);
+  min-height: 0;
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow:
+    0 24px 48px rgba(15, 23, 42, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.preview-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #fffdf9 0%, #fff 100%);
+}
+
+.gallery-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  background: #f8fafc;
+}
+
+.preview-image-card {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  border-radius: 0.75rem;
+  line-height: 0;
+  overflow: visible;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.preview-image-item {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  border-radius: 0.75rem;
+  vertical-align: top;
+}

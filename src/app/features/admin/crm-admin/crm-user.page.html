@@ -1,6 +1,6 @@
 <div class="max-w-3xl mx-auto space-y-6">
   <header>
-    <a routerLink="/admin/crm" class="text-sm text-pink-600 hover:underline">‹ กลับไปภาพรวม CRM</a>
+    <a routerLink="/admin/crm" class="text-sm text-pink-600 hover:underline">‹ {{ 'admin.backToCrmOverview' | trans }}</a>
   </header>
 
   <app-crm-user-panel [userId]="userId()" />

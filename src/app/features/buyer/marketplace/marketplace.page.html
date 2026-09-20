@@ -11,10 +11,10 @@
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-bold text-ink flex items-center gap-2">
           <app-icon name="eye" [size]="14" className="text-pink-500" />
-          ที่คุณเพิ่งดู
+          {{ 'home.recentlyViewedTitle' | trans }}
         </h3>
         <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">
-          ล้าง
+          {{ 'home.clearRecent' | trans }}
         </button>
       </div>
       <div class="flex gap-3 overflow-x-auto pb-1">
@@ -484,8 +484,8 @@
                 <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
                   <app-icon name="package" [size]="30" className="text-pink-500" />
                 </div>
-                <h3 class="text-lg font-bold text-ink">ยังไม่มีแพ็กเกจที่ตรงกับคำค้นหานี้</h3>
-                <p class="text-sm text-ink-muted mt-1 max-w-sm">ลองล้างคำค้นหา หรือลองคำอื่นดูนะคะ</p>
+                <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyBundleTitle' | trans }}</h3>
+                <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyBundleDesc' | trans }}</p>
                 @if (catalog.filters().search) {
                   <button class="btn-pink mt-4" type="button" (click)="clearSearch()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
                 }

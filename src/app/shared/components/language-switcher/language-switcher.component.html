@@ -16,7 +16,9 @@
   [attr.aria-label]="translation.t('header.switchLanguage')"
 >
   <span class="text-sm leading-none">{{ translation.currentLang() === 'th' ? '🇹🇭' : '🇬🇧' }}</span>
-  <span class="font-bold">{{ translation.currentLang() === 'th' ? 'ไทย' : 'English' }}</span>
+  <span class="font-bold">
+    {{ translation.currentLang() === 'th' ? translation.t('header.langTh') : translation.t('header.langEn') }}
+  </span>
   <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
   </svg>
@@ -33,7 +35,7 @@
       [class.!font-bold]="translation.currentLang() === 'th'"
     >
       <span class="text-base leading-none">🇹🇭</span>
-      <span>ไทย</span>
+      <span>{{ translation.t('header.langTh') }}</span>
       @if (translation.currentLang() === 'th') {
         <span class="ml-auto text-pink-600 font-bold">✓</span>
       }
@@ -47,7 +49,7 @@
       [class.!font-bold]="translation.currentLang() === 'en'"
     >
       <span class="text-base leading-none">🇬🇧</span>
-      <span>English</span>
+      <span>{{ translation.t('header.langEn') }}</span>
       @if (translation.currentLang() === 'en') {
         <span class="ml-auto text-pink-600 font-bold">✓</span>
       }

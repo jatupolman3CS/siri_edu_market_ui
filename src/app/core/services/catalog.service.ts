@@ -45,6 +45,7 @@ import type {
 } from '../api/types.gen';
 import { unwrapSdkResult, type SdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n/translation.service';
 import {
   errorActionState,
   idleActionState,
@@ -118,6 +119,7 @@ const DEFAULT_FILTERS: CatalogFilters = {
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _documents = signal<DocumentItem[]>([]);
   private readonly _categories = signal<Category[]>([]);
@@ -143,7 +145,7 @@ export class CatalogService {
   private readonly _documentDetailNotFound = signal<boolean>(false);
   private readonly catalogPager = createInfinitePager<DocumentItem>({
     pageSize: 24,
-    errorMessage: 'โหลดรายการเอกสารไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.context.loadCatalog'),
     fetch: async (Page, PageSize) => {
       const result = await getApiMarketplaceCatalog({ query: { Page, PageSize } });
       const data = unwrapSdkResult(result);
@@ -166,7 +168,7 @@ export class CatalogService {
 
   private readonly freePager = createInfinitePager<DocumentItem>({
     pageSize: 24,
-    errorMessage: 'โหลดเอกสารฟรีไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.context.loadFreeDocuments'),
     fetch: async (Page, PageSize) => {
       const result = await getApiMarketplaceFree({ query: { Page, PageSize } });
       const data = unwrapSdkResult(result);
@@ -188,7 +190,7 @@ export class CatalogService {
   private readonly marketplacePager = createServerPager<DocumentItem>({
     pageSize: 40,
     pageSizeOptions: [12, 20, 24, 40, 48],
-    errorMessage: 'ค้นหาเอกสารไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.context.searchDocuments'),
     fetch: async (page, pageSize) => {
       const result = await getApiMarketplaceSearch(this.buildSearchOptions(page, pageSize));
       const data = unwrapSdkResult(result as SdkResult<MarketplaceSearchResponse>);
@@ -261,7 +263,7 @@ export class CatalogService {
     try {
       await run();
     } catch (e) {
-      this.apiFail.report('ค้นหาเอกสาร', e);
+      this.apiFail.report('errors.context.searchDocuments', e);
     }
   }
 
@@ -335,7 +337,7 @@ export class CatalogService {
         }
         this._catalogState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดรายการเอกสารเพิ่มเติม', e);
+        this.apiFail.report('errors.context.loadMoreDocuments', e);
         this._catalogState.set(errorActionState('โหลดรายการเอกสารไม่สำเร็จ'));
       }
     })();
@@ -479,7 +481,7 @@ export class CatalogService {
       this._catalogState.set(idleActionState());
     } catch (e) {
       this.apiFail.report(
-        useSearch ? 'ค้นหาเอกสาร' : 'โหลดแคตตาล็อกเอกสาร',
+        useSearch ? 'errors.context.searchDocuments' : 'errors.context.loadCatalog',
         e,
       );
       this._catalogState.set(
@@ -501,7 +503,7 @@ export class CatalogService {
         this._categoriesLoaded = true;
         this._categoriesState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดหมวดหมู่', e);
+        this.apiFail.report('errors.context.loadCategories', e);
         this._categoriesState.set(errorActionState('โหลดหมวดหมู่ไม่สำเร็จ'));
       }
     })();
@@ -535,7 +537,7 @@ export class CatalogService {
         }
         this._freeState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดเอกสารฟรี', e);
+        this.apiFail.report('errors.context.loadFreeDocuments', e);
         this._freeState.set(errorActionState('โหลดเอกสารฟรีไม่สำเร็จ'));
       }
     })();
@@ -556,7 +558,7 @@ export class CatalogService {
         }
         this._freeState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดเอกสารฟรีเพิ่มเติม', e);
+        this.apiFail.report('errors.context.loadMoreFreeDocuments', e);
         this._freeState.set(errorActionState('โหลดเอกสารฟรีไม่สำเร็จ'));
       }
     })();
@@ -592,7 +594,7 @@ export class CatalogService {
         this._recommendedReason.set('');
         this._recommendedGatePassed.set(false);
         this._recommendedExplanations.set(new Map());
-        this.apiFail.report('โหลดคำแนะนำสำหรับคุณ', e);
+        this.apiFail.report('errors.context.loadRecommendations', e);
       }
     })();
   }
@@ -636,7 +638,7 @@ export class CatalogService {
       this._categoryDetailState.set(idleActionState());
       return mapped;
     } catch (e) {
-      this.apiFail.report('โหลดรายละเอียดหมวดหมู่', e);
+      this.apiFail.report('errors.context.loadCategoryDetail', e);
       this._categoryDetailState.set(
         errorActionState('โหลดรายละเอียดหมวดหมู่ไม่สำเร็จ'),
       );
@@ -679,7 +681,7 @@ export class CatalogService {
         );
         this._categoryDocumentsState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดเอกสารในหมวดหมู่', e);
+        this.apiFail.report('errors.context.loadCategoryDocuments', e);
         this._categoryDocuments.set([]);
         this._categoryDocumentsState.set(
           errorActionState('โหลดเอกสารในหมวดหมู่ไม่สำเร็จ'),
@@ -702,7 +704,7 @@ export class CatalogService {
       const data = unwrapSdkResult(result);
       this._documents.set((data.items ?? []).map(mapDocument));
     } catch (e) {
-      this.apiFail.report('ค้นหาเอกสาร', e);
+      this.apiFail.report('errors.context.searchDocuments', e);
     }
   }
 
@@ -749,7 +751,7 @@ export class CatalogService {
           this._documentDetailState.set(errorActionState('ไม่พบเอกสารนี้'));
           return;
         }
-        this.apiFail.report('โหลดรายละเอียดเอกสาร', e);
+        this.apiFail.report('errors.context.loadDocumentDetail', e);
         this._documentDetailState.set(errorActionState('โหลดรายละเอียดเอกสารไม่สำเร็จ'));
       }
     })();
@@ -784,7 +786,7 @@ export class CatalogService {
           query: { Page: 1, PageSize: limit },
         });
       } catch (e) {
-        this.apiFail.report('โหลดเอกสารที่เกี่ยวข้อง', e);
+        this.apiFail.report('errors.context.loadRelatedDocuments', e);
       }
     })();
   }
@@ -1076,7 +1078,7 @@ export class CatalogService {
       return data;
     } catch (e) {
       this._failedSellerProfileIds.add(sellerId);
-      this.apiFail.report('โหลดข้อมูลผู้ขาย', e);
+      this.apiFail.report('errors.context.loadSellerInfo', e);
       this._sellerProfileState.set(errorActionState('โหลดข้อมูลผู้ขายไม่สำเร็จ'));
       this._sellerProfile.set(null);
       this._sellerSalesByMonth.set([]);
@@ -1383,7 +1385,7 @@ export class CatalogService {
         );
         this._sellerDocumentsState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('โหลดเอกสารของร้าน', e);
+        this.apiFail.report('errors.context.loadStoreDocuments', e);
         this._sellerDocuments.set([]);
         this._sellerDocumentsState.set(
           errorActionState('โหลดเอกสารของร้านไม่สำเร็จ'),
@@ -1427,7 +1429,7 @@ export class CatalogService {
         .map(mapBoughtTogetherItem)
         .filter((item): item is BoughtTogetherItem => item !== null);
     } catch (e) {
-      this.apiFail.report('โหลดเอกสารที่มักซื้อคู่กัน', e);
+      this.apiFail.report('errors.context.loadFrequentlyBought', e);
       return [];
     }
   }

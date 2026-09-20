@@ -22,19 +22,6 @@ const AUDIENCE_ROUTES: Readonly<Record<NotificationAudience, string>> = {
   admin: '/admin/notifications',
 };
 
-/** Spec §4.2 — copy for the cross-context link inside the bell dropdown. */
-const CROSS_CONTEXT_LABELS: Readonly<Record<NotificationAudience, string>> = {
-  buyer: 'ผู้ซื้อ',
-  seller: 'ร้านค้า',
-  admin: 'ผู้ดูแลระบบ',
-};
-
-/** Spec §4.2 — page heading per audience. */
-const AUDIENCE_HEADINGS: Readonly<Record<NotificationAudience, string>> = {
-  buyer: 'การแจ้งเตือนของฉัน',
-  seller: 'การแจ้งเตือนของร้าน',
-  admin: 'การแจ้งเตือนของผู้ดูแลระบบ',
-};
 
 /** Strips query string / fragment so `/orders?tab=paid` is classified by its path only. */
 function pathOf(url: string): string {
@@ -64,13 +51,6 @@ export function notificationsRouteFor(audience: NotificationAudience): string {
   return AUDIENCE_ROUTES[audience];
 }
 
-export function notificationHeadingFor(audience: NotificationAudience): string {
-  return AUDIENCE_HEADINGS[audience];
-}
-
-export function crossContextLabelFor(audience: NotificationAudience): string {
-  return CROSS_CONTEXT_LABELS[audience];
-}
 
 /**
  * Spec §3.2 "กฎ linkUrl" applied a second time on the client (root cause #3).
@@ -80,6 +60,17 @@ export function crossContextLabelFor(audience: NotificationAudience): string {
  * other layout. Re-checking here is what makes AC-6 ("URL ปลายทางต้องไม่ขึ้นต้นด้วย /seller")
  * hold regardless of what is already sitting in `NOTIFICATION_FEED_ITEM`.
  */
+/** Spec §4.2 — page heading per audience. */
+const NOTIFICATION_HEADINGS: Readonly<Record<NotificationAudience, string>> = {
+  buyer: 'การแจ้งเตือนของฉัน',
+  seller: 'การแจ้งเตือนของร้าน',
+  admin: 'การแจ้งเตือนของผู้ดูแลระบบ',
+};
+
+export function notificationHeadingFor(audience: NotificationAudience): string {
+  return NOTIFICATION_HEADINGS[audience];
+}
+
 export function resolveSafeLinkUrl(linkUrl: string, audience: NotificationAudience): string {
   const fallback = AUDIENCE_ROUTES[audience];
   const raw = (linkUrl || '').trim();
@@ -100,6 +91,7 @@ export class NotificationContextService {
   /** Notification history route of the current layout — used by "ดูการแจ้งเตือนทั้งหมด" (AC-7). */
   readonly notificationsRoute = computed(() => notificationsRouteFor(this._context()));
 
+  /** Spec §4.2 — page heading for the current audience. */
   readonly heading = computed(() => notificationHeadingFor(this._context()));
 
   constructor() {

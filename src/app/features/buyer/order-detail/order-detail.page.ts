@@ -8,6 +8,8 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService, OrderService, WalletService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -28,6 +30,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     ImgFallbackDirective,
     ThbPipe,
     TimeAgoPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './order-detail.page.html',
@@ -40,6 +43,7 @@ export class BuyerOrderDetailPage {
   private readonly route = inject(ActivatedRoute);
   readonly wallet = inject(WalletService);
   private readonly message = inject(NzMessageService);
+  readonly translation = inject(TranslationService);
 
   readonly loading = signal(true);
   readonly payingWithWallet = signal(false);
@@ -91,13 +95,14 @@ export class BuyerOrderDetailPage {
   }
 
   statusLabel(s: string): string {
-    return {
-      awaiting_payment: 'รอชำระเงิน',
-      paid: 'ชำระแล้ว',
-      fulfilled: 'สำเร็จ',
-      refunded: 'คืนเงินแล้ว',
-      cancelled: 'ยกเลิก',
-    }[s] ?? s;
+    const keyMap: Record<string, string> = {
+      awaiting_payment: 'orders.statusAwaitingPayment',
+      paid: 'orders.statusPaid',
+      fulfilled: 'orders.statusFulfilled',
+      refunded: 'orders.statusRefunded',
+      cancelled: 'orders.statusCancelled',
+    };
+    return keyMap[s] ? this.translation.t(keyMap[s] as any) : s;
   }
 
   statusClass(s: string): string {
@@ -111,16 +116,14 @@ export class BuyerOrderDetailPage {
   }
 
   paymentLabel(p: string): string {
-    return {
-      // S-04: an order carries no method until Stripe reports one at the webhook, so this is
-      // what an unpaid order shows rather than a method the buyer never chose.
-      unknown: 'ยังไม่ระบุ',
-      promptpay: 'PromptPay',
-      credit_card: 'บัตรเครดิต',
-      other: 'ช่องทางอื่น',
-      // Historical: orders paid before the Stripe migration.
-      truemoney: 'TrueMoney',
-    }[p] ?? p;
+    const keyMap: Record<string, string> = {
+      unknown: 'orders.methodUnknown',
+      promptpay: 'orders.methodPromptpay',
+      credit_card: 'orders.methodCreditCard',
+      other: 'orders.methodOther',
+      truemoney: 'orders.methodTrueMoney',
+    };
+    return keyMap[p] ? this.translation.t(keyMap[p] as any) : p;
   }
 
   readonly refreshing = signal(false);
@@ -157,7 +160,7 @@ export class BuyerOrderDetailPage {
     try {
       const updated = await this.orderService.payWithWallet(id);
       if (updated && (updated.status === 'paid' || updated.status === 'fulfilled')) {
-        this.message.success('ชำระเงินด้วยกระเป๋าเงินสำเร็จ ยอดเงินตัดเรียบร้อยแล้ว');
+        this.message.success(this.translation.t('orderDetail.walletPaidSuccess'));
         await this.wallet.refreshSummary();
       }
     } finally {

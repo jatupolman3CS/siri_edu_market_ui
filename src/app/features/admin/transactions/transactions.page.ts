@@ -9,6 +9,8 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-admin-transactions',
@@ -20,6 +22,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     PaginationComponent,
     ThbPipe,
     TimeAgoPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transactions.page.html',
@@ -29,6 +32,7 @@ export class AdminTransactionsPage {
   readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+  private readonly i18n = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -46,11 +50,11 @@ export class AdminTransactionsPage {
   readonly status = signal<'all' | 'fulfilled' | 'paid' | 'refunded' | 'awaiting_payment'>('all');
 
   readonly statuses = [
-    { value: 'all' as const, label: 'ทั้งหมด' },
-    { value: 'fulfilled' as const, label: 'สำเร็จ' },
-    { value: 'paid' as const, label: 'ชำระแล้ว' },
-    { value: 'awaiting_payment' as const, label: 'รอชำระ' },
-    { value: 'refunded' as const, label: 'คืนเงิน' },
+    { value: 'all' as const, key: 'admin.transactions.statusAll' },
+    { value: 'fulfilled' as const, key: 'admin.transactions.statusFulfilled' },
+    { value: 'paid' as const, key: 'admin.transactions.statusPaid' },
+    { value: 'awaiting_payment' as const, key: 'admin.transactions.statusAwaiting' },
+    { value: 'refunded' as const, key: 'admin.transactions.statusRefunded' },
   ];
 
   constructor() {
@@ -91,21 +95,19 @@ export class AdminTransactionsPage {
   }
 
   statusLabel(s: string): string {
-    return {
-      fulfilled: 'สำเร็จ',
-      paid: 'ชำระแล้ว',
-      awaiting_payment: 'รอชำระ',
-      refunded: 'คืนเงิน',
-      cancelled: 'ยกเลิก',
-    }[s] ?? s;
+    const keyMap: Record<string, string> = {
+      fulfilled: 'admin.transactions.statusLabelFulfilled',
+      paid: 'admin.transactions.statusLabelPaid',
+      awaiting_payment: 'admin.transactions.statusLabelAwaiting',
+      refunded: 'admin.transactions.statusLabelRefunded',
+      cancelled: 'admin.transactions.statusLabelCancelled',
+    };
+    return keyMap[s] ? this.i18n.t(keyMap[s]) : s;
   }
 
   payLabel(p: string): string {
-    return {
-      promptpay: 'PromptPay',
-      credit_card: 'บัตรเครดิต',
-      truemoney: 'TrueMoney',
-    }[p] ?? p;
+    if (p === 'credit_card') return this.i18n.t('admin.transactions.payLabelCreditCard');
+    return { promptpay: 'PromptPay', truemoney: 'TrueMoney' }[p] ?? p;
   }
 
 
@@ -130,7 +132,7 @@ export class AdminTransactionsPage {
     try {
       await this.admin.refundOrder(id);
       this.confirmingId.set(null);
-      this.message.success('คืนเงินเรียบร้อย และเพิกถอนสิทธิ์ในคลังของผู้ซื้อแล้ว');
+      this.message.success(this.i18n.t('admin.transactions.refundSuccess'));
     } catch (e) {
       // The server's message names the actual reason — already refunded, never paid, or the
       // seller has already drawn this money — and that is what the admin needs to read.

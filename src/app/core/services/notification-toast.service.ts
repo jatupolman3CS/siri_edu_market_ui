@@ -12,6 +12,7 @@ import {
   type NotificationAudience,
 } from './notification-context.service';
 import { NotificationFeedService, type NotificationFeedItemResponse } from './notification-feed.service';
+import { TranslationService } from '../i18n/translation.service';
 
 /** Matches the bell's badge/list refresh cadence (spec §4.4 — no WebSocket/SSE in v1). */
 const POLL_INTERVAL_MS = 60_000;
@@ -77,6 +78,7 @@ export class NotificationToastService {
   private readonly router = inject(Router);
   private readonly nzNotification = inject(NzNotificationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translation = inject(TranslationService);
 
   /** Audiences that have had at least one poll — see the §2 baseline note above. */
   private readonly baselinedAudiences = new Set<NotificationAudience>();
@@ -159,8 +161,8 @@ export class NotificationToastService {
 
   private presentGrouped(count: number, audience: NotificationAudience): void {
     const ref = this.nzNotification.info(
-      `มีการแจ้งเตือนใหม่อีก ${count} รายการ`,
-      'คลิกเพื่อดูการแจ้งเตือนทั้งหมด',
+      this.translation.t('notifToast.newNotifications', { count }),
+      this.translation.t('notifToast.clickToViewAll'),
     );
     ref.onClick.pipe(take(1)).subscribe(() => void this.router.navigateByUrl(notificationsRouteFor(audience)));
   }

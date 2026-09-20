@@ -5,6 +5,7 @@ import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { AdminService, type AnnouncementRequest } from '../../../core/services/admin.service';
 import { SellerService } from '../../../core/services/seller.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import {
   errorActionState,
@@ -16,6 +17,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import type { AnnouncementAdmin } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** announcement-popup v2 §3.1: images per announcement, enforced client-side before hitting the API (AC-26). */
 const MIN_IMAGES = 1;
@@ -41,11 +43,11 @@ export function announcementStatus(a: AnnouncementAdmin, now = new Date()): Anno
   return 'active';
 }
 
-const STATUS_LABELS: Record<AnnouncementStatus, string> = {
-  disabled: 'ปิดใช้งาน',
-  scheduled: 'รอเริ่ม',
-  expired: 'หมดอายุ',
-  active: 'กำลังแสดง',
+const STATUS_KEYS: Record<AnnouncementStatus, string> = {
+  disabled: 'admin.announcements.statusDisabled',
+  scheduled: 'admin.announcements.statusScheduled',
+  expired: 'admin.announcements.statusExpired',
+  active: 'admin.announcements.statusActive',
 };
 
 /**
@@ -67,6 +69,7 @@ const STATUS_LABELS: Record<AnnouncementStatus, string> = {
     IconComponent,
     PaginationComponent,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './announcements-admin.page.html',
@@ -77,6 +80,7 @@ export class AnnouncementsAdminPage {
   private readonly seller = inject(SellerService);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
+  private readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -120,7 +124,11 @@ export class AnnouncementsAdminPage {
   /** AC-26: shown live, and blocks the modal's OK button — before any API call happens. */
   readonly formImageCountError = computed(() => {
     if (this.formImageCountValid()) return '';
-    return `ต้องมีรูปอย่างน้อย ${MIN_IMAGES} รูป และไม่เกิน ${MAX_IMAGES} รูปต่อประกาศ (ตอนนี้มี ${this.formImageCount()} รูป)`;
+    return this.translation.t('admin.announcements.imageCountError', {
+      min: MIN_IMAGES,
+      max: MAX_IMAGES,
+      count: this.formImageCount(),
+    });
   });
 
   constructor() {
@@ -134,7 +142,7 @@ export class AnnouncementsAdminPage {
       this.state.set(idleActionState());
     } catch {
       this.items.set([]);
-      this.state.set(errorActionState('โหลดรายการประกาศไม่สำเร็จ'));
+      this.state.set(errorActionState(this.translation.t('admin.announcements.loadFailed')));
     }
   }
 
@@ -143,7 +151,7 @@ export class AnnouncementsAdminPage {
   }
 
   statusLabel(a: AnnouncementAdmin): string {
-    return STATUS_LABELS[announcementStatus(a)];
+    return this.translation.t(STATUS_KEYS[announcementStatus(a)]);
   }
 
   openCreate(): void {
@@ -226,7 +234,7 @@ export class AnnouncementsAdminPage {
   async save(): Promise<void> {
     const title = this.formTitle().trim();
     if (!title) {
-      this.message.warning('กรุณากรอกหัวข้อ');
+      this.message.warning(this.translation.t('admin.announcements.titleRequired'));
       return;
     }
     if (!this.formImageCountValid()) {
@@ -254,15 +262,15 @@ export class AnnouncementsAdminPage {
       const editingId = this.editingId();
       if (editingId) {
         await this.admin.updateAnnouncement(editingId, request);
-        this.message.success('บันทึกประกาศเรียบร้อย');
+        this.message.success(this.translation.t('admin.announcements.saveSuccess'));
       } else {
         await this.admin.createAnnouncement(request);
-        this.message.success('เพิ่มประกาศเรียบร้อย');
+        this.message.success(this.translation.t('admin.announcements.createSuccess'));
       }
       this.closeForm();
       await this.refresh();
     } catch {
-      this.message.error('ดำเนินการกับประกาศไม่สำเร็จ');
+      this.message.error(this.translation.t('admin.announcements.actionFailed'));
     } finally {
       this.saving.set(false);
     }
@@ -270,11 +278,11 @@ export class AnnouncementsAdminPage {
 
   confirmDelete(a: AnnouncementAdmin): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันลบประกาศ',
+      nzTitle: this.translation.t('admin.announcements.confirmDeleteTitle'),
       nzContent: `ยืนยันลบประกาศ "${a.title}" หรือไม่? การกระทำนี้ย้อนกลับไม่ได้`,
-      nzOkText: 'ลบ',
+      nzOkText: this.translation.t('common.delete') || 'ลบ',
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.translation.t('common.cancel') || 'ยกเลิก',
       nzOnOk: () => this.remove(a.id),
     });
   }
@@ -282,10 +290,10 @@ export class AnnouncementsAdminPage {
   private async remove(id: string): Promise<void> {
     try {
       await this.admin.deleteAnnouncement(id);
-      this.message.success('ลบประกาศเรียบร้อย');
+      this.message.success(this.translation.t('admin.announcements.deleteSuccess'));
       await this.refresh();
     } catch {
-      this.message.error('ดำเนินการกับประกาศไม่สำเร็จ');
+      this.message.error(this.translation.t('admin.announcements.actionFailed'));
     }
   }
 }

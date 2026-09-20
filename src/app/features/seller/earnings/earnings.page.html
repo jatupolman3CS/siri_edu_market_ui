@@ -1,41 +1,41 @@
 <div class="max-w-6xl">
   @if (seller.sellerProfileRequired()) {
   <div class="card-soft">
-    <app-empty-state emoji="🏪" title="ร้านนี้ยังไม่มีร้านค้า"
-      description="สมัครเป็นผู้ขายก่อนถึงจะเข้าถึงแดชบอร์ด Siri Studio ได้">
-      <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+    <app-empty-state emoji="🏪" [title]="'seller.noShopTitleEarnings' | trans"
+      [description]="'seller.noShopDesc' | trans">
+      <a routerLink="/become-seller" class="btn-pink mt-2">{{ 'seller.openShopCta' | trans }}</a>
     </app-empty-state>
   </div>
   } @else {
   <header class="mb-8">
-    <h1 class="text-3xl font-extrabold text-ink mb-1">รายได้ & Payout</h1>
+    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.earningsTitle' | trans }}</h1>
     <p class="text-sm text-ink-soft">
-      ดูรายได้ ค่าธรรมเนียม และประวัติการถอนเงิน
+      {{ 'seller.earningsSubtitle' | trans }}
     </p>
   </header>
 
   <section class="grid grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 mb-8">
-    <app-stat-card label="รายได้สะสม" [value]="totalEarnings() | thb" icon="💰" />
-    <app-stat-card label="ยอดที่ถอนได้" [value]="availableBalance() | thb" icon="⏳" />
-    <app-stat-card label="กำลังดำเนินการถอน" [value]="onHoldAmount() | thb" icon="🔒" />
-    <app-stat-card label="ส่วนแบ่งของคุณ" [value]="sellerSharePercent() + '%'" icon="🌸" />
+    <app-stat-card [label]="'seller.totalAccumulated' | trans" [value]="totalEarnings() | thb" icon="💰" />
+    <app-stat-card [label]="'seller.withdrawable' | trans" [value]="availableBalance() | thb" icon="⏳" />
+    <app-stat-card [label]="'seller.inProgressWithdraw' | trans" [value]="onHoldAmount() | thb" icon="🔒" />
+    <app-stat-card [label]="'seller.yourShare' | trans" [value]="sellerSharePercent() + '%'" icon="🌸" />
   </section>
 
   @if (seller.nextPayoutDate(); as payoutDate) {
   <div class="text-sm text-ink-soft mb-6 -mt-4">
-    รอบโอนถัดไป: <span class="font-bold text-ink">{{ payoutDate | date: 'd MMM yyyy' }}</span>
+    {{ 'seller.nextPayoutRoundEarnings' | trans: { date: (payoutDate | date: 'd MMM yyyy') ?? '' } }}
   </div>
   }
 
   <div class="card-tile mb-6 bg-gradient-pink">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
       <div>
-        <div class="text-xs text-ink-muted mb-1">ยอดที่ถอนได้</div>
+        <div class="text-xs text-ink-muted mb-1">{{ 'seller.withdrawable' | trans }}</div>
         <div class="text-4xl md:text-5xl font-extrabold text-pink-700">
           {{ availableBalance() | thb }}
         </div>
         <div class="text-sm text-ink-soft mt-2">
-          หักค่าธรรมเนียมแพลตฟอร์มจากทุกคำสั่งซื้อที่ชำระแล้วเรียบร้อย
+          {{ 'seller.availableDesc' | trans }}
         </div>
       </div>
 
@@ -43,7 +43,7 @@
       <div class="md:text-right">
         <button class="btn-pink !px-7 !py-3.5" [disabled]="!canOpenRequest()" (click)="openRequest()">
           <app-icon name="wallet" [size]="18" />
-          ขอถอนเงิน
+          {{ 'seller.requestWithdraw' | trans }}
         </button>
         @if (disableReason()) {
         <div class="text-sm text-ink-soft mt-2">{{ disableReason() }}</div>
@@ -55,33 +55,33 @@
     @if (requestOpen()) {
     <div class="mt-5 pt-5 border-t border-white/50 space-y-3">
       <div class="text-xs font-semibold text-ink-soft">
-        โอนเข้า: <span class="font-normal text-ink-muted">{{ destinationMasked() || 'ยังไม่ได้ตั้งค่าบัญชีรับเงิน' }}</span>
+        {{ 'seller.transferTo' | trans }} <span class="font-normal text-ink-muted">{{ destinationMasked() || ('seller.notConfigured' | trans) }}</span>
       </div>
 
       <label class="text-xs font-semibold text-ink-soft block">
-        จำนวนเงินที่ต้องการถอน (บาท)
+        {{ 'seller.withdrawAmount' | trans }}
       </label>
       <div class="flex gap-2">
         <input type="number" [ngModel]="amount()" (ngModelChange)="amount.set($event === '' ? null : +$event)"
-          name="amount" class="input-soft" [placeholder]="'ขั้นต่ำ ' + minPayoutAmount() + ' บาท'" min="0"
+          name="amount" class="input-soft" [placeholder]="'seller.minWithdrawPlaceholder' | trans: { amount: minPayoutAmount() }" min="0"
           step="0.01" />
         <button type="button" class="btn-ghost !px-4 text-sm whitespace-nowrap" (click)="fillMaxAmount()">
-          ถอนทั้งหมด
+          {{ 'seller.withdrawAll' | trans }}
         </button>
       </div>
       @if (amountError()) {
       <p class="text-xs text-rose-600">{{ amountError() }}</p>
       }
 
-      <label class="text-xs font-semibold text-ink-soft block">หมายเหตุ (ถ้ามี)</label>
+      <label class="text-xs font-semibold text-ink-soft block">{{ 'seller.noteOptional' | trans }}</label>
       <input type="text" [ngModel]="note()" (ngModelChange)="note.set($event)" name="note" class="input-soft"
-        maxlength="500" placeholder="ข้อความถึงทีมงาน (ไม่บังคับ)" />
+        maxlength="500" [placeholder]="'seller.notePlaceholder' | trans" />
 
       <div class="flex gap-2">
         <button class="btn-pink !py-2 !px-5 text-sm" [disabled]="submitting()" (click)="submitRequest()">
-          {{ submitting() ? 'กำลังส่งคำขอ...' : 'ส่งคำขอถอนเงิน' }}
+          {{ submitting() ? ('seller.sendingRequest' | trans) : ('seller.sendWithdrawRequest' | trans) }}
         </button>
-        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancelRequest()">ยกเลิก</button>
+        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancelRequest()">{{ 'common.cancel' | trans }}</button>
       </div>
     </div>
     }
@@ -89,16 +89,16 @@
 
   <!-- Recent payout history -->
   <section class="card-tile mb-6">
-    <h2 class="text-lg font-bold text-ink mb-1">ประวัติการถอน</h2>
-    <p class="text-xs text-ink-muted mb-5">รายการการโอนเงินเข้าบัญชีของคุณ</p>
+    <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.payoutHistoryTitle' | trans }}</h2>
+    <p class="text-xs text-ink-muted mb-5">{{ 'seller.payoutHistorySubtitle' | trans }}</p>
     <div class="card-tile-body table-scroll overflow-x-auto -mx-5 px-5 md:-mx-6 md:px-6 pb-2">
       <table class="w-full min-w-[640px]">
         <thead class="bg-pink-50">
           <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-            <th class="px-5 py-3 font-semibold">วันที่ขอ</th>
-            <th class="px-5 py-3 font-semibold">ยอดที่ถอน</th>
-            <th class="px-5 py-3 font-semibold">สถานะ</th>
-            <th class="px-5 py-3 font-semibold">บัญชี</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colRequestedDate' | trans }}</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colAmount' | trans }}</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colStatus' | trans }}</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colAccount' | trans }}</th>
             <th class="px-5 py-3 font-semibold"></th>
           </tr>
         </thead>
@@ -126,11 +126,11 @@
               @if (p.status === 'pending') {
               <button class="btn-ghost !py-1.5 !px-3 text-xs" [disabled]="cancellingId() === p.id"
                 (click)="confirmCancel(p)">
-                ยกเลิกคำขอ
+                {{ 'seller.cancelRequest' | trans }}
               </button>
               } @else if (p.status === 'paid' && p.slipUrl) {
               <a class="btn-ghost !py-1.5 !px-3 text-xs inline-block" [href]="slipFileUrl(p)" target="_blank" rel="noopener">
-                ดูสลิปการโอนเงิน
+                {{ 'seller.viewSlip' | trans }}
               </a>
               }
             </td>
@@ -138,7 +138,7 @@
           }
           } @else {
           <tr>
-            <td colspan="5" class="px-5 py-3 text-center text-sm text-ink-muted">ยังไม่มีข้อมูลการถอนเงิน</td>
+            <td colspan="5" class="px-5 py-3 text-center text-sm text-ink-muted">{{ 'seller.noPayoutHistory' | trans }}</td>
           </tr>
           }
         </tbody>
@@ -153,15 +153,15 @@
 
   <!-- Balance ledger -->
   <section class="card-tile">
-    <h2 class="text-lg font-bold text-ink mb-1">ประวัติยอดเงิน</h2>
-    <p class="text-xs text-ink-muted mb-5">ความเคลื่อนไหวของยอดเงินทั้งหมด</p>
+    <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.ledgerTitle' | trans }}</h2>
+    <p class="text-xs text-ink-muted mb-5">{{ 'seller.ledgerSubtitle' | trans }}</p>
     <div class="card-tile-body table-scroll overflow-x-auto -mx-5 px-5 md:-mx-6 md:px-6 pb-2">
       <table class="w-full min-w-[520px]">
         <thead class="bg-pink-50">
           <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-            <th class="px-5 py-3 font-semibold">วันที่</th>
-            <th class="px-5 py-3 font-semibold">รายการ</th>
-            <th class="px-5 py-3 font-semibold text-right">จำนวนเงิน</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colDate' | trans }}</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colItem' | trans }}</th>
+            <th class="px-5 py-3 font-semibold text-right">{{ 'seller.colAmount' | trans }}</th>
           </tr>
         </thead>
         <tbody>
@@ -178,7 +178,7 @@
           }
           } @else {
           <tr>
-            <td colspan="3" class="px-5 py-3 text-center text-sm text-ink-muted">ยังไม่มีความเคลื่อนไหวของยอดเงิน</td>
+            <td colspan="3" class="px-5 py-3 text-center text-sm text-ink-muted">{{ 'seller.noLedgerHistory' | trans }}</td>
           </tr>
           }
         </tbody>

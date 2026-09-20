@@ -4,11 +4,11 @@
     <a routerLink="/admin/users" class="btn-ghost !p-2 inline-flex items-center justify-center">
       <app-icon name="arrow-left" [size]="18" />
     </a>
-    <h1 class="text-2xl font-extrabold text-ink">รายละเอียดผู้ใช้</h1>
+    <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.userDetailAdmin.title' | trans }}</h1>
   </div>
 
   @if (loading()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-muted">กำลังโหลดข้อมูลผู้ใช้…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-muted">{{ 'admin.userDetailAdmin.loading' | trans }}</div>
   } @else if (user(); as u) {
     <!-- Main User Profile Card -->
     <div class="card-soft p-6 space-y-4">
@@ -28,7 +28,7 @@
               </span>
             </div>
             <div class="text-sm text-ink-soft">{{ u.email }}</div>
-            <div class="text-xs text-ink-muted mt-1">สมัครเมื่อ: {{ u.joinedAt | date: 'dd MMM yyyy HH:mm' }}</div>
+            <div class="text-xs text-ink-muted mt-1">{{ 'admin.userDetailAdmin.joinedAt' | trans }} {{ u.joinedAt | date: 'dd MMM yyyy HH:mm' }}</div>
           </div>
         </div>
 
@@ -43,23 +43,23 @@
       <!-- Action Buttons -->
       <div class="pt-4 border-t border-line flex flex-wrap items-center gap-3">
         @if (isTargetAdmin()) {
-          <span class="text-sm text-ink-muted italic">ไม่สามารถระงับบัญชีผู้ดูแลระบบได้</span>
+          <span class="text-sm text-ink-muted italic">{{ 'admin.userDetailAdmin.cantSuspendAdmin' | trans }}</span>
         } @else if (isTargetSelf()) {
-          <span class="text-sm text-ink-muted italic">ไม่สามารถระงับบัญชีของตัวเองได้</span>
+          <span class="text-sm text-ink-muted italic">{{ 'admin.userDetailAdmin.cantSuspendSelf' | trans }}</span>
         } @else {
           @if (canRestrict()) {
             <button type="button" class="btn-ghost !border-amber-300 !text-amber-700 hover:!bg-amber-50" (click)="openSuspendModal()">
               <app-icon name="shield" [size]="16" />
-              ระงับชั่วคราว
+              {{ 'admin.userDetailAdmin.suspend' | trans }}
             </button>
             <button type="button" class="btn-ghost !border-red-300 !text-red-700 hover:!bg-red-50" (click)="openBanModal()">
               <app-icon name="flag" [size]="16" />
-              แบนถาวร
+              {{ 'admin.userDetailAdmin.ban' | trans }}
             </button>
           }
           @if (canReinstate()) {
             <button type="button" class="btn-primary" (click)="openReinstateModal()">
-              ปลดระงับ
+              {{ 'admin.userDetailAdmin.reinstate' | trans }}
             </button>
           }
         }
@@ -71,32 +71,32 @@
       <div class="card-soft p-5 border-l-4 border-amber-500 bg-amber-50/50 space-y-2">
         <h3 class="text-base font-bold text-ink flex items-center gap-2">
           <app-icon name="flag" [size]="16" class="text-amber-600" />
-          สถานะการระงับบัญชีปัจจุบัน
+          {{ 'admin.userDetailAdmin.restrictionTitle' | trans }}
         </h3>
         <div class="grid gap-2 text-sm sm:grid-cols-2">
           <div>
-            <span class="text-ink-muted">เหตุผล (ภายใน):</span>
+            <span class="text-ink-muted">{{ 'admin.userDetailAdmin.reasonLabel' | trans }}</span>
             <span class="font-medium text-ink ml-1">{{ u.accountStatusReason || '-' }}</span>
           </div>
           <div>
-            <span class="text-ink-muted">หมายเหตุถึงผู้ใช้:</span>
+            <span class="text-ink-muted">{{ 'admin.userDetailAdmin.messageLabel' | trans }}</span>
             <span class="font-medium text-ink ml-1">{{ u.accountStatusMessage || '-' }}</span>
           </div>
           @if (u.suspendedUntil) {
             <div>
-              <span class="text-ink-muted">ระงับถึงวันที่:</span>
+              <span class="text-ink-muted">{{ 'admin.userDetailAdmin.suspendedUntil' | trans }}</span>
               <span class="font-bold text-amber-700 ml-1">{{ u.suspendedUntil | date: 'dd MMM yyyy HH:mm' }} น.</span>
             </div>
           }
           @if (u.accountStatusChangedAt) {
             <div>
-              <span class="text-ink-muted">ดำเนินการเมื่อ:</span>
+              <span class="text-ink-muted">{{ 'admin.userDetailAdmin.actionAt' | trans }}</span>
               <span class="font-medium text-ink ml-1">{{ u.accountStatusChangedAt | date: 'dd MMM yyyy HH:mm' }}</span>
             </div>
           }
           @if (u.accountStatusChangedByName || u.accountStatusChangedBy) {
             <div>
-              <span class="text-ink-muted">โดย:</span>
+              <span class="text-ink-muted">{{ 'admin.userDetailAdmin.byLabel' | trans }}</span>
               <span class="font-medium text-ink ml-1">{{ u.accountStatusChangedByName || u.accountStatusChangedBy }}</span>
             </div>
           }
@@ -110,31 +110,31 @@
       <div class="card-soft p-5 space-y-3">
         <h3 class="text-base font-bold text-ink flex items-center gap-2">
           <app-icon name="wallet" [size]="18" />
-          สถิติการซื้อ (ผู้ซื้อ)
+          {{ 'admin.userDetailAdmin.purchaseStats' | trans }}
         </h3>
         <div class="grid grid-cols-2 gap-3 pt-2 text-sm">
           <div>
-            <div class="text-xs text-ink-muted">ยอดซื้อรวม</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.totalPurchase' | trans }}</div>
             <div class="text-lg font-extrabold text-ink">{{ u.purchaseStats.totalPurchaseAmount | thb }}</div>
           </div>
           <div>
-            <div class="text-xs text-ink-muted">จำนวนคำสั่งซื้อ</div>
-            <div class="text-lg font-extrabold text-ink">{{ u.purchaseStats.totalOrderCount }} รายการ</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.orderCount' | trans }}</div>
+            <div class="text-lg font-extrabold text-ink">{{ u.purchaseStats.totalOrderCount }} {{ 'admin.userDetailAdmin.orderUnit' | trans }}</div>
           </div>
           <div>
-            <div class="text-xs text-ink-muted">ยอดคืนเงิน</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.refunded' | trans }}</div>
             <div class="text-sm font-semibold text-ink-soft">
               {{ u.purchaseStats.refundedAmount | thb }}
-              <span class="text-xs text-ink-muted">({{ u.purchaseStats.refundedOrderCount }} รายการ)</span>
+              <span class="text-xs text-ink-muted">({{ u.purchaseStats.refundedOrderCount }} {{ 'admin.userDetailAdmin.refundUnit' | trans }})</span>
             </div>
           </div>
           <div>
-            <div class="text-xs text-ink-muted">สั่งซื้อล่าสุด</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.lastOrder' | trans }}</div>
             <div class="text-sm font-semibold text-ink-soft">
               @if (u.purchaseStats.lastOrderAt) {
                 {{ u.purchaseStats.lastOrderAt | date: 'dd MMM yyyy' }}
               } @else {
-                ไม่เคยสั่งซื้อ
+                {{ 'admin.userDetailAdmin.neverOrdered' | trans }}
               }
             </div>
           </div>
@@ -147,34 +147,34 @@
           <div class="flex items-center justify-between">
             <h3 class="text-base font-bold text-ink flex items-center gap-2">
               <app-icon name="doc" [size]="18" />
-              สถิติการขาย (ร้าน {{ s.studioName }})
+              {{ 'admin.userDetailAdmin.sellerStats' | trans: { name: s.studioName } }}
             </h3>
             <span class="text-xs font-bold text-amber-600">★ {{ s.rating.toFixed(1) }}</span>
           </div>
           <div class="grid grid-cols-2 gap-3 pt-2 text-sm">
             <div>
-              <div class="text-xs text-ink-muted">ยอดขายรวม (ก่อนหักค่าธรรมเนียม)</div>
+              <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.grossRevenue' | trans }}</div>
               <div class="text-lg font-extrabold text-ink">{{ s.grossRevenue | thb }}</div>
             </div>
             <div>
-              <div class="text-xs text-ink-muted">จำนวนการขาย</div>
-              <div class="text-lg font-extrabold text-ink">{{ s.totalSalesCount }} รายการ</div>
+              <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.salesCount' | trans }}</div>
+              <div class="text-lg font-extrabold text-ink">{{ s.totalSalesCount }} {{ 'admin.userDetailAdmin.orderUnit' | trans }}</div>
             </div>
             <div>
-              <div class="text-xs text-ink-muted">รายได้สุทธิสะสม</div>
+              <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.netEarnings' | trans }}</div>
               <div class="text-sm font-semibold text-emerald-600">{{ s.lifetimeNetEarnings | thb }}</div>
             </div>
             <div>
-              <div class="text-xs text-ink-muted">ยอดคงเหลือรอโอน</div>
+              <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.pendingBalance' | trans }}</div>
               <div class="text-sm font-semibold text-ink">{{ s.pendingBalance | thb }}</div>
             </div>
             <div>
-              <div class="text-xs text-ink-muted">จำนวนเอกสารในระบบ</div>
-              <div class="text-sm font-semibold text-ink">{{ s.totalDocuments }} ชิ้น</div>
+              <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.docCount' | trans }}</div>
+              <div class="text-sm font-semibold text-ink">{{ s.totalDocuments }} {{ 'admin.userDetailAdmin.docUnit' | trans }}</div>
             </div>
           </div>
           <div class="text-[11px] text-ink-muted pt-2 border-t border-line">
-            * ยอดขายรวมเป็นยอดก่อนหักค่าธรรมเนียมและรวมแพ็กเกจ ส่วนรายได้สุทธิคำนวณจากเอกสารเท่านั้น
+            {{ 'admin.userDetailAdmin.salesNote' | trans }}
           </div>
         </div>
       }
@@ -184,26 +184,26 @@
     <div class="card-soft p-5 space-y-3">
       <h3 class="text-base font-bold text-ink flex items-center gap-2">
         <app-icon name="wallet" [size]="18" />
-        กระเป๋าเงินของผู้ใช้
+        {{ 'admin.userDetailAdmin.walletTitle' | trans }}
       </h3>
 
       @if (walletSummary(); as w) {
         <div class="grid grid-cols-3 gap-3 pt-2 text-sm">
           <div>
-            <div class="text-xs text-ink-muted">ยอดคงเหลือ</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.walletBalance' | trans }}</div>
             <div class="text-lg font-extrabold text-ink">{{ w.balance | thb }}</div>
           </div>
           <div>
-            <div class="text-xs text-ink-muted">ยอดเติมสะสม</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.walletToppedUp' | trans }}</div>
             <div class="text-sm font-semibold text-emerald-600">{{ w.lifetimeToppedUp | thb }}</div>
           </div>
           <div>
-            <div class="text-xs text-ink-muted">ยอดใช้จ่ายสะสม</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.walletSpent' | trans }}</div>
             <div class="text-sm font-semibold text-ink-soft">{{ w.lifetimeSpent | thb }}</div>
           </div>
         </div>
       } @else if (!walletEntriesLoading()) {
-        <div class="text-xs text-ink-muted py-2">ผู้ใช้นี้ยังไม่เคยใช้งานกระเป๋าเงิน</div>
+        <div class="text-xs text-ink-muted py-2">{{ 'admin.userDetailAdmin.walletNeverUsed' | trans }}</div>
       }
 
       @if (walletEntries().length > 0) {
@@ -211,10 +211,10 @@
           <table class="w-full text-left text-sm">
             <thead class="bg-pink-50 text-xs text-ink-muted uppercase">
               <tr>
-                <th class="px-3 py-2 font-semibold">ประเภท</th>
-                <th class="px-3 py-2 font-semibold">รายการ</th>
-                <th class="px-3 py-2 font-semibold">วันเวลา</th>
-                <th class="px-3 py-2 font-semibold text-right">จำนวนเงิน</th>
+                <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColType' | trans }}</th>
+                <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColItem' | trans }}</th>
+                <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColDate' | trans }}</th>
+                <th class="px-3 py-2 font-semibold text-right">{{ 'admin.userDetailAdmin.walletColAmount' | trans }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line">
@@ -251,31 +251,31 @@
               class="btn-ghost text-xs !py-1.5 !px-4"
             >
               @if (walletEntriesLoading()) {
-                กำลังโหลด...
+                {{ 'admin.userDetailAdmin.walletLoading' | trans }}
               } @else {
-                โหลดเพิ่ม
+                {{ 'admin.userDetailAdmin.walletLoadMore' | trans }}
               }
             </button>
           </div>
         }
       } @else if (!walletEntriesLoading() && walletSummary()) {
-        <div class="text-xs text-ink-muted py-2">ยังไม่มีรายการในกระเป๋าเงิน</div>
+        <div class="text-xs text-ink-muted py-2">{{ 'admin.userDetailAdmin.walletEmpty' | trans }}</div>
       }
     </div>
 
     <!-- Moderation History -->
     <div class="card-soft p-5 space-y-3">
-      <h3 class="text-base font-bold text-ink">ประวัติการถูกระงับการใช้งาน</h3>
+      <h3 class="text-base font-bold text-ink">{{ 'admin.userDetailAdmin.moderationTitle' | trans }}</h3>
       <div class="table-scroll overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead class="bg-pink-50 text-xs text-ink-muted uppercase">
             <tr>
-              <th class="px-3 py-2 font-semibold">การกระทำ</th>
-              <th class="px-3 py-2 font-semibold">เหตุผล (ภายใน)</th>
-              <th class="px-3 py-2 font-semibold">หมายเหตุถึงผู้ใช้</th>
-              <th class="px-3 py-2 font-semibold">ถึงวันที่</th>
-              <th class="px-3 py-2 font-semibold">โดย</th>
-              <th class="px-3 py-2 font-semibold">เมื่อไหร่</th>
+              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colAction' | trans }}</th>
+              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colReason' | trans }}</th>
+              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colMessage' | trans }}</th>
+              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colUntil' | trans }}</th>
+              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colBy' | trans }}</th>
+              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colWhen' | trans }}</th>
             </tr>
           </thead>
           <tbody>
@@ -297,7 +297,7 @@
             } @empty {
               <tr>
                 <td colspan="6" class="px-3 py-6 text-center text-sm text-ink-muted">
-                  ยังไม่เคยถูกระงับการใช้งาน
+                  {{ 'admin.userDetailAdmin.neverSuspended' | trans }}
                 </td>
               </tr>
             }
@@ -311,28 +311,28 @@
 <!-- Suspend Modal -->
 <nz-modal
   [nzVisible]="suspendModalVisible()"
-  nzTitle="ระงับการใช้งานบัญชีชั่วคราว"
+  [nzTitle]="'admin.userDetailAdmin.suspendModalTitle' | trans"
   (nzOnCancel)="closeSuspendModal()"
   (nzOnOk)="submitSuspend()"
   [nzOkLoading]="submitting()"
   [nzOkDisabled]="!suspendReason().trim() || !suspendUntil()"
-  nzOkText="ยืนยันการระงับ"
-  nzCancelText="ยกเลิก"
+  [nzOkText]="'admin.userDetailAdmin.suspendConfirm' | trans"
+  [nzCancelText]="'common.cancel' | trans"
 >
   <ng-container *nzModalContent>
     <div class="space-y-4">
       <div>
-        <label class="block text-xs font-semibold text-ink mb-1">เหตุผล (ภายใน) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-semibold text-ink mb-1">{{ 'admin.userDetailAdmin.suspendReasonLabel' | trans }} <span class="text-red-500">*</span></label>
         <textarea
           class="input-soft w-full"
           rows="3"
-          placeholder="ระบุเหตุผลภายในสำหรับทีมแอดมิน (อย่างน้อย 3 ตัวอักษร)"
+          [placeholder]="'admin.userDetailAdmin.suspendReasonPlaceholder' | trans"
           [ngModel]="suspendReason()"
           (ngModelChange)="suspendReason.set($event)"
         ></textarea>
       </div>
       <div>
-        <label class="block text-xs font-semibold text-ink mb-1">ระงับถึงวันที่ <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-semibold text-ink mb-1">{{ 'admin.userDetailAdmin.suspendUntilLabel' | trans }} <span class="text-red-500">*</span></label>
         <input
           class="input-soft w-full"
           type="datetime-local"
@@ -341,11 +341,11 @@
         />
       </div>
       <div>
-        <label class="block text-xs font-semibold text-ink mb-1">ข้อความถึงผู้ใช้ (ไม่บังคับ)</label>
+        <label class="block text-xs font-semibold text-ink mb-1">{{ 'admin.userDetailAdmin.suspendMessageLabel' | trans }}</label>
         <textarea
           class="input-soft w-full"
           rows="2"
-          placeholder="ข้อความที่ต้องการแจ้งผู้ใช้เมื่อพยายามเข้าสู่ระบบ"
+          [placeholder]="'admin.userDetailAdmin.suspendMessagePlaceholder' | trans"
           [ngModel]="suspendMessage()"
           (ngModelChange)="suspendMessage.set($event)"
         ></textarea>
@@ -357,36 +357,36 @@
 <!-- Ban Modal -->
 <nz-modal
   [nzVisible]="banModalVisible()"
-  nzTitle="แบนบัญชีถาวร"
+  [nzTitle]="'admin.userDetailAdmin.banModalTitle' | trans"
   (nzOnCancel)="closeBanModal()"
   (nzOnOk)="submitBan()"
   [nzOkLoading]="submitting()"
   [nzOkDisabled]="!banReason().trim()"
-  nzOkText="ยืนยันการแบนถาวร"
+  [nzOkText]="'admin.userDetailAdmin.banConfirm' | trans"
   [nzOkDanger]="true"
-  nzCancelText="ยกเลิก"
+  [nzCancelText]="'common.cancel' | trans"
 >
   <ng-container *nzModalContent>
     <div class="space-y-4">
       <div class="p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-        คำเตือน: การแบนถาวรจะทำให้ผู้ใช้เข้าสู่ระบบไม่ได้ทันที และต้องให้ผู้ดูแลระบบปลดเองเท่านั้น
+        {{ 'admin.userDetailAdmin.banWarning' | trans }}
       </div>
       <div>
-        <label class="block text-xs font-semibold text-ink mb-1">เหตุผล (ภายใน) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-semibold text-ink mb-1">{{ 'admin.userDetailAdmin.suspendReasonLabel' | trans }} <span class="text-red-500">*</span></label>
         <textarea
           class="input-soft w-full"
           rows="3"
-          placeholder="ระบุเหตุผลภายในสำหรับทีมแอดมิน"
+          [placeholder]="'admin.userDetailAdmin.banReasonPlaceholder' | trans"
           [ngModel]="banReason()"
           (ngModelChange)="banReason.set($event)"
         ></textarea>
       </div>
       <div>
-        <label class="block text-xs font-semibold text-ink mb-1">ข้อความถึงผู้ใช้ (ไม่บังคับ)</label>
+        <label class="block text-xs font-semibold text-ink mb-1">{{ 'admin.userDetailAdmin.suspendMessageLabel' | trans }}</label>
         <textarea
           class="input-soft w-full"
           rows="2"
-          placeholder="ข้อความที่ต้องการแจ้งผู้ใช้เมื่อพยายามเข้าสู่ระบบ"
+          [placeholder]="'admin.userDetailAdmin.suspendMessagePlaceholder' | trans"
           [ngModel]="banMessage()"
           (ngModelChange)="banMessage.set($event)"
         ></textarea>
@@ -398,22 +398,22 @@
 <!-- Reinstate Modal -->
 <nz-modal
   [nzVisible]="reinstateModalVisible()"
-  nzTitle="ปลดระงับการใช้งานบัญชี"
+  [nzTitle]="'admin.userDetailAdmin.reinstateModalTitle' | trans"
   (nzOnCancel)="closeReinstateModal()"
   (nzOnOk)="submitReinstate()"
   [nzOkLoading]="submitting()"
   [nzOkDisabled]="!reinstateReason().trim()"
-  nzOkText="ยืนยันการปลดระงับ"
-  nzCancelText="ยกเลิก"
+  [nzOkText]="'admin.userDetailAdmin.reinstateConfirm' | trans"
+  [nzCancelText]="'common.cancel' | trans"
 >
   <ng-container *nzModalContent>
     <div class="space-y-4">
       <div>
-        <label class="block text-xs font-semibold text-ink mb-1">เหตุผล (ภายใน) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-semibold text-ink mb-1">{{ 'admin.userDetailAdmin.suspendReasonLabel' | trans }} <span class="text-red-500">*</span></label>
         <textarea
           class="input-soft w-full"
           rows="3"
-          placeholder="ระบุเหตุผลในการปลดระงับบัญชี"
+          [placeholder]="'admin.userDetailAdmin.reinstateReasonPlaceholder' | trans"
           [ngModel]="reinstateReason()"
           (ngModelChange)="reinstateReason.set($event)"
         ></textarea>

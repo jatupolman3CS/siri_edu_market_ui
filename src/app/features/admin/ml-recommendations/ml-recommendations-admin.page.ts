@@ -4,6 +4,7 @@ import { AdminService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import type { AdminMlRecommendationOverview } from '../../../core/models';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * ml-embedding-recommendations v1 §3.2/§4.2 (`docs/contracts/ml-embedding-recommendations.md`)
@@ -15,7 +16,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 @Component({
   selector: 'app-ml-recommendations-admin',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, StatCardComponent],
+  imports: [DatePipe, DecimalPipe, StatCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ml-recommendations-admin.page.html',
 })
@@ -35,7 +36,7 @@ export class MlRecommendationsAdminPage {
     try {
       this.overview.set(await this.admin.getMlRecommendationOverview());
     } catch (e) {
-      this.apiFail.report('โหลดสถานะระบบแนะนำสินค้า', e);
+      this.apiFail.report('errors.context.loadRecommendationStatus', e);
       this.overview.set(null);
     } finally {
       this.loading.set(false);

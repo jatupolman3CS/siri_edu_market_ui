@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AffiliateService, ReferralService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 
 /**
@@ -11,7 +13,7 @@ import { IconComponent } from '../icon/icon.component';
 @Component({
   selector: 'app-affiliate-link-card',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './affiliate-link-card.component.html',
   styleUrl: './affiliate-link-card.component.scss',
@@ -20,6 +22,7 @@ export class AffiliateLinkCardComponent {
   readonly affiliate = inject(AffiliateService);
   readonly referral = inject(ReferralService, { optional: true });
   private readonly message = inject(NzMessageService, { optional: true });
+  readonly translation = inject(TranslationService);
 
   readonly copied = signal(false);
 
@@ -46,7 +49,7 @@ export class AffiliateLinkCardComponent {
         await navigator.clipboard.writeText(url);
       }
       this.copied.set(true);
-      this.message?.success('คัดลอกลิงก์แล้ว');
+      this.message?.success(this.translation.t('shared.affiliate.copied'));
       setTimeout(() => this.copied.set(false), 3000);
     } catch {
       // Ignore clipboard write failures

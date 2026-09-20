@@ -7,27 +7,29 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { AdsService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import type { AdminAdsCampaign, AdminAdsPlacement } from '../../../core/models';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
-/** §4.4: campaign status → Thai label. */
-const STATUS_LABELS: Record<string, string> = {
-  scheduled: 'รอเริ่ม',
-  active: 'กำลังแสดง',
-  completed: 'สิ้นสุดแล้ว',
-  cancelled: 'ยกเลิกแล้ว',
-  stopped: 'ถูกระงับ',
+/** §4.4: campaign status → translation key. */
+const STATUS_KEYS: Record<string, string> = {
+  scheduled: 'admin.ads.statusScheduled',
+  active: 'admin.ads.statusActive',
+  completed: 'admin.ads.statusCompleted',
+  cancelled: 'admin.ads.statusCancelled',
+  stopped: 'admin.ads.statusStopped',
 };
 
-/** §4.4: stop reason → Thai label. */
-const STOP_REASON_LABELS: Record<string, string> = {
-  admin_stopped: 'ผู้ดูแลระบบระงับ',
-  account_suspended: 'บัญชีถูกระงับ',
-  document_unavailable: 'เอกสารไม่พร้อมแสดง',
-  seller_cancelled: 'ยกเลิกโดยผู้ขาย',
+/** §4.4: stop reason → translation key. */
+const STOP_REASON_KEYS: Record<string, string> = {
+  admin_stopped: 'admin.ads.stopReasonAdminStopped',
+  account_suspended: 'admin.ads.stopReasonAccountSuspended',
+  document_unavailable: 'admin.ads.stopReasonDocumentUnavailable',
+  seller_cancelled: 'admin.ads.stopReasonSellerCancelled',
 };
 
 const MIN_REASON_LENGTH = 10;
@@ -62,6 +64,7 @@ interface PlacementFormValues {
     ImgFallbackDirective,
     PaginationComponent,
     ThbPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ads-admin.page.html',
@@ -70,13 +73,17 @@ interface PlacementFormValues {
 export class AdsAdminPage {
   private readonly ads = inject(AdsService);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   statusLabel(status: string): string {
-    return STATUS_LABELS[status] ?? status;
+    const key = STATUS_KEYS[status];
+    return key ? this.translation.t(key) : status;
   }
 
   stopReasonLabel(reason: string | null): string | null {
-    return reason ? (STOP_REASON_LABELS[reason] ?? reason) : null;
+    if (!reason) return null;
+    const key = STOP_REASON_KEYS[reason];
+    return key ? this.translation.t(key) : reason;
   }
 
   // ───────────────────────── tab 1: campaigns ─────────────────────────
@@ -91,14 +98,16 @@ export class AdsAdminPage {
   readonly placementFilter = signal<string>('all');
   readonly sellerIdFilter = signal<string>('');
 
-  readonly statusFilterOptions: { value: string; label: string }[] = [
-    { value: 'all', label: 'ทั้งหมด' },
-    { value: 'scheduled', label: STATUS_LABELS['scheduled'] ?? '' },
-    { value: 'active', label: STATUS_LABELS['active'] ?? '' },
-    { value: 'completed', label: STATUS_LABELS['completed'] ?? '' },
-    { value: 'cancelled', label: STATUS_LABELS['cancelled'] ?? '' },
-    { value: 'stopped', label: STATUS_LABELS['stopped'] ?? '' },
-  ];
+  get statusFilterOptions(): { value: string; label: string }[] {
+    return [
+      { value: 'all', label: this.translation.t('admin.subscriptionsAdmin.statusAll') },
+      { value: 'scheduled', label: this.translation.t('admin.ads.statusScheduled') },
+      { value: 'active', label: this.translation.t('admin.ads.statusActive') },
+      { value: 'completed', label: this.translation.t('admin.ads.statusCompleted') },
+      { value: 'cancelled', label: this.translation.t('admin.ads.statusCancelled') },
+      { value: 'stopped', label: this.translation.t('admin.ads.statusStopped') },
+    ];
+  }
 
   canStop(c: AdminAdsCampaign): boolean {
     return c.status === 'scheduled' || c.status === 'active';
@@ -168,8 +177,12 @@ export class AdsAdminPage {
   readonly stopReasonError = computed<string | null>(() => {
     const len = this.stopReason().trim().length;
     if (len === 0) return null;
-    if (len < MIN_REASON_LENGTH) return `กรุณาระบุเหตุผลอย่างน้อย ${MIN_REASON_LENGTH} ตัวอักษร`;
-    if (len > MAX_REASON_LENGTH) return `เหตุผลต้องไม่เกิน ${MAX_REASON_LENGTH} ตัวอักษร`;
+    if (len < MIN_REASON_LENGTH) {
+      return this.translation.t('admin.ads.stopReasonMinLength', { min: MIN_REASON_LENGTH });
+    }
+    if (len > MAX_REASON_LENGTH) {
+      return this.translation.t('admin.ads.stopReasonMaxLength', { max: MAX_REASON_LENGTH });
+    }
     return null;
   });
 
@@ -195,7 +208,7 @@ export class AdsAdminPage {
         this.refundRemainingDays(),
       );
       if (result.ok) {
-        this.message.success('ระงับแคมเปญเรียบร้อย');
+        this.message.success(this.translation.t('admin.ads.stopSuccess'));
         this.closeStop();
         void this.refreshCampaigns();
       } else if (result.message) {
@@ -234,16 +247,16 @@ export class AdsAdminPage {
   readonly placementFormError = computed<string | null>(() => {
     const f = this.placementForm();
     if (f.pricePerDay == null || f.pricePerDay <= 0 || f.pricePerDay > 100000) {
-      return 'ราคาต่อวันต้องมากกว่า 0 และไม่เกิน 100,000 บาท';
+      return this.translation.t('admin.ads.placementErrorPricePerDay');
     }
     if (f.weeklyPrice != null && (f.weeklyPrice <= 0 || f.weeklyPrice > f.pricePerDay * 7)) {
-      return 'ราคาต่อสัปดาห์ต้องมากกว่า 0 และไม่เกิน 7 เท่าของราคาต่อวัน';
+      return this.translation.t('admin.ads.placementErrorWeeklyPrice');
     }
     if (f.dailySlotCapacity == null || f.dailySlotCapacity < 1 || f.dailySlotCapacity > 10) {
-      return 'ความจุต่อวันต้องอยู่ระหว่าง 1-10';
+      return this.translation.t('admin.ads.placementErrorDailySlot');
     }
     if (f.maxPerResultPage == null || f.maxPerResultPage < 1 || f.maxPerResultPage > 2) {
-      return 'จำนวนโฆษณาต่อหน้าต้องอยู่ระหว่าง 1-2';
+      return this.translation.t('admin.ads.placementErrorMaxPerPage');
     }
     return null;
   });
@@ -285,7 +298,7 @@ export class AdsAdminPage {
         isEnabled: f.isEnabled,
       });
       if (result.ok) {
-        this.message.success('บันทึกตำแหน่งโฆษณาเรียบร้อย');
+        this.message.success(this.translation.t('admin.ads.savePlacementSuccess'));
         this.closeEditPlacement();
         void this.refreshPlacements();
       } else if (result.message) {

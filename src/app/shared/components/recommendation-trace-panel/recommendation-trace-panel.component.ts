@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, signal } fro
 import { DecimalPipe } from '@angular/common';
 import { CrmService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
 /**
@@ -18,7 +20,7 @@ import { EmptyStateComponent } from '../empty-state/empty-state.component';
 @Component({
   selector: 'app-recommendation-trace-panel',
   standalone: true,
-  imports: [DecimalPipe, EmptyStateComponent],
+  imports: [DecimalPipe, EmptyStateComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './recommendation-trace-panel.component.html',
 })
@@ -27,6 +29,7 @@ export class RecommendationTracePanelComponent {
 
   readonly crm = inject(CrmService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   /** documentId of the currently-expanded candidate row (§4.3 "แถวขยายได้"), or null = none expanded. */
   readonly expandedCandidateId = signal<string | null>(null);
@@ -43,7 +46,7 @@ export class RecommendationTracePanelComponent {
     try {
       await this.crm.loadRecommendationTrace(id);
     } catch (e) {
-      this.apiFail.report('โหลดเหตุผลการแนะนำของผู้ใช้', e);
+      this.apiFail.report(this.translation.t('systemContent.loadRecommendationTrace'), e);
     }
   }
 

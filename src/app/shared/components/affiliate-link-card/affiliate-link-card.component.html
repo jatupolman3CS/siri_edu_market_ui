@@ -7,21 +7,21 @@
         </span>
         <h2 class="text-lg font-bold text-neutral-900">
           @if (affiliate.state().status === 'loading') {
-            ลิงก์พันธมิตร รับค่าคอมมิชชัน —%
+            {{ 'shared.affiliate.headingLoading' | trans }}
           } @else {
-            ลิงก์พันธมิตร รับค่าคอมมิชชัน {{ affiliate.summary()?.commissionRatePercent ?? 0 }}%
+            {{ 'shared.affiliate.heading' | trans: { percent: affiliate.summary()?.commissionRatePercent ?? 0 } }}
           }
         </h2>
       </div>
       <p class="mt-1 text-sm text-neutral-500">
-        แชร์ลิงก์นี้ ทุกยอดขายที่เกิดจากลิงก์ของคุณภายใน 30 วันหลังมีคนคลิก คุณจะได้ค่าคอมมิชชันสะสมไว้
+        {{ 'shared.affiliate.description' | trans }}
       </p>
       <div class="flex flex-wrap gap-2 mt-3">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
-          🎁 เพื่อนได้ส่วนลด 20 บาททันที
+          {{ 'shared.affiliate.friendDiscount' | trans }}
         </span>
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          💰 คุณได้ส่วนลด 20 บาท + คอมมิชชัน {{ affiliate.summary()?.commissionRatePercent ?? 5 }}%
+          {{ 'shared.affiliate.yourCommission' | trans: { percent: affiliate.summary()?.commissionRatePercent ?? 5 } }}
         </span>
       </div>
     </div>
@@ -29,12 +29,12 @@
 
   @if (affiliate.state().status === 'error') {
     <div class="mt-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-600">
-      โหลดข้อมูลลิงก์พันธมิตรไม่สำเร็จ
+      {{ 'shared.affiliate.loadFailed' | trans }}
     </div>
   } @else {
     <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-neutral-50 p-4 border border-neutral-100">
       <div>
-        <span class="text-xs font-medium text-neutral-500">โค้ดพันธมิตรของคุณ</span>
+        <span class="text-xs font-medium text-neutral-500">{{ 'shared.affiliate.yourCode' | trans }}</span>
         <div class="mt-1 font-mono text-2xl font-bold tracking-wider text-emerald-600">
           @if (affiliate.state().status === 'loading') {
             —
@@ -52,44 +52,44 @@
       >
         @if (copied()) {
           <app-icon name="check" [size]="16" />
-          <span>คัดลอกลิงก์แล้ว</span>
+          <span>{{ 'shared.affiliate.copied' | trans }}</span>
         } @else {
           <app-icon name="doc" [size]="16" />
-          <span>คัดลอกลิงก์พันธมิตร</span>
+          <span>{{ 'shared.affiliate.copyLink' | trans }}</span>
         }
       </button>
     </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-        <span class="text-xs text-neutral-500">จำนวนคลิก</span>
+        <span class="text-xs text-neutral-500">{{ 'shared.affiliate.clicks' | trans }}</span>
         <div class="mt-0.5 text-sm font-semibold text-neutral-800">
           @if (affiliate.state().status === 'loading') {
             —
           } @else {
-            มีคนคลิกลิงก์แล้ว {{ affiliate.summary()?.totalClicks ?? 0 }} ครั้ง
+            {{ 'shared.affiliate.clickedCount' | trans: { count: affiliate.summary()?.totalClicks ?? 0 } }}
           }
         </div>
       </div>
 
       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-        <span class="text-xs text-neutral-500">จำนวนที่ซื้อสำเร็จ</span>
+        <span class="text-xs text-neutral-500">{{ 'shared.affiliate.purchases' | trans }}</span>
         <div class="mt-0.5 text-sm font-semibold text-neutral-800">
           @if (affiliate.state().status === 'loading') {
             —
           } @else {
-            เกิดยอดขายแล้ว {{ affiliate.summary()?.totalConversions ?? 0 }} รายการ
+            {{ 'shared.affiliate.salesCount' | trans: { count: affiliate.summary()?.totalConversions ?? 0 } }}
           }
         </div>
       </div>
 
       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-        <span class="text-xs text-neutral-500">ยอดคอมมิชชันสะสม</span>
+        <span class="text-xs text-neutral-500">{{ 'shared.affiliate.commissionEarned' | trans }}</span>
         <div class="mt-0.5 text-sm font-semibold text-neutral-800">
           @if (affiliate.state().status === 'loading') {
             —
           } @else {
-            คอมมิชชันสะสม {{ affiliate.summary()?.commissionEarnedTotal ?? 0 }} บาท
+            {{ 'shared.affiliate.commissionTotal' | trans: { total: affiliate.summary()?.commissionEarnedTotal ?? 0 } }}
           }
         </div>
       </div>

@@ -434,7 +434,9 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
     downloads: d.downloads ?? 0,
     status: 'approved',
     watermarkEnabled: false,
-    previewPages: 0,
+    // marketplace-cover-preview-count v1 AC-14: real field from the generated
+    // `MarketplaceDocumentResponse` type (SDK regenerated against backend that now sends it).
+    previewPages: d.previewPages ?? 0,
     seller: {
       ...emptySeller(),
       id: (d as { sellerId?: string }).sellerId ?? '',

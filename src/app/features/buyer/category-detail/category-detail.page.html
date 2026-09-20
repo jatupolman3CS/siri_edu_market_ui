@@ -1,158 +1,158 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-      <!-- Breadcrumb -->
-      <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
-        <a routerLink="/" class="hover:text-pink-600">หน้าแรก</a>
-        <app-icon name="chevron-right" [size]="14" />
-        <a routerLink="/categories" class="hover:text-pink-600">หมวดหมู่</a>
-        <app-icon name="chevron-right" [size]="14" />
-        <span class="text-ink font-medium">{{ category()?.name ?? '' }}</span>
-        @if (selectedSub(); as sub) {
-          <app-icon name="chevron-right" [size]="14" />
-          <span class="text-pink-600 font-medium">{{ sub.name }}</span>
-        }
-      </nav>
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
+    <a routerLink="/" class="hover:text-pink-600">{{ 'categoryDetail.breadcrumbHome' | trans }}</a>
+    <app-icon name="chevron-right" [size]="14" />
+    <a routerLink="/categories" class="hover:text-pink-600">{{ 'categoryDetail.breadcrumbCategories' | trans }}</a>
+    <app-icon name="chevron-right" [size]="14" />
+    <span class="text-ink font-medium">{{ category()?.name ?? '' }}</span>
+    @if (selectedSub(); as sub) {
+      <app-icon name="chevron-right" [size]="14" />
+      <span class="text-pink-600 font-medium">{{ sub.name }}</span>
+    }
+  </nav>
 
-      @if (category(); as cat) {
-        <!-- Header Card -->
-        <header
-          class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
-        >
-          <div class="flex items-start gap-5 flex-wrap">
-            <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white shadow-soft border border-pink-100 flex items-center justify-center text-4xl flex-shrink-0">
-              {{ cat.icon }}
+  @if (category(); as cat) {
+    <!-- Header Card -->
+    <header
+      class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    >
+      <div class="flex items-start gap-5 flex-wrap">
+        <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white shadow-soft border border-pink-100 flex items-center justify-center text-4xl flex-shrink-0">
+          {{ cat.icon }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">
+            {{ cat.name }}
+          </h1>
+          @if (cat.description) {
+            <p class="text-sm sm:text-base text-ink-soft mb-3 max-w-2xl">{{ cat.description }}</p>
+          }
+          <div class="flex flex-wrap gap-2">
+            <span class="pill-soft text-xs">📄 {{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
+            <span class="pill-soft text-xs">🗂️ {{ 'categoryDetail.subcategoriesCount' | trans:{ count: (cat.subcategories?.length ?? 0) } }}</span>
+            @if (cat.averageRating; as avgRating) {
+              <span class="pill-soft text-xs">⭐ {{ 'categoryDetail.avgRating' | trans:{ rating: ((avgRating | number:'1.1-1') ?? '') } }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub-categories drill-down -->
+    @if (cat.subcategories?.length) {
+      <section class="mb-10">
+        <header class="flex items-center justify-between mb-5 gap-3 flex-wrap">
+          <h2 class="section-title">{{ 'categoryDetail.selectSubcategory' | trans }}</h2>
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
+                <app-icon name="search" [size]="14" />
+              </span>
+              <input
+                type="search"
+                [ngModel]="subSearch()"
+                (ngModelChange)="subSearch.set($event)"
+                [placeholder]="'categoryDetail.searchSubPlaceholder' | trans"
+                class="pl-9 pr-3 py-2 rounded-2xl border border-line bg-white text-sm focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 w-56"
+              />
             </div>
-            <div class="flex-1 min-w-0">
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">
-                {{ cat.name }}
-              </h1>
-              @if (cat.description) {
-                <p class="text-sm sm:text-base text-ink-soft mb-3 max-w-2xl">{{ cat.description }}</p>
-              }
-              <div class="flex flex-wrap gap-2">
-                <span class="pill-soft text-xs">📄 {{ cat.documentCount | compact }} เอกสาร</span>
-                <span class="pill-soft text-xs">🗂️ {{ cat.subcategories?.length ?? 0 }} หมวดย่อย</span>
-                @if (cat.averageRating; as avgRating) {
-                  <span class="pill-soft text-xs">⭐ คะแนนเฉลี่ย {{ avgRating | number:'1.1-1' }}</span>
-                }
-              </div>
-            </div>
+            <button class="text-xs text-pink-600 font-bold hover:underline" (click)="selectedSubId.set('')">
+              {{ 'categories.viewAll' | trans }}
+            </button>
           </div>
         </header>
 
-        <!-- Sub-categories drill-down -->
-        @if (cat.subcategories?.length) {
-          <section class="mb-10">
-            <header class="flex items-center justify-between mb-5 gap-3 flex-wrap">
-              <h2 class="section-title">เลือกหมวดย่อย</h2>
-              <div class="flex items-center gap-3 flex-wrap">
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
-                    <app-icon name="search" [size]="14" />
-                  </span>
-                  <input
-                    type="search"
-                    [ngModel]="subSearch()"
-                    (ngModelChange)="subSearch.set($event)"
-                    placeholder="ค้นหาหมวดย่อย…"
-                    class="pl-9 pr-3 py-2 rounded-2xl border border-line bg-white text-sm focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 w-56"
-                  />
-                </div>
-                <button class="text-xs text-pink-600 font-bold hover:underline" (click)="selectedSubId.set('')">
-                  ดูทั้งหมด
-                </button>
-              </div>
-            </header>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+          <button
+            class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
+            [class.!border-pink-500]="!selectedSubId()"
+            [class.shadow-pop]="!selectedSubId()"
+            (click)="selectedSubId.set('')"
+          >
+            <div class="text-2xl mb-2">{{ cat.icon }}</div>
+            <div class="text-sm font-bold text-ink">{{ 'categoryDetail.allSubcategories' | trans }}</div>
+            <div class="text-xs text-ink-muted">{{ 'categories.itemsUnit' | trans:{ count: cat.documentCount } }}</div>
+          </button>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              <button
-                class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
-                [class.!border-pink-500]="!selectedSubId()"
-                [class.shadow-pop]="!selectedSubId()"
-                (click)="selectedSubId.set('')"
-              >
-                <div class="text-2xl mb-2">{{ cat.icon }}</div>
-                <div class="text-sm font-bold text-ink">ทั้งหมด</div>
-                <div class="text-xs text-ink-muted">{{ cat.documentCount }} ชิ้น</div>
-              </button>
-
-              @for (sub of filteredSubcategories(); track sub.id) {
-                <button
-                  class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
-                  [class.!border-pink-500]="selectedSubId() === sub.id"
-                  [class.shadow-pop]="selectedSubId() === sub.id"
-                  (click)="selectedSubId.set(sub.id)"
-                >
-                  <div class="text-2xl mb-2">{{ sub.icon }}</div>
-                  <div class="text-sm font-bold text-ink leading-tight line-clamp-1">{{ sub.name }}</div>
-                  <div class="text-xs text-ink-muted mt-0.5">{{ sub.documentCount }} ชิ้น</div>
-                </button>
-              } @empty {
-                <div class="col-span-full text-center text-sm text-ink-muted py-6">
-                  ไม่พบหมวดย่อยที่ตรงกับ "{{ subSearch() }}"
-                </div>
-              }
-            </div>
-          </section>
-        }
-
-        <!-- Toolbar -->
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="section-title">
-            @if (selectedSub(); as sub) {
-              เอกสารใน {{ sub.name }}
-            } @else {
-              เอกสารทั้งหมดในหมวด
-            }
-          </h2>
-          <div class="flex items-center gap-2 text-sm">
-            <span class="text-ink-muted">{{ docs().length }} รายการ</span>
-          </div>
-        </div>
-
-        <!-- Sort tabs -->
-        <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
-          @for (s of sorts; track s.value) {
+          @for (sub of filteredSubcategories(); track sub.id) {
             <button
-              class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
-              [class.bg-pink-500]="sort() === s.value"
-              [class.text-white]="sort() === s.value"
-              [class.bg-white]="sort() !== s.value"
-              [class.text-ink-soft]="sort() !== s.value"
-              [class.border]="sort() !== s.value"
-              [class.border-line]="sort() !== s.value"
-              (click)="sort.set(s.value)"
+              class="card-soft p-4 text-left transition-all hover:-translate-y-0.5"
+              [class.!border-pink-500]="selectedSubId() === sub.id"
+              [class.shadow-pop]="selectedSubId() === sub.id"
+              (click)="selectedSubId.set(sub.id)"
             >
-              {{ s.label }}
+              <div class="text-2xl mb-2">{{ sub.icon }}</div>
+              <div class="text-sm font-bold text-ink leading-tight line-clamp-1">{{ sub.name }}</div>
+              <div class="text-xs text-ink-muted mt-0.5">{{ 'categories.itemsUnit' | trans:{ count: sub.documentCount } }}</div>
             </button>
+          } @empty {
+            <div class="col-span-full text-center text-sm text-ink-muted py-6">
+              {{ 'categoryDetail.noSubMatch' | trans:{ term: subSearch() } }}
+            </div>
           }
         </div>
+      </section>
+    }
 
-        @if (catalog.categoryDocumentsState().status === 'loading') {
-          <app-empty-state emoji="⏳" title="กำลังโหลดเอกสาร…" description="รอสักครู่นะคะ" />
-        } @else if (docs().length === 0) {
-          <app-empty-state
-            emoji="🌸"
-            title="ยังไม่มีเอกสารในกลุ่มนี้"
-            description="ลองเลือกหมวดย่อยอื่นหรือดูเอกสารทั้งหมด"
-          >
-            <button class="btn-pink mt-4" (click)="selectedSubId.set('')">ดูทั้งหมด</button>
-          </app-empty-state>
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="section-title">
+        @if (selectedSub(); as sub) {
+          {{ 'categoryDetail.docsInSub' | trans:{ name: sub.name } }}
         } @else {
-          <div class="document-card-grid">
-            @for (doc of docs(); track doc.id) {
-              <app-document-card [doc]="doc" density="compact" />
-            }
-          </div>
+          {{ 'categoryDetail.docsInCat' | trans }}
         }
-      } @else if (catalog.categoryDetailState().status === 'loading') {
-        <app-empty-state emoji="⏳" title="กำลังโหลดหมวดหมู่…" description="รอสักครู่นะคะ" />
-      } @else {
-        <app-empty-state
-          emoji="🤔"
-          title="ไม่พบหมวดหมู่นี้"
-          description="หมวดที่คุณค้นหาอาจถูกย้ายหรือถูกลบ"
+      </h2>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-ink-muted">{{ 'categoryDetail.itemsCount' | trans:{ count: docs().length } }}</span>
+      </div>
+    </div>
+
+    <!-- Sort tabs -->
+    <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+      @for (s of sorts; track s.value) {
+        <button
+          class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
+          [class.bg-pink-500]="sort() === s.value"
+          [class.text-white]="sort() === s.value"
+          [class.bg-white]="sort() !== s.value"
+          [class.text-ink-soft]="sort() !== s.value"
+          [class.border]="sort() !== s.value"
+          [class.border-line]="sort() !== s.value"
+          (click)="sort.set(s.value)"
         >
-          <a routerLink="/categories" class="btn-pink mt-4">กลับหน้าหมวดหมู่</a>
-        </app-empty-state>
+          {{ s.labelKey | trans }}
+        </button>
       }
     </div>
+
+    @if (catalog.categoryDocumentsState().status === 'loading') {
+      <app-empty-state emoji="⏳" [title]="'categoryDetail.loadingDocs' | trans" [description]="'common.pleaseWait' | trans" />
+    } @else if (docs().length === 0) {
+      <app-empty-state
+        emoji="🌸"
+        [title]="'categoryDetail.emptyDocsTitle' | trans"
+        [description]="'categoryDetail.emptyDocsDesc' | trans"
+      >
+        <button class="btn-pink mt-4" (click)="selectedSubId.set('')">{{ 'categories.viewAll' | trans }}</button>
+      </app-empty-state>
+    } @else {
+      <div class="document-card-grid">
+        @for (doc of docs(); track doc.id) {
+          <app-document-card [doc]="doc" density="compact" />
+        }
+      </div>
+    }
+  } @else if (catalog.categoryDetailState().status === 'loading') {
+    <app-empty-state emoji="⏳" [title]="'categoryDetail.loadingCategory' | trans" [description]="'common.pleaseWait' | trans" />
+  } @else {
+    <app-empty-state
+      emoji="🤔"
+      [title]="'categoryDetail.notFoundTitle' | trans"
+      [description]="'categoryDetail.notFoundDesc' | trans"
+    >
+      <a routerLink="/categories" class="btn-pink mt-4">{{ 'categoryDetail.backToCategories' | trans }}</a>
+    </app-empty-state>
+  }
+</div>

@@ -4,20 +4,20 @@
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-      <span>แพ็กเกจสมาชิก</span>
+      <span>{{ 'subscribe.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">สมัครสมาชิกรายเดือน</h1>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'subscribe.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">
-      เลือกหมวดหมู่ที่ต้องการ แล้วดาวน์โหลดเอกสารในหมวดที่เลือกได้ไม่จำกัดตลอดรอบบิล
+      {{ 'subscribe.desc' | trans }}
     </p>
   </header>
 
   <div class="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
     <section class="card-soft p-6">
-      <h2 class="text-base font-bold text-ink mb-4">เลือกหมวดหมู่ที่ต้องการ</h2>
+      <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.selectCategoriesTitle' | trans }}</h2>
 
       @if (catalog.categories().length === 0) {
-        <p class="text-sm text-ink-muted">กำลังโหลดหมวดหมู่…</p>
+        <p class="text-sm text-ink-muted">{{ 'subscribe.loadingCategories' | trans }}</p>
       } @else {
         <ul class="divide-y divide-line">
           @for (c of eligibleCategories(); track c.id) {
@@ -33,19 +33,19 @@
                 <span class="text-sm font-semibold text-ink truncate">{{ c.name }}</span>
               </label>
               <span class="text-sm font-bold text-pink-600 whitespace-nowrap">
-                {{ c.subscriptionMonthlyPrice | thb }}/เดือน
+                {{ c.subscriptionMonthlyPrice | thb }}{{ 'subscribe.perMonth' | trans }}
               </span>
             </li>
           } @empty {
             <li class="py-6 text-sm text-ink-muted text-center">
-              ยังไม่มีหมวดหมู่ที่เปิดให้สมัครสมาชิกในตอนนี้
+              {{ 'subscribe.noCategoriesAvailable' | trans }}
             </li>
           }
         </ul>
 
         @if (ineligibleCategories().length > 0) {
           <div class="mt-4 pt-4 border-t border-line">
-            <p class="text-xs font-semibold text-ink-muted mb-2">หมวดที่ยังไม่เปิดให้สมัครสมาชิก</p>
+            <p class="text-xs font-semibold text-ink-muted mb-2">{{ 'subscribe.ineligibleTitle' | trans }}</p>
             <ul class="flex flex-wrap gap-2">
               @for (c of ineligibleCategories(); track c.id) {
                 <li class="pill-soft text-xs opacity-70">{{ c.name }}</li>
@@ -58,18 +58,18 @@
 
     <aside>
       <div class="card-soft p-6 lg:sticky lg:top-[88px]">
-        <h2 class="text-base font-bold text-ink mb-4">สรุปการสมัครสมาชิก</h2>
+        <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.summaryTitle' | trans }}</h2>
 
-        <p class="text-sm text-ink-soft mb-1">ราคารวม {{ totalPrice() | thb: false }} บาท/เดือน</p>
-        <p class="text-xs text-ink-muted mb-5">{{ selectedCategoryIds().length }} หมวดหมู่ที่เลือก</p>
+        <p class="text-sm text-ink-soft mb-1">{{ 'subscribe.totalPrice' | trans:{ total: ((totalPrice() | thb: false) ?? '0') } }}</p>
+        <p class="text-xs text-ink-muted mb-5">{{ 'subscribe.selectedCount' | trans:{ count: selectedCategoryIds().length } }}</p>
 
         @if (!hasSavedCard()) {
           <div
             class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed mb-4"
           >
-            <p class="font-bold mb-1">กรุณาเพิ่มบัตรเครดิต/เดบิตก่อนสมัครสมาชิก</p>
+            <p class="font-bold mb-1">{{ 'subscribe.needCard' | trans }}</p>
             <a [routerLink]="['/account']" fragment="cards" class="text-pink-600 font-semibold underline">
-              ไปเพิ่มบัตร
+              {{ 'subscribe.addCardLink' | trans }}
             </a>
           </div>
         }
@@ -78,8 +78,8 @@
           <div
             class="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-relaxed mb-4"
           >
-            <p class="font-bold mb-1">ยืนยันการชำระเงินไม่สำเร็จ</p>
-            <p>คุณสมัครสมาชิกไว้แล้ว แต่การชำระเงินยังไม่เสร็จสมบูรณ์ กรุณาลองยืนยันการชำระเงินอีกครั้ง</p>
+            <p class="font-bold mb-1">{{ 'subscribe.paymentFailedTitle' | trans }}</p>
+            <p>{{ 'subscribe.paymentFailedDesc' | trans }}</p>
           </div>
         }
 
@@ -91,7 +91,7 @@
             (click)="retryPayment()"
           >
             <app-icon name="lock" [size]="16" />
-            {{ confirmingPayment() ? 'กำลังยืนยันการชำระเงิน…' : 'ลองยืนยันการชำระเงินอีกครั้ง' }}
+            {{ confirmingPayment() ? ('subscribe.confirmingPayment' | trans) : ('subscribe.retryPayment' | trans) }}
           </button>
         } @else {
           <button
@@ -101,7 +101,7 @@
             (click)="subscribe()"
           >
             <app-icon name="lock" [size]="16" />
-            {{ submitting() ? (confirmingPayment() ? 'กำลังยืนยันการชำระเงิน…' : 'กำลังสมัคร…') : 'สมัครสมาชิกรายเดือน' }}
+            {{ submitting() ? (confirmingPayment() ? ('subscribe.confirmingPayment' | trans) : ('subscribe.submitting' | trans)) : ('subscribe.submitBtn' | trans) }}
           </button>
         }
       </div>

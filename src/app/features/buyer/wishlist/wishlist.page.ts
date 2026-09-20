@@ -7,6 +7,7 @@ import { DocumentCardComponent } from '../../../shared/components/document-card/
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { TranslationService, TranslatePipe } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-wishlist',
@@ -19,6 +20,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
     EmptyStateComponent,
     IconComponent,
     ThbPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wishlist.page.html',
@@ -28,6 +30,7 @@ export class BuyerWishlistPage {
   readonly wishlist = inject(WishlistService);
   private readonly cart = inject(CartService);
   private readonly modal = inject(NzModalService);
+  private readonly i18n = inject(TranslationService);
 
   totalValue(): number {
     return this.wishlist.items().reduce((sum, d) => sum + d.price, 0);
@@ -43,11 +46,11 @@ export class BuyerWishlistPage {
 
   confirmClear(): void {
     this.modal.confirm({
-      nzTitle: 'ยืนยันล้างรายการโปรด',
-      nzContent: 'ลบทุกรายการโปรดออก?',
-      nzOkText: 'ลบทั้งหมด',
+      nzTitle: this.i18n.t('wishlist.confirmClearTitle'),
+      nzContent: this.i18n.t('wishlist.confirmClearDesc'),
+      nzOkText: this.i18n.t('wishlist.clearAllBtn'),
       nzOkDanger: true,
-      nzCancelText: 'ยกเลิก',
+      nzCancelText: this.i18n.t('common.cancel'),
       nzOnOk: () => this.wishlist.clear(),
     });
   }

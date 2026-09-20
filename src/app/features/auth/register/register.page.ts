@@ -58,10 +58,14 @@ export class AuthRegisterPage {
 
   strengthLabel(): string {
     const s = this.strengthLevel();
-    const labelsTh = ['อ่อนมาก', 'อ่อน', 'พอใช้', 'ดี', 'แข็งแรง'];
-    const labelsEn = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-    const list = this.i18n.currentLang() === 'en' ? labelsEn : labelsTh;
-    return list[s] ?? '';
+    const keys = [
+      'auth.strengthVeryWeak',
+      'auth.strengthWeak',
+      'auth.strengthFair',
+      'auth.strengthGood',
+      'auth.strengthStrong',
+    ];
+    return this.i18n.t(keys[s] ?? '');
   }
 
   strengthColor(): string {
@@ -87,7 +91,7 @@ export class AuthRegisterPage {
     });
     this.loading.set(false);
     if (!r.ok) {
-      this.error.set(r.error ?? 'สมัครไม่สำเร็จ');
+      this.error.set(r.error ?? this.i18n.t('auth.registerFailed'));
       return;
     }
     this.router.navigate(['/auth/verify-email'], {
@@ -113,7 +117,7 @@ export class AuthRegisterPage {
   confirmLineEmail(): void {
     const mail = this.lineEmail().trim();
     if (!mail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-      this.lineEmailError.set('กรุณาระบุอีเมลที่ถูกต้อง');
+      this.lineEmailError.set(this.i18n.t('auth.pleaseEnterValidEmail'));
       return;
     }
     this.lineModalVisible.set(false);
@@ -125,7 +129,7 @@ export class AuthRegisterPage {
       });
       this.loading.set(false);
       if (!r.ok) {
-        this.error.set(r.error ?? 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ');
+        this.error.set(r.error ?? this.i18n.t('auth.lineLoginFailed'));
       }
     })();
   }
@@ -136,7 +140,7 @@ export class AuthRegisterPage {
       const r = await this.auth.signInWithProvider(provider, { returnUrl: this.returnUrl() });
       this.loading.set(false);
       if (!r.ok) {
-        this.error.set(r.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
+        this.error.set(r.error ?? this.i18n.t('auth.loginFailed'));
         return;
       }
       this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));

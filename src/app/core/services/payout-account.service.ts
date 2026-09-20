@@ -8,6 +8,7 @@ import {
 } from '../api';
 import { extractErrorCode, extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import {
   errorActionState,
   idleActionState,
@@ -53,6 +54,7 @@ export interface RevealedPayoutAccount {
 @Injectable({ providedIn: 'root' })
 export class PayoutAccountService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _account = signal<PayoutAccount | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
@@ -116,11 +118,11 @@ export class PayoutAccountService {
       this._sellerProfileRequired.set(false);
       this._state.set(idleActionState());
     } catch (e) {
-      if (this.handleSellerScopedError('โหลดข้อมูลบัญชีรับเงินไม่สำเร็จ', e)) {
+      if (this.handleSellerScopedError('errors.context.loadPayoutAccount', e)) {
         this._state.set(idleActionState());
         return;
       }
-      this._state.set(errorActionState('โหลดข้อมูลบัญชีรับเงินไม่สำเร็จ'));
+      this._state.set(errorActionState(this.translation.t('seller.loadPayoutAccountFailed')));
     }
   }
 

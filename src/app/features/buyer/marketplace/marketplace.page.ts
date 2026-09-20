@@ -97,20 +97,10 @@ export class BuyerMarketplacePage {
    * pre-existing behavior outside this redesign's scope.
    */
   readonly heroDescription = computed(() => {
-    const isEn = this.i18n.currentLang() === 'en';
     const totalDocs = this.platformStats.stats()?.totalApprovedDocuments;
-    if (isEn) {
-      const base =
-        totalDocs != null
-          ? `Over ${this.compactPipe.transform(totalDocs)} documents from verified creators nationwide`
-          : 'Quality educational documents from verified creators nationwide';
-      return `${base} — use filters on the left to find what you need`;
-    }
-    const base =
-      totalDocs != null
-        ? `กว่า ${this.compactPipe.transform(totalDocs)} เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ`
-        : 'เอกสารคุณภาพจากครีเอเตอร์ตัวจริงทั่วประเทศ';
-    return `${base} — ใช้ตัวกรองด้านซ้ายเพื่อค้นหาที่ใช่`;
+    return totalDocs != null
+      ? this.i18n.t('marketplace.heroDescWithCount', { count: this.compactPipe.transform(totalDocs) })
+      : this.i18n.t('marketplace.heroDescNoCount');
   });
 
   readonly formats = ['pdf', 'docx', 'pptx', 'xlsx', 'zip'];

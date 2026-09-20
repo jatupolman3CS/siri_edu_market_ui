@@ -276,7 +276,7 @@ describe('LibraryService — toggleRead (library-read-progress v1 §4)', () => {
     await library.toggleRead('doc-1', true);
     await settle();
 
-    expect(reporter.report).toHaveBeenCalledWith('อัปเดตสถานะการอ่านไม่สำเร็จ', expect.anything());
+    expect(reporter.report).toHaveBeenCalledWith('errors.context.updateReadStatus', expect.anything());
     expect(library.library()[0].isRead).toBe(false);
   });
 });

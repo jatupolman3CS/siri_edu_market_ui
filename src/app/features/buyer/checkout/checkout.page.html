@@ -262,10 +262,7 @@
 
               <!-- T-13: the charge already went through; clicking again would charge twice. -->
               @if (paymentUnderReview()) {
-                <p class="text-[12px] text-rose-600 text-center mt-3 leading-relaxed">
-                  ระบบได้รับเงินของคุณแล้ว แต่ยังจับคู่กับคำสั่งซื้อไม่สำเร็จ
-                  ทีมงานได้รับแจ้งและกำลังตรวจสอบ — <strong>กรุณาอย่าชำระเงินซ้ำ</strong>
-                </p>
+                <p class="text-[12px] text-rose-600 text-center mt-3 leading-relaxed" [innerHTML]="'checkout.paymentUnderReviewNotice' | trans"></p>
               }
 
               <p class="text-[11px] text-ink-muted text-center mt-3 leading-relaxed">

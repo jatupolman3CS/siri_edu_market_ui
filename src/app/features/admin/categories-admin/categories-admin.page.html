@@ -1,12 +1,12 @@
 <div class="max-w-5xl">
       <header class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-3xl font-extrabold text-ink mb-1">หมวดหมู่</h1>
-          <p class="text-sm text-ink-soft">จัดการหมวดหมู่เอกสารบนแพลตฟอร์ม</p>
+          <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.categoriesAdmin.title' | trans }}</h1>
+          <p class="text-sm text-ink-soft">{{ 'admin.categoriesAdmin.desc' | trans }}</p>
         </div>
         <button type="button" class="btn-pink" (click)="openCreateCategory()">
           <app-icon name="plus" [size]="16" />
-          เพิ่มหมวดหมู่
+          {{ 'admin.categoriesAdmin.addBtn' | trans }}
         </button>
       </header>
 
@@ -15,11 +15,11 @@
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-5 py-3 w-24"></th>
-              <th class="px-5 py-3 font-semibold">ชื่อหมวด</th>
-              <th class="px-5 py-3 font-semibold">Slug</th>
-              <th class="px-5 py-3 font-semibold">คำอธิบาย</th>
-              <th class="px-5 py-3 font-semibold text-right">เอกสาร</th>
-              <th class="px-5 py-3 font-semibold text-right">ราคาสมาชิก/เดือน</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.categoriesAdmin.colName' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.categoriesAdmin.colSlug' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.categoriesAdmin.colDesc' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'admin.categoriesAdmin.colDocs' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'admin.categoriesAdmin.colPrice' | trans }}</th>
             </tr>
           </thead>
           <tbody>
@@ -40,7 +40,7 @@
                     <button
                       type="button"
                       class="btn-icon !w-7 !h-7 shrink-0"
-                      [attr.aria-label]="expandedCategoryId() === c.id ? 'ยุบหมวดย่อย' : 'ขยายหมวดย่อย'"
+                      [attr.aria-label]="expandedCategoryId() === c.id ? ('admin.categoriesAdmin.subCollapse' | trans) : ('admin.categoriesAdmin.subExpand' | trans)"
                       (click)="toggleExpand(c)"
                     >
                       <app-icon [name]="expandedCategoryId() === c.id ? 'chevron-down' : 'chevron-right'" [size]="14" />
@@ -60,7 +60,7 @@
                   @if (c.subscriptionMonthlyPrice != null) {
                     <span class="font-bold text-ink">{{ c.subscriptionMonthlyPrice | thb }}</span>
                   } @else {
-                    <span class="text-ink-muted">ยังไม่เปิด</span>
+                    <span class="text-ink-muted">{{ 'admin.categoriesAdmin.notOpen' | trans }}</span>
                   }
                 </td>
               </tr>
@@ -69,10 +69,10 @@
                 <tr class="bg-pink-50/30 border-t border-line">
                   <td colspan="6" class="px-5 py-4">
                     <div class="flex items-center justify-between mb-3">
-                      <h3 class="text-sm font-bold text-ink">หมวดย่อย</h3>
+                      <h3 class="text-sm font-bold text-ink">{{ 'admin.categoriesAdmin.subTitle' | trans }}</h3>
                       <button type="button" class="btn-pink !py-1.5 !px-4 text-xs" (click)="openCreateSubcategory(c)">
                         <app-icon name="plus" [size]="12" />
-                        เพิ่มหมวดย่อย
+                        {{ 'admin.categoriesAdmin.subAddBtn' | trans }}
                       </button>
                     </div>
 
@@ -85,14 +85,14 @@
                             class="btn-ghost !py-1 !px-3 text-xs whitespace-nowrap"
                             (click)="disableInsteadOfDelete()"
                           >
-                            ปิดใช้งานแทน
+                            {{ 'admin.categoriesAdmin.closeConflict' | trans }}
                           </button>
                         </div>
                       }
                     }
 
                     @if (subcategoryLoading()) {
-                      <p class="text-xs text-ink-muted">กำลังโหลด...</p>
+                      <p class="text-xs text-ink-muted">{{ 'admin.categoriesAdmin.subLoading' | trans }}</p>
                     } @else {
                       <ul class="divide-y divide-line">
                         @for (s of subcategories()[c.id]; track s.id) {
@@ -102,9 +102,9 @@
                               <span class="text-sm font-semibold text-ink truncate">{{ s.name }}</span>
                               <span class="text-xs text-ink-muted font-mono shrink-0">{{ s.slug }}</span>
                               @if (!s.isActive) {
-                                <span class="pill-soft text-[10px] shrink-0">ปิดใช้งาน</span>
+                                <span class="pill-soft text-[10px] shrink-0">{{ 'admin.categoriesAdmin.subDisabled' | trans }}</span>
                               }
-                              <span class="pill-pink text-[10px] shrink-0">{{ s.documentCount }} เอกสาร</span>
+                              <span class="pill-pink text-[10px] shrink-0">{{ s.documentCount }} {{ 'admin.categoriesAdmin.colDocs' | trans }}</span>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                               <button type="button" class="btn-icon !w-7 !h-7" title="แก้ไข" (click)="openEditSubcategory(c, s)">
@@ -121,7 +121,7 @@
                             </div>
                           </li>
                         } @empty {
-                          <li class="py-3 text-xs text-ink-muted">ยังไม่มีหมวดย่อยในหมวดหมู่นี้</li>
+                          <li class="py-3 text-xs text-ink-muted">{{ 'admin.categoriesAdmin.subEmpty' | trans }}</li>
                         }
                       </ul>
                     }
@@ -144,9 +144,9 @@
 
 <nz-modal
   [nzVisible]="categoryFormOpen()"
-  [nzTitle]="editingCategory() ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่'"
-  [nzOkText]="editingCategory() ? 'บันทึก' : 'เพิ่ม'"
-  nzCancelText="ยกเลิก"
+  [nzTitle]="editingCategory() ? ('admin.categoriesAdmin.editTitle' | trans) : ('admin.categoriesAdmin.createTitle' | trans)"
+  [nzOkText]="editingCategory() ? ('common.save' | trans) : ('admin.categoriesAdmin.addBtnOk' | trans)"
+  [nzCancelText]="'common.cancel' | trans"
   [nzOkLoading]="catSaving()"
   [nzOkDisabled]="!categoryFormValid() || catSaving()"
   (nzOnOk)="saveCategory()"
@@ -155,7 +155,7 @@
   <ng-container *nzModalContent>
     <div class="space-y-4">
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">ชื่อหมวดหมู่</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.nameLabel' | trans }}</label>
         <input type="text" [(ngModel)]="catName" name="catName" class="input-soft" />
         @if (catNameError()) {
           <p class="text-[11px] text-rose-500 mt-1">{{ catNameError() }}</p>
@@ -163,14 +163,14 @@
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">Slug</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.colSlug' | trans }}</label>
         <input type="text" [(ngModel)]="catSlug" name="catSlug" class="input-soft" />
-        <p class="text-[11px] text-ink-muted mt-1">เว้นว่างได้ — ระบบจะสร้างจากชื่อหมวดหมู่</p>
+        <p class="text-[11px] text-ink-muted mt-1">{{ 'admin.categoriesAdmin.slugHint' | trans }}</p>
       </div>
 
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-1 block">
-          ราคาสมาชิกรายเดือน (บาท, รวม VAT)
+          {{ 'admin.categoriesAdmin.priceLabel' | trans }}
         </label>
         <input
           type="text"
@@ -182,7 +182,7 @@
         @if (catPriceError()) {
           <p class="text-[11px] text-rose-500 mt-1">{{ catPriceError() }}</p>
         } @else {
-          <p class="text-[11px] text-ink-muted mt-1">เว้นว่าง = ยังไม่เปิดให้สมัครสมาชิกหมวดนี้</p>
+          <p class="text-[11px] text-ink-muted mt-1">{{ 'admin.categoriesAdmin.priceHint' | trans }}</p>
         }
       </div>
     </div>
@@ -191,9 +191,9 @@
 
 <nz-modal
   [nzVisible]="subcategoryFormOpen()"
-  [nzTitle]="editingSubcategoryId() ? 'แก้ไขหมวดย่อย' : ('เพิ่มหมวดย่อยใน ' + subcategoryFormCategoryName())"
-  [nzOkText]="editingSubcategoryId() ? 'บันทึก' : 'เพิ่ม'"
-  nzCancelText="ยกเลิก"
+  [nzTitle]="editingSubcategoryId() ? ('admin.categoriesAdmin.subEditTitle' | trans) : ('admin.categoriesAdmin.subCreateTitle' | trans)"
+  [nzOkText]="editingSubcategoryId() ? ('common.save' | trans) : ('admin.categoriesAdmin.addBtnOk' | trans)"
+  [nzCancelText]="'common.cancel' | trans"
   [nzOkLoading]="subSaving()"
   (nzOnOk)="saveSubcategory()"
   (nzOnCancel)="closeSubcategoryForm()"
@@ -202,36 +202,36 @@
     <div class="space-y-4">
       @if (!editingSubcategoryId()) {
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1 block">รหัส (id)</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.subIdLabel' | trans }}</label>
           <input type="text" [(ngModel)]="subId" name="subId" class="input-soft" />
-          <p class="text-[11px] text-ink-muted mt-1">เปลี่ยนภายหลังไม่ได้ ใช้อักษรอังกฤษพิมพ์เล็กและขีดกลาง</p>
+          <p class="text-[11px] text-ink-muted mt-1">{{ 'admin.categoriesAdmin.subIdHint' | trans }}</p>
         </div>
       }
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">ชื่อ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.subNameLabel' | trans }}</label>
         <input type="text" [(ngModel)]="subName" name="subName" class="input-soft" />
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">Slug</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.colSlug' | trans }}</label>
         <input type="text" [(ngModel)]="subSlug" name="subSlug" class="input-soft" />
-        <p class="text-[11px] text-ink-muted mt-1">เว้นว่างได้ ระบบจะใช้รหัสแทน</p>
+        <p class="text-[11px] text-ink-muted mt-1">{{ 'admin.categoriesAdmin.subSlugHint' | trans }}</p>
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">ไอคอน</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.subIconLabel' | trans }}</label>
         <input type="text" [(ngModel)]="subIcon" name="subIcon" class="input-soft" />
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-1 block">ลำดับ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'admin.categoriesAdmin.subSortLabel' | trans }}</label>
         <input type="number" [(ngModel)]="subSortOrder" name="subSortOrder" class="input-soft" />
       </div>
 
       <div class="flex items-center gap-2">
         <nz-switch [attr.name]="'subIsActive'" [(ngModel)]="subIsActive" />
-        <span class="text-xs font-semibold text-ink-soft">เปิดใช้งาน</span>
+        <span class="text-xs font-semibold text-ink-soft">{{ 'admin.categoriesAdmin.subEnabledLabel' | trans }}</span>
       </div>
     </div>
   </ng-container>

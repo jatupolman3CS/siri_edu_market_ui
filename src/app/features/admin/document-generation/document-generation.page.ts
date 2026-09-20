@@ -1,3 +1,5 @@
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,12 +31,16 @@ const RUN_PAGE_SIZE = 20;
 @Component({
   selector: 'app-admin-document-generation',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent],
+  imports: [
+    TranslatePipe,
+    DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-generation.page.html',
   styleUrl: './document-generation.page.scss',
 })
 export class AdminDocumentGenerationPage {
+  readonly translation = inject(TranslationService);
   private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
@@ -47,7 +53,7 @@ export class AdminDocumentGenerationPage {
     () => this.jobToggles().find((t) => t.jobKey === DOCUMENT_GENERATION_JOB_KEY) ?? null,
   );
   /**
-   * Judgment call: the spec only defines "เปิดใช้งาน"/"ปิดใช้งาน" text, not a third "unknown"
+   * Judgment call: the spec only defines enabled/disabled text, not a third "unknown"
    * state. Until backend ships the 5th toggle catalog row, this item is never found — treated
    * as disabled (`false`) rather than inventing new copy not in §4's exact-text table.
    */
@@ -135,7 +141,7 @@ export class AdminDocumentGenerationPage {
     try {
       const result = await this.admin.runDocumentGeneration(categoryId);
       if (result) {
-        this.message.success(`สร้างเอกสารอัตโนมัติเรียบร้อย (${result.documentsGenerated} รายการ)`);
+        this.message.success(this.translation.t('admin.docGenSuccess', { count: result.documentsGenerated }));
         this.page.set(1);
         await Promise.all([this.loadCategories(), this.loadRuns()]);
       }
@@ -156,14 +162,14 @@ export class AdminDocumentGenerationPage {
   }
 
   runTypeLabel(triggeredBy: DocumentGenerationRun['triggeredBy']): string {
-    return triggeredBy === 'Scheduled' ? 'ตามกำหนดเวลา' : 'สั่งด้วยมือ';
+    return triggeredBy === 'Scheduled' ? this.translation.t('admin.triggeredScheduled') : this.translation.t('admin.triggeredManual');
   }
 
   runStatusLabel(status: DocumentGenerationRun['status']): string {
     return {
-      Success: 'สำเร็จ',
-      PartialFailure: 'สำเร็จบางส่วน',
-      Failed: 'ล้มเหลว',
+      Success: this.translation.t('admin.runStatusSuccess'),
+      PartialFailure: this.translation.t('admin.runStatusPartial'),
+      Failed: this.translation.t('admin.runStatusFailed'),
     }[status];
   }
 

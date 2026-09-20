@@ -7,6 +7,8 @@ import {
   WishlistService,
 } from '../../../core/services';
 import { RESOURCE_TYPE_LABELS, GRADE_LEVEL_LABELS } from '../../../core/models';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { ThbPipe } from '../../pipes/thb.pipe';
 import { CompactPipe } from '../../pipes/compact.pipe';
 import { IconComponent } from '../icon/icon.component';
@@ -24,6 +26,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
     IconComponent,
     RatingStarsComponent,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quick-view-modal.component.html',
@@ -34,12 +37,18 @@ export class QuickViewModalComponent {
   readonly wishlist = inject(WishlistService);
   readonly cart = inject(CartService);
   private readonly router = inject(Router);
+  readonly translation = inject(TranslationService);
 
   resourceLabel(t: string): string {
-    return RESOURCE_TYPE_LABELS[t as keyof typeof RESOURCE_TYPE_LABELS] ?? t;
+    const key = `resourceTypes.${t}`;
+    const translated = this.translation.t(key);
+    return translated !== key ? translated : (RESOURCE_TYPE_LABELS[t as keyof typeof RESOURCE_TYPE_LABELS] ?? t);
   }
+
   gradeLabel(g: string): string {
-    return GRADE_LEVEL_LABELS[g as keyof typeof GRADE_LEVEL_LABELS] ?? g;
+    const key = `gradeLevels.${g}`;
+    const translated = this.translation.t(key);
+    return translated !== key ? translated : (GRADE_LEVEL_LABELS[g as keyof typeof GRADE_LEVEL_LABELS] ?? g);
   }
 
   addToCart(): void {

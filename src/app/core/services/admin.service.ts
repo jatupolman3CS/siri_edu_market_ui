@@ -546,12 +546,14 @@ import {
 } from '../api-mappers/mappers';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n/translation.service';
 import { createInfinitePager, type PagedResult } from './infinite-pager';
 import { getApiAdminDocumentById, type AdminDocumentDetail } from '../api/admin-documents.api';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _pendingQuery = signal<{
     title?: string;
@@ -589,7 +591,7 @@ export class AdminService {
 
   private readonly txnsPager = createInfinitePager<AdminTransaction>({
     pageSize: 50,
-    errorMessage: 'โหลดธุรกรรมแอดมินไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.context.loadAdminTransactions'),
     fetch: async (Page, PageSize) => {
       const result = await getApiAdminTransactions({ query: { Page, PageSize } });
       const data = unwrapSdkResult(result);
@@ -605,7 +607,7 @@ export class AdminService {
 
   private readonly pendingPager = createInfinitePager<DocumentItem>({
     pageSize: 50,
-    errorMessage: 'โหลดคิวอนุมัติเอกสารไม่สำเร็จ',
+    errorMessage: this.translation.t('errors.context.loadApprovalQueue'),
     fetch: async (Page, PageSize) => {
       const q = this._pendingQuery();
       const result = await postApiAdminDocumentsPendingSearch({
@@ -663,7 +665,7 @@ export class AdminService {
     try {
       await this.txnsPager.loadFirst();
     } catch (e) {
-      this.apiFail.report('โหลดธุรกรรมแอดมิน', e);
+      this.apiFail.report('errors.context.loadAdminTransactions', e);
     }
   }
 
@@ -686,7 +688,7 @@ export class AdminService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.apiFail.report('โหลดธุรกรรมแอดมิน', e);
+      this.apiFail.report('errors.context.loadAdminTransactions', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -697,7 +699,7 @@ export class AdminService {
       const data = unwrapSdkResult(result);
       this._dashboard.set(data ?? null);
     } catch (e) {
-      this.apiFail.report('โหลดแดชบอร์ดแอดมิน', e);
+      this.apiFail.report('errors.context.loadAdminDashboard', e);
       this._dashboard.set(null);
     }
   }
@@ -712,7 +714,7 @@ export class AdminService {
       this._pendingQuery.set(query ?? {});
       await this.pendingPager.loadFirst();
     } catch (e) {
-      this.apiFail.report('โหลดคิวอนุมัติเอกสาร', e);
+      this.apiFail.report('errors.context.loadApprovalQueue', e);
     }
   }
 
@@ -726,7 +728,7 @@ export class AdminService {
       unwrapSdkResult(result);
       await this.refreshPendingDocuments();
     } catch (e) {
-      this.apiFail.report('อนุมัติเอกสาร', e);
+      this.apiFail.report('errors.context.approveDocument', e);
       throw e;
     }
   }
@@ -740,7 +742,7 @@ export class AdminService {
       unwrapSdkResult(result);
       await this.refreshPendingDocuments();
     } catch (e) {
-      this.apiFail.report('ปฏิเสธเอกสาร', e);
+      this.apiFail.report('errors.context.rejectDocument', e);
       throw e;
     }
   }
@@ -750,7 +752,7 @@ export class AdminService {
       const result = await getApiAdminDocumentById({ path: { id } });
       return unwrapSdkResult(result) ?? null;
     } catch (e) {
-      this.apiFail.report('โหลดรายละเอียดเอกสาร', e);
+      this.apiFail.report('errors.context.loadDocumentDetail', e);
       return null;
     }
   }
@@ -762,7 +764,7 @@ export class AdminService {
       unwrapSdkResult(result);
       await this.refreshPendingDocuments();
     } catch (e) {
-      this.apiFail.report('ประเมินความเสี่ยงด้วย AI', e);
+      this.apiFail.report('errors.context.aiPrescreen', e);
       throw e;
     }
   }
@@ -816,7 +818,7 @@ export class AdminService {
         totalPages: result.totalPages,
       };
     } catch (e) {
-      this.apiFail.report('ค้นหาผู้ขาย', e);
+      this.apiFail.report('errors.context.searchSellers', e);
       return { items: [], page: query.page, pageSize: query.pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -827,7 +829,7 @@ export class AdminService {
       const data = unwrapSdkResult(result);
       this._adminCategories.set((data ?? []).map(mapCategory));
     } catch (e) {
-      this.apiFail.report('โหลดหมวดหมู่ (แอดมิน)', e);
+      this.apiFail.report('errors.context.loadAdminCategories', e);
       this._adminCategories.set([]);
     }
   }
@@ -838,7 +840,7 @@ export class AdminService {
       unwrapSdkResult(result);
       await this.refreshAdminCategories();
     } catch (e) {
-      this.apiFail.report('เพิ่มหมวดหมู่', e);
+      this.apiFail.report('errors.context.createCategory', e);
       throw e;
     }
   }
@@ -855,7 +857,7 @@ export class AdminService {
       unwrapSdkResult(result);
       await this.refreshAdminCategories();
     } catch (e) {
-      this.apiFail.report('อัปเดตหมวดหมู่', e);
+      this.apiFail.report('errors.context.updateCategory', e);
       throw e;
     }
   }
@@ -863,7 +865,7 @@ export class AdminService {
   async deleteCategory(id: string): Promise<void> {
     const result = await deleteApiAdminCategoriesById({ path: { id } });
     if (result.error) {
-      this.apiFail.report('ลบหมวดหมู่', result.error);
+      this.apiFail.report('errors.context.deleteCategory', result.error);
       throw result.error;
     }
     await this.refreshAdminCategories();
@@ -877,7 +879,7 @@ export class AdminService {
       this._settings.set(settings);
       return settings;
     } catch (e) {
-      this.apiFail.report('โหลดการตั้งค่าระบบ', e);
+      this.apiFail.report('errors.context.loadSettings', e);
       this._settings.set(null);
       return null;
     }
@@ -896,7 +898,7 @@ export class AdminService {
       this._settings.set(settings);
       return settings;
     } catch (e) {
-      this.apiFail.report('บันทึกการตั้งค่าระบบ', e);
+      this.apiFail.report('errors.context.saveSettings', e);
       throw e;
     }
   }
@@ -907,7 +909,7 @@ export class AdminService {
       this._storageUsage.set(usage);
       return usage;
     } catch (e) {
-      this.apiFail.report('โหลดสถิติพื้นที่จัดเก็บ', e);
+      this.apiFail.report('errors.context.loadStorageUsage', e);
       this._storageUsage.set(null);
       return null;
     }
@@ -937,7 +939,7 @@ export class AdminService {
       });
       return (unwrapSdkResult(result).items ?? []).map(toAdminWatermarkCopy);
     } catch (e) {
-      this.apiFail.report('ค้นหารหัสสำเนาเอกสาร', e);
+      this.apiFail.report('errors.context.searchWatermarkCopies', e);
       throw e;
     }
   }
@@ -953,7 +955,7 @@ export class AdminService {
       this._jobToggles.set(items);
       return items;
     } catch (e) {
-      this.apiFail.report('โหลดสถานะงานอัตโนมัติเบื้องหลัง', e);
+      this.apiFail.report('errors.context.loadJobToggles', e);
       this._jobToggles.set([]);
       return [];
     }
@@ -974,7 +976,7 @@ export class AdminService {
       );
       return item;
     } catch (e) {
-      this.apiFail.report('อัปเดตสถานะงานอัตโนมัติเบื้องหลัง', e);
+      this.apiFail.report('errors.context.updateJobToggle', e);
       throw e;
     }
   }
@@ -1016,7 +1018,7 @@ export class AdminService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.apiFail.report('โหลดรายการถอนเงิน', e);
+      this.apiFail.report('errors.context.loadPayouts', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -1264,7 +1266,7 @@ export class AdminService {
       const items = unwrapSdkResult(await getApiAdminDocumentGenerationCategories()) ?? [];
       return items.map(toDocumentGenerationEligibleCategory);
     } catch (e) {
-      this.apiFail.report('โหลดรายการหมวดหมู่สำหรับสร้างเอกสารอัตโนมัติ', e);
+      this.apiFail.report('errors.context.loadDocGenCategories', e);
       return [];
     }
   }
@@ -1283,7 +1285,7 @@ export class AdminService {
       if (extractErrorStatus(e) === 409) {
         throw e;
       }
-      this.apiFail.report('สั่งสร้างเอกสารอัตโนมัติ', e);
+      this.apiFail.report('errors.context.runDocGeneration', e);
       throw e;
     }
   }
@@ -1304,7 +1306,7 @@ export class AdminService {
         totalPages: result.totalPages,
       };
     } catch (e) {
-      this.apiFail.report('โหลดประวัติการรันสร้างเอกสารอัตโนมัติ', e);
+      this.apiFail.report('errors.context.loadDocGenRuns', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -1327,7 +1329,7 @@ export class AdminService {
       const data = unwrapSdkResult(result) as { url?: string } | undefined;
       return data?.url ?? null;
     } catch (e) {
-      this.apiFail.report('ขอลิงก์ดาวน์โหลดไฟล์', e);
+      this.apiFail.report('errors.context.getFileDownloadUrl', e);
       return null;
     }
   }
@@ -1402,7 +1404,7 @@ export class AdminService {
         totalPages: result.totalPages ?? 0,
       };
     } catch (e) {
-      this.apiFail.report('ค้นหาผู้ใช้', e);
+      this.apiFail.report('errors.context.searchUsers', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
     }
   }
@@ -1417,7 +1419,7 @@ export class AdminService {
       const result = await getApiAdminUsersByUserId({ path: { userId } });
       return toAdminUserDetail(unwrapSdkResult(result));
     } catch (e) {
-      this.apiFail.report('โหลดข้อมูลผู้ใช้', e);
+      this.apiFail.report('errors.context.loadUserDetail', e);
       throw e;
     }
   }
@@ -1428,7 +1430,7 @@ export class AdminService {
       const result = await postApiAdminUsersByUserIdSuspend({ path: { userId }, body });
       return toAdminUserDetail(unwrapSdkResult(result));
     } catch (e) {
-      this.apiFail.report('ระงับบัญชีผู้ใช้', e);
+      this.apiFail.report('errors.context.suspendUser', e);
       throw e;
     }
   }
@@ -1439,7 +1441,7 @@ export class AdminService {
       const result = await postApiAdminUsersByUserIdBan({ path: { userId }, body });
       return toAdminUserDetail(unwrapSdkResult(result));
     } catch (e) {
-      this.apiFail.report('แบนบัญชีผู้ใช้', e);
+      this.apiFail.report('errors.context.banUser', e);
       throw e;
     }
   }
@@ -1450,7 +1452,7 @@ export class AdminService {
       const result = await postApiAdminUsersByUserIdReinstate({ path: { userId }, body });
       return toAdminUserDetail(unwrapSdkResult(result));
     } catch (e) {
-      this.apiFail.report('ปลดระงับบัญชีผู้ใช้', e);
+      this.apiFail.report('errors.context.reinstateUser', e);
       throw e;
     }
   }
@@ -1471,7 +1473,7 @@ export class AdminService {
         totalPages: data.totalPages ?? 0,
       };
     } catch (e) {
-      this.apiFail.report('โหลดรายการลิงก์พันธมิตร', e);
+      this.apiFail.report('errors.context.loadAffiliates', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
     }
   }
@@ -1500,7 +1502,7 @@ export class AdminService {
       unwrapSdkResult(result);
       return true;
     } catch (e) {
-      this.apiFail.report('บันทึกการตั้งค่าลิงก์พันธมิตร', e);
+      this.apiFail.report('errors.context.saveAffiliateSettings', e);
       return false;
     }
   }
@@ -1512,7 +1514,7 @@ export class AdminService {
       const data = unwrapSdkResult(result);
       return mapAdminWalletSummary(data);
     } catch (e) {
-      this.apiFail.report('โหลดข้อมูลกระเป๋าเงินผู้ใช้', e);
+      this.apiFail.report('errors.context.loadUserWallet', e);
       return null;
     }
   }
@@ -1537,7 +1539,7 @@ export class AdminService {
         totalPages: data.totalPages ?? 0,
       };
     } catch (e) {
-      this.apiFail.report('โหลดประวัติกระเป๋าเงินผู้ใช้', e);
+      this.apiFail.report('errors.context.loadUserWalletEntries', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
     }
   }
@@ -1552,7 +1554,7 @@ export class AdminService {
       const data = unwrapSdkResult(result);
       return mapAdminMlRecommendationOverview(data);
     } catch (e) {
-      this.apiFail.report('โหลดสถานะระบบแนะนำสินค้า', e);
+      this.apiFail.report('errors.context.loadMlRecommendations', e);
       return null;
     }
   }

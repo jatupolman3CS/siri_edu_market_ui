@@ -88,7 +88,7 @@
             <div class="grid grid-cols-6 gap-3 items-end h-48 min-w-[320px] px-2">
             @for (m of seller.stats().revenueByMonth; track m.month) {
               <div class="flex flex-col items-center gap-2 h-full justify-end">
-                <span class="text-xs font-bold text-ink">฿{{ (m.amount / 1000).toFixed(1) }}k</span>
+                <span class="text-xs font-bold text-ink">{{ 'common.baht' | trans }}{{ (m.amount / 1000).toFixed(1) }}k</span>
                 <div
                   class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
                   [style.height.%]="(m.amount / maxMonth()) * 100"
@@ -104,13 +104,13 @@
 
         <!-- Top categories -->
         <section class="card-tile">
-          <h2 class="text-lg font-bold text-ink mb-1">หมวดที่ขายดี</h2>
-          <p class="text-xs text-ink-muted mb-5">จัดอันดับตามจำนวนยอดขายในเดือนนี้</p>
+          <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.topCategories' | trans }}</h2>
+          <p class="text-xs text-ink-muted mb-5">{{ 'seller.topCategoriesSubtitle' | trans }}</p>
           @if (seller.stats().topCategories.length === 0) {
             <app-empty-state
               emoji="🏷️"
-              title="ยังไม่มียอดขาย"
-              description="เมื่อมีเอกสารขายได้ หมวดที่ขายดีจะแสดงที่นี่"
+              [title]="'seller.noSalesYet' | trans"
+              [description]="'seller.noSalesYetDesc' | trans"
             />
           } @else {
             <ul class="card-tile-body space-y-3">
@@ -149,22 +149,22 @@
       <div class="grid lg:grid-cols-2 gap-6 mt-6">
         <!-- Conversion rate ต่อเอกสาร -->
         <section class="min-w-0 card-tile">
-          <h2 class="text-lg font-bold text-ink mb-1">Conversion rate ต่อเอกสาร</h2>
-          <p class="text-xs text-ink-muted mb-5">คนดูกี่ครั้งแล้วซื้อกี่ครั้ง</p>
+          <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.conversionRate' | trans }}</h2>
+          <p class="text-xs text-ink-muted mb-5">{{ 'seller.conversionRateSubtitle' | trans }}</p>
           @if (seller.stats().insights.documentConversions.length === 0) {
             <app-empty-state
               emoji="📊"
-              title="ยังไม่มีข้อมูลการดู"
-              description="เมื่อมีคนเปิดดูเอกสารของคุณ ข้อมูล conversion จะแสดงที่นี่"
+              [title]="'seller.noViewData' | trans"
+              [description]="'seller.noViewDataDesc' | trans"
             />
           } @else {
             <div class="card-tile-body overflow-x-auto -mx-2">
               <table class="w-full text-sm min-w-[380px]">
                 <thead>
                   <tr class="text-left text-xs text-ink-muted border-b border-line">
-                    <th class="py-2 px-2 font-semibold">เอกสาร</th>
-                    <th class="py-2 px-2 font-semibold text-right">จำนวนดู</th>
-                    <th class="py-2 px-2 font-semibold text-right">จำนวนขาย</th>
+                    <th class="py-2 px-2 font-semibold">{{ 'seller.documentCol' | trans }}</th>
+                    <th class="py-2 px-2 font-semibold text-right">{{ 'seller.viewsCol' | trans }}</th>
+                    <th class="py-2 px-2 font-semibold text-right">{{ 'seller.salesCol' | trans }}</th>
                     <th class="py-2 px-2 font-semibold text-right">Conversion</th>
                   </tr>
                 </thead>
@@ -188,13 +188,13 @@
         <div class="flex flex-col gap-6">
           <!-- คำค้นหายอดนิยมที่พาคนมาเจอร้าน -->
           <section class="card-tile">
-            <h2 class="text-lg font-bold text-ink mb-1">คำค้นหาที่พาคนมาเจอร้านคุณ</h2>
-            <p class="text-xs text-ink-muted mb-5">คำค้นหายอดนิยมที่คนใช้แล้วเจอเอกสารของคุณ</p>
+            <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.topSearchTerms' | trans }}</h2>
+            <p class="text-xs text-ink-muted mb-5">{{ 'seller.topSearchTermsSubtitle' | trans }}</p>
             @if (seller.stats().insights.topSearchTerms.length === 0) {
               <app-empty-state
                 emoji="🔍"
-                title="ยังไม่มีคำค้นหา"
-                description="เมื่อมีคนค้นหาแล้วเจอเอกสารของคุณ คำค้นหาจะแสดงที่นี่"
+                [title]="'seller.noSearchTerms' | trans"
+              [description]="'seller.noSearchTermsDesc' | trans"
               />
             } @else {
               <ul class="card-tile-body flex flex-wrap gap-2 content-start">
@@ -210,15 +210,15 @@
 
           <!-- Breakdown ต้นทาง traffic ของร้าน -->
           <section class="card-tile flex-1">
-            <h2 class="text-lg font-bold text-ink mb-1">ต้นทาง traffic ของร้านคุณ</h2>
-            <p class="text-xs text-ink-muted mb-5">สัดส่วนที่มาของคนที่เปิดดูเอกสารในร้าน</p>
+            <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.trafficSource' | trans }}</h2>
+            <p class="text-xs text-ink-muted mb-5">{{ 'seller.trafficSourceSubtitle' | trans }}</p>
             @if (seller.stats().insights.trafficBreakdown.totalViews === 0) {
-              <app-empty-state emoji="🧭" title="ยังไม่มีข้อมูล traffic" />
+              <app-empty-state emoji="🧭" [title]="'seller.noTrafficData' | trans" />
             } @else {
               <ul class="card-tile-body space-y-3">
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
-                    <span class="font-medium text-ink">ค้นหา</span>
+                    <span class="font-medium text-ink">{{ 'seller.trafficSearch' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.searchPercent.toFixed(1) }}%</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
@@ -230,7 +230,7 @@
                 </li>
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
-                    <span class="font-medium text-ink">หมวดหมู่</span>
+                    <span class="font-medium text-ink">{{ 'seller.trafficCategory' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.categoryPercent.toFixed(1) }}%</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
@@ -242,7 +242,7 @@
                 </li>
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
-                    <span class="font-medium text-ink">ลิงก์ตรง</span>
+                    <span class="font-medium text-ink">{{ 'seller.trafficDirect' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.directPercent.toFixed(1) }}%</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
@@ -263,14 +263,14 @@
         <!-- Recent docs -->
         <section class="lg:col-span-2 min-w-0 card-tile">
           <header class="flex items-end justify-between mb-5">
-            <h2 class="text-lg font-bold text-ink">เอกสารล่าสุดของคุณ</h2>
-            <a routerLink="/seller/documents" class="text-sm text-pink-600 hover:underline font-semibold">ดูทั้งหมด →</a>
+            <h2 class="text-lg font-bold text-ink">{{ 'seller.recentDocuments' | trans }}</h2>
+            <a routerLink="/seller/documents" class="text-sm text-pink-600 hover:underline font-semibold">{{ 'common.viewAll' | trans }} →</a>
           </header>
           @if (seller.myDocuments().length === 0) {
             <app-empty-state
               emoji="📄"
-              title="ยังไม่มีเอกสาร"
-              description="อัปโหลดเอกสารแรกของคุณเพื่อเริ่มขาย"
+              [title]="'seller.noDocumentsYet' | trans"
+              [description]="'seller.noDocumentsYetDesc' | trans"
             />
           } @else {
             <ul class="card-tile-body divide-y divide-line">
@@ -282,14 +282,14 @@
                     <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">
                       <span class="uppercase">{{ d.format }}</span>
                       <span>·</span>
-                      <span>{{ d.downloads }} ดาวน์โหลด</span>
+                      <span>{{ d.downloads }} {{ 'common.downloads' | trans }}</span>
                       <span>·</span>
                       <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
                     </div>
                   </div>
                   <div class="text-right">
                     <div class="text-sm font-bold text-ink">{{ d.price | thb }}</div>
-                    <span class="pill-pink !py-0 !text-[10px]">{{ d.status === 'approved' ? 'เผยแพร่' : 'รออนุมัติ' }}</span>
+                    <span class="pill-pink !py-0 !text-[10px]">{{ d.status === 'approved' ? ('seller.statusApproved' | trans) : ('seller.statusPending' | trans) }}</span>
                   </div>
                 </li>
               }
@@ -299,13 +299,13 @@
 
         <!-- Payout -->
         <section class="card-tile bg-gradient-pink !border-pink-200">
-          <h2 class="text-lg font-bold text-ink mb-1">รอจ่ายคุณ</h2>
-          <p class="text-xs text-ink-muted mb-4">เงินที่พร้อมโอนเข้าบัญชีของคุณ</p>
+          <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.pendingPayout' | trans }}</h2>
+          <p class="text-xs text-ink-muted mb-4">{{ 'seller.pendingPayoutSubtitle' | trans }}</p>
           <div class="text-4xl font-extrabold text-pink-700 leading-none">
             {{ seller.stats().pendingPayout | thb }}
           </div>
           @if (seller.nextPayoutDate(); as payoutDate) {
-            <div class="text-xs text-ink-muted mt-2">โอนรอบถัดไป: {{ payoutDate | date: 'd MMM yyyy' }}</div>
+            <div class="text-xs text-ink-muted mt-2">{{ 'seller.nextPayoutRound' | trans: { date: (payoutDate | date: 'd MMM yyyy') ?? '' } }}</div>
           }
           <button
             class="btn-pink w-full mt-5 !py-2.5"
@@ -313,21 +313,21 @@
             (click)="requestWithdraw()"
           >
             <app-icon name="wallet" [size]="16" />
-            ขอถอนเงินทันที
+            {{ 'seller.requestWithdrawNow' | trans }}
           </button>
 
           <div class="mt-5 pt-5 border-t border-pink-200/60 space-y-3">
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
-              <span class="text-ink-soft">ส่วนแบ่งผู้ขาย <b class="text-ink">{{ sellerSharePercent() }}%</b> + ภาษีจัดการให้</span>
+              <span class="text-ink-soft">{{ 'seller.sellerShareFeature' | trans: { percent: sellerSharePercent() } }}</span>
             </div>
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
-              <span class="text-ink-soft">โอนเข้าบัญชีไทยทุกธนาคาร</span>
+              <span class="text-ink-soft">{{ 'seller.thaiBanksFeature' | trans }}</span>
             </div>
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
-              <span class="text-ink-soft">รับยอดขายภายใน 2-3 วันทำการ</span>
+              <span class="text-ink-soft">{{ 'seller.fastTransferFeature' | trans }}</span>
             </div>
           </div>
         </section>
@@ -341,8 +341,8 @@
               <app-icon name="chart" [size]="11" />
               Earnings Calculator
             </span>
-            <h2 class="text-xl font-extrabold text-ink">ลองคำนวณรายได้ของคุณ 💰</h2>
-            <p class="text-sm text-ink-muted mt-1">ป้อนสมมติฐาน — เห็นภาพรายได้ที่จะได้รับในแต่ละเดือน</p>
+            <h2 class="text-xl font-extrabold text-ink">{{ 'seller.calcTitle' | trans }}</h2>
+            <p class="text-sm text-ink-muted mt-1">{{ 'seller.calcSubtitle' | trans }}</p>
           </div>
         </header>
 
@@ -351,8 +351,8 @@
           <div class="space-y-5">
             <div>
               <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                <span>ราคาต่อชิ้น (THB)</span>
-                <span class="font-bold text-ink">฿{{ pricePerItem() }}</span>
+                <span>{{ 'seller.calcPricePerItem' | trans }}</span>
+                <span class="font-bold text-ink">{{ 'common.baht' | trans }}{{ pricePerItem() }}</span>
               </label>
               <input
                 type="range" min="50" max="990" step="10"
@@ -363,8 +363,8 @@
             </div>
             <div>
               <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                <span>ยอดขายต่อเดือน</span>
-                <span class="font-bold text-ink">{{ salesPerMonth() }} ชิ้น</span>
+                <span>{{ 'seller.calcSalesPerMonth' | trans }}</span>
+                <span class="font-bold text-ink">{{ salesPerMonth() }} {{ 'seller.calcUnits' | trans }}</span>
               </label>
               <input
                 type="range" min="5" max="500" step="5"
@@ -375,8 +375,8 @@
             </div>
             <div>
               <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                <span>จำนวนเอกสารในร้าน</span>
-                <span class="font-bold text-ink">{{ activeDocs() }} ชิ้น</span>
+                <span>{{ 'seller.calcActiveDocs' | trans }}</span>
+                <span class="font-bold text-ink">{{ activeDocs() }} {{ 'seller.calcUnits' | trans }}</span>
               </label>
               <input
                 type="range" min="1" max="100" step="1"
@@ -389,31 +389,31 @@
 
           <!-- Output -->
           <div class="card-tile bg-white">
-            <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">รายได้ที่คุณจะได้รับ ({{ sellerSharePercent() }}%)</div>
+            <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">{{ 'seller.calcYourRevenue' | trans: { percent: sellerSharePercent() } }}</div>
             <div class="text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
-            <div class="text-sm text-ink-muted mb-5">ต่อเดือน (หลังหักค่าธรรมเนียม)</div>
+            <div class="text-sm text-ink-muted mb-5">{{ 'seller.calcPerMonthNet' | trans }}</div>
 
             <ul class="space-y-3 text-sm border-t border-line pt-4">
               <li class="flex justify-between">
-                <span class="text-ink-soft">รายได้รวม (gross)</span>
+                <span class="text-ink-soft">{{ 'seller.calcGrossRevenue' | trans }}</span>
                 <span class="font-bold text-ink">{{ grossRevenue() | thb }}</span>
               </li>
               <li class="flex justify-between">
-                <span class="text-ink-soft">ค่าธรรมเนียมแพลตฟอร์ม ({{ feeRatePercent() }}%)</span>
+                <span class="text-ink-soft">{{ 'seller.calcPlatformFee' | trans: { percent: feeRatePercent() } }}</span>
                 <span class="text-rose-500">- {{ platformFee() | thb }}</span>
               </li>
               <li class="flex justify-between border-t border-line pt-3 font-bold">
-                <span class="text-ink">รายได้สุทธิต่อเดือน</span>
+                <span class="text-ink">{{ 'seller.calcNetRevenuePerMonth' | trans }}</span>
                 <span class="text-pink-600">{{ monthlyEarnings() | thb }}</span>
               </li>
               <li class="flex justify-between text-emerald-600 font-bold">
-                <span>รายได้ปี (ประมาณการ)</span>
+                <span>{{ 'seller.calcYearlyRevenueEst' | trans }}</span>
                 <span>{{ yearlyEarnings() | thb }}</span>
               </li>
             </ul>
 
             <div class="mt-5 pt-4 border-t border-line text-[11px] text-ink-muted">
-              💡 หากคุณมีเอกสารคุณภาพและใส่ใจกับการรีวิว ยอดขายของคุณจะเติบโตขึ้นเรื่อยๆ
+              {{ 'seller.calcTip' | trans }}
             </div>
           </div>
         </div>

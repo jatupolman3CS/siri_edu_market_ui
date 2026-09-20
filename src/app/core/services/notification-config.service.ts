@@ -7,6 +7,7 @@ import {
 import type { NotificationEventConfigItem as GeneratedNotificationEventConfigItem } from '../api/types.gen';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { toNotificationAudience, type NotificationAudience } from './notification-context.service';
+import { TranslationService } from '../i18n/translation.service';
 
 /**
  * notification-master-config v2 §3.7 (`docs/contracts/notification-master-config.md`) — the admin
@@ -81,9 +82,6 @@ export class NotificationConfigError extends Error {
   }
 }
 
-const FORBIDDEN_MESSAGE = 'ไม่มีสิทธิ์เข้าถึง';
-const UNAUTHORIZED_MESSAGE = 'กรุณาเข้าสู่ระบบอีกครั้ง';
-const GENERIC_FAILURE_MESSAGE = 'บันทึกไม่สำเร็จ กรุณาลองใหม่';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -126,6 +124,7 @@ function messageFromBody(body: unknown): string | null {
 @Injectable({ providedIn: 'root' })
 export class NotificationConfigService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _items = signal<NotificationEventConfigItem[]>([]);
   private readonly _loading = signal(false);
@@ -146,7 +145,7 @@ export class NotificationConfigService {
       this._items.set(items);
       return items;
     } catch (e) {
-      this.apiFail.report('โหลดการตั้งค่าการแจ้งเตือนของระบบ', e);
+      this.apiFail.report('errors.context.loadNotificationConfig', e);
       this._items.set([]);
       return [];
     } finally {
@@ -219,12 +218,12 @@ export class NotificationConfigService {
     raw: GeneratedNotificationEventConfigItem | undefined,
   ): GeneratedNotificationEventConfigItem {
     if (raw) return raw;
-    throw new NotificationConfigError(GENERIC_FAILURE_MESSAGE, undefined);
+    throw new NotificationConfigError(this.translation.t('notifConfigErrors.saveFailed'), undefined);
   }
 
   private failureMessage(status: number | undefined, error: unknown): string {
-    if (status === 403) return FORBIDDEN_MESSAGE;
-    if (status === 401) return UNAUTHORIZED_MESSAGE;
-    return messageFromBody(error) ?? GENERIC_FAILURE_MESSAGE;
+    if (status === 403) return this.translation.t('notifConfigErrors.forbidden');
+    if (status === 401) return this.translation.t('notifConfigErrors.unauthorized');
+    return messageFromBody(error) ?? this.translation.t('notifConfigErrors.saveFailed');
   }
 }

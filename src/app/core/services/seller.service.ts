@@ -65,6 +65,7 @@ import {
 } from '../api/seller-document-main-files';
 import { getApiSellerDocumentsByIdVersions } from '../api';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import { createInfinitePager, type PagedResult } from './infinite-pager';
 
 export interface SellerPayoutRow {
@@ -121,6 +122,7 @@ export type SellerReviewRow = {
 @Injectable({ providedIn: 'root' })
 export class SellerService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly docsQuery = signal<{ status: string; search: string }>({
     status: 'all',
@@ -176,7 +178,7 @@ export class SellerService {
 
   private readonly docsPager = createInfinitePager<DocumentItem>({
     pageSize: 24,
-    errorMessage: 'โหลดเอกสารของฉันไม่สำเร็จ',
+    errorMessage: this.translation.t('seller.loadMyDocsFailed'),
     fetch: async (Page, PageSize) => {
       const q = this.docsQuery();
       const result = await getApiSellerDocuments({
@@ -222,7 +224,7 @@ export class SellerService {
       if (data) this._stats.set(mapSellerStats(data));
       this._sellerProfileRequired.set(false);
     } catch (e) {
-      this.handleSellerScopedError('โหลดแดชบอร์ดผู้ขาย', e);
+      this.handleSellerScopedError('errors.context.loadSellerDashboard', e);
     }
   }
 
@@ -233,7 +235,7 @@ export class SellerService {
       if (data) this._earnings.set(data);
       this._sellerProfileRequired.set(false);
     } catch (e) {
-      this.handleSellerScopedError('โหลดรายได้ของฉัน', e);
+      this.handleSellerScopedError('errors.context.loadEarnings', e);
     }
   }
 
@@ -262,7 +264,7 @@ export class SellerService {
         this._sellerProfileRequired.set(true);
         return { ok: false };
       }
-      this.apiFail.report('ขอถอนเงิน', e);
+      this.apiFail.report('errors.context.requestPayout', e);
       return { ok: false };
     }
   }
@@ -274,7 +276,7 @@ export class SellerService {
       await this.loadEarnings();
       return { ok: true };
     } catch (e) {
-      this.apiFail.report('ยกเลิกคำขอถอนเงิน', e);
+      this.apiFail.report('errors.context.cancelPayout', e);
       return { ok: false };
     }
   }
@@ -296,7 +298,7 @@ export class SellerService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.handleSellerScopedError('โหลดประวัติยอดเงิน', e);
+      this.handleSellerScopedError('errors.context.loadBalanceEntries', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -306,7 +308,7 @@ export class SellerService {
       await this.docsPager.loadFirst();
       this._sellerProfileRequired.set(false);
     } catch (e) {
-      this.handleSellerScopedError('โหลดเอกสารของฉัน', e);
+      this.handleSellerScopedError('errors.context.loadMyDocs', e);
     }
   }
 
@@ -350,7 +352,7 @@ export class SellerService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.handleSellerScopedError('โหลดเอกสารของฉัน', e);
+      this.handleSellerScopedError('errors.context.loadMyDocs', e);
       return {
         items: [],
         page: query.page ?? 1,
@@ -383,7 +385,7 @@ export class SellerService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.handleSellerScopedError('โหลดประวัติการถอนเงิน', e);
+      this.handleSellerScopedError('errors.context.loadPayoutHistory', e);
       return {
         items: [],
         page,
@@ -405,7 +407,7 @@ export class SellerService {
       if (!data) return null;
       return mapSellerDocument(data);
     } catch (e) {
-      this.apiFail.report('โหลดเอกสารสำหรับแก้ไข', e);
+      this.apiFail.report('errors.context.loadDocForEdit', e);
       return null;
     }
   }
@@ -425,7 +427,7 @@ export class SellerService {
         }))
         .filter((m) => m.id !== '' && m.storageKey !== '');
     } catch (e) {
-      this.apiFail.report('โหลดรายการไฟล์หลัก', e);
+      this.apiFail.report('errors.context.loadMainFiles', e);
       return [];
     }
   }
@@ -445,7 +447,7 @@ export class SellerService {
       unwrapSdkResult(result);
       return true;
     } catch (e) {
-      this.apiFail.report('เพิ่มไฟล์หลัก', e);
+      this.apiFail.report('errors.context.addMainFile', e);
       return false;
     }
   }
@@ -470,7 +472,7 @@ export class SellerService {
       });
       return unwrapSdkResult(result) ?? null;
     } catch (e) {
-      this.apiFail.report('ตั้งไฟล์ที่ขาย', e);
+      this.apiFail.report('errors.context.setListedFile', e);
       return null;
     }
   }
@@ -485,7 +487,7 @@ export class SellerService {
       const data = unwrapSdkResult(result);
       return (data ?? []).map(mapSellerDocumentVersion);
     } catch (e) {
-      this.apiFail.report('โหลดประวัติเวอร์ชัน', e);
+      this.apiFail.report('errors.context.loadVersionHistory', e);
       return [];
     }
   }
@@ -504,7 +506,7 @@ export class SellerService {
       const url = data?.url?.trim();
       return url || null;
     } catch (e) {
-      this.apiFail.report('ดาวน์โหลดไฟล์', e);
+      this.apiFail.report('errors.context.downloadFile', e);
       return null;
     }
   }
@@ -518,7 +520,7 @@ export class SellerService {
       unwrapSdkResult(result);
       await this.refreshDocuments();
     } catch (e) {
-      this.apiFail.report('อัปเดตเอกสาร', e);
+      this.apiFail.report('errors.context.updateDocument', e);
       throw e;
     }
   }
@@ -528,7 +530,7 @@ export class SellerService {
       await deleteApiSellerDocumentsById({ path: { id } });
       await this.refreshDocuments();
     } catch (e) {
-      this.apiFail.report('ลบเอกสาร', e);
+      this.apiFail.report('errors.context.deleteDocument', e);
       void this.refreshDocuments();
       throw e;
     }
@@ -540,7 +542,7 @@ export class SellerService {
       const result = await postApiFilesUpload({ body: { file } });
       return unwrapSdkResult(result);
     } catch (e) {
-      this.apiFail.report('อัปโหลดไฟล์', e);
+      this.apiFail.report('errors.context.uploadFile', e);
       throw e;
     }
   }
@@ -584,7 +586,7 @@ export class SellerService {
       void this.refreshDocuments();
       return data;
     } catch (e) {
-      this.apiFail.report('สร้างเอกสารใหม่', e);
+      this.apiFail.report('errors.context.createDocument', e);
       throw e;
     }
   }
@@ -630,7 +632,7 @@ export class SellerService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.handleSellerScopedError('โหลดรีวิวลูกค้า', e);
+      this.handleSellerScopedError('errors.context.loadCustomerReviews', e);
       return { items: [], totalCount: 0, page, pageSize, totalPages: 0 };
     }
   }
@@ -657,7 +659,7 @@ export class SellerService {
         sellerRepliedAt: r.sellerRepliedAt,
       };
     } catch (e) {
-      this.handleSellerScopedError('ตอบกลับรีวิวลูกค้า', e);
+      this.handleSellerScopedError('errors.context.replyReview', e);
       throw e;
     }
   }

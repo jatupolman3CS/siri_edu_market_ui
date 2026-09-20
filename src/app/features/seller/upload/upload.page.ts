@@ -179,7 +179,7 @@ export class SellerUploadPage {
     const p = this.price();
     const op = this.originalPrice();
     if (op > 0 && op <= p) {
-      return `ราคาเต็มก่อนลดต้องมากกว่าราคาขายปัจจุบัน (฿${p}) หรือใส่ 0 หากไม่มีส่วนลด`;
+      return this.translation.t('seller.invalidOriginalPrice', { price: p });
     }
     return null;
   });
@@ -242,7 +242,7 @@ export class SellerUploadPage {
           doc = this.seller.myDocuments().find((d) => d.id === id) ?? null;
         }
         if (!doc) {
-          this.message.error('ไม่พบเอกสารหรือโหลดไม่สำเร็จ');
+          this.message.error(this.translation.t('seller.docLoadFailed'));
           return;
         }
         this.applyEditDocument(doc);
@@ -348,7 +348,7 @@ export class SellerUploadPage {
           if (!ok) return;
           await this.refreshMainFiles(this.editId());
         }
-        this.message.success('อัปโหลดไฟล์ขึ้นเซิร์ฟเวอร์สำเร็จ');
+        this.message.success(this.translation.t('seller.serverUploadSuccess'));
       } catch {
         // SellerService already toasted
       } finally {
@@ -408,13 +408,13 @@ export class SellerUploadPage {
         const notifiedCount = raw.lastVersionNotifiedBuyerCount;
 
         if (notifiedCount != null) {
-          this.message.success(`อัปเดตเวอร์ชันใหม่แล้ว แจ้งเตือนผู้ซื้อเดิม ${notifiedCount} คน`);
+          this.message.success(this.translation.t('seller.newVersionNotified', { count: notifiedCount }));
         }
 
         if (mapped.status === 'pending') {
-          this.message.info('เปลี่ยนไฟล์ที่ขายแล้ว — สถานะกลับเป็นรอตรวจสอบ');
+          this.message.info(this.translation.t('seller.sellingFileChanged'));
         } else if (notifiedCount == null) {
-          this.message.success('ตั้งไฟล์ที่ขายแล้ว');
+          this.message.success(this.translation.t('seller.sellingFileSet'));
         }
       }
     } finally {
@@ -475,17 +475,17 @@ export class SellerUploadPage {
             failed++;
             // SellerService already toasted, but we still want per-file context.
             const name = f?.name ? ` (${f.name})` : '';
-            this.message.error(`อัปโหลดรูปไม่สำเร็จ${name}`);
+            this.message.error(this.translation.t('seller.uploadImageFailed') + name);
           }
         }
         if (added > 0) {
-          this.message.success(`อัปโหลดรูปแล้ว ${added} รูป`);
+          this.message.success(this.translation.t('seller.uploadImagesSuccess', { count: added }));
         }
         if (failed > 0 && added > 0) {
-          this.message.warning(`มีบางรูปอัปโหลดไม่สำเร็จ ${failed} รูป`);
+          this.message.warning(this.translation.t('seller.uploadImagesPartialFail', { count: failed }));
         }
         if (failed > 0 && added === 0) {
-          this.message.error('อัปโหลดรูปไม่สำเร็จ');
+          this.message.error(this.translation.t('seller.uploadImageFailed'));
         }
       } finally {
         this.galleryUploading.set(false);
@@ -669,12 +669,12 @@ export class SellerUploadPage {
         if (res.description) this.longDescription.set(res.description);
         if (res.categoryIds?.length) this.categoryIds.set(res.categoryIds);
         if (res.tags?.length) this.tags.set(res.tags);
-        this.message.success('AI ช่วยเติมข้อมูลให้แล้ว ตรวจสอบและแก้ไขได้เลยครับ');
+        this.message.success(this.translation.t('seller.aiPrefillSuccess'));
       } else {
-        this.message.warning(res.failureReason || 'ไม่สามารถสร้างข้อมูลแนะนำจาก AI ได้ในขณะนี้');
+        this.message.warning(res.failureReason || this.translation.t('seller.aiPrefillFailed'));
       }
     } catch {
-      this.message.error('เกิดข้อผิดพลาดในการขอข้อมูลแนะนำจาก AI');
+      this.message.error(this.translation.t('seller.aiPrefillError'));
     } finally {
       this.aiAutofillLoading.set(false);
     }
@@ -711,14 +711,14 @@ export class SellerUploadPage {
   aiSuggest(kind: 'short' | 'long'): void {
     if (kind === 'short') {
       this.shortDescription.set(
-        'สรุปเนื้อหาคุณภาพ ใช้ทบทวนได้ทันที พร้อมตัวอย่างแบบฝึกหัด',
+        this.translation.t('seller.aiFallbackShortDesc'),
       );
     } else {
       this.longDescription.set(
-        'เอกสารฉบับนี้รวบรวมเนื้อหาที่จำเป็นและคัดเฉพาะส่วนที่ออกสอบบ่อยที่สุด พร้อมตัวอย่างประกอบและแบบฝึกหัด ช่วยให้ผู้อ่านเข้าใจเนื้อหาในเวลาอันรวดเร็ว เหมาะสำหรับนักเรียนและผู้ที่เตรียมสอบทุกระดับชั้น',
+        this.translation.t('seller.aiFallbackFullDesc'),
       );
     }
-    this.message.success('AI ช่วยเขียนเสร็จแล้ว ลองปรับให้เป็นสไตล์คุณดูครับ');
+    this.message.success(this.translation.t('seller.aiWritingSuccess'));
   }
 
   submit(): void {
@@ -729,7 +729,7 @@ export class SellerUploadPage {
       // cover-image-mode v1 §4/AC-05: the "must upload a cover" rule only applies in 'custom'
       // mode — 'auto' generates its own cover from the document, so an empty gallery is fine.
       if (this.coverImageMode() === 'custom' && gallery.length === 0) {
-        this.message.error('กรุณาอัปโหลดรูปปกอย่างน้อย 1 รูป');
+        this.message.error(this.translation.t('seller.requireCoverImage'));
         return;
       }
 
@@ -748,7 +748,7 @@ export class SellerUploadPage {
 
       const categoryIds = this.categoryIds();
       if (!this.title().trim() || !this.shortDescription().trim() || categoryIds.length === 0) {
-        this.message.error('กรุณากรอกชื่อ/คำอธิบายสั้น/หมวดหมู่ให้ครบ');
+        this.message.error(this.translation.t('seller.requireFieldsError'));
         return;
       }
 
@@ -805,14 +805,14 @@ export class SellerUploadPage {
             try {
               await this.watermarkService.saveConfig(id, tpl.config);
             } catch {
-              this.message.error('บันทึกการตั้งค่าลายน้ำไม่สำเร็จ กรุณาลองใหม่');
+              this.message.error(this.translation.t('seller.saveWatermarkConfigFailed'));
             }
           }
 
-          this.message.success('บันทึกการแก้ไขเรียบร้อย');
+          this.message.success(this.translation.t('seller.saveDocSuccess'));
         } else {
           if (!f || !uploaded) {
-            this.message.error('กรุณาเลือกไฟล์เอกสารและรอให้อัปโหลดเสร็จก่อน');
+            this.message.error(this.translation.t('seller.requireDocFileError'));
             return;
           }
           const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
@@ -884,7 +884,7 @@ export class SellerUploadPage {
             }
           }
 
-          this.message.success('ส่งเข้าพิจารณาเรียบร้อย');
+          this.message.success(this.translation.t('seller.docSubmitSuccess'));
         }
         this.router.navigate(['/seller/documents']);
       } catch {

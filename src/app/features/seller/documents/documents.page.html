@@ -1,38 +1,38 @@
 <div class="max-w-6xl">
   @if (seller.sellerProfileRequired()) {
   <div class="card-soft">
-    <app-empty-state emoji="🏪" title="บัญชีนี้ยังไม่มีร้านค้า" description="สมัครเป็นผู้ขายก่อนถึงจะจัดการเอกสารได้">
-      <a routerLink="/become-seller" class="btn-pink mt-2">เปิดร้านขายเอกสาร</a>
+    <app-empty-state emoji="🏪" [title]="'seller.noShopTitle' | trans" [description]="'seller.noShopDesc' | trans">
+      <a routerLink="/become-seller" class="btn-pink mt-2">{{ 'seller.openShopCta' | trans }}</a>
     </app-empty-state>
   </div>
   } @else {
   <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">เอกสารของฉัน</h1>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.myDocsTitle' | trans }}</h1>
       <p class="text-sm text-ink-soft">
-        จัดการเอกสารทั้งหมดของร้าน — แก้ไข ลบ หรือดูสถิติได้จากที่นี่
+        {{ 'seller.myDocsSubtitle' | trans }}
       </p>
     </div>
     <a routerLink="/seller/upload" class="btn-pink">
       <app-icon name="plus" [size]="16" />
-      อัปโหลดใหม่
+      {{ 'seller.uploadNew' | trans }}
     </a>
   </header>
 
   <!-- Filter bar -->
   <div class="card-tile md:flex-row gap-3 mb-5">
     <form class="relative flex-1" (ngSubmit)="applySearch()">
-      <button type="submit" aria-label="ค้นหา"
+      <button type="submit" [attr.aria-label]="'common.search' | trans"
         class="absolute left-3.5 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-        title="ค้นหา">
+        [title]="'common.search' | trans">
         <app-icon name="search" [size]="18" />
       </button>
       <input type="search" name="sellerDocSearch" [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)"
-        placeholder="ค้นหาเอกสารในร้านของคุณ…"
+        [placeholder]="'seller.searchDocsPlaceholder' | trans"
         class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm" />
     </form>
     <div class="flex flex-wrap gap-2">
-      @for (s of statuses; track s.value) {
+      @for (s of statuses(); track s.value) {
       <button type="button" class="px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors"
         [class.bg-pink-500]="status() === s.value" [class.text-white]="status() === s.value"
         [class.border-pink-500]="status() === s.value" [class.bg-white]="status() !== s.value"
@@ -47,8 +47,8 @@
   <!-- Doc table -->
   @if (items().length === 0) {
   <div class="card-soft">
-    <app-empty-state emoji="📄" title="ยังไม่มีเอกสาร"
-      description="อัปโหลดเอกสารแรกของคุณ หรือปรับตัวกรอง/คำค้นหาด้านบนดู" />
+    <app-empty-state emoji="📄" [title]="'seller.noDocumentsYet' | trans"
+      [description]="'seller.noDocsFilterEmpty' | trans" />
   </div>
   } @else {
   <div class="card-soft table-scroll overflow-x-auto pb-2">
@@ -56,12 +56,12 @@
       <thead class="bg-pink-50">
         <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
           <th class="px-5 py-3 w-28"></th>
-          <th class="px-5 py-3 font-semibold">เอกสาร</th>
-          <th class="px-5 py-3 font-semibold">ราคา</th>
-          <th class="px-5 py-3 font-semibold">ยอดขาย</th>
-          <th class="px-5 py-3 font-semibold">คะแนน</th>
-          <th class="px-5 py-3 font-semibold">สถานะ</th>
-          <th class="px-5 py-3 font-semibold">อัปเดต</th>
+          <th class="px-5 py-3 font-semibold">{{ 'seller.documentCol' | trans }}</th>
+          <th class="px-5 py-3 font-semibold">{{ 'seller.colPrice' | trans }}</th>
+          <th class="px-5 py-3 font-semibold">{{ 'seller.colSales' | trans }}</th>
+          <th class="px-5 py-3 font-semibold">{{ 'seller.colRating' | trans }}</th>
+          <th class="px-5 py-3 font-semibold">{{ 'seller.colStatus' | trans }}</th>
+          <th class="px-5 py-3 font-semibold">{{ 'seller.colUpdated' | trans }}</th>
         </tr>
       </thead>
       <tbody>
@@ -69,17 +69,17 @@
         <tr class="border-t border-line hover:bg-pink-50/40 transition-colors">
           <td class="px-5 py-4 whitespace-nowrap">
             <div class="flex items-center gap-1">
-              <button type="button" class="btn-icon !w-8 !h-8" title="ดู" (click)="view(d)">
+              <button type="button" class="btn-icon !w-8 !h-8" [title]="'seller.viewAria' | trans" (click)="view(d)">
                 <app-icon name="eye" [size]="14" />
               </button>
-              <button type="button" class="btn-icon !w-8 !h-8" title="แก้ไข" (click)="edit(d.id)">
+              <button type="button" class="btn-icon !w-8 !h-8" [title]="'seller.editAria' | trans" (click)="edit(d.id)">
                 <app-icon name="edit" [size]="14" />
               </button>
-              <a [routerLink]="['/seller/documents', d.id, 'watermark']" class="btn-icon !w-8 !h-8 text-pink-600 hover:!bg-pink-50" title="จัดการลายน้ำ (Watermark Studio)">
+              <a [routerLink]="['/seller/documents', d.id, 'watermark']" class="btn-icon !w-8 !h-8 text-pink-600 hover:!bg-pink-50" [title]="'seller.watermarkAria' | trans">
                 <app-icon name="shield" [size]="14" />
               </a>
               <button type="button"
-                class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500 hover:!border-rose-200" title="ลบ"
+                class="btn-icon !w-8 !h-8 hover:!bg-rose-50 hover:!text-rose-500 hover:!border-rose-200" [title]="'seller.deleteAria' | trans"
                 (click)="confirmRemove(d.id, d.title)">
                 <app-icon name="trash" [size]="14" />
               </button>
@@ -91,7 +91,7 @@
                 class="w-10 h-14 rounded-xl object-cover" alt="" />
               <div class="min-w-0">
                 <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
-                <div class="text-xs text-ink-muted uppercase">{{ d.format }} · {{ d.pages }} หน้า</div>
+                <div class="text-xs text-ink-muted uppercase">{{ d.format }} · {{ d.pages }} {{ 'common.pages' | trans }}</div>
               </div>
             </div>
           </td>
@@ -100,10 +100,10 @@
           </td>
           <td class="px-5 py-4 text-sm text-ink">
             <div class="whitespace-nowrap font-semibold">
-              ขาย {{ (d.salesCount ?? 0) | compact }}
+              {{ 'seller.soldCount' | trans: { count: ((d.salesCount ?? 0) | compact) } }}
             </div>
             <div class="text-xs text-ink-muted whitespace-nowrap">
-              ดาวน์โหลด {{ d.downloads | compact }}
+              {{ 'seller.downloadCount' | trans: { count: (d.downloads | compact) } }}
             </div>
           </td>
           <td class="px-5 py-4 text-sm whitespace-nowrap">
@@ -117,7 +117,7 @@
                 class="mt-1 text-xs text-rose-600 max-w-[220px] truncate"
                 [title]="d.rejectionReason"
               >
-                เหตุผล: {{ d.rejectionReason }}
+                {{ 'seller.rejectionReasonLabel' | trans: { reason: d.rejectionReason } }}
               </div>
             }
           </td>

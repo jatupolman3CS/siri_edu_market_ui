@@ -8,8 +8,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ExamHubService, type UpdateExamHubPageInput } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import type { ExamHubType } from '../../../core/models';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * exam-hub-landing-pages v1 (docs/contracts/exam-hub-landing-pages.md §4, §6)
@@ -18,7 +20,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 @Component({
   selector: 'app-exam-hub-admin-page',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './exam-hub-admin.page.html',
   styleUrl: './exam-hub-admin.page.scss',
@@ -26,6 +28,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 export class ExamHubAdminPage implements OnInit {
   readonly examHub = inject(ExamHubService);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly selectedExamType = signal<ExamHubType>('tcas');
   readonly loading = signal(false);
@@ -87,9 +90,9 @@ export class ExamHubAdminPage implements OnInit {
     this.saving.set(true);
     try {
       await this.examHub.updatePage(this.selectedExamType(), this.form());
-      this.message.success('บันทึกเนื้อหาเรียบร้อย');
+      this.message.success(this.translation.t('examHub.saveSuccess'));
     } catch {
-      this.message.error('บันทึกไม่สำเร็จ');
+      this.message.error(this.translation.t('examHub.saveFailed'));
     } finally {
       this.saving.set(false);
     }

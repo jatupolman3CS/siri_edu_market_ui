@@ -2,13 +2,13 @@
   @if (loading()) {
     <div class="flex flex-col items-center justify-center py-24 text-ink-muted">
       <div class="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent mb-3"></div>
-      <p class="text-sm font-medium">กำลังโหลดการตั้งค่าลายน้ำ…</p>
+      <p class="text-sm font-medium">{{ 'seller.loadingWatermarkSettings' | trans }}</p>
     </div>
   } @else {
   <!-- Top Navigation & Header -->
   <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div class="flex items-center gap-3">
-      <a routerLink="/seller/documents" class="btn-icon !w-10 !h-10 hover:bg-slate-100" title="กลับไปหน้ารายการเอกสาร">
+      <a routerLink="/seller/documents" class="btn-icon !w-10 !h-10 hover:bg-slate-100" [title]="'seller.backToDocList' | trans">
         <app-icon name="arrow-left" [size]="18" />
       </a>
       <div>
@@ -19,22 +19,22 @@
           </span>
           @if (saving()) {
             <span class="inline-flex items-center gap-1 text-xs text-pink-600 font-medium animate-pulse">
-              กำลังบันทึก...
+              {{ 'seller.savingWatermark' | trans }}
             </span>
           }
         </div>
         <h1 class="text-2xl font-black text-ink tracking-tight mt-1">
           @if (documentId()) {
-            จัดการลายน้ำเอกสารนี้
+            {{ 'seller.manageThisDocWatermark' | trans }}
           } @else {
-            ระบบจัดการเทมเพลตลายน้ำ
+            {{ 'seller.watermarkTemplateSystem' | trans }}
           }
         </h1>
         <p class="text-xs text-ink-muted mt-0.5">
           @if (documentId()) {
-            แก้ไขลายน้ำของเอกสาร "{{ documentTitle() }}" โดยเฉพาะ — การเปลี่ยนแปลงมีผลกับเอกสารนี้ทันที
+            {{ 'seller.docSpecificWatermarkDesc' | trans: { title: documentTitle() } }}
           } @else {
-            กำหนดเทมเพลตลายน้ำมาตรฐานของร้าน เพื่อนำไปประทับบนเอกสารใหม่อัตโนมัติในหน้าอัปโหลดเอกสาร
+            {{ 'seller.shopTemplateWatermarkDesc' | trans }}
           }
         </p>
       </div>
@@ -46,7 +46,7 @@
           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-ink text-xs font-bold transition-colors"
         >
           <app-icon name="upload" [size]="14" />
-          <span>ไปหน้าอัปโหลดเอกสารใหม่</span>
+          <span>{{ 'seller.goToUploadNewDoc' | trans }}</span>
         </a>
       </div>
     }
@@ -63,7 +63,7 @@
       class="pb-4 px-6 border-b-2 text-sm transition-colors flex items-center gap-2 cursor-pointer"
     >
       <app-icon name="eye" [size]="16" />
-      จัดตำแหน่งลายน้ำสำหรับเว็บ (Web Preview)
+      {{ 'seller.tabWebPreviewWatermark' | trans }}
     </button>
     <button
       type="button"
@@ -74,7 +74,7 @@
       class="pb-4 px-6 border-b-2 text-sm transition-colors flex items-center gap-2 cursor-pointer"
     >
       <app-icon name="shield" [size]="16" />
-      Personalized Watermark (สำหรับไฟล์ดาวน์โหลด)
+      {{ 'seller.tabPersonalizedWatermark' | trans }}
     </button>
   </div>
 
@@ -86,19 +86,19 @@
         <div class="lg:col-span-5 space-y-6">
           <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
             <div class="border-b border-line pb-4">
-              <h2 class="text-base font-black text-ink">ตั้งค่าลายน้ำหน้าเว็บ</h2>
+              <h2 class="text-base font-black text-ink">{{ 'seller.webWatermarkSettings' | trans }}</h2>
               <p class="text-xs text-ink-muted mt-0.5">
-                ประทับลงบนรูปภาพตัวอย่างบนเว็บไซต์โดยอัตโนมัติจาก .NET Backend
+                {{ 'seller.webWatermarkBackendDesc' | trans }}
               </p>
             </div>
 
             <!-- Watermark Text -->
             <div class="space-y-1.5">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">ข้อความลายน้ำ</label>
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkText' | trans }}</label>
               <input
                 type="text"
                 [(ngModel)]="watermarkText"
-                placeholder="เช่น SIRI EDUMARKET PREVIEW"
+                [placeholder]="'seller.watermarkTextPlaceholder' | trans"
                 class="w-full px-4 py-2.5 rounded-xl border border-line text-sm text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
               />
             </div>
@@ -106,7 +106,7 @@
             <!-- Position Matrix (9-Grid + Specials) -->
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <label class="text-xs font-bold text-ink uppercase tracking-wider">ตำแหน่งลายน้ำ</label>
+                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkPosition' | trans }}</label>
                 <span class="text-xs font-semibold text-pink-600">{{ watermarkPosition() }}</span>
               </div>
 
@@ -125,7 +125,7 @@
                       class="w-2 h-2 rounded-full"
                       [class]="watermarkPosition() === pos.value ? 'bg-white' : 'bg-slate-300'"
                     ></div>
-                    <span>{{ pos.label }}</span>
+                    <span>{{ pos.labelKey | trans }}</span>
                   </button>
                 }
               </div>
@@ -141,7 +141,7 @@
                   class="py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <app-icon name="sparkle" [size]="14" />
-                  <span>กึ่งกลางเฉียง (Diagonal)</span>
+                  <span>{{ 'seller.posDiagonal' | trans }}</span>
                 </button>
 
                 <button
@@ -153,7 +153,7 @@
                   class="py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <app-icon name="dashboard" [size]="14" />
-                  <span>ตารางกระจายทั่วหน้า (Tile)</span>
+                  <span>{{ 'seller.posTileLabel' | trans }}</span>
                 </button>
               </div>
             </div>
@@ -161,7 +161,7 @@
             <!-- Opacity Slider -->
             <div class="space-y-1.5">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-ink uppercase tracking-wider">ความโปร่งใส (Opacity)</span>
+                <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkOpacity' | trans }}</span>
                 <span class="font-bold text-pink-600">{{ watermarkOpacity() }}%</span>
               </div>
               <input
@@ -173,9 +173,9 @@
                 class="w-full accent-pink-600 cursor-pointer"
               />
               <div class="flex justify-between text-[10px] text-ink-muted">
-                <span>10% (จางมาก)</span>
-                <span>50% (ปานกลาง)</span>
-                <span>90% (เข้มชัด)</span>
+                <span>{{ 'seller.opacityVeryLight' | trans }}</span>
+                <span>{{ 'seller.opacityMedium' | trans }}</span>
+                <span>{{ 'seller.opacityDark' | trans }}</span>
               </div>
             </div>
 
@@ -183,7 +183,7 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-ink uppercase tracking-wider">ขนาดอักษร</span>
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.fontSize' | trans }}</span>
                   <span class="font-bold text-pink-600">{{ watermarkFontSize() }}px</span>
                 </div>
                 <input
@@ -198,7 +198,7 @@
 
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-ink uppercase tracking-wider">องศาการเอียง</span>
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.rotationDeg' | trans }}</span>
                   <span class="font-bold text-pink-600">{{ watermarkRotation() }}°</span>
                 </div>
                 <input
@@ -214,7 +214,7 @@
 
             <!-- Color Picker -->
             <div class="space-y-2">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">สีตัวอักษร</label>
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkColor' | trans }}</label>
               <div class="flex items-center gap-2">
                 @for (c of colorPresets; track c.hex) {
                   <button
@@ -252,21 +252,21 @@
               >
                 @if (saving()) {
                   <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>กำลังบันทึกเทมเพลต...</span>
+                  <span>{{ 'seller.savingTemplate' | trans }}</span>
                 } @else {
                   <app-icon name="check" [size]="16" />
                   @if (documentId()) {
-                    <span>บันทึกลายน้ำเอกสารนี้</span>
+                    <span>{{ 'seller.saveDocWatermark' | trans }}</span>
                   } @else {
-                    <span>บันทึกเทมเพลตลายน้ำ</span>
+                    <span>{{ 'seller.saveWatermarkTemplate' | trans }}</span>
                   }
                 }
               </button>
               <p class="text-[11px] text-ink-muted text-center mt-2">
                 @if (documentId()) {
-                  * การเปลี่ยนแปลงนี้มีผลกับเอกสารนี้ทันที ระบบจะสร้างพรีวิวใหม่ให้อัตโนมัติ
+                  {{ 'seller.docWatermarkNotice' | trans }}
                 } @else {
-                  * เทมเพลตนี้จะถูกนำไปใช้กับเอกสารใหม่ที่อัปโหลดโดยอัตโนมัติ
+                  {{ 'seller.templateWatermarkNotice' | trans }}
                 }
               </p>
             </div>
@@ -275,7 +275,63 @@
 
         <!-- Preview Column (7 cols) -->
         <div class="lg:col-span-7 space-y-4">
-          <!-- SIMULATOR VIEW -->
+          <!-- REAL PREVIEW (document mode only) — the actual watermarked JPEG pages already
+               generated server-side, as opposed to the CSS mockup below which only simulates
+               what the NEXT save will look like. -->
+          @if (documentId()) {
+            <div class="bg-white rounded-3xl p-5 border border-line shadow-xs space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="text-sm font-black text-ink flex items-center gap-2">
+                  <app-icon name="eye" [size]="16" />
+                  {{ 'seller.livePreview' | trans }}
+                </h3>
+                @if (hasRealPreview()) {
+                  <span class="text-xs text-ink-muted font-medium">{{ 'seller.pagesCount' | trans: { count: previewImageUrls().length } }}</span>
+                }
+              </div>
+
+              @if (hasRealPreview()) {
+                <div class="grid grid-cols-3 gap-2">
+                  @for (path of previewImageUrls(); track $index) {
+                    <button
+                      type="button"
+                      (click)="openRealPreview()"
+                      class="group relative rounded-xl border border-line bg-slate-50 overflow-hidden aspect-[1/1.414] cursor-pointer"
+                    >
+                      <img
+                        appImgFallback
+                        [src]="previewImgSrc(path)"
+                        [alt]="'seller.livePreviewPageAlt' | trans: { page: $index + 1 }"
+                        class="w-full h-full object-cover select-none"
+                        loading="lazy"
+                        draggable="false"
+                        (contextmenu)="$event.preventDefault()"
+                      />
+                      <div class="absolute inset-0 bg-pink-900/0 group-hover:bg-pink-900/10 transition-colors flex items-center justify-center">
+                        <span class="opacity-0 group-hover:opacity-100 transition-opacity pill bg-white/90 text-pink-600 text-[10px] font-bold shadow-xs">
+                          {{ 'seller.pageNumber' | trans: { page: $index + 1 } }}
+                        </span>
+                      </div>
+                    </button>
+                  }
+                </div>
+                <button
+                  type="button"
+                  (click)="openRealPreview()"
+                  class="btn-ghost w-full !py-2 text-xs font-semibold text-pink-600 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <app-icon name="eye" [size]="14" />
+                  <span>{{ 'seller.viewFullscreen' | trans }}</span>
+                </button>
+              } @else if (showRealPreviewEmptyNotice()) {
+                <p class="text-xs text-ink-muted">
+                  {{ 'seller.noLivePreview' | trans }}
+                </p>
+              }
+            </div>
+          }
+
+          <!-- SIMULATOR VIEW (live CSS mockup — reflects unsaved slider changes) -->
             <div class="bg-slate-100/80 rounded-3xl p-6 border border-line flex flex-col items-center justify-center min-h-[620px]">
               <!-- A4 Simulated Paper Frame -->
               <div
@@ -370,7 +426,7 @@
                 <!-- Page Footer simulated line -->
                 <div class="mt-auto p-4 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
                   <span>SIRI EDUMARKET PREVIEW MODE</span>
-                  <span>หน้า 1</span>
+                  <span>{{ 'seller.page1' | trans }}</span>
                 </div>
               </div>
             </div>
@@ -392,9 +448,9 @@
                   <app-icon name="shield" [size]="18" />
                 </span>
                 <div>
-                  <h2 class="text-base font-black text-ink">Personalized Watermark (สำหรับดาวน์โหลด)</h2>
+                  <h2 class="text-base font-black text-ink">{{ 'seller.tabPersonalizedWatermark' | trans }}</h2>
                   <p class="text-xs text-ink-muted mt-0.5">
-                    ประทับข้อมูลเฉพาะตัวของผู้ซื้อลงในไฟล์จริงตอนลูกค้ากดดาวน์โหลด
+                    {{ 'seller.personalizedSubtitle' | trans }}
                   </p>
                 </div>
               </div>
@@ -402,7 +458,7 @@
 
             <!-- Download Position Options -->
             <div class="space-y-2">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">ตำแหน่งบนไฟล์ดาวน์โหลด</label>
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.downloadPosition' | trans }}</label>
               <div class="grid grid-cols-1 gap-2.5">
                 @for (pos of downloadPositions; track pos.value) {
                   <label
@@ -419,8 +475,8 @@
                       class="mt-0.5 text-pink-600 focus:ring-pink-500"
                     />
                     <div>
-                      <div class="text-xs font-bold text-ink">{{ pos.label }}</div>
-                      <div class="text-[11px] text-ink-muted mt-0.5">{{ pos.desc }}</div>
+                      <div class="text-xs font-bold text-ink">{{ pos.labelKey | trans }}</div>
+                      <div class="text-[11px] text-ink-muted mt-0.5">{{ pos.descKey | trans }}</div>
                     </div>
                   </label>
                 }
@@ -430,8 +486,8 @@
             <!-- Watermark Template Input -->
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <label class="text-xs font-bold text-ink uppercase tracking-wider">เทมเพลตข้อความประทับตรา</label>
-                <span class="text-[11px] text-pink-600 font-semibold">คลิกเพื่อแทรกตัวแปร:</span>
+                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.stampTemplate' | trans }}</label>
+                <span class="text-[11px] text-pink-600 font-semibold">{{ 'seller.clickToInsertVar' | trans }}</span>
               </div>
 
               <!-- Variable Tag Chips -->
@@ -441,28 +497,28 @@
                   (click)="insertTag('{email}')"
                   class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
-                  + &#123;email&#125; (อีเมลผู้ซื้อ)
+                  {{ 'seller.varBuyerEmail' | trans }}
                 </button>
                 <button
                   type="button"
                   (click)="insertTag('{token}')"
                   class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
-                  + &#123;token&#125; (รหัส Forensic)
+                  {{ 'seller.varForensicToken' | trans }}
                 </button>
                 <button
                   type="button"
                   (click)="insertTag('{date}')"
                   class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
-                  + &#123;date&#125; (วันเวลาที่โหลด)
+                  {{ 'seller.varDownloadDate' | trans }}
                 </button>
                 <button
                   type="button"
                   (click)="insertTag('{platform}')"
                   class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
-                  + &#123;platform&#125; (ชื่อระบบ)
+                  {{ 'seller.varPlatform' | trans }}
                 </button>
               </div>
 
@@ -470,8 +526,111 @@
                 rows="4"
                 [(ngModel)]="downloadWatermarkTemplate"
                 class="w-full px-4 py-3 rounded-2xl border border-line text-xs font-medium text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
-                placeholder="ระบุข้อความลายน้ำที่ต้องการประทับลงบนเอกสารดาวน์โหลด..."
+                [placeholder]="'seller.downloadTextPlaceholder' | trans"
               ></textarea>
+            </div>
+
+            <!-- watermark-completion v5 §4.9: style controls making this tab a first-class peer
+                 of "Web Preview" — font family / opacity / font size & rotation / color. -->
+
+            <!-- Font Family -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkFont' | trans }}</label>
+              <select
+                [(ngModel)]="downloadWatermarkFontFamily"
+                class="w-full px-4 py-2.5 rounded-xl border border-line text-sm text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors bg-white cursor-pointer"
+              >
+                @for (font of previewWatermarkFontOptions; track font) {
+                  <option [value]="font">{{ font }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Opacity Slider -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkOpacity' | trans }}</span>
+                <span class="font-bold text-pink-600">{{ downloadWatermarkOpacity() }}%</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="90"
+                step="5"
+                [(ngModel)]="downloadWatermarkOpacity"
+                class="w-full accent-pink-600 cursor-pointer"
+              />
+              <div class="flex justify-between text-[10px] text-ink-muted">
+                <span>{{ 'seller.opacityVeryLight' | trans }}</span>
+                <span>{{ 'seller.opacityMedium' | trans }}</span>
+                <span>{{ 'seller.opacityDark' | trans }}</span>
+              </div>
+            </div>
+
+            <!-- Font Size & Rotation Sliders -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.fontSize' | trans }}</span>
+                  <span class="font-bold text-pink-600">{{ downloadWatermarkFontSize() }}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="18"
+                  max="72"
+                  step="2"
+                  [(ngModel)]="downloadWatermarkFontSize"
+                  class="w-full accent-pink-600 cursor-pointer"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.rotationDeg' | trans }}</span>
+                  <span class="font-bold text-pink-600">{{ downloadWatermarkRotation() }}°</span>
+                </div>
+                <input
+                  type="range"
+                  min="-90"
+                  max="90"
+                  step="5"
+                  [(ngModel)]="downloadWatermarkRotation"
+                  class="w-full accent-pink-600 cursor-pointer"
+                />
+                @if (downloadWatermarkPosition() !== 'diagonal') {
+                  <p class="text-[10px] text-ink-muted">{{ 'seller.diagonalOnlyNotice' | trans }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Color Picker -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkColor' | trans }}</label>
+              <div class="flex items-center gap-2">
+                @for (c of colorPresets; track c.hex) {
+                  <button
+                    type="button"
+                    (click)="setDownloadColor(c.hex)"
+                    [style.background-color]="c.hex"
+                    [class.ring-2]="downloadWatermarkColor() === c.hex"
+                    [class.ring-offset-2]="downloadWatermarkColor() === c.hex"
+                    class="w-7 h-7 rounded-full transition-transform hover:scale-110 cursor-pointer ring-pink-500"
+                    [title]="c.name"
+                  ></button>
+                }
+                <div class="flex items-center gap-1.5 ml-auto">
+                  <input
+                    type="color"
+                    [(ngModel)]="downloadWatermarkColor"
+                    class="w-7 h-7 rounded-lg border border-line cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    [(ngModel)]="downloadWatermarkColor"
+                    class="w-20 px-2 py-1 text-xs uppercase font-mono border border-line rounded-lg text-center"
+                  />
+                </div>
+              </div>
             </div>
 
             <!-- Save Action Button -->
@@ -484,13 +643,13 @@
               >
                 @if (saving()) {
                   <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>กำลังบันทึก...</span>
+                  <span>{{ 'seller.savingWatermark' | trans }}</span>
                 } @else {
                   <app-icon name="check" [size]="16" />
                   @if (documentId()) {
-                    <span>บันทึกลายน้ำเอกสารนี้</span>
+                    <span>{{ 'seller.saveDocWatermark' | trans }}</span>
                   } @else {
-                    <span>บันทึกการตั้งค่า Personalized Watermark</span>
+                    <span>{{ 'seller.savePersonalizedSettings' | trans }}</span>
                   }
                 }
               </button>
@@ -502,16 +661,16 @@
         <div class="lg:col-span-6 space-y-6">
           <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
             <div class="border-b border-line pb-4">
-              <h2 class="text-base font-black text-ink">ทดสอบจำลองข้อมูลผู้ซื้อ (Buyer Simulator)</h2>
+              <h2 class="text-base font-black text-ink">{{ 'seller.buyerSimulator' | trans }}</h2>
               <p class="text-xs text-ink-muted mt-0.5">
-                ดูผลลัพธ์ข้อความที่จะถูกประทับจริงบนไฟล์ PDF, Office และ ZIP ของลูกค้า
+                {{ 'seller.buyerSimulatorDesc' | trans }}
               </p>
             </div>
 
             <!-- Test Inputs -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-ink uppercase tracking-wider">อีเมลผู้ซื้อทดสอบ</label>
+                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.simBuyerEmail' | trans }}</label>
                 <input
                   type="email"
                   [(ngModel)]="simBuyerEmail"
@@ -520,7 +679,7 @@
               </div>
 
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-ink uppercase tracking-wider">รหัส Forensic Token จำลอง</label>
+                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.simForensicToken' | trans }}</label>
                 <input
                   type="text"
                   [(ngModel)]="simToken"
@@ -533,7 +692,7 @@
             <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
               <div class="flex items-center gap-1.5 text-xs font-bold text-amber-900">
                 <app-icon name="shield" [size]="14" />
-                <span>ข้อความที่จะประทับบนไฟล์จริง:</span>
+                <span>{{ 'seller.stampedTextPreview' | trans }}</span>
               </div>
               <p class="text-xs font-medium text-amber-950 break-words leading-relaxed font-mono bg-white/80 p-3 rounded-xl border border-amber-100">
                 {{ simulatedDownloadText() }}
@@ -546,8 +705,15 @@
                 
                 <!-- HEADER STAMP -->
                 @if (downloadWatermarkPosition() === 'header' || downloadWatermarkPosition() === 'both') {
-                  <div class="text-[8px] font-mono text-rose-700 bg-rose-50/80 border-b border-rose-200 py-1 px-1.5 truncate text-center">
-                    {{ simulatedDownloadText() }}
+                  <div class="bg-rose-50/80 border-b border-rose-200 py-1 px-1.5 truncate text-center">
+                    <span
+                      class="font-mono"
+                      [style.color]="downloadWatermarkColor()"
+                      [style.opacity]="downloadWatermarkOpacity() / 100"
+                      [style.font-size.px]="downloadWatermarkFontSize() * 0.5"
+                    >
+                      {{ simulatedDownloadText() }}
+                    </span>
                   </div>
                 } @else {
                   <div class="h-2 border-b border-slate-100"></div>
@@ -565,7 +731,11 @@
                 @if (downloadWatermarkPosition() === 'diagonal') {
                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden px-4">
                     <span
-                      class="text-[10px] font-mono font-bold text-rose-600/40 -rotate-30 text-center leading-tight select-none"
+                      class="font-mono font-bold text-center leading-tight select-none"
+                      [style.color]="downloadWatermarkColor()"
+                      [style.opacity]="downloadWatermarkOpacity() / 100"
+                      [style.transform]="'rotate(' + downloadWatermarkRotation() + 'deg)'"
+                      [style.font-size.px]="downloadWatermarkFontSize() * 0.6"
                     >
                       {{ simulatedDownloadText() }}
                     </span>
@@ -574,8 +744,15 @@
 
                 <!-- FOOTER STAMP -->
                 @if (downloadWatermarkPosition() === 'footer' || downloadWatermarkPosition() === 'both') {
-                  <div class="text-[8px] font-mono text-rose-700 bg-rose-50/80 border-t border-rose-200 py-1 px-1.5 truncate text-center">
-                    {{ simulatedDownloadText() }}
+                  <div class="bg-rose-50/80 border-t border-rose-200 py-1 px-1.5 truncate text-center">
+                    <span
+                      class="font-mono"
+                      [style.color]="downloadWatermarkColor()"
+                      [style.opacity]="downloadWatermarkOpacity() / 100"
+                      [style.font-size.px]="downloadWatermarkFontSize() * 0.5"
+                    >
+                      {{ simulatedDownloadText() }}
+                    </span>
                   </div>
                 } @else {
                   <div class="h-2 border-t border-slate-100"></div>
@@ -588,6 +765,41 @@
 
       </div>
     }
+  }
+
+  @if (showPreviewGallery()) {
+    <div
+      class="preview-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'seller.realDocPreview' | trans"
+      (click)="closePreviewGallery()"
+    >
+      <div class="preview-modal-content" (click)="$event.stopPropagation()">
+        <header class="preview-modal-header">
+          <span class="text-sm font-bold text-ink">{{ 'seller.realDocPreview' | trans }}</span>
+          <button type="button" class="btn-ghost !py-2 !px-4 text-sm" (click)="closePreviewGallery()">
+            {{ 'common.close' | trans }}
+          </button>
+        </header>
+        <div class="gallery-container">
+          @for (path of previewImageUrls(); track $index) {
+            <figure class="preview-image-card select-none" (contextmenu)="$event.preventDefault()">
+              <img
+                appImgFallback
+                [src]="previewImgSrc(path)"
+                [alt]="'seller.docPreviewWatermarkAlt' | trans"
+                class="preview-image-item block h-auto max-h-none w-full max-w-full object-contain select-none"
+                loading="lazy"
+                decoding="async"
+                draggable="false"
+                (contextmenu)="$event.preventDefault()"
+              />
+            </figure>
+          }
+        </div>
+      </div>
+    </div>
   }
 
 </div>

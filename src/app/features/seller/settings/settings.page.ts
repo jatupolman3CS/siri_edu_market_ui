@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MeService } from '../../../core/services';
 import { LineNotificationComponent } from '../../../shared/components/line-notification/line-notification.component';
 import { NotificationSettingsComponent } from '../../../shared/components/notification-settings/notification-settings.component';
@@ -22,6 +23,7 @@ import { ProfileEditorComponent } from '../../../shared/components/profile-edito
   selector: 'app-seller-settings',
   standalone: true,
   imports: [
+    TranslatePipe,
     ProfileEditorComponent,
     PayoutAccountFormComponent,
     NotificationSettingsComponent,

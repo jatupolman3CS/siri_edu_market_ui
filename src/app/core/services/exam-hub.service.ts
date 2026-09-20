@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import type { DocumentItem, ExamHubPage, ExamHubType } from '../models';
 import {
   errorActionState,
@@ -15,6 +15,7 @@ import {
 } from '../api';
 import { mapDocument, mapExamHubPage } from '../api-mappers/mappers';
 import { unwrapSdkResult } from './api-result';
+import { TranslationService } from '../i18n/translation.service';
 
 export interface UpdateExamHubPageInput {
   title?: string | null;
@@ -31,6 +32,7 @@ export interface UpdateExamHubPageInput {
  */
 @Injectable({ providedIn: 'root' })
 export class ExamHubService {
+  private readonly translation = inject(TranslationService);
   private readonly _page = signal<ExamHubPage | null>(null);
   private readonly _state = signal<ActionState>(idleActionState());
   private readonly _updateState = signal<ActionState>(idleActionState());
@@ -60,7 +62,7 @@ export class ExamHubService {
         return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
       }
     },
-    errorMessage: 'โหลดข้อมูลไม่สำเร็จ',
+    errorMessage: this.translation.t('common.loadFailed'),
   });
 
   readonly docs = this.pager.items;
@@ -84,7 +86,7 @@ export class ExamHubService {
       this._state.set(idleActionState());
     } catch {
       this._page.set(null);
-      this._state.set(errorActionState('โหลดข้อมูลไม่สำเร็จ'));
+      this._state.set(errorActionState(this.translation.t('common.loadFailed')));
     }
   }
 
@@ -121,12 +123,12 @@ export class ExamHubService {
       const data = unwrapSdkResult(result);
       if (data) {
         this._page.set(mapExamHubPage(data));
-        this._updateState.set(successActionState('บันทึกเนื้อหาเรียบร้อย'));
+        this._updateState.set(successActionState(this.translation.t('examHub.saveSuccess')));
         return;
       }
       throw new Error('No response data');
     } catch (error) {
-      this._updateState.set(errorActionState('บันทึกไม่สำเร็จ'));
+      this._updateState.set(errorActionState(this.translation.t('examHub.saveFailed')));
       throw error;
     }
   }
@@ -136,30 +138,15 @@ export class ExamHubService {
   }
 
   private getStubDefaultPage(examType: ExamHubType): ExamHubPage {
-    const titles: Record<ExamHubType, { title: string; intro: string }> = {
-      tcas: {
-        title: 'TCAS — ระบบคัดเลือกเข้ามหาวิทยาลัย',
-        intro: 'รวมเอกสารและข้อมูลอัปเดตล่าสุดสำหรับระบบ TCAS ครบทุกรอบ',
-      },
-      'tgat-tpat': {
-        title: 'TGAT/TPAT — เตรียมสอบวัดความถนัด',
-        intro: 'รวมเอกสารติว TGAT และ TPAT ทุกพาร์ท',
-      },
-      'a-level': {
-        title: 'A-Level — สอบวิชาสามัญ',
-        intro: 'รวมเอกสารติว A-Level ครบทุกวิชา',
-      },
-      onet: {
-        title: 'O-NET — สอบมาตรฐานการศึกษา',
-        intro: 'รวมเอกสารติว O-NET ครบทุกช่วงชั้น',
-      },
+    const keyMap: Record<ExamHubType, string> = {
+      tcas: 'tcas',
+      'tgat-tpat': 'tgatTpat',
+      'a-level': 'aLevel',
+      onet: 'onet',
     };
-    const info = titles[examType] ?? titles.tcas;
-    return {
-      examType,
-      title: info.title,
-      metaDescription: info.intro,
-      introText: info.intro,
-    };
+    const k = keyMap[examType] ?? 'tcas';
+    const title = this.translation.t(`examHub.defaultTitle.${k}`);
+    const intro = this.translation.t(`examHub.defaultIntro.${k}`);
+    return { examType, title, metaDescription: intro, introText: intro };
   }
 }

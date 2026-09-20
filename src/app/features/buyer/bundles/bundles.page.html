@@ -2,24 +2,24 @@
       @if (bundleService.bundlesState().status === 'loading') {
         <app-empty-state
           emoji="⏳"
-          title="กำลังโหลดแพ็กเกจ…"
-          description="รอสักครู่นะคะ"
+          [title]="'bundles.loading' | trans"
+          [description]="'common.pleaseWait' | trans"
         />
       } @else if (bundleService.bundlesState().status === 'error') {
         <app-empty-state
           emoji="⚠️"
-          title="โหลดแพ็กเกจไม่สำเร็จ"
-          description="ลองใหม่อีกครั้ง"
+          [title]="'bundles.loadFailed' | trans"
+          [description]="'common.retry' | trans"
         >
           <button class="btn-pink mt-5" type="button" (click)="bundleService.refreshBundles()">
-            ลองใหม่
+            {{ 'common.retry' | trans }}
           </button>
         </app-empty-state>
       } @else if (bundleService.bundles().length === 0) {
         <app-empty-state
           emoji="📦"
-          title="ยังไม่มีแพ็กเกจ"
-          description="ตอนนี้ยังไม่มีแพ็กเกจที่เปิดขาย"
+          [title]="'bundles.emptyTitle' | trans"
+          [description]="'bundles.emptyDesc' | trans"
         />
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -9,6 +9,8 @@ import { RatingStarsComponent } from '../../../shared/components/rating-stars/ra
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ReviewRow = {
   id: string;
@@ -36,6 +38,7 @@ type ReviewRow = {
     PaginationComponent,
     TimeAgoPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reviews.page.html',
@@ -44,6 +47,7 @@ type ReviewRow = {
 export class SellerReviewsPage {
   readonly seller = inject(SellerService);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly items = signal<ReviewRow[]>([]);
   readonly statsRows = signal<ReviewRow[] | null>(null);
@@ -155,7 +159,7 @@ export class SellerReviewsPage {
   async submitReply(reviewId: string): Promise<void> {
     const text = this.replyDraft().trim();
     if (!text) {
-      this.message.warning('กรุณาระบุข้อความตอบกลับ');
+      this.message.warning(this.translation.t('seller.pleaseEnterReply'));
       return;
     }
     this.replySubmitting.set(true);
@@ -178,12 +182,12 @@ export class SellerReviewsPage {
               )
             : null
         );
-        this.message.success('ตอบกลับรีวิวสำเร็จ');
+        this.message.success(this.translation.t('seller.replySuccess'));
         this.replyingReviewId.set(null);
         this.replyDraft.set('');
       }
     } catch {
-      this.message.error('ไม่สามารถตอบกลับรีวิวได้ กรุณาลองใหม่อีกครั้ง');
+      this.message.error(this.translation.t('seller.replyFailed'));
     } finally {
       this.replySubmitting.set(false);
     }

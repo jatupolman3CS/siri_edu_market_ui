@@ -104,16 +104,39 @@ export class TranslationService {
     return val;
   }
 
+  /** Resolves a translated string list while preserving the active-language fallback rules. */
+  list(path: string): readonly string[] {
+    const lang = this.currentLang();
+    const value = this.resolveValue(this.dictionaries[lang], path);
+    if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+      return value;
+    }
+
+    if (lang !== 'th') {
+      const fallback = this.resolveValue(this.dictionaries.th, path);
+      if (Array.isArray(fallback) && fallback.every((item) => typeof item === 'string')) {
+        return fallback;
+      }
+    }
+
+    return [];
+  }
+
   private resolvePath(obj: any, path: string): string {
+    const value = this.resolveValue(obj, path);
+    return typeof value === 'string' ? value : '';
+  }
+
+  private resolveValue(obj: unknown, path: string): unknown {
     const segments = path.split('.');
     let current = obj;
     for (const seg of segments) {
       if (current && typeof current === 'object' && seg in current) {
-        current = current[seg];
+        current = (current as Record<string, unknown>)[seg];
       } else {
-        return '';
+        return undefined;
       }
     }
-    return typeof current === 'string' ? current : '';
+    return current;
   }
 }

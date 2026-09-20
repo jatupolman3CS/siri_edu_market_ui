@@ -9,6 +9,8 @@ import {
   type NotificationSettingItem,
 } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n';
 
 export interface NotificationSettingGroup {
   audience: NotificationAudience;
@@ -19,10 +21,10 @@ export interface NotificationSettingGroup {
 /** notification-master-config v1 §4.1: the card groups the keys by which side of the app they belong to. */
 const AUDIENCE_ORDER: readonly NotificationAudience[] = ['buyer', 'seller', 'admin'];
 
-const AUDIENCE_LABELS: Readonly<Record<NotificationAudience, string>> = {
-  buyer: 'สำหรับผู้ซื้อ',
-  seller: 'สำหรับผู้ขาย',
-  admin: 'สำหรับผู้ดูแลระบบ',
+const AUDIENCE_LABEL_KEYS: Readonly<Record<NotificationAudience, string>> = {
+  buyer: 'shared.notificationSettings.audienceBuyer',
+  seller: 'shared.notificationSettings.audienceSeller',
+  admin: 'shared.notificationSettings.audienceAdmin',
 };
 
 /**
@@ -41,7 +43,7 @@ const AUDIENCE_LABELS: Readonly<Record<NotificationAudience, string>> = {
 @Component({
   selector: 'app-notification-settings',
   standalone: true,
-  imports: [FormsModule, NzSwitchModule, NzTooltipModule, IconComponent],
+  imports: [FormsModule, NzSwitchModule, NzTooltipModule, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-settings.component.html',
   styles: [':host { display: block; }'],
@@ -49,12 +51,13 @@ const AUDIENCE_LABELS: Readonly<Record<NotificationAudience, string>> = {
 export class NotificationSettingsComponent {
   readonly notifications = inject(NotificationService);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   readonly groups = computed<NotificationSettingGroup[]>(() => {
     const settings = this.notifications.settings();
     return AUDIENCE_ORDER.map((audience) => ({
       audience,
-      label: AUDIENCE_LABELS[audience],
+      label: this.translation.t(AUDIENCE_LABEL_KEYS[audience]),
       items: settings.filter((setting) => setting.audience === audience),
     })).filter((group) => group.items.length > 0);
   });
@@ -81,7 +84,7 @@ export class NotificationSettingsComponent {
     }
 
     this.notifications.updateSettings({ settings: map }).subscribe({
-      next: () => this.message.success('อัปเดตการแจ้งเตือนแล้ว'),
+      next: () => this.message.success(this.translation.t('shared.notificationSettings.updateSuccess')),
       error: () => {
         /* reported by NotificationService through ApiFailureReporter */
       },

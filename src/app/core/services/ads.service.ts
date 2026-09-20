@@ -34,6 +34,7 @@ import {
 } from '../api';
 import { unwrapSdkResult, extractErrorStatus } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import type { PagedResult } from './infinite-pager';
 
 /**
@@ -93,6 +94,7 @@ export type CreateAdsCampaignResult =
 @Injectable({ providedIn: 'root' })
 export class AdsService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   /**
    * §4.3: "ยิงครั้งเดียวต่อผลลัพธ์หนึ่งชุด" — keyed off the *identity* of the result-set array a
@@ -110,7 +112,7 @@ export class AdsService {
       const data = unwrapSdkResult(await getApiSellerAdsPlacements());
       return (data ?? []).map(mapAdsPlacement);
     } catch (e) {
-      this.apiFail.report('โหลดตำแหน่งโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.loadAdsPlacements', e);
       return [];
     }
   }
@@ -136,7 +138,7 @@ export class AdsService {
       return mapAdsAvailability(data);
     } catch (e) {
       const msg = rawMessage(e);
-      if (!msg) this.apiFail.report('โหลดความว่างของตำแหน่งโฆษณาไม่สำเร็จ', e);
+      if (!msg) this.apiFail.report('errors.context.loadAdsAvailability', e);
       return null;
     }
   }
@@ -161,8 +163,8 @@ export class AdsService {
     } catch (e) {
       const msg = rawMessage(e);
       if (msg) return { ok: false, message: msg };
-      this.apiFail.report('คำนวณราคาแคมเปญไม่สำเร็จ', e);
-      return { ok: false, message: 'คำนวณราคาแคมเปญไม่สำเร็จ' };
+      this.apiFail.report('errors.context.calculateAdsCampaignPrice', e);
+      return { ok: false, message: this.translation.t('ads.calculatePriceFailed') };
     }
   }
 
@@ -194,7 +196,7 @@ export class AdsService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.apiFail.report('โหลดรายการแคมเปญโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.loadAdsCampaigns', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -207,7 +209,7 @@ export class AdsService {
       );
       return mapAdsCampaignDetail(data);
     } catch (e) {
-      this.apiFail.report('โหลดรายละเอียดแคมเปญไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.loadAdsCampaignDetail', e);
       return null;
     }
   }
@@ -234,7 +236,7 @@ export class AdsService {
         return {
           ok: false,
           kind: 'full_dates',
-          message: rawMessage(e) ?? 'ช่วงวันที่เลือกมีวันที่เต็มแล้ว กรุณาเลือกวันอื่น',
+          message: rawMessage(e) ?? this.translation.t('ads.datesFull'),
           fullDates,
         };
       }
@@ -243,8 +245,8 @@ export class AdsService {
         return { ok: false, kind: 'price_changed', message: msg };
       }
       if (msg) return { ok: false, kind: 'generic', message: msg };
-      this.apiFail.report('สร้างแคมเปญโฆษณาไม่สำเร็จ', e);
-      return { ok: false, kind: 'generic', message: 'สร้างแคมเปญโฆษณาไม่สำเร็จ' };
+      this.apiFail.report('errors.context.createAdsCampaign', e);
+      return { ok: false, kind: 'generic', message: this.translation.t('ads.createFailed') };
     }
   }
 
@@ -260,7 +262,7 @@ export class AdsService {
     } catch (e) {
       const msg = rawMessage(e);
       if (msg) return { ok: false, message: msg };
-      this.apiFail.report('ยกเลิกแคมเปญโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.cancelAdsCampaign', e);
       return { ok: false };
     }
   }
@@ -297,7 +299,7 @@ export class AdsService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.apiFail.report('โหลดรายการแคมเปญโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.loadAdsCampaigns', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -319,7 +321,7 @@ export class AdsService {
     } catch (e) {
       const msg = rawMessage(e);
       if (msg) return { ok: false, message: msg };
-      this.apiFail.report('ระงับแคมเปญโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.stopAdsCampaign', e);
       return { ok: false };
     }
   }
@@ -330,7 +332,7 @@ export class AdsService {
       const data = unwrapSdkResult(await getApiAdminAdsPlacements());
       return (data ?? []).map(mapAdminAdsPlacement);
     } catch (e) {
-      this.apiFail.report('โหลดตำแหน่งโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.loadAdsPlacements', e);
       return [];
     }
   }
@@ -354,7 +356,7 @@ export class AdsService {
     } catch (e) {
       const msg = rawMessage(e);
       if (msg) return { ok: false, message: msg };
-      this.apiFail.report('บันทึกตำแหน่งโฆษณาไม่สำเร็จ', e);
+      this.apiFail.report('errors.context.saveAdsPlacement', e);
       return { ok: false };
     }
   }

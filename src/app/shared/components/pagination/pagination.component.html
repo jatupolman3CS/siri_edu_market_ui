@@ -3,25 +3,25 @@
   <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-ink-muted">
     @if (showTotal()) {
       @if (total() > 0) {
-        <span>แสดง <strong>{{ startRecord() }} - {{ endRecord() }}</strong> จากทั้งหมด <strong>{{ total() }}</strong> รายการ</span>
+        <span>{{ 'shared.pagination.showingTotal' | trans: { start: startRecord(), end: endRecord(), total: total() } }}</span>
         <span class="opacity-50">·</span>
-        <span>หน้า <strong>{{ page() }}</strong> / <strong>{{ computedTotalPages() }}</strong></span>
+        <span>{{ 'shared.pagination.pageTotal' | trans: { page: page(), total: computedTotalPages() } }}</span>
       } @else {
-        <span>ทั้งหมด <strong>0</strong> รายการ</span>
+        <span>{{ 'shared.pagination.totalZero' | trans }}</span>
       }
     }
 
     @if (showPageSize()) {
       <div class="inline-flex items-center gap-1.5">
-        <span class="text-xs text-ink-muted">ต่อหน้า:</span>
+        <span class="text-xs text-ink-muted">{{ 'shared.pagination.perPage' | trans }}</span>
         <select
           class="bg-white border border-line rounded-lg px-2 py-1 text-xs text-ink font-medium focus:outline-none focus:border-pink-500 hover:border-pink-300 transition-colors cursor-pointer shadow-xs"
           [value]="pageSize()"
           (change)="onPageSizeChange($event)"
-          aria-label="เลือกจำนวนรายการต่อหน้า"
+          [attr.aria-label]="'shared.pagination.selectPerPageAria' | trans"
         >
           @for (opt of pageSizeOptions(); track opt) {
-            <option [value]="opt">{{ opt }} รายการ</option>
+            <option [value]="opt">{{ 'shared.pagination.itemsUnit' | trans: { count: opt } }}</option>
           }
         </select>
       </div>
@@ -37,10 +37,10 @@
         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
         [disabled]="page() <= 1"
         (click)="prev()"
-        aria-label="หน้าก่อนหน้า"
+        [attr.aria-label]="'shared.pagination.prevAria' | trans"
       >
         <app-icon name="arrow-left" [size]="14" />
-        <span class="hidden sm:inline">ก่อนหน้า</span>
+        <span class="hidden sm:inline">{{ 'shared.pagination.prev' | trans }}</span>
       </button>
 
       <!-- Page Numbers -->
@@ -73,9 +73,9 @@
         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
         [disabled]="page() >= computedTotalPages()"
         (click)="next()"
-        aria-label="หน้าถัดไป"
+        [attr.aria-label]="'shared.pagination.nextAria' | trans"
       >
-        <span class="hidden sm:inline">ถัดไป</span>
+        <span class="hidden sm:inline">{{ 'shared.pagination.next' | trans }}</span>
         <app-icon name="arrow-right" [size]="14" />
       </button>
     </nav>

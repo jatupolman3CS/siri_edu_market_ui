@@ -146,7 +146,7 @@ describe('NotificationFeedService', () => {
 
       expect(service.loading()).toBe(false);
       expect(service.items()).toEqual([]);
-      expect(apiFail.report).toHaveBeenCalledWith('โหลดการแจ้งเตือน', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadNotifications', expect.anything());
     });
   });
 
@@ -169,7 +169,7 @@ describe('NotificationFeedService', () => {
       const { service, apiFail } = buildService();
 
       await expect(service.fetchRecentForToast(10)).rejects.toBeDefined();
-      expect(apiFail.report).toHaveBeenCalledWith('โหลดการแจ้งเตือนใหม่', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadRecentNotifications', expect.anything());
     });
   });
 
@@ -193,7 +193,7 @@ describe('NotificationFeedService', () => {
       await settle();
 
       expect(service.unreadCount()).toBe(3);
-      expect(apiFail.report).toHaveBeenCalledWith('โหลดจำนวนแจ้งเตือนที่ยังไม่อ่าน', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadUnreadCount', expect.anything());
     });
   });
 
@@ -261,7 +261,7 @@ describe('NotificationFeedService', () => {
       await settle();
 
       expect(caught).toBeDefined();
-      expect(apiFail.report).toHaveBeenCalledWith('ทำเครื่องหมายว่าอ่านแล้ว', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.markRead', expect.anything());
     });
   });
 
@@ -312,7 +312,7 @@ describe('NotificationFeedService', () => {
       await settle();
 
       expect(caught).toBeDefined();
-      expect(apiFail.report).toHaveBeenCalledWith('ทำเครื่องหมายว่าอ่านแล้วทั้งหมด', expect.anything());
+      expect(apiFail.report).toHaveBeenCalledWith('errors.context.markAllRead', expect.anything());
     });
   });
 
@@ -458,32 +458,32 @@ describe('NotificationFeedService', () => {
       ];
       expect(keys.length).toBe(19);
       for (const key of keys) {
-        expect(getNotificationStyle(key).label).not.toBe('การแจ้งเตือน');
+        expect(getNotificationStyle(key).label).not.toBe('shared.notifications.types.unknown');
       }
     });
 
     it('AC-28: "new_document_for_interest" resolves to its own label, distinct from the followed-seller arm', () => {
       const forInterest = getNotificationStyle('new_document_for_interest');
       const followedSeller = getNotificationStyle('new_document_from_followed_seller');
-      expect(forInterest.label).toBe('ตรงกับความสนใจของคุณ');
+      expect(forInterest.label).toBe('shared.notifications.types.new_document_for_interest');
       expect(forInterest.label).not.toBe(followedSeller.label);
     });
 
     it('matches the exact key before the Thai-title heuristics', () => {
       // "ผู้ขายตอบกลับรีวิวของคุณ" contains "รีวิว", which used to be swallowed by the `review` arm.
-      expect(getNotificationStyle('review_reply', 'ผู้ขายตอบกลับรีวิวของคุณ').label).toBe('ตอบกลับรีวิว');
-      expect(getNotificationStyle('review', 'มีรีวิวใหม่สำหรับ "สรุปฟิสิกส์"').label).toBe('รีวิวใหม่');
+      expect(getNotificationStyle('review_reply', 'ผู้ขายตอบกลับรีวิวของคุณ').label).toBe('shared.notifications.types.review_reply');
+      expect(getNotificationStyle('review', 'มีรีวิวใหม่สำหรับ "สรุปฟิสิกส์"').label).toBe('shared.notifications.types.review');
     });
 
     it('still resolves the legacy PascalCase keys written before the §2.4 migration', () => {
-      expect(getNotificationStyle('DocumentApproved').label).toBe('อนุมัติแล้ว');
-      expect(getNotificationStyle('DocumentRejected').label).toBe('ไม่อนุมัติ');
-      expect(getNotificationStyle('DocumentPendingApproval').label).toBe('รออนุมัติ');
-      expect(getNotificationStyle('ReviewReply').label).toBe('ตอบกลับรีวิว');
+      expect(getNotificationStyle('DocumentApproved').label).toBe('shared.notifications.types.document_approved');
+      expect(getNotificationStyle('DocumentRejected').label).toBe('shared.notifications.types.document_rejected');
+      expect(getNotificationStyle('DocumentPendingApproval').label).toBe('shared.notifications.types.admin_document_submitted');
+      expect(getNotificationStyle('ReviewReply').label).toBe('shared.notifications.types.review_reply');
     });
 
     it('falls back to the neutral style for an unknown key', () => {
-      expect(getNotificationStyle('something_new_from_f07').label).toBe('การแจ้งเตือน');
+      expect(getNotificationStyle('something_new_from_f07').label).toBe('shared.notifications.types.unknown');
     });
   });
 });

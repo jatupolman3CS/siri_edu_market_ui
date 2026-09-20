@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { CrmUserPanelComponent } from '../../../shared/components/crm-user-panel/crm-user-panel.component';
 import { RecommendationTracePanelComponent } from '../../../shared/components/recommendation-trace-panel/recommendation-trace-panel.component';
 
@@ -15,7 +16,7 @@ import { RecommendationTracePanelComponent } from '../../../shared/components/re
 @Component({
   selector: 'app-crm-user',
   standalone: true,
-  imports: [RouterLink, CrmUserPanelComponent, RecommendationTracePanelComponent],
+  imports: [RouterLink, TranslatePipe, CrmUserPanelComponent, RecommendationTracePanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-user.page.html',
 })

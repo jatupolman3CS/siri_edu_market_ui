@@ -47,7 +47,7 @@ export class FollowService {
         const rollback = new Set(this._following());
         rollback.add(sellerId);
         this._following.set(rollback);
-        this.apiFail.report('เลิกติดตามร้าน', e);
+        this.apiFail.report('errors.context.unfollowSeller', e);
         return true;
       }
     } else {
@@ -61,7 +61,7 @@ export class FollowService {
         const rollback = new Set(this._following());
         rollback.delete(sellerId);
         this._following.set(rollback);
-        this.apiFail.report('ติดตามร้าน', e);
+        this.apiFail.report('errors.context.followSeller', e);
         return false;
       }
     }
@@ -87,7 +87,7 @@ export class FollowService {
       // Don't pop up error toasts for unauthenticated visitors
       const status = extractErrorStatus(e);
       if (status !== 401) {
-        this.apiFail.report('โหลดสถานะติดตาม', e);
+        this.apiFail.report('errors.context.loadFollowStatus', e);
       }
     }
   }

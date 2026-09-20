@@ -1,55 +1,57 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-      <div class="flex flex-wrap items-center gap-4 mb-6">
-        <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
-          <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            <app-icon name="download" [size]="18" />
-          </span>
-          <div>
-            <div class="text-xs text-ink-muted">ดาวน์โหลดรวม</div>
-            <div class="text-base font-bold text-ink">
-              {{ totalDownloads() | compact }} ครั้ง
-            </div>
-          </div>
-        </div>
-        <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
-          <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
-            <app-icon name="package" [size]="18" />
-          </span>
-          <div>
-            <div class="text-xs text-ink-muted">เอกสารฟรีทั้งหมด</div>
-            <div class="text-base font-bold text-ink">{{ catalog.freeResources().length }} ชิ้น</div>
-          </div>
+  <div class="flex flex-wrap items-center gap-4 mb-6">
+    <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+        <app-icon name="download" [size]="18" />
+      </span>
+      <div>
+        <div class="text-xs text-ink-muted">{{ 'free.totalDownloads' | trans }}</div>
+        <div class="text-base font-bold text-ink">
+          {{ 'free.downloadsCount' | trans:{ count: (totalDownloads() | compact) } }}
         </div>
       </div>
-
-      @if (catalog.freeState().status === 'loading') {
-        <app-empty-state emoji="⏳" title="กำลังโหลดเอกสารฟรี…" description="รอสักครู่นะคะ" />
-      } @else if (catalog.freeState().status === 'error') {
-        <app-empty-state emoji="⚠️" title="โหลดเอกสารฟรีไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
-          <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
-            ลองใหม่
-          </button>
-        </app-empty-state>
-      } @else if (catalog.freeResources().length === 0) {
-        <app-empty-state emoji="🎁" title="ตอนนี้ยังไม่มีเอกสารฟรี" />
-      } @else {
-        <div class="document-card-grid">
-          @for (doc of catalog.freeResources(); track doc.id) {
-            <app-document-card [doc]="doc" density="compact" />
-          }
+    </div>
+    <div class="card-soft px-5 py-3 inline-flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+        <app-icon name="package" [size]="18" />
+      </span>
+      <div>
+        <div class="text-xs text-ink-muted">{{ 'free.totalFreeDocs' | trans }}</div>
+        <div class="text-base font-bold text-ink">
+          {{ 'free.freeDocsCount' | trans:{ count: catalog.freeResources().length } }}
         </div>
+      </div>
+    </div>
+  </div>
 
-        @if (catalog.freeHasMore()) {
-          <div class="flex justify-center mt-6">
-            <button
-              type="button"
-              class="btn-pink"
-              (click)="catalog.loadMoreFreeResources()"
-              [disabled]="catalog.freeState().status === 'loading'"
-            >
-              โหลดเพิ่ม
-            </button>
-          </div>
-        }
+  @if (catalog.freeState().status === 'loading') {
+    <app-empty-state emoji="⏳" [title]="'home.loadingFreeDocs' | trans" [description]="'common.pleaseWait' | trans" />
+  } @else if (catalog.freeState().status === 'error') {
+    <app-empty-state emoji="⚠️" [title]="'home.loadFreeDocsFailed' | trans" [description]="'common.retry' | trans">
+      <button class="btn-pink mt-5" type="button" (click)="catalog.loadFreeResources()">
+        {{ 'common.retry' | trans }}
+      </button>
+    </app-empty-state>
+  } @else if (catalog.freeResources().length === 0) {
+    <app-empty-state emoji="🎁" [title]="'free.emptyTitle' | trans" />
+  } @else {
+    <div class="document-card-grid">
+      @for (doc of catalog.freeResources(); track doc.id) {
+        <app-document-card [doc]="doc" density="compact" />
       }
     </div>
+
+    @if (catalog.freeHasMore()) {
+      <div class="flex justify-center mt-6">
+        <button
+          type="button"
+          class="btn-pink"
+          (click)="catalog.loadMoreFreeResources()"
+          [disabled]="catalog.freeState().status === 'loading'"
+        >
+          {{ 'home.loadMore' | trans }}
+        </button>
+      </div>
+    }
+  }
+</div>

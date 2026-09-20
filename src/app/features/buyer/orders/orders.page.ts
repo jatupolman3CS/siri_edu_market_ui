@@ -4,6 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzTabChangeEvent, NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService, LibraryService, OrderService, WalletService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import type { OrderTabFilter } from '../../../core/services/library.service';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -35,6 +37,7 @@ const TAB_ORDER: readonly OrderTabFilter[] = [
     ThbPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders.page.html',
@@ -43,6 +46,7 @@ const TAB_ORDER: readonly OrderTabFilter[] = [
 export class BuyerOrdersPage {
   readonly library = inject(LibraryService);
   readonly wallet = inject(WalletService);
+  readonly translation = inject(TranslationService);
   private readonly orderService = inject(OrderService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -117,7 +121,7 @@ export class BuyerOrdersPage {
     try {
       const updated = await this.orderService.payWithWallet(orderId);
       if (updated && (updated.status === 'paid' || updated.status === 'fulfilled')) {
-        this.message.success('ชำระเงินด้วยกระเป๋าเงินสำเร็จ ยอดเงินตัดเรียบร้อยแล้ว');
+        this.message.success(this.translation.t('orders.walletPaidSuccess'));
         await this.wallet.refreshSummary();
         await this.library.refreshOrders();
       }
@@ -127,13 +131,14 @@ export class BuyerOrdersPage {
   }
 
   statusLabel(s: string): string {
-    return {
-      awaiting_payment: 'รอชำระเงิน',
-      paid: 'ชำระแล้ว',
-      fulfilled: 'สำเร็จ',
-      refunded: 'คืนเงินแล้ว',
-      cancelled: 'ยกเลิก',
-    }[s] ?? s;
+    const keyMap: Record<string, string> = {
+      awaiting_payment: 'orders.statusAwaitingPayment',
+      paid: 'orders.statusPaid',
+      fulfilled: 'orders.statusFulfilled',
+      refunded: 'orders.statusRefunded',
+      cancelled: 'orders.statusCancelled',
+    };
+    return keyMap[s] ? this.translation.t(keyMap[s] as any) : s;
   }
 
   statusClass(s: string): string {
@@ -147,10 +152,13 @@ export class BuyerOrdersPage {
   }
 
   paymentLabel(p: string): string {
-    return {
-      promptpay: 'PromptPay',
-      credit_card: 'บัตรเครดิต',
-      truemoney: 'TrueMoney',
-    }[p] ?? p;
+    const keyMap: Record<string, string> = {
+      promptpay: 'orders.methodPromptpay',
+      credit_card: 'orders.methodCreditCard',
+      truemoney: 'orders.methodTrueMoney',
+      unknown: 'orders.methodUnknown',
+      other: 'orders.methodOther',
+    };
+    return keyMap[p] ? this.translation.t(keyMap[p] as any) : p;
   }
 }

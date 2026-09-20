@@ -4,22 +4,22 @@
       <app-icon name="flag" [size]="18" />
     </div>
     <div>
-      <h2 class="text-lg font-bold text-ink mb-1">โหมดใกล้สอบ</h2>
-      <p class="text-xs text-ink-muted">ตั้งวันสอบของคุณ ระบบจะนับถอยหลังและแนะนำเอกสารที่เกี่ยวข้องให้อัตโนมัติ</p>
+      <h2 class="text-lg font-bold text-ink mb-1">{{ 'shared.examCountdown.title' | trans }}</h2>
+      <p class="text-xs text-ink-muted">{{ 'shared.examCountdown.description' | trans }}</p>
     </div>
   </div>
 
   @if (showForm()) {
     <div class="grid gap-4 sm:grid-cols-2">
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-2 block">ประเภทสอบ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'shared.examCountdown.examType' | trans }}</label>
         <select
           class="input-soft cursor-pointer"
           name="examType"
           [ngModel]="formExamType()"
           (ngModelChange)="formExamType.set($event)"
         >
-          <option value="">เลือกประเภทสอบ</option>
+          <option value="">{{ 'shared.examCountdown.selectExamType' | trans }}</option>
           @for (t of examTypes; track t) {
             <option [value]="t">{{ t }}</option>
           }
@@ -27,7 +27,7 @@
       </div>
 
       <div>
-        <label class="text-xs font-semibold text-ink-soft mb-2 block">วันสอบ</label>
+        <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'shared.examCountdown.examDate' | trans }}</label>
         <input
           type="date"
           class="input-soft"
@@ -49,35 +49,35 @@
     <div class="flex flex-wrap justify-end gap-2 mt-6">
       @if (examCountdown.setting()) {
         <button type="button" class="btn-ghost !px-6" [disabled]="saving()" (click)="confirmClear()">
-          ล้างค่า
+          {{ 'shared.examCountdown.clear' | trans }}
         </button>
       }
       <button type="button" class="btn-pink !px-7" [disabled]="saving()" (click)="submit()">
         <app-icon name="check" [size]="16" />
-        บันทึก
+        {{ 'common.save' | trans }}
       </button>
     </div>
   } @else {
     <div class="grid gap-3 sm:grid-cols-2 text-sm">
       <div>
-        <p class="text-xs text-ink-muted mb-1">ประเภทสอบ</p>
+        <p class="text-xs text-ink-muted mb-1">{{ 'shared.examCountdown.examType' | trans }}</p>
         <p class="font-semibold text-ink">{{ examCountdown.setting()?.examType }}</p>
       </div>
       <div>
-        <p class="text-xs text-ink-muted mb-1">วันสอบ</p>
+        <p class="text-xs text-ink-muted mb-1">{{ 'shared.examCountdown.examDate' | trans }}</p>
         <p class="font-semibold text-ink">{{ examCountdown.setting()?.examDate }}</p>
       </div>
       <div class="sm:col-span-2">
-        <p class="text-xs text-ink-muted mb-1">สถานะ</p>
+        <p class="text-xs text-ink-muted mb-1">{{ 'shared.examCountdown.status' | trans }}</p>
         <p class="font-semibold text-ink">
-          {{ examCountdown.setting()?.isEnabled ? 'เปิดใช้งานอยู่' : 'ปิดใช้งานอยู่' }}
+          {{ (examCountdown.setting()?.isEnabled ? 'shared.examCountdown.enabled' : 'shared.examCountdown.disabled') | trans }}
         </p>
       </div>
     </div>
 
     <div class="flex flex-wrap justify-end gap-2 mt-6">
-      <button type="button" class="btn-ghost !px-6" (click)="confirmClear()">ล้างค่า</button>
-      <button type="button" class="btn-pink !px-7" (click)="startEdit()">แก้ไขวันสอบ</button>
+      <button type="button" class="btn-ghost !px-6" (click)="confirmClear()">{{ 'shared.examCountdown.clear' | trans }}</button>
+      <button type="button" class="btn-pink !px-7" (click)="startEdit()">{{ 'shared.examCountdown.edit' | trans }}</button>
     </div>
   }
 </section>

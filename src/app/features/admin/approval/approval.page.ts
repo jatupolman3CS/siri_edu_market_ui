@@ -13,6 +13,7 @@ import { FileNamePipe } from '../../../shared/pipes/file-name.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-admin-approval',
@@ -36,6 +37,7 @@ export class AdminApprovalPage {
   readonly admin = inject(AdminService);
   private readonly message = inject(NzMessageService);
   private readonly auth = inject(AuthService);
+  private readonly translation = inject(TranslationService);
 
   private suppressAutoSearch = false;
   private readonly autoSearchDebounceMs = 400;
@@ -71,11 +73,11 @@ export class AdminApprovalPage {
   /** Returns a fresh unchecked list — used for initialization and reset. */
   private freshChecks(): { label: string; checked: boolean }[] {
     return [
-      { label: 'เอกสารตรงกับคำอธิบาย', checked: false },
-      { label: 'ไม่ละเมิดลิขสิทธิ์', checked: false },
-      { label: 'มีลายน้ำในไฟล์ตัวอย่าง', checked: false },
-      { label: 'ภาพหน้าปกเหมาะสม', checked: false },
-      { label: 'ราคาเหมาะสมกับเนื้อหา', checked: false },
+      { label: this.translation.t('admin.checklistDocMatch'), checked: false },
+      { label: this.translation.t('admin.checklistNoCopyright'), checked: false },
+      { label: this.translation.t('admin.checklistWatermark'), checked: false },
+      { label: this.translation.t('admin.checklistCoverOk'), checked: false },
+      { label: this.translation.t('admin.checklistPriceOk'), checked: false },
     ];
   }
 
@@ -253,9 +255,9 @@ export class AdminApprovalPage {
     this.prescreening.set(true);
     try {
       await this.admin.prescreenDocument(id);
-      this.message.success('ประเมินความเสี่ยงด้วย AI เรียบร้อย');
+      this.message.success(this.translation.t('admin.prescreenSuccess'));
     } catch {
-      this.message.error('ประเมินความเสี่ยงด้วย AI ไม่สำเร็จ');
+      this.message.error(this.translation.t('admin.prescreenFailed'));
     } finally {
       this.prescreening.set(false);
     }
@@ -264,7 +266,7 @@ export class AdminApprovalPage {
   async approve(id: string, title: string): Promise<void> {
     try {
       await this.admin.approveDocument(id);
-      this.message.success(`อนุมัติ "${title}" เรียบร้อย`);
+      this.message.success(this.translation.t('admin.approveDocSuccess', { title }));
       this.previewDetail.set(null);
       this.selectedId.set('');
       if (this.lockedId() === id) this.lockedId.set('');
@@ -275,12 +277,12 @@ export class AdminApprovalPage {
 
   readonly rejectModalVisible = signal(false);
   readonly rejectTarget = signal<{ id: string; title: string } | null>(null);
-  readonly rejectReason = signal('ไม่ผ่านเกณฑ์คุณภาพ');
+  readonly rejectReason = signal('');
   readonly rejectSubmitting = signal(false);
 
   openRejectModal(id: string, title: string): void {
     this.rejectTarget.set({ id, title });
-    this.rejectReason.set('ไม่ผ่านเกณฑ์คุณภาพ');
+    this.rejectReason.set(this.translation.t('admin.defaultRejectReason'));
     this.rejectModalVisible.set(true);
   }
 
@@ -292,11 +294,11 @@ export class AdminApprovalPage {
   async confirmReject(): Promise<void> {
     const target = this.rejectTarget();
     if (!target) return;
-    const reason = this.rejectReason().trim() || 'ไม่ผ่านเกณฑ์คุณภาพ';
+    const reason = this.rejectReason().trim() || this.translation.t('admin.defaultRejectReason');
     this.rejectSubmitting.set(true);
     try {
       await this.admin.rejectDocument(target.id, reason);
-      this.message.warning(`ปฏิเสธ "${target.title}" แล้ว`);
+      this.message.warning(this.translation.t('admin.rejectDocSuccess', { title: target.title }));
       this.previewDetail.set(null);
       this.selectedId.set('');
       if (this.lockedId() === target.id) this.lockedId.set('');

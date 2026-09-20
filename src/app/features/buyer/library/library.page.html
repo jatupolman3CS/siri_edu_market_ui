@@ -1,33 +1,33 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
       <app-page-hero
-        eyebrow="คลังของฉัน"
-        title="เอกสารที่คุณซื้อทั้งหมด"
-        description="ดาวน์โหลดได้ตลอดเวลา ทุกไฟล์มีลายน้ำเฉพาะคุณเพื่อความปลอดภัย"
+        [eyebrow]="'library.eyebrow' | trans"
+        [title]="'library.heroTitle' | trans"
+        [description]="'library.description' | trans"
       />
 
       @if (library.state().status === 'loading') {
-        <app-empty-state emoji="⏳" title="กำลังโหลดคลังของคุณ…" description="รอสักครู่นะคะ" />
+        <app-empty-state emoji="⏳" [title]="'library.loading' | trans" [description]="'common.pleaseWait' | trans" />
       } @else if (library.state().status === 'error') {
-        <app-empty-state emoji="⚠️" title="โหลดคลังไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+        <app-empty-state emoji="⚠️" [title]="'library.loadFailed' | trans" [description]="'common.retry' | trans">
           <button class="btn-pink mt-4" type="button" (click)="library.refreshLibrary()">
-            ลองใหม่
+            {{ 'common.retry' | trans }}
           </button>
         </app-empty-state>
       } @else {
       <!-- Stats -->
       <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <app-stat-card
-          label="เอกสารที่ซื้อ"
-          [value]="library.totalDocuments() + ' เล่ม'"
+          [label]="'library.statPurchased' | trans"
+          [value]="library.totalDocuments() + ' ' + ('library.booksUnit' | trans)"
           icon="📚"
         />
         <app-stat-card
-          label="ดาวน์โหลด"
-          [value]="(library.totalDownloads() | compact) + ' ครั้ง'"
+          [label]="'library.statDownloads' | trans"
+          [value]="(library.totalDownloads() | compact) + ' ' + ('library.timesUnit' | trans)"
           icon="⬇️"
         />
         <app-stat-card
-          label="ใช้จ่ายรวม"
+          [label]="'library.statSpent' | trans"
           [value]="library.totalSpent() | thb"
           icon="💸"
         />
@@ -36,10 +36,10 @@
         <div class="card-soft p-5 flex flex-col gap-2">
           <div class="flex items-center justify-between text-ink-muted">
             <span class="text-xs font-semibold uppercase tracking-wider inline-flex items-center gap-1">
-              คะแนนสะสม
+              {{ 'library.pointsTitle' | trans }}
               <span
                 nz-tooltip
-                nzTooltipTitle="ได้ 1 คะแนน ต่อทุก 10 บาท (ก่อน VAT)"
+                [nzTooltipTitle]="'library.pointsTooltip' | trans"
                 class="w-3.5 h-3.5 rounded-full border border-ink-muted text-[9px] leading-[13px] text-center cursor-help"
               >
                 ?
@@ -49,17 +49,17 @@
           </div>
 
           @if (loyalty.state().status === 'error') {
-            <div class="text-sm font-semibold text-rose-500">โหลดคะแนนสะสมไม่สำเร็จ</div>
+            <div class="text-sm font-semibold text-rose-500">{{ 'library.pointsLoadFailed' | trans }}</div>
           } @else if (loyalty.summary(); as loyaltySummary) {
             <div class="text-2xl md:text-3xl font-extrabold text-ink">
               {{ loyaltySummary.balance | compact }} pt
             </div>
             @if (loyaltySummary.earnedThisMonth > 0) {
               <div class="text-xs font-semibold text-emerald-500">
-                +{{ loyaltySummary.earnedThisMonth }} ในเดือนนี้
+                {{ 'library.earnedThisMonth' | trans: { count: loyaltySummary.earnedThisMonth } }}
               </div>
             } @else {
-              <div class="text-xs text-ink-muted">ยังไม่ได้คะแนนในเดือนนี้</div>
+              <div class="text-xs text-ink-muted">{{ 'library.noPointsThisMonth' | trans }}</div>
             }
           } @else {
             <div class="text-2xl md:text-3xl font-extrabold text-ink">—</div>
@@ -70,7 +70,7 @@
             class="text-xs font-semibold text-pink-600 text-left mt-1"
             (click)="openLedgerDrawer()"
           >
-            ดูประวัติคะแนน
+            {{ 'library.viewPointsHistory' | trans }}
           </button>
         </div>
       </section>
@@ -88,13 +88,13 @@
             [class.border-line]="library.libraryFilter() !== t.value"
             (click)="library.setLibraryFilter(t.value)"
           >
-            {{ t.label }}
+            {{ t.labelKey | trans }}
           </button>
         }
         <input
           type="search"
           class="input-soft ml-auto !w-auto min-w-[220px] text-sm"
-          placeholder="ค้นหาเอกสารของฉัน..."
+          [placeholder]="'library.searchPlaceholder' | trans"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
@@ -102,23 +102,23 @@
 
       @if (library.library().length === 0) {
         @if (library.libraryFilter() === 'unreviewed') {
-          <app-empty-state emoji="✅" title="รีวิวครบทุกเอกสารแล้ว ขอบคุณค่ะ" />
+          <app-empty-state emoji="✅" [title]="'library.allReviewedEmpty' | trans" />
         } @else if (library.libraryFilter() === 'unread') {
-          <app-empty-state emoji="✅" title="อ่านครบทุกเอกสารแล้ว เก่งมากค่ะ" />
+          <app-empty-state emoji="✅" [title]="'library.allReadEmpty' | trans" />
         } @else {
           <app-empty-state
             emoji="📚"
-            title="คลังของคุณยังว่างอยู่"
-            description="เริ่มต้นเลือกซื้อเอกสารแรกได้เลย"
+            [title]="'library.emptyTitle' | trans"
+            [description]="'library.emptyDesc' | trans"
           >
-            <a routerLink="/marketplace" class="btn-pink mt-4">เริ่มเลือกซื้อ</a>
+            <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'library.startShopping' | trans }}</a>
           </app-empty-state>
         }
       } @else if (filteredLibrary().length === 0) {
         <app-empty-state
           emoji="🔍"
-          title="ไม่พบเอกสารที่ค้นหา"
-          description="ลองค้นหาด้วยคำอื่นดูนะคะ"
+          [title]="'library.notFoundTitle' | trans"
+          [description]="'library.notFoundDesc' | trans"
         />
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -129,7 +129,7 @@
               <div class="p-5 pt-3 flex flex-col gap-2">
                 @if (item.hasNewVersion) {
                   <span class="pill bg-rose-500 text-white shadow-soft w-fit">
-                    มีเวอร์ชันใหม่
+                    {{ 'library.newVersionBadge' | trans }}
                   </span>
                 }
                 @if (item.hasNewVersion && item.latestChangeNote) {
@@ -140,18 +140,18 @@
                 @if (item.isReviewed) {
                   <span class="pill bg-amber-400 text-white shadow-soft w-fit">
                     <app-icon name="star" [size]="11" />
-                    รีวิวแล้ว
+                    {{ 'library.reviewedBadge' | trans }}
                   </span>
                 }
 
                 @if (item.isRead) {
                   <button type="button" class="pill bg-sky-500 text-white shadow-soft w-fit" (click)="library.toggleRead(item.document.id, false)">
                     <app-icon name="check" [size]="11" />
-                    อ่านแล้ว
+                    {{ 'library.readBadge' | trans }}
                   </button>
                 } @else {
                   <button type="button" class="pill bg-pink-50 text-ink-soft w-fit" (click)="library.toggleRead(item.document.id, true)">
-                    ทำเครื่องหมายว่าอ่านแล้ว
+                    {{ 'library.markAsRead' | trans }}
                   </button>
                 }
 
@@ -161,18 +161,18 @@
                   (click)="openVersionsModal(item.document.id, item.document.title)"
                 >
                   <app-icon name="doc" [size]="12" />
-                  ดูสิ่งที่อัปเดต
+                  {{ 'library.viewUpdates' | trans }}
                 </button>
 
                 <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-ink-muted mt-2">
-                  <div>เลขที่คำสั่งซื้อ</div>
+                  <div>{{ 'library.orderNumber' | trans }}</div>
                   <div class="text-ink font-semibold">{{ item.orderNumber }}</div>
-                  <div>ซื้อเมื่อ</div>
+                  <div>{{ 'library.purchasedAt' | trans }}</div>
                   <div class="text-ink">{{ item.purchasedAt | timeAgo }}</div>
-                  <div>ดาวน์โหลด</div>
-                  <div class="text-ink">{{ item.downloadCount }} ครั้ง</div>
+                  <div>{{ 'library.downloadCount' | trans }}</div>
+                  <div class="text-ink">{{ item.downloadCount }} {{ 'library.timesUnit' | trans }}</div>
                   @if (item.isReviewed) {
-                    <div>คะแนนของคุณ</div>
+                    <div>{{ 'library.yourRating' | trans }}</div>
                     <div class="text-yellow-400">
                       @for (star of [1, 2, 3, 4, 5]; track star) {
                         <span [class.text-gray-300]="star > (item.myRating ?? 0)">★</span>
@@ -187,14 +187,14 @@
                     class="btn-ghost flex-1 !py-2.5 text-sm"
                   >
                     <app-icon name="eye" [size]="14" />
-                    รายละเอียด
+                    {{ 'library.detailsBtn' | trans }}
                   </a>
                   <button
                     class="btn-pink flex-1 !py-2.5 text-sm"
                     (click)="download(item.document.id)"
                   >
                     <app-icon name="download" [size]="14" />
-                    ดาวน์โหลด
+                    {{ 'library.downloadBtn' | trans }}
                   </button>
                 </div>
                 @if (item.isReviewed) {
@@ -203,7 +203,7 @@
                     (click)="openReviewModal(item.document.id, item.document.title, item.myRating)"
                   >
                     <app-icon name="star" [size]="14" />
-                    แก้ไขรีวิว
+                    {{ 'library.editReviewBtn' | trans }}
                   </button>
                 } @else {
                   <button
@@ -211,7 +211,7 @@
                     (click)="openReviewModal(item.document.id, item.document.title)"
                   >
                     <app-icon name="star" [size]="14" />
-                    เขียนรีวิว
+                    {{ 'library.writeReviewBtn' | trans }}
                   </button>
                 }
               </div>
@@ -227,7 +227,7 @@
               (click)="library.loadMoreLibrary()"
               [disabled]="library.state().status === 'loading'"
             >
-              โหลดเพิ่ม
+              {{ 'library.loadMore' | trans }}
             </button>
           </div>
         }
@@ -244,15 +244,15 @@
           <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0">
             <app-icon name="star" [size]="16" />
           </span>
-          <h3 class="text-base md:text-lg font-bold text-ink">เขียนรีวิวเอกสาร</h3>
+          <h3 class="text-base md:text-lg font-bold text-ink">{{ 'library.reviewModalTitle' | trans }}</h3>
         </div>
-        <button class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft hover:text-pink-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" aria-label="ปิด">
+        <button class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft hover:text-pink-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" [attr.aria-label]="'common.close' | trans">
           <app-icon name="close" [size]="14" />
         </button>
       </div>
 
       <div class="p-3 bg-pink-50/70 rounded-2xl border border-pink-100 mb-4">
-        <p class="text-[11px] font-medium text-ink-muted mb-0.5">เอกสารที่คุณกำลังรีวิว:</p>
+        <p class="text-[11px] font-medium text-ink-muted mb-0.5">{{ 'library.reviewingDoc' | trans }}</p>
         <p class="text-sm font-semibold text-ink line-clamp-2">{{ modal.title }}</p>
       </div>
 
@@ -262,17 +262,17 @@
             <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">
               ✓
             </div>
-            <p class="text-base font-bold text-emerald-700">{{ rs.message ?? 'รีวิวสำเร็จ!' }}</p>
-            <p class="text-xs text-ink-muted mt-1">ขอบคุณสำหรับความคิดเห็นของคุณ</p>
+            <p class="text-base font-bold text-emerald-700">{{ rs.message ?? ('library.reviewSuccessTitle' | trans) }}</p>
+            <p class="text-xs text-ink-muted mt-1">{{ 'library.reviewSuccessDesc' | trans }}</p>
             <button type="button" class="btn-pink mt-5 !py-2 !px-6 text-sm" (click)="closeReviewModal()">
-              ปิดหน้าต่าง
+              {{ 'library.closeModal' | trans }}
             </button>
           </div>
         } @else {
         <form (ngSubmit)="submitReview()">
           <!-- Rating -->
           <div class="mb-4">
-            <label class="block text-xs font-semibold text-ink-soft mb-2">ให้คะแนนความพึงพอใจ</label>
+            <label class="block text-xs font-semibold text-ink-soft mb-2">{{ 'library.ratingSatisfaction' | trans }}</label>
             <div class="flex items-center justify-between p-3 bg-pink-50/50 rounded-2xl border border-line">
               <div class="flex gap-1.5">
                 @for (star of [1, 2, 3, 4, 5]; track star) {
@@ -282,23 +282,23 @@
                     [class.text-amber-400]="star <= reviewForm().rating"
                     [class.text-stone-300]="star > reviewForm().rating"
                     (click)="setRating(star)"
-                    [title]="star + ' ดาว'"
+                    [title]="'library.stars' | trans: { count: star }"
                   >
                     ★
                   </button>
                 }
               </div>
-              <span class="text-xs font-bold text-pink-600 bg-pink-100 px-2.5 py-1 rounded-full">{{ reviewForm().rating }} / 5 ดาว</span>
+              <span class="text-xs font-bold text-pink-600 bg-pink-100 px-2.5 py-1 rounded-full">{{ 'library.starsScore' | trans: { score: reviewForm().rating } }}</span>
             </div>
           </div>
 
           <!-- Comment -->
           <div class="mb-4">
-            <label class="block text-xs font-semibold text-ink-soft mb-1.5">ความคิดเห็นของคุณ</label>
+            <label class="block text-xs font-semibold text-ink-soft mb-1.5">{{ 'library.yourComment' | trans }}</label>
             <textarea
               class="input-soft resize-none text-sm"
               rows="4"
-              placeholder="แชร์ประสบการณ์การใช้เอกสารนี้ เช่น คุณภาพเนื้อหา เข้าใจง่าย นำไปสอนได้จริง..."
+              [placeholder]="'library.commentPlaceholder' | trans"
               [ngModel]="reviewForm().comment"
               (ngModelChange)="reviewForm.update(f => ({ ...f, comment: $event }))"
               name="comment"
@@ -315,7 +315,7 @@
 
           <div class="flex gap-2.5 pt-3 border-t border-line">
             <button type="button" class="btn-ghost flex-1 !py-2.5 text-sm" (click)="closeReviewModal()">
-              ยกเลิก
+              {{ 'library.cancel' | trans }}
             </button>
             <button
               type="submit"
@@ -323,9 +323,9 @@
               [disabled]="rs.status === 'loading' || !reviewForm().comment.trim()"
             >
               @if (rs.status === 'loading') {
-                <span>กำลังส่ง…</span>
+                <span>{{ 'library.submittingReview' | trans }}</span>
               } @else {
-                ส่งรีวิว
+                {{ 'library.submitReview' | trans }}
               }
             </button>
           </div>
@@ -348,7 +348,7 @@
   <ng-container *nzDrawerContent>
     <div class="flex flex-col h-full bg-canvas">
       <header class="flex items-center justify-between px-6 py-5 border-b border-line bg-white">
-        <h3 class="text-base font-bold text-ink">ประวัติคะแนนสะสม</h3>
+        <h3 class="text-base font-bold text-ink">{{ 'library.pointsHistoryTitle' | trans }}</h3>
         <button class="btn-icon" type="button" (click)="closeLedgerDrawer()">
           <app-icon name="close" [size]="18" />
         </button>
@@ -358,7 +358,7 @@
         @if (loyalty.ledger().length === 0) {
           <app-empty-state
             emoji="🌸"
-            title="ยังไม่มีรายการคะแนน — ซื้อเอกสารเพื่อเริ่มสะสม"
+            [title]="'library.noPointsHistory' | trans"
           />
         } @else {
           <ul class="flex flex-col gap-3">
@@ -367,7 +367,7 @@
                 <div class="min-w-0">
                   <p class="text-sm font-semibold text-ink truncate">
                     @if (entry.reason === 'order_paid' && entry.orderNumber) {
-                      ได้รับจากคำสั่งซื้อ {{ entry.orderNumber }}
+                      {{ 'library.receivedFromOrder' | trans: { orderNumber: entry.orderNumber } }}
                     } @else {
                       {{ entry.reason }}
                     }
@@ -395,7 +395,7 @@
             (click)="loyalty.loadMoreLedger()"
             [disabled]="loyalty.ledgerState().status === 'loading'"
           >
-            โหลดเพิ่ม
+            {{ 'library.loadMore' | trans }}
           </button>
         </footer>
       }
@@ -406,21 +406,21 @@
 <!-- Modal ประวัติเวอร์ชันสำหรับผู้ซื้อ (Buyer Document Versions §4.2) -->
 <nz-modal
   [nzVisible]="!!versionsModal()"
-  [nzTitle]="'ประวัติเวอร์ชัน: ' + (versionsModal()?.title ?? '')"
+  [nzTitle]="'library.versionHistoryTitle' | trans: { title: (versionsModal()?.title ?? '') }"
   [nzFooter]="null"
   (nzOnCancel)="closeVersionsModal()"
 >
   <ng-container *nzModalContent>
     @if (versionsLoading()) {
-      <div class="py-8 text-center text-sm text-ink-muted">กำลังโหลดประวัติเวอร์ชัน…</div>
+      <div class="py-8 text-center text-sm text-ink-muted">{{ 'library.loadingVersionHistory' | trans }}</div>
     } @else if (!versionsList().length) {
-      <div class="py-8 text-center text-sm text-ink-muted">ยังไม่มีประวัติเวอร์ชันสำหรับเอกสารนี้</div>
+      <div class="py-8 text-center text-sm text-ink-muted">{{ 'library.noVersionHistory' | trans }}</div>
     } @else {
       <div class="divide-y divide-line">
         @for (v of versionsList(); track v.versionNumber) {
           <div class="py-3 first:pt-0 last:pb-0">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-ink">เวอร์ชัน {{ v.versionNumber }}</span>
+              <span class="font-bold text-sm text-ink">{{ 'library.versionNumber' | trans: { version: v.versionNumber } }}</span>
               <span class="text-xs text-ink-muted">{{ v.createdAt ? (v.createdAt | timeAgo) : '—' }}</span>
             </div>
             @if (v.changeNote) {

@@ -6,20 +6,20 @@
           <app-icon name="wallet" [size]="18" />
         </div>
         <div>
-          <h2 class="text-lg font-bold text-ink mb-1">บัตรที่บันทึกไว้</h2>
-          <p class="text-xs text-ink-muted">จัดการบัตรที่บันทึกไว้สำหรับการชำระเงินครั้งถัดไป</p>
+          <h2 class="text-lg font-bold text-ink mb-1">{{ 'shared.savedCards.title' | trans }}</h2>
+          <p class="text-xs text-ink-muted">{{ 'shared.savedCards.subtitle' | trans }}</p>
         </div>
       </div>
 
       @if (paymentMethods.state().status === 'loading') {
-        <p class="text-sm text-ink-soft mb-4">กำลังโหลด…</p>
+        <p class="text-sm text-ink-soft mb-4">{{ 'common.loading' | trans }}</p>
       } @else if (paymentMethods.state().status === 'error') {
-        <p class="text-sm text-rose-600 mb-4">โหลดรายการบัตรไม่สำเร็จ</p>
+        <p class="text-sm text-rose-600 mb-4">{{ 'shared.savedCards.loadFailed' | trans }}</p>
       } @else if (paymentMethods.list().length === 0) {
         <app-empty-state
           emoji="💳"
-          title="ยังไม่มีบัตรที่บันทึกไว้"
-          description="เพิ่มได้จากปุ่มด้านล่าง"
+          [title]="'shared.savedCards.noCardsTitle' | trans"
+          [description]="'shared.savedCards.noCardsDesc' | trans"
         />
       } @else {
         <ul class="space-y-3 mb-4">
@@ -29,13 +29,15 @@
                 <div class="text-sm font-semibold text-ink capitalize flex items-center gap-2 flex-wrap">
                   <span>{{ card.brand }} •••• {{ card.last4 }}</span>
                   @if (card.isDefault) {
-                    <span class="pill-pink">บัตรหลัก</span>
+                    <span class="pill-pink">{{ 'shared.savedCards.primaryBadge' | trans }}</span>
                   }
                   @if (isExpired(card)) {
-                    <span class="pill-soft text-rose-600">บัตรหมดอายุ</span>
+                    <span class="pill-soft text-rose-600">{{ 'shared.savedCards.expiredBadge' | trans }}</span>
                   }
                 </div>
-                <div class="text-xs text-ink-muted mt-0.5">หมดอายุ {{ card.expMonth }}/{{ card.expYear }}</div>
+                <div class="text-xs text-ink-muted mt-0.5">
+                  {{ 'shared.savedCards.expires' | trans: { month: card.expMonth, year: card.expYear } }}
+                </div>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 @if (!card.isDefault) {
@@ -45,7 +47,7 @@
                     [disabled]="busy()"
                     (click)="setDefault(card.id)"
                   >
-                    ตั้งเป็นบัตรหลัก
+                    {{ 'shared.savedCards.setPrimary' | trans }}
                   </button>
                 }
                 <button
@@ -54,7 +56,7 @@
                   [disabled]="busy()"
                   (click)="confirmRemove(card)"
                 >
-                  ลบ
+                  {{ 'shared.savedCards.remove' | trans }}
                 </button>
               </div>
             </li>
@@ -63,22 +65,28 @@
       }
 
       @if (!addingCard()) {
-        <button type="button" class="btn-ghost" [disabled]="busy()" (click)="openAddCard()">เพิ่มบัตรใหม่</button>
+        <button type="button" class="btn-ghost" [disabled]="busy()" (click)="openAddCard()">
+          {{ 'shared.savedCards.addNewCard' | trans }}
+        </button>
       } @else {
         <div id="saved-cards-setup-element" class="min-h-[200px] mb-3"></div>
         <div class="flex gap-2">
-          <button type="button" class="btn-pink" [disabled]="busy()" (click)="confirmAddCard()">บันทึกบัตร</button>
-          <button type="button" class="btn-ghost" [disabled]="busy()" (click)="closeAddCard()">ยกเลิก</button>
+          <button type="button" class="btn-pink" [disabled]="busy()" (click)="confirmAddCard()">
+            {{ 'shared.savedCards.saveCard' | trans }}
+          </button>
+          <button type="button" class="btn-ghost" [disabled]="busy()" (click)="closeAddCard()">
+            {{ 'common.cancel' | trans }}
+          </button>
         </div>
       }
     </section>
   }
   @case ('select') {
     @if (paymentMethods.state().status === 'error') {
-      <p class="text-sm text-rose-600 mb-3">โหลดรายการบัตรไม่สำเร็จ</p>
+      <p class="text-sm text-rose-600 mb-3">{{ 'shared.savedCards.loadFailed' | trans }}</p>
     } @else if (paymentMethods.list().length > 0) {
       <div class="mb-4">
-        <h3 class="text-sm font-bold text-ink mb-2">บัตรที่บันทึกไว้</h3>
+        <h3 class="text-sm font-bold text-ink mb-2">{{ 'shared.savedCards.title' | trans }}</h3>
         <div class="space-y-2">
           @for (card of paymentMethods.list(); track card.id) {
             <label
@@ -95,12 +103,12 @@
                 (change)="selectCard(card.id)"
               />
               <span class="text-sm text-ink flex items-center gap-2 flex-wrap">
-                <span>{{ card.brand }} •••• {{ card.last4 }} — หมดอายุ {{ card.expMonth }}/{{ card.expYear }}</span>
+                <span>{{ card.brand }} •••• {{ card.last4 }} — {{ 'shared.savedCards.expires' | trans: { month: card.expMonth, year: card.expYear } }}</span>
                 @if (card.isDefault) {
-                  <span class="pill-pink">บัตรหลัก</span>
+                  <span class="pill-pink">{{ 'shared.savedCards.primaryBadge' | trans }}</span>
                 }
                 @if (isExpired(card)) {
-                  <span class="pill-soft text-rose-600">บัตรหมดอายุ</span>
+                  <span class="pill-soft text-rose-600">{{ 'shared.savedCards.expiredBadge' | trans }}</span>
                 }
               </span>
             </label>
@@ -113,7 +121,7 @@
               [checked]="selected() === 'new'"
               (change)="selectCard('new')"
             />
-            <span class="text-sm text-ink">ใช้บัตรใหม่</span>
+            <span class="text-sm text-ink">{{ 'shared.savedCards.useNewCard' | trans }}</span>
           </label>
         </div>
       </div>

@@ -53,6 +53,13 @@ describe('TranslationService & TranslatePipe (Bilingual Support)', () => {
     expect(service.t('non.existent.key')).toBe('non.existent.key');
   });
 
+  it('returns translated string lists for the active language', () => {
+    service.setLanguage('en');
+    expect(service.list('header.quickSearchItems')).toContain('Biology Notes');
+    expect(service.list('home.quickSearchItems')).toContain('Research');
+    expect(service.list('non.existent.list')).toEqual([]);
+  });
+
   it('translates via TranslatePipe', () => {
     const pipe = new TranslatePipe(service);
     service.setLanguage('th');

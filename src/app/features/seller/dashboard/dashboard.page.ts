@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { PlatformStatsService, SellerService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { DEFAULT_STORE_READINESS } from '../../../core/models';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -48,6 +49,7 @@ export class SellerDashboardPage {
   readonly platformStats = inject(PlatformStatsService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
   readonly feedbackModalOpen = signal(false);
 
   openFeedbackModal(): void {
@@ -112,7 +114,7 @@ export class SellerDashboardPage {
    */
   requestWithdraw(): void {
     if (this.seller.stats().pendingPayout <= 0) {
-      this.message.warning('ยังไม่มียอดเงินให้ถอนในตอนนี้');
+      this.message.warning(this.translation.t('seller.noWithdrawBalance'));
       return;
     }
     void this.router.navigate(['/seller/earnings']);

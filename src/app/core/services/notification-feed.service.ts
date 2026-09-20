@@ -9,6 +9,7 @@ import {
 } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n/translation.service';
 import {
   NOTIFICATION_AUDIENCES,
   toNotificationAudience,
@@ -129,27 +130,27 @@ function toneStyle(icon: NotificationStyleInfo['icon'], label: string, tone: Sty
  * arm would otherwise have swallowed.
  */
 const STYLE_BY_KEY: Readonly<Record<string, NotificationStyleInfo>> = {
-  sale: toneStyle('wallet', 'มีการขาย', 'emerald'),
-  review: toneStyle('star', 'รีวิวใหม่', 'amber'),
-  qna_question: toneStyle('mail', 'คำถามใหม่', 'sky'),
-  seller_follow: toneStyle('heart', 'ผู้ติดตามใหม่', 'pink'),
-  store_visit_digest: toneStyle('eye', 'สรุปการเข้าชม', 'indigo'),
-  cart_add_digest: toneStyle('cart', 'สรุปตะกร้า', 'indigo'),
-  wishlist_add_digest: toneStyle('heart', 'สรุปรายการโปรด', 'pink'),
-  review_reply: toneStyle('mail', 'ตอบกลับรีวิว', 'sky'),
-  qna_answer: toneStyle('mail', 'ตอบคำถามแล้ว', 'sky'),
-  document_submitted: toneStyle('doc', 'ส่งตรวจแล้ว', 'purple'),
-  document_approved: toneStyle('check', 'อนุมัติแล้ว', 'emerald'),
-  document_rejected: toneStyle('x', 'ไม่อนุมัติ', 'rose'),
-  admin_document_submitted: toneStyle('shield', 'รออนุมัติ', 'purple'),
-  admin_payout_requested: toneStyle('wallet', 'คำขอถอนเงิน', 'amber'),
-  payout: toneStyle('wallet', 'ถอนเงิน', 'emerald'),
-  new_document_from_followed_seller: toneStyle('doc', 'ผลงานใหม่', 'pink'),
+  sale: toneStyle('wallet', 'shared.notifications.types.sale', 'emerald'),
+  review: toneStyle('star', 'shared.notifications.types.review', 'amber'),
+  qna_question: toneStyle('mail', 'shared.notifications.types.qna_question', 'sky'),
+  seller_follow: toneStyle('heart', 'shared.notifications.types.seller_follow', 'pink'),
+  store_visit_digest: toneStyle('eye', 'shared.notifications.types.store_visit_digest', 'indigo'),
+  cart_add_digest: toneStyle('cart', 'shared.notifications.types.cart_add_digest', 'indigo'),
+  wishlist_add_digest: toneStyle('heart', 'shared.notifications.types.wishlist_add_digest', 'pink'),
+  review_reply: toneStyle('mail', 'shared.notifications.types.review_reply', 'sky'),
+  qna_answer: toneStyle('mail', 'shared.notifications.types.qna_answer', 'sky'),
+  document_submitted: toneStyle('doc', 'shared.notifications.types.document_submitted', 'purple'),
+  document_approved: toneStyle('check', 'shared.notifications.types.document_approved', 'emerald'),
+  document_rejected: toneStyle('x', 'shared.notifications.types.document_rejected', 'rose'),
+  admin_document_submitted: toneStyle('shield', 'shared.notifications.types.admin_document_submitted', 'purple'),
+  admin_payout_requested: toneStyle('wallet', 'shared.notifications.types.admin_payout_requested', 'amber'),
+  payout: toneStyle('wallet', 'shared.notifications.types.payout', 'emerald'),
+  new_document_from_followed_seller: toneStyle('doc', 'shared.notifications.types.new_document_from_followed_seller', 'pink'),
   // crm-targeted-document-alerts v2 §3.1/§4.1 (F-12, AC-28) — 19th catalog key, same `doc` icon
   // as the followed-seller arm above but its own label so the two never read as one event.
-  new_document_for_interest: toneStyle('doc', 'ตรงกับความสนใจของคุณ', 'purple'),
-  announcement: toneStyle('sparkle', 'ข่าวประกาศ', 'indigo'),
-  tips: toneStyle('sparkle', 'เคล็ดลับ', 'slate'),
+  new_document_for_interest: toneStyle('doc', 'shared.notifications.types.new_document_for_interest', 'purple'),
+  announcement: toneStyle('sparkle', 'shared.notifications.types.announcement', 'indigo'),
+  tips: toneStyle('sparkle', 'shared.notifications.types.tips', 'slate'),
 };
 
 export function getNotificationStyle(key: string, title = ''): NotificationStyleInfo {
@@ -162,34 +163,34 @@ export function getNotificationStyle(key: string, title = ''): NotificationStyle
   // Legacy arms below: PascalCase keys written before the §2.4 key-normalisation migration
   // (and rows seeded by older builds) still have to render sensibly. Kept as fallback per §4.1.
   if (normKey === 'review' || normTitle.includes('รีวิว')) {
-    return toneStyle('star', 'รีวิวใหม่', 'amber');
+    return toneStyle('star', 'shared.notifications.types.review', 'amber');
   }
 
   if (normKey === 'reviewreply' || normTitle.includes('ตอบกลับ')) {
-    return toneStyle('mail', 'ตอบกลับรีวิว', 'sky');
+    return toneStyle('mail', 'shared.notifications.types.review_reply', 'sky');
   }
 
   if (normKey === 'documentapproved' || normTitle.includes('อนุมัติแล้ว')) {
-    return toneStyle('check', 'อนุมัติแล้ว', 'emerald');
+    return toneStyle('check', 'shared.notifications.types.document_approved', 'emerald');
   }
 
   if (normKey === 'documentrejected' || normTitle.includes('ไม่ผ่านการอนุมัติ') || normTitle.includes('ไม่อนุมัติ')) {
-    return toneStyle('x', 'ไม่อนุมัติ', 'rose');
+    return toneStyle('x', 'shared.notifications.types.document_rejected', 'rose');
   }
 
   if (normKey === 'documentpendingapproval' || normTitle.includes('รอการตรวจสอบ') || normTitle.includes('รออนุมัติ')) {
-    return toneStyle('doc', 'รออนุมัติ', 'purple');
+    return toneStyle('doc', 'shared.notifications.types.admin_document_submitted', 'purple');
   }
 
   if (normKey === 'announcement' || normTitle.includes('ประกาศ') || normTitle.includes('ข่าวสาร')) {
-    return toneStyle('sparkle', 'ข่าวประกาศ', 'indigo');
+    return toneStyle('sparkle', 'shared.notifications.types.announcement', 'indigo');
   }
 
   if (normKey === 'newdocumentalert' || normKey === 'documentpublished' || normTitle.includes('ผลงานใหม่')) {
-    return toneStyle('doc', 'ผลงานใหม่', 'pink');
+    return toneStyle('doc', 'shared.notifications.types.new_document_from_followed_seller', 'pink');
   }
 
-  return toneStyle('bell', 'การแจ้งเตือน', 'slate');
+  return toneStyle('bell', 'shared.notifications.types.unknown', 'slate');
 }
 
 /** Matches the backend default in spec §3.3 (clamp [1,50], default 20). */
@@ -226,6 +227,7 @@ function normalizeFeedItem(
 @Injectable({ providedIn: 'root' })
 export class NotificationFeedService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   private readonly _items = signal<NotificationFeedItemResponse[]>([]);
   private readonly _previewItems = signal<NotificationFeedItemResponse[]>([]);
@@ -260,7 +262,7 @@ export class NotificationFeedService {
         const data = await this.fetchFeedPage(1, size, audience);
         this._previewItems.set(data.items);
       } catch (e) {
-        this.apiFail.report('โหลดการแจ้งเตือนพรีวิว', e);
+        this.apiFail.report('errors.context.loadNotificationPreview', e);
       }
     })();
   }
@@ -274,7 +276,7 @@ export class NotificationFeedService {
         this._items.update((items) => (page > 1 ? [...items, ...data.items] : data.items));
         this._totalCount.set(data.totalCount);
       } catch (e) {
-        this.apiFail.report('โหลดการแจ้งเตือน', e);
+        this.apiFail.report('errors.context.loadNotifications', e);
       } finally {
         this._loading.set(false);
       }
@@ -305,7 +307,7 @@ export class NotificationFeedService {
             : { buyer: total, seller: total, admin: total },
         );
       } catch (e) {
-        this.apiFail.report('โหลดจำนวนแจ้งเตือนที่ยังไม่อ่าน', e);
+        this.apiFail.report('errors.context.loadUnreadCount', e);
       }
     })();
   }
@@ -330,7 +332,7 @@ export class NotificationFeedService {
       // Resync with the server in case the optimistic update drifted.
       tap(() => this.refreshUnreadCount()),
       catchError((e) => {
-        this.apiFail.report('ทำเครื่องหมายว่าอ่านแล้ว', e);
+        this.apiFail.report('errors.context.markRead', e);
         return throwError(() => e);
       }),
     );
@@ -358,7 +360,7 @@ export class NotificationFeedService {
     return from(this.postMarkAllRead(audience)).pipe(
       tap(() => this.refreshUnreadCount()),
       catchError((e) => {
-        this.apiFail.report('ทำเครื่องหมายว่าอ่านแล้วทั้งหมด', e);
+        this.apiFail.report('errors.context.markAllRead', e);
         return throwError(() => e);
       }),
     );
@@ -384,7 +386,7 @@ export class NotificationFeedService {
       const data = await this.fetchFeedPage(1, size, audience);
       return data.items;
     } catch (e) {
-      this.apiFail.report('โหลดการแจ้งเตือนใหม่', e);
+      this.apiFail.report('errors.context.loadRecentNotifications', e);
       throw e;
     }
   }

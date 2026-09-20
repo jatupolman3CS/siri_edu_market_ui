@@ -1,6 +1,6 @@
 @if (catalog.documentDetailState().status === 'loading') {
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
-        <app-empty-state emoji="⏳" title="กำลังโหลดรายละเอียดเอกสาร…" description="รอสักครู่นะคะ" />
+        <app-empty-state emoji="⏳" [title]="'common.loading' | trans" [description]="'common.pleaseWait' | trans" />
       </div>
     } @else if (catalog.documentDetailState().status === 'error') {
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
@@ -9,13 +9,13 @@
         @if (catalog.documentDetailNotFound()) {
           <app-empty-state
             emoji="🔍"
-            title="ไม่พบเอกสารนี้"
-            description="เอกสารนี้อาจถูกลบหรือย้ายไปแล้ว"
+            [title]="'product.notFoundTitle' | trans"
+            [description]="'product.notFoundDesc' | trans"
           />
         } @else {
-          <app-empty-state emoji="⚠️" title="โหลดรายละเอียดไม่สำเร็จ" description="ลองใหม่อีกครั้ง">
+          <app-empty-state emoji="⚠️" [title]="'common.loadFailed' | trans" [description]="'common.retry' | trans">
             <button class="btn-pink mt-4" type="button" (click)="catalog.loadDocumentDetail(id())">
-              ลองใหม่
+              {{ 'common.retry' | trans }}
             </button>
           </app-empty-state>
         }
@@ -24,9 +24,9 @@
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
         <!-- Breadcrumb -->
         <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
-          <a routerLink="/" class="hover:text-pink-600">หน้าแรก</a>
+          <a routerLink="/" class="hover:text-pink-600">{{ 'nav.home' | trans }}</a>
           <app-icon name="chevron-right" [size]="14" />
-          <a routerLink="/marketplace" class="hover:text-pink-600">ตลาด</a>
+          <a routerLink="/marketplace" class="hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a>
           <app-icon name="chevron-right" [size]="14" />
           @for (cid of d.categoryIds; track cid; let last = $last) {
             @if (catalog.getCategoryById(cid); as c) {
@@ -66,11 +66,11 @@
                 </span>
                 @if (d.isFree) {
                   <span class="absolute top-4 right-4 pill bg-emerald-500 text-white shadow-soft">
-                    🆓 ฟรี
+                    🆓 {{ 'product.freePill' | trans }}
                   </span>
                 } @else if (discountPercent()) {
                   <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
-                    -{{ discountPercent() }}% ส่วนลด
+                    -{{ discountPercent() }}% {{ 'product.discountLabel' | trans }}
                   </span>
                 }
               </div>
@@ -97,7 +97,7 @@
                 <div class="px-3 pb-3 bg-white flex items-center justify-between border-t border-line/60 pt-2.5">
                   <div class="flex items-center gap-1.5 text-xs text-ink-muted">
                     <app-icon name="eye" [size]="14" className="text-pink-500" />
-                    <span>มีตัวอย่างพรีวิว {{ d.previewPages }} หน้าแรก (ลายน้ำจากระบบ)</span>
+                    <span>{{ 'product.hasPreviewPages' | trans: { count: d.previewPages } }}</span>
                   </div>
                   <button
                     type="button"
@@ -106,10 +106,10 @@
                     [disabled]="previewLoading()"
                   >
                     @if (previewLoading()) {
-                      กำลังโหลด…
+                      {{ 'product.loading' | trans }}
                     } @else {
                       <app-icon name="eye" [size]="13" />
-                      ดูตัวอย่างเอกสาร
+                      {{ 'product.previewDocBtn' | trans }}
                     }
                   </button>
                 </div>
@@ -120,21 +120,21 @@
             <div class="mt-8">
               <nz-tabs>
                 @if (d.previewPages > 0) {
-                  <nz-tab nzTitle="พรีวิว" (nzSelect)="onPreviewTabSelect()">
+                  <nz-tab [nzTitle]="'product.previewTab' | trans" (nzSelect)="onPreviewTabSelect()">
                     <div id="preview-section" class="mt-4 card-cream p-6">
                       <div class="flex items-start justify-between gap-4 mb-4">
                         <div>
-                          <div class="text-sm font-bold text-ink">พรีวิวฟรี (ตัวอย่างเอกสารพร้อมลายน้ำ)</div>
+                          <div class="text-sm font-bold text-ink">{{ 'product.previewFreeTitle' | trans }}</div>
                           <div class="text-xs text-ink-muted mt-1">
-                            ดูตัวอย่างได้ประมาณ {{ d.previewPages }} หน้าแรก (ลายน้ำป้องกันการคัดลอกจากเซิร์ฟเวอร์)
+                            {{ 'product.previewFreeDesc' | trans: { count: d.previewPages } }}
                           </div>
                         </div>
                         <button class="btn-pink !py-2.5 !px-5 text-sm flex items-center gap-1.5" type="button" (click)="openPreview(true)" [disabled]="previewLoading()">
                           @if (previewLoading()) {
-                            กำลังโหลด…
+                            {{ 'product.loading' | trans }}
                           } @else {
                             <app-icon name="eye" [size]="15" />
-                            เปิดพรีวิว
+                            {{ 'product.openPreviewBtn' | trans }}
                           }
                         </button>
                       </div>
@@ -157,7 +157,7 @@
                                     <img
                                       appImgFallback
                                       [src]="previewImgSrc(path)"
-                                      alt="ตัวอย่างหน้า {{ $index + 1 }}"
+                                      [alt]="'product.pageLabel' | trans: { index: $index + 1 }"
                                       class="w-full h-full object-contain select-none transition-transform duration-200 group-hover:scale-102"
                                       loading="lazy"
                                       draggable="false"
@@ -165,14 +165,14 @@
                                     />
                                     <div class="absolute inset-0 bg-pink-900/0 group-hover:bg-pink-900/10 transition-colors flex items-center justify-center">
                                       <span class="opacity-0 group-hover:opacity-100 transition-opacity pill bg-white/90 text-pink-600 text-xs font-bold shadow-xs">
-                                        คลิกเพื่อขยาย
+                                        {{ 'product.clickToZoom' | trans }}
                                       </span>
                                     </div>
                                   </div>
                                   <div class="mt-2 flex items-center justify-between text-xs text-ink-muted px-1">
-                                    <span>หน้า {{ $index + 1 }}</span>
+                                    <span>{{ 'product.pageLabel' | trans: { index: $index + 1 } }}</span>
                                     <span class="text-pink-600 font-medium group-hover:underline flex items-center gap-0.5">
-                                      <app-icon name="eye" [size]="12" /> ขยาย
+                                      <app-icon name="eye" [size]="12" /> {{ 'product.zoom' | trans }}
                                     </span>
                                   </div>
                                 </div>
@@ -180,25 +180,21 @@
                             </div>
                             <div class="text-center pt-1">
                               <button type="button" class="btn-ghost !py-2 !px-4 text-xs font-semibold text-pink-600 inline-flex items-center gap-1.5" (click)="openPreview(true)">
-                                <app-icon name="eye" [size]="14" /> ดูภาพขนาดเต็มทั้งหมด ({{ previewRasterUrls().length }} หน้า)
+                                <app-icon name="eye" [size]="14" /> {{ 'product.viewAllPagesFull' | trans: { count: previewRasterUrls().length } }}
                               </button>
                             </div>
                           </div>
                         }
 
                         @if (d.format !== 'pdf' && previewRasterUrls().length === 0) {
-                          <!-- P0-3: ไฟล์ที่ไม่ใช่ PDF (เช่น ZIP) ไม่สามารถแปลงเป็นภาพพรีวิวได้ —
-                               เช็คก่อน excerptLines เสมอ เพราะ backend ส่ง excerptLines ที่ไม่ว่างเปล่าเสมอ
-                               (มี fallback text ฝั่ง backend) จึงพึ่ง @else if (excerptLines?.length) เดิมไม่ได้ —
-                               แจ้งตามจริงแทนคำว่า "ลองใหม่อีกครั้ง" ที่ทำให้เข้าใจผิดว่าระบบกำลังประมวลผลอยู่ -->
                           <app-empty-state
                             emoji="🗂️"
-                            title="ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้"
-                            description="รองรับพรีวิวแบบภาพเฉพาะไฟล์ PDF เท่านั้น กรุณาดูรายละเอียดในแท็บ “รายละเอียด” แทน"
+                            [title]="'product.noRasterForType' | trans"
+                            [description]="'product.noRasterDesc' | trans"
                           />
                         } @else if (p.excerptLines?.length) {
                           <div class="rounded-2xl border border-line bg-white p-4">
-                            <div class="text-xs font-semibold text-ink-muted mb-2">เนื้อหาตัวอย่างย่อ:</div>
+                            <div class="text-xs font-semibold text-ink-muted mb-2">{{ 'product.previewExcerpt' | trans }}</div>
                             <div class="space-y-2 text-sm text-ink-soft leading-relaxed">
                               @for (line of p.excerptLines!; track line) {
                                 <p class="m-0">{{ line }}</p>
@@ -208,18 +204,18 @@
                         } @else if (previewRasterUrls().length === 0) {
                           <app-empty-state
                             emoji="📄"
-                            title="ยังไม่มีตัวอย่างพรีวิว"
-                            description="ระบบอาจกำลังสร้างพรีวิว ลองใหม่อีกครั้ง"
+                            [title]="'product.noPreviewYet' | trans"
+                            [description]="'product.generatingPreview' | trans"
                           />
                         }
                       } @else {
                         <div class="text-center py-6">
                           <button class="btn-pink !py-2.5 !px-6 text-sm flex items-center gap-2 mx-auto" type="button" (click)="openPreview(false)" [disabled]="previewLoading()">
                             @if (previewLoading()) {
-                              กำลังโหลดตัวอย่าง…
+                              {{ 'product.loading' | trans }}
                             } @else {
                               <app-icon name="eye" [size]="16" />
-                              เปิดพรีวิว
+                              {{ 'product.openPreviewBtn' | trans }}
                             }
                           </button>
                         </div>
@@ -228,7 +224,7 @@
                   </nz-tab>
                 }
 
-                <nz-tab nzTitle="รายละเอียด">
+                <nz-tab [nzTitle]="'product.detailsTab' | trans">
                   <div class="prose prose-sm max-w-none mt-4">
                     <p class="text-ink-soft leading-relaxed">{{ d.description }}</p>
 
@@ -237,7 +233,7 @@
                       <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
                         <span class="text-2xl">{{ resourceIcon(d.resourceType) }}</span>
                         <div class="text-sm">
-                          <div class="text-xs text-ink-muted">ประเภท</div>
+                          <div class="text-xs text-ink-muted">{{ 'product.typeLabel' | trans }}</div>
                           <div class="font-bold text-ink">{{ resourceLabel(d.resourceType) }}</div>
                         </div>
                       </li>
@@ -246,7 +242,7 @@
                           <app-icon name="user" [size]="16" />
                         </span>
                         <div class="text-sm">
-                          <div class="text-xs text-ink-muted">ระดับชั้น</div>
+                          <div class="text-xs text-ink-muted">{{ 'product.gradeLevelLabel' | trans }}</div>
                           <div class="font-bold text-ink">
                             {{ gradeLabels(d.gradeLevels) }}
                           </div>
@@ -257,8 +253,8 @@
                           <app-icon name="doc" [size]="16" />
                         </span>
                         <div class="text-sm">
-                          <div class="text-xs text-ink-muted">รูปแบบ / หน้า</div>
-                          <div class="font-bold text-ink uppercase">{{ d.format }} · {{ d.pages }} หน้า</div>
+                          <div class="text-xs text-ink-muted">{{ 'product.formatAndPages' | trans }}</div>
+                          <div class="font-bold text-ink uppercase">{{ d.format }} · {{ d.pages }} {{ 'common.pages' | trans }}</div>
                         </div>
                       </li>
                       <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
@@ -266,8 +262,8 @@
                           <app-icon name="globe" [size]="16" />
                         </span>
                         <div class="text-sm">
-                          <div class="text-xs text-ink-muted">ภาษา</div>
-                          <div class="font-bold text-ink">{{ d.language === 'th' ? 'ไทย' : 'อังกฤษ' }}</div>
+                          <div class="text-xs text-ink-muted">{{ 'product.languageLabel' | trans }}</div>
+                          <div class="font-bold text-ink">{{ d.language === 'th' ? ('product.thaiLang' | trans) : ('product.englishLang' | trans) }}</div>
                         </div>
                       </li>
                       @if (d.standards?.length) {
@@ -276,7 +272,7 @@
                             <app-icon name="flag" [size]="16" />
                           </span>
                           <div class="text-sm flex-1">
-                            <div class="text-xs text-ink-muted">หลักสูตร / สอบ</div>
+                            <div class="text-xs text-ink-muted">{{ 'product.standardsLabel' | trans }}</div>
                             <div class="flex gap-1.5 mt-1 flex-wrap">
                               @for (s of d.standards!; track s) {
                                 <span class="pill bg-white text-pink-600 !text-[11px]">{{ s }}</span>
@@ -290,15 +286,15 @@
                 </nz-tab>
 
                 @if (showAiSummary()) {
-                  <nz-tab nzTitle="✨ AI Summary">
+                  <nz-tab [nzTitle]="'product.aiSummaryTab' | trans">
                     <div class="mt-4 card-cream p-6">
                       <div class="flex items-center gap-2 mb-4">
                         <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500 text-white flex items-center justify-center">
                           <app-icon name="sparkle" [size]="18" />
                         </span>
                         <div>
-                          <div class="text-sm font-bold text-ink">สรุป {{ aiSummaryCount() }} ข้อโดย AI</div>
-                          <div class="text-xs text-ink-muted">วิเคราะห์เนื้อหาเอกสารโดยอัตโนมัติ — ใช้เพื่อตัดสินใจซื้อได้ง่ายขึ้น</div>
+                          <div class="text-sm font-bold text-ink">{{ 'product.aiSummaryPoints' | trans: { count: aiSummaryCount() } }}</div>
+                          <div class="text-xs text-ink-muted">{{ 'product.aiSummaryDesc' | trans }}</div>
                         </div>
                       </div>
                       <ul class="space-y-3">
@@ -315,7 +311,7 @@
                   </nz-tab>
                 }
 
-                <nz-tab [nzTitle]="'รีวิว (' + d.reviews.length + ')'">
+                <nz-tab [nzTitle]="'product.reviewsTab' | trans: { count: d.reviews.length }">
                   <div class="mt-4">
                     <!-- Rating summary -->
                     <div class="flex flex-col sm:flex-row gap-6 p-6 card-cream mb-6">
@@ -325,7 +321,7 @@
                         </div>
                         <app-rating-stars [value]="d.rating" [size]="18" [showValue]="false" />
                         <div class="text-xs text-ink-muted mt-2">
-                          {{ d.reviewCount | compact }} รีวิว
+                          {{ d.reviewCount | compact }} {{ 'product.reviewsCount' | trans }}
                         </div>
                       </div>
                       <div class="flex-1 flex flex-col gap-1.5">
@@ -343,7 +339,7 @@
 
                     <!-- Review list -->
                     @if (d.reviews.length === 0) {
-                      <app-empty-state emoji="💬" title="ยังไม่มีรีวิว" description="ซื้อแล้วเขียนรีวิวเป็นคนแรกสิ" />
+                      <app-empty-state emoji="💬" [title]="'product.noReviewsTitle' | trans" [description]="'product.noReviewsDesc' | trans" />
                     } @else {
                       <ul class="flex flex-col gap-4">
                         @for (rv of d.reviews; track rv.id) {
@@ -361,7 +357,7 @@
                                   @if (rv.verified) {
                                     <span class="pill-pink !py-0">
                                       <app-icon name="check" [size]="11" />
-                                      ซื้อจริง
+                                      {{ 'product.verifiedPurchase' | trans }}
                                     </span>
                                   }
                                 </div>
@@ -372,7 +368,7 @@
                                 <p class="text-sm text-ink-soft leading-relaxed">{{ rv.comment }}</p>
                                 <div class="flex items-center gap-4 mt-3">
                                   <button class="text-xs text-ink-muted hover:text-pink-600 inline-flex items-center gap-1">
-                                    👍 {{ rv.helpful ?? 0 }} คนว่ามีประโยชน์
+                                    👍 {{ 'product.helpfulCount' | trans: { count: rv.helpful ?? 0 } }}
                                   </button>
                                 </div>
                               </div>
@@ -384,7 +380,7 @@
                                 <div class="flex-1">
                                   <div class="flex items-center gap-2 mb-1">
                                     <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
-                                    <span class="pill-pink !py-0 !text-[10px]">ผู้ขาย</span>
+                                    <span class="pill-pink !py-0 !text-[10px]">{{ 'product.sellerLabel' | trans }}</span>
                                     <span class="text-[11px] text-ink-muted">{{ reply.createdAt | timeAgo }}</span>
                                   </div>
                                   <p class="text-sm text-ink-soft leading-relaxed">{{ reply.text }}</p>
@@ -399,13 +395,13 @@
                 </nz-tab>
 
                 @if (showFaqTab()) {
-                  <nz-tab [nzTitle]="'คำถามที่พบบ่อย (FAQ) (' + faqCount() + ')'">
+                  <nz-tab [nzTitle]="'product.faqTab' | trans: { count: faqCount() }">
                     <div class="mt-4">
                       @if (faqItems().length === 0) {
                         <app-empty-state
                           emoji="❓"
-                          title="ยังไม่มีคำถามที่พบบ่อย"
-                          description="ผู้ขายยังไม่ได้ปักหมุดคำถามใดเป็น FAQ"
+                          [title]="'product.noFaqTitle' | trans"
+                          [description]="'product.noFaqDesc' | trans"
                         />
                       } @else {
                         <ul class="flex flex-col gap-3">
@@ -414,7 +410,7 @@
                               <p class="text-sm font-bold text-ink leading-relaxed mb-3">{{ q.question }}</p>
                               @if (q.answer; as a) {
                                 <div class="pl-4 border-l-2 border-pink-300">
-                                  <div class="text-xs font-bold text-pink-700 mb-1">คำตอบจากผู้ขาย</div>
+                                  <div class="text-xs font-bold text-pink-700 mb-1">{{ 'product.sellerAnswer' | trans }}</div>
                                   <p class="text-sm text-ink-soft leading-relaxed">{{ a.text }}</p>
                                 </div>
                               }
@@ -426,26 +422,25 @@
                   </nz-tab>
                 }
 
-                <nz-tab [nzTitle]="'ถาม-ตอบ (' + qnaCount() + ')'">
+                <nz-tab [nzTitle]="'product.qnaTab' | trans: { count: qnaCount() }">
                   <div class="mt-4">
                     <!-- Policy notice -->
                     <div class="card-cream p-5 mb-6">
                       <h3 class="text-sm font-bold text-ink mb-2 flex items-center gap-2">
                         <app-icon name="bell" [size]="16" className="text-pink-500" />
-                        คำถาม-คำตอบสาธารณะ
+                        {{ 'product.qnaPublicNoticeTitle' | trans }}
                       </h3>
                       <p class="text-xs text-ink-muted leading-relaxed">
-                        คำถามและคำตอบบนหน้านี้แสดงต่อสาธารณะเพื่อช่วยให้ผู้ซื้อท่านอื่นได้ข้อมูลประกอบการตัดสินใจ
-                        — การซื้อขายและการสนทนาทำผ่านระบบในเว็บเท่านั้น
+                        {{ 'product.qnaPublicNoticeDesc' | trans }}
                       </p>
                     </div>
 
                     <!-- GAP-06: buyers can now ask the seller a question. -->
                     <div class="card-soft p-5 mb-6">
-                      <h3 class="text-sm font-bold text-ink mb-3">ถามผู้ขาย</h3>
+                      <h3 class="text-sm font-bold text-ink mb-3">{{ 'product.askSeller' | trans }}</h3>
                       @if (questionSent()) {
                         <p class="text-sm text-emerald-700 bg-emerald-50 rounded-2xl px-4 py-3">
-                          ส่งคำถามเรียบร้อยแล้ว คำตอบจะปรากฏที่หน้านี้เมื่อผู้ขายตอบกลับ
+                          {{ 'product.questionSentSuccess' | trans }}
                         </p>
                       }
                       <textarea
@@ -453,7 +448,7 @@
                         name="newQuestion"
                         rows="3"
                         class="input-soft"
-                        placeholder="เช่น เอกสารนี้ครอบคลุมบทไหนบ้าง"
+                        [placeholder]="'product.askPlaceholder' | trans"
                         maxlength="2000"
                       ></textarea>
                       <div class="flex justify-end mt-3">
@@ -462,13 +457,13 @@
                           [disabled]="askingQuestion()"
                           (click)="askQuestion(d.id)"
                         >
-                          {{ askingQuestion() ? 'กำลังส่ง…' : 'ส่งคำถาม' }}
+                          {{ askingQuestion() ? ('product.sendingQuestion' | trans) : ('product.sendQuestion' | trans) }}
                         </button>
                       </div>
                     </div>
 
                     @if (!d.qna?.length) {
-                      <app-empty-state emoji="💭" title="ยังไม่มีคำถาม" description="ลองดูแท็บรายละเอียดและพรีวิวเพื่อข้อมูลเพิ่มเติม" />
+                      <app-empty-state emoji="💭" [title]="'product.noQuestionsTitle' | trans" [description]="'product.noQuestionsDesc' | trans" />
                     } @else {
                       <ul class="flex flex-col gap-3">
                         @for (q of d.qna!; track q.id) {
@@ -488,7 +483,7 @@
                                     <div class="flex-1">
                                       <div class="flex items-center gap-2 mb-1">
                                         <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
-                                        <span class="pill-pink !py-0 !text-[10px]">ผู้ขาย</span>
+                                        <span class="pill-pink !py-0 !text-[10px]">{{ 'product.sellerLabel' | trans }}</span>
                                         <span class="text-[11px] text-ink-muted">{{ a.answeredAt | timeAgo }}</span>
                                       </div>
                                       <p class="text-sm text-ink-soft leading-relaxed">{{ a.text }}</p>
@@ -496,7 +491,7 @@
                                   </div>
                                 } @else {
                                   <div class="mt-2 pill bg-amber-100 text-amber-700">
-                                    ⏳ รอผู้ขายตอบกลับ
+                                    ⏳ {{ 'product.waitingForSeller' | trans }}
                                   </div>
                                 }
                               </div>
@@ -521,14 +516,14 @@
                     {{ resourceIcon(d.resourceType) }} {{ resourceLabel(d.resourceType) }}
                   </span>
                   @if (d.isBestseller) {
-                    <span class="pill bg-amber-400 text-amber-900">⭐ ขายดี</span>
+                    <span class="pill bg-amber-400 text-amber-900">⭐ {{ 'product.bestseller' | trans }}</span>
                   }
                   @if (d.isEditorsPick) {
                     <span class="pill bg-violet-500 text-white">✨ Editor's Pick</span>
                   }
                   @if (d.isAutoGenerated) {
-                    <span class="pill bg-purple-100 text-purple-700 font-semibold" title="เอกสารนี้สร้างโครงร่างและเนื้อหาเริ่มต้นด้วยระบบ AI ของแพลตฟอร์ม">
-                      🤖 สร้างโดยระบบ AI
+                    <span class="pill bg-purple-100 text-purple-700 font-semibold" [title]="'product.aiGeneratedTooltip' | trans">
+                      🤖 {{ 'product.aiGenerated' | trans }}
                     </span>
                   }
                 </div>
@@ -544,23 +539,23 @@
                   <div class="card-cream p-4 text-center">
                     <dt class="text-[11px] uppercase tracking-wider text-ink-muted flex items-center justify-center gap-1">
                       <app-icon name="download" [size]="12" className="text-pink-500" />
-                      ยอดดาวน์โหลด
+                      {{ 'product.downloadsCount' | trans }}
                     </dt>
                     <dd class="text-2xl font-extrabold text-ink mt-1 leading-none">
                       {{ d.downloads | compact }}
                     </dd>
-                    <dd class="text-[11px] text-ink-muted mt-1">ครั้ง</dd>
+                    <dd class="text-[11px] text-ink-muted mt-1">{{ 'product.times' | trans }}</dd>
                   </div>
                   <div class="card-cream p-4 text-center">
                     <dt class="text-[11px] uppercase tracking-wider text-ink-muted flex items-center justify-center gap-1">
                       <app-icon name="star" [size]="12" className="text-amber-500" />
-                      รีวิว
+                      {{ 'product.reviewsCount' | trans }}
                     </dt>
                     <dd class="text-2xl font-extrabold text-ink mt-1 leading-none flex items-baseline justify-center gap-1">
                       {{ d.rating }}
                       <span class="text-sm text-amber-500">★</span>
                     </dd>
-                    <dd class="text-[11px] text-ink-muted mt-1">{{ d.reviewCount | compact }} รีวิว</dd>
+                    <dd class="text-[11px] text-ink-muted mt-1">{{ d.reviewCount | compact }} {{ 'product.reviewsCount' | trans }}</dd>
                   </div>
                 </dl>
               </div>
@@ -569,14 +564,14 @@
               <div class="card-soft p-6">
                 <div class="flex items-end gap-3 mb-5">
                   @if (d.isFree) {
-                    <span class="text-4xl font-extrabold text-emerald-600 leading-none">ฟรี</span>
-                    <span class="text-xs text-emerald-600">ดาวน์โหลดได้ทันที</span>
+                    <span class="text-4xl font-extrabold text-emerald-600 leading-none">{{ 'product.freePill' | trans }}</span>
+                    <span class="text-xs text-emerald-600">{{ 'product.downloadImmediately' | trans }}</span>
                   } @else {
                     <span class="text-4xl font-extrabold text-ink leading-none">{{ d.price | thb }}</span>
                     @if (d.originalPrice) {
                       <div class="flex flex-col">
                         <span class="text-base text-ink-muted line-through leading-none">{{ d.originalPrice | thb }}</span>
-                        <span class="text-xs text-emerald-600 font-bold mt-1">ประหยัด {{ discountPercent() }}%</span>
+                        <span class="text-xs text-emerald-600 font-bold mt-1">{{ 'product.savePercent' | trans: { percent: discountPercent() } }}</span>
                       </div>
                     }
                   }
@@ -585,11 +580,11 @@
                 @if (!d.isFree) {
                   @if (discountCountdownActive()) {
                     <p class="text-xs text-ink-muted mt-2">
-                      ราคานี้ถึง {{ d.discountExpiresAt | date: 'd MMM yyyy' }}
+                      {{ 'product.priceUntil' | trans: { date: (d.discountExpiresAt | date: 'd MMM yyyy') ?? '' } }}
                     </p>
                   } @else if (showSoldThisMonth()) {
                     <p class="text-xs text-ink-muted mt-2">
-                      ขายแล้ว {{ d.soldThisMonthCount }} ครั้งในเดือนนี้
+                      {{ 'product.soldThisMonthCount' | trans: { count: d.soldThisMonthCount ?? 0 } }}
                     </p>
                   }
                 }
@@ -598,36 +593,36 @@
                   @if (cart.has(d.id)) {
                     <button class="btn-pink !py-3.5" disabled>
                       <app-icon name="check" [size]="18" />
-                      อยู่ในตะกร้าแล้ว
+                      {{ 'product.alreadyInCartBtn' | trans }}
                     </button>
                     <button class="btn-ghost !py-3.5" (click)="cart.openDrawer()">
-                      ดูตะกร้าสินค้า
+                      {{ 'product.viewCartBtn' | trans }}
                     </button>
                   } @else if (d.isFree) {
                     <button class="btn-pink !py-3.5 text-base" (click)="downloadFree()">
                       <app-icon name="download" [size]="18" />
-                      ดาวน์โหลดฟรีเลย
+                      {{ 'product.downloadFreeBtn' | trans }}
                     </button>
                   } @else if (owned()) {
                     <button class="btn-pink !py-3.5 text-base" type="button" (click)="downloadOwned()">
                       <app-icon name="download" [size]="18" />
-                      ดาวน์โหลดเอกสาร (อยู่ในคลังแล้ว)
+                      {{ 'product.downloadOwnedBtn' | trans }}
                     </button>
                     <a routerLink="/library" class="btn-ghost !py-3.5">
-                      ไปที่คลังของฉัน
+                      {{ 'product.goToLibraryBtn' | trans }}
                     </a>
                   } @else if (accessibleViaSubscription()) {
                     <button class="btn-pink !py-3.5 text-base" type="button" (click)="downloadViaSubscription()">
                       <app-icon name="download" [size]="18" />
-                      ดาวน์โหลด (สิทธิ์สมาชิก)
+                      {{ 'product.downloadSubBtn' | trans }}
                     </button>
                   } @else {
                     <button type="button" class="btn-pink !py-3.5 text-base" (click)="cart.add(d)">
                       <app-icon name="cart" [size]="18" />
-                      เพิ่มลงตะกร้า
+                      {{ 'product.addToCartBtn' | trans }}
                     </button>
                     <button class="btn-ghost !py-3.5" (click)="buyNow(d.id)">
-                      ซื้อทันที
+                      {{ 'product.buyNowBtn' | trans }}
                     </button>
                   }
 
@@ -640,27 +635,27 @@
                   >
                     @if (wishlist.has(d.id)) {
                       <app-icon name="heart-fill" [size]="16" />
-                      อยู่ในรายการโปรด
+                      {{ 'product.inWishlist' | trans }}
                     } @else {
                       <app-icon name="heart" [size]="16" />
-                      บันทึกในรายการโปรด
+                      {{ 'product.saveToWishlist' | trans }}
                     }
                   </button>
                 </div>
 
                 <div class="flex items-center gap-2 mt-2 pt-4 border-t border-line text-xs text-ink-muted justify-center">
                   <app-icon name="lock" [size]="12" />
-                  <span>ชำระเงินปลอดภัยผ่าน PromptPay / บัตรเครดิต</span>
+                  <span>{{ 'product.paymentTrustNotice' | trans }}</span>
                 </div>
                 <div class="flex items-center gap-2 mt-1.5 text-xs text-ink-muted justify-center">
                   <app-icon name="shield" [size]="12" />
-                  <span>เนื้อหาไม่ตรงปก แจ้งคืนเงินได้ภายใน 3 วัน</span>
+                  <span>{{ 'product.refundNotice' | trans }}</span>
                 </div>
               </div>
 
               <!-- Seller card with FOLLOW -->
               <div class="card-soft p-5">
-                <h3 class="text-sm font-bold text-ink mb-3">ผู้ขาย</h3>
+                <h3 class="text-sm font-bold text-ink mb-3">{{ 'product.sellerLabel' | trans }}</h3>
                 <div class="flex items-start gap-3">
                   <a [routerLink]="['/store', d.seller.id]">
                     <img appImgFallback [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100" />
@@ -677,18 +672,18 @@
                         </svg>
                       }
                     </div>
-                    <div class="text-xs text-ink-muted mb-2">โดย {{ d.seller.ownerName }}</div>
+                    <div class="text-xs text-ink-muted mb-2">{{ 'product.byAuthor' | trans: { name: d.seller.ownerName } }}</div>
                     <div class="flex items-center gap-3 text-xs flex-wrap mb-3">
                       <span class="font-bold text-pink-600">★ {{ d.seller.rating }}</span>
                       <span>·</span>
-                      <span>{{ d.seller.totalDocuments }} เอกสาร</span>
+                      <span>{{ 'product.docCount' | trans: { count: d.seller.totalDocuments } }}</span>
                       <span>·</span>
-                      <span>{{ d.seller.followerCount | compact }} ฟอลโลเวอร์</span>
+                      <span>{{ 'product.followersCount' | trans: { count: (d.seller.followerCount | compact) } }}</span>
                     </div>
                     <div class="flex gap-2">
                       @if (isOwner()) {
                         <a routerLink="/seller/store-sections" class="btn-ghost !py-1.5 !px-3 text-xs flex-1 text-center">
-                          จัดการหน้าร้าน
+                          {{ 'product.manageStore' | trans }}
                         </a>
                       } @else {
                         <button
@@ -698,19 +693,19 @@
                           (click)="toggleFollow()"
                         >
                           @if (isFollowing()) {
-                            ✓ ติดตามอยู่
+                            ✓ {{ 'product.following' | trans }}
                           } @else {
-                            + ติดตาม
+                            {{ 'product.follow' | trans }}
                           }
                         </button>
                       }
                       <a [routerLink]="['/store', d.seller.id]" class="btn-ghost !py-1.5 !px-4 text-xs">
-                        ดูร้าน
+                        {{ 'product.viewShop' | trans }}
                       </a>
                     </div>
                     <p class="text-[11px] text-ink-muted leading-relaxed mt-3 flex items-center gap-1">
                       <app-icon name="lock" [size]="11" className="text-pink-500" />
-                      ซื้อขายและสอบถามผ่านระบบในเว็บเท่านั้น เพื่อความปลอดภัยของทุกฝ่าย
+                      {{ 'product.safeTradingNotice' | trans }}
                     </p>
                   </div>
                 </div>
@@ -725,8 +720,8 @@
         <!-- document-bundle-cross-sell v1: "ในแพ็กเกจที่คุ้มกว่า" -->
         @if (showCrossSell()) {
           <section class="mt-16">
-            <h2 class="section-title mb-2">ในแพ็กเกจที่คุ้มกว่า</h2>
-            <p class="text-sm text-ink-muted mb-6">เอกสารนี้รวมอยู่ในแพ็กเกจด้านล่าง ซื้อยกแพ็กคุ้มกว่า</p>
+            <h2 class="section-title mb-2">{{ 'product.bundlesCrossSellTitle' | trans }}</h2>
+            <p class="text-sm text-ink-muted mb-6">{{ 'product.bundlesCrossSellDesc' | trans }}</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               @if (crossSellLoading()) {
                 @for (i of [1, 2, 3]; track i) {
@@ -758,17 +753,17 @@
 
                         <!-- Badges -->
                         <div class="absolute top-3 left-3 flex gap-2">
-                          <span class="pill bg-violet-500 text-white shadow-soft">📦 BUNDLE</span>
+                          <span class="pill bg-violet-500 text-white shadow-soft">📦 {{ 'product.bundleTag' | trans }}</span>
                           @if (card.savePercent > 0) {
                             <span class="pill bg-pink-500 text-white shadow-soft">
-                              ประหยัด {{ card.savePercent }}%
+                              {{ 'product.savePercent' | trans: { percent: card.savePercent } }}
                             </span>
                           }
                         </div>
 
                         <!-- Document count pill -->
                         <div class="absolute bottom-3 left-3 pill bg-white/90 backdrop-blur text-ink text-xs font-bold">
-                          {{ card.bundle.documentCount }} เอกสาร
+                          {{ 'product.docCount' | trans: { count: card.bundle.documentCount } }}
                         </div>
                       </div>
 
@@ -814,13 +809,13 @@
                           </div>
                           @if (card.savePercent > 0) {
                             <div class="text-emerald-600 font-bold text-xs">
-                              ประหยัด {{ card.saveAmount | thb }}
+                              {{ 'product.saveAmount' | trans: { amount: (card.saveAmount | thb) } }}
                             </div>
                           }
                         </div>
 
                         <button type="button" class="btn-pink !py-1.5 !px-4 text-xs mt-1 w-full">
-                          ดูแพ็กเกจ
+                          {{ 'product.viewBundleBtn' | trans }}
                         </button>
                       </div>
                     </a>
@@ -831,13 +826,11 @@
           </section>
         }
 
-        <!-- ml-embedding-recommendations v1 §4.1/§4.3: "มักซื้อคู่กับเอกสารนี้" — placed between
-             cross-sell (bundle) and "more from seller" per §4.1 (both are complementary-purchase
-             signals; this one is user-behavior-driven, not metadata-driven like `related` below). -->
+        <!-- ml-embedding-recommendations v1 §4.1/§4.3: "มักซื้อคู่กับเอกสารนี้" -->
         @if (boughtTogetherLoading() || boughtTogether().length > 0) {
           <section class="mt-12">
-            <h2 class="section-title mb-2">มักซื้อคู่กับเอกสารนี้</h2>
-            <p class="section-subtitle mb-6">ผู้ที่ซื้อเอกสารนี้มักซื้อเอกสารเหล่านี้ด้วย</p>
+            <h2 class="section-title mb-2">{{ 'product.coPurchaseTitle' | trans }}</h2>
+            <p class="section-subtitle mb-6">{{ 'product.boughtTogetherDesc' | trans }}</p>
             <div class="document-card-grid">
               @if (boughtTogetherLoading()) {
                 @for (i of [1, 2, 3, 4, 5, 6]; track i) {
@@ -853,7 +846,7 @@
                 @for (item of boughtTogether(); track item.document.id) {
                   <div class="relative">
                     <span class="absolute top-3 right-3 z-10 pill bg-pink-600 text-white shadow-soft text-[11px]">
-                      ซื้อคู่กันแล้ว {{ item.coPurchaseCount }} ครั้ง
+                      {{ 'product.coPurchasedTimes' | trans: { count: item.coPurchaseCount } }}
                     </span>
                     <app-document-card [doc]="item.document" density="compact" />
                   </div>
@@ -868,11 +861,11 @@
           <section class="mt-12">
             <header class="flex items-end justify-between mb-6">
               <div>
-                <h2 class="section-title">เพิ่มเติมจาก {{ d.seller.studioName }}</h2>
-                <p class="section-subtitle">ผู้ซื้อเอกสารนี้มักดูชิ้นอื่นของผู้ขายคนเดียวกัน</p>
+                <h2 class="section-title">{{ 'product.moreFromSeller' | trans: { name: d.seller.studioName } }}</h2>
+                <p class="section-subtitle">{{ 'product.moreFromSellerDesc' | trans }}</p>
               </div>
               <a [routerLink]="['/store', d.seller.id]" class="text-sm text-pink-600 hover:underline font-bold">
-                ดูร้านทั้งหมด →
+                {{ 'product.viewAllStore' | trans }}
               </a>
             </header>
             <div class="document-card-grid">
@@ -886,7 +879,7 @@
         <!-- Related -->
         @if (related().length) {
           <section class="mt-12">
-            <h2 class="section-title mb-6">เอกสารที่เกี่ยวข้อง</h2>
+            <h2 class="section-title mb-6">{{ 'product.relatedDocsTitle' | trans }}</h2>
             <div class="document-card-grid">
               @for (r of related(); track r.id) {
                 <app-document-card [doc]="r" density="compact" />
@@ -900,14 +893,14 @@
             class="preview-modal-overlay"
             role="dialog"
             aria-modal="true"
-            aria-label="พรีวิวเอกสาร"
+            [attr.aria-label]="'product.previewModalTitle' | trans"
             (click)="closePreviewGallery()"
           >
             <div class="preview-modal-content" (click)="$event.stopPropagation()">
               <header class="preview-modal-header">
-                <span class="text-sm font-bold text-ink">พรีวิวเอกสาร</span>
+                <span class="text-sm font-bold text-ink">{{ 'product.previewModalTitle' | trans }}</span>
                 <button type="button" class="btn-ghost !py-2 !px-4 text-sm" (click)="closePreviewGallery()">
-                  ปิด
+                  {{ 'product.close' | trans }}
                 </button>
               </header>
               <div class="gallery-container">
@@ -916,7 +909,7 @@
                     <img
                       appImgFallback
                       [src]="previewImgSrc(path)"
-                      alt="พรีวิวหน้าเอกสาร (ลายน้ำจากระบบ)"
+                      [alt]="'product.previewAlt' | trans"
                       class="preview-image-item block h-auto max-h-none w-full max-w-full object-contain select-none"
                       loading="lazy"
                       decoding="async"
@@ -934,10 +927,10 @@
       <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
         <app-empty-state
           emoji="📭"
-          title="ไม่พบเอกสารที่ต้องการ"
-          description="เอกสารที่คุณค้นหาอาจถูกย้ายหรือถูกลบ"
+          [title]="'product.notFoundTitle' | trans"
+          [description]="'product.notFoundDesc' | trans"
         >
-          <a routerLink="/marketplace" class="btn-pink mt-4">กลับหน้าตลาด</a>
+          <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'product.backToMarket' | trans }}</a>
         </app-empty-state>
       </div>
     }

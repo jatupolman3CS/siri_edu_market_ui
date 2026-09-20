@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services';
 import { AuthLayoutComponent } from '../../../layouts/auth/auth-layout/auth-layout.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * GAP-03: redeems the token from the emailed reset link. Password recovery previously
@@ -13,7 +15,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 @Component({
   selector: 'app-auth-reset-password',
   standalone: true,
-  imports: [RouterLink, FormsModule, AuthLayoutComponent, IconComponent],
+  imports: [RouterLink, FormsModule, AuthLayoutComponent, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reset-password.page.html',
   styleUrl: './reset-password.page.scss',
@@ -22,6 +24,7 @@ export class AuthResetPasswordPage {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly translation = inject(TranslationService);
 
   readonly token = signal<string>('');
   readonly password = signal<string>('');
@@ -41,7 +44,7 @@ export class AuthResetPasswordPage {
     this.error.set('');
 
     if (!this.token()) {
-      this.error.set('ลิงก์ไม่ถูกต้อง กรุณาขอลิงก์ตั้งรหัสผ่านใหม่อีกครั้ง');
+      this.error.set(this.translation.t('auth.resetPasswordLinkInvalid'));
       return;
     }
 
@@ -53,7 +56,7 @@ export class AuthResetPasswordPage {
         this.confirmPassword(),
       );
       if (!result.ok) {
-        this.error.set(result.error ?? 'ตั้งรหัสผ่านใหม่ไม่สำเร็จ');
+        this.error.set(result.error ?? this.translation.t('auth.resetPasswordFailed'));
         return;
       }
       this.done.set(true);

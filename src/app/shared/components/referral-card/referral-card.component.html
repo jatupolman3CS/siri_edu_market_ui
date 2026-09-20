@@ -5,17 +5,17 @@
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
           <app-icon name="tag" [size]="18" />
         </span>
-        <h2 class="text-lg font-bold text-neutral-900">ชวนเพื่อน รับส่วนลดคนละ 20 บาท & ลิงก์พันธมิตร รับค่าคอมมิชชัน 5%</h2>
+        <h2 class="text-lg font-bold text-neutral-900">{{ 'shared.referral.title' | trans }}</h2>
       </div>
       <p class="mt-1 text-sm text-neutral-500">
-        แชร์ลิงก์นี้ให้เพื่อน เมื่อเพื่อนซื้อเอกสารครั้งแรกสำเร็จ คุณจะได้เครดิตส่วนลด 20 บาททันที และได้รับค่าคอมมิชชัน 5% จากทุกยอดสั่งซื้อของเพื่อน
+        {{ 'shared.referral.description' | trans }}
       </p>
       <div class="flex flex-wrap gap-2 mt-3">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
-          🎁 เพื่อนได้ส่วนลด 20 บาททันที
+          {{ 'shared.referral.friendBenefit' | trans }}
         </span>
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          💰 คุณได้ส่วนลด 20 บาท + คอมมิชชัน 5%
+          {{ 'shared.referral.yourBenefit' | trans }}
         </span>
       </div>
     </div>
@@ -23,12 +23,12 @@
 
   @if (referral.state().status === 'error') {
     <div class="mt-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-600">
-      โหลดข้อมูลชวนเพื่อนไม่สำเร็จ
+      {{ 'shared.referral.loadFailed' | trans }}
     </div>
   } @else {
     <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-neutral-50 p-4 border border-neutral-100">
       <div>
-        <span class="text-xs font-medium text-neutral-500">โค้ดของคุณ</span>
+        <span class="text-xs font-medium text-neutral-500">{{ 'shared.referral.yourCode' | trans }}</span>
         <div class="mt-1 font-mono text-2xl font-bold tracking-wider text-emerald-600">
           @if (referral.state().status === 'loading') {
             —
@@ -46,56 +46,56 @@
       >
         @if (copied()) {
           <app-icon name="check" [size]="16" />
-          <span>คัดลอกลิงก์แล้ว</span>
+          <span>{{ 'shared.referral.copiedLink' | trans }}</span>
         } @else {
           <app-icon name="doc" [size]="16" />
-          <span>คัดลอกลิงก์แชร์</span>
+          <span>{{ 'shared.referral.copyLink' | trans }}</span>
         }
       </button>
     </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-        <span class="text-xs text-neutral-500">สถานะการแนะนำ</span>
+        <span class="text-xs text-neutral-500">{{ 'shared.referral.referralStatus' | trans }}</span>
         <div class="mt-0.5 text-sm font-semibold text-neutral-800">
           @if (referral.state().status === 'loading') {
             —
           } @else {
-            แนะนำสำเร็จแล้ว {{ referral.summary()?.totalReferred ?? 0 }} คน
+            {{ 'shared.referral.referredSuccess' | trans: { count: referral.summary()?.totalReferred ?? 0 } }}
           }
         </div>
       </div>
 
       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-        <span class="text-xs text-neutral-500">เครดิตส่วนลดสะสม</span>
+        <span class="text-xs text-neutral-500">{{ 'shared.referral.creditDiscount' | trans }}</span>
         <div class="mt-0.5 text-sm font-semibold text-neutral-800">
           @if (referral.state().status === 'loading') {
             —
           } @else {
-            เครดิตคงเหลือ {{ referral.summary()?.unusedCreditCount ?? 0 }} ใบ ({{ referral.summary()?.unusedCreditTotal ?? 0 }} บาท)
+            {{ 'shared.referral.creditsRemaining' | trans: { count: referral.summary()?.unusedCreditCount ?? 0, total: referral.summary()?.unusedCreditTotal ?? 0 } }}
           }
         </div>
       </div>
 
       @if (affiliate && affiliate.summary()) {
         <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-          <span class="text-xs text-neutral-500">จำนวนคลิกลิงก์</span>
+          <span class="text-xs text-neutral-500">{{ 'shared.referral.clicksCount' | trans }}</span>
           <div class="mt-0.5 text-sm font-semibold text-neutral-800">
-            มีคนคลิกแล้ว {{ affiliate.summary()?.totalClicks ?? 0 }} ครั้ง
+            {{ 'shared.referral.clickedTimes' | trans: { count: affiliate.summary()?.totalClicks ?? 0 } }}
           </div>
         </div>
 
         <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-          <span class="text-xs text-neutral-500">จำนวนที่ซื้อสำเร็จ</span>
+          <span class="text-xs text-neutral-500">{{ 'shared.referral.completedOrders' | trans }}</span>
           <div class="mt-0.5 text-sm font-semibold text-neutral-800">
-            เกิดยอดขายแล้ว {{ affiliate.summary()?.totalConversions ?? 0 }} รายการ
+            {{ 'shared.referral.salesCount' | trans: { count: affiliate.summary()?.totalConversions ?? 0 } }}
           </div>
         </div>
 
         <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
-          <span class="text-xs text-neutral-500">ค่าคอมมิชชันสะสม</span>
+          <span class="text-xs text-neutral-500">{{ 'shared.referral.commissionTotal' | trans }}</span>
           <div class="mt-0.5 text-sm font-semibold text-emerald-600">
-            {{ affiliate.summary()?.commissionEarnedTotal ?? 0 }} บาท ({{ affiliate.summary()?.commissionRatePercent ?? 5 }}%)
+            {{ 'shared.referral.commissionBaht' | trans: { total: affiliate.summary()?.commissionEarnedTotal ?? 0, percent: affiliate.summary()?.commissionRatePercent ?? 5 } }}
           </div>
         </div>
       }

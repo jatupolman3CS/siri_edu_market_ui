@@ -5,6 +5,8 @@ import {
   type AdminSubscriptionStatusFilter,
 } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -18,13 +20,14 @@ import type { AdminSubscriptionListItem, SubscriptionStatus } from '../../../cor
 @Component({
   selector: 'app-admin-subscriptions',
   standalone: true,
-  imports: [DatePipe, ThbPipe, EmptyStateComponent, PaginationComponent],
+  imports: [DatePipe, ThbPipe, EmptyStateComponent, PaginationComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subscriptions-admin.page.html',
 })
 export class AdminSubscriptionsPage {
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
   readonly pageSize = signal(10);
@@ -34,13 +37,15 @@ export class AdminSubscriptionsPage {
   readonly loading = signal<boolean>(false);
   readonly filter = signal<AdminSubscriptionStatusFilter>('all');
 
-  readonly filters: { value: AdminSubscriptionStatusFilter; label: string }[] = [
-    { value: 'all', label: 'ทั้งหมด' },
-    { value: 'active', label: 'ใช้งานอยู่' },
-    { value: 'incomplete', label: 'รอชำระเงิน' },
-    { value: 'past_due', label: 'ค้างชำระ' },
-    { value: 'canceled', label: 'ยกเลิกแล้ว' },
-  ];
+  get filters(): { value: AdminSubscriptionStatusFilter; label: string }[] {
+    return [
+      { value: 'all', label: this.translation.t('admin.subscriptionsAdmin.statusAll') },
+      { value: 'active', label: this.translation.t('admin.subscriptionsAdmin.statusActive') },
+      { value: 'incomplete', label: this.translation.t('admin.subscriptionsAdmin.statusIncomplete') },
+      { value: 'past_due', label: this.translation.t('admin.subscriptionsAdmin.statusPastDue') },
+      { value: 'canceled', label: this.translation.t('admin.subscriptionsAdmin.statusCanceled') },
+    ];
+  }
 
   constructor() {
     void this.reload();
@@ -74,7 +79,7 @@ export class AdminSubscriptionsPage {
       this.items.set(res.items ?? []);
       this.total.set(res.totalCount ?? 0);
     } catch (e) {
-      this.apiFail.report('โหลดรายการสมาชิกทั้งหมด', e);
+      this.apiFail.report('errors.context.listAdminSubscriptions', e);
       this.items.set([]);
       this.total.set(0);
     } finally {
@@ -85,13 +90,13 @@ export class AdminSubscriptionsPage {
   statusLabel(status: SubscriptionStatus): string {
     switch (status) {
       case 'active':
-        return 'ใช้งานอยู่';
+        return this.translation.t('admin.subscriptionsAdmin.statusActive');
       case 'incomplete':
-        return 'รอชำระเงิน';
+        return this.translation.t('admin.subscriptionsAdmin.statusIncomplete');
       case 'past_due':
-        return 'ค้างชำระ';
+        return this.translation.t('admin.subscriptionsAdmin.statusPastDue');
       case 'canceled':
-        return 'ยกเลิกแล้ว';
+        return this.translation.t('admin.subscriptionsAdmin.statusCanceled');
       default:
         return status;
     }

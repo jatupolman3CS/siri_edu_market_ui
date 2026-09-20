@@ -1,29 +1,27 @@
 <app-auth-layout
-  artTitle="เข้าสู่ระบบด้วย LINE 💚"
-  artDescription="กำลังเชื่อมต่อบัญชี LINE ของคุณกับ SIRIEDUMARKET"
+  [artTitle]="'auth.lineLoginTitle' | trans"
+  [artDescription]="'auth.lineConnectingDesc' | trans"
   [artBullets]="[
-    { icon: '🔒', label: 'เชื่อมต่อผ่าน LINE Login อย่างปลอดภัย' },
-    { icon: '⚡', label: 'ไม่ต้องจำรหัสผ่านเพิ่มอีกชุด' },
-    { icon: '📄', label: 'เอกสารที่ซื้อไว้อยู่ในบัญชีเดิมของคุณ' }
+    { icon: '🔒', label: 'auth.lineBullet1' | trans },
+    { icon: '⚡', label: 'auth.lineBullet2' | trans },
+    { icon: '📄', label: 'auth.lineBullet3' | trans }
   ]"
 >
   <div class="max-w-md w-full mx-auto text-center py-12">
     @if (loading()) {
       <span class="inline-block animate-spin text-4xl">✦</span>
-      <p class="text-sm text-ink-soft mt-4">กำลังเข้าสู่ระบบด้วย LINE...</p>
+      <p class="text-sm text-ink-soft mt-4">{{ 'auth.lineLoggingIn' | trans }}</p>
     } @else if (error()) {
       <div
         class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-3 text-left"
       >
         <span class="text-lg leading-none">⚠️</span>
-        <!-- §4.3: only the sentence the situation actually calls for. A fixed "ไม่สำเร็จ" headline
-             above it would tell a user who simply pressed "ยกเลิก" on LINE that something broke. -->
         <p class="flex-1 font-semibold">{{ error() }}</p>
       </div>
 
-      @if (error().includes('อีเมล') || error().includes('email')) {
+      @if (needsEmailRetry()) {
         <div class="mb-6 p-5 rounded-2xl bg-white border border-line text-left space-y-3 shadow-sm">
-          <label class="text-xs font-semibold text-ink-soft block">ระบุอีเมลเพื่อดำเนินการต่อ</label>
+          <label class="text-xs font-semibold text-ink-soft block">{{ 'auth.lineSpecifyEmailToContinue' | trans }}</label>
           <input
             type="email"
             [(ngModel)]="retryEmail"
@@ -39,7 +37,7 @@
             class="w-full py-2.5 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white text-sm font-semibold transition-all shadow-md shadow-[#06C755]/20"
             (click)="retryWithEmail()"
           >
-            เข้าสู่ระบบด้วย LINE พร้อมอีเมลนี้
+            {{ 'auth.lineLoginWithThisEmail' | trans }}
           </button>
         </div>
       }
@@ -48,7 +46,7 @@
         routerLink="/auth/login"
         class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-semibold text-sm transition-all"
       >
-        กลับไปหน้าเข้าสู่ระบบ
+        {{ 'auth.backToLogin' | trans }}
       </a>
     }
   </div>

@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * backend-wide-pagination-and-seller-directory v1 §4.1: table-result + filter, replacing the old
@@ -30,6 +31,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     ThbPipe,
     DatePipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sellers.page.html',
@@ -53,11 +55,11 @@ export class AdminSellersPage {
   readonly loading = signal(false);
 
   readonly sorts = [
-    { value: 'Newest', label: 'ใหม่สุด' },
-    { value: 'Oldest', label: 'เก่าสุด' },
-    { value: 'MostDocuments', label: 'เอกสารมากสุด' },
-    { value: 'MostRevenue', label: 'รายได้มากสุด' },
-    { value: 'NameAsc', label: 'ชื่อ A-Z' },
+    { value: 'Newest', key: 'admin.sellers.sortNewest' },
+    { value: 'Oldest', key: 'admin.sellers.sortOldest' },
+    { value: 'MostDocuments', key: 'admin.sellers.sortMostDocs' },
+    { value: 'MostRevenue', key: 'admin.sellers.sortMostRevenue' },
+    { value: 'NameAsc', key: 'admin.sellers.sortNameAsc' },
   ];
 
   private readonly sortKeyToApi: Record<string, AdminSellersSort> = {

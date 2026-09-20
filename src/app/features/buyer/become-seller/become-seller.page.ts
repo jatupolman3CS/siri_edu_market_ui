@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../../../core/services';
 import { SellerApplicationService } from '../../../core/services/seller-application.service';
+import { TranslatePipe, TranslationService } from '../../../core/i18n';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 
@@ -14,13 +15,14 @@ import { PageHeroComponent } from '../../../shared/components/page-hero/page-her
 @Component({
   selector: 'app-become-seller',
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, PageHeroComponent],
+  imports: [FormsModule, RouterLink, IconComponent, PageHeroComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './become-seller.page.html',
 })
 export class BecomeSellerPage {
   private readonly applications = inject(SellerApplicationService);
   private readonly message = inject(NzMessageService);
+  private readonly i18n = inject(TranslationService);
   readonly auth = inject(AuthService);
 
   readonly studioName = signal<string>('');
@@ -59,7 +61,7 @@ export class BecomeSellerPage {
 
     const studioName = this.studioName().trim();
     if (!studioName) {
-      this.message.warning('กรุณาระบุชื่อร้าน');
+      this.message.warning(this.i18n.t('becomeSeller.studioNameRequired'));
       return;
     }
 
@@ -77,7 +79,7 @@ export class BecomeSellerPage {
       });
 
       if (result.ok) {
-        this.message.success('ส่งใบสมัครเรียบร้อย รอทีมงานตรวจสอบ');
+        this.message.success(this.i18n.t('becomeSeller.submitSuccess'));
       }
     } finally {
       this.submitting.set(false);

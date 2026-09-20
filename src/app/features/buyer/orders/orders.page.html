@@ -7,12 +7,12 @@
             <app-icon name="check" [size]="22" />
           </div>
           <div class="flex-1">
-            <h3 class="text-lg font-bold text-ink">ชำระเงินเรียบร้อย!</h3>
+            <h3 class="text-lg font-bold text-ink">{{ 'orders.paymentSuccessTitle' | trans }}</h3>
             <p class="text-sm text-ink-soft mt-1">
-              เราได้บันทึกคำสั่งซื้อของคุณแล้ว ดาวน์โหลดได้จากคลังของฉันได้เลย
+              {{ 'orders.paymentSuccessDesc' | trans }}
             </p>
             <a routerLink="/library" class="btn-pink mt-3 !py-2 text-sm">
-              ไปยังคลังเอกสาร
+              {{ 'orders.goToLibrary' | trans }}
               <app-icon name="arrow-right" [size]="14" />
             </a>
           </div>
@@ -23,27 +23,27 @@
       }
 
       <app-page-hero
-        eyebrow="ประวัติคำสั่งซื้อ"
-        title="คำสั่งซื้อทั้งหมดของคุณ"
-        description="ดูสถานะการชำระเงินและรายละเอียดเอกสารที่ซื้อทุกรายการ"
+        [eyebrow]="'orders.heroEyebrow' | trans"
+        [title]="'orders.heroTitle' | trans"
+        [description]="'orders.heroDescription' | trans"
       />
 
       <!-- order-status-tabs v1 §4: tab strip only — the order list below is shared content,
            fetched fresh per tab via library.setOrdersTab (not client-side filtered). -->
       <nz-tabs [nzSelectedIndex]="selectedTabIndex()" (nzSelectChange)="onTabChange($event)">
-        <nz-tab nzTitle="ทั้งหมด" />
-        <nz-tab nzTitle="รอชำระเงิน" />
-        <nz-tab nzTitle="สำเร็จ" />
-        <nz-tab nzTitle="ยกเลิก/คืนเงิน" />
+        <nz-tab [nzTitle]="'orders.tabAll' | trans" />
+        <nz-tab [nzTitle]="'orders.tabAwaitingPayment' | trans" />
+        <nz-tab [nzTitle]="'orders.tabSuccessful' | trans" />
+        <nz-tab [nzTitle]="'orders.tabCancelledRefunded' | trans" />
       </nz-tabs>
 
       @if (library.orders().length === 0) {
         <app-empty-state
           emoji="📜"
-          title="ยังไม่มีคำสั่งซื้อ"
-          description="คำสั่งซื้อแรกของคุณจะปรากฏที่นี่"
+          [title]="'orders.emptyTitle' | trans"
+          [description]="'orders.emptyDesc' | trans"
         >
-          <a routerLink="/marketplace" class="btn-pink mt-4">เริ่มเลือกซื้อ</a>
+          <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'orders.startShopping' | trans }}</a>
         </app-empty-state>
       } @else {
         <div class="flex flex-col gap-4">
@@ -79,13 +79,13 @@
                   <div class="flex-1 min-w-0">
                     <div class="text-xs text-ink-muted">{{ item.document.seller.studioName }}</div>
                     <div class="text-sm font-bold text-ink line-clamp-1">{{ item.document.title }}</div>
-                    <div class="text-xs text-ink-muted uppercase">{{ item.document.format }} · {{ item.document.pages }} หน้า</div>
+                    <div class="text-xs text-ink-muted uppercase">{{ item.document.format }} · {{ item.document.pages }} {{ 'orders.pagesUnit' | trans }}</div>
                   </div>
                   <a
                     [routerLink]="['/document', item.document.id]"
                     class="btn-ghost !py-2 !px-3 text-xs"
                   >
-                    ดูสินค้า
+                    {{ 'orders.viewProduct' | trans }}
                   </a>
                 </div>
               }
@@ -93,15 +93,15 @@
               <footer class="flex flex-wrap items-center gap-3 pt-3 mt-2 border-t border-line text-xs text-ink-muted">
                 <span class="inline-flex items-center gap-1">
                   <app-icon name="qr" [size]="12" />
-                  ชำระผ่าน {{ paymentLabel(o.paymentMethod) }}
+                  {{ 'orders.paidVia' | trans:{ method: paymentLabel(o.paymentMethod) } }}
                 </span>
                 <span>·</span>
                 <a [routerLink]="['/orders', o.id]" class="text-pink-600 hover:underline font-semibold">
-                  รายละเอียด
+                  {{ 'orders.details' | trans }}
                 </a>
                 <span>·</span>
                 <a routerLink="/library" class="text-pink-600 hover:underline font-semibold">
-                  ดาวน์โหลด
+                  {{ 'orders.download' | trans }}
                 </a>
                 <!-- order-status-tabs v1 §4/AC-12: same condition + copy/disabled state as
                      BuyerOrderDetailPage.cancelOrder — buyers cancel an accidental duplicate
@@ -115,7 +115,7 @@
                     (click)="payWithWallet(o.id)"
                   >
                     <app-icon name="wallet" [size]="12" />
-                    {{ payingWalletId() === o.id ? 'กำลังตัดยอด…' : 'ชำระด้วยกระเป๋าเงิน' }}
+                    {{ payingWalletId() === o.id ? ('orders.payingWithWallet' | trans) : ('orders.payWithWallet' | trans) }}
                   </button>
                   <span>·</span>
                   <button
@@ -124,7 +124,7 @@
                     [disabled]="cancellingId() !== null"
                     (click)="cancelOrder(o.id)"
                   >
-                    {{ cancellingId() === o.id ? 'กำลังยกเลิก…' : 'ยกเลิกคำสั่งซื้อ' }}
+                    {{ cancellingId() === o.id ? ('orders.cancellingOrder' | trans) : ('orders.cancelOrder' | trans) }}
                   </button>
                 }
               </footer>
@@ -140,7 +140,7 @@
               (click)="library.loadMoreOrders()"
               [disabled]="library.state().status === 'loading'"
             >
-              โหลดเพิ่ม
+              {{ 'orders.loadMore' | trans }}
             </button>
           </div>
         }

@@ -13,6 +13,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, OrderService, WalletService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import type { WalletEntry, WalletTopUp } from '../../../core/models';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -33,6 +35,7 @@ import { loadStripeScript } from '../../../core/util/load-stripe-script';
     FormsModule,
     ThbPipe,
     IconComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wallet.page.html',
@@ -47,6 +50,7 @@ export class WalletPage implements OnInit, OnDestroy {
   private readonly message = inject(NzMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
+  readonly translation = inject(TranslationService);
 
   readonly amount = signal<number | null>(null);
   readonly busy = signal<boolean>(false);
@@ -142,7 +146,7 @@ export class WalletPage implements OnInit, OnDestroy {
   async startTopUp(): Promise<void> {
     const val = this.amount();
     if (!val || val <= 0) {
-      this.message.warning('กรุณาระบุจำนวนเงินที่ต้องการเติม');
+      this.message.warning(this.translation.t('wallet.warnAmountRequired'));
       return;
     }
 
@@ -150,7 +154,7 @@ export class WalletPage implements OnInit, OnDestroy {
     try {
       const topup = await this.wallet.createTopUp(val);
       if (!topup) {
-        this.message.error('สร้างรายการเติมเงินไม่สำเร็จ');
+        this.message.error(this.translation.t('wallet.topUpCreateFailed'));
         return;
       }
 
@@ -165,7 +169,7 @@ export class WalletPage implements OnInit, OnDestroy {
           try {
             await this.mountPaymentElement(topup.clientSecret!);
           } catch (e) {
-            const msg = e instanceof Error ? e.message : 'โหลดระบบชำระเงินไม่สำเร็จ';
+            const msg = e instanceof Error ? e.message : this.translation.t('wallet.paymentSystemLoadFailed');
             this.message.error(msg);
           } finally {
             this.mountingPayment.set(false);
@@ -201,14 +205,14 @@ export class WalletPage implements OnInit, OnDestroy {
       });
 
       if (result.error) {
-        this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ');
+        this.message.error(result.error.message ?? this.translation.t('wallet.paymentConfirmFailed'));
         return;
       }
 
       // If confirmPayment did not redirect:
       await this.handleTopUpSucceeded(topUp.id);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'ยืนยันการชำระเงินไม่สำเร็จ';
+      const msg = e instanceof Error ? e.message : this.translation.t('wallet.paymentConfirmFailed');
       this.message.error(msg);
     } finally {
       this.busy.set(false);
@@ -228,12 +232,12 @@ export class WalletPage implements OnInit, OnDestroy {
 
     const stripeFactory = window.Stripe;
     if (!stripeFactory) {
-      throw new Error('โหลด Stripe.js ไม่สำเร็จ');
+      throw new Error(this.translation.t('wallet.stripeScriptFailed'));
     }
 
     const publishableKey = await this.orders.getStripePublishableKey();
     if (!publishableKey) {
-      throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
+      throw new Error(this.translation.t('wallet.stripeKeyNotConfigured'));
     }
 
     this.stripe = stripeFactory(publishableKey);
@@ -274,9 +278,9 @@ export class WalletPage implements OnInit, OnDestroy {
     }
 
     if (succeeded) {
-      this.message.success('เติมเงินสำเร็จ ยอดเงินในกระเป๋าของคุณอัปเดตเรียบร้อยแล้ว');
+      this.message.success(this.translation.t('wallet.topUpSuccess'));
     } else {
-      this.message.info('ระบบกำลังดำเนินการเติมเงิน ยอดจะปรากฏในกระเป๋าเงินเร็วๆ นี้');
+      this.message.info(this.translation.t('wallet.topUpProcessing'));
     }
     this.currentTopUp.set(null);
     this.amount.set(null);
@@ -289,11 +293,11 @@ export class WalletPage implements OnInit, OnDestroy {
   getKindLabel(kind: WalletEntry['kind']): string {
     switch (kind) {
       case 'topup':
-        return 'เติมเงิน';
+        return this.translation.t('wallet.kindTopup');
       case 'purchase':
-        return 'ซื้อเอกสาร';
+        return this.translation.t('wallet.kindPurchase');
       case 'refund':
-        return 'คืนเงินเข้ากระเป๋า';
+        return this.translation.t('wallet.kindRefund');
       default:
         return kind;
     }
@@ -302,13 +306,13 @@ export class WalletPage implements OnInit, OnDestroy {
   getTopUpStatusLabel(status: string): string {
     switch (status) {
       case 'pending':
-        return 'กำลังดำเนินการ';
+        return this.translation.t('wallet.statusPending');
       case 'succeeded':
-        return 'สำเร็จ';
+        return this.translation.t('wallet.statusSucceeded');
       case 'failed':
-        return 'ไม่สำเร็จ';
+        return this.translation.t('wallet.statusFailed');
       case 'cancelled':
-        return 'ยกเลิกแล้ว';
+        return this.translation.t('wallet.statusCancelled');
       default:
         return status;
     }

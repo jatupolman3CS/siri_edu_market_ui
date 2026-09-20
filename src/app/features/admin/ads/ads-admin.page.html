@@ -1,21 +1,21 @@
 <div class="space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-ink tracking-tight">จัดการโฆษณา (Ads)</h1>
+      <h1 class="text-2xl font-bold text-ink tracking-tight">{{ 'admin.ads.title' | trans }}</h1>
       <p class="text-sm text-ink-muted mt-1">
-        ตรวจสอบแคมเปญโฆษณาทั้งหมดในระบบ และกำหนดค่าตำแหน่งโฆษณา
+        {{ 'admin.ads.desc' | trans }}
       </p>
     </div>
   </div>
 
   <nz-tabs>
     <!-- TAB 1: Campaigns -->
-    <nz-tab nzTitle="แคมเปญทั้งหมด">
+    <nz-tab [nzTitle]="'admin.ads.tabCampaigns' | trans">
       <div class="space-y-4 pt-4">
         <!-- Filters -->
         <div class="card-soft p-4 flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-ink-muted">สถานะ:</span>
+            <span class="text-xs font-semibold text-ink-muted">{{ 'admin.ads.filterStatus' | trans }}</span>
             <nz-select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)" style="min-width: 140px">
               @for (opt of statusFilterOptions; track opt.value) {
                 <nz-option [nzValue]="opt.value" [nzLabel]="opt.label" />
@@ -24,9 +24,9 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-ink-muted">ตำแหน่ง:</span>
+            <span class="text-xs font-semibold text-ink-muted">{{ 'admin.ads.filterPlacement' | trans }}</span>
             <nz-select [ngModel]="placementFilter()" (ngModelChange)="onPlacementFilterChange($event)" style="min-width: 160px">
-              <nz-option nzValue="all" nzLabel="ทั้งหมด" />
+              <nz-option nzValue="all" [nzLabel]="'common.all' | trans" />
               @for (p of placements(); track p.placementKey) {
                 <nz-option [nzValue]="p.placementKey" [nzLabel]="p.displayName" />
               }
@@ -43,21 +43,21 @@
               (keyup.enter)="applySellerIdFilter()"
             />
             <button type="button" class="btn-ghost !py-1.5 !px-3 text-xs" (click)="applySellerIdFilter()">
-              ค้นหา
+              {{ 'common.search' | trans }}
             </button>
           </div>
         </div>
 
         @if (loadingList() && !campaigns().length) {
           <div class="card-soft p-12 text-center text-sm text-ink-muted">
-            กำลังโหลดข้อมูล…
+            {{ 'common.loading' | trans }}
           </div>
         } @else if (!campaigns().length) {
           <div class="card-soft p-12">
             <app-empty-state
               emoji="📢"
-              title="ไม่พบแคมเปญโฆษณา"
-              description="ไม่มีรายการแคมเปญที่ตรงกับเงื่อนไขการค้นหา"
+              [title]="'admin.ads.campaignEmpty' | trans"
+              [description]="'admin.ads.campaignEmptyDesc' | trans"
             />
           </div>
         } @else {
@@ -66,14 +66,14 @@
               <table class="w-full text-left text-sm min-w-[900px]">
                 <thead>
                   <tr class="border-b border-line text-xs font-semibold text-ink-muted">
-                    <th class="pb-3 pr-4">เอกสาร</th>
-                    <th class="pb-3 px-4">ผู้ขาย</th>
-                    <th class="pb-3 px-4">ตำแหน่ง</th>
-                    <th class="pb-3 px-4">ช่วงเวลา</th>
-                    <th class="pb-3 px-4 text-right">ยอดรวม</th>
-                    <th class="pb-3 px-4 text-center">สถานะ</th>
-                    <th class="pb-3 px-4 text-right">สถิติ (Imp/Click)</th>
-                    <th class="pb-3 pl-4 text-right">การจัดการ</th>
+                    <th class="pb-3 pr-4">{{ 'admin.ads.colDocument' | trans }}</th>
+                    <th class="pb-3 px-4">{{ 'admin.ads.colSeller' | trans }}</th>
+                    <th class="pb-3 px-4">{{ 'admin.ads.colPlacement' | trans }}</th>
+                    <th class="pb-3 px-4">{{ 'admin.ads.colPeriod' | trans }}</th>
+                    <th class="pb-3 px-4 text-right">{{ 'admin.ads.colTotal' | trans }}</th>
+                    <th class="pb-3 px-4 text-center">{{ 'common.status' | trans }}</th>
+                    <th class="pb-3 px-4 text-right">{{ 'admin.ads.colStatImpClick' | trans }}</th>
+                    <th class="pb-3 pl-4 text-right">{{ 'admin.ads.colManage' | trans }}</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-line">
@@ -92,7 +92,7 @@
                       </td>
                       <td class="py-3.5 px-4">
                         <div class="font-medium text-ink">{{ c.sellerName }}</div>
-                        <div class="text-xs text-ink-muted">คงเหลือ {{ c.sellerAvailableBalance | thb }}</div>
+                        <div class="text-xs text-ink-muted">{{ 'admin.ads.balanceRemaining' | trans }} {{ c.sellerAvailableBalance | thb }}</div>
                       </td>
                       <td class="py-3.5 px-4 whitespace-nowrap text-ink-soft">
                         <div>{{ c.placementName }}</div>
@@ -102,12 +102,12 @@
                       </td>
                       <td class="py-3.5 px-4 whitespace-nowrap text-ink-soft text-xs">
                         <div>{{ c.startDate | date: 'd MMM yy' }} – {{ c.endDate | date: 'd MMM yy' }}</div>
-                        <div class="text-ink-muted">{{ c.dayCount }} วัน ({{ c.pricePerDay | thb }}/วัน)</div>
+                        <div class="text-ink-muted">{{ c.dayCount }} {{ 'admin.ads.days' | trans }} ({{ c.pricePerDay | thb }}{{ 'admin.ads.pricePerDayUnit' | trans }})</div>
                       </td>
                       <td class="py-3.5 px-4 text-right whitespace-nowrap font-medium text-ink">
                         <div>{{ c.totalAmount | thb }}</div>
                         @if (c.refundedAmount > 0) {
-                          <div class="text-xs text-emerald-600 font-normal">คืน {{ c.refundedAmount | thb }}</div>
+                          <div class="text-xs text-emerald-600 font-normal">{{ 'admin.ads.refundedLabel' | trans }} {{ c.refundedAmount | thb }}</div>
                         }
                       </td>
                       <td class="py-3.5 px-4 text-center whitespace-nowrap">
@@ -123,8 +123,8 @@
                         }
                       </td>
                       <td class="py-3.5 px-4 text-right whitespace-nowrap text-xs text-ink">
-                        <div>{{ c.impressions }} วิว</div>
-                        <div class="text-ink-muted">{{ c.clicks }} คลิก</div>
+                        <div>{{ c.impressions }} {{ 'admin.ads.views' | trans }}</div>
+                        <div class="text-ink-muted">{{ c.clicks }} {{ 'admin.ads.clicks' | trans }}</div>
                       </td>
                       <td class="py-3.5 pl-4 text-right whitespace-nowrap">
                         @if (canStop(c)) {
@@ -133,7 +133,7 @@
                             class="btn-ghost !py-1 !px-2.5 text-xs text-rose-600 hover:bg-rose-50"
                             (click)="openStop(c)"
                           >
-                            ระงับแคมเปญ
+                            {{ 'admin.ads.stopCampaign' | trans }}
                           </button>
                         }
                       </td>
@@ -158,11 +158,11 @@
     </nz-tab>
 
     <!-- TAB 2: Placements -->
-    <nz-tab nzTitle="ตำแหน่งโฆษณา">
+    <nz-tab [nzTitle]="'admin.ads.tabPlacements' | trans">
       <div class="space-y-4 pt-4">
         @if (loadingPlacements() && !placements().length) {
           <div class="card-soft p-12 text-center text-sm text-ink-muted">
-            กำลังโหลดข้อมูลตำแหน่งโฆษณา…
+            {{ 'admin.ads.loadingPlacements' | trans }}
           </div>
         } @else {
           <div class="card-soft p-6 overflow-hidden">
@@ -170,13 +170,13 @@
               <table class="w-full text-left text-sm min-w-[700px]">
                 <thead>
                   <tr class="border-b border-line text-xs font-semibold text-ink-muted">
-                    <th class="pb-3 pr-4">การจัดการ</th>
-                    <th class="pb-3 px-4">ตำแหน่ง</th>
-                    <th class="pb-3 px-4 text-right">ราคา/วัน</th>
-                    <th class="pb-3 px-4 text-right">ราคา/สัปดาห์</th>
-                    <th class="pb-3 px-4 text-center">ความจุ/วัน</th>
-                    <th class="pb-3 px-4 text-center">สูงสุด/หน้า</th>
-                    <th class="pb-3 pl-4 text-center">สถานะ</th>
+                    <th class="pb-3 pr-4">{{ 'admin.ads.colManage' | trans }}</th>
+                    <th class="pb-3 px-4">{{ 'admin.ads.colPlacement' | trans }}</th>
+                    <th class="pb-3 px-4 text-right">{{ 'admin.ads.colPricePerDay' | trans }}</th>
+                    <th class="pb-3 px-4 text-right">{{ 'admin.ads.colWeeklyPrice' | trans }}</th>
+                    <th class="pb-3 px-4 text-center">{{ 'admin.ads.colDailyCapacity' | trans }}</th>
+                    <th class="pb-3 px-4 text-center">{{ 'admin.ads.colMaxPerPage' | trans }}</th>
+                    <th class="pb-3 pl-4 text-center">{{ 'common.status' | trans }}</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-line">
@@ -188,7 +188,7 @@
                           class="btn-ghost !py-1 !px-3 text-xs"
                           (click)="openEditPlacement(p)"
                         >
-                          แก้ไข
+                          {{ 'common.edit' | trans }}
                         </button>
                       </td>
                       <td class="py-3.5 px-4">
@@ -208,13 +208,13 @@
                         {{ p.dailySlotCapacity }} slot
                       </td>
                       <td class="py-3.5 px-4 text-center text-ink">
-                        {{ p.maxPerResultPage }} ชิ้น
+                        {{ p.maxPerResultPage }} {{ 'admin.ads.itemUnit' | trans }}
                       </td>
                       <td class="py-3.5 pl-4 text-center">
                         @if (p.isEnabled) {
-                          <span class="pill pill-green">เปิดใช้งาน</span>
+                          <span class="pill pill-green">{{ 'admin.ads.enabled' | trans }}</span>
                         } @else {
-                          <span class="pill pill-rose">ปิดใช้งาน</span>
+                          <span class="pill pill-rose">{{ 'admin.ads.disabled' | trans }}</span>
                         }
                       </td>
                     </tr>
@@ -233,8 +233,8 @@
 @if (stopTarget()) {
   <nz-modal
     [nzVisible]="true"
-    nzTitle="ระงับแคมเปญโฆษณา"
-    [nzOkText]="'ยืนยันการระงับ'"
+    [nzTitle]="'admin.ads.stopModalTitle' | trans"
+    [nzOkText]="'admin.ads.confirmStop' | trans"
     [nzOkDanger]="true"
     [nzOkLoading]="stopping()"
     [nzOkDisabled]="!stopReasonValid()"
@@ -244,18 +244,18 @@
     <ng-container *nzModalContent>
       <div class="space-y-4">
         <div class="text-sm text-ink">
-          คุณกำลังจะระงับแคมเปญโฆษณาของเอกสาร:
+          {{ 'admin.ads.stopBody' | trans }}
           <span class="font-semibold">{{ stopTarget()?.documentTitle }}</span>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-ink-muted mb-1">
-            เหตุผลในการระงับ (10-500 ตัวอักษร) *
+            {{ 'admin.ads.stopReasonLabel' | trans }}
           </label>
           <textarea
             rows="3"
             class="input-soft w-full text-sm"
-            placeholder="ระบุเหตุผลการระงับ..."
+            [placeholder]="'admin.ads.stopReasonPlaceholder' | trans"
             [ngModel]="stopReason()"
             (ngModelChange)="stopReason.set($event)"
           ></textarea>
@@ -266,8 +266,8 @@
 
         <div class="flex items-center justify-between p-3 rounded-lg bg-pink-50/50 border border-line">
           <div>
-            <div class="text-sm font-semibold text-ink">คืนเงินค่าโฆษณาสำหรับวันที่เหลือ</div>
-            <div class="text-xs text-ink-muted">คืนเงินเข้ายอดคงเหลือของผู้ขายตามสัดส่วนวันที่เหลือ</div>
+            <div class="text-sm font-semibold text-ink">{{ 'admin.ads.refundRemainingTitle' | trans }}</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.ads.refundRemainingDesc' | trans }}</div>
           </div>
           <nz-switch
             [ngModel]="refundRemainingDays()"
@@ -283,8 +283,8 @@
 @if (editingPlacement()) {
   <nz-modal
     [nzVisible]="true"
-    [nzTitle]="'แก้ไขตำแหน่ง: ' + editingPlacement()?.displayName"
-    [nzOkText]="'บันทึก'"
+    [nzTitle]="('admin.ads.colManage' | trans) + ': ' + editingPlacement()?.displayName"
+    [nzOkText]="'common.save' | trans"
     [nzOkLoading]="savingPlacement()"
     [nzOkDisabled]="!!placementFormError()"
     (nzOnCancel)="closeEditPlacement()"
@@ -299,7 +299,7 @@
         }
 
         <div>
-          <label class="block text-xs font-semibold text-ink-muted mb-1">ราคาต่อวัน (THB) *</label>
+          <label class="block text-xs font-semibold text-ink-muted mb-1">{{ 'admin.ads.pricePerDayLabel' | trans }}</label>
           <input
             type="number"
             class="input-soft w-full text-sm"
@@ -309,7 +309,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-ink-muted mb-1">ราคารายสัปดาห์ (THB, ว่างไว้ถ้าไม่มี)</label>
+          <label class="block text-xs font-semibold text-ink-muted mb-1">{{ 'admin.ads.weeklyPriceLabel' | trans }}</label>
           <input
             type="number"
             class="input-soft w-full text-sm"
@@ -320,7 +320,7 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-ink-muted mb-1">ความจุต่อวัน (1-10) *</label>
+            <label class="block text-xs font-semibold text-ink-muted mb-1">{{ 'admin.ads.dailyCapLabel' | trans }}</label>
             <input
               type="number"
               class="input-soft w-full text-sm"
@@ -329,7 +329,7 @@
             />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-ink-muted mb-1">สูงสุดต่อหน้า (1-2) *</label>
+            <label class="block text-xs font-semibold text-ink-muted mb-1">{{ 'admin.ads.maxPerPageLabel' | trans }}</label>
             <input
               type="number"
               class="input-soft w-full text-sm"
@@ -341,8 +341,8 @@
 
         <div class="flex items-center justify-between p-3 rounded-lg bg-pink-50/50 border border-line">
           <div>
-            <div class="text-sm font-semibold text-ink">เปิดใช้งานตำแหน่งนี้</div>
-            <div class="text-xs text-ink-muted">หากปิด ผู้ขายจะไม่สามารถจองตำแหน่งนี้ได้ใหม่</div>
+            <div class="text-sm font-semibold text-ink">{{ 'admin.ads.enablePlacementTitle' | trans }}</div>
+            <div class="text-xs text-ink-muted">{{ 'admin.ads.enablePlacementDesc' | trans }}</div>
           </div>
           <nz-switch
             [ngModel]="placementForm().isEnabled"

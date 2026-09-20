@@ -1,48 +1,48 @@
 <div class="max-w-6xl space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">หมวดหน้าร้าน</h1>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.sectionsTitle' | trans }}</h1>
       <p class="text-sm text-ink-soft">
-        จัดกลุ่มเอกสารของคุณเป็นหมวด เพื่อให้ผู้ซื้อหาสิ่งที่ต้องการได้เร็วขึ้น
+        {{ 'seller.sectionsSubtitle' | trans }}
       </p>
     </div>
     @if (!formOpen()) {
-      <button class="btn-pink !py-2 !px-5 text-sm" (click)="startCreate()">เพิ่มหมวดใหม่</button>
+      <button class="btn-pink !py-2 !px-5 text-sm" (click)="startCreate()">{{ 'seller.createSection' | trans }}</button>
     }
   </header>
 
   @if (formOpen()) {
     <section class="card-tile space-y-5">
       <h2 class="text-lg font-bold text-ink">
-        {{ editingId() ? 'แก้ไขหมวด' : 'เพิ่มหมวดใหม่' }}
+        {{ editingId() ? ('seller.editSection' | trans) : ('seller.createSection' | trans) }}
       </h2>
 
       <div class="grid sm:grid-cols-3 gap-4">
         <div class="sm:col-span-2">
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อหมวด</label>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.sectionNameLabel' | trans }}</label>
           <input
             type="text"
             [(ngModel)]="name"
             name="name"
             class="input-soft"
-            placeholder="เช่น ขายดีที่สุด"
+            [placeholder]="'seller.sectionNamePlaceholder' | trans"
             maxlength="200"
           />
         </div>
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">ลำดับ</label>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.sortOrderLabel' | trans }}</label>
           <input type="number" [(ngModel)]="sortOrder" name="sortOrder" class="input-soft" min="0" />
         </div>
       </div>
 
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">
-          เลือกเอกสารในหมวดนี้
-          <span class="font-normal text-ink-muted">({{ selectedDocumentIds().length }} รายการ)</span>
+          {{ 'seller.selectDocsLabel' | trans }}
+          <span class="font-normal text-ink-muted">{{ 'seller.itemsCount' | trans: { count: selectedDocumentIds().length } }}</span>
         </label>
 
         @if (documents().length === 0) {
-          <p class="text-sm text-ink-muted">ยังไม่มีเอกสาร — อัปโหลดเอกสารก่อนจึงจะจัดหมวดได้</p>
+          <p class="text-sm text-ink-muted">{{ 'seller.noDocsToSection' | trans }}</p>
         } @else {
           <ul class="max-h-72 overflow-y-auto border border-line rounded-2xl divide-y divide-line">
             @for (doc of documents(); track doc.id) {
@@ -68,21 +68,21 @@
 
       <div class="flex gap-2">
         <button class="btn-pink !py-2 !px-5 text-sm" [disabled]="saving()" (click)="save()">
-          {{ saving() ? 'กำลังบันทึก…' : 'บันทึก' }}
+          {{ saving() ? ('seller.savingDots' | trans) : ('common.save' | trans) }}
         </button>
-        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">ยกเลิก</button>
+        <button class="btn-ghost !py-2 !px-5 text-sm" (click)="cancel()">{{ 'common.cancel' | trans }}</button>
       </div>
     </section>
   }
 
   @if (loading()) {
-    <div class="card-tile text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-tile text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (sections().length === 0) {
     <div class="card-soft">
       <app-empty-state
         emoji="🗂️"
-        title="ยังไม่มีหมวด"
-        description="สร้างหมวดแรกเพื่อจัดเรียงเอกสารบนหน้าร้านของคุณ"
+        [title]="'seller.noSections' | trans"
+        [description]="'seller.noSectionsDesc' | trans"
       />
     </div>
   } @else {
@@ -93,17 +93,17 @@
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-bold text-ink line-clamp-2">{{ section.name }}</h3>
               <p class="text-xs text-ink-muted">
-                ลำดับ {{ section.sortOrder }} · {{ section.documentIds?.length ?? 0 }} เอกสาร
+                {{ 'seller.sectionSortAndDocs' | trans: { sort: section.sortOrder ?? 0, count: (section.documentIds?.length ?? 0) } }}
               </p>
             </div>
             <div class="flex gap-2 shrink-0">
-              <button class="btn-ghost !py-1.5 !px-4 text-xs" (click)="startEdit(section)">แก้ไข</button>
+              <button class="btn-ghost !py-1.5 !px-4 text-xs" (click)="startEdit(section)">{{ 'common.edit' | trans }}</button>
               <button
                 class="btn-ghost !py-1.5 !px-4 text-xs"
                 [disabled]="saving()"
                 (click)="confirmRemove(section)"
               >
-                ลบ
+                {{ 'common.delete' | trans }}
               </button>
             </div>
           </div>

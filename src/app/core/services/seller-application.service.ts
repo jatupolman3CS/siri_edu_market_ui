@@ -12,6 +12,7 @@ import type {
 } from '../api';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { TranslationService } from '../i18n';
 import { AuthService } from './auth.service';
 
 export type SellerApplicationStatus = 'pending' | 'approved' | 'rejected';
@@ -54,6 +55,7 @@ function normalizeStatus(raw: string | undefined): SellerApplicationStatus {
 @Injectable({ providedIn: 'root' })
 export class SellerApplicationService {
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
   /**
    * F-03: read only for cache ownership (`user()?.id`). AuthService never injects this service,
    * so the dependency stays one-way and cannot form a DI cycle.
@@ -165,15 +167,15 @@ export class SellerApplicationService {
       this.cacheAccess(normalizeStatus(data.status));
       return { ok: true };
     } catch (e) {
-      this.apiFail.report('ส่งใบสมัครผู้ขาย', e);
-      return { ok: false, error: 'ส่งใบสมัครไม่สำเร็จ' };
+      this.apiFail.report('errors.context.submitSellerApplication', e);
+      return { ok: false, error: this.translation.t('sellerApplication.submitFailed') };
     }
   }
 
   private async fetchAccessStatus(): Promise<SellerAccessStatus> {
     const outcome = await this.fetchMine();
     if (!outcome.ok) {
-      this.apiFail.report('ตรวจสอบสถานะร้านของคุณ', outcome.error);
+      this.apiFail.report('errors.context.checkSellerStatus', outcome.error);
       this.accessFailedAt = Date.now();
       this._accessStatus.set('unavailable');
       return 'unavailable';
@@ -221,7 +223,7 @@ export class SellerApplicationService {
       const result = await getApiAdminSellerApplications({ query: { Page: page, PageSize: pageSize } });
       return unwrapSdkResult(result).items ?? [];
     } catch (e) {
-      this.apiFail.report('โหลดใบสมัครผู้ขาย', e);
+      this.apiFail.report('errors.context.loadSellerApplications', e);
       return [];
     }
   }
@@ -241,7 +243,7 @@ export class SellerApplicationService {
         totalPages: data.totalPages ?? 1,
       };
     } catch (e) {
-      this.apiFail.report('โหลดใบสมัครผู้ขาย', e);
+      this.apiFail.report('errors.context.loadSellerApplications', e);
       return { items: [], page, pageSize, totalCount: 0, totalPages: 1 };
     }
   }
@@ -251,7 +253,7 @@ export class SellerApplicationService {
       await postApiAdminSellerApplicationsByUserIdApprove({ path: { userId }, throwOnError: true });
       return true;
     } catch (e) {
-      this.apiFail.report('อนุมัติใบสมัครผู้ขาย', e);
+      this.apiFail.report('errors.context.approveApplication', e);
       return false;
     }
   }
@@ -265,7 +267,7 @@ export class SellerApplicationService {
       });
       return true;
     } catch (e) {
-      this.apiFail.report('ปฏิเสธใบสมัครผู้ขาย', e);
+      this.apiFail.report('errors.context.rejectApplication', e);
       return false;
     }
   }

@@ -344,7 +344,7 @@ export class BuyerCheckoutPage implements OnDestroy {
 
       const order = outcome.order;
       if (!order.id?.trim()) {
-        this.message.error('สร้างคำสั่งซื้อแล้วแต่ไม่ได้รับรหัสออเดอร์ — โปรดตรวจที่ประวัติคำสั่งซื้อ');
+        this.message.error(this.translation.t('checkout.missingOrderId'));
         this.orders.resetCheckout();
         return;
       }
@@ -354,7 +354,7 @@ export class BuyerCheckoutPage implements OnDestroy {
       if (order.status === 'paid' || order.status === 'fulfilled') {
         this.cart.clear();
         await this.wallet.refreshSummary();
-        this.message.success('ชำระเงินสำเร็จแล้ว');
+        this.message.success(this.translation.t('checkout.paymentSuccess'));
         await this.ngZone.run(() =>
           this.router.navigateByUrl(this.router.createUrlTree(['/orders'], { queryParams: { success: 1 } })),
         );
@@ -363,7 +363,7 @@ export class BuyerCheckoutPage implements OnDestroy {
 
       const clientSecret = order.paymentHints?.clientSecret;
       if (!clientSecret) {
-        this.message.error('เปิดการชำระเงินไม่สำเร็จ — โปรดดูคำสั่งซื้อในประวัติแล้วลองอีกครั้ง');
+        this.message.error(this.translation.t('checkout.paymentOpenFailedWithOrder'));
         this.orders.resetCheckout();
         return;
       }
@@ -379,7 +379,7 @@ export class BuyerCheckoutPage implements OnDestroy {
       await this.mountPaymentElement(clientSecret);
       this.paymentReady.set(true);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'เปิดการชำระเงินไม่สำเร็จ';
+      const msg = e instanceof Error ? e.message : this.translation.t('checkout.paymentOpenFailed');
       this.orders.resetCheckout();
       this.message.error(msg);
     } finally {
@@ -396,7 +396,7 @@ export class BuyerCheckoutPage implements OnDestroy {
   private async payWithSavedCard(clientSecret: string, savedCardId: string): Promise<void> {
     const card = this.paymentMethods.list().find((c) => c.id === savedCardId);
     if (!card) {
-      this.message.error('ไม่พบบัตรที่เลือก — โปรดลองใหม่');
+      this.message.error(this.translation.t('checkout.selectedCardMissing'));
       this.orders.resetCheckout();
       return;
     }
@@ -404,11 +404,11 @@ export class BuyerCheckoutPage implements OnDestroy {
     await loadStripeScript();
     const stripeFactory = window.Stripe;
     if (!stripeFactory) {
-      throw new Error('โหลด Stripe.js ไม่สำเร็จ');
+      throw new Error(this.translation.t('checkout.stripeLoadFailed'));
     }
     const publishableKey = await this.orders.getStripePublishableKey();
     if (!publishableKey) {
-      throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
+      throw new Error(this.translation.t('checkout.stripeKeyMissing'));
     }
 
     const stripe = stripeFactory(publishableKey);
@@ -419,7 +419,7 @@ export class BuyerCheckoutPage implements OnDestroy {
     // Same toast pattern as `confirmPayment()` below: Stripe only returns here when the payment
     // could not be confirmed.
     if (result.error) {
-      this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ');
+      this.message.error(result.error.message ?? this.translation.t('checkout.paymentConfirmFailed'));
       return;
     }
 
@@ -438,7 +438,7 @@ export class BuyerCheckoutPage implements OnDestroy {
   async confirmPayment(): Promise<void> {
     if (this.busy() || this.paymentUnderReview()) return;
     if (!this.stripe || !this.elements || !this.orderId) {
-      this.message.warning('กรุณากด «ดำเนินการชำระเงิน» ก่อน');
+      this.message.warning(this.translation.t('checkout.startPaymentFirst'));
       return;
     }
 
@@ -457,7 +457,7 @@ export class BuyerCheckoutPage implements OnDestroy {
       // Stripe only returns here when the payment could not be confirmed; anything else has
       // already sent the browser to return_url.
       if (result.error) {
-        this.message.error(result.error.message ?? 'ยืนยันการชำระเงินไม่สำเร็จ');
+        this.message.error(result.error.message ?? this.translation.t('checkout.paymentConfirmFailed'));
         return;
       }
 
@@ -481,7 +481,7 @@ export class BuyerCheckoutPage implements OnDestroy {
         ),
       );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'ยืนยันการชำระเงินไม่สำเร็จ';
+      const msg = e instanceof Error ? e.message : this.translation.t('checkout.paymentConfirmFailed');
       this.message.error(msg);
     } finally {
       this.busy.set(false);
@@ -494,12 +494,12 @@ export class BuyerCheckoutPage implements OnDestroy {
 
     const stripeFactory = window.Stripe;
     if (!stripeFactory) {
-      throw new Error('โหลด Stripe.js ไม่สำเร็จ');
+      throw new Error(this.translation.t('checkout.stripeLoadFailed'));
     }
 
     const publishableKey = await this.orders.getStripePublishableKey();
     if (!publishableKey) {
-      throw new Error('ยังไม่ตั้งค่า Stripe publishable key ที่เซิร์ฟเวอร์');
+      throw new Error(this.translation.t('checkout.stripeKeyMissing'));
     }
 
     this.stripe = stripeFactory(publishableKey);
@@ -526,7 +526,7 @@ export class BuyerCheckoutPage implements OnDestroy {
     // BUG-09: an earlier unpaid order still holds these documents. Send the buyer to their order
     // history to finish paying it or cancel it, instead of a dead-end toast.
     if (outcome.pendingOrder) {
-      this.message.warning(outcome.message ?? 'คุณมีคำสั่งซื้อที่ยังไม่ได้ชำระเงินอยู่');
+      this.message.warning(outcome.message ?? this.translation.t('checkout.pendingOrderWarning'));
       void this.ngZone.run(() => this.router.navigateByUrl('/orders'));
       return;
     }
@@ -538,14 +538,14 @@ export class BuyerCheckoutPage implements OnDestroy {
       this.paymentUnderReview.set(true);
       this.message.error(
         outcome.message ??
-          'ชำระเงินสำเร็จแล้ว แต่ระบบยังจับคู่การชำระเงินกับคำสั่งซื้อไม่สำเร็จ ทีมงานกำลังตรวจสอบ กรุณาอย่าชำระเงินซ้ำ',
+          this.translation.t('checkout.paymentMatchFailed'),
         { nzDuration: 12000 },
       );
       return;
     }
 
     if (outcome.alreadyOwned) {
-      this.message.warning('มีบางรายการที่คุณเป็นเจ้าของอยู่แล้ว — ไปที่คลังของฉัน');
+      this.message.warning(this.translation.t('checkout.alreadyOwnedGoLibrary'));
       void this.ngZone.run(() => this.router.navigateByUrl('/library'));
       return;
     }

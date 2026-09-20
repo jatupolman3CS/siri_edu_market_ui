@@ -24,7 +24,7 @@ export class SystemStatusService {
       const data = unwrapSdkResult(result);
       this._state.set({ status: 'ready', data });
     } catch (e) {
-      this.apiFail.report('โหลดสถานะระบบ', e);
+      this.apiFail.report('errors.context.loadSystemStatus', e);
       this._state.set({ status: 'error' });
     }
   }

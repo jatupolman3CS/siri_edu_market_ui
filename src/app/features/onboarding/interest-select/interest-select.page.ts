@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService, CatalogService, OnboardingService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * registration-onboarding v1 §4.2: interest selection screen.
@@ -10,7 +12,7 @@ import { AuthService, CatalogService, OnboardingService } from '../../../core/se
 @Component({
   selector: 'app-interest-select',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './interest-select.page.html',
   styleUrls: ['./interest-select.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,6 +24,7 @@ export class InterestSelectPage {
   private readonly catalog = inject(CatalogService);
   private readonly onboardingService = inject(OnboardingService);
   private readonly message = inject(NzMessageService);
+  readonly translation = inject(TranslationService);
 
   readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
   readonly categories = this.catalog.categories;
@@ -50,7 +53,7 @@ export class InterestSelectPage {
     try {
       const res = await this.onboardingService.updateInterests(this.selectedCategoryIds());
       if (!res.ok) {
-        this.message.error(res.error ?? 'บันทึกความสนใจไม่สำเร็จ');
+        this.message.error(res.error ?? this.translation.t('onboarding.saveInterestsFailed'));
         return;
       }
       const redirect = this.auth.resolvePostAuthRedirect(this.returnUrl);
@@ -66,7 +69,7 @@ export class InterestSelectPage {
     try {
       const res = await this.onboardingService.skip();
       if (!res.ok) {
-        this.message.error(res.error ?? 'ข้ามขั้นตอนไม่สำเร็จ');
+        this.message.error(res.error ?? this.translation.t('onboarding.skipFailed'));
         return;
       }
       const redirect = this.auth.resolvePostAuthRedirect(this.returnUrl);

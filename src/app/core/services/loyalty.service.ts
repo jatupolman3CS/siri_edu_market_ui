@@ -69,7 +69,7 @@ export class LoyaltyService {
       this._summary.set(mapLoyaltySummary(data));
       this._state.set(idleActionState());
     } catch (e) {
-      this.apiFail.report('โหลดคะแนนสะสม', e);
+      this.apiFail.report('errors.context.loadLoyaltyPoints', e);
       this._state.set(errorActionState('โหลดคะแนนสะสมไม่สำเร็จ'));
     }
   }
@@ -79,7 +79,7 @@ export class LoyaltyService {
     try {
       await this.ledgerPager.loadFirst();
     } catch (e) {
-      this.apiFail.report('โหลดประวัติคะแนนสะสม', e);
+      this.apiFail.report('errors.context.loadLoyaltyHistory', e);
     }
   }
 

@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AffiliateService, ReferralService } from '../../../core/services';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-referral-card',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './referral-card.component.html',
   styleUrl: './referral-card.component.scss',
@@ -15,6 +17,7 @@ export class ReferralCardComponent {
   readonly referral = inject(ReferralService);
   readonly affiliate = inject(AffiliateService, { optional: true });
   private readonly message = inject(NzMessageService, { optional: true });
+  readonly translation = inject(TranslationService);
 
   readonly copied = signal(false);
 
@@ -37,7 +40,7 @@ export class ReferralCardComponent {
         await navigator.clipboard.writeText(url);
       }
       this.copied.set(true);
-      this.message?.success('คัดลอกลิงก์แล้ว');
+      this.message?.success(this.translation.t('shared.referral.copiedLink'));
       setTimeout(() => this.copied.set(false), 3000);
     } catch {
       // Ignore clipboard write failures

@@ -58,6 +58,7 @@ import type {
 import { unwrapSdkResult } from './api-result';
 import { toRecommendationStrategy } from './catalog.service';
 import { createServerPager, type ServerPager } from './server-pager';
+import { TranslationService } from '../i18n';
 
 // ====== crm-core v1 §3 response mappers ======
 // Every field on the generated DTOs below is required per the contract (§3.1-§3.6), so mappers
@@ -343,6 +344,8 @@ function toCrmDocumentAlertOverview(res: AdminCrmDocumentAlertOverviewResponse):
  */
 @Injectable({ providedIn: 'root' })
 export class CrmService {
+  private readonly translation = inject(TranslationService);
+
   // ====== Buyer: §3.1–§3.3 ======
 
   private readonly _myProfile = signal<MyCrmProfile | null>(null);
@@ -416,7 +419,7 @@ export class CrmService {
   private readonly segmentUsersPagerInstance: ServerPager<CrmSegmentUser, string> =
     createServerPager<CrmSegmentUser, string>({
       pageSize: 20,
-      errorMessage: 'โหลดสมาชิกของ segment ไม่สำเร็จ',
+      errorMessage: this.translation.t('crm.loadSegmentUsersFailed'),
       fetch: async (page, pageSize, code) => {
         const data = unwrapSdkResult(
           await getApiAdminCrmSegmentsByCodeUsers({
@@ -491,7 +494,7 @@ export class CrmService {
   private readonly demandGapsPagerInstance: ServerPager<AdminDemandGap> =
     createServerPager<AdminDemandGap>({
       pageSize: 20,
-      errorMessage: 'โหลดคำค้นที่หาแล้วไม่เจอไม่สำเร็จ',
+      errorMessage: this.translation.t('crm.loadDemandGapsFailed'),
       fetch: async (page, pageSize) => {
         const data = unwrapSdkResult(
           await getApiAdminCrmDemandGaps({ query: { Page: page, PageSize: pageSize } }),

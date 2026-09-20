@@ -3,6 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CrmService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
@@ -17,7 +18,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-crm-segment-users',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink, EmptyStateComponent, PaginationComponent],
+  imports: [DatePipe, DecimalPipe, RouterLink, EmptyStateComponent, PaginationComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-segment-users.page.html',
 })
@@ -37,7 +38,7 @@ export class CrmSegmentUsersPage {
     try {
       await this.crm.loadSegmentUsers(this.code());
     } catch (e) {
-      this.apiFail.report('โหลดสมาชิกของกลุ่ม', e);
+      this.apiFail.report('errors.context.loadSegmentMembers', e);
     }
   }
 
@@ -45,7 +46,7 @@ export class CrmSegmentUsersPage {
     try {
       await this.crm.onSegmentUsersPageChange(page);
     } catch (e) {
-      this.apiFail.report('โหลดสมาชิกของกลุ่ม', e);
+      this.apiFail.report('errors.context.loadSegmentMembers', e);
     }
   }
 
@@ -53,7 +54,7 @@ export class CrmSegmentUsersPage {
     try {
       await this.crm.onSegmentUsersPageSizeChange(size);
     } catch (e) {
-      this.apiFail.report('โหลดสมาชิกของกลุ่ม', e);
+      this.apiFail.report('errors.context.loadSegmentMembers', e);
     }
   }
 

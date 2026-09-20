@@ -1,24 +1,24 @@
 <div class="max-w-6xl">
   <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">โปรโมตเอกสารของคุณ</h1>
-      <p class="text-sm text-ink-soft">ซื้อโฆษณาแบบเหมาช่วงเวลาเพื่อดันเอกสารขึ้นบนสุดของผลการค้นหา</p>
+      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'sellerAds.pageTitle' | trans }}</h1>
+      <p class="text-sm text-ink-soft">{{ 'sellerAds.pageSubtitle' | trans }}</p>
     </div>
     <button type="button" class="btn-pink !px-6 !py-3" (click)="openCreate()">
       <app-icon name="sparkle" [size]="16" />
-      สร้างแคมเปญโฆษณา
+      {{ 'sellerAds.createCampaignBtn' | trans }}
     </button>
   </header>
 
   <div class="card-tile mb-6 bg-gradient-pink">
-    <div class="text-xs text-ink-muted mb-1">ยอดคงเหลือที่ใช้ซื้อโฆษณาได้</div>
+    <div class="text-xs text-ink-muted mb-1">{{ 'sellerAds.balanceLabel' | trans }}</div>
     <div class="text-4xl md:text-5xl font-extrabold text-pink-700">{{ availableBalance() | thb }}</div>
-    <p class="text-sm text-ink-soft mt-2">ยอดนี้มาจากรายได้การขายของคุณ (ประวัติยอดเงินดูได้ที่หน้า "รายได้ & Payout")</p>
+    <p class="text-sm text-ink-soft mt-2">{{ 'sellerAds.balanceDesc' | trans }}</p>
   </div>
 
   <section class="card-tile">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-      <h2 class="text-lg font-bold text-ink">แคมเปญของคุณ</h2>
+      <h2 class="text-lg font-bold text-ink">{{ 'sellerAds.campaignsTitle' | trans }}</h2>
       <nz-select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)" style="min-width: 160px">
         @for (opt of statusFilterOptions; track opt.value) {
           <nz-option [nzValue]="opt.value" [nzLabel]="opt.label" />
@@ -31,14 +31,14 @@
         <table class="w-full min-w-[860px]">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-5 py-3 font-semibold">เอกสาร</th>
-              <th class="px-5 py-3 font-semibold">ตำแหน่ง</th>
-              <th class="px-5 py-3 font-semibold">ช่วงวันที่</th>
-              <th class="px-5 py-3 font-semibold text-right">ราคา/วัน</th>
-              <th class="px-5 py-3 font-semibold text-right">ยอดรวม</th>
-              <th class="px-5 py-3 font-semibold">สถานะ</th>
-              <th class="px-5 py-3 font-semibold text-right">การแสดงผล</th>
-              <th class="px-5 py-3 font-semibold text-right">การคลิก</th>
+              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colDocument' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colPlacement' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colDateRange' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colPricePerDay' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colTotal' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colStatus' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colImpressions' | trans }}</th>
+              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colClicks' | trans }}</th>
               <th class="px-5 py-3 font-semibold"></th>
             </tr>
           </thead>
@@ -59,13 +59,13 @@
                 </td>
                 <td class="px-5 py-3 text-sm text-ink-soft whitespace-nowrap">
                   {{ c.startDate | date: 'd MMM yy' }} – {{ c.endDate | date: 'd MMM yy' }}
-                  <div class="text-xs text-ink-muted">{{ c.dayCount }} วัน</div>
+                  <div class="text-xs text-ink-muted">{{ c.dayCount }} {{ 'sellerAds.dayUnit' | trans }}</div>
                 </td>
                 <td class="px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.pricePerDay | thb }}</td>
                 <td class="px-5 py-3 text-sm font-bold text-ink text-right whitespace-nowrap">
                   {{ c.totalAmount | thb }}
                   @if (c.refundedAmount > 0) {
-                    <div class="text-xs text-emerald-600 font-normal">คืนแล้ว {{ c.refundedAmount | thb }}</div>
+                    <div class="text-xs text-emerald-600 font-normal">{{ 'sellerAds.refundedPrefix' | trans }} {{ c.refundedAmount | thb }}</div>
                   }
                 </td>
                 <td class="px-5 py-3 whitespace-nowrap">
@@ -93,7 +93,7 @@
                       [disabled]="cancellingId() === c.id"
                       (click)="confirmCancel(c)"
                     >
-                      ยกเลิก
+                      {{ 'sellerAds.cancelBtn' | trans }}
                     </button>
                   }
                 </td>
@@ -102,12 +102,12 @@
           </tbody>
         </table>
       </div>
-      <p class="text-xs text-ink-muted mt-4">ตัวเลขการแสดงผล/การคลิกใช้เพื่อดูผลลัพธ์เท่านั้น ค่าบริการคิดแบบเหมาช่วงเวลา ไม่คิดตามจำนวนคลิก</p>
+      <p class="text-xs text-ink-muted mt-4">{{ 'sellerAds.statsDisclaimer' | trans }}</p>
       <div class="mt-6 pt-3 border-t border-line">
         <app-pagination [page]="page()" [pageSize]="pageSize()" [total]="total()" (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)" />
       </div>
     } @else if (!loadingList()) {
-      <app-empty-state emoji="📢" title="ยังไม่มีแคมเปญโฆษณา" description="สร้างแคมเปญแรกเพื่อดันเอกสารของคุณขึ้นบนสุดของผลการค้นหา" />
+      <app-empty-state emoji="📢" [title]="'sellerAds.emptyTitle' | trans" [description]="'sellerAds.emptyDesc' | trans" />
     }
   </section>
 </div>
@@ -115,9 +115,9 @@
 <!-- seller-ads-promotion v1 §4.2: create-campaign modal — NG-ZORRO modal, never native dialog -->
 <nz-modal
   [nzVisible]="formOpen()"
-  nzTitle="สร้างแคมเปญโฆษณา"
-  nzOkText="ยืนยันสร้างแคมเปญ"
-  nzCancelText="ยกเลิก"
+  [nzTitle]="'sellerAds.modalTitle' | trans"
+  [nzOkText]="'sellerAds.modalOkText' | trans"
+  [nzCancelText]="'sellerAds.modalCancelText' | trans"
   [nzOkLoading]="submitting()"
   [nzOkDisabled]="submitDisabled()"
   (nzOnOk)="submit()"
@@ -127,14 +127,14 @@
   <ng-container *nzModalContent>
     <div class="space-y-4">
       @if (loadingForm()) {
-        <p class="text-sm text-ink-muted">กำลังโหลดข้อมูล...</p>
+        <p class="text-sm text-ink-muted">{{ 'sellerAds.loadingForm' | trans }}</p>
       } @else {
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1 block">เอกสารที่จะโปรโมต</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'sellerAds.docFieldLabel' | trans }}</label>
           <nz-select
             [ngModel]="selectedDocumentId()"
             (ngModelChange)="onDocumentChange($event)"
-            nzPlaceHolder="เลือกเอกสารของคุณ (เฉพาะที่อนุมัติแล้ว)"
+            [nzPlaceHolder]="'sellerAds.docFieldPlaceholder' | trans"
             nzShowSearch
             style="width: 100%"
           >
@@ -143,20 +143,20 @@
             }
           </nz-select>
           @if (myDocuments().length === 0) {
-            <p class="text-[11px] text-ink-muted mt-1">คุณยังไม่มีเอกสารที่อนุมัติแล้ว — อัปโหลดและรออนุมัติก่อนสร้างแคมเปญ</p>
+            <p class="text-[11px] text-ink-muted mt-1">{{ 'sellerAds.noApprovedDocs' | trans }}</p>
           }
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1 block">ตำแหน่งโฆษณา</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'sellerAds.placementFieldLabel' | trans }}</label>
           <nz-select
             [ngModel]="selectedPlacementKey()"
             (ngModelChange)="onPlacementChange($event)"
-            nzPlaceHolder="เลือกตำแหน่ง"
+            [nzPlaceHolder]="'sellerAds.placementFieldPlaceholder' | trans"
             style="width: 100%"
           >
             @for (p of placements(); track p.placementKey) {
-              <nz-option [nzValue]="p.placementKey" [nzLabel]="p.displayName + ' — ' + (p.pricePerDay | thb) + '/วัน'" />
+              <nz-option [nzValue]="p.placementKey" [nzLabel]="p.displayName + ' — ' + (p.pricePerDay | thb) + ('sellerAds.perDaySuffix' | trans)" />
             }
           </nz-select>
           @if (selectedPlacement(); as p) {
@@ -166,11 +166,11 @@
 
         @if (selectedPlacement()?.requiresTarget) {
           <div>
-            <label class="text-xs font-semibold text-ink-soft mb-1 block">หมวดหมู่</label>
+            <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'sellerAds.categoryFieldLabel' | trans }}</label>
             <nz-select
               [ngModel]="selectedTargetKey()"
               (ngModelChange)="onTargetChange($event)"
-              nzPlaceHolder="เลือกหมวดหมู่"
+              [nzPlaceHolder]="'sellerAds.categoryFieldPlaceholder' | trans"
               nzShowSearch
               style="width: 100%"
             >
@@ -182,7 +182,7 @@
         }
 
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-1 block">ช่วงวันที่แสดงโฆษณา</label>
+          <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'sellerAds.dateRangeFieldLabel' | trans }}</label>
           <nz-range-picker
             [ngModel]="dateRange()"
             (ngModelChange)="onDateRangeChange($event)"
@@ -190,27 +190,27 @@
             [nzDisabledDate]="isDateDisabled"
             style="width: 100%"
           />
-          <p class="text-[11px] text-ink-muted mt-1">วันที่เต็มแล้วจะถูกปิดไม่ให้เลือกในปฏิทิน</p>
+          <p class="text-[11px] text-ink-muted mt-1">{{ 'sellerAds.dateRangeHint' | trans }}</p>
         </div>
 
         @if (quoting()) {
-          <p class="text-sm text-ink-muted">กำลังคำนวณราคา...</p>
+          <p class="text-sm text-ink-muted">{{ 'sellerAds.quoting' | trans }}</p>
         } @else if (quote(); as q) {
           <div class="card-soft p-4 space-y-1.5 bg-pink-50">
             <div class="flex justify-between text-sm">
-              <span class="text-ink-soft">จำนวนวัน</span>
-              <span class="font-semibold text-ink">{{ q.dayCount }} วัน ({{ q.pricingMode === 'weekly' ? 'ราคาแบบสัปดาห์' : 'ราคารายวัน' }})</span>
+              <span class="text-ink-soft">{{ 'sellerAds.quoteDayCount' | trans }}</span>
+              <span class="font-semibold text-ink">{{ q.dayCount }} {{ 'sellerAds.dayUnit' | trans }} ({{ (q.pricingMode === 'weekly' ? 'sellerAds.pricingModeWeekly' : 'sellerAds.pricingModeDaily') | trans }})</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-ink-soft">ราคาต่อวัน</span>
+              <span class="text-ink-soft">{{ 'sellerAds.quotePricePerDay' | trans }}</span>
               <span class="font-semibold text-ink">{{ q.pricePerDay | thb }}</span>
             </div>
             <div class="flex justify-between text-base pt-1.5 border-t border-pink-200">
-              <span class="font-bold text-ink">ยอดรวม</span>
+              <span class="font-bold text-ink">{{ 'sellerAds.quoteTotal' | trans }}</span>
               <span class="font-extrabold text-pink-700">{{ q.totalAmount | thb }}</span>
             </div>
             <div class="flex justify-between text-xs text-ink-muted">
-              <span>ยอดคงเหลือของคุณ</span>
+              <span>{{ 'sellerAds.quoteBalance' | trans }}</span>
               <span>{{ q.availableBalance | thb }}</span>
             </div>
           </div>

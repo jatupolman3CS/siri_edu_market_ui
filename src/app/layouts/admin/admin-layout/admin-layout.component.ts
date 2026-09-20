@@ -10,6 +10,7 @@ import { defaultAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-admin-layout',
@@ -23,6 +24,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     GlobalLoaderComponent,
     ImgFallbackDirective,
     TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-layout.component.html',

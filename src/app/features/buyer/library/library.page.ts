@@ -22,6 +22,8 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-buyer-library',
   standalone: true,
@@ -39,6 +41,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
     ThbPipe,
     TimeAgoPipe,
     CompactPipe,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './library.page.html',
@@ -82,10 +85,10 @@ export class BuyerLibraryPage {
    * library-is-reviewed v1: AC-9 — switching tabs re-queries the API through
    * `LibraryService.setLibraryFilter`, it never filters `library.library()` in place.
    */
-  readonly tabs: { value: LibraryFilter; label: string }[] = [
-    { value: 'all', label: 'ทั้งหมด' },
-    { value: 'unreviewed', label: 'ยังไม่ได้รีวิว' },
-    { value: 'unread', label: 'ยังไม่อ่าน' },
+  readonly tabs: { value: LibraryFilter; labelKey: string }[] = [
+    { value: 'all', labelKey: 'library.tabAll' },
+    { value: 'unreviewed', labelKey: 'library.tabUnreviewed' },
+    { value: 'unread', labelKey: 'library.tabUnread' },
   ];
 
   readonly reviewModal = signal<{ documentId: string; title: string } | null>(null);

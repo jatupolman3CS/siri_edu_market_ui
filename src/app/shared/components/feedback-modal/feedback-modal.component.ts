@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, input, model, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { FeedbackService } from '../../../core/services/feedback.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
 import type { FeedbackRole, FeedbackType, SubmitFeedbackRequest } from '../../../core/models';
 
@@ -17,7 +19,7 @@ export interface LocalAttachment {
 @Component({
   selector: 'app-feedback-modal',
   standalone: true,
-  imports: [FormsModule, NzModalModule, IconComponent],
+  imports: [FormsModule, NzModalModule, IconComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './feedback-modal.component.html',
   styleUrls: ['./feedback-modal.component.scss'],
@@ -26,6 +28,7 @@ export class FeedbackModalComponent {
   private readonly feedbackService = inject(FeedbackService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  readonly translation = inject(TranslationService);
 
   readonly context = input<FeedbackRole>('buyer');
   readonly open = model<boolean>(false);
@@ -39,20 +42,15 @@ export class FeedbackModalComponent {
   details = '';
   pageUrl: string | null = null;
 
-  readonly types = [
-    { value: 'bug', label: 'แจ้งบั๊ก/ข้อผิดพลาด' },
-    { value: 'suggestion', label: 'ข้อเสนอแนะ' },
-    { value: 'usability', label: 'ปัญหาการใช้งาน' },
-    { value: 'other', label: 'อื่น ๆ' },
-  ];
+  readonly types = computed(() => [
+    { value: 'bug', label: this.translation.t('shared.feedbackModal.types.bug') },
+    { value: 'suggestion', label: this.translation.t('shared.feedbackModal.types.suggestion') },
+    { value: 'usability', label: this.translation.t('shared.feedbackModal.types.usability') },
+    { value: 'other', label: this.translation.t('shared.feedbackModal.types.other') },
+  ]);
 
   private readonly allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-  /**
-   * F-07 fix: the server rejects anything over 5,000,000 bytes (`system-feedback.md` §“กฎการ
-   * ตรวจ attachmentKeys” ข้อ 6). Checking 5 MiB here let 5.00–5.24 MB files sail past the form and
-   * fail with a 400 only after the upload had already run.
-   */
-  private readonly maxFileSize = 5_000_000; // 5 MB, decimal — same number the API enforces
+  private readonly maxFileSize = 5_000_000; // 5 MB, decimal
 
   get isSubmitDisabled(): boolean {
     return !this.subject.trim() || !this.details.trim() || this.sending();
@@ -80,7 +78,7 @@ export class FeedbackModalComponent {
     const incoming = Array.from(inputEl.files);
 
     if (current.length + incoming.length > 3) {
-      this.message.warning('แนบภาพได้สูงสุด 3 ไฟล์');
+      this.message.warning(this.translation.t('shared.feedbackModal.maxFiles'));
       inputEl.value = '';
       return;
     }
@@ -90,13 +88,13 @@ export class FeedbackModalComponent {
     for (const file of incoming) {
       const ext = '.' + (file.name.split('.').pop() ?? '').toLowerCase();
       if (!this.allowedExtensions.includes(ext)) {
-        this.message.warning('รองรับเฉพาะไฟล์ภาพ PNG, JPG, WEBP หรือ GIF');
+        this.message.warning(this.translation.t('shared.feedbackModal.supportedTypes'));
         inputEl.value = '';
         return;
       }
 
       if (file.size > this.maxFileSize) {
-        this.message.warning('ไฟล์แนบต้องมีขนาดไม่เกิน 5 MB ต่อไฟล์');
+        this.message.warning(this.translation.t('shared.feedbackModal.fileTooLarge'));
         inputEl.value = '';
         return;
       }
@@ -123,7 +121,7 @@ export class FeedbackModalComponent {
     const trimmedDetails = this.details.trim();
 
     if (!trimmedSubject || !trimmedDetails) {
-      this.message.warning('กรุณากรอกหัวข้อและรายละเอียด');
+      this.message.warning(this.translation.t('shared.feedbackModal.subjectDetailsRequired'));
       return;
     }
 
@@ -144,7 +142,7 @@ export class FeedbackModalComponent {
             att.key = res.key;
             keys.push(res.key);
           } catch {
-            this.message.error('ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+            this.message.error(this.translation.t('shared.feedbackModal.failMessage'));
             this.sending.set(false);
             return;
           }
@@ -163,7 +161,7 @@ export class FeedbackModalComponent {
 
       await this.feedbackService.submit(request);
 
-      this.message.success('ส่งเรียบร้อย ทีมงานจะตรวจสอบและติดตามให้เร็วที่สุด');
+      this.message.success(this.translation.t('shared.feedbackModal.successMessage'));
       this.open.set(false);
       this.submitted.emit();
     } catch (e: unknown) {
@@ -171,9 +169,9 @@ export class FeedbackModalComponent {
         ?? (e as { statusCode?: number } | null)?.statusCode;
 
       if (status === 429) {
-        this.message.error('คุณส่งเรื่องมาหลายครั้งแล้ววันนี้ กรุณารอสักครู่แล้วลองใหม่');
+        this.message.error(this.translation.t('shared.feedbackModal.rateLimit'));
       } else {
-        this.message.error('ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        this.message.error(this.translation.t('shared.feedbackModal.failMessage'));
       }
     } finally {
       this.sending.set(false);

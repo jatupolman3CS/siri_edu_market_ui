@@ -23,6 +23,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TranslatePipe, TranslationService } from '../../../core/i18n';
 
 @Component({
   selector: 'app-buyer-storefront',
@@ -35,6 +36,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     EmptyStateComponent,
     CompactPipe,
     ImgFallbackDirective,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './storefront.page.html',
@@ -53,6 +55,7 @@ export class BuyerStorefrontPage {
   private readonly route = inject(ActivatedRoute);
   private readonly message = inject(NzMessageService);
   private readonly seo = inject(SeoMetaService);
+  private readonly i18n = inject(TranslationService);
 
   readonly sellerId = signal<string>('');
   readonly tab = signal<'all' | 'bundles' | 'free' | 'top'>('all');
@@ -106,10 +109,10 @@ export class BuyerStorefrontPage {
   );
 
   readonly tabs = computed(() => [
-    { value: 'all' as const, label: 'ทั้งหมด', count: this.sellerDocs().length },
-    { value: 'bundles' as const, label: 'แพ็กเกจ', count: this.sellerBundles().length },
-    { value: 'free' as const, label: 'ฟรี', count: this.sellerFree().length },
-    { value: 'top' as const, label: 'ขายดี', count: null },
+    { value: 'all' as const, label: this.i18n.t('storefront.tabAll'), count: this.sellerDocs().length },
+    { value: 'bundles' as const, label: this.i18n.t('storefront.tabBundles'), count: this.sellerBundles().length },
+    { value: 'free' as const, label: this.i18n.t('storefront.tabFree'), count: this.sellerFree().length },
+    { value: 'top' as const, label: this.i18n.t('storefront.tabTop'), count: null },
   ]);
 
   isFollowing(): boolean {
@@ -154,13 +157,13 @@ export class BuyerStorefrontPage {
     if (!seller) return;
 
     if (!this.auth.isAuthenticated()) {
-      this.message.warning('กรุณาเข้าสู่ระบบเพื่อติดตามร้านค้า');
+      this.message.warning(this.i18n.t('storefront.loginToFollow'));
       this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
 
     if (this.isOwner()) {
-      this.message.info('คุณไม่สามารถติดตามร้านค้าของตัวเองได้');
+      this.message.info(this.i18n.t('storefront.cannotFollowSelf'));
       return;
     }
 
@@ -170,9 +173,9 @@ export class BuyerStorefrontPage {
     if (wasFollowing !== isNowFollowing) {
       this.catalog.updateSellerFollowerCount(isNowFollowing ? 1 : -1, sellerId);
       if (isNowFollowing) {
-        this.message.success(`เริ่มติดตาม ${seller.studioName} แล้ว 💗`);
+        this.message.success(this.i18n.t('storefront.followSuccess', { name: seller.studioName ?? '' }));
       } else {
-        this.message.info(`เลิกติดตาม ${seller.studioName}`);
+        this.message.info(this.i18n.t('storefront.unfollowSuccess', { name: seller.studioName ?? '' }));
       }
     }
   }

@@ -23131,6 +23131,10 @@
               "type": "string"
             }
           },
+          "previewPages": {
+            "type": "integer",
+            "format": "int32"
+          },
           "pages": {
             "type": "integer",
             "format": "int32"
@@ -26726,6 +26730,31 @@
             "maxLength": 512,
             "type": "string",
             "nullable": true
+          },
+          "personalizedWatermarkFontFamily": {
+            "maxLength": 128,
+            "type": "string",
+            "nullable": true
+          },
+          "personalizedWatermarkColor": {
+            "maxLength": 32,
+            "type": "string",
+            "nullable": true
+          },
+          "personalizedWatermarkOpacity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "personalizedWatermarkRotation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "personalizedWatermarkFontSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -26778,6 +26807,27 @@
           },
           "personalizedWatermarkTemplate": {
             "type": "string",
+            "nullable": true
+          },
+          "personalizedWatermarkFontFamily": {
+            "type": "string",
+            "nullable": true
+          },
+          "personalizedWatermarkColor": {
+            "type": "string"
+          },
+          "personalizedWatermarkOpacity": {
+            "type": "number",
+            "format": "double"
+          },
+          "personalizedWatermarkRotation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "personalizedWatermarkFontSize": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "previewImageUrls": {

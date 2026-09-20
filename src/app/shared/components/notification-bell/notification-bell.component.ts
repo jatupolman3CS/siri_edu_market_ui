@@ -7,7 +7,6 @@ import {
   NOTIFICATION_AUDIENCES,
   NotificationContextService,
   NotificationFeedService,
-  crossContextLabelFor,
   getNotificationStyle,
   notificationsRouteFor,
   resolveSafeLinkUrl,
@@ -43,10 +42,13 @@ export interface CrossContextLink {
  * wrote. It now scopes both the request and the navigation to
  * `NotificationContextService.context()`.
  */
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [RouterLink, NzDropDownModule, IconComponent, TimeAgoPipe],
+  imports: [RouterLink, NzDropDownModule, IconComponent, TimeAgoPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-bell.component.html',
   styleUrl: './notification-bell.component.scss',
@@ -56,6 +58,7 @@ export class NotificationBellComponent {
   private readonly context = inject(NotificationContextService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  readonly translation = inject(TranslationService);
 
   /** Presentation variant: 'icon' (default standalone bell button) or 'topbar' (inline text link with badge) */
   readonly variant = input<'icon' | 'topbar'>('icon');
@@ -84,7 +87,7 @@ export class NotificationBellComponent {
       audience: item,
       count: counts[item],
       route: notificationsRouteFor(item),
-      label: `การแจ้งเตือนของ${crossContextLabelFor(item)} ${counts[item]} รายการ`,
+      label: this.translation.t('shared.notifications.crossRoleUnread', { role: this.translation.t(`shared.notifications.audiences.${item}`), count: counts[item] }),
     }));
   });
 

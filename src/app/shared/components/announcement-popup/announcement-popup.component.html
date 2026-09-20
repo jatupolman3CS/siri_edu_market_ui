@@ -13,7 +13,7 @@
         <app-icon name="sparkle" [size]="16" />
       </span>
       <span class="font-bold text-ink text-base md:text-lg truncate">
-        {{ popup.current()?.title || 'ประกาศข่าวสาร' }}
+        {{ popup.current()?.title || ('shared.announcementPopup.defaultTitle' | trans) }}
       </span>
     </div>
   </ng-template>
@@ -45,7 +45,7 @@
             <button
               type="button"
               class="absolute top-1/2 left-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
-              aria-label="รูปก่อนหน้า"
+              [attr.aria-label]="'shared.announcementPopup.prevImage' | trans"
               (click)="prevImage()"
             >
               <app-icon name="arrow-left" [size]="16" />
@@ -53,7 +53,7 @@
             <button
               type="button"
               class="absolute top-1/2 right-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
-              aria-label="รูปถัดไป"
+              [attr.aria-label]="'shared.announcementPopup.nextImage' | trans"
               (click)="nextImage()"
             >
               <app-icon name="arrow-right" [size]="16" />
@@ -69,7 +69,7 @@
                       ? 'h-2 w-5 rounded-full bg-white transition-all duration-200'
                       : 'h-2 w-2 rounded-full bg-white/50 hover:bg-white/80 transition-all duration-200'
                   "
-                  [attr.aria-label]="'ไปที่รูปที่ ' + (i + 1)"
+                  [attr.aria-label]="'shared.announcementPopup.goToImage' | trans: { number: i + 1 }"
                   [attr.aria-current]="i === currentImageIndex() ? 'true' : null"
                   (click)="goToImage(i)"
                 ></button>
@@ -91,7 +91,7 @@
             (change)="toggleDontShowAgain($any($event.target).checked)"
             class="w-4 h-4 rounded border-line text-pink-500 focus:ring-pink-300 accent-pink-500 cursor-pointer"
           />
-          <span>ไม่ต้องแสดงอีก</span>
+          <span>{{ 'shared.announcementPopup.dontShowAgain' | trans }}</span>
         </label>
 
         <div class="flex items-center gap-2">
@@ -101,7 +101,7 @@
               class="btn-pink !py-2 !px-4 text-xs md:text-sm"
               (click)="onImageClick(announcement.images[currentImageIndex()])"
             >
-              ดูรายละเอียด
+              {{ 'shared.announcementPopup.viewDetail' | trans }}
               <app-icon name="arrow-right" [size]="14" />
             </button>
           }
@@ -110,7 +110,7 @@
             class="btn-ghost !py-2 !px-4 text-xs md:text-sm"
             (click)="closeCurrent()"
           >
-            ปิด
+            {{ 'common.close' | trans }}
           </button>
         </div>
       </div>

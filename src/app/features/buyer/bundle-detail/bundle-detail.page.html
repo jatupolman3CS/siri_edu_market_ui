@@ -1,103 +1,103 @@
 @if (bundle(); as b) {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-        <!-- Breadcrumb -->
-        <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
-          <a routerLink="/" class="hover:text-pink-600">หน้าแรก</a>
-          <app-icon name="chevron-right" [size]="14" />
-          <a routerLink="/bundles" class="hover:text-pink-600">แพ็กเกจ</a>
-          <app-icon name="chevron-right" [size]="14" />
-          <span class="text-ink line-clamp-1 max-w-md">{{ b.title }}</span>
-        </nav>
+  <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
+      <a routerLink="/" class="hover:text-pink-600">{{ 'bundleDetail.breadcrumbHome' | trans }}</a>
+      <app-icon name="chevron-right" [size]="14" />
+      <a routerLink="/bundles" class="hover:text-pink-600">{{ 'bundleDetail.breadcrumbBundles' | trans }}</a>
+      <app-icon name="chevron-right" [size]="14" />
+      <span class="text-ink line-clamp-1 max-w-md">{{ b.title }}</span>
+    </nav>
 
-        <!-- Hero -->
-        <section class="grid lg:grid-cols-12 gap-8 mb-12">
-          <div class="lg:col-span-7">
-            <div class="relative card-soft overflow-hidden aspect-[16/10]">
-              <img appImgFallback [src]="b.cover" [alt]="b.title" class="absolute inset-0 w-full h-full object-cover" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-              <span class="absolute top-4 left-4 pill bg-violet-500 text-white shadow-soft">
-                📦 BUNDLE
-              </span>
-              @if (savingsPercent() > 0) {
-                <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
-                  ประหยัด {{ savingsPercent() }}%
-                </span>
-              }
-            </div>
-          </div>
-          <div class="lg:col-span-5 flex flex-col">
-            <span class="pill-pink mb-3 self-start">
-              {{ items().length }} เอกสารในแพ็กเกจ
+    <!-- Hero -->
+    <section class="grid lg:grid-cols-12 gap-8 mb-12">
+      <div class="lg:col-span-7">
+        <div class="relative card-soft overflow-hidden aspect-[16/10]">
+          <img appImgFallback [src]="b.cover" [alt]="b.title" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+          <span class="absolute top-4 left-4 pill bg-violet-500 text-white shadow-soft">
+            {{ 'bundleDetail.tag' | trans }}
+          </span>
+          @if (savingsPercent() > 0) {
+            <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
+              {{ 'bundleDetail.savePercent' | trans:{ percent: savingsPercent() } }}
             </span>
-            <h1 class="text-3xl md:text-4xl font-extrabold text-ink leading-tight mb-3">
-              {{ b.title }}
-            </h1>
-            <p class="text-base text-ink-soft mb-5 leading-relaxed">{{ b.description }}</p>
-
-            <div class="flex items-center gap-4 mb-5 text-sm">
-              <span class="text-pink-600 font-bold">★ {{ b.rating }}</span>
-              <span class="text-ink-muted">({{ b.reviewCount }} รีวิว)</span>
-              <span class="text-ink-muted">·</span>
-              <span class="inline-flex items-center gap-1 text-ink-soft">
-                <app-icon name="download" [size]="14" />
-                {{ b.downloads | compact }} ดาวน์โหลด
-              </span>
-            </div>
-
-            <!-- Price -->
-            <div class="card-soft p-5 mt-auto">
-              <div class="flex items-baseline gap-3 mb-1">
-                <span class="text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
-                <span class="text-base text-ink-muted line-through">{{ b.originalPrice | thb }}</span>
-              </div>
-              @if (savings() > 0) {
-                <div class="text-sm text-emerald-600 font-bold mb-4">
-                  ประหยัด {{ savings() | thb }} ({{ savingsPercent() }}% off)
-                </div>
-              }
-
-              <div class="flex flex-col gap-2">
-                <button class="btn-pink !py-3.5" (click)="addAllToCart()">
-                  <app-icon name="cart" [size]="16" />
-                  เพิ่มทุกเล่มลงตะกร้า
-                </button>
-                <button class="btn-ghost" (click)="addAllToCart()">
-                  ซื้อทันที
-                </button>
-              </div>
-
-              <div class="flex items-center gap-3 mt-4 pt-4 border-t border-line">
-                <img appImgFallback [src]="b.seller.avatar" class="w-10 h-10 rounded-2xl object-cover ring-2 ring-pink-100" alt="" />
-                <div class="text-xs">
-                  <div class="font-bold text-ink">{{ b.seller.studioName }}</div>
-                  <div class="text-ink-muted">★ {{ b.seller.rating }} · {{ b.seller.totalDocuments }} เอกสาร</div>
-                </div>
-                <a [routerLink]="['/store', b.seller.id]" class="ml-auto text-xs text-pink-600 font-bold hover:underline">
-                  ดูร้าน →
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Items in bundle -->
-        <section>
-          <h2 class="section-title mb-6">เอกสารที่อยู่ในแพ็กเกจ</h2>
-          <div class="document-card-grid">
-            @for (doc of items(); track doc.id) {
-              <app-document-card [doc]="doc" density="compact" />
-            }
-          </div>
-        </section>
+          }
+        </div>
       </div>
-    } @else {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
-        <app-empty-state
-          emoji="📦"
-          title="ไม่พบแพ็กเกจที่ต้องการ"
-          description="แพ็กเกจที่คุณค้นหาอาจถูกย้ายหรือถูกลบ"
-        >
-          <a routerLink="/bundles" class="btn-pink mt-4">กลับหน้าแพ็กเกจ</a>
-        </app-empty-state>
+      <div class="lg:col-span-5 flex flex-col">
+        <span class="pill-pink mb-3 self-start">
+          {{ 'bundleDetail.itemsInBundle' | trans:{ count: items().length } }}
+        </span>
+        <h1 class="text-3xl md:text-4xl font-extrabold text-ink leading-tight mb-3">
+          {{ b.title }}
+        </h1>
+        <p class="text-base text-ink-soft mb-5 leading-relaxed">{{ b.description }}</p>
+
+        <div class="flex items-center gap-4 mb-5 text-sm">
+          <span class="text-pink-600 font-bold">★ {{ b.rating }}</span>
+          <span class="text-ink-muted">{{ 'bundleDetail.reviewsCount' | trans:{ count: b.reviewCount } }}</span>
+          <span class="text-ink-muted">·</span>
+          <span class="inline-flex items-center gap-1 text-ink-soft">
+            <app-icon name="download" [size]="14" />
+            {{ 'bundleDetail.downloadsCount' | trans:{ count: (b.downloads | compact) } }}
+          </span>
+        </div>
+
+        <!-- Price -->
+        <div class="card-soft p-5 mt-auto">
+          <div class="flex items-baseline gap-3 mb-1">
+            <span class="text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
+            <span class="text-base text-ink-muted line-through">{{ b.originalPrice | thb }}</span>
+          </div>
+          @if (savings() > 0) {
+            <div class="text-sm text-emerald-600 font-bold mb-4">
+              {{ 'bundleDetail.savingsBanner' | trans:{ amount: (savings() | thb), percent: savingsPercent() } }}
+            </div>
+          }
+
+          <div class="flex flex-col gap-2">
+            <button class="btn-pink !py-3.5" (click)="addAllToCart()">
+              <app-icon name="cart" [size]="16" />
+              {{ 'bundleDetail.addAllToCart' | trans }}
+            </button>
+            <button class="btn-ghost" (click)="addAllToCart()">
+              {{ 'bundleDetail.buyNow' | trans }}
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 mt-4 pt-4 border-t border-line">
+            <img appImgFallback [src]="b.seller.avatar" class="w-10 h-10 rounded-2xl object-cover ring-2 ring-pink-100" alt="" />
+            <div class="text-xs">
+              <div class="font-bold text-ink">{{ b.seller.studioName }}</div>
+              <div class="text-ink-muted">★ {{ b.seller.rating }} · {{ 'home.docCount' | trans:{ count: b.seller.totalDocuments } }}</div>
+            </div>
+            <a [routerLink]="['/store', b.seller.id]" class="ml-auto text-xs text-pink-600 font-bold hover:underline">
+              {{ 'bundleDetail.viewStore' | trans }}
+            </a>
+          </div>
+        </div>
       </div>
-    }
+    </section>
+
+    <!-- Items in bundle -->
+    <section>
+      <h2 class="section-title mb-6">{{ 'bundleDetail.itemsTitle' | trans }}</h2>
+      <div class="document-card-grid">
+        @for (doc of items(); track doc.id) {
+          <app-document-card [doc]="doc" density="compact" />
+        }
+      </div>
+    </section>
+  </div>
+} @else {
+  <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+    <app-empty-state
+      emoji="📦"
+      [title]="'bundleDetail.notFoundTitle' | trans"
+      [description]="'bundleDetail.notFoundDesc' | trans"
+    >
+      <a routerLink="/bundles" class="btn-pink mt-4">{{ 'bundleDetail.backToBundles' | trans }}</a>
+    </app-empty-state>
+  </div>
+}

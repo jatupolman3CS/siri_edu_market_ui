@@ -1,8 +1,8 @@
 <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
   <app-page-hero
-    eyebrow="Siri Studio"
-    title="เปิดร้านขายเอกสารของคุณ"
-    description="แบ่งปันสื่อการสอนที่คุณสร้างเอง และสร้างรายได้จากงานของคุณ"
+    [eyebrow]="'becomeSeller.heroEyebrow' | trans"
+    [title]="'becomeSeller.title' | trans"
+    [description]="'becomeSeller.desc' | trans"
   />
 
   <div class="max-w-2xl mx-auto">
@@ -11,21 +11,21 @@
         <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4">
           ✓
         </div>
-        <h2 class="text-xl font-extrabold text-ink mb-2">คุณเป็นผู้ขายอยู่แล้ว</h2>
-        <p class="text-sm text-ink-soft mb-6">ไปที่แดชบอร์ดผู้ขายเพื่อจัดการเอกสารและดูยอดขาย</p>
-        <a routerLink="/seller/dashboard" class="btn-pink">ไปที่แดชบอร์ดผู้ขาย</a>
+        <h2 class="text-xl font-extrabold text-ink mb-2">{{ 'becomeSeller.alreadySellerTitle' | trans }}</h2>
+        <p class="text-sm text-ink-soft mb-6">{{ 'becomeSeller.alreadySellerDesc' | trans }}</p>
+        <a routerLink="/seller/dashboard" class="btn-pink">{{ 'becomeSeller.goToDashboard' | trans }}</a>
       </div>
     } @else if (loading()) {
-      <div class="card-soft p-8 text-center text-ink-soft text-sm">กำลังโหลด…</div>
+      <div class="card-soft p-8 text-center text-ink-soft text-sm">{{ 'common.loading' | trans }}</div>
     } @else {
       @if (status() === 'pending') {
         <div class="card-soft p-6 mb-6 border-l-4 border-amber-400">
           <div class="flex items-start gap-3">
             <app-icon name="bell" [size]="20" className="inline-block text-amber-500 mt-0.5" />
             <div>
-              <h2 class="font-bold text-ink mb-1">ใบสมัครอยู่ระหว่างตรวจสอบ</h2>
+              <h2 class="font-bold text-ink mb-1">{{ 'becomeSeller.pendingTitle' | trans }}</h2>
               <p class="text-sm text-ink-soft">
-                ทีมงานกำลังตรวจสอบใบสมัครของคุณ เมื่ออนุมัติแล้วคุณจะเข้าถึงเมนูผู้ขายได้ทันที
+                {{ 'becomeSeller.pendingDesc' | trans }}
               </p>
             </div>
           </div>
@@ -37,13 +37,13 @@
           <div class="flex items-start gap-3">
             <app-icon name="flag" [size]="20" className="inline-block text-rose-500 mt-0.5" />
             <div>
-              <h2 class="font-bold text-ink mb-1">ใบสมัครยังไม่ผ่าน</h2>
+              <h2 class="font-bold text-ink mb-1">{{ 'becomeSeller.rejectedTitle' | trans }}</h2>
               @if (application()?.rejectionReason) {
                 <p class="text-sm text-ink-soft mb-1">
-                  เหตุผล: {{ application()?.rejectionReason }}
+                  {{ 'becomeSeller.rejectedReason' | trans:{ reason: application()?.rejectionReason ?? '' } }}
                 </p>
               }
-              <p class="text-sm text-ink-soft">แก้ไขข้อมูลด้านล่างแล้วส่งใหม่ได้เลย</p>
+              <p class="text-sm text-ink-soft">{{ 'becomeSeller.rejectedHint' | trans }}</p>
             </div>
           </div>
         </div>
@@ -51,13 +51,13 @@
 
       <form class="card-soft p-6 space-y-5" (ngSubmit)="onSubmit()">
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">ชื่อร้าน *</label>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'becomeSeller.studioNameLabel' | trans }}</label>
           <input
             type="text"
             [(ngModel)]="studioName"
             name="studioName"
             class="input-soft"
-            placeholder="เช่น ห้องเรียนครูพิม"
+            [placeholder]="'becomeSeller.studioNamePlaceholder' | trans"
             maxlength="200"
             [disabled]="!canSubmit()"
             required
@@ -65,13 +65,13 @@
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-ink-soft mb-2 block">แนะนำตัว</label>
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'becomeSeller.bioLabel' | trans }}</label>
           <textarea
             [(ngModel)]="bio"
             name="bio"
             rows="4"
             class="input-soft"
-            placeholder="เล่าเกี่ยวกับประสบการณ์สอนและสื่อที่คุณตั้งใจจะขาย"
+            [placeholder]="'becomeSeller.bioPlaceholder' | trans"
             maxlength="2000"
             [disabled]="!canSubmit()"
           ></textarea>
@@ -79,22 +79,22 @@
 
         <div>
           <label class="text-xs font-semibold text-ink-soft mb-2 block">
-            วิชาที่ถนัด
-            <span class="font-normal text-ink-muted">(คั่นด้วยเครื่องหมายจุลภาค)</span>
+            {{ 'becomeSeller.specialtiesLabel' | trans }}
+            <span class="font-normal text-ink-muted">{{ 'becomeSeller.specialtiesHint' | trans }}</span>
           </label>
           <input
             type="text"
             [(ngModel)]="specialtiesText"
             name="specialties"
             class="input-soft"
-            placeholder="คณิต ม.ปลาย, A-Level, TGAT"
+            [placeholder]="'becomeSeller.specialtiesPlaceholder' | trans"
             [disabled]="!canSubmit()"
           />
         </div>
 
         @if (canSubmit()) {
           <button type="submit" class="btn-pink w-full !py-3.5" [disabled]="submitting()">
-            {{ submitting() ? 'กำลังส่ง…' : 'ส่งใบสมัคร' }}
+            {{ submitting() ? ('becomeSeller.submitting' | trans) : ('becomeSeller.submitBtn' | trans) }}
           </button>
         }
       </form>

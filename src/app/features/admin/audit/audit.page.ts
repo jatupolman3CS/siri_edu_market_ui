@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import type { AdminAuditLogResponse } from '../../../core/api';
 import { AdminService } from '../../../core/services/admin.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
@@ -20,13 +22,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-admin-audit',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent],
+  imports: [CommonModule, DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './audit.page.html',
 })
 export class AdminAuditPage {
   private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
+  private readonly translation = inject(TranslationService);
 
   readonly entries = signal<AdminAuditLogResponse[]>([]);
   readonly loading = signal(false);
@@ -62,22 +65,23 @@ export class AdminAuditPage {
     this.expandedId.update((current) => (current === id ? null : id));
   }
 
-  /** Action mapping to human-readable Thai */
+  /** Action mapping to human-readable label (via i18n) */
   actionLabel(action: string | undefined): string {
-    if (!action) return 'การกระทำ';
-    const map: Record<string, string> = {
-      'document.approve': 'อนุมัติเอกสาร',
-      'document.reject': 'ปฏิเสธเอกสาร',
-      'document.patch': 'แก้ไขข้อมูลเอกสาร',
-      'document.bulk': 'จัดการเอกสารเป็นกลุ่ม',
-      'document.report.create': 'รายงานปัญหาเอกสาร',
-      'document.report.resolve': 'จัดการรายงานปัญหา',
-      'document.report.resolve_all': 'จัดการรายงานปัญหาทั้งหมด',
-      'payout.approve': 'อนุมัติการถอนเงิน',
-      'payout.reject': 'ปฏิเสธการถอนเงิน',
-      'order.refund': 'คืนเงินคำสั่งซื้อ',
+    if (!action) return this.translation.t('admin.audit.actionDefault');
+    const keyMap: Record<string, string> = {
+      'document.approve': 'admin.audit.actionDocumentApprove',
+      'document.reject': 'admin.audit.actionDocumentReject',
+      'document.patch': 'admin.audit.actionDocumentPatch',
+      'document.bulk': 'admin.audit.actionDocumentBulk',
+      'document.report.create': 'admin.audit.actionDocumentReportCreate',
+      'document.report.resolve': 'admin.audit.actionDocumentReportResolve',
+      'document.report.resolve_all': 'admin.audit.actionDocumentReportResolveAll',
+      'payout.approve': 'admin.audit.actionPayoutApprove',
+      'payout.reject': 'admin.audit.actionPayoutReject',
+      'order.refund': 'admin.audit.actionOrderRefund',
     };
-    return map[action] ?? action;
+    const tKey = keyMap[action];
+    return tKey ? this.translation.t(tKey) : action;
   }
 
   /** Action color style */
@@ -90,15 +94,16 @@ export class AdminAuditPage {
     return 'bg-pink-50 text-pink-700 border-pink-200';
   }
 
-  /** Entity type label in Thai */
+  /** Entity type label via i18n */
   entityTypeLabel(type: string | undefined): string {
-    if (!type) return 'รายการ';
-    const map: Record<string, string> = {
-      Document: 'เอกสาร',
-      Payout: 'การถอนเงิน',
-      Order: 'คำสั่งซื้อ',
+    if (!type) return this.translation.t('admin.audit.entityDefault');
+    const keyMap: Record<string, string> = {
+      Document: 'admin.audit.entityDocument',
+      Payout: 'admin.audit.entityPayout',
+      Order: 'admin.audit.entityOrder',
     };
-    return map[type] ?? type;
+    const tKey = keyMap[type];
+    return tKey ? this.translation.t(tKey) : type;
   }
 
   /**
@@ -107,60 +112,48 @@ export class AdminAuditPage {
    */
   parseDetails(detailsJson: string | null | undefined): { label: string; value: string }[] {
     if (!detailsJson) return [];
+    // Maps camelCase field name → translation key (PascalCase variant is normalized below)
+    const fieldKeyMap: Record<string, string> = {
+      title: 'admin.audit.fieldTitle',
+      shortDescription: 'admin.audit.fieldShortDescription',
+      description: 'admin.audit.fieldDescription',
+      price: 'admin.audit.fieldPrice',
+      status: 'admin.audit.fieldStatus',
+      reason: 'admin.audit.fieldReason',
+      action: 'admin.audit.fieldAction',
+      amount: 'admin.audit.fieldAmount',
+      netAmount: 'admin.audit.fieldNetAmount',
+      orderNumber: 'admin.audit.fieldOrderNumber',
+      note: 'admin.audit.fieldNote',
+      count: 'admin.audit.fieldCount',
+      watermarkEnabled: 'admin.audit.fieldWatermarkEnabled',
+      isFeatured: 'admin.audit.fieldIsFeatured',
+      isFree: 'admin.audit.fieldIsFree',
+      format: 'admin.audit.fieldFormat',
+      categoryIds: 'admin.audit.fieldCategoryIds',
+      tags: 'admin.audit.fieldTags',
+    };
     try {
-      const obj = JSON.parse(detailsJson);
-      if (!obj || typeof obj !== 'object') return [{ label: 'ข้อมูล', value: String(obj) }];
-
-      const fieldLabels: Record<string, string> = {
-        title: 'ชื่อเอกสาร',
-        Title: 'ชื่อเอกสาร',
-        shortDescription: 'คำอธิบายสั้น',
-        ShortDescription: 'คำอธิบายสั้น',
-        description: 'รายละเอียด',
-        Description: 'รายละเอียด',
-        price: 'ราคา',
-        Price: 'ราคา',
-        status: 'สถานะ',
-        Status: 'สถานะ',
-        reason: 'เหตุผล',
-        Reason: 'เหตุผล',
-        action: 'การกระทำ',
-        Action: 'การกระทำ',
-        amount: 'ยอดเงิน',
-        Amount: 'ยอดเงิน',
-        netAmount: 'ยอดสุทธิ',
-        NetAmount: 'ยอดสุทธิ',
-        orderNumber: 'เลขคำสั่งซื้อ',
-        OrderNumber: 'เลขคำสั่งซื้อ',
-        note: 'บันทึก',
-        Note: 'บันทึก',
-        count: 'จำนวน',
-        Count: 'จำนวน',
-        watermarkEnabled: 'เปิดใช้ลายน้ำ',
-        WatermarkEnabled: 'เปิดใช้ลายน้ำ',
-        isFeatured: 'แนะนำพิเศษ',
-        IsFeatured: 'แนะนำพิเศษ',
-        isFree: 'ฟรี',
-        IsFree: 'ฟรี',
-        format: 'รูปแบบ',
-        Format: 'รูปแบบ',
-        categoryIds: 'หมวดหมู่',
-        CategoryIds: 'หมวดหมู่',
-        tags: 'แท็ก',
-        Tags: 'แท็ก',
-      };
+      const obj = JSON.parse(detailsJson) as unknown;
+      if (!obj || typeof obj !== 'object') {
+        return [{ label: this.translation.t('admin.audit.detailLabel'), value: String(obj) }];
+      }
 
       const result: { label: string; value: string }[] = [];
-      for (const [key, val] of Object.entries(obj)) {
+      for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
         if (val === null || val === undefined || val === '') continue;
         if (Array.isArray(val) && val.length === 0) continue;
 
-        const label = fieldLabels[key] || key;
+        // Normalize PascalCase → camelCase for lookup
+        const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+        const tKey = fieldKeyMap[camelKey];
+        const label = tKey ? this.translation.t(tKey) : key;
+
         let valueStr = '';
         if (Array.isArray(val)) {
-          valueStr = val.join(', ');
+          valueStr = (val as unknown[]).join(', ');
         } else if (typeof val === 'boolean') {
-          valueStr = val ? 'ใช่' : 'ไม่ใช่';
+          valueStr = val ? this.translation.t('admin.audit.boolTrue') : this.translation.t('admin.audit.boolFalse');
         } else if (typeof val === 'number' && (key.toLowerCase().includes('price') || key.toLowerCase().includes('amount'))) {
           valueStr = `${val.toLocaleString()} บาท`;
         } else if (typeof val === 'object') {
@@ -172,7 +165,7 @@ export class AdminAuditPage {
       }
       return result;
     } catch {
-      return [{ label: 'ข้อมูล', value: detailsJson }];
+      return [{ label: this.translation.t('admin.audit.detailLabel'), value: detailsJson }];
     }
   }
 
@@ -225,7 +218,7 @@ export class AdminAuditPage {
       this.total.set(result.totalCount ?? 0);
       this.totalPages.set(Math.max(1, result.totalPages ?? 1));
     } catch (e) {
-      this.apiFail.report('โหลดประวัติการทำงานของแอดมิน', e);
+      this.apiFail.report('errors.context.loadAdminAuditLog', e);
       this.entries.set([]);
     } finally {
       this.loading.set(false);

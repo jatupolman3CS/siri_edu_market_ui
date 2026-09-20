@@ -4,17 +4,16 @@
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <app-icon name="shield" [size]="14" />
-      <span>ความเป็นส่วนตัว</span>
+      <span>{{ 'accountPrivacy.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">ความเป็นส่วนตัวของฉัน</h1>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'accountPrivacy.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">
-      เราใช้ประวัติการเปิดดู ค้นหา และการซื้อของคุณ เพื่อแนะนำเอกสารที่ตรงกับความสนใจของคุณมากขึ้น
-      ข้อมูลนี้ผู้ขายมองไม่เห็น
+      {{ 'accountPrivacy.desc' | trans }}
     </p>
   </header>
 
   @if (crm.loadingMine()) {
-    <div class="card-soft p-8 text-center text-sm text-ink-soft">กำลังโหลด…</div>
+    <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'accountPrivacy.loading' | trans }}</div>
   } @else {
     @let profile = crm.myProfile();
 
@@ -23,10 +22,10 @@
       <section class="card-tile">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-lg font-bold text-ink mb-1">ให้ระบบเรียนรู้ความสนใจของฉัน</h2>
+            <h2 class="text-lg font-bold text-ink mb-1">{{ 'accountPrivacy.trackingTitle' | trans }}</h2>
             @if (profile && !profile.trackingEnabled) {
               <p class="text-xs text-amber-700">
-                ปิดอยู่ — ระบบจะไม่เก็บพฤติกรรมของคุณอีก และข้อมูลเดิมถูกลบไปแล้ว
+                {{ 'accountPrivacy.trackingDisabledHint' | trans }}
               </p>
             }
           </div>
@@ -41,11 +40,11 @@
 
       <!-- Interests -->
       <section class="card-tile">
-        <h2 class="text-lg font-bold text-ink mb-3">ความสนใจที่ระบบวิเคราะห์ได้</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">{{ 'accountPrivacy.interestsTitle' | trans }}</h2>
         @if (!profile || profile.topInterests.length === 0) {
           <app-empty-state
             emoji="🔎"
-            title="ยังไม่มีข้อมูลมากพอที่จะวิเคราะห์ความสนใจของคุณ"
+            [title]="'accountPrivacy.emptyInterests' | trans"
           />
         } @else {
           <ul class="card-tile-body space-y-2.5">
@@ -64,9 +63,9 @@
 
       <!-- Segments -->
       <section class="card-tile">
-        <h2 class="text-lg font-bold text-ink mb-3">กลุ่มของคุณ</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">{{ 'accountPrivacy.segmentsTitle' | trans }}</h2>
         @if (!profile || profile.segments.length === 0) {
-          <app-empty-state emoji="🏷️" title="ยังไม่มีข้อมูล" />
+          <app-empty-state emoji="🏷️" [title]="'accountPrivacy.emptySegments' | trans" />
         } @else {
           <ul class="card-tile-body flex flex-wrap gap-2">
             @for (segment of profile.segments; track segment.code) {
@@ -84,9 +83,9 @@
 
       <!-- Signal counts -->
       <section class="card-tile">
-        <h2 class="text-lg font-bold text-ink mb-3">ข้อมูลที่ระบบเก็บไว้</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">{{ 'accountPrivacy.dataStoredTitle' | trans }}</h2>
         <dl class="card-tile-body grid grid-cols-2 sm:grid-cols-3 gap-3">
-          @for (row of signalCountRows; track row.key) {
+          @for (row of signalCountRows(); track row.key) {
             <div class="p-3 rounded-2xl border border-line text-center">
               <dt class="text-xs text-ink-muted">{{ row.label }}</dt>
               <dd class="text-lg font-extrabold text-ink">{{ profile?.signalCounts?.[row.key] ?? 0 }}</dd>
@@ -99,11 +98,10 @@
       <section class="card-tile">
         <button type="button" class="btn-ghost text-rose-600" [disabled]="deleting()" (click)="confirmDelete()">
           <app-icon name="trash" [size]="16" />
-          {{ deleting() ? 'กำลังลบ…' : 'ลบข้อมูลพฤติกรรมของฉัน' }}
+          {{ deleting() ? ('accountPrivacy.deleting' | trans) : ('accountPrivacy.deleteBtn' | trans) }}
         </button>
         <p class="text-xs text-ink-muted mt-3">
-          ระบบเก็บประวัติการเปิดดูและการค้นหาไว้ {{ profile?.dataRetentionDays ?? 90 }} วัน
-          จากนั้นจะลบอัตโนมัติ
+          {{ 'accountPrivacy.retentionHint' | trans:{ days: profile?.dataRetentionDays ?? 90 } }}
         </p>
       </section>
     </div>
