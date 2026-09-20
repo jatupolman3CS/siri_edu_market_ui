@@ -335,6 +335,14 @@ export class SellerUploadPage {
     this.upload.set(null);
     this.fileSizeLabel.set(SellerUploadPage.formatFileSize(f.size));
 
+    if (f.name.toLowerCase().endsWith('.pdf')) {
+      void SellerUploadPage.readPdfPageCount(f).then((count) => {
+        if (count && count > 0 && this.pages() === 0) {
+          this.pages.set(count);
+        }
+      });
+    }
+
     void (async () => {
       this.uploading.set(true);
       try {
@@ -355,6 +363,18 @@ export class SellerUploadPage {
         this.uploading.set(false);
       }
     })();
+  }
+
+  private static async readPdfPageCount(file: File): Promise<number | null> {
+    try {
+      const buf = await file.arrayBuffer();
+      const text = new TextDecoder('latin1').decode(new Uint8Array(buf));
+      const matches = [...text.matchAll(/\/Count\s+(\d+)/g)];
+      if (!matches.length) return null;
+      return Math.max(...matches.map((m) => parseInt(m[1], 10)));
+    } catch {
+      return null;
+    }
   }
 
   selectListedMainFile(fileId: string): void {
@@ -877,7 +897,10 @@ export class SellerUploadPage {
 
             if (tpl.config) {
               try {
-                await this.watermarkService.saveConfig(doc.id, tpl.config);
+                await this.watermarkService.saveConfig(doc.id, {
+                  ...tpl.config,
+                  previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim() || tpl.config.previewWatermarkSubtitle,
+                });
               } catch {
                 // silent fallback if endpoint fails
               }

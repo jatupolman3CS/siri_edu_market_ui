@@ -93,7 +93,7 @@
         }
         <input
           type="search"
-          class="input-soft ml-auto !w-auto min-w-[220px] text-sm"
+          class="input-soft w-full sm:w-auto sm:min-w-[220px] sm:ml-auto text-sm"
           [placeholder]="'library.searchPlaceholder' | trans"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
@@ -121,7 +121,7 @@
           [description]="'library.notFoundDesc' | trans"
         />
       } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="document-card-grid">
           @for (item of filteredLibrary(); track item.document.id) {
             <article class="card-soft overflow-hidden flex flex-col">
               <app-document-card [doc]="item.document" density="compact" [isOwned]="true" />

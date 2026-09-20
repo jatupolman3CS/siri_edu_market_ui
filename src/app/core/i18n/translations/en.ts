@@ -1473,6 +1473,7 @@ export const en: TranslationKeys = {
     "accordingToWatermarkSettings": "Per watermark settings",
     "enabled": "Enabled",
     "estimatedManual": "Estimated (manual)",
+    "autoDetected": "Auto-detected",
     "docNotFoundOrNoPermission": "This document was not found or you do not have permission to edit",
     "nextStep": "Next step",
     "prevStep": "Previous",

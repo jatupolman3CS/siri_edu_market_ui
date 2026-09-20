@@ -77,7 +77,19 @@
         class="lg:hidden sticky top-0 z-20 bg-white border-b border-line w-full"
       >
         <div class="flex flex-wrap items-center justify-between px-4 py-2.5 min-h-[4rem] gap-2">
-          <app-logo link="/seller" />
+          <div class="flex items-center gap-2">
+            <!-- Hamburger to open sidebar drawer -->
+            <button
+              type="button"
+              (click)="toggleSidebar()"
+              class="btn-icon !w-9 !h-9"
+              [attr.aria-label]="sidebarOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
+              [attr.aria-expanded]="sidebarOpen()"
+            >
+              <app-icon [name]="sidebarOpen() ? 'close' : 'menu'" [size]="20" />
+            </button>
+            <app-logo link="/seller" />
+          </div>
           <div class="flex items-center gap-1.5 shrink-0">
             <app-notification-bell variant="icon" />
             <a routerLink="/" class="btn-ghost !py-1.5 !px-2.5 text-xs whitespace-nowrap">
@@ -112,6 +124,91 @@
           ></div>
         </div>
       </header>
+
+      <!-- Mobile sidebar drawer overlay -->
+      @if (sidebarOpen()) {
+        <div class="lg:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
+          <!-- Backdrop -->
+          <div
+            class="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+            (click)="closeSidebar()"
+          ></div>
+          <!-- Sidebar panel -->
+          <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-white shadow-pop overflow-hidden">
+            <div class="shrink-0 p-5 border-b border-line">
+              <div class="flex items-center justify-between">
+                <app-logo link="/seller" />
+                <div class="flex items-center gap-1.5">
+                  <app-notification-bell variant="icon" />
+                  <button
+                    type="button"
+                    (click)="closeSidebar()"
+                    class="btn-icon !w-8 !h-8"
+                    [attr.aria-label]="'header.closeMenu' | trans"
+                  >
+                    <app-icon name="close" [size]="18" />
+                  </button>
+                </div>
+              </div>
+              <div class="mt-2.5 pl-1">
+                <span class="pill-pink !text-[10px]">
+                  <app-icon name="dashboard" [size]="11" />
+                  STUDIO MODE
+                </span>
+              </div>
+            </div>
+
+            <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto p-4 pr-5">
+              @for (item of navItems(); track item.href) {
+                <a
+                  [routerLink]="item.href"
+                  routerLinkActive="!bg-pink-50 !text-pink-600 !border-pink-200"
+                  [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                  class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                  (click)="closeSidebar()"
+                >
+                  <app-icon [name]="item.icon" [size]="18" />
+                  <span class="flex-1 truncate">{{ item.label }}</span>
+                </a>
+              }
+            </nav>
+
+            <div class="shrink-0 p-4 pt-3 border-t border-line flex flex-col gap-1">
+              <a
+                routerLink="/"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                (click)="closeSidebar()"
+              >
+                <app-icon name="arrow-left" [size]="16" />
+                {{ 'nav.backToMarket' | trans }}
+              </a>
+              <button
+                type="button"
+                (click)="signOut(); closeSidebar()"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-rose-500 hover:bg-rose-50 transition-colors"
+              >
+                <app-icon name="logout" [size]="16" />
+                {{ 'nav.signOut' | trans }}
+              </button>
+              @if (auth.user(); as u) {
+                <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-pink-50 border border-line">
+                  <img
+                    appImgFallback
+                    [src]="avatarSrc()"
+                    class="w-8 h-8 rounded-full object-cover ring-2 ring-white shrink-0"
+                    [alt]="u.name"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-bold text-ink truncate">{{ u.name }}</div>
+                    <div class="text-xs text-ink-muted truncate">Siri Studio</div>
+                  </div>
+                  <app-language-switcher variant="dropdown" placement="topRight" />
+                </div>
+              }
+            </div>
+          </aside>
+        </div>
+      }
 
       <!-- Main -->
       <main class="flex-1 min-w-0">

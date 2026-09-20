@@ -682,6 +682,12 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
     }
   }
 
+  @media (min-width: 1024px) {
+    .document-card-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
   @media (min-width: 1280px) {
     .document-card-grid {
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -738,6 +744,47 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 
   .glass-blob {
     background: radial-gradient(60% 60% at 50% 40%, rgba(255, 184, 206, 0.45) 0%, rgba(255, 247, 250, 0) 70%);
+  }
+}
+
+/* ---------------- Mobile Responsive Overrides (< 576px) ---------------- */
+@media (max-width: 575px) {
+  /* NG-ZORRO Modal — responsive on small screens */
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px auto !important;
+    border-radius: 1.25rem !important;
+  }
+
+  .ant-modal-content {
+    border-radius: 1.25rem !important;
+  }
+
+  .ant-modal-header {
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    padding: 1rem 1.25rem 0.875rem 1.25rem !important;
+  }
+
+  .ant-modal-footer {
+    border-radius: 0 0 1.25rem 1.25rem !important;
+    padding: 0.875rem 1.25rem !important;
+  }
+
+  .ant-modal-body {
+    padding: 1rem !important;
+  }
+
+  .ant-modal-confirm .ant-modal-content {
+    padding: 1.25rem !important;
+  }
+
+  /* NG-ZORRO Drawer — full-width and padded on mobile */
+  .ant-drawer-body {
+    padding: 16px !important;
+  }
+
+  .ant-drawer-content-wrapper {
+    width: 100vw !important;
   }
 }
 

@@ -294,6 +294,7 @@ export class WatermarkEditorPage {
       previewWatermarkSubtitle: this.watermarkText().trim(),
       previewWatermarkFontFamily: this.previewWatermarkFontFamily(),
       config: {
+        previewWatermarkSubtitle: this.watermarkText().trim(),
         previewWatermarkPosition: this.watermarkPosition(),
         previewWatermarkOpacity: this.watermarkOpacity() / 100,
         previewWatermarkColor: this.watermarkColor(),

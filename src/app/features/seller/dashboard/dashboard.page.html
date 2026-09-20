@@ -301,7 +301,7 @@
         <section class="card-tile bg-gradient-pink !border-pink-200">
           <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.pendingPayout' | trans }}</h2>
           <p class="text-xs text-ink-muted mb-4">{{ 'seller.pendingPayoutSubtitle' | trans }}</p>
-          <div class="text-4xl font-extrabold text-pink-700 leading-none">
+          <div class="text-3xl sm:text-4xl font-extrabold text-pink-700 leading-none">
             {{ seller.stats().pendingPayout | thb }}
           </div>
           @if (seller.nextPayoutDate(); as payoutDate) {
@@ -390,7 +390,7 @@
           <!-- Output -->
           <div class="card-tile bg-white">
             <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">{{ 'seller.calcYourRevenue' | trans: { percent: sellerSharePercent() } }}</div>
-            <div class="text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
+            <div class="text-3xl sm:text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
             <div class="text-sm text-ink-muted mb-5">{{ 'seller.calcPerMonthNet' | trans }}</div>
 
             <ul class="space-y-3 text-sm border-t border-line pt-4">

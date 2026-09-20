@@ -3,13 +3,13 @@
 >
   <!-- Top Utility Micro-Bar (Desktop & Tablet) -->
   <div class="hidden md:block border-b border-pink-100/70 bg-gradient-to-r from-pink-50/90 via-cream/40 to-pink-50/90 text-xs text-ink-muted">
-    <div class="max-w-7xl mx-auto px-4 lg:px-6 h-8 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6 h-8 flex items-center justify-between gap-2">
       <!-- Left side: Seller CTA & Platform Tagline -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 min-w-0 shrink">
         @if (auth.isSeller() || auth.isAdmin()) {
           <a
             routerLink="/seller"
-            class="flex items-center gap-1.5 font-semibold text-pink-600 hover:text-pink-700 transition-colors"
+            class="flex items-center gap-1.5 font-semibold text-pink-600 hover:text-pink-700 transition-colors shrink-0 whitespace-nowrap"
           >
             <app-icon name="dashboard" [size]="14" />
             <span>{{ 'nav.studio' | trans }} ({{ 'nav.sellerCenter' | trans }})</span>
@@ -17,20 +17,20 @@
         } @else {
           <a
             routerLink="/become-seller"
-            class="flex items-center gap-1.5 font-medium text-pink-600 hover:text-pink-700 transition-colors"
+            class="flex items-center gap-1.5 font-medium text-pink-600 hover:text-pink-700 transition-colors shrink-0 whitespace-nowrap"
           >
             <app-icon name="dashboard" [size]="14" />
             <span>{{ 'home.becomeSeller' | trans }}</span>
           </a>
         }
-        <span class="text-pink-200">|</span>
-        <span class="hidden lg:inline text-ink-muted/80">
+        <span class="text-pink-200 shrink-0">|</span>
+        <span class="hidden lg:inline text-ink-muted/80 truncate">
           {{ 'header.topbarSlogan' | trans }}
         </span>
       </div>
 
       <!-- Right side: Notifications & Language -->
-      <div class="flex items-center gap-3.5">
+      <div class="flex items-center gap-3.5 shrink-0 whitespace-nowrap ml-auto">
         @if (auth.isAuthenticated()) {
           <app-notification-bell variant="topbar" />
           <span class="text-pink-200">|</span>
@@ -42,12 +42,12 @@
 
   <!-- Main Hero Navbar -->
   <div class="max-w-7xl mx-auto px-4 lg:px-6">
-    <div class="flex items-center gap-3 md:gap-5 py-3 md:py-3.5">
+    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 py-3 md:py-3.5">
       <!-- Mobile nav toggle button -->
       <button
         #mobileMenuToggle
         type="button"
-        class="btn-icon md:hidden !w-9 !h-9"
+        class="btn-icon md:hidden !w-9 !h-9 shrink-0"
         [attr.aria-expanded]="mobileMenuOpen()"
         aria-controls="mobile-nav-panel"
         [attr.aria-label]="mobileMenuOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
@@ -62,14 +62,14 @@
       </div>
 
       <!-- Center: Prominent, Expansive Search Bar (Shopee-inspired large search) -->
-      <div class="flex-1 max-w-2xl xl:max-w-3xl hidden md:flex flex-col justify-center mx-2 lg:mx-4">
+      <div class="flex-1 min-w-0 md:max-w-xs lg:max-w-lg xl:max-w-2xl 2xl:max-w-3xl hidden md:flex flex-col justify-center mx-1.5 lg:mx-3">
         <form class="relative w-full" (ngSubmit)="search()">
           <div class="search-container relative flex items-center rounded-2xl border-2 border-pink-300 bg-pink-50/30">
             <!-- Search icon button on left -->
             <button
               type="submit"
               [attr.aria-label]="'header.searchAria' | trans"
-              class="pl-3.5 pr-2 py-2 text-ink-muted hover:text-pink-600 focus:text-pink-600 transition-colors flex items-center justify-center cursor-pointer"
+              class="pl-3.5 pr-2 py-2 text-ink-muted hover:text-pink-600 focus:text-pink-600 transition-colors flex items-center justify-center cursor-pointer shrink-0"
               [title]="'header.searchAria' | trans"
             >
               <app-icon name="search" [size]="18" />
@@ -82,7 +82,7 @@
               [ngModel]="query()"
               (ngModelChange)="query.set($event)"
               [placeholder]="'header.searchPlaceholder' | trans"
-              class="w-full py-2.5 pr-2 bg-transparent text-sm text-ink placeholder:text-ink-muted/70 focus:outline-none"
+              class="w-full py-2.5 pr-2 bg-transparent text-sm text-ink placeholder:text-ink-muted/70 focus:outline-none min-w-0"
             />
 
             <!-- Clear button -->
@@ -90,7 +90,7 @@
               <button
                 type="button"
                 (click)="clearQuery()"
-                class="p-1.5 mr-1 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-pink-100 cursor-pointer"
+                class="p-1.5 mr-1 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-pink-100 cursor-pointer shrink-0"
                 [title]="'header.clearSearch' | trans"
               >
                 <app-icon name="close" [size]="14" />
@@ -101,22 +101,22 @@
             <button
               type="submit"
               [attr.aria-label]="'header.searchAria' | trans"
-              class="m-1 px-4 lg:px-6 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 active:scale-95 text-white font-semibold text-sm flex items-center gap-1.5 transition-all shadow-soft cursor-pointer shrink-0"
+              class="m-1 px-3.5 lg:px-5 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 active:scale-95 text-white font-semibold text-sm flex items-center gap-1.5 transition-all shadow-soft cursor-pointer shrink-0 whitespace-nowrap"
             >
               <app-icon name="search" [size]="16" />
-              <span class="hidden lg:inline">{{ 'common.search' | trans }}</span>
+              <span class="hidden lg:inline whitespace-nowrap">{{ 'common.search' | trans }}</span>
             </button>
           </div>
         </form>
 
         <!-- Trending / Quick Search Keywords (Under Search Input like Shopee) -->
-        <div class="flex items-center gap-2 mt-1.5 overflow-x-auto no-scrollbar text-xs">
-          <span class="text-ink-muted text-[11px] shrink-0">{{ 'header.popularSearches' | trans }}:</span>
+        <div class="flex items-center gap-2 mt-1.5 overflow-x-auto no-scrollbar text-xs max-w-full">
+          <span class="text-ink-muted text-[11px] shrink-0 whitespace-nowrap">{{ 'header.popularSearches' | trans }}:</span>
           @for (kw of quickSearches(); track kw) {
             <button
               type="button"
               (click)="searchTag(kw)"
-              class="chip-tag px-2 py-0.5 rounded-full text-ink-soft bg-pink-50/60 border border-pink-100/80 whitespace-nowrap text-[11px] font-medium cursor-pointer"
+              class="chip-tag px-2 py-0.5 rounded-full text-ink-soft bg-pink-50/60 border border-pink-100/80 whitespace-nowrap text-[11px] font-medium cursor-pointer shrink-0"
             >
               {{ kw }}
             </button>
@@ -125,7 +125,7 @@
       </div>
 
       <!-- Right Actions: Wishlist, Library, Cart, User Menu -->
-      <div class="flex items-center gap-2 ml-auto">
+      <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0 whitespace-nowrap">
         <!-- Search icon button for mobile (< md) -->
         <a routerLink="/marketplace" class="btn-icon md:hidden !w-9 !h-9" [title]="'common.search' | trans">
           <app-icon name="search" [size]="18" />
@@ -161,7 +161,7 @@
         <!-- Library (My materials) -->
         <a
           routerLink="/library"
-          class="btn-icon !w-9 !h-9 sm:!w-10 sm:!h-10"
+          class="btn-icon !w-9 !h-9 sm:!w-10 sm:!h-10 hidden sm:inline-flex"
           [title]="'header.libraryTitle' | trans"
         >
           <app-icon name="package" [size]="18" />
@@ -275,14 +275,14 @@
             </ul>
           </nz-dropdown-menu>
         } @else {
-          <div class="flex items-center gap-1.5 ml-1">
+          <div class="flex items-center gap-1.5 ml-1 shrink-0 whitespace-nowrap">
             <a
               routerLink="/auth/login"
-              class="hidden sm:inline-flex items-center text-sm font-medium text-ink hover:text-pink-600 px-3 py-1.5 rounded-full hover:bg-pink-50 transition-colors"
+              class="hidden sm:inline-flex items-center text-sm font-medium text-ink hover:text-pink-600 px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-pink-50 transition-colors whitespace-nowrap shrink-0"
             >
               {{ 'nav.signIn' | trans }}
             </a>
-            <a routerLink="/auth/register" class="btn-pink !px-3.5 sm:!px-4 !py-2 text-xs sm:text-sm">
+            <a routerLink="/auth/register" class="btn-pink !px-3 sm:!px-4 !py-2 text-xs sm:text-sm whitespace-nowrap shrink-0">
               {{ 'nav.register' | trans }}
             </a>
           </div>
@@ -411,6 +411,27 @@
             (click)="closeMobileMenu()"
           >
             {{ 'nav.myAccount' | trans }}
+          </a>
+          <a
+            routerLink="/library"
+            class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+            (click)="closeMobileMenu()"
+          >
+            {{ 'nav.library' | trans }}
+          </a>
+          <a
+            routerLink="/wishlist"
+            class="px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-soft hover:text-pink-600 hover:bg-pink-50 transition-colors"
+            (click)="closeMobileMenu()"
+          >
+            {{ 'header.wishlistTitle' | trans }}
+            @if (wishlist.count() > 0) {
+              <span
+                class="ml-1.5 inline-flex min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold items-center justify-center align-middle"
+              >
+                {{ wishlist.count() }}
+              </span>
+            }
           </a>
           <a
             routerLink="/orders"

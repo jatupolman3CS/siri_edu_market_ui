@@ -7,7 +7,7 @@
       </header>
 
       <!-- Stats -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <app-stat-card
           [label]="'admin.statGmvMonth' | trans"
           [value]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb"

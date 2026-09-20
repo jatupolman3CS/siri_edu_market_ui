@@ -47,7 +47,7 @@
         <!-- Price -->
         <div class="card-soft p-5 mt-auto">
           <div class="flex items-baseline gap-3 mb-1">
-            <span class="text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
+            <span class="text-3xl sm:text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
             <span class="text-base text-ink-muted line-through">{{ b.originalPrice | thb }}</span>
           </div>
           @if (savings() > 0) {

@@ -316,7 +316,7 @@
                     <!-- Rating summary -->
                     <div class="flex flex-col sm:flex-row gap-6 p-6 card-cream mb-6">
                       <div class="flex flex-col items-center sm:items-start">
-                        <div class="text-5xl font-extrabold text-ink leading-none">
+                        <div class="text-4xl sm:text-5xl font-extrabold text-ink leading-none">
                           {{ d.rating.toFixed(1) }}
                         </div>
                         <app-rating-stars [value]="d.rating" [size]="18" [showValue]="false" />
@@ -564,10 +564,10 @@
               <div class="card-soft p-6">
                 <div class="flex items-end gap-3 mb-5">
                   @if (d.isFree) {
-                    <span class="text-4xl font-extrabold text-emerald-600 leading-none">{{ 'product.freePill' | trans }}</span>
+                    <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">{{ 'product.freePill' | trans }}</span>
                     <span class="text-xs text-emerald-600">{{ 'product.downloadImmediately' | trans }}</span>
                   } @else {
-                    <span class="text-4xl font-extrabold text-ink leading-none">{{ d.price | thb }}</span>
+                    <span class="text-3xl sm:text-4xl font-extrabold text-ink leading-none">{{ d.price | thb }}</span>
                     @if (d.originalPrice) {
                       <div class="flex flex-col">
                         <span class="text-base text-ink-muted line-through leading-none">{{ d.originalPrice | thb }}</span>

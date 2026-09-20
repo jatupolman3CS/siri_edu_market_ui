@@ -1471,6 +1471,7 @@ export const th = {
     "accordingToWatermarkSettings": "ตามที่ตั้งไว้ในลายน้ำ",
     "enabled": "เปิดใช้งาน",
     "estimatedManual": "ประมาณการ (ตั้งเอง)",
+    "autoDetected": "ตรวจจับอัตโนมัติ",
     "docNotFoundOrNoPermission": "ไม่พบเอกสารนี้ หรือคุณไม่มีสิทธิ์แก้ไข",
     "nextStep": "ขั้นตอนถัดไป",
     "prevStep": "ก่อนหน้า",

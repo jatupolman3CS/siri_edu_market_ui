@@ -1,7 +1,7 @@
 <nz-drawer
       [nzVisible]="cart.drawerOpen()"
       nzPlacement="right"
-      [nzWidth]="420"
+      [nzWidth]="drawerWidth()"
       [nzClosable]="false"
       [nzBodyStyle]="{ padding: '0' }"
       (nzOnClose)="cart.closeDrawer()"

@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
@@ -51,6 +53,9 @@ export class AdminLayoutComponent {
 
   readonly newFeedbackCount = signal<number>(0);
 
+  /** Mobile sidebar drawer state — toggled by hamburger button */
+  readonly sidebarOpen = signal(false);
+
   constructor() {
     effect(() => {
       if (this.auth.isAuthenticated()) {
@@ -58,6 +63,22 @@ export class AdminLayoutComponent {
         void this.loadNewFeedbackCount();
       }
     });
+
+    // Close sidebar on every navigation
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.sidebarOpen.set(false));
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update((v) => !v);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 
   private async loadNewFeedbackCount(): Promise<void> {

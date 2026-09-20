@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../../../shared/components/logo/logo.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -39,6 +41,9 @@ export class SellerLayoutComponent {
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
 
+  /** Mobile sidebar drawer state — toggled by hamburger button */
+  readonly sidebarOpen = signal(false);
+
   readonly avatarSrc = computed(() => {
     const r2Url = resolvePublicUrl(this.me.profile()?.avatarUrl);
     if (r2Url) return r2Url;
@@ -53,6 +58,22 @@ export class SellerLayoutComponent {
         this.me.loadProfile().subscribe({ error: () => { /* silent */ } });
       }
     });
+
+    // Close sidebar on every navigation
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.sidebarOpen.set(false));
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update((v) => !v);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 
   signOut(): void {

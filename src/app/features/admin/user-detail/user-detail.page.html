@@ -188,7 +188,7 @@
       </h3>
 
       @if (walletSummary(); as w) {
-        <div class="grid grid-cols-3 gap-3 pt-2 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-sm">
           <div>
             <div class="text-xs text-ink-muted">{{ 'admin.userDetailAdmin.walletBalance' | trans }}</div>
             <div class="text-lg font-extrabold text-ink">{{ w.balance | thb }}</div>

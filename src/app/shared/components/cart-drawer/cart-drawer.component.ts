@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -31,6 +31,23 @@ export class CartDrawerComponent {
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
   private readonly i18n = inject(TranslationService);
+
+  /**
+   * Responsive drawer width: full-width on mobile (< 480px), 420px otherwise.
+   */
+  private readonly _windowWidth = signal(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  readonly drawerWidth = computed(() => {
+    const w = this._windowWidth();
+    return w < 480 ? w : 420;
+  });
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const onResize = () => this._windowWidth.set(window.innerWidth);
+      window.addEventListener('resize', onResize);
+    }
+  }
 
   checkout(): void {
     this.cart.closeDrawer();

@@ -208,19 +208,25 @@
 
                 <!-- cover-image-mode v1 §1/§4 (AC-01): choose custom upload vs. an
                      auto-generated cover rendered from the document's first page. -->
-                <div class="flex gap-2 mb-4">
+                <div class="inline-flex rounded-2xl border border-line bg-gray-100/80 p-1 gap-1 mb-4">
                   <button
                     type="button"
-                    class="btn-ghost !py-1.5 !px-3 text-xs"
-                    [class.btn-primary]="coverImageMode() === 'custom'"
+                    class="px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150"
+                    [class.bg-white]="coverImageMode() === 'custom'"
+                    [class.shadow-xs]="coverImageMode() === 'custom'"
+                    [class.text-ink]="coverImageMode() === 'custom'"
+                    [class.text-ink-muted]="coverImageMode() !== 'custom'"
                     (click)="coverImageMode.set('custom')"
                   >
                     {{ 'seller.uploadCoverManual' | trans }}
                   </button>
                   <button
                     type="button"
-                    class="btn-ghost !py-1.5 !px-3 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
-                    [class.btn-primary]="coverImageMode() === 'auto'"
+                    class="px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                    [class.bg-white]="coverImageMode() === 'auto'"
+                    [class.shadow-xs]="coverImageMode() === 'auto'"
+                    [class.text-ink]="coverImageMode() === 'auto'"
+                    [class.text-ink-muted]="coverImageMode() !== 'auto'"
                     [disabled]="!coverAutoModeAvailable()"
                     [title]="!coverAutoModeAvailable() ? ('seller.autoCoverTooltip' | trans) : ''"
                     (click)="coverImageMode() !== 'auto' && coverAutoModeAvailable() && coverImageMode.set('auto')"
@@ -384,8 +390,15 @@
               </div>
 
               <div class="mt-4">
-                <label class="text-xs font-semibold text-ink-soft mb-2 block">
-                  {{ 'seller.pageCountEstimated' | trans }} <span class="text-ink-muted font-normal">{{ 'seller.estimatedManual' | trans }}</span>
+                <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center gap-1.5">
+                  {{ 'seller.pageCountEstimated' | trans }}
+                  @if (pages() > 0 && file()) {
+                    <span class="pill bg-emerald-100 text-emerald-700 !text-[10px] !py-0">
+                      <app-icon name="check" [size]="10" /> {{ 'seller.autoDetected' | trans }}
+                    </span>
+                  } @else {
+                    <span class="text-ink-muted font-normal">{{ 'seller.estimatedManual' | trans }}</span>
+                  }
                 </label>
                 <input
                   type="number"
@@ -647,28 +660,28 @@
                   <div>
                     <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.priceLabel' | trans }}</label>
                     <div class="relative">
-                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">THB</span>
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold text-xs sm:text-sm select-none pointer-events-none z-10">THB</span>
                       <input
                         [ngModel]="price()"
                         (ngModelChange)="price.set(+$event || 0)"
                         type="number"
                         min="0"
                         step="10"
-                        class="input-soft !pl-9"
+                        class="input-soft !pl-16"
                       />
                     </div>
                   </div>
                   <div>
                     <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.originalPriceLabel' | trans }}</label>
                     <div class="relative">
-                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold">THB</span>
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted font-bold text-xs sm:text-sm select-none pointer-events-none z-10">THB</span>
                       <input
                         [ngModel]="originalPrice()"
                         (ngModelChange)="originalPrice.set(+$event || 0)"
                         type="number"
                         min="0"
                         step="10"
-                        class="input-soft !pl-9"
+                        class="input-soft !pl-16"
                         [class.!border-rose-400]="!!originalPriceError()"
                         [class.!bg-rose-50/30]="!!originalPriceError()"
                         placeholder="0"
