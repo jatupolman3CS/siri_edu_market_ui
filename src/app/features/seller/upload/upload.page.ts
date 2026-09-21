@@ -304,10 +304,18 @@ export class SellerUploadPage {
       );
     } else if (doc.gallery?.length) {
       this.galleryItems.set(
-        doc.gallery.map((publicUrl) => ({ key: '', publicUrl, previewUrl: publicUrl })),
+        doc.gallery.map((rawUrl) => {
+          const publicUrl = resolvePublicUrl(rawUrl);
+          return { key: SellerUploadPage.extractKeyFromDownloadUrl(publicUrl), publicUrl, previewUrl: publicUrl };
+        }),
       );
     } else if (doc.cover) {
-      this.galleryItems.set([{ key: '', publicUrl: doc.cover, previewUrl: doc.cover }]);
+      const publicUrl = resolvePublicUrl(doc.cover);
+      this.galleryItems.set([{
+        key: SellerUploadPage.extractKeyFromDownloadUrl(publicUrl),
+        publicUrl,
+        previewUrl: publicUrl,
+      }]);
     }
     this.step.set(1);
     this.mainFiles.set(doc.mainFiles ?? []);
@@ -353,8 +361,8 @@ export class SellerUploadPage {
             storageKey: data.key,
             originalFileName: f.name,
           });
-          if (!ok) return;
           await this.refreshMainFiles(this.editId());
+          if (!ok) return;
         }
         this.message.success(this.translation.t('seller.serverUploadSuccess'));
       } catch {
@@ -363,6 +371,15 @@ export class SellerUploadPage {
         this.uploading.set(false);
       }
     })();
+  }
+
+  /** Extracts a bare storage key from a backend download URL. Returns '' if not recognised. */
+  private static extractKeyFromDownloadUrl(url: string): string {
+    const marker = '/api/files/download/';
+    const idx = url.indexOf(marker);
+    if (idx < 0) return '';
+    const encoded = url.slice(idx + marker.length).split('?')[0];
+    return encoded.split('/').map((p) => { try { return decodeURIComponent(p); } catch { return p; } }).join('/');
   }
 
   private static async readPdfPageCount(file: File): Promise<number | null> {

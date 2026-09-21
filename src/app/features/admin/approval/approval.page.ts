@@ -215,37 +215,49 @@ export class AdminApprovalPage {
   async openSaleFile(): Promise<void> {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key, true);
-    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
-    if (url) window.open(url, '_blank', 'noopener');
+    const win = window.open('', '_blank');
+    try {
+      const rawUrl = await this.admin.getFileDownloadUrl(key, true);
+      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
+      if (url && win) { win.location.href = url; } else { win?.close(); }
+    } catch { win?.close(); }
   }
 
   async downloadSaleFile(): Promise<void> {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key, false);
-    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
-    if (url) window.open(url, '_blank', 'noopener');
+    const win = window.open('', '_blank');
+    try {
+      const rawUrl = await this.admin.getFileDownloadUrl(key, false);
+      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
+      if (url && win) { win.location.href = url; } else { win?.close(); }
+    } catch { win?.close(); }
   }
 
   async openMainFile(storageKey: string | null | undefined): Promise<void> {
     const key = storageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key, true);
-    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
-    if (url) window.open(url, '_blank', 'noopener');
+    const win = window.open('', '_blank');
+    try {
+      const rawUrl = await this.admin.getFileDownloadUrl(key, true);
+      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
+      if (url && win) { win.location.href = url; } else { win?.close(); }
+    } catch { win?.close(); }
   }
 
   async downloadMainFile(storageKey: string | null | undefined): Promise<void> {
     const key = storageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key, false);
-    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
-    if (url) window.open(url, '_blank', 'noopener');
+    const win = window.open('', '_blank');
+    try {
+      const rawUrl = await this.admin.getFileDownloadUrl(key, false);
+      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
+      if (url && win) { win.location.href = url; } else { win?.close(); }
+    } catch { win?.close(); }
   }
 
   readonly prescreening = signal<boolean>(false);

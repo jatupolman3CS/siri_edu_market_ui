@@ -259,16 +259,18 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
 
   it('downloadMainFile() opens window with resolved download URL', async () => {
     stubLoad();
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    // Pre-open window pattern: window.open('', '_blank') is called synchronously,
+    // then win.location.href is set to the resolved URL after the async presigned-URL fetch.
+    const mockWin = { location: { href: '' }, close: vi.fn() };
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => mockWin as unknown as Window);
     const { component } = render(async () => {
       throw new Error('upload should not be called');
     });
     await settle();
 
     await component.downloadMainFile();
-    expect(openSpy).toHaveBeenCalled();
-    const openedUrl = openSpy.mock.calls[0][0] as string;
-    expect(openedUrl).toContain('orig/main.pdf');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(mockWin.location.href).toContain('orig/main.pdf');
     openSpy.mockRestore();
   });
 });

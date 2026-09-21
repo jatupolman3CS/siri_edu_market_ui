@@ -494,10 +494,21 @@ export class AdminDocumentDetailPage {
   async downloadMainFile(): Promise<void> {
     const key = this.doc()?.fileStorageKey?.trim();
     if (!key) return;
-    const rawUrl = await this.admin.getFileDownloadUrl(key);
-    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken());
-    if (url) window.open(url, '_blank', 'noopener');
+    // Open the window synchronously within the click gesture so popup blockers
+    // don't interfere with the window.open call that would otherwise happen after an await.
+    const win = window.open('', '_blank');
+    try {
+      const rawUrl = await this.admin.getFileDownloadUrl(key);
+      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken());
+      if (url && win) {
+        win.location.href = url;
+      } else {
+        win?.close();
+      }
+    } catch {
+      win?.close();
+    }
   }
 
   async onMainFile(ev: Event): Promise<void> {
