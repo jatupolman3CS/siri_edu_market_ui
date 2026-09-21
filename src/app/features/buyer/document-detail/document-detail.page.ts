@@ -460,10 +460,21 @@ export class BuyerDocumentDetailPage {
    * itself is started by `LibraryService` exactly as before.
    */
   private async downloadWithNotice(documentId: string): Promise<void> {
-    const result = await this.library.download(documentId);
-    const notice = result?.watermarkNotice;
-    if (notice) {
-      this.message.info(notice, { nzDuration: 8000 });
+    const win = window.open('', '_blank');
+    try {
+      const result = await this.library.download(documentId);
+      const url = result?.downloadUrl;
+      if (url && win) {
+        win.location.href = url;
+      } else {
+        win?.close();
+      }
+      const notice = result?.watermarkNotice;
+      if (notice) {
+        this.message.info(notice, { nzDuration: 8000 });
+      }
+    } catch {
+      win?.close();
     }
   }
 

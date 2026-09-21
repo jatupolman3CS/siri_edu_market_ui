@@ -477,12 +477,21 @@ export class SellerUploadPage {
   }
 
   downloadMainFile(fileId: string): void {
+    const docId = this.editId();
+    if (!docId) return;
+    const win = window.open('', '_blank');
     void (async () => {
-      const docId = this.editId();
-      if (!docId) return;
-      const rawUrl = await this.seller.getMainFileDownloadUrl(docId, fileId);
-      const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
-      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+      try {
+        const rawUrl = await this.seller.getMainFileDownloadUrl(docId, fileId);
+        const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
+        if (url && win) {
+          win.location.href = url;
+        } else {
+          win?.close();
+        }
+      } catch {
+        win?.close();
+      }
     })();
   }
 

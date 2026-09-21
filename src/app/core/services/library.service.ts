@@ -256,9 +256,6 @@ export class LibraryService {
       );
 
       const url = resolveDownloadUrl(data?.downloadUrl, this.auth.accessToken());
-      if (url) {
-        window.open(url, '_blank', 'noopener');
-      }
       return {
         downloadUrl: url ?? '',
         watermarkApplied: data?.watermarkApplied ?? false,

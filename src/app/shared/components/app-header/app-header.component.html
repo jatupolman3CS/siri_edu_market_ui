@@ -4,27 +4,9 @@
   <!-- Top Utility Micro-Bar (Desktop & Tablet) -->
   <div class="hidden md:block border-b border-pink-100/70 bg-gradient-to-r from-pink-50/90 via-cream/40 to-pink-50/90 text-xs text-ink-muted">
     <div class="max-w-7xl mx-auto px-4 lg:px-6 h-8 flex items-center justify-between gap-2">
-      <!-- Left side: Seller CTA & Platform Tagline -->
+      <!-- Left side: Platform Tagline -->
       <div class="flex items-center gap-3 min-w-0 shrink">
-        @if (auth.isSeller() || auth.isAdmin()) {
-          <a
-            routerLink="/seller"
-            class="flex items-center gap-1.5 font-semibold text-pink-600 hover:text-pink-700 transition-colors shrink-0 whitespace-nowrap"
-          >
-            <app-icon name="dashboard" [size]="14" />
-            <span>{{ 'nav.studio' | trans }} ({{ 'nav.sellerCenter' | trans }})</span>
-          </a>
-        } @else {
-          <a
-            routerLink="/become-seller"
-            class="flex items-center gap-1.5 font-medium text-pink-600 hover:text-pink-700 transition-colors shrink-0 whitespace-nowrap"
-          >
-            <app-icon name="dashboard" [size]="14" />
-            <span>{{ 'home.becomeSeller' | trans }}</span>
-          </a>
-        }
-        <span class="text-pink-200 shrink-0">|</span>
-        <span class="hidden lg:inline text-ink-muted/80 truncate">
+        <span class="text-ink-muted/80 truncate">
           {{ 'header.topbarSlogan' | trans }}
         </span>
       </div>
@@ -42,27 +24,31 @@
 
   <!-- Main Hero Navbar -->
   <div class="max-w-7xl mx-auto px-4 lg:px-6">
-    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 py-3 md:py-3.5">
-      <!-- Mobile nav toggle button -->
-      <button
-        #mobileMenuToggle
-        type="button"
-        class="btn-icon md:hidden !w-9 !h-9 shrink-0"
-        [attr.aria-expanded]="mobileMenuOpen()"
-        aria-controls="mobile-nav-panel"
-        [attr.aria-label]="mobileMenuOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
-        (click)="toggleMobileMenu()"
-      >
-        <app-icon [name]="mobileMenuOpen() ? 'close' : 'menu'" [size]="20" />
-      </button>
+    <div class="flex md:grid md:grid-cols-[auto_1fr_auto] items-center gap-x-3 md:gap-x-4 py-3 md:py-3.5">
+      <!-- Left: Mobile Toggle + Logo -->
+      <div class="flex items-center gap-2">
+        <button
+          #mobileMenuToggle
+          type="button"
+          class="btn-icon md:hidden !w-9 !h-9 shrink-0"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          aria-controls="mobile-nav-panel"
+          [attr.aria-label]="mobileMenuOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
+          (click)="toggleMobileMenu()"
+        >
+          <app-icon [name]="mobileMenuOpen() ? 'close' : 'menu'" [size]="20" />
+        </button>
 
-      <!-- Logo -->
-      <div class="shrink-0">
-        <app-logo />
+        <!-- Logo -->
+        <div class="shrink-0">
+          <app-logo />
+        </div>
       </div>
 
-      <!-- Center: Prominent, Expansive Search Bar (Shopee-inspired large search) -->
-      <div class="flex-1 min-w-0 md:max-w-xs lg:max-w-lg xl:max-w-2xl 2xl:max-w-3xl hidden md:flex flex-col justify-center mx-1.5 lg:mx-3">
+      <!-- Center: Search Bar + Seller Center Button -->
+      <div class="hidden md:flex items-start gap-2 min-w-0">
+        <!-- Search (flex-1) -->
+        <div class="flex-1 min-w-0 flex flex-col">
         <form class="relative w-full" (ngSubmit)="search()">
           <div class="search-container relative flex items-center rounded-2xl border-2 border-pink-300 bg-pink-50/30">
             <!-- Search icon button on left -->
@@ -122,10 +108,29 @@
             </button>
           }
         </div>
+        </div>
+        <!-- Seller Center prominent button -->
+        @if (auth.isSeller() || auth.isAdmin()) {
+          <a
+            routerLink="/seller"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white font-semibold text-sm shadow-md hover:shadow-lg hover:from-pink-600 hover:to-rose-600 active:scale-95 transition-all shrink-0 whitespace-nowrap self-start"
+          >
+            <app-icon name="dashboard" [size]="16" />
+            <span>{{ 'nav.sellerCenter' | trans }}</span>
+          </a>
+        } @else {
+          <a
+            routerLink="/become-seller"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white font-semibold text-sm shadow-md hover:shadow-lg hover:from-pink-600 hover:to-rose-600 active:scale-95 transition-all shrink-0 whitespace-nowrap self-start"
+          >
+            <app-icon name="dashboard" [size]="16" />
+            <span>{{ 'nav.sellerCenter' | trans }}</span>
+          </a>
+        }
       </div>
 
       <!-- Right Actions: Wishlist, Library, Cart, User Menu -->
-      <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0 whitespace-nowrap">
+      <div class="flex items-center gap-1.5 sm:gap-2 ml-auto md:ml-0 shrink-0 whitespace-nowrap justify-end">
         <!-- Search icon button for mobile (< md) -->
         <a routerLink="/marketplace" class="btn-icon md:hidden !w-9 !h-9" [title]="'common.search' | trans">
           <app-icon name="search" [size]="18" />
