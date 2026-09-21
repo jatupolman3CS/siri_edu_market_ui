@@ -257,7 +257,7 @@ export class SellerService {
         body: { amount, note: note?.trim() || null },
         throwOnError: true,
       });
-      await this.loadEarnings();
+      void this.loadEarnings();
       return { ok: true };
     } catch (e) {
       if (extractErrorStatus(e) === 403 && extractErrorCode(e) === 'seller_profile_required') {
@@ -273,7 +273,7 @@ export class SellerService {
   async cancelPayout(payoutId: string): Promise<{ ok: boolean }> {
     try {
       await deleteApiSellerPayoutsByPayoutId({ path: { payoutId }, throwOnError: true });
-      await this.loadEarnings();
+      void this.loadEarnings();
       return { ok: true };
     } catch (e) {
       this.apiFail.report('errors.context.cancelPayout', e);

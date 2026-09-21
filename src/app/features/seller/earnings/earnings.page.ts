@@ -229,8 +229,11 @@ export class SellerEarningsPage {
       if (result.ok) {
         this.message.success(this.translation.t('seller.earnings.payoutRequestSent'));
         this.cancelRequest();
-        void this.loadPayouts();
-        void this.loadLedger();
+        void Promise.all([
+          this.seller.loadEarnings(),
+          this.loadPayouts(),
+          this.loadLedger(),
+        ]);
       }
     } finally {
       this.submitting.set(false);
@@ -255,8 +258,11 @@ export class SellerEarningsPage {
       const result = await this.seller.cancelPayout(payoutId);
       if (result.ok) {
         this.message.success(this.translation.t('seller.earnings.payoutCancelled'));
-        void this.loadPayouts();
-        void this.loadLedger();
+        void Promise.all([
+          this.seller.loadEarnings(),
+          this.loadPayouts(),
+          this.loadLedger(),
+        ]);
       }
     } finally {
       this.cancellingId.set(null);
