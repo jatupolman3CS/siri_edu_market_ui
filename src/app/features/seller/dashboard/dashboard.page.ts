@@ -9,7 +9,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { PlatformStatsService, SellerService } from '../../../core/services';
+import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { DEFAULT_STORE_READINESS } from '../../../core/models';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
@@ -47,6 +47,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 export class SellerDashboardPage {
   readonly seller = inject(SellerService);
   readonly platformStats = inject(PlatformStatsService);
+  readonly catalog = inject(CatalogService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
   private readonly translation = inject(TranslationService);
@@ -100,11 +101,16 @@ export class SellerDashboardPage {
   readonly yearlyEarnings = computed(() => this.monthlyEarnings() * 12);
 
   constructor() {
+    this.catalog.ensureCategories();
     void this.seller.refreshDashboard();
     // real-data-stats v1 §4.6: "โอนรอบถัดไป" reads `seller.nextPayoutDate()`, sourced from the
     // same earnings endpoint the /seller/earnings page uses (§3.5) — this page needs its own load.
     void this.seller.loadEarnings();
     this.platformStats.loadStats();
+  }
+
+  categoryDisplayName(category: string): string {
+    return this.catalog.getCategoryById(category)?.name ?? category;
   }
 
   /**

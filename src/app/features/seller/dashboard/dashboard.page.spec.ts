@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerDashboardPage } from './dashboard.page';
-import { PlatformStatsService, SellerService } from '../../../core/services';
+import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS } from '../../../core/models';
 import type { PlatformStats, SellerStats } from '../../../core/models';
 
@@ -39,6 +39,7 @@ function render(opts: {
   stats?: Partial<SellerStats>;
   nextPayoutDate?: string | null;
   platformStats?: PlatformStats;
+  categories?: { id: string; name: string }[];
   messageWarning?: (text: string) => void;
   sellerProfileRequired?: boolean;
 }) {
@@ -54,6 +55,11 @@ function render(opts: {
     stats: () => opts.platformStats,
     loadStats: vi.fn(),
   };
+  const fakeCatalog = {
+    ensureCategories: vi.fn(),
+    getCategoryById: (id: string) => opts.categories?.find((c) => c.id === id),
+    categories: () => opts.categories ?? [],
+  };
 
   TestBed.configureTestingModule({
     imports: [SellerDashboardPage],
@@ -61,6 +67,7 @@ function render(opts: {
       provideRouter([]),
       { provide: SellerService, useValue: fakeSeller },
       { provide: PlatformStatsService, useValue: fakePlatformStats },
+      { provide: CatalogService, useValue: fakeCatalog },
       { provide: NzMessageService, useValue: { warning: opts.messageWarning ?? vi.fn() } },
     ],
   });
@@ -305,5 +312,35 @@ describe('SellerDashboardPage — insights (seller-analytics-insights v1 §4/AC-
     expect(text).toContain('35.0%');
     expect(text).toContain('25.0%');
     expect(text).not.toContain('ยังไม่มีข้อมูล traffic');
+  });
+});
+
+describe('SellerDashboardPage — top categories display', () => {
+  it('renders category name directly when category is a human-readable name', () => {
+    const fixture = render({
+      stats: {
+        topCategories: [{ category: 'คณิตศาสตร์', sales: 5 }],
+      },
+    });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('คณิตศาสตร์');
+    expect(text).toContain('5');
+  });
+
+  it('resolves category ID to display name using CatalogService', () => {
+    const fixture = render({
+      stats: {
+        topCategories: [{ category: 'cat-04', sales: 7 }],
+      },
+      categories: [
+        { id: 'cat-04', name: 'วิทยาศาสตร์' },
+      ],
+    });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('วิทยาศาสตร์');
+    expect(text).not.toContain('cat-04');
+    expect(text).toContain('7');
   });
 });

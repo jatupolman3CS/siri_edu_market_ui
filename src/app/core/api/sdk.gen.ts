@@ -314,6 +314,9 @@ import type {
   GetApiNotificationsSettingsResponses,
   GetApiOrdersByIdData,
   GetApiOrdersByIdErrors,
+  GetApiOrdersByIdReceiptData,
+  GetApiOrdersByIdReceiptErrors,
+  GetApiOrdersByIdReceiptResponses,
   GetApiOrdersByIdResponses,
   GetApiOrdersByIdSimilarDocumentsData,
   GetApiOrdersByIdSimilarDocumentsErrors,
@@ -459,6 +462,8 @@ import type {
   PostApiAdminFeedbackByIdStatusData,
   PostApiAdminFeedbackByIdStatusErrors,
   PostApiAdminFeedbackByIdStatusResponses,
+  PostApiAdminImagesBackfillVariantsData,
+  PostApiAdminImagesBackfillVariantsResponses,
   PostApiAdminNotificationConfigByEventKeyResetData,
   PostApiAdminNotificationConfigByEventKeyResetErrors,
   PostApiAdminNotificationConfigByEventKeyResetResponses,
@@ -1653,6 +1658,22 @@ export const getApiAdminUsersByUserIdWalletEntries = <ThrowOnError extends boole
     GetApiAdminUsersByUserIdWalletEntriesErrors,
     ThrowOnError
   >({ url: '/api/admin/users/{userId}/wallet/entries', ...options });
+
+export const postApiAdminImagesBackfillVariants = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminImagesBackfillVariantsData, ThrowOnError>,
+): RequestResult<PostApiAdminImagesBackfillVariantsResponses, unknown, ThrowOnError> =>
+  (options.client ?? client).post<
+    PostApiAdminImagesBackfillVariantsResponses,
+    unknown,
+    ThrowOnError
+  >({
+    url: '/api/admin/images/backfill-variants',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const postApiAffiliateClick = <ThrowOnError extends boolean = false>(
   options: Options<PostApiAffiliateClickData, ThrowOnError>,
@@ -3256,6 +3277,15 @@ export const getApiOrdersByIdSimilarDocuments = <ThrowOnError extends boolean = 
     GetApiOrdersByIdSimilarDocumentsErrors,
     ThrowOnError
   >({ url: '/api/orders/{id}/similar-documents', ...options });
+
+export const getApiOrdersByIdReceipt = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiOrdersByIdReceiptData, ThrowOnError>,
+): RequestResult<GetApiOrdersByIdReceiptResponses, GetApiOrdersByIdReceiptErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetApiOrdersByIdReceiptResponses,
+    GetApiOrdersByIdReceiptErrors,
+    ThrowOnError
+  >({ url: '/api/orders/{id}/receipt', ...options });
 
 export const getApiPaymentsStripeConfig = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiPaymentsStripeConfigData, ThrowOnError>,

@@ -1,7 +1,7 @@
 <article
-      class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1"
+      class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
     >
-      <a [routerLink]="['/bundle', bundle().id]" class="block">
+      <a [routerLink]="['/bundle', bundle().id]" class="flex flex-col flex-1">
         <!-- Cover -->
         <div class="relative aspect-[16/10] bg-pink-50 overflow-hidden">
           <img
@@ -32,7 +32,7 @@
         </div>
 
         <!-- Body -->
-        <div class="p-5 flex flex-col gap-2">
+        <div class="p-5 flex flex-col gap-2 flex-1">
           <div class="flex items-center gap-2 text-[11px] text-ink-muted">
             <img
               appImgFallback
@@ -43,11 +43,11 @@
             <span class="truncate">{{ bundle().seller.studioName }}</span>
           </div>
 
-          <h3 class="text-base font-extrabold text-ink leading-snug line-clamp-2 group-hover:text-pink-600 transition-colors">
+          <h3 class="text-base font-extrabold text-ink leading-snug line-clamp-2 min-h-[2.75rem] group-hover:text-pink-600 transition-colors">
             {{ bundle().title }}
           </h3>
 
-          <p class="text-xs text-ink-soft line-clamp-2 leading-relaxed">
+          <p class="text-xs text-ink-soft line-clamp-2 leading-relaxed min-h-[2.5rem]">
             {{ bundle().description }}
           </p>
 
@@ -60,7 +60,7 @@
             </span>
           </div>
 
-          <div class="flex items-end justify-between mt-2 pt-3 border-t border-line">
+          <div class="flex items-end justify-between mt-auto pt-3 border-t border-line">
             <div class="flex items-baseline gap-2">
               <span class="text-xl font-extrabold text-ink">
                 {{ bundle().price | thb }}
@@ -77,4 +77,15 @@
           </div>
         </div>
       </a>
+      <div class="px-5 pb-5">
+        <button
+          type="button"
+          class="btn-pink w-full !py-2.5 text-sm"
+          [disabled]="addingToCart()"
+          (click)="addToCart($event)"
+        >
+          <app-icon name="cart" [size]="16" />
+          {{ 'bundleDetail.buyNow' | trans }}
+        </button>
+      </div>
     </article>

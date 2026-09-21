@@ -280,6 +280,18 @@ export interface DocumentItem {
   watermarkPolicyLocked?: boolean;
   /** Thai warning composed by the backend — never re-worded or re-derived in the UI (§4.3). */
   watermarkWarning?: string | null;
+  /**
+   * document-watermark-scope-options v1 §3.5/§4.1 — Option A: the watermark stamped on the
+   * *public preview* artifacts (preview pages, cover, gallery images), which is a completely
+   * separate switch from `watermarkEnabled` (Option B, the buyer's download). `undefined` on
+   * buyer-facing mappers; absent value reads as `true` (today's behavior: previews are always
+   * stamped).
+   */
+  previewWatermarkEnabled?: boolean;
+  /** What will really happen on the preview render (policy + the seller toggle). */
+  previewWatermarkEffective?: boolean;
+  /** `true` = the platform policy decides, so switch A must be disabled and stay ticked. */
+  previewWatermarkPolicyLocked?: boolean;
   /** Main binaries for this listing (seller GET by id / listed-main-file PUT). */
   mainFiles?: {
     id: string;

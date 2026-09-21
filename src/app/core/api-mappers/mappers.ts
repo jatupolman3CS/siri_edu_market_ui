@@ -381,6 +381,9 @@ export function mapAdminPendingToDocumentItem(
     downloads: 0,
     status: 'pending',
     watermarkEnabled: false,
+    // document-watermark-scope-options v1 §4.1: mirrors the hardcoded `watermarkEnabled` above
+    // — buyer-facing payloads carry no watermark policy, and previews are stamped by default.
+    previewWatermarkEnabled: true,
     previewPages: 0,
     seller: {
       ...emptySeller(),
@@ -434,6 +437,9 @@ export function mapDocument(d: MarketplaceDocumentResponse): DocumentItem {
     downloads: d.downloads ?? 0,
     status: 'approved',
     watermarkEnabled: false,
+    // document-watermark-scope-options v1 §4.1: mirrors the hardcoded `watermarkEnabled` above
+    // — buyer-facing payloads carry no watermark policy, and previews are stamped by default.
+    previewWatermarkEnabled: true,
     // marketplace-cover-preview-count v1 AC-14: real field from the generated
     // `MarketplaceDocumentResponse` type (SDK regenerated against backend that now sends it).
     previewPages: d.previewPages ?? 0,
@@ -516,6 +522,10 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
     downloads: d.downloads ?? 0,
     status: (d.status ?? 'approved') as DocumentItem['status'],
     watermarkEnabled: d.watermarkEnabled ?? false,
+    // document-watermark-scope-options v1 §3.5/§4.1: buyer-facing DTOs deliberately never carry
+    // this flag (a buyer has no business knowing why an image is stamped) — default `true`,
+    // same as the sibling mappers.
+    previewWatermarkEnabled: true,
     previewPages: d.previewPages ?? 0,
     previewStorageKey: d.previewStorageKey ?? null,
     seller: mapSeller(d.seller),
@@ -622,6 +632,9 @@ export function mapLibraryItem(item: LibraryItemResponse): LibraryItem {
     downloads: item.downloadCount ?? 0,
     status: 'approved',
     watermarkEnabled: false,
+    // document-watermark-scope-options v1 §4.1: mirrors the hardcoded `watermarkEnabled` above
+    // — buyer-facing payloads carry no watermark policy, and previews are stamped by default.
+    previewWatermarkEnabled: true,
     previewPages: 0,
     seller: emptySeller(),
     createdAt: item.purchasedAt ?? '',
@@ -704,6 +717,8 @@ export function mapOrder(o: OrderResponse): Order {
         downloads: 0,
         status: 'approved' as DocumentItem['status'],
         watermarkEnabled: false,
+        // document-watermark-scope-options v1 §4.1: same default as the sibling mappers above.
+        previewWatermarkEnabled: true,
         previewPages: 0,
         seller: emptySeller(),
         createdAt: o.createdAt ?? '',
@@ -988,6 +1003,12 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     watermarkEffective: d.watermarkEffective ?? false,
     watermarkPolicyLocked: d.watermarkPolicyLocked ?? false,
     watermarkWarning: (d.watermarkWarning ?? '').trim() || null,
+    // document-watermark-scope-options v1 §3.5/§4.1 (รอบสอง, post-regen): Option A — the public
+    // preview watermark switch. Defaults follow §4.1: an absent flag means "stamping as before"
+    // (`true`) and "the seller may still change it" (`locked = false`).
+    previewWatermarkEnabled: d.previewWatermarkEnabled ?? true,
+    previewWatermarkEffective: d.previewWatermarkEffective ?? true,
+    previewWatermarkPolicyLocked: d.previewWatermarkPolicyLocked ?? false,
     previewPages: d.previewPages ?? 0,
     previewWatermarkSubtitle: d.previewWatermarkSubtitle ?? undefined,
     previewWatermarkFontFamily: d.previewWatermarkFontFamily ?? undefined,
@@ -1323,6 +1344,9 @@ export function mapSellerDocumentSummary(d: SellerDocumentSummaryResponse): Docu
     conversionRatePercent: d.conversionRatePercent ?? 0,
     status: (d.status ?? 'pending') as DocumentItem['status'],
     watermarkEnabled: false,
+    // document-watermark-scope-options v1 §4.1: mirrors the hardcoded `watermarkEnabled` above
+    // — buyer-facing payloads carry no watermark policy, and previews are stamped by default.
+    previewWatermarkEnabled: true,
     previewPages: 0,
     seller: emptySeller(),
     createdAt: d.updatedAt ?? new Date().toISOString(),

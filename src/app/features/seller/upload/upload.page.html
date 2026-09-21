@@ -193,6 +193,12 @@
                       }
                     </ul>
                   }
+                  <!-- document-watermark-scope-options v1 §4.3: watermark settings live on the
+                       document, so a new version inherits them automatically — say so here for
+                       the (silent) path where no confirmation modal opens. -->
+                  <p class="text-xs text-ink-muted mt-2">
+                    {{ 'seller.versionWatermarkInheritNotice' | trans }}
+                  </p>
                   @if (listedSaving()) {
                     <p class="text-xs text-pink-600 mt-2">{{ 'seller.savingDots' | trans }}</p>
                   }
@@ -311,6 +317,43 @@
 
               <!-- Watermark + preview options -->
               <div class="grid sm:grid-cols-2 gap-3 mt-6">
+                <!-- document-watermark-scope-options v1 §4.2 — switch A: the watermark on the
+                     PUBLIC PREVIEW (preview pages, cover, gallery). Fully independent from the
+                     download watermark next to it: all four on/off combinations are valid. -->
+                <label
+                  class="flex items-start gap-3 p-4 rounded-2xl border border-line hover:border-pink-300"
+                  [class.cursor-pointer]="!previewWatermarkPolicyLocked()"
+                  [class.opacity-80]="previewWatermarkPolicyLocked()"
+                >
+                  <input
+                    type="checkbox"
+                    name="preview-watermark-enabled"
+                    [ngModel]="previewWatermark()"
+                    (ngModelChange)="previewWatermark.set($event)"
+                    [disabled]="previewWatermarkPolicyLocked()"
+                    class="w-5 h-5 accent-pink-500 mt-0.5"
+                  />
+                  <div>
+                    <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
+                      <app-icon name="shield" [size]="14" className="text-pink-500" />
+                      {{ 'seller.previewWatermarkTitle' | trans }}
+                    </div>
+                    <div class="text-xs text-ink-muted mt-1">
+                      {{ 'seller.previewWatermarkDesc' | trans }}
+                    </div>
+                    @if (previewWatermarkPolicyLocked()) {
+                      <div class="text-xs font-semibold text-pink-600 mt-2">
+                        {{ 'seller.previewWatermarkMandatory' | trans }}
+                      </div>
+                    } @else if (!previewWatermark()) {
+                      <div
+                        class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2"
+                      >
+                        {{ 'seller.previewWatermarkOffWarning' | trans }}
+                      </div>
+                    }
+                  </div>
+                </label>
                 <!-- watermark-completion v1 §4.3: the platform policy, not the seller, has the
                      final say — when it is locked the checkbox is disabled and stays ticked, and
                      any warning shown here is the backend's text verbatim. -->
@@ -330,10 +373,10 @@
                   <div>
                     <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
                       <app-icon name="shield" [size]="14" className="text-pink-500" />
-                      {{ 'seller.enableWatermarkTitle' | trans }}
+                      {{ 'seller.downloadWatermarkTitle' | trans }}
                     </div>
                     <div class="text-xs text-ink-muted mt-1">
-                      {{ 'seller.enableWatermarkDesc' | trans }}
+                      {{ 'seller.downloadWatermarkDesc' | trans }}
                     </div>
                     @if (watermarkPolicyLocked()) {
                       <div class="text-xs font-semibold text-pink-600 mt-2">
@@ -812,8 +855,16 @@
                     <span class="text-emerald-600 font-semibold">{{ 'seller.freeDocFeeNotice' | trans }}</span>
                   </li>
                 }
+                <!-- document-watermark-scope-options v1 §4.2: one row per switch — the old single
+                     "ลายน้ำ" row hid the fact that the two stamp different artifacts. -->
                 <li class="py-3 flex justify-between text-sm">
-                  <span class="text-ink-muted">{{ 'seller.colDocWatermark' | trans }}</span>
+                  <span class="text-ink-muted">{{ 'seller.colDocPreviewWatermark' | trans }}</span>
+                  <span class="text-ink font-semibold">
+                    {{ previewWatermark() ? ('seller.enabled' | trans) : ('seller.disabled' | trans) }}
+                  </span>
+                </li>
+                <li class="py-3 flex justify-between text-sm">
+                  <span class="text-ink-muted">{{ 'seller.colDocDownloadWatermark' | trans }}</span>
                   <span class="text-ink font-semibold">
                     {{ watermark() ? ('seller.enabled' | trans) : ('seller.disabled' | trans) }}
                   </span>
@@ -941,6 +992,76 @@
                 </div>
               </div>
             </label>
+          </div>
+
+          <!-- document-watermark-scope-options v1 §4.3: the new version inherits this listing's
+               watermark settings — show them, and let the seller change them for this file. -->
+          <div class="rounded-xl border border-line p-3 space-y-2">
+            <div class="font-semibold text-sm text-ink">
+              {{ 'seller.versionWatermarkSectionTitle' | trans }}
+            </div>
+            <p class="text-xs text-ink-muted">
+              {{
+                'seller.versionWatermarkInheritedSummary'
+                  | trans
+                    : {
+                        preview:
+                          previewWatermark() ? ('seller.enabled' | trans) : ('seller.disabled' | trans),
+                        download:
+                          watermark() ? ('seller.enabled' | trans) : ('seller.disabled' | trans)
+                      }
+              }}
+            </p>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="version-watermark-override"
+                [ngModel]="versionWatermarkOverride()"
+                (ngModelChange)="versionWatermarkOverride.set($event)"
+                class="w-4 h-4 accent-pink-500"
+              />
+              <span class="text-xs font-semibold text-ink">
+                {{ 'seller.versionWatermarkChangeLabel' | trans }}
+              </span>
+            </label>
+            @if (versionWatermarkOverride()) {
+              <div class="space-y-2 pt-1">
+                <label
+                  class="flex items-start gap-2"
+                  [class.cursor-pointer]="!previewWatermarkPolicyLocked()"
+                  [class.opacity-80]="previewWatermarkPolicyLocked()"
+                >
+                  <input
+                    type="checkbox"
+                    name="version-preview-watermark"
+                    [ngModel]="versionPreviewWatermark()"
+                    (ngModelChange)="versionPreviewWatermark.set($event)"
+                    [disabled]="previewWatermarkPolicyLocked()"
+                    class="w-4 h-4 accent-pink-500 mt-0.5"
+                  />
+                  <span class="text-xs text-ink">
+                    {{ 'seller.previewWatermarkTitle' | trans }}
+                  </span>
+                </label>
+                <label
+                  class="flex items-start gap-2"
+                  [class.cursor-pointer]="!watermarkPolicyLocked()"
+                  [class.opacity-80]="watermarkPolicyLocked()"
+                >
+                  <input
+                    type="checkbox"
+                    name="version-download-watermark"
+                    [ngModel]="versionDownloadWatermark()"
+                    (ngModelChange)="versionDownloadWatermark.set($event)"
+                    [disabled]="watermarkPolicyLocked()"
+                    class="w-4 h-4 accent-pink-500 mt-0.5"
+                  />
+                  <span class="text-xs text-ink">
+                    {{ 'seller.downloadWatermarkTitle' | trans }}
+                  </span>
+                </label>
+              </div>
+            }
           </div>
 
           @if (isNewVersionOption()) {

@@ -60,12 +60,26 @@ export class BuyerLibraryPage {
    * is unrelated and still re-queries the API as before.
    */
   readonly searchQuery = signal('');
+  readonly expandedDocumentIds = signal<ReadonlySet<string>>(new Set());
 
   readonly filteredLibrary = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
     if (!q) return this.library.library();
     return this.library.library().filter((item) => item.document.title.toLowerCase().includes(q));
   });
+
+  isExpanded(documentId: string): boolean {
+    return this.expandedDocumentIds().has(documentId);
+  }
+
+  toggleExpanded(documentId: string): void {
+    this.expandedDocumentIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(documentId)) next.delete(documentId);
+      else next.add(documentId);
+      return next;
+    });
+  }
 
   /**
    * watermark-completion v1 §4.4: the download itself is unchanged — this wrapper only surfaces

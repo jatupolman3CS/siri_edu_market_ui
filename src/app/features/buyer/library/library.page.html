@@ -124,8 +124,7 @@
         <div class="document-card-grid">
           @for (item of filteredLibrary(); track item.document.id) {
             <article
-              class="group bg-white rounded-3xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1.5 cursor-pointer active:scale-[0.99] select-none"
-              (click)="navigateToDetail(item.document.id)"
+              class="group bg-white rounded-3xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-shadow duration-300"
             >
               <!-- Card Visual / Elevated Icon Header with Motion -->
               <div class="relative h-44 bg-gradient-to-br from-pink-50/90 via-rose-50/40 to-pink-100/50 border-b border-pink-100/60 flex items-center justify-center overflow-hidden">
@@ -168,35 +167,6 @@
                   }
                 </div>
 
-                <!-- Bottom Bar of Header: New Version Badge & Read Status Button -->
-                <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between z-10">
-                  @if (item.hasNewVersion) {
-                    <span class="pill bg-rose-500 text-white shadow-soft text-[10px] animate-pulse">
-                      {{ 'library.newVersionBadge' | trans }}
-                    </span>
-                  } @else {
-                    <span></span>
-                  }
-
-                  @if (item.isRead) {
-                    <button
-                      type="button"
-                      class="pill bg-sky-500 text-white shadow-soft text-[10px] flex items-center gap-1 hover:bg-sky-600 transition-colors"
-                      (click)="library.toggleRead(item.document.id, false); $event.stopPropagation()"
-                    >
-                      <app-icon name="check" [size]="10" />
-                      {{ 'library.readBadge' | trans }}
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="pill bg-white/95 backdrop-blur text-ink-soft text-[10px] border border-pink-100 hover:bg-pink-50 transition-colors"
-                      (click)="library.toggleRead(item.document.id, true); $event.stopPropagation()"
-                    >
-                      {{ 'library.markAsRead' | trans }}
-                    </button>
-                  }
-                </div>
               </div>
 
               <!-- Card Body Content -->
@@ -206,6 +176,11 @@
                   {{ item.document.title }}
                 </h3>
 
+                @if (isExpanded(item.document.id)) {
+                <div
+                  [id]="'library-details-' + item.document.id"
+                  class="order-2 space-y-2 border-t border-line pt-3"
+                >
                 <!-- New Version Change Note -->
                 @if (item.hasNewVersion && item.latestChangeNote) {
                   <p class="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-xl p-2.5 line-clamp-2">
@@ -215,6 +190,11 @@
 
                 <!-- Badges / updates row -->
                 <div class="flex items-center gap-2 flex-wrap text-xs">
+                  @if (item.hasNewVersion) {
+                    <span class="pill bg-rose-500 text-white shadow-soft text-[10px]">
+                      {{ 'library.newVersionBadge' | trans }}
+                    </span>
+                  }
                   @if (item.isReviewed) {
                     <span class="pill bg-amber-400 text-white shadow-soft text-[10px]">
                       <app-icon name="star" [size]="11" />
@@ -250,25 +230,67 @@
                   }
                 </dl>
 
-                <!-- Actions Bottom Row -->
-                <div class="flex gap-2 mt-auto pt-3">
-                  <a
-                    [routerLink]="['/document', item.document.id]"
-                    class="btn-ghost flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
-                    (click)="$event.stopPropagation()"
-                  >
-                    <app-icon name="eye" [size]="14" />
-                    {{ 'library.detailsBtn' | trans }}
-                  </a>
+                </div>
+                }
+
+                <!-- The collapsed card keeps only download and expand visible. -->
+                <div class="order-1 flex gap-2 mt-auto pt-3">
                   <button
                     type="button"
                     class="btn-pink flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
-                    (click)="download(item.document.id); $event.stopPropagation()"
+                    (click)="download(item.document.id)"
                   >
                     <app-icon name="download" [size]="14" />
                     {{ 'library.downloadBtn' | trans }}
                   </button>
+                  <button
+                    type="button"
+                    class="btn-ghost flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
+                    [attr.aria-expanded]="isExpanded(item.document.id)"
+                    [attr.aria-controls]="'library-details-' + item.document.id"
+                    (click)="toggleExpanded(item.document.id)"
+                  >
+                    <app-icon
+                      name="chevron-down"
+                      [size]="15"
+                      class="transition-transform duration-200"
+                      [class.rotate-180]="isExpanded(item.document.id)"
+                    />
+                    {{ (isExpanded(item.document.id) ? 'library.collapseBtn' : 'library.expandBtn') | trans }}
+                  </button>
                 </div>
+
+                @if (isExpanded(item.document.id)) {
+                <div
+                  class="order-3 space-y-2"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    @if (item.isRead) {
+                      <button
+                        type="button"
+                        class="pill bg-sky-500 text-white text-[10px] inline-flex items-center gap-1"
+                        (click)="library.toggleRead(item.document.id, false)"
+                      >
+                        <app-icon name="check" [size]="10" />
+                        {{ 'library.readBadge' | trans }}
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="pill bg-pink-50 text-ink-soft text-[10px] border border-pink-100"
+                        (click)="library.toggleRead(item.document.id, true)"
+                      >
+                        {{ 'library.markAsRead' | trans }}
+                      </button>
+                    }
+                    <a
+                      [routerLink]="['/document', item.document.id]"
+                      class="text-xs font-semibold text-pink-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <app-icon name="eye" [size]="13" />
+                      {{ 'library.detailsBtn' | trans }}
+                    </a>
+                  </div>
 
                 @if (item.isReviewed) {
                   <button
@@ -288,6 +310,8 @@
                     <app-icon name="star" [size]="14" />
                     {{ 'library.writeReviewBtn' | trans }}
                   </button>
+                }
+                </div>
                 }
               </div>
             </article>

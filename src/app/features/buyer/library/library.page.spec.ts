@@ -118,11 +118,21 @@ function renderWithItems(
   return fixture;
 }
 
+function expandFirstCard(fixture: ReturnType<typeof renderWithItems>): void {
+  const expandButton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+    'button[aria-expanded="false"]',
+  );
+  expect(expandButton).toBeTruthy();
+  expandButton!.click();
+  fixture.detectChanges();
+}
+
 describe('BuyerLibraryPage — card states (AC-10)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('shows "เขียนรีวิว" and no badge for an item that has not been reviewed', () => {
     const fixture = renderWithItems([buildItem('doc-1', { isReviewed: false })]);
+    expandFirstCard(fixture);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).toContain('เขียนรีวิว');
@@ -134,6 +144,7 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
     const fixture = renderWithItems([
       buildItem('doc-1', { isReviewed: true, myReviewId: 'rev-1', myRating: 4 }),
     ]);
+    expandFirstCard(fixture);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).toContain('แก้ไขรีวิว');
@@ -149,6 +160,7 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
   it('shows "ทำเครื่องหมายว่าอ่านแล้ว" for an unread item and clicking toggles to read', () => {
     const toggleSpy = vi.fn(async () => {});
     const fixture = renderWithItems([buildItem('doc-1', { isRead: false })], 'all', fakeLoyalty(), toggleSpy);
+    expandFirstCard(fixture);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).toContain('ทำเครื่องหมายว่าอ่านแล้ว');
@@ -164,6 +176,7 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
   it('shows "อ่านแล้ว" badge/button for a read item and clicking toggles to unread', () => {
     const toggleSpy = vi.fn(async () => {});
     const fixture = renderWithItems([buildItem('doc-1', { isRead: true })], 'all', fakeLoyalty(), toggleSpy);
+    expandFirstCard(fixture);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).toContain('อ่านแล้ว');
@@ -200,16 +213,25 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
     expect(text).not.toContain('อ่านครบทุกเอกสารแล้ว');
   });
 
-  it('clicking the card navigates to document detail page', () => {
+  it('keeps a collapsed card to download and expand actions only', () => {
     const fixture = renderWithItems([buildItem('doc-101')]);
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const card = (fixture.nativeElement as HTMLElement).querySelector('article');
+    const buttons = card?.querySelectorAll('button') ?? [];
+
+    expect(buttons.length).toBe(2);
+    expect(card?.querySelector('[aria-expanded="false"]')).toBeTruthy();
+    expect(card?.textContent).not.toContain('ORD-doc-101');
+  });
+
+  it('reveals document metadata and secondary actions after expand', () => {
+    const fixture = renderWithItems([buildItem('doc-101', { isReviewed: false })]);
+
+    expandFirstCard(fixture);
 
     const card = (fixture.nativeElement as HTMLElement).querySelector('article');
-    expect(card).toBeDefined();
-
-    card!.click();
-    expect(navigateSpy).toHaveBeenCalledWith(['/document', 'doc-101']);
+    expect(card?.querySelector('[aria-expanded="true"]')).toBeTruthy();
+    expect(card?.textContent).toContain('ORD-doc-101');
+    expect(card?.querySelector('a[href="/document/doc-101"]')).toBeTruthy();
   });
 
   it('clicking download button stops propagation and does not trigger card navigation', async () => {
@@ -558,6 +580,7 @@ describe('BuyerLibraryPage — document versioning (document-versioning v1 §4/�
       latestChangeNote: 'แก้ไขสูตรคำนวณและข้อสอบเพิ่มเติม',
     });
     const fixture = renderWithItems([item]);
+    expandFirstCard(fixture);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).toContain('มีเวอร์ชันใหม่');

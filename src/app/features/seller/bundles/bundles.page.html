@@ -87,7 +87,7 @@
         }
       </div>
 
-      <div class="grid sm:grid-cols-2 gap-4">
+      <div class="grid sm:grid-cols-2 gap-4 items-start">
         <div>
           <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'seller.bundlePrice' | trans }}</label>
           <input
@@ -104,14 +104,39 @@
           <label class="text-xs font-semibold text-ink-soft mb-2 block">
             {{ 'seller.coverOptional' | trans }}
           </label>
-          <input
-            type="text"
-            [(ngModel)]="coverUrl"
-            name="coverUrl"
-            class="input-soft"
-            [placeholder]="'seller.coverPlaceholder' | trans"
-            maxlength="1024"
-          />
+          <label
+            class="relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-dashed border-pink-200 bg-pink-50/40 cursor-pointer hover:border-pink-300 transition-colors"
+            [class.pointer-events-none]="coverUploading()"
+            [class.opacity-60]="coverUploading()"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              class="sr-only"
+              [disabled]="coverUploading()"
+              (change)="onCoverFileChange($event)"
+            />
+            @if (coverPreviewUrl()) {
+              <img
+                appImgFallback
+                [src]="coverPreviewUrl()"
+                [alt]="title()"
+                class="absolute inset-0 h-full w-full object-cover"
+              />
+              <span class="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-2 text-center text-xs font-semibold text-white">
+                {{ 'seller.uploadCoverManual' | trans }}
+              </span>
+            } @else {
+              <span class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-100 text-pink-600">
+                  <app-icon name="upload" [size]="20" />
+                </span>
+                <span class="text-sm font-bold text-ink">
+                  {{ coverUploading() ? ('seller.uploadingImages' | trans) : ('seller.clickToSelectImages' | trans) }}
+                </span>
+              </span>
+            }
+          </label>
         </div>
       </div>
 

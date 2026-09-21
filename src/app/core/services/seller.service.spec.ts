@@ -442,6 +442,85 @@ describe('SellerService — setListedMainFile (document-versioning v1 §3.1/§4.
   });
 });
 
+/**
+ * document-watermark-scope-options v1 §3.6 — AC-23/AC-24 at the wire level. The backend reads an
+ * ABSENT key as "keep inheriting the document's current watermark settings", so the difference
+ * between omitting `previewWatermarkEnabled` and sending it as `null` is the difference between
+ * inheriting and overwriting. `JSON.stringify` drops `undefined` values, which makes that mistake
+ * invisible in a naive object-identity assertion — these tests look at the serialized body, and at
+ * the keys that survived serialization, for exactly that reason.
+ */
+describe('SellerService — setListedMainFile watermark override (document-watermark-scope-options v1 §3.6)', () => {
+  const PATH = '/api/seller/documents/doc-1/listed-main-file';
+
+  function sentBody(): Record<string, unknown> {
+    const call = requestBodies.find((r) => r.method === 'PUT' && r.path === PATH);
+    expect(call).toBeDefined();
+    return call?.body as Record<string, unknown>;
+  }
+
+  it('AC-23: no override at all → neither watermark key appears in the request body', async () => {
+    stubRoute('PUT', PATH, { id: 'doc-1' });
+    const service = buildService();
+
+    await service.setListedMainFile('doc-1', 'file-2', { isNewVersion: true, changeNote: 'แก้ไฟล์' });
+
+    const body = sentBody();
+    expect(Object.keys(body)).not.toContain('previewWatermarkEnabled');
+    expect(Object.keys(body)).not.toContain('watermarkEnabled');
+    expect(body['fileId']).toBe('file-2');
+  });
+
+  it('AC-24: only the overridden key is sent — the untouched one stays absent', async () => {
+    stubRoute('PUT', PATH, { id: 'doc-1' });
+    const service = buildService();
+
+    await service.setListedMainFile('doc-1', 'file-2', {
+      isNewVersion: false,
+      previewWatermarkEnabled: false,
+    });
+
+    const body = sentBody();
+    expect(body['previewWatermarkEnabled']).toBe(false);
+    expect(Object.keys(body)).not.toContain('watermarkEnabled');
+  });
+
+  it('AC-24: both overrides travel with the seller\'s exact values', async () => {
+    stubRoute('PUT', PATH, { id: 'doc-1' });
+    const service = buildService();
+
+    await service.setListedMainFile('doc-1', 'file-2', {
+      isNewVersion: true,
+      changeNote: 'ปิดลายน้ำตัวอย่าง',
+      previewWatermarkEnabled: false,
+      watermarkEnabled: true,
+    });
+
+    expect(sentBody()).toEqual({
+      fileId: 'file-2',
+      isNewVersion: true,
+      changeNote: 'ปิดลายน้ำตัวอย่าง',
+      previewWatermarkEnabled: false,
+      watermarkEnabled: true,
+    });
+  });
+
+  it('AC-24: an override of `false` is sent, not mistaken for "nothing to send"', async () => {
+    stubRoute('PUT', PATH, { id: 'doc-1' });
+    const service = buildService();
+
+    await service.setListedMainFile('doc-1', 'file-2', {
+      isNewVersion: false,
+      previewWatermarkEnabled: false,
+      watermarkEnabled: false,
+    });
+
+    const body = sentBody();
+    expect(body['previewWatermarkEnabled']).toBe(false);
+    expect(body['watermarkEnabled']).toBe(false);
+  });
+});
+
 describe('SellerService — getDocumentVersions (document-versioning v1 §3.2/§4.1)', () => {
   it('GETs .../versions and maps the version history, newest first', async () => {
     stubRoute('GET', '/api/seller/documents/doc-1/versions', [

@@ -51,6 +51,7 @@ import type {
   SellerAutofillResponse,
   SellerDocumentResponse,
   SellerReviewResponse,
+  SetListedSellerDocumentMainFileRequest,
   StoreSectionResponse,
   SellerEarningsResponse,
   UploadResponse,
@@ -459,16 +460,37 @@ export class SellerService {
   async setListedMainFile(
     id: string,
     fileId: string,
-    options?: { isNewVersion?: boolean; changeNote?: string },
+    options?: {
+      isNewVersion?: boolean;
+      changeNote?: string;
+      /**
+       * document-watermark-scope-options v1 §3.6: per-upload override of the document's
+       * watermark settings. Omitting a key (never sending `null`) means "inherit the document's
+       * current value", which is what an unchanged new version must do.
+       */
+      previewWatermarkEnabled?: boolean;
+      watermarkEnabled?: boolean;
+    },
   ): Promise<SellerDocumentResponse | null> {
     try {
+      // document-watermark-scope-options v1 §3.6/AC-23: the two watermark keys are added to the
+      // body **only** when the caller actually passed them. An absent key means "inherit the
+      // document's current value" server-side, so writing `undefined`/`null` here — which is what
+      // a plain object literal would do — would turn "don't touch it" into an explicit value.
+      const body: SetListedSellerDocumentMainFileRequest = {
+        fileId,
+        isNewVersion: options?.isNewVersion,
+        changeNote: options?.changeNote,
+      };
+      if (options?.previewWatermarkEnabled !== undefined) {
+        body.previewWatermarkEnabled = options.previewWatermarkEnabled;
+      }
+      if (options?.watermarkEnabled !== undefined) {
+        body.watermarkEnabled = options.watermarkEnabled;
+      }
       const result = await putApiSellerDocumentsByIdListedMainFile({
         path: { id },
-        body: {
-          fileId,
-          isNewVersion: options?.isNewVersion,
-          changeNote: options?.changeNote,
-        },
+        body,
       });
       return unwrapSdkResult(result) ?? null;
     } catch (e) {

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { RouterLink } from '@angular/router';
 import type { SellerBundleItemResponse, SellerBundleResponse } from '../../../core/api';
-import { BundleService } from '../../../core/services';
+import { BundleService, SellerService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { extractErrorCode, extractErrorStatus } from '../../../core/services/api-result';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -13,6 +13,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 /**
  * F-04 (N-02): the seller's side of bundles.
@@ -30,12 +31,13 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 @Component({
   selector: 'app-seller-bundles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, EmptyStateComponent, IconComponent, PaginationComponent, ThbPipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, EmptyStateComponent, IconComponent, PaginationComponent, ThbPipe, ImgFallbackDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bundles.page.html',
 })
 export class SellerBundlesPage {
   private readonly bundleService = inject(BundleService);
+  private readonly sellerService = inject(SellerService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
   private readonly translation = inject(TranslationService);
@@ -44,6 +46,7 @@ export class SellerBundlesPage {
   readonly candidates = signal<SellerBundleItemResponse[]>([]);
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
+  readonly coverUploading = signal<boolean>(false);
 
   // backend-wide-pagination-and-seller-directory v1 §4 point 5: `GET /api/seller/bundles` is now
   // paginated.
@@ -64,6 +67,7 @@ export class SellerBundlesPage {
   readonly title = signal<string>('');
   readonly description = signal<string>('');
   readonly coverUrl = signal<string>('');
+  readonly coverPreviewUrl = signal<string>('');
   readonly price = signal<number | null>(null);
   readonly selectedDocumentIds = signal<string[]>([]);
 
@@ -147,6 +151,7 @@ export class SellerBundlesPage {
     this.title.set('');
     this.description.set('');
     this.coverUrl.set('');
+    this.coverPreviewUrl.set('');
     this.price.set(null);
     this.selectedDocumentIds.set([]);
     this.formOpen.set(true);
@@ -157,6 +162,7 @@ export class SellerBundlesPage {
     this.title.set(bundle.title ?? '');
     this.description.set(bundle.description ?? '');
     this.coverUrl.set(bundle.coverUrl ?? '');
+    this.coverPreviewUrl.set(bundle.coverUrl ?? '');
     this.price.set(bundle.price ?? null);
     this.selectedDocumentIds.set(
       (bundle.items ?? []).map((i) => i.documentId).filter((id): id is string => !!id),
@@ -178,6 +184,24 @@ export class SellerBundlesPage {
     this.selectedDocumentIds.update((ids) =>
       ids.includes(documentId) ? ids.filter((id) => id !== documentId) : [...ids, documentId],
     );
+  }
+
+  async onCoverFileChange(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.coverUploading()) return;
+
+    this.coverUploading.set(true);
+    try {
+      const uploaded = await this.sellerService.uploadFile(file);
+      this.coverUrl.set(uploaded.key ?? uploaded.publicUrl ?? '');
+      this.coverPreviewUrl.set(uploaded.optimizedUrl ?? uploaded.publicUrl ?? '');
+    } catch {
+      // SellerService reports upload failures through the shared error reporter.
+    } finally {
+      this.coverUploading.set(false);
+    }
   }
 
   async save(): Promise<void> {

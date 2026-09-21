@@ -2,6 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { BundleCardComponent } from './bundle-card.component';
 import type { Bundle } from '../../../core/models';
+import { CartService } from '../../../core/services';
+
+const addBundle = vi.fn(async () => ({ ok: true }));
 
 /**
  * Q-07 item 3: the home page's bundle grid ("แพ็กคณิตศาสตร์ ตะลุยโจทย์ #1220" in the QA report)
@@ -46,7 +49,7 @@ function buildBundle(over: Partial<Bundle> = {}): Bundle {
 function render(bundle: Bundle) {
   TestBed.configureTestingModule({
     imports: [BundleCardComponent],
-    providers: [provideRouter([])],
+    providers: [provideRouter([]), { provide: CartService, useValue: { addBundle } }],
   });
   const fixture = TestBed.createComponent(BundleCardComponent);
   fixture.componentRef.setInput('bundle', bundle);
@@ -54,7 +57,10 @@ function render(bundle: Bundle) {
   return fixture;
 }
 
-afterEach(() => TestBed.resetTestingModule());
+afterEach(() => {
+  addBundle.mockClear();
+  TestBed.resetTestingModule();
+});
 
 describe('BundleCardComponent — savings (Q-07 item 3)', () => {
   it('shows the "− ฿N" savings line when originalPrice > price', () => {
@@ -82,5 +88,14 @@ describe('BundleCardComponent — savings (Q-07 item 3)', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('−');
+  });
+  it('adds the bundle to the cart from the card buy button', async () => {
+    const fixture = render(buildBundle());
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button');
+
+    button?.click();
+    await fixture.whenStable();
+
+    expect(addBundle).toHaveBeenCalledWith('bun-1');
   });
 });

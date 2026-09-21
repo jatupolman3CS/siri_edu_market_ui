@@ -20,7 +20,10 @@ import {
   putApiSellerDocumentsById,
   type UpdateSellerDocumentRequest,
 } from '../../../core/api/seller-document-update';
-import type { DocumentGalleryItemRequest } from '../../../core/api/types.gen';
+import type {
+  DocumentGalleryItemRequest,
+  SellerWatermarkConfigRequest,
+} from '../../../core/api/types.gen';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { FileNamePipe } from '../../../shared/pipes/file-name.pipe';
@@ -44,6 +47,20 @@ const PREVIEW_WATERMARK_FONT_OPTIONS = [
 type GalleryItem = { id?: string | null; key: string; publicUrl: string; previewUrl: string };
 
 type MainFileRow = NonNullable<DocumentItem['mainFiles']>[number];
+
+/**
+ * document-watermark-scope-options v1 §3.6/§4.3: the options bag handed to
+ * `SellerService.setListedMainFile`. `previewWatermarkEnabled`/`watermarkEnabled` are optional on
+ * purpose — when the seller does not override them the keys must be **absent from the object
+ * entirely** (never `null`), which is what tells the backend to keep inheriting the document's
+ * current settings (AC-23).
+ */
+type SetListedMainFileOptions = {
+  isNewVersion: boolean;
+  changeNote?: string;
+  previewWatermarkEnabled?: boolean;
+  watermarkEnabled?: boolean;
+};
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -139,6 +156,23 @@ export class SellerUploadPage {
   readonly watermarkPolicyLocked = signal<boolean>(false);
   /** Thai warning straight from the backend — never composed or re-worded here (§4.3). */
   readonly watermarkWarning = signal<string | null>(null);
+  /**
+   * document-watermark-scope-options v1 §4.1 — Option A: the watermark stamped on the *public
+   * preview* (preview pages, cover, gallery images). Fully independent from `watermark()` above,
+   * which is Option B (the buyer's downloaded file): all four on/off combinations are valid.
+   * Create mode always starts at `true` (today's behavior — previews are always stamped).
+   */
+  readonly previewWatermark = signal<boolean>(true);
+  /** `true` = the platform policy decides for Option A; switch A is disabled and stays ticked. */
+  readonly previewWatermarkPolicyLocked = signal<boolean>(false);
+  /**
+   * document-watermark-scope-options v1 §4.3: version modal state. The document's watermark
+   * settings are inherited automatically by a new version — these three only exist so the seller
+   * can *see* what will be inherited and opt into changing it for this upload.
+   */
+  readonly versionWatermarkOverride = signal<boolean>(false);
+  readonly versionPreviewWatermark = signal<boolean>(true);
+  readonly versionDownloadWatermark = signal<boolean>(true);
   readonly previewPages = signal<number>(5);
   readonly previewWatermarkSubtitle = signal('');
   readonly previewWatermarkFontFamily = signal('Noto Sans Thai');
@@ -260,6 +294,7 @@ export class SellerUploadPage {
     watermarkEffective?: boolean;
     watermarkPolicyLocked?: boolean;
     watermarkWarning?: string | null;
+    previewWatermarkPolicyLocked?: boolean;
   }): void {
     this.watermarkCapability.set(doc.watermarkCapability ?? 'none');
     this.watermarkEffective.set(doc.watermarkEffective ?? false);
@@ -267,6 +302,13 @@ export class SellerUploadPage {
     this.watermarkWarning.set((doc.watermarkWarning ?? '').trim() || null);
     if (doc.watermarkPolicyLocked) {
       this.watermark.set(true);
+    }
+    // document-watermark-scope-options v1 §4.1/AC-22: Option A has its own lock, decided by the
+    // platform policy alone (no file capability involved — §3.1). Same shape as Option B above:
+    // locked means the server forces `true`, so the form must not pretend otherwise.
+    this.previewWatermarkPolicyLocked.set(doc.previewWatermarkPolicyLocked ?? false);
+    if (doc.previewWatermarkPolicyLocked) {
+      this.previewWatermark.set(true);
     }
   }
 
@@ -282,6 +324,9 @@ export class SellerUploadPage {
     this.originalPrice.set(doc.originalPrice ?? 0);
     this.discountExpiresAt.set(doc.discountExpiresAt ? doc.discountExpiresAt.slice(0, 10) : '');
     this.watermark.set(doc.watermarkEnabled ?? true);
+    // document-watermark-scope-options v1 §4.1/AC-21: edit mode shows what this listing was
+    // actually saved with, never a stale create-mode default.
+    this.previewWatermark.set(doc.previewWatermarkEnabled ?? true);
     this.applyWatermarkPolicy(doc);
     this.previewPages.set(doc.previewPages ?? 5);
     this.previewWatermarkSubtitle.set((doc.previewWatermarkSubtitle ?? '').trim());
@@ -405,6 +450,11 @@ export class SellerUploadPage {
       this.pendingListedFileId.set(fileId);
       this.isNewVersionOption.set(false);
       this.changeNoteInput.set('');
+      // document-watermark-scope-options v1 §4.3: the modal always opens showing the settings
+      // this new version would inherit, with the override checkbox cleared.
+      this.versionWatermarkOverride.set(false);
+      this.versionPreviewWatermark.set(this.previewWatermark());
+      this.versionDownloadWatermark.set(this.watermark());
       this.versionModalVisible.set(true);
       return;
     }
@@ -426,13 +476,25 @@ export class SellerUploadPage {
     }
     const isNewVersion = this.isNewVersionOption();
     const changeNote = isNewVersion ? this.changeNoteInput().trim() : undefined;
+    const options: SetListedMainFileOptions = { isNewVersion, changeNote };
+    // document-watermark-scope-options v1 §4.3/AC-23: without the override checkbox the two
+    // watermark keys never enter the object at all — the document's own settings are inherited
+    // server-side. AC-24: with it, only the switches the seller actually moved are sent.
+    if (this.versionWatermarkOverride()) {
+      if (this.versionPreviewWatermark() !== this.previewWatermark()) {
+        options.previewWatermarkEnabled = this.versionPreviewWatermark();
+      }
+      if (this.versionDownloadWatermark() !== this.watermark()) {
+        options.watermarkEnabled = this.versionDownloadWatermark();
+      }
+    }
     this.versionModalVisible.set(false);
-    void this.executeSetListedMainFile(fileId, { isNewVersion, changeNote });
+    void this.executeSetListedMainFile(fileId, options);
   }
 
   async executeSetListedMainFile(
     fileId: string,
-    options: { isNewVersion: boolean; changeNote?: string },
+    options: SetListedMainFileOptions,
   ): Promise<void> {
     this.listedSaving.set(true);
     try {
@@ -819,6 +881,9 @@ export class SellerUploadPage {
             isFree: this.isFree(),
             language: this.language(),
             watermarkEnabled: this.watermark(),
+            // document-watermark-scope-options v1 §3.3 (รอบสอง, post-regen): Option A travels with
+            // the same PUT as Option B so both switches land in one round trip.
+            previewWatermarkEnabled: this.previewWatermark(),
             previewPages: this.previewPages(),
             previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
             previewWatermarkFontFamily: this.previewWatermarkFontFamily().trim(),
@@ -849,7 +914,13 @@ export class SellerUploadPage {
           const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
           if (tpl.config) {
             try {
-              await this.watermarkService.saveConfig(id, tpl.config);
+              // document-watermark-scope-options v1 §3.4 (รอบสอง, post-regen): this endpoint can
+              // set Option A too, so the config call carries the same value the PUT above sent —
+              // whichever request lands last, the stored flag is the one the seller chose.
+              await this.watermarkService.saveConfig(id, {
+                ...tpl.config,
+                previewWatermarkEnabled: this.previewWatermark(),
+              });
             } catch {
               this.message.error(this.translation.t('seller.saveWatermarkConfigFailed'));
             }
@@ -863,6 +934,14 @@ export class SellerUploadPage {
           }
           const tpl = this.watermarkTemplates.loadOrDefault(this.auth.user()?.id);
           const coverImageMode = this.coverImageMode();
+          // create-document-watermark-properties v1 §4.2: the seller's subtitle lives in two
+          // places — the per-upload field (`tpl.previewWatermarkSubtitle`, usually blank) and the
+          // saved template (`tpl.config.previewWatermarkSubtitle`). Until now only the follow-up
+          // watermark-config call applied this fallback, so the create row got an empty subtitle
+          // whenever the per-upload field was untouched. Resolve it once, up front, and use the
+          // same value on every call below.
+          const previewWatermarkSubtitle =
+            tpl.previewWatermarkSubtitle.trim() || tpl.config.previewWatermarkSubtitle;
           const createBody: Parameters<typeof this.seller.createDocument>[0] = {
             title: this.title().trim(),
             shortDescription: this.shortDescription().trim(),
@@ -877,9 +956,23 @@ export class SellerUploadPage {
             resourceType: 'lesson-summary',
             standards: [],
             watermarkEnabled: this.watermark(),
+            // document-watermark-scope-options v1 §3.2 (รอบสอง, post-regen): Option A is set from
+            // the very first request — omitting it would silently mean `true`.
+            previewWatermarkEnabled: this.previewWatermark(),
             language: this.language(),
-            previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim(),
+            previewWatermarkSubtitle,
             previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),
+            // create-document-watermark-properties v1 §4.2/AC-09 (รอบสอง, post-regen): the seven
+            // appearance properties now ride along with the create call itself, so the new row is
+            // correct the moment it exists instead of depending on the follow-up calls below.
+            // `?? null` keeps "the seller never set this" distinct from a real value (§3.2).
+            previewWatermarkPosition: tpl.config.previewWatermarkPosition ?? null,
+            previewWatermarkOpacity: tpl.config.previewWatermarkOpacity ?? null,
+            previewWatermarkColor: tpl.config.previewWatermarkColor ?? null,
+            previewWatermarkRotation: tpl.config.previewWatermarkRotation ?? null,
+            previewWatermarkFontSize: tpl.config.previewWatermarkFontSize ?? null,
+            personalizedWatermarkPosition: tpl.config.personalizedWatermarkPosition ?? null,
+            personalizedWatermarkTemplate: tpl.config.personalizedWatermarkTemplate ?? null,
             originalPrice: this.isFree() ? 0 : this.originalPrice(),
             discountExpiresAt:
               this.isFree() || !this.discountExpiresAt() ? null : this.discountExpiresAt(),
@@ -903,8 +996,16 @@ export class SellerUploadPage {
             const putBody: UpdateSellerDocumentRequest = {
               fileStorageKey: uploaded.key,
               watermarkEnabled: this.watermark(),
+              // document-watermark-scope-options v1 §3.3 (รอบสอง, post-regen): same as edit mode —
+              // Option A rides along with the file-attach PUT.
+              previewWatermarkEnabled: this.previewWatermark(),
               previewPages: this.previewPages(),
-              previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim(),
+              // create-document-watermark-properties v1 §4.2: reuse the resolved subtitle instead
+              // of the raw per-upload field, which is usually blank. Sending the blank one here
+              // used to be invisible only because the watermark-config call that followed rewrote
+              // it; that call no longer carries the subtitle (§4.1.2), so this PUT is now the last
+              // writer and a blank value would be what the buyer ends up seeing.
+              previewWatermarkSubtitle,
               previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),
               previewStorageKey: null,
               pages: this.pages(),
@@ -921,14 +1022,29 @@ export class SellerUploadPage {
               body: putBody,
             });
 
-            if (tpl.config) {
+            // create-document-watermark-properties v1 §4.1.2: every other watermark field now
+            // travels with the create call and the PUT above, so this third call is narrowed to
+            // the five personalized-appearance fields that live on no other request DTO. Sending
+            // the rest again would let this call — the one most likely to fail — overwrite values
+            // that are already correct. It only goes out when at least one of the five is set.
+            const personalizedAppearance: SellerWatermarkConfigRequest = {
+              personalizedWatermarkFontFamily: tpl.config.personalizedWatermarkFontFamily ?? null,
+              personalizedWatermarkColor: tpl.config.personalizedWatermarkColor ?? null,
+              personalizedWatermarkOpacity: tpl.config.personalizedWatermarkOpacity ?? null,
+              personalizedWatermarkRotation: tpl.config.personalizedWatermarkRotation ?? null,
+              personalizedWatermarkFontSize: tpl.config.personalizedWatermarkFontSize ?? null,
+            };
+            const hasPersonalizedAppearance = Object.values(personalizedAppearance).some(
+              (value) => value !== null && value !== undefined,
+            );
+            // AC-10: this call used to swallow every failure, so a seller could lose their
+            // watermark setup without a single hint. Mirror the edit-mode branch: toast the error,
+            // but keep the submit itself successful (the document exists) and still navigate away.
+            if (hasPersonalizedAppearance) {
               try {
-                await this.watermarkService.saveConfig(doc.id, {
-                  ...tpl.config,
-                  previewWatermarkSubtitle: tpl.previewWatermarkSubtitle.trim() || tpl.config.previewWatermarkSubtitle,
-                });
+                await this.watermarkService.saveConfig(doc.id, personalizedAppearance);
               } catch {
-                // silent fallback if endpoint fails
+                this.message.error(this.translation.t('seller.saveWatermarkConfigFailed'));
               }
             }
           }

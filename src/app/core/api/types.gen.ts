@@ -849,6 +849,22 @@ export type AuthUserResponse = {
   onboardingCompletedAt?: string | null;
 };
 
+export type BackfillVariantResult = {
+  key: string;
+  status: string;
+  thumbnailKey: string | null;
+  fullKey: string | null;
+  error: string | null;
+};
+
+export type BackfillVariantsRequest = {
+  keys: Array<string>;
+};
+
+export type BackfillVariantsResponse = {
+  results: Array<BackfillVariantResult>;
+};
+
 export type BanUserRequest = {
   reason: string;
   messageToUser?: string | null;
@@ -1031,8 +1047,16 @@ export type CreateDocumentRequest = {
   resourceType?: string;
   standards?: Array<string>;
   watermarkEnabled?: boolean | null;
+  previewWatermarkEnabled?: boolean | null;
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
+  previewWatermarkPosition?: string | null;
+  previewWatermarkOpacity?: number | null;
+  previewWatermarkColor?: string | null;
+  previewWatermarkRotation?: number | null;
+  previewWatermarkFontSize?: number | null;
+  personalizedWatermarkPosition?: string | null;
+  personalizedWatermarkTemplate?: string | null;
   language?: string;
   originalPrice?: number | null;
   discountExpiresAt?: string | null;
@@ -2262,6 +2286,9 @@ export type SellerDocumentResponse = {
   watermarkEffective?: boolean;
   watermarkPolicyLocked?: boolean;
   watermarkWarning?: string | null;
+  previewWatermarkEnabled?: boolean;
+  previewWatermarkEffective?: boolean;
+  previewWatermarkPolicyLocked?: boolean;
   currentVersionNumber?: number;
   lastVersionNotifiedBuyerCount?: number | null;
   rejectionReason?: string | null;
@@ -2420,6 +2447,7 @@ export type SellerTrafficBreakdownResponse = {
 
 export type SellerWatermarkConfigRequest = {
   watermarkEnabled?: boolean | null;
+  previewWatermarkEnabled?: boolean | null;
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
   previewWatermarkPosition?: string | null;
@@ -2441,6 +2469,9 @@ export type SellerWatermarkConfigResponse = {
   title?: string;
   format?: string;
   watermarkEnabled?: boolean;
+  previewWatermarkEnabled?: boolean;
+  previewWatermarkEffective?: boolean;
+  previewWatermarkPolicyLocked?: boolean;
   previewWatermarkSubtitle?: string | null;
   previewWatermarkFontFamily?: string | null;
   previewWatermarkPosition?: string;
@@ -2477,6 +2508,8 @@ export type SetListedSellerDocumentMainFileRequest = {
   fileId: string;
   isNewVersion?: boolean;
   changeNote?: string | null;
+  previewWatermarkEnabled?: boolean | null;
+  watermarkEnabled?: boolean | null;
 };
 
 export type SetQnaFaqRequest = {
@@ -2709,6 +2742,7 @@ export type UpdateDocumentRequest = {
   resourceType?: string | null;
   standards?: Array<string> | null;
   watermarkEnabled?: boolean | null;
+  previewWatermarkEnabled?: boolean | null;
   language?: string | null;
   fileStorageKey?: string | null;
   previewStorageKey?: string | null;
@@ -2825,6 +2859,10 @@ export type UploadResponse = {
   eTag: string;
   optimizedKey: string | null;
   optimizedUrl: string | null;
+  thumbnailKey?: string | null;
+  thumbnailUrl?: string | null;
+  fullKey?: string | null;
+  fullUrl?: string | null;
 };
 
 export type UpsertExamCountdownSettingRequest = {
@@ -4820,6 +4858,23 @@ export type GetApiAdminUsersByUserIdWalletEntriesResponses = {
 export type GetApiAdminUsersByUserIdWalletEntriesResponse =
   GetApiAdminUsersByUserIdWalletEntriesResponses[keyof GetApiAdminUsersByUserIdWalletEntriesResponses];
 
+export type PostApiAdminImagesBackfillVariantsData = {
+  body: BackfillVariantsRequest;
+  path?: never;
+  query?: never;
+  url: '/api/admin/images/backfill-variants';
+};
+
+export type PostApiAdminImagesBackfillVariantsResponses = {
+  /**
+   * OK
+   */
+  200: BackfillVariantsResponse;
+};
+
+export type PostApiAdminImagesBackfillVariantsResponse =
+  PostApiAdminImagesBackfillVariantsResponses[keyof PostApiAdminImagesBackfillVariantsResponses];
+
 export type PostApiAffiliateClickData = {
   body: AffiliateClickRequest;
   path?: never;
@@ -5871,7 +5926,9 @@ export type PostApiFilesUploadData = {
     file?: IFormFile;
   };
   path?: never;
-  query?: never;
+  query?: {
+    purpose?: string;
+  };
   url: '/api/files/upload';
 };
 
@@ -5888,7 +5945,9 @@ export type PostApiFilesUploadResponse =
 export type PostApiFilesUploadBase64Data = {
   body: UploadBase64Request;
   path?: never;
-  query?: never;
+  query?: {
+    purpose?: string;
+  };
   url: '/api/files/upload-base64';
 };
 
@@ -8372,6 +8431,39 @@ export type GetApiOrdersByIdSimilarDocumentsResponses = {
 
 export type GetApiOrdersByIdSimilarDocumentsResponse =
   GetApiOrdersByIdSimilarDocumentsResponses[keyof GetApiOrdersByIdSimilarDocumentsResponses];
+
+export type GetApiOrdersByIdReceiptData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/orders/{id}/receipt';
+};
+
+export type GetApiOrdersByIdReceiptErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type GetApiOrdersByIdReceiptError =
+  GetApiOrdersByIdReceiptErrors[keyof GetApiOrdersByIdReceiptErrors];
+
+export type GetApiOrdersByIdReceiptResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type GetApiOrdersByIdReceiptResponse =
+  GetApiOrdersByIdReceiptResponses[keyof GetApiOrdersByIdReceiptResponses];
 
 export type GetApiPaymentsStripeConfigData = {
   body?: never;

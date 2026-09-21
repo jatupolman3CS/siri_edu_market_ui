@@ -23,6 +23,7 @@ import {
   mapAdminWalletSummary,
   mapBoughtTogetherItem,
   mapAdminMlRecommendationOverview,
+  mapSellerDocument,
 } from './mappers';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import { DEFAULT_STORE_READINESS } from '../models';
@@ -36,6 +37,7 @@ import type {
   MarketplaceDocumentResponse,
   OrderResponse,
   SellerDashboardResponse,
+  SellerDocumentResponse,
   SellerQnaResponse,
 } from '../api/types.gen';
 
@@ -1392,3 +1394,61 @@ describe('mapAdminMlRecommendationOverview', () => {
   });
 });
 
+
+/**
+ * document-watermark-scope-options v1 §3.5/§4.1 — Option A (the watermark stamped on the PUBLIC
+ * preview: preview pages, cover, gallery) reaches `/seller/upload` only through this mapper.
+ * Until the wiring round it returned three hard-coded optimistic constants, so a listing whose
+ * preview watermark the seller had switched off still came back looking switched on, and a
+ * policy-locked one looked freely editable. Both are silent data losses on save.
+ */
+describe('mapSellerDocument — preview watermark flags', () => {
+  it('reads all three flags off the response rather than assuming them', () => {
+    const doc = mapSellerDocument({
+      id: 'doc-1',
+      previewWatermarkEnabled: false,
+      previewWatermarkEffective: false,
+      previewWatermarkPolicyLocked: false,
+    } as SellerDocumentResponse);
+
+    expect(doc.previewWatermarkEnabled).toBe(false);
+    expect(doc.previewWatermarkEffective).toBe(false);
+    expect(doc.previewWatermarkPolicyLocked).toBe(false);
+  });
+
+  it('keeps effective stamping on when the platform policy overrides the seller (§3.1)', () => {
+    const doc = mapSellerDocument({
+      id: 'doc-1',
+      previewWatermarkEnabled: false,
+      previewWatermarkEffective: true,
+      previewWatermarkPolicyLocked: true,
+    } as SellerDocumentResponse);
+
+    expect(doc.previewWatermarkEnabled).toBe(false);
+    expect(doc.previewWatermarkEffective).toBe(true);
+    expect(doc.previewWatermarkPolicyLocked).toBe(true);
+  });
+
+  it('falls back to "stamped and seller-editable" when the response omits them (§4.1)', () => {
+    const doc = mapSellerDocument({ id: 'doc-1' } as SellerDocumentResponse);
+
+    expect(doc.previewWatermarkEnabled).toBe(true);
+    expect(doc.previewWatermarkEffective).toBe(true);
+    expect(doc.previewWatermarkPolicyLocked).toBe(false);
+  });
+
+  it('is independent of Option B — the download watermark flags do not bleed into it (§1.1)', () => {
+    const doc = mapSellerDocument({
+      id: 'doc-1',
+      watermarkEnabled: false,
+      watermarkPolicyLocked: true,
+      previewWatermarkEnabled: true,
+      previewWatermarkPolicyLocked: false,
+    } as SellerDocumentResponse);
+
+    expect(doc.watermarkEnabled).toBe(false);
+    expect(doc.watermarkPolicyLocked).toBe(true);
+    expect(doc.previewWatermarkEnabled).toBe(true);
+    expect(doc.previewWatermarkPolicyLocked).toBe(false);
+  });
+});

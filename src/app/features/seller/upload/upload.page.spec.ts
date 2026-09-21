@@ -5,12 +5,20 @@ import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerUploadPage } from './upload.page';
 import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
+import {
+  SellerWatermarkTemplateService,
+  type SellerWatermarkTemplate,
+} from '../../../core/services/seller-watermark-template.service';
+import { SellerWatermarkService } from '../../../core/services/seller-watermark.service';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import type { DocumentItem, PlatformStats } from '../../../core/models';
 import type {
+  CreateDocumentRequest,
   DocumentGalleryItemRequest,
   SellerDocumentResponse,
+  SellerWatermarkConfigRequest,
+  SellerWatermarkConfigResponse,
   UploadResponse,
 } from '../../../core/api/types.gen';
 import type { UpdateSellerDocumentRequest } from '../../../core/api/seller-document-update';
@@ -1568,6 +1576,715 @@ describe('SellerUploadPage — cover image mode (cover-image-mode v1 §1/§4)', 
     expect(text).not.toContain('ล้างรูปทั้งหมด');
     expect(text).not.toContain('คลิกเพื่อเลือกรูป');
     expect(text).toContain('ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ');
+  });
+});
+
+/**
+ * create-document-watermark-properties v1 §4.1/§4.2 — create-mode watermark follow-up call:
+ *  - AC-10: `SellerWatermarkService.saveConfig` rejecting must raise
+ *    `message.error(t('seller.saveWatermarkConfigFailed'))` instead of being swallowed, while the
+ *    submit itself still counts as successful (success toast + navigation stay).
+ *  - §4.2: the subtitle fallback (`tpl.previewWatermarkSubtitle.trim() ||
+ *    tpl.config.previewWatermarkSubtitle`) is applied on the create body too, not only on the
+ *    follow-up call.
+ * Round 2 (post-SDK-regen) adds:
+ *  - AC-09: the create body carries all seven appearance properties (§4.2) in the SINGLE
+ *    `createDocument` call, so the row is right the moment it exists.
+ *  - §4.1.2: the follow-up watermark-config call is narrowed to the five personalized-appearance
+ *    fields no other DTO accepts, and is skipped entirely when none of them is set.
+ */
+describe('SellerUploadPage — create-mode watermark-config failure (create-document-watermark-properties v1 §4)', () => {
+  const SAVE_WATERMARK_CONFIG_FAILED = 'บันทึกการตั้งค่าลายน้ำไม่สำเร็จ';
+  const TEMPLATE_SUBTITLE = 'SIRI EDUMARKET PREVIEW';
+
+  type CreateBodyProbe = CreateDocumentRequest;
+
+  /**
+   * The five `personalized*` appearance fields exist on no DTO other than
+   * `SellerWatermarkConfigRequest`, so they are what keeps the third call alive at all (§4.1.2).
+   * `withPersonalizedAppearance: false` models the seller who never opened the watermark editor.
+   */
+  function buildTemplate(
+    perUploadSubtitle: string,
+    withPersonalizedAppearance = true,
+  ): SellerWatermarkTemplate {
+    return {
+      enabled: true,
+      previewWatermarkSubtitle: perUploadSubtitle,
+      previewWatermarkFontFamily: 'Noto Sans Thai',
+      config: {
+        previewWatermarkSubtitle: TEMPLATE_SUBTITLE,
+        previewWatermarkPosition: 'tile',
+        previewWatermarkOpacity: 0.91,
+        previewWatermarkColor: '#123456',
+        previewWatermarkFontSize: 77,
+        previewWatermarkRotation: 33,
+        personalizedWatermarkPosition: 'footer',
+        personalizedWatermarkTemplate: 'ผู้ซื้อ {email}',
+        ...(withPersonalizedAppearance
+          ? {
+              personalizedWatermarkFontFamily: 'Sarabun',
+              personalizedWatermarkColor: '#0f172a',
+              personalizedWatermarkOpacity: 0.4,
+              personalizedWatermarkRotation: 0,
+              personalizedWatermarkFontSize: 11,
+            }
+          : {}),
+      },
+    };
+  }
+
+  function renderForCreate(options: {
+    saveConfigRejects: boolean;
+    perUploadSubtitle?: string;
+    withPersonalizedAppearance?: boolean;
+  }) {
+    const createDocumentCalls: CreateBodyProbe[] = [];
+    const saveConfigCalls: { id: string; body: SellerWatermarkConfigRequest }[] = [];
+    const messages = { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() };
+    const navigate = vi.fn();
+
+    const fakeSellerForCreate: Partial<SellerService> = {
+      createDocument: async (req) => {
+        createDocumentCalls.push(req);
+        return { id: 'doc-new', slug: 'doc-new', title: req.title ?? '' } as SellerDocumentResponse;
+      },
+      refreshDocuments: async () => {},
+    };
+
+    const template = buildTemplate(
+      options.perUploadSubtitle ?? '',
+      options.withPersonalizedAppearance ?? true,
+    );
+    const fakeTemplates: Partial<SellerWatermarkTemplateService> = {
+      load: () => template,
+      loadOrDefault: () => template,
+      save: () => true,
+    };
+
+    const fakeWatermarkService: Partial<SellerWatermarkService> = {
+      saveConfig: async (id: string, body: SellerWatermarkConfigRequest) => {
+        saveConfigCalls.push({ id, body });
+        if (options.saveConfigRejects) {
+          throw new Error('watermark-config endpoint failed');
+        }
+        return {} as SellerWatermarkConfigResponse;
+      },
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+        {
+          provide: CatalogService,
+          useValue: { loadCategories: () => {}, getCategoryById: () => undefined },
+        },
+        { provide: SellerService, useValue: fakeSellerForCreate },
+        { provide: SellerWatermarkTemplateService, useValue: fakeTemplates },
+        { provide: SellerWatermarkService, useValue: fakeWatermarkService },
+        { provide: NzMessageService, useValue: messages },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return {
+      component: fixture.componentInstance,
+      createDocumentCalls,
+      saveConfigCalls,
+      messages,
+      navigate,
+    };
+  }
+
+  /**
+   * The create-mode follow-up `PUT /api/seller/documents/{id}` goes out through
+   * `putApiSellerDocumentsById` (not a TestBed-injectable dependency), so — exactly as the
+   * cover-image-mode block above does — stub the global `fetch` to answer it with a synthetic
+   * 200 instead of reaching for an absent backend.
+   */
+  function stubFetchOk(putBodies: UpdateSellerDocumentRequest[] = []) {
+    return vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request = input instanceof Request ? input : new Request(input, init);
+        const text = await request.clone().text().catch(() => '');
+        if (request.method === 'PUT' && text) {
+          putBodies.push(JSON.parse(text) as UpdateSellerDocumentRequest);
+        }
+        return new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      },
+    );
+  }
+
+  async function submitAndFlush(component: SellerUploadPage): Promise<void> {
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+    component.file.set(new File(['x'], 'notes.pdf'));
+    component.upload.set({
+      key: 'seller-1/notes.pdf',
+      publicUrl: 'https://cdn.example.test/notes.pdf',
+    });
+    component.galleryItems.set([
+      {
+        id: null,
+        key: 'k1',
+        publicUrl: 'https://cdn.example.test/k1',
+        previewUrl: 'https://cdn.example.test/k1',
+      },
+    ]);
+
+    component.submit();
+    for (let i = 0; i < 8; i++) {
+      await Promise.resolve();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it('AC-10: a rejecting saveConfig raises the seller.saveWatermarkConfigFailed error toast (no silent swallow)', async () => {
+    const { component, messages, saveConfigCalls } = renderForCreate({ saveConfigRejects: true });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(saveConfigCalls).toHaveLength(1);
+      expect(messages.error).toHaveBeenCalledWith(SAVE_WATERMARK_CONFIG_FAILED);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('AC-10: the submit still succeeds after a rejecting saveConfig — success toast + navigation to /seller/documents', async () => {
+    const { component, messages, navigate } = renderForCreate({ saveConfigRejects: true });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(messages.success).toHaveBeenCalledWith('ส่งเอกสารเข้าระบบตรวจสอบเรียบร้อยแล้ว');
+      expect(navigate).toHaveBeenCalledWith(['/seller/documents']);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('AC-10 regression: a succeeding saveConfig raises no error toast', async () => {
+    const { component, messages } = renderForCreate({ saveConfigRejects: false });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(messages.error).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('§4.2: create body falls back to the saved template subtitle when the per-upload field is blank', async () => {
+    const { component, createDocumentCalls } = renderForCreate({
+      saveConfigRejects: false,
+      perUploadSubtitle: '   ',
+    });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(createDocumentCalls).toHaveLength(1);
+      expect(createDocumentCalls[0].previewWatermarkSubtitle).toBe(TEMPLATE_SUBTITLE);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  /**
+   * §4.2 regression guard. Create mode fires three calls in order: `POST /documents` →
+   * `PUT /documents/{id}` (attaches the file) → `POST /documents/{id}/watermark-config`. The PUT
+   * used to send the raw per-upload subtitle, which is blank far more often than not; that was
+   * harmless only because the third call happened to rewrite the subtitle afterwards. Now that the
+   * third call is narrowed to the personalized-appearance fields (§4.1.2) the PUT is the last
+   * writer, so a blank subtitle there would become the value buyers actually see on the preview.
+   * All three calls must carry the same resolved subtitle and the ordering must stop mattering.
+   */
+  it('§4.2: the file-attach PUT sends the resolved subtitle too — never the blank per-upload field', async () => {
+    const { component, createDocumentCalls } = renderForCreate({
+      saveConfigRejects: false,
+      perUploadSubtitle: '   ',
+    });
+    const putBodies: UpdateSellerDocumentRequest[] = [];
+    const fetchSpy = stubFetchOk(putBodies);
+    try {
+      await submitAndFlush(component);
+
+      expect(putBodies).toHaveLength(1);
+      expect(putBodies[0].previewWatermarkSubtitle).toBe(TEMPLATE_SUBTITLE);
+      expect(putBodies[0].previewWatermarkSubtitle).toBe(
+        createDocumentCalls[0].previewWatermarkSubtitle,
+      );
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('§4.2: a non-blank per-upload subtitle reaches the PUT unchanged as well', async () => {
+    const { component } = renderForCreate({
+      saveConfigRejects: false,
+      perUploadSubtitle: '  ตัวอย่างเท่านั้น  ',
+    });
+    const putBodies: UpdateSellerDocumentRequest[] = [];
+    const fetchSpy = stubFetchOk(putBodies);
+    try {
+      await submitAndFlush(component);
+
+      expect(putBodies[0].previewWatermarkSubtitle).toBe('ตัวอย่างเท่านั้น');
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  /**
+   * AC-09: the seven appearance properties used to be dropped on the floor by `POST /documents`
+   * and had to be smuggled in by the follow-up watermark-config call — a call wrapped in an empty
+   * `catch`. They now belong to the create request itself, and must all arrive in ONE call.
+   */
+  it('AC-09: the single createDocument call carries all seven watermark appearance properties', async () => {
+    const { component, createDocumentCalls } = renderForCreate({ saveConfigRejects: false });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(createDocumentCalls).toHaveLength(1);
+      const body = createDocumentCalls[0];
+      expect(body.previewWatermarkPosition).toBe('tile');
+      expect(body.previewWatermarkOpacity).toBe(0.91);
+      expect(body.previewWatermarkColor).toBe('#123456');
+      expect(body.previewWatermarkRotation).toBe(33);
+      expect(body.previewWatermarkFontSize).toBe(77);
+      expect(body.personalizedWatermarkPosition).toBe('footer');
+      expect(body.personalizedWatermarkTemplate).toBe('ผู้ซื้อ {email}');
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('AC-09 (document-watermark-scope-options §3.2): the create body also states Option A explicitly', async () => {
+    const { component, createDocumentCalls } = renderForCreate({ saveConfigRejects: false });
+    const fetchSpy = stubFetchOk();
+    try {
+      component.previewWatermark.set(false);
+      await submitAndFlush(component);
+
+      expect(createDocumentCalls[0].previewWatermarkEnabled).toBe(false);
+      expect(createDocumentCalls[0].watermarkEnabled).toBe(true);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('§4.1.2: the watermark-config call carries only the five personalized-appearance fields', async () => {
+    const { component, saveConfigCalls } = renderForCreate({ saveConfigRejects: false });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(saveConfigCalls).toHaveLength(1);
+      expect(saveConfigCalls[0].body).toEqual({
+        personalizedWatermarkFontFamily: 'Sarabun',
+        personalizedWatermarkColor: '#0f172a',
+        personalizedWatermarkOpacity: 0.4,
+        personalizedWatermarkRotation: 0,
+        personalizedWatermarkFontSize: 11,
+      });
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('§4.1.2: no personalized-appearance field set → the third call is skipped entirely', async () => {
+    const { component, saveConfigCalls, messages } = renderForCreate({
+      saveConfigRejects: true,
+      withPersonalizedAppearance: false,
+    });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(saveConfigCalls).toHaveLength(0);
+      expect(messages.error).not.toHaveBeenCalled();
+      expect(messages.success).toHaveBeenCalledWith('ส่งเอกสารเข้าระบบตรวจสอบเรียบร้อยแล้ว');
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('§4.2: a non-blank per-upload subtitle still wins over the saved template subtitle', async () => {
+    const { component, createDocumentCalls } = renderForCreate({
+      saveConfigRejects: false,
+      perUploadSubtitle: '  ตัวอย่างเท่านั้น  ',
+    });
+    const fetchSpy = stubFetchOk();
+    try {
+      await submitAndFlush(component);
+
+      expect(createDocumentCalls[0].previewWatermarkSubtitle).toBe('ตัวอย่างเท่านั้น');
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
+/**
+ * document-watermark-scope-options v1 §4.1–§4.3 — AC-21..AC-24: two genuinely independent
+ * watermark switches on `/seller/upload`.
+ *  - A (`preview-watermark-enabled`) stamps the PUBLIC preview: preview pages, cover, gallery.
+ *  - B (`watermark-enabled`, the existing one) stamps the buyer's DOWNLOADED file.
+ * All four on/off combinations are valid, and each has its own policy lock (§3.1 — A's lock never
+ * looks at the file's watermark capability).
+ *
+ * These specs spread the flags onto the *mapped* `DocumentItem` — the page's real input — so they
+ * stay focused on what the page does with the values. That the mapper now reads them off the wire
+ * instead of hard-coding them is covered separately in `mappers.spec.ts`.
+ */
+describe('SellerUploadPage — preview/download watermark switches (document-watermark-scope-options v1 §4)', () => {
+  const PREVIEW_MANDATORY = 'ระบบกำหนดให้ตัวอย่างสาธารณะต้องมีลายน้ำเสมอ';
+  const PREVIEW_OFF_WARNING = 'ปิดลายน้ำตัวอย่างแล้ว ภาพตัวอย่างของคุณจะถูกคัดลอกไปใช้ได้ง่ายขึ้น';
+
+  function renderForScope(docOverrides: Partial<DocumentItem> = {}) {
+    const rawDoc = {
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      price: 300,
+    };
+    const doc: DocumentItem = {
+      ...mapSellerDocument(rawDoc as SellerDocumentResponse),
+      ...docOverrides,
+    };
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async () => {},
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) },
+        },
+        {
+          provide: CatalogService,
+          useValue: { loadCategories: () => {}, getCategoryById: () => undefined },
+        },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        {
+          provide: NzMessageService,
+          useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() },
+        },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance };
+  }
+
+  async function settleLoad(fixture: { detectChanges: () => void }): Promise<void> {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+  }
+
+  function checkbox(fixture: { nativeElement: unknown }, name: string): HTMLInputElement {
+    const el = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      `input[name="${name}"]`,
+    );
+    expect(el).not.toBeNull();
+    return el as HTMLInputElement;
+  }
+
+  it('AC-21: create mode renders both switches side by side, preview watermark defaulting to on', () => {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+
+    expect(component.previewWatermark()).toBe(true);
+    expect(checkbox(fixture, 'preview-watermark-enabled')).toBeTruthy();
+    expect(checkbox(fixture, 'watermark-enabled')).toBeTruthy();
+  });
+
+  it('AC-21: edit mode loads the document\'s own previewWatermarkEnabled (not a stale default)', async () => {
+    const { fixture, component } = renderForScope({
+      previewWatermarkEnabled: false,
+      watermarkEnabled: true,
+    });
+    await settleLoad(fixture);
+
+    expect(component.previewWatermark()).toBe(false);
+    expect(component.watermark()).toBe(true);
+    expect(checkbox(fixture, 'preview-watermark-enabled').checked).toBe(false);
+    expect(checkbox(fixture, 'watermark-enabled').checked).toBe(true);
+  });
+
+  it('AC-22: previewWatermarkPolicyLocked disables switch A, forces it on and explains why', async () => {
+    const { fixture, component } = renderForScope({
+      previewWatermarkEnabled: false,
+      previewWatermarkPolicyLocked: true,
+    });
+    await settleLoad(fixture);
+
+    expect(component.previewWatermarkPolicyLocked()).toBe(true);
+    expect(component.previewWatermark()).toBe(true);
+    expect(checkbox(fixture, 'preview-watermark-enabled').disabled).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(PREVIEW_MANDATORY);
+  });
+
+  it('AC-22: an unlocked switch A stays editable and shows no mandatory line', async () => {
+    const { fixture, component } = renderForScope({
+      previewWatermarkEnabled: true,
+      previewWatermarkPolicyLocked: false,
+    });
+    await settleLoad(fixture);
+
+    expect(checkbox(fixture, 'preview-watermark-enabled').disabled).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(PREVIEW_MANDATORY);
+    expect(component.previewWatermark()).toBe(true);
+  });
+
+  it('§4.2: turning switch A off by choice shows the copy-risk warning', async () => {
+    const { fixture, component } = renderForScope({ previewWatermarkEnabled: true });
+    await settleLoad(fixture);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(PREVIEW_OFF_WARNING);
+
+    component.previewWatermark.set(false);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(PREVIEW_OFF_WARNING);
+  });
+
+  it('§1.1: the two locks are independent — B locked never locks A, and vice versa', async () => {
+    const bLocked = renderForScope({
+      watermarkEnabled: false,
+      watermarkPolicyLocked: true,
+      previewWatermarkEnabled: false,
+      previewWatermarkPolicyLocked: false,
+    });
+    await settleLoad(bLocked.fixture);
+
+    expect(bLocked.component.watermark()).toBe(true);
+    expect(bLocked.component.previewWatermark()).toBe(false);
+    expect(checkbox(bLocked.fixture, 'watermark-enabled').disabled).toBe(true);
+    expect(checkbox(bLocked.fixture, 'preview-watermark-enabled').disabled).toBe(false);
+
+    TestBed.resetTestingModule();
+
+    const aLocked = renderForScope({
+      watermarkEnabled: false,
+      watermarkPolicyLocked: false,
+      previewWatermarkEnabled: false,
+      previewWatermarkPolicyLocked: true,
+    });
+    await settleLoad(aLocked.fixture);
+
+    expect(aLocked.component.previewWatermark()).toBe(true);
+    expect(aLocked.component.watermark()).toBe(false);
+    expect(checkbox(aLocked.fixture, 'preview-watermark-enabled').disabled).toBe(true);
+    expect(checkbox(aLocked.fixture, 'watermark-enabled').disabled).toBe(false);
+  });
+
+  it('§4.2: the review step lists the two watermarks on separate rows', async () => {
+    const { fixture, component } = renderForScope({
+      previewWatermarkEnabled: false,
+      watermarkEnabled: true,
+    });
+    await settleLoad(fixture);
+    component.step.set(4);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ลายน้ำตัวอย่าง');
+    expect(text).toContain('ลายน้ำไฟล์ดาวน์โหลด');
+    expect(text).toContain('ปิดใช้งาน');
+    expect(text).toContain('เปิดใช้งาน');
+  });
+
+  it('§4.3: the main-file list states that a new version inherits the current settings', async () => {
+    const { fixture } = renderForScope({
+      mainFiles: [
+        {
+          id: 'file-1',
+          storageKey: 'k1',
+          originalFileName: 'f1.pdf',
+          uploadedAt: '',
+          isListedForSale: true,
+        },
+      ],
+    });
+    await settleLoad(fixture);
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'ไฟล์เวอร์ชันใหม่จะใช้การตั้งค่าลายน้ำเดิมของเอกสารนี้',
+    );
+  });
+});
+
+/**
+ * document-watermark-scope-options v1 §4.3 — AC-23/AC-24: what the version-confirmation modal
+ * actually hands to `SellerService.setListedMainFile`. The rule the backend depends on (§3.6):
+ * an omitted key means "inherit the document's setting", so an untouched modal must not put
+ * `previewWatermarkEnabled`/`watermarkEnabled` into the options object at all — not even as
+ * `null`/`undefined`.
+ *
+ * These specs assert the options object the modal hands to the service; the other half of the
+ * rule — that `SellerService.setListedMainFile` then keeps those keys out of the serialized HTTP
+ * body — is asserted against the real request in `seller.service.spec.ts`.
+ */
+describe('SellerUploadPage — version modal watermark override (document-watermark-scope-options v1 §4.3)', () => {
+  type ListedOptions = {
+    isNewVersion: boolean;
+    changeNote?: string;
+    previewWatermarkEnabled?: boolean;
+    watermarkEnabled?: boolean;
+  };
+
+  function openModal(options: { previewWatermark: boolean; downloadWatermark: boolean }) {
+    const setListedSpy = vi.fn().mockResolvedValue({ id: 'doc-1', status: 'approved' });
+    Object.assign(fakeSeller, { setListedMainFile: setListedSpy });
+
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.editId.set('doc-1');
+    component.previewWatermark.set(options.previewWatermark);
+    component.watermark.set(options.downloadWatermark);
+    component.mainFiles.set([
+      {
+        id: 'file-1',
+        storageKey: 'k1',
+        originalFileName: 'f1.pdf',
+        uploadedAt: '',
+        isListedForSale: false,
+      },
+    ]);
+    component.editDocument.set({
+      id: 'doc-1',
+      status: 'approved',
+      salesCount: 5,
+    } as unknown as DocumentItem);
+
+    component.selectListedMainFile('file-1');
+    return { component, setListedSpy };
+  }
+
+  function lastOptions(setListedSpy: ReturnType<typeof vi.fn>): ListedOptions {
+    expect(setListedSpy).toHaveBeenCalledTimes(1);
+    return setListedSpy.mock.calls[0][2] as ListedOptions;
+  }
+
+  it('copies the document\'s current settings into the modal and clears the override every time', () => {
+    const { component } = openModal({ previewWatermark: false, downloadWatermark: true });
+
+    expect(component.versionModalVisible()).toBe(true);
+    expect(component.versionWatermarkOverride()).toBe(false);
+    expect(component.versionPreviewWatermark()).toBe(false);
+    expect(component.versionDownloadWatermark()).toBe(true);
+
+    // A second open must not leak the previous session's override state.
+    component.versionWatermarkOverride.set(true);
+    component.cancelVersionModal();
+    component.selectListedMainFile('file-1');
+    expect(component.versionWatermarkOverride()).toBe(false);
+  });
+
+  it('AC-23: confirming without ticking the override omits both watermark keys entirely', () => {
+    const { component, setListedSpy } = openModal({
+      previewWatermark: true,
+      downloadWatermark: true,
+    });
+
+    component.confirmVersionModal();
+
+    const options = lastOptions(setListedSpy);
+    expect('previewWatermarkEnabled' in options).toBe(false);
+    expect('watermarkEnabled' in options).toBe(false);
+    expect(options.isNewVersion).toBe(false);
+  });
+
+  it('AC-23: even flipping the modal switches sends nothing while the override box is unticked', () => {
+    const { component, setListedSpy } = openModal({
+      previewWatermark: true,
+      downloadWatermark: true,
+    });
+
+    component.versionPreviewWatermark.set(false);
+    component.versionDownloadWatermark.set(false);
+    component.confirmVersionModal();
+
+    const options = lastOptions(setListedSpy);
+    expect('previewWatermarkEnabled' in options).toBe(false);
+    expect('watermarkEnabled' in options).toBe(false);
+  });
+
+  it('AC-24: with the override ticked, only the switch the seller actually moved is sent', () => {
+    const { component, setListedSpy } = openModal({
+      previewWatermark: true,
+      downloadWatermark: true,
+    });
+
+    component.versionWatermarkOverride.set(true);
+    component.versionPreviewWatermark.set(false);
+    component.confirmVersionModal();
+
+    const options = lastOptions(setListedSpy);
+    expect(options.previewWatermarkEnabled).toBe(false);
+    expect('watermarkEnabled' in options).toBe(false);
+  });
+
+  it('AC-24: both switches moved → both keys travel, with the seller\'s values', () => {
+    const { component, setListedSpy } = openModal({
+      previewWatermark: true,
+      downloadWatermark: false,
+    });
+
+    component.versionWatermarkOverride.set(true);
+    component.versionPreviewWatermark.set(false);
+    component.versionDownloadWatermark.set(true);
+    component.isNewVersionOption.set(true);
+    component.changeNoteInput.set('เปลี่ยนไฟล์ + ปิดลายน้ำตัวอย่าง');
+    component.confirmVersionModal();
+
+    const options = lastOptions(setListedSpy);
+    expect(options.previewWatermarkEnabled).toBe(false);
+    expect(options.watermarkEnabled).toBe(true);
+    expect(options.isNewVersion).toBe(true);
+    expect(options.changeNote).toBe('เปลี่ยนไฟล์ + ปิดลายน้ำตัวอย่าง');
+  });
+
+  it('AC-24: ticking the override but changing nothing still omits both keys', () => {
+    const { component, setListedSpy } = openModal({
+      previewWatermark: false,
+      downloadWatermark: true,
+    });
+
+    component.versionWatermarkOverride.set(true);
+    component.confirmVersionModal();
+
+    const options = lastOptions(setListedSpy);
+    expect('previewWatermarkEnabled' in options).toBe(false);
+    expect('watermarkEnabled' in options).toBe(false);
   });
 });
 

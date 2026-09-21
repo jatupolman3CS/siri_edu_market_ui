@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerBundlesPage } from './bundles.page';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
+import { SellerService } from '../../../core/services';
 
 /**
  * F-14: the bundle editor is the one page in this wave with arithmetic of its own — the running
@@ -154,6 +155,56 @@ describe('SellerBundlesPage', () => {
 
     expect(page.savingAmount()).toBe(50);
     expect(page.savingPercent()).toBe(25);
+
+    page.startCreate();
+    page.toggleDocument('doc-1');
+    page.toggleDocument('doc-2');
+    page.price.set(150);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('฿50');
+    expect(text).toContain('25%');
+  });
+
+  it('renders the selected bundle cover as an image preview', async () => {
+    stubEmptyList();
+    const fixture = renderPage();
+    await settle();
+    const page = fixture.componentInstance;
+
+    page.startCreate();
+    page.coverUrl.set('https://cdn.example.test/bundle-cover.jpg');
+    page.coverPreviewUrl.set('https://cdn.example.test/bundle-cover.jpg');
+    fixture.detectChanges();
+
+    const cover = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
+      'img[src="https://cdn.example.test/bundle-cover.jpg"]',
+    );
+    expect(cover).toBeTruthy();
+    expect(cover?.classList.contains('object-cover')).toBe(true);
+  });
+
+  it('stores the uploaded cover key while previewing its optimized image URL', async () => {
+    stubEmptyList();
+    const fixture = renderPage();
+    await settle();
+    const page = fixture.componentInstance;
+    vi.spyOn(TestBed.inject(SellerService), 'uploadFile').mockResolvedValue({
+      key: 'bundles/cover.jpg',
+      publicUrl: '/api/files/download/bundles/cover.jpg',
+      optimizedUrl: '/api/files/download/bundles/cover.webp',
+      optimizedKey: 'bundles/cover.webp',
+      eTag: 'cover-etag',
+    });
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', {
+      value: [new File(['cover'], 'cover.jpg', { type: 'image/jpeg' })],
+    });
+
+    await page.onCoverFileChange({ target: input } as unknown as Event);
+
+    expect(page.coverUrl()).toBe('bundles/cover.jpg');
+    expect(page.coverPreviewUrl()).toBe('/api/files/download/bundles/cover.webp');
   });
 
   it('reports no saving when the price is not below the list total', async () => {
