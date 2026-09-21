@@ -132,22 +132,14 @@ export class AppHeaderComponent {
   }
 
   /**
-   * Main nav links — "Siri Studio" only shows for seller/admin roles so guests and
-   * plain buyers never see a link that the route guard (`sellerGuard`) would bounce
-   * them back from. Computed signal because role can change on login/logout without
-   * a page reload (zoneless app).
+   * Main nav links for primary navigation.
+   * "Siri Studio" removed per user request.
    */
-  readonly navItems = computed(() => {
-    const items: { label: string; href: string; exact?: boolean }[] = [
-      { label: this.translation.t('nav.home'), href: '/', exact: true },
-      { label: this.translation.t('nav.marketplace'), href: '/marketplace' },
-      { label: this.translation.t('nav.categories'), href: '/categories' },
-    ];
-    if (this.auth.isSeller() || this.auth.isAdmin()) {
-      items.push({ label: this.translation.t('nav.studio'), href: '/seller' });
-    }
-    return items;
-  });
+  readonly navItems = computed(() => [
+    { label: this.translation.t('nav.home'), href: '/', exact: true },
+    { label: this.translation.t('nav.marketplace'), href: '/marketplace' },
+    { label: this.translation.t('nav.categories'), href: '/categories' },
+  ]);
 
   /**
    * Sub-nav items displayed on desktop left side:

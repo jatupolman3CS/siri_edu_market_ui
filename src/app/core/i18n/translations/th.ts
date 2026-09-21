@@ -14,7 +14,7 @@ export const th = {
     "signOut": "ออกจากระบบ",
     "register": "ลงทะเบียน",
     "myAccount": "บัญชีของฉัน",
-    "sellerCenter": "ศูนย์ผู้ขาย",
+    "sellerCenter": "Seller Center",
     "backToMarket": "กลับสู่หน้าตลาด"
   },
   "header": {
