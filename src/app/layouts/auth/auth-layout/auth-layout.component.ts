@@ -31,6 +31,7 @@ export class AuthLayoutComponent {
   readonly artTitleInput = input<string | null>(null, { alias: 'artTitle' });
   readonly artDescriptionInput = input<string | null>(null, { alias: 'artDescription' });
   readonly artBulletsInput = input<{ icon: string; label: string }[] | null>(null, { alias: 'artBullets' });
+  readonly compact = input(false);
 
   readonly artTitle = computed(() => this.artTitleInput() ?? this.translation.t('auth.defaultArtTitle'));
   readonly artDescription = computed(() => this.artDescriptionInput() ?? this.translation.t('auth.defaultArtDesc'));

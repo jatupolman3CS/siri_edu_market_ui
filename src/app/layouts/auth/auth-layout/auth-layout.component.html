@@ -1,7 +1,10 @@
 <div class="min-h-screen flex items-stretch bg-canvas">
       <app-global-loader />
       <!-- Left: form area (content slot) -->
-      <div class="flex-1 flex flex-col px-6 lg:px-12 py-8 max-w-xl mx-auto w-full">
+      <div
+        class="auth-form-pane flex-1 flex flex-col px-6 lg:px-12 py-8 max-w-xl mx-auto w-full"
+        [class.auth-form-pane--compact]="compact()"
+      >
         <header class="flex items-center justify-between">
           <app-logo />
           <div class="flex items-center gap-2">
@@ -12,11 +15,11 @@
           </div>
         </header>
 
-        <main class="flex-1 flex flex-col justify-center mt-10">
+        <main class="auth-main flex-1 flex flex-col justify-center mt-10">
           <ng-content />
         </main>
 
-        <footer class="text-[11px] text-ink-muted text-center mt-6">
+        <footer class="auth-footer text-[11px] text-ink-muted text-center mt-6">
           © 2026 SIRIEDUMARKET — Document Studio
         </footer>
       </div>

@@ -1,0 +1,25 @@
+.auth-form-pane--compact {
+  padding-block: 1.25rem;
+}
+
+.auth-form-pane--compact .auth-main {
+  margin-top: 1rem;
+}
+
+.auth-form-pane--compact .auth-footer {
+  margin-top: 1rem;
+}
+
+@media (max-height: 720px) {
+  .auth-form-pane--compact {
+    padding-block: 0.75rem;
+  }
+
+  .auth-form-pane--compact .auth-main {
+    margin-top: 0.5rem;
+  }
+
+  .auth-form-pane--compact .auth-footer {
+    margin-top: 0.5rem;
+  }
+}
