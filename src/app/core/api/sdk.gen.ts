@@ -198,6 +198,8 @@ import type {
   GetApiLibraryByDocumentIdVersionsResponses,
   GetApiLibraryData,
   GetApiLibraryResponses,
+  GetApiMarketplaceAdsSponsoredData,
+  GetApiMarketplaceAdsSponsoredResponses,
   GetApiMarketplaceBundlesByIdData,
   GetApiMarketplaceBundlesByIdErrors,
   GetApiMarketplaceBundlesByIdResponses,
@@ -2566,6 +2568,14 @@ export const postApiMarketplaceAdsByCampaignIdClick = <ThrowOnError extends bool
     unknown,
     ThrowOnError
   >({ url: '/api/marketplace/ads/{campaignId}/click', ...options });
+
+export const getApiMarketplaceAdsSponsored = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiMarketplaceAdsSponsoredData, ThrowOnError>,
+): RequestResult<GetApiMarketplaceAdsSponsoredResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiMarketplaceAdsSponsoredResponses, unknown, ThrowOnError>({
+    url: '/api/marketplace/ads/sponsored',
+    ...options,
+  });
 
 export const getApiMeProfile = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMeProfileData, ThrowOnError>,

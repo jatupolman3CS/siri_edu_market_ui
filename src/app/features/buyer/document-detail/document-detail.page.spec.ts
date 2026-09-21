@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { BuyerDocumentDetailPage } from './document-detail.page';
 import {
+  AdsService,
   AuthService,
   BundleService,
   CartService,
@@ -135,6 +136,14 @@ function render(bundlesResult: () => Promise<Bundle[]>) {
       { provide: LibraryService, useValue: fakeLibrary },
       { provide: RecentlyViewedService, useValue: fakeRecent },
       { provide: BundleService, useValue: fakeBundleService },
+      {
+        provide: AdsService,
+        useValue: {
+          getSponsoredAds: vi.fn(async () => []),
+          recordImpressions: vi.fn(),
+          recordClick: vi.fn(),
+        },
+      },
     ],
   });
 

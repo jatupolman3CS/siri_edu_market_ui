@@ -9,7 +9,6 @@ import { NotificationSettingsComponent } from '../../../shared/components/notifi
 import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
 import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
 import { ReferralCardComponent } from '../../../shared/components/referral-card/referral-card.component';
-import { AffiliateLinkCardComponent } from '../../../shared/components/affiliate-link-card/affiliate-link-card.component';
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
@@ -37,7 +36,6 @@ import { TranslatePipe, TranslationService } from '../../../core/i18n';
     NotificationSettingsComponent,
     SavedCardsComponent,
     ReferralCardComponent,
-    AffiliateLinkCardComponent,
     ExamCountdownFormComponent,
     ThbPipe,
     TranslatePipe,
@@ -68,7 +66,6 @@ export class AccountPage {
       { fragment: 'cards', label: this.i18n.t('account.navCards'), icon: 'wallet' as const },
       { fragment: 'wallet', label: this.i18n.t('account.navWallet'), icon: 'wallet' as const },
       { fragment: 'referral', label: this.i18n.t('account.navReferral'), icon: 'tag' as const },
-      { fragment: 'affiliate', label: this.i18n.t('account.navAffiliate'), icon: 'wallet' as const },
       { fragment: 'exam-countdown', label: this.i18n.t('account.navExamCountdown'), icon: 'flag' as const },
       { fragment: 'shortcuts', label: this.i18n.t('account.navShortcuts'), icon: 'dashboard' as const },
     ];

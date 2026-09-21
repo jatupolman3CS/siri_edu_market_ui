@@ -9666,6 +9666,69 @@
         }
       }
     },
+    "/api/marketplace/ads/sponsored": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "name": "placement",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 2
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketplaceDocumentResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketplaceDocumentResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketplaceDocumentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/profile": {
       "get": {
         "tags": [
@@ -25155,6 +25218,14 @@
           },
           "payoutMethodPromptPayQrEnabled": {
             "type": "boolean"
+          },
+          "affiliateCommissionRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "referralDiscountAmount": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -25391,6 +25462,10 @@
             "format": "int32"
           },
           "unusedCreditTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "referralDiscountAmount": {
             "type": "number",
             "format": "double"
           }
@@ -28090,6 +28165,20 @@
           },
           "payoutMethodPromptPayQrEnabled": {
             "type": "boolean",
+            "nullable": true
+          },
+          "affiliateCommissionRatePercent": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "referralDiscountAmount": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
             "nullable": true
           }
         }

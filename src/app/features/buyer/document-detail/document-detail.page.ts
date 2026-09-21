@@ -15,6 +15,7 @@ import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
+  AdsService,
   AuthService,
   BundleService,
   CartService,
@@ -38,6 +39,7 @@ import {
   RESOURCE_TYPE_LABELS,
   type Bundle,
   type BoughtTogetherItem,
+  type DocumentItem,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { ReportDocumentComponent } from '../../../shared/components/report-document/report-document.component';
@@ -92,10 +94,12 @@ export class BuyerDocumentDetailPage {
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
   private readonly seo = inject(SeoMetaService);
+  private readonly ads = inject(AdsService);
 
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly id = signal<string>('');
+  readonly sponsoredDocs = signal<DocumentItem[]>([]);
   readonly selectedImage = signal<number>(0);
   readonly preview = signal<MarketplaceDocumentPreviewResponse | null>(null);
   readonly previewLoading = signal<boolean>(false);
@@ -335,6 +339,7 @@ export class BuyerDocumentDetailPage {
       }
       this.loadCrossSellBundles(id);
       this.loadBoughtTogether(id);
+      this.loadSponsoredAds();
     });
     // Track recently viewed
     effect(() => {
@@ -620,4 +625,17 @@ export class BuyerDocumentDetailPage {
       this.boughtTogetherState.set(idleActionState());
     })();
   }
+
+  private loadSponsoredAds(): void {
+    void this.ads.getSponsoredAds('doc_detail_related', '*', 2).then((sponsored) => {
+      this.sponsoredDocs.set(sponsored);
+      if (sponsored.length > 0) {
+        this.ads.recordImpressions(
+          this.sponsoredDocs,
+          sponsored.map((d) => d.sponsoredCampaignId),
+        );
+      }
+    });
+  }
 }
+

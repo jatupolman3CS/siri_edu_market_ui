@@ -4,11 +4,12 @@ import {
   OnInit,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
-import { ExamHubService } from '../../../core/services';
-import type { ExamHubType } from '../../../core/models';
+import { AdsService, ExamHubService } from '../../../core/services';
+import type { DocumentItem, ExamHubType } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -37,6 +38,7 @@ export class ExamHubPage implements OnInit {
   private readonly titleService = inject(Title);
   private readonly meta = inject(Meta);
   readonly examHub = inject(ExamHubService);
+  readonly ads = inject(AdsService);
 
   readonly examType: ExamHubType =
     (this.route.snapshot.data['examType'] as ExamHubType) ?? 'tcas';
@@ -46,6 +48,7 @@ export class ExamHubPage implements OnInit {
   readonly docs = this.examHub.docs;
   readonly docsState = this.examHub.docsState;
   readonly hasMore = this.examHub.hasMore;
+  readonly sponsoredDocs = signal<DocumentItem[]>([]);
 
   readonly hasAnyInfoCard = computed(() => {
     const p = this.page();
@@ -69,6 +72,8 @@ export class ExamHubPage implements OnInit {
       this.examHub.loadDocuments(this.examType),
     ]);
 
+    this.loadSponsoredAds();
+
     const p = this.page();
     if (p) {
       if (p.title) {
@@ -78,6 +83,18 @@ export class ExamHubPage implements OnInit {
         this.meta.updateTag({ name: 'description', content: p.metaDescription });
       }
     }
+  }
+
+  private loadSponsoredAds(): void {
+    void this.ads.getSponsoredAds('exam_hub_top', this.examType, 2).then((sponsored) => {
+      this.sponsoredDocs.set(sponsored);
+      if (sponsored.length > 0) {
+        this.ads.recordImpressions(
+          this.sponsoredDocs,
+          sponsored.map((d) => d.sponsoredCampaignId),
+        );
+      }
+    });
   }
 
   async loadMore(): Promise<void> {

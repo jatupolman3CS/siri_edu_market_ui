@@ -1921,6 +1921,8 @@ export type PlatformSettingsResponse = {
   payoutMethodPromptPayPhoneEnabled?: boolean;
   payoutMethodPromptPayNationalIdEnabled?: boolean;
   payoutMethodPromptPayQrEnabled?: boolean;
+  affiliateCommissionRatePercent?: number;
+  referralDiscountAmount?: number;
 };
 
 export type PlatformStatsResponse = {
@@ -1997,6 +1999,7 @@ export type ReferralSummaryResponse = {
   totalReferred?: number;
   unusedCreditCount?: number;
   unusedCreditTotal?: number;
+  referralDiscountAmount?: number;
 };
 
 export type RefreshTokenRequest = {
@@ -2789,6 +2792,8 @@ export type UpdatePlatformSettingsRequest = {
   payoutMethodPromptPayPhoneEnabled?: boolean | null;
   payoutMethodPromptPayNationalIdEnabled?: boolean | null;
   payoutMethodPromptPayQrEnabled?: boolean | null;
+  affiliateCommissionRatePercent?: number | null;
+  referralDiscountAmount?: number | null;
 };
 
 export type UpdateProfileRequest = {
@@ -6661,6 +6666,27 @@ export type PostApiMarketplaceAdsByCampaignIdClickResponses = {
 
 export type PostApiMarketplaceAdsByCampaignIdClickResponse =
   PostApiMarketplaceAdsByCampaignIdClickResponses[keyof PostApiMarketplaceAdsByCampaignIdClickResponses];
+
+export type GetApiMarketplaceAdsSponsoredData = {
+  body?: never;
+  path?: never;
+  query?: {
+    placement?: string;
+    target?: string;
+    limit?: number;
+  };
+  url: '/api/marketplace/ads/sponsored';
+};
+
+export type GetApiMarketplaceAdsSponsoredResponses = {
+  /**
+   * OK
+   */
+  200: Array<MarketplaceDocumentResponse>;
+};
+
+export type GetApiMarketplaceAdsSponsoredResponse =
+  GetApiMarketplaceAdsSponsoredResponses[keyof GetApiMarketplaceAdsSponsoredResponses];
 
 export type GetApiMeProfileData = {
   body?: never;

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, injec
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
+  AdsService,
   AuthService,
   BundleService,
   CatalogService,
@@ -24,7 +25,7 @@ import { PopularSearchChipsComponent } from '../../../shared/components/popular-
 import { DiscoveryRailComponent } from '../../../shared/components/discovery-rail/discovery-rail.component';
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
-import type { RecommendationExplanation, RecommendationStrategy } from '../../../core/models';
+import type { DocumentItem, RecommendationExplanation, RecommendationStrategy } from '../../../core/models';
 
 /** crm-driven-discovery v1 §3.3/§4.3: strategy → section title map (ห้าม hardcode subtitle ฝั่ง UI อีก — subtitle มาจาก `strategyReason` ของ backend เท่านั้น). */
 const RECOMMENDED_STRATEGY_TITLES: Record<RecommendationStrategy, string> = {
@@ -69,9 +70,12 @@ export class BuyerHomePage {
   readonly examCountdown = inject(ExamCountdownService);
   readonly discovery = inject(DiscoveryService);
   readonly translation = inject(TranslationService);
+  readonly ads = inject(AdsService);
   private readonly router = inject(Router);
   private readonly compactPipe = new CompactPipe();
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly homeSponsoredDocs = signal<DocumentItem[]>([]);
 
   // ===== exam-countdown-mode v1 §4 =====
 
@@ -229,6 +233,7 @@ export class BuyerHomePage {
     if (this.auth.isAuthenticated()) {
       this.examCountdown.loadSetting();
     }
+    void this.loadHomeSponsored();
 
     // Ensure featured sellers' follower count & stats are enriched from profiles
     effect(() => {
@@ -279,4 +284,16 @@ export class BuyerHomePage {
       queryParams: input.value.trim() ? { q: input.value.trim() } : {},
     });
   }
+
+  private async loadHomeSponsored(): Promise<void> {
+    const docs = await this.ads.getSponsoredAds('home_top', '*', 4);
+    this.homeSponsoredDocs.set(docs);
+    if (docs.length > 0) {
+      this.ads.recordImpressions(
+        this.homeSponsoredDocs,
+        docs.map((d) => d.sponsoredCampaignId),
+      );
+    }
+  }
 }
+

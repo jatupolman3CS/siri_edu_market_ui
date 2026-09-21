@@ -5,17 +5,17 @@
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
           <app-icon name="tag" [size]="18" />
         </span>
-        <h2 class="text-lg font-bold text-neutral-900">{{ 'shared.referral.title' | trans }}</h2>
+        <h2 class="text-lg font-bold text-neutral-900">{{ 'shared.referral.title' | trans: { discount: referralDiscount(), percent: commissionRate() } }}</h2>
       </div>
       <p class="mt-1 text-sm text-neutral-500">
-        {{ 'shared.referral.description' | trans }}
+        {{ 'shared.referral.description' | trans: { discount: referralDiscount(), percent: commissionRate() } }}
       </p>
       <div class="flex flex-wrap gap-2 mt-3">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
-          {{ 'shared.referral.friendBenefit' | trans }}
+          {{ 'shared.referral.friendBenefit' | trans: { discount: referralDiscount() } }}
         </span>
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          {{ 'shared.referral.yourBenefit' | trans }}
+          {{ 'shared.referral.yourBenefit' | trans: { discount: referralDiscount(), percent: commissionRate() } }}
         </span>
       </div>
     </div>
@@ -95,7 +95,7 @@
         <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5">
           <span class="text-xs text-neutral-500">{{ 'shared.referral.commissionTotal' | trans }}</span>
           <div class="mt-0.5 text-sm font-semibold text-emerald-600">
-            {{ 'shared.referral.commissionBaht' | trans: { total: affiliate.summary()?.commissionEarnedTotal ?? 0, percent: affiliate.summary()?.commissionRatePercent ?? 5 } }}
+            {{ 'shared.referral.commissionBaht' | trans: { amount: affiliate.summary()?.commissionEarnedTotal ?? 0, rate: commissionRate() } }}
           </div>
         </div>
       }

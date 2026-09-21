@@ -10,11 +10,13 @@ describe('ReferralCardComponent', () => {
   let component: ReferralCardComponent;
   let fixture: ComponentFixture<ReferralCardComponent>;
   let mockSummary: ReturnType<typeof signal<ReferralSummary | null>>;
+  let mockAffSummary: ReturnType<typeof signal<any>>;
   let mockState: ReturnType<typeof signal<ActionState>>;
   let refreshCalled: boolean;
 
   beforeEach(async () => {
     mockSummary = signal<ReferralSummary | null>(null);
+    mockAffSummary = signal<any>(null);
     mockState = signal<ActionState>(idleActionState());
     refreshCalled = false;
 
@@ -34,7 +36,7 @@ describe('ReferralCardComponent', () => {
     };
 
     const fakeAffiliateService = {
-      summary: signal(null).asReadonly(),
+      summary: mockAffSummary.asReadonly(),
       state: signal(idleActionState()).asReadonly(),
       refreshSummary: () => Promise.resolve(),
     };
@@ -113,5 +115,32 @@ describe('ReferralCardComponent', () => {
     await component.copyShareUrl();
     expect(writeTextSpy).toHaveBeenCalledWith('http://localhost:4200/marketplace?ref=SHARE123');
     expect(component.copied()).toBe(true);
+  });
+
+  it('renders dynamic referral discount amount and affiliate commission rate percent when configured', () => {
+    mockSummary.set({
+      code: 'FRIEND99',
+      shareUrl: 'http://localhost:4200/marketplace?ref=FRIEND99',
+      totalReferred: 3,
+      unusedCreditCount: 1,
+      unusedCreditTotal: 50,
+      referralDiscountAmount: 50,
+    });
+    mockAffSummary.set({
+      code: 'AFF99',
+      commissionRatePercent: 10,
+      commissionEarnedTotal: 150,
+      totalClicks: 20,
+      totalConversions: 5,
+    });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('ชวนเพื่อน รับส่วนลดคนละ 50 บาท & ลิงก์พันธมิตร รับค่าคอมมิชชัน 10%');
+    expect(el.textContent).toContain('เครดิตส่วนลด 50 บาททันที');
+    expect(el.textContent).toContain('ค่าคอมมิชชัน 10%');
+    expect(el.textContent).toContain('เพื่อนได้ส่วนลด 50 บาททันที');
+    expect(el.textContent).toContain('คุณได้ส่วนลด 50 บาท + คอมมิชชัน 10%');
+    expect(el.textContent).toContain('150 บาท (10%)');
   });
 });

@@ -33,7 +33,11 @@
         </div>
       }
 
-      @if (doc().isFree) {
+      @if (doc().isSponsored) {
+        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-ink text-white text-[11px] font-semibold shadow-soft z-10" [title]="'documentCard.sponsoredTooltip' | trans">
+          📢 {{ 'documentCard.sponsored' | trans }}
+        </span>
+      } @else if (doc().isFree) {
         <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold">
           {{ 'documentCard.free' | trans }}
         </span>

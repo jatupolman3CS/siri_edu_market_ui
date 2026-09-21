@@ -1056,6 +1056,7 @@ export interface ReferralSummary {
   totalReferred: number;
   unusedCreditCount: number;
   unusedCreditTotal: number;
+  referralDiscountAmount?: number;
 }
 
 export interface ReferralCodeValidation {

@@ -107,6 +107,9 @@ export const sellerGuard: CanActivateFn = async (
 
     case 'none':
     default:
+      // If the user already holds the seller role (e.g. seeded account, pre-existing seller,
+      // or direct admin promotion), allow access rather than locking them out in a /become-seller loop.
+      if (auth.isSeller()) return true;
       message.warning(translation.t('roleGuard.noShopYet'));
       return router.createUrlTree(['/become-seller']);
   }

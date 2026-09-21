@@ -1350,6 +1350,8 @@ export function mapReferralSummary(raw: unknown): ReferralSummary {
     unused_credit_count?: number | null;
     unusedCreditTotal?: number | null;
     unused_credit_total?: number | null;
+    referralDiscountAmount?: number | null;
+    referral_discount_amount?: number | null;
   };
   return {
     code: r.code ?? '',
@@ -1357,6 +1359,10 @@ export function mapReferralSummary(raw: unknown): ReferralSummary {
     totalReferred: Number(r.totalReferred ?? r.total_referred ?? 0),
     unusedCreditCount: Number(r.unusedCreditCount ?? r.unused_credit_count ?? 0),
     unusedCreditTotal: Number(r.unusedCreditTotal ?? r.unused_credit_total ?? 0),
+    referralDiscountAmount:
+      r.referralDiscountAmount != null || r.referral_discount_amount != null
+        ? Number(r.referralDiscountAmount ?? r.referral_discount_amount)
+        : undefined,
   };
 }
 

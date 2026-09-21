@@ -144,6 +144,28 @@
       </div>
     </section>
 
+    <!-- ===================== SPONSORED ADS (home_top) ===================== -->
+    @if (homeSponsoredDocs().length > 0) {
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-8">
+        <div class="rounded-3xl bg-gradient-to-r from-pink-50/80 via-white to-pink-50/50 border border-pink-200/80 p-5 md:p-6 shadow-soft">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="pill bg-pink-500 text-white font-bold text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                <app-icon name="sparkle" [size]="12" />
+                โฆษณาแนะนำ
+              </span>
+              <span class="text-xs text-ink-muted">เอกสารพิเศษจากผู้ขายที่ได้รับการแนะนำ</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (doc of homeSponsoredDocs(); track doc.id) {
+              <app-document-card [doc]="doc" />
+            }
+          </div>
+        </div>
+      </section>
+    }
+
     <!-- ===================== EXAM COUNTDOWN (exam-countdown-mode v1) ===================== -->
     @if (auth.isAuthenticated()) {
       @if (examCountdownActive()) {

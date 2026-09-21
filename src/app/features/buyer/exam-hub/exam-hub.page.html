@@ -72,6 +72,23 @@
       }
     </div>
 
+    @if (sponsoredDocs().length > 0) {
+      <div class="rounded-2xl bg-gradient-to-r from-pink-50/70 via-white to-pink-50/40 border border-pink-100 p-4 mb-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="pill bg-pink-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+            <app-icon name="sparkle" [size]="12" />
+            เอกสารสอบแนะนำ
+          </span>
+          <span class="text-xs text-ink-muted">โฆษณาแนะนำสำหรับศูนย์รวมข้อสอบ</span>
+        </div>
+        <div class="document-card-grid">
+          @for (s of sponsoredDocs(); track s.id) {
+            <app-document-card [doc]="s" density="compact" />
+          }
+        </div>
+      </div>
+    }
+
     @if (docsState().status === 'loading' && docs().length === 0) {
       <app-empty-state emoji="⏳" [title]="'examHub.loadingDocs' | trans" [description]="'common.pleaseWait' | trans" />
     } @else if (docsState().status === 'error' && docs().length === 0) {

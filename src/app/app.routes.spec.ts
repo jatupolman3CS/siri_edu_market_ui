@@ -1,3 +1,5 @@
+import '@angular/compiler';
+import { describe, expect, it } from 'vitest';
 import { routes } from './app.routes';
 
 /**
@@ -26,5 +28,16 @@ describe('app.routes — /wishlist is guest-accessible (anonymous-cart-wishlist-
 
     expect(wishlist).toBeTruthy();
     expect(wishlist?.canActivate).toBeUndefined();
+  });
+});
+
+describe('app.routes — /seller/dashboard compatibility alias', () => {
+  it('redirects the linked seller dashboard URL to the canonical seller dashboard route', () => {
+    const sellerRoot = routes.find((r) => r.path === 'seller');
+    const dashboardAlias = sellerRoot?.children?.find((c) => c.path === 'dashboard');
+
+    expect(dashboardAlias).toBeTruthy();
+    expect(dashboardAlias?.redirectTo).toBe('/seller');
+    expect(dashboardAlias?.pathMatch).toBe('full');
   });
 });

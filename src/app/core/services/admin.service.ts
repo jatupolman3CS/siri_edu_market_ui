@@ -146,6 +146,9 @@ export interface PlatformSettings {
   payoutMethodPromptPayPhoneEnabled: boolean;
   payoutMethodPromptPayNationalIdEnabled: boolean;
   payoutMethodPromptPayQrEnabled: boolean;
+  /** referral-program & affiliate config */
+  affiliateCommissionRatePercent: number;
+  referralDiscountAmount: number;
 }
 
 /** watermark-completion v1 §2.2/§3.2 — the 3 values `watermarkPolicy` may hold. */
@@ -178,6 +181,9 @@ export interface PlatformSettingsUpdate {
   payoutMethodPromptPayPhoneEnabled?: boolean;
   payoutMethodPromptPayNationalIdEnabled?: boolean;
   payoutMethodPromptPayQrEnabled?: boolean;
+  /** referral-program & affiliate config */
+  affiliateCommissionRatePercent?: number;
+  referralDiscountAmount?: number;
 }
 
 /**
@@ -331,6 +337,8 @@ function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
     payoutMethodPromptPayPhoneEnabled: res.payoutMethodPromptPayPhoneEnabled ?? false,
     payoutMethodPromptPayNationalIdEnabled: res.payoutMethodPromptPayNationalIdEnabled ?? false,
     payoutMethodPromptPayQrEnabled: res.payoutMethodPromptPayQrEnabled ?? true,
+    affiliateCommissionRatePercent: res.affiliateCommissionRatePercent ?? 5,
+    referralDiscountAmount: res.referralDiscountAmount ?? 20,
   };
 }
 

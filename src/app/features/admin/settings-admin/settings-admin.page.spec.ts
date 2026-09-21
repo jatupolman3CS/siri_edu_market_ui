@@ -1,13 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { WritableSignal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminSettingsPage } from './settings-admin.page';
 import {
   AdminService,
+  AdsService,
   type AdminWatermarkCopy,
   type PlatformSettings,
   type SystemConfigJobToggle,
-} from '../../../core/services/admin.service';
+} from '../../../core/services';
+import type { AdminAdsPlacement } from '../../../core/models';
 
 /**
  * system-config-job-toggle v1 (docs/contracts/system-config-job-toggle.md §4).
@@ -88,8 +91,41 @@ function platformSettings(overrides: Partial<PlatformSettings> = {}): PlatformSe
     payoutMethodPromptPayPhoneEnabled: false,
     payoutMethodPromptPayNationalIdEnabled: false,
     payoutMethodPromptPayQrEnabled: true,
+    affiliateCommissionRatePercent: 5,
+    referralDiscountAmount: 20,
     ...overrides,
   };
+}
+
+function samplePlacements(): AdminAdsPlacement[] {
+  return [
+    {
+      placementKey: 'search_top',
+      displayName: 'บนสุดของผลค้นหา',
+      description: 'แสดงเป็นแถวแรกของผลการค้นหา',
+      pricePerDay: 199,
+      weeklyPrice: 999,
+      dailySlotCapacity: 3,
+      maxPerResultPage: 2,
+      isEnabled: true,
+      updatedAt: null,
+      activeCampaignCount: 0,
+      requiresTarget: false,
+    },
+    {
+      placementKey: 'home_top',
+      displayName: 'บนสุดของหน้าแรก',
+      description: 'แบนเนอร์และแถบแนะนำเอกสารบนสุดของหน้าแรก',
+      pricePerDay: 299,
+      weeklyPrice: 1499,
+      dailySlotCapacity: 2,
+      maxPerResultPage: 2,
+      isEnabled: true,
+      updatedAt: null,
+      activeCampaignCount: 0,
+      requiresTarget: false,
+    },
+  ];
 }
 
 /** watermark-completion v1 §3.3: one row of `GET /api/admin/watermark-copies`. */
@@ -120,12 +156,16 @@ function watermarkCopy(overrides: Partial<AdminWatermarkCopy> = {}): AdminWaterm
   };
 }
 
-function renderPage(settings: PlatformSettings | null = null) {
+function renderPage(
+  settings: PlatformSettings | null = null,
+  placements: AdminAdsPlacement[] = samplePlacements(),
+) {
   messages = { success: [], warning: [], error: [] };
 
   TestBed.configureTestingModule({
     imports: [AdminSettingsPage],
     providers: [
+      provideRouter([]),
       {
         provide: NzMessageService,
         useValue: {
@@ -138,16 +178,18 @@ function renderPage(settings: PlatformSettings | null = null) {
   });
 
   const admin = TestBed.inject(AdminService);
+  const ads = TestBed.inject(AdsService);
   vi.spyOn(admin, 'loadSettings').mockResolvedValue(settings);
   vi.spyOn(admin, 'loadStorageUsage').mockResolvedValue(null);
   vi.spyOn(admin, 'loadJobToggles').mockImplementation(async () => {
     seedJobToggles(admin, fourJobToggles);
     return fourJobToggles;
   });
+  vi.spyOn(ads, 'adminListPlacements').mockResolvedValue(placements);
 
   const fixture = TestBed.createComponent(AdminSettingsPage);
   fixture.detectChanges();
-  return { fixture, admin };
+  return { fixture, admin, ads };
 }
 
 afterEach(() => {
@@ -256,6 +298,8 @@ describe('AdminSettingsPage — watermark policy card (watermark-completion v1 �
       vatPercent: 7,
       payoutMinTHB: 500,
       payoutSchedule: 'monthly-15',
+      affiliateCommissionRatePercent: 5,
+      referralDiscountAmount: 20,
       watermarkPolicy: 'required_always',
     });
     expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
@@ -275,6 +319,8 @@ describe('AdminSettingsPage — watermark policy card (watermark-completion v1 �
       vatPercent: 10,
       payoutMinTHB: 500,
       payoutSchedule: 'monthly-15',
+      affiliateCommissionRatePercent: 5,
+      referralDiscountAmount: 20,
     });
   });
 
@@ -340,6 +386,8 @@ describe('AdminSettingsPage — payout method master config (payment-method-mast
       vatPercent: 7,
       payoutMinTHB: 500,
       payoutSchedule: 'monthly-15',
+      affiliateCommissionRatePercent: 5,
+      referralDiscountAmount: 20,
       payoutMethodBankEnabled: true,
     });
     expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
@@ -359,6 +407,8 @@ describe('AdminSettingsPage — payout method master config (payment-method-mast
       vatPercent: 10,
       payoutMinTHB: 500,
       payoutSchedule: 'monthly-15',
+      affiliateCommissionRatePercent: 5,
+      referralDiscountAmount: 20,
     });
   });
 
@@ -377,6 +427,8 @@ describe('AdminSettingsPage — payout method master config (payment-method-mast
       vatPercent: 7,
       payoutMinTHB: 500,
       payoutSchedule: 'monthly-15',
+      affiliateCommissionRatePercent: 5,
+      referralDiscountAmount: 20,
       watermarkPolicy: 'required_always',
       payoutMethodPromptPayQrEnabled: false,
     });
@@ -471,3 +523,77 @@ describe('AdminSettingsPage — watermark copy lookup (watermark-completion v1 �
     expect(text).toContain('ผู้ขายปิดลายน้ำ');
   });
 });
+
+describe('AdminSettingsPage — referral & affiliate settings', () => {
+  it('renders referral discount and affiliate commission rate inputs and saves updated values', async () => {
+    const { fixture, admin } = renderPage(
+      platformSettings({
+        referralDiscountAmount: 25,
+        affiliateCommissionRatePercent: 8,
+      }),
+    );
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ระบบแนะนำเพื่อนและลิงก์พันธมิตร');
+    expect(text).toContain('ส่วนลดแนะนำเพื่อน (บาท)');
+    expect(text).toContain('ค่าคอมมิชชันพันธมิตรเริ่มต้น (%)');
+
+    const page = fixture.componentInstance;
+    expect(page.form().referralDiscountAmount).toBe(25);
+    expect(page.form().affiliateCommissionRatePercent).toBe(8);
+
+    const saveSpy = vi.spyOn(admin, 'saveSettings').mockResolvedValue(platformSettings());
+    page.patch('referralDiscountAmount', 30);
+    page.patch('affiliateCommissionRatePercent', 10);
+    await page.save();
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      feeRatePercent: 12,
+      vatPercent: 7,
+      payoutMinTHB: 500,
+      payoutSchedule: 'monthly-15',
+      affiliateCommissionRatePercent: 10,
+      referralDiscountAmount: 30,
+    });
+    expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
+  });
+});
+
+describe('AdminSettingsPage — ad placements & pricing config', () => {
+  it('renders ad placements with price and slot capacity, and edits pricing', async () => {
+    const { fixture, ads } = renderPage(platformSettings());
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ตำแหน่งโฆษณาและราคาโปรโมต');
+    expect(text).toContain('บนสุดของผลค้นหา');
+    expect(text).toContain('บนสุดของหน้าแรก');
+
+    const page = fixture.componentInstance;
+    expect(page.adPlacements().length).toBe(2);
+
+    const updateSpy = vi.spyOn(ads, 'adminUpdatePlacement').mockResolvedValue({
+      ok: true,
+      placement: {
+        ...samplePlacements()[0],
+        pricePerDay: 250,
+      },
+    });
+
+    page.openEditPlacement(samplePlacements()[0]);
+    page.updatePlacementForm('pricePerDay', 250);
+    await page.savePlacement();
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      'search_top',
+      expect.objectContaining({
+        pricePerDay: 250,
+      }),
+    );
+    expect(messages.success).toContain('อัปเดตราคาและตำแหน่งโฆษณาเรียบร้อย');
+  });
+});
+

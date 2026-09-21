@@ -160,6 +160,13 @@ describe('sellerGuard — store status gate (F-03)', () => {
     expect(SELLER_GUARD_MESSAGES.none).not.toBe(SELLER_GUARD_MESSAGES.pending);
   });
 
+  it('no application at all (404) but has seller role: allows existing seller into /seller', async () => {
+    const harness = setup(buildAuth({ isSeller: true }), 'none');
+    const result = await runSellerGuard();
+    expect(result).toBe(true);
+    expect(harness.message.warning).not.toHaveBeenCalled();
+  });
+
   it('lookup failed: a real seller still gets in (falls back to the role in the token)', async () => {
     const harness = setup(buildAuth({ isSeller: true }), 'unavailable');
     const result = await runSellerGuard();

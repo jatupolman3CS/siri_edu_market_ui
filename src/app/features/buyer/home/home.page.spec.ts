@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { BuyerHomePage } from './home.page';
 import {
+  AdsService,
   AuthService,
   BundleService,
   CartService,
@@ -185,6 +186,7 @@ function render(opts: {
   popularTerms?: PopularSearchTerm[];
   discovery?: DiscoveryBlock | null;
   discoveryState?: ActionState;
+  sponsoredDocs?: DocumentItem[];
 }) {
   const fakeStats = {
     stats: () => opts.stats,
@@ -206,6 +208,11 @@ function render(opts: {
     opts.discovery ?? null,
     opts.discoveryState ?? idleActionState(),
   );
+  const fakeAds = {
+    getSponsoredAds: vi.fn(async () => opts.sponsoredDocs ?? []),
+    recordImpressions: vi.fn(),
+    recordClick: vi.fn(),
+  };
 
   TestBed.configureTestingModule({
     imports: [BuyerHomePage],
@@ -220,6 +227,7 @@ function render(opts: {
       { provide: AuthService, useValue: { isAuthenticated: () => opts.isAuthenticated ?? false } },
       { provide: ExamCountdownService, useValue: examCountdown },
       { provide: DiscoveryService, useValue: discovery },
+      { provide: AdsService, useValue: fakeAds },
     ],
   });
 

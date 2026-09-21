@@ -1,19 +1,24 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   AdminService,
+  AdsService,
   type AdminWatermarkCopy,
   type PlatformSettings,
   type PlatformSettingsUpdate,
   type SystemConfigJobToggle,
   type WatermarkPolicy,
 } from '../../../core/services';
+import type { AdminAdsPlacement } from '../../../core/models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 
 /**
  * watermark-completion v1 §3.2/§4.1: the 5 watermark fields of `PUT /api/admin/settings` are
@@ -60,15 +65,43 @@ const RETENTION_DAYS_MAX = 3650;
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
-  imports: [FormsModule, IconComponent, DecimalPipe, DatePipe, NzSwitchModule, TranslatePipe],
+  imports: [
+    FormsModule,
+    IconComponent,
+    DecimalPipe,
+    DatePipe,
+    NzModalModule,
+    NzSwitchModule,
+    RouterLink,
+    ThbPipe,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-admin.page.html',
   styleUrl: './settings-admin.page.scss',
 })
 export class AdminSettingsPage {
   readonly admin = inject(AdminService);
+  readonly ads = inject(AdsService);
   private readonly message = inject(NzMessageService);
   private readonly translation = inject(TranslationService);
+
+  // ===== Ad Placements & Pricing =====
+  readonly adPlacements = signal<AdminAdsPlacement[]>([]);
+  readonly loadingAds = signal(false);
+  readonly editingPlacement = signal<AdminAdsPlacement | null>(null);
+  readonly savingPlacement = signal(false);
+  readonly placementForm = signal<{
+    pricePerDay: number;
+    weeklyPrice: number | null;
+    dailySlotCapacity: number;
+    isEnabled: boolean;
+  }>({
+    pricePerDay: 0,
+    weeklyPrice: null,
+    dailySlotCapacity: 1,
+    isEnabled: true,
+  });
 
   readonly form = signal<PlatformSettings>({
     feeRatePercent: 10,
@@ -91,6 +124,8 @@ export class AdminSettingsPage {
     payoutMethodPromptPayPhoneEnabled: false,
     payoutMethodPromptPayNationalIdEnabled: false,
     payoutMethodPromptPayQrEnabled: true,
+    affiliateCommissionRatePercent: 5,
+    referralDiscountAmount: 20,
   });
 
   /** watermark-completion v1 §4.1: only touched watermark fields are sent on save. */
@@ -151,11 +186,17 @@ export class AdminSettingsPage {
   }
 
   async reload(): Promise<void> {
-    const [s] = await Promise.all([
+    this.loadingAds.set(true);
+    const [s, , , placements] = await Promise.all([
       this.admin.loadSettings(),
       this.admin.loadStorageUsage(),
       this.admin.loadJobToggles(),
+      this.ads.adminListPlacements().catch(() => []),
     ]);
+    this.loadingAds.set(false);
+    if (placements) {
+      this.adPlacements.set(placements);
+    }
     if (s) {
       this.form.set({
         feeRatePercent: Number(s.feeRatePercent ?? 10),
@@ -173,6 +214,8 @@ export class AdminSettingsPage {
         payoutMethodPromptPayPhoneEnabled: s.payoutMethodPromptPayPhoneEnabled,
         payoutMethodPromptPayNationalIdEnabled: s.payoutMethodPromptPayNationalIdEnabled,
         payoutMethodPromptPayQrEnabled: s.payoutMethodPromptPayQrEnabled,
+        affiliateCommissionRatePercent: Number(s.affiliateCommissionRatePercent ?? 5),
+        referralDiscountAmount: Number(s.referralDiscountAmount ?? 20),
       });
     }
     // Reloading discards the pending edits, so nothing is "touched" any more either.
@@ -207,6 +250,8 @@ export class AdminSettingsPage {
       vatPercent: f.vatPercent,
       payoutMinTHB: f.payoutMinTHB,
       payoutSchedule: f.payoutSchedule,
+      affiliateCommissionRatePercent: f.affiliateCommissionRatePercent,
+      referralDiscountAmount: f.referralDiscountAmount,
     };
     if (touched.has('watermarkPolicy')) body.watermarkPolicy = f.watermarkPolicy;
     if (touched.has('watermarkDefaultEnabled')) {
@@ -354,4 +399,56 @@ export class AdminSettingsPage {
       this.savingJobKey.set(null);
     }
   }
+
+  // ===== Ad Placements & Pricing =====
+  openEditPlacement(p: AdminAdsPlacement): void {
+    this.editingPlacement.set(p);
+    this.placementForm.set({
+      pricePerDay: p.pricePerDay,
+      weeklyPrice: p.weeklyPrice,
+      dailySlotCapacity: p.dailySlotCapacity,
+      isEnabled: p.isEnabled,
+    });
+  }
+
+  closeEditPlacement(): void {
+    this.editingPlacement.set(null);
+  }
+
+  updatePlacementForm<K extends keyof ReturnType<typeof this.placementForm>>(
+    key: K,
+    value: ReturnType<typeof this.placementForm>[K],
+  ): void {
+    this.placementForm.update((f) => ({ ...f, [key]: value }));
+  }
+
+  async savePlacement(): Promise<void> {
+    const p = this.editingPlacement();
+    if (!p) return;
+    const form = this.placementForm();
+    if (form.pricePerDay <= 0 || form.dailySlotCapacity <= 0) return;
+
+    this.savingPlacement.set(true);
+    try {
+      const res = await this.ads.adminUpdatePlacement(p.placementKey, {
+        pricePerDay: form.pricePerDay,
+        weeklyPrice: form.weeklyPrice != null && form.weeklyPrice > 0 ? form.weeklyPrice : null,
+        dailySlotCapacity: form.dailySlotCapacity,
+        maxPerResultPage: p.maxPerResultPage,
+        isEnabled: form.isEnabled,
+      });
+      if (res.ok) {
+        this.adPlacements.update((list) =>
+          list.map((item) => (item.placementKey === p.placementKey ? res.placement : item)),
+        );
+        this.message.success(this.translation.t('admin.settingsAdmin.savePlacementSuccess'));
+        this.closeEditPlacement();
+      } else if (res.message) {
+        this.message.error(res.message);
+      }
+    } finally {
+      this.savingPlacement.set(false);
+    }
+  }
 }
+

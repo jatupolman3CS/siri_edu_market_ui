@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ExamHubPage } from './exam-hub.page';
-import { ExamHubService, CartService, WishlistService } from '../../../core/services';
+import { AdsService, ExamHubService, CartService, WishlistService } from '../../../core/services';
 import type { ExamHubType } from '../../../core/models';
 import { signal } from '@angular/core';
 
@@ -76,6 +76,14 @@ describe('ExamHubPage', () => {
         },
         { provide: CartService, useValue: fakeCart },
         { provide: WishlistService, useValue: fakeWishlist },
+        {
+          provide: AdsService,
+          useValue: {
+            getSponsoredAds: vi.fn(async () => []),
+            recordImpressions: vi.fn(),
+            recordClick: vi.fn(),
+          },
+        },
       ],
     });
 

@@ -7,6 +7,7 @@ import type {
   AdsPlacement,
   AdminAdsCampaign,
   AdminAdsPlacement,
+  DocumentItem,
 } from '../models';
 import {
   mapAdsAvailability,
@@ -16,11 +17,13 @@ import {
   mapAdsPlacement,
   mapAdminAdsCampaign,
   mapAdminAdsPlacement,
+  mapDocument,
 } from '../api-mappers/mappers';
 import {
   deleteApiSellerAdsCampaignsByCampaignId,
   getApiAdminAdsCampaigns,
   getApiAdminAdsPlacements,
+  getApiMarketplaceAdsSponsored,
   getApiSellerAdsAvailability,
   getApiSellerAdsCampaigns,
   getApiSellerAdsCampaignsByCampaignId,
@@ -391,5 +394,20 @@ export class AdsService {
     void postApiMarketplaceAdsByCampaignIdClick({ path: { campaignId } }).catch(() => {
       // §4.3: fire-and-forget.
     });
+  }
+
+  /**
+   * Returns live sponsored documents for a specific placement (e.g. home_top, doc_detail_related, exam_hub_top).
+   */
+  async getSponsoredAds(placement: string, target?: string, limit = 2): Promise<DocumentItem[]> {
+    try {
+      const res = await getApiMarketplaceAdsSponsored({
+        query: { placement, target, limit },
+      });
+      const data = unwrapSdkResult(res);
+      return (data ?? []).map(mapDocument);
+    } catch {
+      return [];
+    }
   }
 }

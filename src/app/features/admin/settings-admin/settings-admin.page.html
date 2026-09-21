@@ -60,6 +60,102 @@
       </section>
 
       <section class="card-soft p-6 mb-6">
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.referralTitle' | trans }}</h2>
+        <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.referralDesc' | trans }}</p>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.referralDiscountLabel' | trans }}</label>
+            <input
+              class="input-soft"
+              type="number"
+              min="0"
+              step="5"
+              [ngModel]="form().referralDiscountAmount"
+              (ngModelChange)="patch('referralDiscountAmount', $event)"
+            />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.affiliateRateLabel' | trans }}</label>
+            <input
+              class="input-soft"
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              [ngModel]="form().affiliateCommissionRatePercent"
+              (ngModelChange)="patch('affiliateCommissionRatePercent', $event)"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- seller-ads-promotion: ตำแหน่งโฆษณาและราคาโปรโมต (Ad Placements & Pricing) -->
+      <section class="card-soft p-6 mb-6">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-lg font-bold text-ink">{{ 'admin.settingsAdmin.adsPlacementsTitle' | trans }}</h2>
+          <a routerLink="/admin/ads" class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline">
+            {{ 'admin.settingsAdmin.manageAdsLink' | trans }} &rarr;
+          </a>
+        </div>
+        <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.adsPlacementsDesc' | trans }}</p>
+
+        @if (loadingAds() && adPlacements().length === 0) {
+          <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">กำลังโหลด…</div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[620px]">
+              <thead>
+                <tr class="border-b border-line text-xs font-semibold text-ink-muted">
+                  <th class="pb-3 pr-4">{{ 'admin.settingsAdmin.colPlacementName' | trans }}</th>
+                  <th class="pb-3 px-4 text-right">{{ 'admin.settingsAdmin.colDailyPrice' | trans }}</th>
+                  <th class="pb-3 px-4 text-right">{{ 'admin.settingsAdmin.colWeeklyPrice' | trans }}</th>
+                  <th class="pb-3 px-4 text-center">{{ 'admin.settingsAdmin.colSlotCapacity' | trans }}</th>
+                  <th class="pb-3 px-4 text-center">{{ 'common.status' | trans }}</th>
+                  <th class="pb-3 pl-4 text-right"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line">
+                @for (p of adPlacements(); track p.placementKey) {
+                  <tr class="hover:bg-pink-50/30 transition-colors">
+                    <td class="py-3 pr-4">
+                      <div class="font-semibold text-ink">{{ p.displayName }}</div>
+                      <div class="text-xs font-mono text-ink-muted">{{ p.placementKey }}</div>
+                    </td>
+                    <td class="py-3 px-4 text-right font-medium text-ink">
+                      {{ p.pricePerDay | thb }}
+                    </td>
+                    <td class="py-3 px-4 text-right font-medium text-ink">
+                      {{ p.weeklyPrice != null ? (p.weeklyPrice | thb) : '—' }}
+                    </td>
+                    <td class="py-3 px-4 text-center text-ink">
+                      {{ p.dailySlotCapacity }}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      @if (p.isEnabled) {
+                        <span class="pill bg-emerald-100 text-emerald-700">{{ 'admin.ads.enabled' | trans }}</span>
+                      } @else {
+                        <span class="pill bg-rose-100 text-rose-700">{{ 'admin.ads.disabled' | trans }}</span>
+                      }
+                    </td>
+                    <td class="py-3 pl-4 text-right">
+                      <button
+                        type="button"
+                        class="btn-ghost !py-1 !px-3 text-xs"
+                        (click)="openEditPlacement(p)"
+                      >
+                        {{ 'admin.settingsAdmin.editPrice' | trans }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="card-soft p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.paymentTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.paymentDesc' | trans }}</p>
         <ul class="space-y-3">
@@ -400,3 +496,80 @@
         </div>
       </section>
     </div>
+
+<!-- Modal: Edit Placement Pricing & Capacity -->
+@if (editingPlacement(); as p) {
+  <nz-modal
+    [nzVisible]="true"
+    [nzTitle]="'admin.settingsAdmin.editPlacementTitle' | trans"
+    [nzOkText]="'common.save' | trans"
+    [nzCancelText]="'common.cancel' | trans"
+    [nzOkLoading]="savingPlacement()"
+    (nzOnCancel)="closeEditPlacement()"
+    (nzOnOk)="savePlacement()"
+  >
+    <ng-container *nzModalContent>
+      <div class="space-y-4">
+        <div>
+          <div class="text-sm font-semibold text-ink">{{ p.displayName }}</div>
+          <div class="text-xs font-mono text-ink-muted">{{ p.placementKey }}</div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-1.5 block">
+            {{ 'admin.settingsAdmin.colDailyPrice' | trans }}
+          </label>
+          <input
+            type="number"
+            class="input-soft"
+            min="1"
+            step="1"
+            [ngModel]="placementForm().pricePerDay"
+            (ngModelChange)="updatePlacementForm('pricePerDay', +$event || 0)"
+          />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-1.5 block">
+            {{ 'admin.settingsAdmin.colWeeklyPrice' | trans }}
+          </label>
+          <input
+            type="number"
+            class="input-soft"
+            min="0"
+            step="1"
+            placeholder="—"
+            [ngModel]="placementForm().weeklyPrice"
+            (ngModelChange)="updatePlacementForm('weeklyPrice', $event ? +$event : null)"
+          />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-ink-soft mb-1.5 block">
+            {{ 'admin.settingsAdmin.colSlotCapacity' | trans }}
+          </label>
+          <input
+            type="number"
+            class="input-soft"
+            min="1"
+            max="50"
+            step="1"
+            [ngModel]="placementForm().dailySlotCapacity"
+            (ngModelChange)="updatePlacementForm('dailySlotCapacity', +$event || 1)"
+          />
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <label class="text-xs font-semibold text-ink-soft">
+            {{ 'common.status' | trans }}
+          </label>
+          <nz-switch
+            [ngModel]="placementForm().isEnabled"
+            (ngModelChange)="updatePlacementForm('isEnabled', $event)"
+          />
+        </div>
+      </div>
+    </ng-container>
+  </nz-modal>
+}
+

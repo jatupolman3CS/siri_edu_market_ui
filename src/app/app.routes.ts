@@ -278,6 +278,11 @@ export const routes: Routes = [
       ),
     children: [
       {
+        path: 'dashboard',
+        redirectTo: '/seller',
+        pathMatch: 'full',
+      },
+      {
         path: '',
         loadComponent: () =>
           import('./features/seller/dashboard/dashboard.page').then(

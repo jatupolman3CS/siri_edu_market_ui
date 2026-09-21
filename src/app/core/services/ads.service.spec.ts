@@ -654,4 +654,46 @@ describe('AdsService — recordImpressions() / recordClick() (§3.8, §4.3)', ()
 
     expect(requests.filter((r) => r.path.includes('/click'))).toHaveLength(1);
   });
+
+  it('getSponsoredAds() queries GET /api/marketplace/ads/sponsored and maps documents', async () => {
+    stubRoute('GET', '/api/marketplace/ads/sponsored', [
+      {
+        id: 'doc-sp-1',
+        title: 'สรุปคณิต ม.6 โฆษณา',
+        price: 99,
+        originalPrice: 150,
+        pageCount: 30,
+        fileFormat: 'pdf',
+        seller: { id: 's-1', name: 'Kru Math' },
+        sponsoredCampaignId: 'camp-sp-1',
+        sponsoredPlacement: 'home_top',
+      },
+    ]);
+    const service = buildService();
+
+    const result = await service.getSponsoredAds('home_top', '*', 2);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('doc-sp-1');
+    expect(result[0].title).toBe('สรุปคณิต ม.6 โฆษณา');
+    expect(result[0].sponsoredCampaignId).toBe('camp-sp-1');
+
+    const call = requests.find(
+      (r) => r.method === 'GET' && r.path === '/api/marketplace/ads/sponsored',
+    );
+    expect(call).toBeDefined();
+    expect(call?.search).toContain('placement=home_top');
+    expect(call?.search).toContain('target=*');
+    expect(call?.search).toContain('limit=2');
+  });
+
+  it('getSponsoredAds() returns empty array on error', async () => {
+    stubRoute('GET', '/api/marketplace/ads/sponsored', { message: 'Server error' }, 500);
+    const service = buildService();
+
+    const result = await service.getSponsoredAds('home_top');
+
+    expect(result).toEqual([]);
+  });
 });
+

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AffiliateService, ReferralService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -20,6 +20,9 @@ export class ReferralCardComponent {
   readonly translation = inject(TranslationService);
 
   readonly copied = signal(false);
+
+  readonly referralDiscount = computed(() => this.referral.summary()?.referralDiscountAmount ?? 20);
+  readonly commissionRate = computed(() => this.affiliate?.summary()?.commissionRatePercent ?? 5);
 
   constructor() {
     void this.referral.refreshSummary();
