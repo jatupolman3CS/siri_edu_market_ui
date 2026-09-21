@@ -321,7 +321,7 @@
                         </div>
                         <app-rating-stars [value]="d.rating" [size]="18" [showValue]="false" />
                         <div class="text-xs text-ink-muted mt-2">
-                          {{ d.reviewCount | compact }} {{ 'product.reviewsCount' | trans }}
+                          {{ 'product.reviewsCount' | trans: { count: (d.reviewCount | compact) } }}
                         </div>
                       </div>
                       <div class="flex-1 flex flex-col gap-1.5">
@@ -549,13 +549,13 @@
                   <div class="card-cream p-4 text-center">
                     <dt class="text-[11px] uppercase tracking-wider text-ink-muted flex items-center justify-center gap-1">
                       <app-icon name="star" [size]="12" className="text-amber-500" />
-                      {{ 'product.reviewsCount' | trans }}
+                      {{ 'product.reviewsLabel' | trans }}
                     </dt>
                     <dd class="text-2xl font-extrabold text-ink mt-1 leading-none flex items-baseline justify-center gap-1">
                       {{ d.rating }}
                       <span class="text-sm text-amber-500">★</span>
                     </dd>
-                    <dd class="text-[11px] text-ink-muted mt-1">{{ d.reviewCount | compact }} {{ 'product.reviewsCount' | trans }}</dd>
+                    <dd class="text-[11px] text-ink-muted mt-1">{{ 'product.reviewsCount' | trans: { count: (d.reviewCount | compact) } }}</dd>
                   </div>
                 </dl>
               </div>

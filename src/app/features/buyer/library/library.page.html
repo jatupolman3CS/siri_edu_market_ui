@@ -123,50 +123,119 @@
       } @else {
         <div class="document-card-grid">
           @for (item of filteredLibrary(); track item.document.id) {
-            <article class="card-soft overflow-hidden flex flex-col">
-              <app-document-card [doc]="item.document" density="compact" [isOwned]="true" />
+            <article
+              class="group bg-white rounded-3xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1.5 cursor-pointer active:scale-[0.99] select-none"
+              (click)="navigateToDetail(item.document.id)"
+            >
+              <!-- Card Visual / Elevated Icon Header with Motion -->
+              <div class="relative h-44 bg-gradient-to-br from-pink-50/90 via-rose-50/40 to-pink-100/50 border-b border-pink-100/60 flex items-center justify-center overflow-hidden">
+                <!-- Subtle decorative background blur circles -->
+                <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-pink-200/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500"></div>
+                <div class="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-rose-200/30 blur-lg pointer-events-none"></div>
 
-              <div class="p-5 pt-3 flex flex-col gap-2">
-                @if (item.hasNewVersion) {
-                  <span class="pill bg-rose-500 text-white shadow-soft w-fit">
-                    {{ 'library.newVersionBadge' | trans }}
+                <!-- Top Header Badges -->
+                <div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10 pointer-events-none">
+                  <span class="px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur text-[10px] font-extrabold uppercase tracking-wider text-pink-600 shadow-sm border border-pink-100">
+                    {{ item.document.format }}
                   </span>
-                }
+                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold shadow-soft inline-flex items-center gap-1">
+                    <app-icon name="check" [size]="11" />
+                    {{ 'documentCard.owned' | trans }}
+                  </span>
+                </div>
+
+                <!-- Center Document Showcase with hover motion -->
+                <div class="relative z-10 flex flex-col items-center justify-center">
+                  @if (hasRealCover(item.document.cover)) {
+                    <div class="relative w-20 h-28 rounded-xl overflow-hidden shadow-soft border-2 border-white group-hover:scale-105 group-hover:-translate-y-1.5 group-hover:shadow-pop transition-all duration-300 ease-out">
+                      <img
+                        appImgFallback
+                        [src]="item.document.cover"
+                        [alt]="item.document.title"
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  } @else {
+                    <div class="relative w-20 h-24 rounded-2xl bg-white border border-pink-100 shadow-soft flex flex-col items-center justify-center gap-1.5 group-hover:scale-110 group-hover:-translate-y-1.5 group-hover:shadow-pop group-hover:border-pink-300 group-hover:rotate-[-2deg] transition-all duration-300 ease-out">
+                      <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center group-hover:bg-pink-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                        <app-icon name="doc" [size]="20" />
+                      </div>
+                      <span class="text-[10px] font-extrabold uppercase tracking-wider text-ink-muted group-hover:text-pink-600 transition-colors">
+                        {{ item.document.format }}
+                      </span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Bottom Bar of Header: New Version Badge & Read Status Button -->
+                <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between z-10">
+                  @if (item.hasNewVersion) {
+                    <span class="pill bg-rose-500 text-white shadow-soft text-[10px] animate-pulse">
+                      {{ 'library.newVersionBadge' | trans }}
+                    </span>
+                  } @else {
+                    <span></span>
+                  }
+
+                  @if (item.isRead) {
+                    <button
+                      type="button"
+                      class="pill bg-sky-500 text-white shadow-soft text-[10px] flex items-center gap-1 hover:bg-sky-600 transition-colors"
+                      (click)="library.toggleRead(item.document.id, false); $event.stopPropagation()"
+                    >
+                      <app-icon name="check" [size]="10" />
+                      {{ 'library.readBadge' | trans }}
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="pill bg-white/95 backdrop-blur text-ink-soft text-[10px] border border-pink-100 hover:bg-pink-50 transition-colors"
+                      (click)="library.toggleRead(item.document.id, true); $event.stopPropagation()"
+                    >
+                      {{ 'library.markAsRead' | trans }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Card Body Content -->
+              <div class="p-5 flex flex-col gap-2.5 flex-1">
+                <!-- Title -->
+                <h3 class="text-base font-bold text-ink leading-snug line-clamp-2 min-h-[3rem] group-hover:text-pink-600 transition-colors">
+                  {{ item.document.title }}
+                </h3>
+
+                <!-- New Version Change Note -->
                 @if (item.hasNewVersion && item.latestChangeNote) {
-                  <p class="text-xs text-rose-600 bg-rose-50 rounded-lg p-2 line-clamp-2">
+                  <p class="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-xl p-2.5 line-clamp-2">
                     {{ item.latestChangeNote }}
                   </p>
                 }
-                @if (item.isReviewed) {
-                  <span class="pill bg-amber-400 text-white shadow-soft w-fit">
-                    <app-icon name="star" [size]="11" />
-                    {{ 'library.reviewedBadge' | trans }}
-                  </span>
-                }
 
-                @if (item.isRead) {
-                  <button type="button" class="pill bg-sky-500 text-white shadow-soft w-fit" (click)="library.toggleRead(item.document.id, false)">
-                    <app-icon name="check" [size]="11" />
-                    {{ 'library.readBadge' | trans }}
+                <!-- Badges / updates row -->
+                <div class="flex items-center gap-2 flex-wrap text-xs">
+                  @if (item.isReviewed) {
+                    <span class="pill bg-amber-400 text-white shadow-soft text-[10px]">
+                      <app-icon name="star" [size]="11" />
+                      {{ 'library.reviewedBadge' | trans }}
+                    </span>
+                  }
+
+                  <button
+                    type="button"
+                    class="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1 hover:underline"
+                    (click)="openVersionsModal(item.document.id, item.document.title); $event.stopPropagation()"
+                  >
+                    <app-icon name="doc" [size]="12" />
+                    {{ 'library.viewUpdates' | trans }}
                   </button>
-                } @else {
-                  <button type="button" class="pill bg-pink-50 text-ink-soft w-fit" (click)="library.toggleRead(item.document.id, true)">
-                    {{ 'library.markAsRead' | trans }}
-                  </button>
-                }
+                </div>
 
-                <button
-                  type="button"
-                  class="text-xs font-semibold text-pink-600 hover:text-pink-700 text-left inline-flex items-center gap-1 w-fit"
-                  (click)="openVersionsModal(item.document.id, item.document.title)"
-                >
-                  <app-icon name="doc" [size]="12" />
-                  {{ 'library.viewUpdates' | trans }}
-                </button>
-
-                <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-ink-muted mt-2">
+                <!-- Purchase Info Grid -->
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-ink-muted mt-1 p-3 bg-pink-50/40 rounded-2xl border border-pink-100/50">
                   <div>{{ 'library.orderNumber' | trans }}</div>
-                  <div class="text-ink font-semibold">{{ item.orderNumber }}</div>
+                  <div class="text-ink font-semibold truncate">{{ item.orderNumber }}</div>
                   <div>{{ 'library.purchasedAt' | trans }}</div>
                   <div class="text-ink">{{ item.purchasedAt | timeAgo }}</div>
                   <div>{{ 'library.downloadCount' | trans }}</div>
@@ -181,34 +250,40 @@
                   }
                 </dl>
 
-                <div class="flex gap-2 mt-auto pt-4">
+                <!-- Actions Bottom Row -->
+                <div class="flex gap-2 mt-auto pt-3">
                   <a
                     [routerLink]="['/document', item.document.id]"
-                    class="btn-ghost flex-1 !py-2.5 text-sm"
+                    class="btn-ghost flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
+                    (click)="$event.stopPropagation()"
                   >
                     <app-icon name="eye" [size]="14" />
                     {{ 'library.detailsBtn' | trans }}
                   </a>
                   <button
-                    class="btn-pink flex-1 !py-2.5 text-sm"
-                    (click)="download(item.document.id)"
+                    type="button"
+                    class="btn-pink flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
+                    (click)="download(item.document.id); $event.stopPropagation()"
                   >
                     <app-icon name="download" [size]="14" />
                     {{ 'library.downloadBtn' | trans }}
                   </button>
                 </div>
+
                 @if (item.isReviewed) {
                   <button
-                    class="btn-ghost w-full !py-2 text-sm mt-2"
-                    (click)="openReviewModal(item.document.id, item.document.title, item.myRating)"
+                    type="button"
+                    class="btn-ghost w-full !py-2 text-sm inline-flex items-center justify-center gap-1.5"
+                    (click)="openReviewModal(item.document.id, item.document.title, item.myRating); $event.stopPropagation()"
                   >
                     <app-icon name="star" [size]="14" />
                     {{ 'library.editReviewBtn' | trans }}
                   </button>
                 } @else {
                   <button
-                    class="btn-ghost w-full !py-2 text-sm mt-2"
-                    (click)="openReviewModal(item.document.id, item.document.title)"
+                    type="button"
+                    class="btn-ghost w-full !py-2 text-sm inline-flex items-center justify-center gap-1.5"
+                    (click)="openReviewModal(item.document.id, item.document.title); $event.stopPropagation()"
                   >
                     <app-icon name="star" [size]="14" />
                     {{ 'library.writeReviewBtn' | trans }}

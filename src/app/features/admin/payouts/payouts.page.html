@@ -45,35 +45,19 @@
       [description]="'admin.payouts.emptyDesc' | trans"
     />
   } @else {
-    <div class="card-soft p-6">
-      <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
-        <table class="w-full min-w-[960px]">
-          <thead class="bg-pink-50">
-            <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colSeller' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colAmount' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colDestination' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colBalance' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colRequestedAt' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colStatus' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.payouts.colSlipStatus' | trans }}</th>
-              <th class="px-4 py-3 font-semibold text-right">{{ 'admin.payouts.colActions' | trans }}</th>
-            </tr>
-          </thead>
+    <div class="overflow-hidden rounded-lg border border-line bg-white">
+      <div class="table-scroll overflow-x-auto">
+        <table class="w-full min-w-[980px]">
           <tbody>
             @for (p of items(); track p.id) {
-              <tr class="border-t border-line">
-                <td class="px-4 py-3 text-sm">
+              <tr class="border-b border-line last:border-b-0">
+                <td class="px-4 py-4 text-sm align-middle w-[24%]">
                   <div class="font-semibold text-ink">{{ p.sellerName }}</div>
-                  <div class="text-xs text-ink-muted">{{ p.sellerEmail }}</div>
+                  <div class="text-xs text-ink-muted">{{ 'admin.payouts.colRequestedAt' | trans }}: {{ p.requestedAt | date: 'dd MMM yyyy' }}</div>
+                  <div class="text-xs text-ink-muted mt-0.5">{{ p.sellerEmail }}</div>
                 </td>
-                <td class="px-4 py-3 text-sm font-bold text-ink whitespace-nowrap">
-                  {{ p.netAmount | thb }}
-                </td>
-                <td class="px-4 py-3 text-sm text-ink-soft">
-                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 mr-1">
-                    {{ destinationBadge(p) }}
-                  </span>
+                <td class="px-4 py-4 text-sm text-ink-soft align-middle w-[26%]">
+                  <div class="font-semibold text-ink">{{ destinationBadge(p) }}</div>
                   <div class="whitespace-nowrap">{{ p.payoutAccountMasked ?? p.bankAccount }}</div>
                   <div class="text-xs text-ink-muted">{{ p.payoutAccountHolderName }}</div>
                   @if (p.payoutAccountQrImageUrl) {
@@ -85,17 +69,17 @@
                   </div>
                   }
                 </td>
-                <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">{{ p.sellerAvailableBalance | thb }}</td>
-                <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">
-                  {{ p.requestedAt | date: 'dd MMM yyyy' }}
+                <td class="px-4 py-4 text-base font-extrabold text-ink whitespace-nowrap align-middle w-[14%]">
+                  {{ p.netAmount | thb }}
                 </td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-4 align-middle w-[14%]">
                   <span class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap" [class]="statusClass(p.status)">
                     {{ statusLabel(p.status) }}
                   </span>
+                  <div class="text-xs text-ink-muted mt-1">{{ 'admin.payouts.colSlipStatus' | trans }}: {{ slipStatusLabel(p.latestSlipStatus) }}</div>
+                  <div class="text-xs text-ink-muted mt-0.5">{{ 'admin.payouts.colBalance' | trans }}: {{ p.sellerAvailableBalance | thb }}</div>
                 </td>
-                <td class="px-4 py-3 text-sm text-ink-soft whitespace-nowrap">{{ slipStatusLabel(p.latestSlipStatus) }}</td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-4 align-middle">
                   <div class="flex flex-wrap gap-2 justify-end">
                     @if (p.status === 'pending') {
                       <button
@@ -161,8 +145,11 @@
         <h2 class="font-semibold text-ink">{{ 'admin.payouts.qrModalTitle' | trans }}</h2>
         <button type="button" class="text-ink-soft" [attr.aria-label]="'common.close' | trans" (click)="qrModalPayout.set(null)"><app-icon name="close" [size]="18" /></button>
       </div>
-      <p class="text-sm text-ink mb-1">{{ payout.sellerName }}</p>
-      <p class="text-sm font-semibold text-ink mb-4">{{ payout.netAmount | thb }}</p>
+      <div class="rounded-lg border border-pink-100 bg-pink-50 px-4 py-3 mb-4">
+        <p class="text-sm font-semibold text-ink">{{ payout.sellerName }}</p>
+        <p class="text-xs text-ink-muted mt-1">{{ payout.payoutAccountHolderName || payout.sellerEmail }}</p>
+        <p class="text-2xl font-extrabold text-pink-700 mt-2">{{ payout.netAmount | thb }}</p>
+      </div>
       <img [src]="qrImageUrl(payout)" [alt]="'admin.payouts.qrAlt' | trans" class="w-full max-w-64 mx-auto object-contain" />
     </div>
   </div>

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerLibraryPage } from './library.page';
 import { AuthService, LibraryService, LoyaltyService } from '../../../core/services';
@@ -198,6 +198,33 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
     expect(text).toContain('คลังของคุณยังว่างอยู่');
     expect(text).not.toContain('รีวิวครบทุกเอกสารแล้ว');
     expect(text).not.toContain('อ่านครบทุกเอกสารแล้ว');
+  });
+
+  it('clicking the card navigates to document detail page', () => {
+    const fixture = renderWithItems([buildItem('doc-101')]);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector('article');
+    expect(card).toBeDefined();
+
+    card!.click();
+    expect(navigateSpy).toHaveBeenCalledWith(['/document', 'doc-101']);
+  });
+
+  it('clicking download button stops propagation and does not trigger card navigation', async () => {
+    const downloadSpy = vi.fn(async () => null);
+    const fixture = renderWithItems([buildItem('doc-101')], 'all', fakeLoyalty(), vi.fn(async () => {}), downloadSpy);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    const downloadBtn = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((b) => b.textContent?.includes('ดาวน์โหลด'));
+    expect(downloadBtn).toBeDefined();
+
+    downloadBtn!.click();
+    expect(downloadSpy).toHaveBeenCalledWith('doc-101');
+    expect(navigateSpy).not.toHaveBeenCalled();
   });
 });
 

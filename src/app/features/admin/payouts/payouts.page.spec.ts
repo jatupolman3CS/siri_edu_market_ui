@@ -270,10 +270,11 @@ describe('AdminPayoutsPage — คอลัมน์ปลายทาง / ย�
 });
 
 describe('AdminPayoutsPage — PromptPay QR', () => {
-  it('opens the saved QR and closes the dialog', async () => {
+  it('opens the saved QR with seller and amount confirmation, then closes the dialog', async () => {
     const url = '/api/files/download/seller/qr.png';
+    const payout = payoutFixture({ destinationType: 'promptpay', payoutAccountQrImageUrl: url, netAmount: 9621 });
     const { fixture } = render({
-      items: [payoutFixture({ destinationType: 'promptpay', payoutAccountQrImageUrl: url })],
+      items: [payout],
     });
     await settle(fixture);
 
@@ -284,6 +285,8 @@ describe('AdminPayoutsPage — PromptPay QR', () => {
     fixture.detectChanges();
 
     const dialog = root.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain(payout.sellerName);
+    expect(dialog?.textContent).toContain('9,621');
     expect(dialog?.querySelector('img')?.getAttribute('src')).toContain(url);
     (dialog?.querySelector('button[aria-label="ปิด"]') as HTMLButtonElement).click();
     fixture.detectChanges();

@@ -1257,3 +1257,56 @@ describe('BuyerDocumentDetailPage — PDF preview modal (pdf-preview-popup-and-i
   });
 });
 
+describe('BuyerDocumentDetailPage — review counts & labels', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  function renderWithDoc(doc: DocumentItem) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders review tab with count and reviewsLabel without unparsed {count} interpolation', () => {
+    const doc = buildDoc({
+      reviewCount: 15,
+      rating: 4.8,
+      reviews: [
+        {
+          id: 'rev-1',
+          buyerName: 'Somchai',
+          buyerAvatar: '',
+          rating: 5,
+          comment: 'Good document',
+          createdAt: '2026-08-01T00:00:00Z',
+          verified: true,
+        },
+      ],
+    });
+    const fixture = renderWithDoc(doc);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('รีวิว (1)');
+    expect(text).toContain('15 รีวิว');
+    expect(text).not.toContain('{count}');
+  });
+});
+

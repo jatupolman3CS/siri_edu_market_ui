@@ -17,11 +17,11 @@ import { PageHeroComponent } from '../../../shared/components/page-hero/page-her
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
-import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
@@ -37,7 +37,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     IconComponent,
     EmptyStateComponent,
     StatCardComponent,
-    DocumentCardComponent,
+    ImgFallbackDirective,
     ThbPipe,
     TimeAgoPipe,
     CompactPipe,
@@ -176,5 +176,16 @@ export class BuyerLibraryPage {
 
   closeVersionsModal(): void {
     this.versionsModal.set(null);
+  }
+
+  navigateToDetail(documentId: string): void {
+    if (!documentId) return;
+    this.router.navigate(['/document', documentId]);
+  }
+
+  hasRealCover(coverUrl?: string | null): boolean {
+    if (!coverUrl) return false;
+    const lower = coverUrl.toLowerCase();
+    return !lower.includes('placeholder-cover') && !lower.includes('default-logo');
   }
 }
