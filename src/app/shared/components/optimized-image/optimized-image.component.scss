@@ -1,0 +1,10 @@
+// display: contents keeps this component and its <picture> wrapper out of layout entirely, so
+// callers that rely on the <img> being an absolutely-positioned/flex direct child (e.g.
+// document-card's `absolute inset-0`) keep working exactly as before.
+:host {
+  display: contents;
+}
+
+picture {
+  display: contents;
+}

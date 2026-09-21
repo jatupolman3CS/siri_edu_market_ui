@@ -1,3 +1,5 @@
+import type { UploadResponse } from '../api/types.gen';
+
 /**
  * Shape returned by `@hey-api/client-fetch`. `request`/`response` are optional because the
  * client omits them when fetch throws before a response exists — the unwrapper already
@@ -69,3 +71,15 @@ export function extractErrorCode(error: unknown): string | undefined {
   }
   return undefined;
 }
+
+// TODO(contract v2): remove this shim once thumbnailKey/thumbnailUrl/fullKey/fullUrl actually
+// exist on the SDK-generated `UploadResponse` (after the backend ships them + `npm run
+// generate:api` runs against the deployed OpenAPI spec). See
+// docs/contracts/image-upload-optimization.md v2 §4 — same pattern v1 used for
+// optimizedKey/optimizedUrl before its own regen.
+export type UploadResponseWithVariants = UploadResponse & {
+  thumbnailKey?: string | null;
+  thumbnailUrl?: string | null;
+  fullKey?: string | null;
+  fullUrl?: string | null;
+};

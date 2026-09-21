@@ -1,0 +1,12 @@
+<picture>
+  <source [srcset]="displaySrc()" />
+  <img
+    appImgFallback
+    [src]="displaySrc()"
+    [alt]="alt()"
+    [class]="imgClass()"
+    [class.cursor-zoom-in]="lightbox()"
+    [attr.loading]="eager() ? null : 'lazy'"
+    (click)="onImageClick()"
+  />
+</picture>

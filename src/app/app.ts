@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DevRoleSwitcherComponent } from './core/dev/dev-role-switcher.component';
 import { NavigationSourceService, NotificationToastService } from './core/services';
+import { LightboxComponent } from './shared/components/lightbox/lightbox.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, DevRoleSwitcherComponent],
+  imports: [RouterOutlet, DevRoleSwitcherComponent, LightboxComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<router-outlet /><app-dev-role-switcher />`,
+  template: `<router-outlet /><app-dev-role-switcher /><app-lightbox />`,
 })
 export class App {
   // seller-analytics-insights v1 §4: NavigationSourceService must start listening to

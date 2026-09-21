@@ -7,7 +7,7 @@ import { MeService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../icon/icon.component';
-import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
+import { OptimizedImageComponent } from '../optimized-image/optimized-image.component';
 
 /**
  * F-07: display name plus avatar, shared by /account and /seller/settings.
@@ -15,7 +15,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 @Component({
   selector: 'app-profile-editor',
   standalone: true,
-  imports: [FormsModule, IconComponent, ImgFallbackDirective, TranslatePipe],
+  imports: [FormsModule, IconComponent, OptimizedImageComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-editor.component.html',
   styles: [':host { display: block; }'],

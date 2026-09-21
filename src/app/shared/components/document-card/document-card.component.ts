@@ -13,6 +13,7 @@ import { IconComponent } from '../icon/icon.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
+import { OptimizedImageComponent } from '../optimized-image/optimized-image.component';
 
 @Component({
   selector: 'app-document-card',
@@ -25,6 +26,7 @@ import { TranslationService, TranslatePipe } from '../../../core/i18n';
     RatingStarsComponent,
     ImgFallbackDirective,
     TranslatePipe,
+    OptimizedImageComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-card.component.html',

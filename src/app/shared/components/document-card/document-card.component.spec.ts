@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { DocumentCardComponent } from './document-card.component';
+import { OptimizedImageComponent } from '../optimized-image/optimized-image.component';
 import { AdsService, CartService, QuickViewService, WishlistService } from '../../../core/services';
 import { mapDocument } from '../../../core/api-mappers/mappers';
 import type { DocumentItem } from '../../../core/models';
+import { DEFAULT_LOGO_ASSET_PATH } from '../../directives/img-fallback.directive';
 
 /**
  * seller-ads-promotion v1 (docs/contracts/seller-ads-promotion.md §1.4 "frontend spec", §4.1,
@@ -189,3 +192,36 @@ describe('DocumentCardComponent — marketplace-cover-preview-count v1 §4 (AC-1
   });
 });
 
+/**
+ * image-upload-optimization v2 §4 (AC-28) — cover now renders through the reusable
+ * `app-optimized-image` component instead of a bare `<img appImgFallback>`. Only the default
+ * (non-compact) branch is covered here — the compact branch's hover-cycle behavior above is
+ * untouched by this feature.
+ */
+describe('DocumentCardComponent — image-upload-optimization v2 (AC-28)', () => {
+  it('renders the cover through app-optimized-image', () => {
+    const fixture = render(buildDoc());
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('app-optimized-image')).not.toBeNull();
+    const img = el.querySelector('app-optimized-image img') as HTMLImageElement;
+    expect(img.src).toBe(buildDoc().cover);
+  });
+
+  it('still falls back to the default logo when the cover fails to load (fallback preserved)', () => {
+    const fixture = render(buildDoc());
+    const el = fixture.nativeElement as HTMLElement;
+    const img = el.querySelector('app-optimized-image img') as HTMLImageElement;
+
+    img.dispatchEvent(new Event('error'));
+
+    expect(img.src.endsWith(DEFAULT_LOGO_ASSET_PATH)).toBe(true);
+  });
+
+  it('does not enable the lightbox on the cover (navigation to the detail page takes priority)', () => {
+    const fixture = render(buildDoc());
+    const optimizedImage = fixture.debugElement.query(By.directive(OptimizedImageComponent));
+
+    expect((optimizedImage.componentInstance as OptimizedImageComponent).lightbox()).toBe(false);
+  });
+});

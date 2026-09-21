@@ -12,10 +12,9 @@
   <div class="flex items-center gap-5 mb-6 flex-wrap">
     <label class="relative flex-shrink-0 cursor-pointer group">
       <input type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
-      <img
-        appImgFallback
+      <app-optimized-image
         [src]="avatarSrc()"
-        class="w-24 h-24 rounded-[1.75rem] object-cover ring-4 ring-pink-100 transition-opacity group-hover:opacity-80"
+        imgClass="w-24 h-24 rounded-[1.75rem] object-cover ring-4 ring-pink-100 transition-opacity group-hover:opacity-80"
         [alt]="'shared.profileEditor.profileImageAlt' | trans"
       />
       <span

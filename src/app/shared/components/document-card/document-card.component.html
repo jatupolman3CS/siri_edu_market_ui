@@ -137,12 +137,15 @@
         (click)="onSponsoredNavigate()"
         class="block relative aspect-[4/5] bg-pink-50 overflow-hidden rounded-3xl"
       >
-        <img
-          appImgFallback
+        <!-- image-upload-optimization v2: reusable renderer, ready for thumbSrc/fullSrc once the
+             catalog API exposes them (see docs/contracts/image-upload-optimization.md v2 §5).
+             `lightbox` is left off here on purpose — this cover already opens the document detail
+             page on click via the enclosing routerLink; a click-to-zoom lightbox on the same
+             element would fight that navigation instead of complementing it. -->
+        <app-optimized-image
           [src]="doc().cover"
           [alt]="doc().title"
-          class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          loading="lazy"
+          imgClass="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         @if (doc().gallery.length > 1) {
           <div class="absolute bottom-3 left-3 right-3 flex gap-1.5 z-10">
