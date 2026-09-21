@@ -134,7 +134,6 @@ describe('AppHeaderComponent — mobile nav toggle (bug #1)', () => {
   });
 });
 
-
 describe('AppHeaderComponent search submission', () => {
   it('keeps typing local and submits a trimmed marketplace query without old filters', async () => {
     const fixture = render();
@@ -200,5 +199,61 @@ describe('AppHeaderComponent search submission', () => {
   });
 });
 
+describe('AppHeaderComponent — Row 1 Alignment and Responsive Grid', () => {
+  it('places logo, search + seller center, and right actions in Row 1, and trending tags in Row 2', () => {
+    const fixture = render();
+    const el = fixture.nativeElement as HTMLElement;
 
+    // Logo column
+    const logoCol = el.querySelector('app-logo')?.parentElement?.parentElement;
+    expect(logoCol?.className).toContain('md:row-start-1');
+    expect(logoCol?.className).toContain('md:col-start-1');
 
+    // Search and Seller Center column
+    const searchInput = el.querySelector('input[name="q"]');
+    const centerCol = searchInput?.closest('.search-container')?.parentElement?.parentElement;
+    expect(centerCol?.className).toContain('md:row-start-1');
+    expect(centerCol?.className).toContain('md:col-start-2');
+    expect(centerCol?.className).toContain('items-center');
+
+    // Seller center button within center column
+    const sellerBtn = centerCol?.querySelector('a[routerLink="/become-seller"], a[routerLink="/seller"]');
+    expect(sellerBtn).toBeTruthy();
+    expect(sellerBtn?.className).not.toContain('self-start');
+    expect(sellerBtn?.className).toContain('items-center');
+
+    // Right actions column (Wishlist, Library, Cart, etc.)
+    const wishlistLink = el.querySelector('a[routerLink="/wishlist"]');
+    const rightCol = wishlistLink?.parentElement;
+    expect(rightCol?.className).toContain('md:row-start-1');
+    expect(rightCol?.className).toContain('md:col-start-3');
+    expect(rightCol?.className).toContain('items-center');
+
+    // Popular / Trending search tags in Row 2
+    const chip = el.querySelector('.chip-tag');
+    const row2Container = chip?.parentElement;
+    expect(row2Container?.className).toContain('md:row-start-2');
+    expect(row2Container?.className).toContain('md:col-start-2');
+  });
+
+  it('standardizes matching height classes across search container, seller center button, and actions', () => {
+    const fixture = render();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const searchContainer = el.querySelector('.search-container');
+    expect(searchContainer?.className).toContain('h-10');
+    expect(searchContainer?.className).toContain('lg:h-11');
+
+    const sellerBtn = el.querySelector('a[routerLink="/become-seller"], a[routerLink="/seller"]');
+    expect(sellerBtn?.className).toContain('h-10');
+    expect(sellerBtn?.className).toContain('lg:h-11');
+
+    const wishlist = el.querySelector('a[routerLink="/wishlist"]');
+    expect(wishlist?.className).toContain('lg:!w-11');
+    expect(wishlist?.className).toContain('lg:!h-11');
+
+    const cartBtn = el.querySelector('button[aria-label*="ตะกร้า"]');
+    expect(cartBtn?.className).toContain('lg:!w-11');
+    expect(cartBtn?.className).toContain('lg:!h-11');
+  });
+});
