@@ -22,13 +22,15 @@ function buildAuth(overrides: {
   accessToken?: string | null;
   isAdmin?: boolean;
   isSeller?: boolean;
-}): Pick<AuthService, 'isAuthenticated' | 'accessToken' | 'isAdmin' | 'isSeller'> {
+  refreshSession?: () => Promise<string | null>;
+}): Pick<AuthService, 'isAuthenticated' | 'accessToken' | 'isAdmin' | 'isSeller' | 'refreshSession'> {
   return {
     isAuthenticated: () => overrides.isAuthenticated ?? true,
     accessToken: () => (overrides.accessToken !== undefined ? overrides.accessToken : 'token-1'),
     isAdmin: () => overrides.isAdmin ?? false,
     isSeller: () => overrides.isSeller ?? false,
-  } as Pick<AuthService, 'isAuthenticated' | 'accessToken' | 'isAdmin' | 'isSeller'>;
+    refreshSession: overrides.refreshSession ?? (() => Promise.resolve(null)),
+  } as Pick<AuthService, 'isAuthenticated' | 'accessToken' | 'isAdmin' | 'isSeller' | 'refreshSession'>;
 }
 
 type GuardHarness = {
@@ -124,11 +126,32 @@ describe('sellerGuard — store status gate (F-03)', () => {
     expect(harness.resolveAccessStatus).toHaveBeenCalledTimes(1);
   });
 
-  it('approved but the token has no seller role yet: keeps the pre-F-03 answer (home)', async () => {
-    // Approval grants the role server-side; a token minted before that is simply stale, and the
-    // seller APIs would reject it — F-03 must not turn that into a /become-seller loop.
-    const harness = setup(buildAuth({ isSeller: false, isAdmin: false }), 'approved');
+  it('approved + stale token: calls refreshSession and grants access when refresh updates the role', async () => {
+    // Approval grants the role server-side; a token minted before that is stale.
+    // Guard must call refreshSession() so the new token carries the Seller claim, then re-check.
+    let refreshCalled = false;
+    const auth = {
+      ...buildAuth({ isAdmin: false }),
+      isSeller: () => refreshCalled, // false before refresh, true after
+      refreshSession: vi.fn(async () => {
+        refreshCalled = true;
+        return 'new-token';
+      }),
+    };
+    setup(auth as unknown as Partial<AuthService>, 'approved');
     const result = await runSellerGuard();
+    expect(auth.refreshSession).toHaveBeenCalledTimes(1);
+    expect(result).toBe(true);
+  });
+
+  it('approved + stale token: blocks when refresh still cannot grant seller role', async () => {
+    const refreshSession = vi.fn(async () => null as string | null);
+    const harness = setup(
+      buildAuth({ isSeller: false, isAdmin: false, refreshSession }) as Partial<AuthService>,
+      'approved',
+    );
+    const result = await runSellerGuard();
+    expect(refreshSession).toHaveBeenCalledTimes(1);
     expect(result).not.toBe(true);
     expect(redirectTarget(result)).toEqual(['/']);
     expect(harness.message.error).toHaveBeenCalledWith(SELLER_GUARD_MESSAGES.notSeller);

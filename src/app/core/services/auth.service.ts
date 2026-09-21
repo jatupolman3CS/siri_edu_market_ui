@@ -238,6 +238,12 @@ export class AuthService {
         const data = unwrapSdkResult(result);
         this.setAccessToken(data.accessToken ?? null);
         this.setRefreshToken(data.refreshToken ?? null);
+        // Sync roles from the new session — the backend re-reads USER.Role from DB on every
+        // refresh, so if a role was granted (e.g. buyer→seller approval) since last login,
+        // the in-memory _session picks it up here without requiring a full sign-out.
+        if (data.user) {
+          this.syncUserFromProfile(data.user);
+        }
         return data.accessToken ?? null;
       } catch (e) {
         // Drop session — caller decides whether to redirect to /auth/login.
@@ -395,6 +401,13 @@ export class AuthService {
     };
     this._pending.set(pending);
     this.persistPending();
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem('siriedu_otp_cooldown_ts', Date.now().toString());
+      }
+    } catch {
+      // Ignore storage errors
+    }
     return { ok: true };
   }
 

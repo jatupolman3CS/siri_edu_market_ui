@@ -96,8 +96,15 @@ export class TranslationService {
     }
 
     if (params) {
-      Object.keys(params).forEach((paramKey) => {
-        val = val.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(params[paramKey]));
+      const normalizedParams: Record<string, string | number> = { ...params };
+      if (normalizedParams['seconds'] !== undefined && normalizedParams['s'] === undefined) {
+        normalizedParams['s'] = normalizedParams['seconds'];
+      } else if (normalizedParams['s'] !== undefined && normalizedParams['seconds'] === undefined) {
+        normalizedParams['seconds'] = normalizedParams['s'];
+      }
+
+      Object.keys(normalizedParams).forEach((paramKey) => {
+        val = val.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(normalizedParams[paramKey]));
       });
     }
 

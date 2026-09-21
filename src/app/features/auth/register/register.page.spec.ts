@@ -78,41 +78,4 @@ describe('AuthRegisterPage — Terms/Privacy checkbox (bug #3/#4)', () => {
     expect(button.disabled).toBe(false);
   });
 
-  it('redirects via resolvePostAuthRedirect when onSocial succeeds', async () => {
-    const resolvePostAuthRedirect = vi.fn().mockReturnValue('/onboarding/role');
-    const signInWithProvider = vi.fn().mockResolvedValue({ ok: true });
-    TestBed.configureTestingModule({
-      imports: [AuthRegisterPage],
-      providers: [
-        provideRouter([]),
-        {
-          provide: AuthService,
-          useValue: { register: vi.fn(), signInWithProvider, resolvePostAuthRedirect },
-        },
-        {
-          provide: GoogleOauthConfigService,
-          useValue: { ensureLoaded: () => Promise.resolve(), getClientId: () => 'client-id' },
-        },
-        {
-          // external-login-and-mail-config v1 §4.1 — see the note in render() above.
-          provide: OauthClientsService,
-          useValue: { ensureLoaded: () => Promise.resolve(), lineLoginChannelId: () => '' },
-        },
-        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
-      ],
-    });
-    const fixture = TestBed.createComponent(AuthRegisterPage);
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-    const component = fixture.componentInstance;
-
-    component.onSocial('google');
-    await new Promise((r) => setTimeout(r, 20));
-
-    // external-login-and-mail-config v1 §4.1: the page now forwards where the user wanted to
-    // go, because a redirect-based provider (LINE) loses this component before it comes back.
-    expect(signInWithProvider).toHaveBeenCalledWith('google', { returnUrl: '/' });
-    expect(resolvePostAuthRedirect).toHaveBeenCalled();
-    expect(navigateSpy).toHaveBeenCalledWith('/onboarding/role');
-  });
 });

@@ -2959,7 +2959,7 @@ export const th = {
     "otpExpiresIn15Min": "รหัสมีอายุ 15 นาที",
     "submitOtp": "ยืนยันรหัส OTP",
     "didNotReceiveOtp": "ไม่ได้รับรหัส OTP?",
-    "resendOtpIn": "ขอรหัสใหม่ใน {s}s",
+    "resendOtpIn": "ขอรหัสใหม่ใน {seconds}s",
     "requestNewOtp": "ขอรหัส OTP ใหม่",
     "verifyHint1": "💡 ท่านสามารถกดปุ่ม \"ยืนยันอีเมล\" ในจดหมายที่ได้รับแทนการกรอกรหัสได้เช่นกัน",
     "verifyHint2": "📬 หากไม่พบอีเมล โปรดตรวจสอบในโฟลเดอร์ สแปม / จดหมายขยะ (Spam/Junk)",

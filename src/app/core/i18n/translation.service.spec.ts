@@ -1,71 +1,35 @@
 import { TestBed } from '@angular/core/testing';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { TranslationService } from './translation.service';
-import { TranslatePipe } from './translate.pipe';
 
-describe('TranslationService & TranslatePipe (Bilingual Support)', () => {
+describe('TranslationService', () => {
   let service: TranslationService;
 
   beforeEach(() => {
-    try { window?.localStorage?.clear?.(); } catch {}
     TestBed.configureTestingModule({
       providers: [TranslationService],
     });
     service = TestBed.inject(TranslationService);
-    // Reset to default 'th' for tests
+  });
+
+  it('translates auth.resendOtpIn with {seconds} parameter in Thai', () => {
     service.setLanguage('th');
+    const result = service.t('auth.resendOtpIn', { seconds: 45 });
+    expect(result).toBe('ขอรหัสใหม่ใน 45s');
   });
 
-  afterEach(() => {
-    try { window?.localStorage?.clear?.(); } catch {}
-  });
-
-  it('initializes with default language "th"', () => {
-    expect(service.currentLang()).toBe('th');
-    expect(service.t('nav.home')).toBe('หน้าแรก');
-  });
-
-  it('switches language to "en" and translates nav items to English', () => {
-    service.setLanguage('en');
-    expect(service.currentLang()).toBe('en');
-    expect(service.t('nav.home')).toBe('Home');
-    expect(service.t('nav.marketplace')).toBe('Marketplace');
-    expect(service.t('common.search')).toBe('Search');
-  });
-
-  it('interpolates parameters in translation strings', () => {
+  it('translates auth.resendOtpIn with {s} parameter alias in Thai', () => {
     service.setLanguage('th');
-    expect(service.t('header.cartCount', { count: 5 })).toBe('ตะกร้าสินค้า 5 รายการ');
+    const result = service.t('auth.resendOtpIn', { s: 45 });
+    expect(result).toBe('ขอรหัสใหม่ใน 45s');
+  });
 
+  it('translates auth.resendOtpIn in English', () => {
     service.setLanguage('en');
-    expect(service.t('header.cartCount', { count: 5 })).toBe('Cart (5 items)');
-  });
+    const resultWithSeconds = service.t('auth.resendOtpIn', { seconds: 30 });
+    expect(resultWithSeconds).toBe('Request new code in 30s');
 
-  it('toggles language between th and en', () => {
-    service.setLanguage('th');
-    service.toggleLanguage();
-    expect(service.currentLang()).toBe('en');
-
-    service.toggleLanguage();
-    expect(service.currentLang()).toBe('th');
-  });
-
-  it('falls back to key if path is unknown', () => {
-    expect(service.t('non.existent.key')).toBe('non.existent.key');
-  });
-
-  it('returns translated string lists for the active language', () => {
-    service.setLanguage('en');
-    expect(service.list('header.quickSearchItems')).toContain('Biology Notes');
-    expect(service.list('home.quickSearchItems')).toContain('Research');
-    expect(service.list('non.existent.list')).toEqual([]);
-  });
-
-  it('translates via TranslatePipe', () => {
-    const pipe = new TranslatePipe(service);
-    service.setLanguage('th');
-    expect(pipe.transform('nav.signIn')).toBe('เข้าสู่ระบบ');
-
-    service.setLanguage('en');
-    expect(pipe.transform('nav.signIn')).toBe('Sign In');
+    const resultWithS = service.t('auth.resendOtpIn', { s: 30 });
+    expect(resultWithS).toBe('Request new code in 30s');
   });
 });

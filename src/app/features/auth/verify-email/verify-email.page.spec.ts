@@ -1,4 +1,4 @@
-﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthVerifyEmailPage } from './verify-email.page';
@@ -88,5 +88,26 @@ describe('AuthVerifyEmailPage', () => {
 
     expect(mockAuthService.sendOtp).toHaveBeenCalledWith('test@example.com');
     expect(component.cooldown()).toBe(60);
+
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const resendBtn = el.querySelector('#resend-otp-btn') as HTMLButtonElement | null;
+    expect(resendBtn).not.toBeNull();
+    // Verify it doesn't contain untranslated {s} or {seconds}
+    expect(resendBtn?.textContent).not.toContain('{s}');
+    expect(resendBtn?.textContent).not.toContain('{seconds}');
+    expect(resendBtn?.textContent).toContain('60s');
+
+    // Test countdown update
+    component.cooldown.set(59);
+    fixture.detectChanges();
+    expect(resendBtn?.textContent).toContain('59s');
+  });
+
+  it('cleans up timer on destroy', () => {
+    component.startCooldown(60, false);
+    expect(component.cooldown()).toBe(60);
+    component.ngOnDestroy();
+    // After destroy, timer should be cleared
   });
 });

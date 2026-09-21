@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   inject,
   signal,
 } from '@angular/core';
@@ -15,6 +16,9 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+export const OTP_COOLDOWN_STORAGE_KEY = 'siriedu_otp_cooldown_ts';
+export const OTP_COOLDOWN_DURATION = 60;
+
 @Component({
   selector: 'app-auth-verify-email',
   standalone: true,
@@ -23,7 +27,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
   templateUrl: './verify-email.page.html',
   styleUrl: './verify-email.page.scss',
 })
-export class AuthVerifyEmailPage {
+export class AuthVerifyEmailPage implements OnDestroy {
   readonly auth = inject(AuthService);
   readonly translation = inject(TranslationService);
   private readonly router = inject(Router);
@@ -38,6 +42,7 @@ export class AuthVerifyEmailPage {
   readonly otpDigits = signal<string[]>(['', '', '', '', '', '']);
 
   private emailLinkVerifyStarted = false;
+  private cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => {
@@ -52,6 +57,71 @@ export class AuthVerifyEmailPage {
         void this.verifyWithToken(emailToken, emailParam);
       }
     });
+
+    this.checkInitialCooldown();
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimer();
+  }
+
+  private clearTimer(): void {
+    if (this.cooldownTimer) {
+      clearInterval(this.cooldownTimer);
+      this.cooldownTimer = null;
+    }
+  }
+
+  private checkInitialCooldown(): void {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const lastSentStr = window.sessionStorage.getItem(OTP_COOLDOWN_STORAGE_KEY);
+        if (lastSentStr) {
+          const lastSent = Number(lastSentStr);
+          const elapsed = Math.floor((Date.now() - lastSent) / 1000);
+          const remaining = OTP_COOLDOWN_DURATION - elapsed;
+          if (remaining > 0 && remaining <= OTP_COOLDOWN_DURATION) {
+            this.startCooldown(remaining, false);
+          } else {
+            window.sessionStorage.removeItem(OTP_COOLDOWN_STORAGE_KEY);
+          }
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  startCooldown(seconds = OTP_COOLDOWN_DURATION, persist = true): void {
+    this.clearTimer();
+    this.cooldown.set(seconds);
+
+    if (persist) {
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem(OTP_COOLDOWN_STORAGE_KEY, Date.now().toString());
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    }
+
+    this.cooldownTimer = setInterval(() => {
+      const next = this.cooldown() - 1;
+      if (next <= 0) {
+        this.cooldown.set(0);
+        this.clearTimer();
+        try {
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            window.sessionStorage.removeItem(OTP_COOLDOWN_STORAGE_KEY);
+          }
+        } catch {
+          // Ignore storage errors
+        }
+      } else {
+        this.cooldown.set(next);
+      }
+    }, 1000);
   }
 
   get targetEmail(): string {
@@ -164,11 +234,7 @@ export class AuthVerifyEmailPage {
       this.message.success(r.message || this.translation.t('auth.otpResentSuccess'));
       this.error.set('');
       this.otpDigits.set(['', '', '', '', '', '']);
-      this.cooldown.set(60);
-      const t = setInterval(() => {
-        this.cooldown.update((v) => v - 1);
-        if (this.cooldown() <= 0) clearInterval(t);
-      }, 1000);
+      this.startCooldown(OTP_COOLDOWN_DURATION, true);
       this.focusInput(0);
     } else {
       this.message.error(this.translation.t('auth.resendOtpFailed'));

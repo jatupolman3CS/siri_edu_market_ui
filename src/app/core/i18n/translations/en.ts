@@ -2961,7 +2961,7 @@ export const en: TranslationKeys = {
     "otpExpiresIn15Min": "Code expires in 15 minutes",
     "submitOtp": "Verify OTP",
     "didNotReceiveOtp": "Did not receive the OTP?",
-    "resendOtpIn": "Request new code in {s}s",
+    "resendOtpIn": "Request new code in {seconds}s",
     "requestNewOtp": "Request new OTP",
     "verifyHint1": "💡 You can also click the \"Verify Email\" button in the email instead of entering the code.",
     "verifyHint2": "📬 If you cannot find the email, check your Spam / Junk folder.",

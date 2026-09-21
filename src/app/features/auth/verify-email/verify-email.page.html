@@ -98,12 +98,13 @@
           <span class="text-ink-muted">{{ 'auth.didNotReceiveOtp' | trans }}</span>
           <button
             type="button"
+            id="resend-otp-btn"
             class="text-pink-600 font-bold hover:underline disabled:opacity-50 disabled:no-underline"
             [disabled]="cooldown() > 0"
             (click)="resend()"
           >
             @if (cooldown() > 0) {
-              {{ 'auth.resendOtpIn' | trans:{ seconds: cooldown() } }}
+              {{ 'auth.resendOtpIn' | trans:{ seconds: cooldown(), s: cooldown() } }}
             } @else {
               {{ 'auth.requestNewOtp' | trans }}
             }

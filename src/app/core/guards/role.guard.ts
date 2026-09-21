@@ -89,8 +89,10 @@ export const sellerGuard: CanActivateFn = async (
 
   switch (status) {
     case 'approved':
-      // A stale token (approved seconds ago, not refreshed yet) still has no seller role, and the
-      // seller APIs would reject it — keep the pre-F-03 answer for that one case.
+      if (auth.isSeller()) return true;
+      // Stale token: role was granted since this session started. Refresh to pick up the new
+      // Seller claim — refreshSession() now syncs _session.user.roles from the response.
+      await auth.refreshSession();
       return auth.isSeller() ? true : blockedFromSellerArea();
 
     case 'unavailable':

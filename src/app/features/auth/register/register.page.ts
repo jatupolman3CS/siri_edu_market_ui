@@ -2,10 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AuthProvider, AuthService } from '../../../core/services';
+import { AuthService } from '../../../core/services';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
 import { AuthLayoutComponent } from '../../../layouts/auth/auth-layout/auth-layout.component';
-import { SocialButtonsComponent } from '../../../shared/components/social-buttons/social-buttons.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
@@ -15,7 +14,6 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
     RouterLink,
     FormsModule,
     AuthLayoutComponent,
-    SocialButtonsComponent,
     IconComponent,
     TranslatePipe,
   ],
@@ -99,51 +97,4 @@ export class AuthRegisterPage {
     });
   }
 
-  readonly lineModalVisible = signal<boolean>(false);
-  readonly lineEmail = signal<string>('');
-  readonly lineEmailError = signal<string>('');
-
-  onSocial(provider: AuthProvider): void {
-    if (provider === 'email') return;
-    if (provider === 'line') {
-      this.lineEmail.set(this.email().trim());
-      this.lineEmailError.set('');
-      this.lineModalVisible.set(true);
-      return;
-    }
-    this.executeSocial(provider);
-  }
-
-  confirmLineEmail(): void {
-    const mail = this.lineEmail().trim();
-    if (!mail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-      this.lineEmailError.set(this.i18n.t('auth.pleaseEnterValidEmail'));
-      return;
-    }
-    this.lineModalVisible.set(false);
-    this.loading.set(true);
-    void (async () => {
-      const r = await this.auth.signInWithProvider('line', {
-        returnUrl: this.returnUrl(),
-        email: mail,
-      });
-      this.loading.set(false);
-      if (!r.ok) {
-        this.error.set(r.error ?? this.i18n.t('auth.lineLoginFailed'));
-      }
-    })();
-  }
-
-  private executeSocial(provider: Exclude<AuthProvider, 'email'>): void {
-    this.loading.set(true);
-    void (async () => {
-      const r = await this.auth.signInWithProvider(provider, { returnUrl: this.returnUrl() });
-      this.loading.set(false);
-      if (!r.ok) {
-        this.error.set(r.error ?? this.i18n.t('auth.loginFailed'));
-        return;
-      }
-      this.router.navigateByUrl(this.auth.resolvePostAuthRedirect(this.returnUrl()));
-    })();
-  }
 }

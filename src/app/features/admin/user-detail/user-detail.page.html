@@ -73,7 +73,7 @@
           <app-icon name="flag" [size]="16" class="text-amber-600" />
           {{ 'admin.userDetailAdmin.restrictionTitle' | trans }}
         </h3>
-        <div class="grid gap-2 text-sm sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
           <div>
             <span class="text-ink-muted">{{ 'admin.userDetailAdmin.reasonLabel' | trans }}</span>
             <span class="font-medium text-ink ml-1">{{ u.accountStatusReason || '-' }}</span>
@@ -105,7 +105,7 @@
     }
 
     <!-- Stat Cards Grid -->
-    <div class="grid gap-6 md:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       <!-- Buyer Purchase Stats -->
       <div class="card-soft p-5 space-y-3">
         <h3 class="text-base font-bold text-ink flex items-center gap-2">

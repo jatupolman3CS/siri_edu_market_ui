@@ -39,6 +39,7 @@ export class AuthLoginPage {
   readonly error = signal<string>('');
 
   readonly returnUrl = signal<string>('/');
+  readonly registerMode = signal<boolean>(false);
   readonly lineModalVisible = signal<boolean>(false);
   readonly lineEmail = signal<string>('');
   readonly lineEmailError = signal<string>('');
@@ -47,6 +48,15 @@ export class AuthLoginPage {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => {
       this.returnUrl.set(p.get('returnUrl') ?? '/');
     });
+  }
+
+  goToRegister(): void {
+    this.registerMode.set(true);
+    setTimeout(() => {
+      void this.router.navigate(['/auth/register'], {
+        queryParams: { returnUrl: this.returnUrl() },
+      });
+    }, 220);
   }
 
   async onSubmit(): Promise<void> {
