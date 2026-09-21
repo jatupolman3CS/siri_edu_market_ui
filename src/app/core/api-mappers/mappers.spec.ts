@@ -510,6 +510,41 @@ describe('brand asset fallbacks', () => {
     expect(doc.cover).not.toBe(placeholderCoverUrl());
     expect(doc.cover).toContain('seller/cover.png');
   });
+
+  /**
+   * document-preview-access-fixes v1 AC-08 (UI half). A document with no gallery rows now gets
+   * its watermarked page rasters from the backend under `/Previews/...`. These are static files,
+   * NOT object-storage keys — if the mapper ever rewrites them the way it rewrites a storage key,
+   * the URL 404s and the buyer is back to the placeholder icon the fix exists to remove.
+   */
+  it('keeps a /Previews raster cover intact instead of falling back to the placeholder', () => {
+    const doc = mapDocument({
+      id: 'doc-1',
+      galleryPreviewUrls: ['/Previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769'],
+    } as MarketplaceDocumentResponse);
+
+    expect(doc.cover).not.toBe(placeholderCoverUrl());
+    expect(doc.cover).toContain('/Previews/2c670625a7194445948a3f105204332a/page-1.jpg');
+    expect(doc.cover).not.toContain('/api/files/download/Previews/');
+  });
+
+  it('keeps every /Previews raster page in the detail gallery', () => {
+    const detail = mapDocumentDetail({
+      id: 'doc-1',
+      title: 'ไม่มีแกลเลอรี',
+      galleryUrls: [
+        '/Previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769',
+        '/Previews/2c670625a7194445948a3f105204332a/page-2.jpg?v=1789990769',
+      ],
+    } as MarketplaceDocumentDetailResponse);
+
+    expect(detail.gallery).toHaveLength(2);
+    expect(detail.cover).toBe(detail.gallery[0]);
+    for (const url of detail.gallery) {
+      expect(url).toContain('/Previews/');
+      expect(url).not.toContain('/api/files/download/Previews/');
+    }
+  });
 });
 
 /**

@@ -53,6 +53,14 @@ beforeEach(() => {
     if (route.contentType === 'text/plain') {
       return textResponse(route.body as string, route.status ?? 200);
     }
+    if (route.contentType === 'application/pdf') {
+      // The fetch client picks its parser from the Content-Type, so a binary route has to answer
+      // with the real header for `getDocumentReviewPdf` to see a Blob instead of parsed JSON.
+      return new Response(route.body as BodyInit, {
+        status: route.status ?? 200,
+        headers: { 'Content-Type': 'application/pdf' },
+      });
+    }
     return jsonResponse(route.body, route.status ?? 200);
   }) as typeof globalThis.fetch;
 });
@@ -1190,5 +1198,75 @@ describe('AdminService — getMlRecommendationOverview (ml-embedding-recommendat
     const overview = await admin.getMlRecommendationOverview();
 
     expect(overview).toBeNull();
+  });
+});
+
+/**
+ * document-preview-access-fixes v1 §3.2 / §4.3 — `GET /api/admin/documents/{id}/preview-pdf`.
+ *
+ * This is the only route that can show an admin a document that is still pending: every
+ * marketplace preview route gates on `Status == Approved`. The two things worth pinning down are
+ * that a 200 really arrives as a `Blob` (the object URL the viewer builds depends on it) and that
+ * the `404 { error: 'file_missing' }` case rejects rather than resolving with junk — the page's
+ * "download the original instead" branch hangs off that rejection.
+ */
+describe('AdminService — admin document review PDF (document-preview-access-fixes v1)', () => {
+  function requestedUrls(): string[] {
+    const mocked = globalThis.fetch as unknown as { mock: { calls: unknown[][] } };
+    return mocked.mock.calls.map((call) => {
+      const first = call[0];
+      return first instanceof Request ? first.url : String(first);
+    });
+  }
+
+  it('returns the PDF as a Blob and defaults to the seller original (watermark=false)', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-9/preview-pdf', {
+      body: '%PDF-1.7 original',
+      contentType: 'application/pdf',
+    });
+    const admin = buildService();
+
+    const blob = await admin.getDocumentReviewPdf('doc-9');
+
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toBe('application/pdf');
+    expect(await blob.text()).toContain('%PDF');
+    expect(requestedUrls()[0]).toContain('watermark=false');
+  });
+
+  it('asks for the buyer-facing render when watermark=true', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-9/preview-pdf', {
+      body: '%PDF-1.7 watermarked',
+      contentType: 'application/pdf',
+    });
+    const admin = buildService();
+
+    await admin.getDocumentReviewPdf('doc-9', true);
+
+    expect(requestedUrls()[0]).toContain('watermark=true');
+  });
+
+  it('rejects with the backend payload when the stored file is missing (404 file_missing)', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-9/preview-pdf', {
+      status: 404,
+      body: { error: 'file_missing' },
+    });
+    const admin = buildService();
+
+    await expect(admin.getDocumentReviewPdf('doc-9')).rejects.toMatchObject({
+      error: 'file_missing',
+    });
+  });
+
+  it('rejects when the file turns out not to be a PDF (400 not_a_pdf_document)', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-9/preview-pdf', {
+      status: 400,
+      body: { error: 'not_a_pdf_document' },
+    });
+    const admin = buildService();
+
+    await expect(admin.getDocumentReviewPdf('doc-9')).rejects.toMatchObject({
+      error: 'not_a_pdf_document',
+    });
   });
 });

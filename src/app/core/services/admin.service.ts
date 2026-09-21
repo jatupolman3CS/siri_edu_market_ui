@@ -46,6 +46,7 @@ import {
   getApiAdminDashboard,
   getApiAdminDocumentGenerationCategories,
   getApiAdminDocumentGenerationRuns,
+  getApiAdminDocumentsByIdPreviewPdf,
   getApiAdminPayouts,
   getApiAdminPayoutsByPayoutIdSlips,
   getApiFilesPresignedByKey,
@@ -1340,6 +1341,33 @@ export class AdminService {
       this.apiFail.report('errors.context.getFileDownloadUrl', e);
       return null;
     }
+  }
+
+  /**
+   * document-preview-access-fixes v1 §3.2 / §4.3 — the admin review viewer.
+   *
+   * Every marketplace preview route gates on `Status == Approved`, so a document sitting in the
+   * approval queue could not be opened at all: the whole point of the queue was being approved
+   * sight-unseen. This admin-only route has no status gate and streams the real file.
+   *
+   * `watermark = false` (default) returns the seller's original PDF in full; `watermark = true`
+   * renders exactly what a buyer would see (capped to `PreviewPages`, honouring
+   * `PreviewWatermarkEnabled` + the platform policy).
+   *
+   * Errors are deliberately re-thrown rather than reported here: the page turns them into the
+   * "open failed, download the original instead" branch. A missing stored file arrives as
+   * `404 { error: 'file_missing' }`, a non-PDF as `400 { error: 'not_a_pdf_document' }`.
+   */
+  async getDocumentReviewPdf(id: string, watermark = false): Promise<Blob> {
+    const result = await getApiAdminDocumentsByIdPreviewPdf({
+      path: { id },
+      query: { watermark },
+    });
+    // OpenAPI types the stream as `FileResult`; the fetch client parses `application/pdf` into a
+    // real Blob. Anything else means the response was not the PDF we asked for.
+    const data: unknown = unwrapSdkResult(result);
+    if (!(data instanceof Blob)) throw new Error('admin_review_pdf_unexpected_payload');
+    return data;
   }
 
   // ========== Announcement admin (announcement-popup v1) ==========

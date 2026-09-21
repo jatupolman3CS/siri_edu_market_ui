@@ -4858,6 +4858,53 @@ export type GetApiAdminUsersByUserIdWalletEntriesResponses = {
 export type GetApiAdminUsersByUserIdWalletEntriesResponse =
   GetApiAdminUsersByUserIdWalletEntriesResponses[keyof GetApiAdminUsersByUserIdWalletEntriesResponses];
 
+export type GetApiAdminDocumentsByIdPreviewPdfData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: {
+    watermark?: boolean;
+  };
+  url: '/api/admin/documents/{id}/preview-pdf';
+};
+
+export type GetApiAdminDocumentsByIdPreviewPdfErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails;
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+  /**
+   * Internal Server Error
+   */
+  500: unknown;
+};
+
+export type GetApiAdminDocumentsByIdPreviewPdfError =
+  GetApiAdminDocumentsByIdPreviewPdfErrors[keyof GetApiAdminDocumentsByIdPreviewPdfErrors];
+
+export type GetApiAdminDocumentsByIdPreviewPdfResponses = {
+  /**
+   * OK
+   */
+  200: FileResult;
+};
+
+export type GetApiAdminDocumentsByIdPreviewPdfResponse =
+  GetApiAdminDocumentsByIdPreviewPdfResponses[keyof GetApiAdminDocumentsByIdPreviewPdfResponses];
+
 export type PostApiAdminImagesBackfillVariantsData = {
   body: BackfillVariantsRequest;
   path?: never;

@@ -75,6 +75,10 @@
               <button type="button" class="btn-icon !w-8 !h-8" [title]="'seller.editAria' | trans" (click)="edit(d.id)">
                 <app-icon name="edit" [size]="14" />
               </button>
+              <button type="button" class="btn-icon !w-8 !h-8" [title]="'seller.downloadOriginalAria' | trans"
+                [disabled]="downloadingId() === d.id" (click)="download(d)">
+                <app-icon name="download" [size]="14" />
+              </button>
               <a [routerLink]="['/seller/documents', d.id, 'watermark']" class="btn-icon !w-8 !h-8 text-pink-600 hover:!bg-pink-50" [title]="'seller.watermarkAria' | trans">
                 <app-icon name="shield" [size]="14" />
               </a>

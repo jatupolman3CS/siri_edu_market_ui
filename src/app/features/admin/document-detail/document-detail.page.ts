@@ -1,11 +1,13 @@
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import {
   CdkDrag,
@@ -60,6 +62,7 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
     FormsModule,
     RouterLink,
     NzCheckboxModule,
+    NzModalModule,
     NzSwitchModule,
     EmptyStateComponent,
     IconComponent,
@@ -84,6 +87,7 @@ export class AdminDocumentDetailPage {
   readonly admin = inject(AdminService);
   private readonly seller = inject(SellerService);
   private readonly auth = inject(AuthService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly doc = signal<AdminDocumentDetail | null>(null);
   readonly reports = signal<AdminDocumentReport[]>([]);
@@ -103,6 +107,19 @@ export class AdminDocumentDetailPage {
   readonly coverUploading = signal(false);
   readonly mainFileUploading = signal(false);
   readonly previewUploading = signal(false);
+
+  // document-preview-access-fixes v1 §4.3 — admin review viewer state. The PDF never becomes a
+  // URL the browser can navigate to on its own: the admin route is `[Authorize(Roles="Admin")]`
+  // and must not be reachable through a `?token=` query (a JWT in the address bar leaks into
+  // history/logs for a file that is not public yet), so the bytes arrive through the SDK and are
+  // handed to the iframe as an object URL.
+  readonly reviewViewerOpen = signal(false);
+  readonly reviewViewerLoading = signal(false);
+  readonly reviewViewerUrl = signal<SafeResourceUrl | null>(null);
+  readonly reviewViewerFailed = signal(false);
+  /** "ดูแบบที่ผู้ซื้อเห็น" — sends `?watermark=true` so the admin can check the buyer-facing render. */
+  readonly reviewAsBuyer = signal(false);
+  private readonly _reviewBlobUrl = signal<string | null>(null);
 
   readonly maxGalleryImages = MAX_GALLERY_IMAGES;
   readonly galleryItems = signal<GalleryItem[]>([]);
@@ -137,6 +154,7 @@ export class AdminDocumentDetailPage {
   private documentId = '';
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.revokeReviewBlob());
     void this.admin.refreshAdminCategories();
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -509,6 +527,68 @@ export class AdminDocumentDetailPage {
     } catch {
       win?.close();
     }
+  }
+
+  /**
+   * document-preview-access-fixes v1 §4.3 — open the review viewer.
+   *
+   * Mirrors the buyer preview modal (`features/buyer/document-detail`): fetch the PDF as a Blob
+   * through the service, turn it into an object URL, hand it to the iframe as a trusted resource
+   * URL. The failure branch is not cosmetic — a document whose stored file is gone answers
+   * `404 { error: 'file_missing' }`, and the admin must be told that instead of staring at a
+   * blank frame, with the original-file download offered as the way out.
+   */
+  async openReviewViewer(): Promise<void> {
+    if (!this.documentId || this.reviewViewerLoading()) return;
+    this.revokeReviewBlob();
+    this.reviewViewerUrl.set(null);
+    this.reviewViewerFailed.set(false);
+    this.reviewViewerOpen.set(true);
+    this.reviewViewerLoading.set(true);
+    try {
+      const blob = await this.admin.getDocumentReviewPdf(this.documentId, this.reviewAsBuyer());
+      const blobUrl = URL.createObjectURL(blob);
+      this._reviewBlobUrl.set(blobUrl);
+      this.reviewViewerUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl));
+    } catch {
+      this.reviewViewerFailed.set(true);
+      this.message.error(this.translation.t('admin.reviewViewerFailed'));
+    } finally {
+      this.reviewViewerLoading.set(false);
+    }
+  }
+
+  closeReviewViewer(): void {
+    this.reviewViewerOpen.set(false);
+    this.revokeReviewBlob();
+    this.reviewViewerUrl.set(null);
+  }
+
+  /** Switching the buyer/original mode re-fetches, so the old blob must go first. */
+  setReviewAsBuyer(value: boolean): void {
+    if (this.reviewAsBuyer() === value) return;
+    this.reviewAsBuyer.set(value);
+    const wasOpen = this.reviewViewerOpen();
+    this.revokeReviewBlob();
+    this.reviewViewerUrl.set(null);
+    if (wasOpen) void this.openReviewViewer();
+  }
+
+  /**
+   * Fallback offered whenever the viewer fails: the raw file straight from storage. Unlike the
+   * admin preview route this one is the public `/api/files/download/{key}` endpoint, which takes
+   * its auth from the `token` query `resolveDownloadUrl` appends.
+   */
+  reviewOriginalFileUrl(): string {
+    const key = this.doc()?.fileStorageKey?.trim();
+    if (!key) return '';
+    return resolveDownloadUrl(downloadUrlForStorageKey(key), this.auth.accessToken());
+  }
+
+  private revokeReviewBlob(): void {
+    const blobUrl = this._reviewBlobUrl();
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+    this._reviewBlobUrl.set(null);
   }
 
   async onMainFile(ev: Event): Promise<void> {

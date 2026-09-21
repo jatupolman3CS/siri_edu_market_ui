@@ -5,9 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { resolveDownloadUrl } from '../../../core/api-runtime';
 import { placeholderCoverUrl } from '../../../core/brand-assets';
 import { DocumentItem } from '../../../core/models';
-import { SellerService } from '../../../core/services';
+import { AuthService, SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -43,6 +44,7 @@ export class SellerDocumentsPage {
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
@@ -57,6 +59,12 @@ export class SellerDocumentsPage {
     'all',
   );
   readonly coverFallback = placeholderCoverUrl();
+
+  /**
+   * document-preview-access-fixes v1 §4.2 (D3) — id of the row whose original file is being
+   * prepared, so only that row's download button shows the busy state.
+   */
+  readonly downloadingId = signal<string | null>(null);
 
   readonly statuses = computed(() => [
     { value: 'all' as const, label: this.translation.t('seller.statusAll') },
@@ -163,6 +171,59 @@ export class SellerDocumentsPage {
 
   edit(id: string): void {
     this.router.navigate(['/seller/upload'], { queryParams: { id } });
+  }
+
+  /**
+   * document-preview-access-fixes v1 §4.2 (D3) — download the seller's own original file.
+   *
+   * The blank tab is opened synchronously *before* the first `await` on purpose: opening it after
+   * one would be blocked as an unrequested popup (same reason as `upload.page.ts`).
+   *
+   * The presigned URL resolves even when the storage object is gone (old seed rows whose key is
+   * prefixed `it/`), in which case the real GET answers `404 application/problem+json` — so the
+   * URL is probed before the tab is navigated, otherwise the seller would be dropped on a page of
+   * raw JSON. The probe is a plain GET with no extra headers: the endpoint is `[HttpGet]` (a HEAD
+   * would be `405`) and a custom header would force a needless CORS preflight — the credentials
+   * ride the `?token=` query parameter that `resolveDownloadUrl` appends. The response body is
+   * aborted the moment the status has been read, so the file is not buffered twice.
+   */
+  async download(doc: DocumentItem): Promise<void> {
+    const win = window.open('', '_blank');
+    this.downloadingId.set(doc.id);
+    try {
+      const res = await this.seller.getDocumentDownloadUrl(doc.id);
+      if (!res || 'error' in res) {
+        win?.close();
+        if (res && res.error === 'no_file') {
+          this.message.warning(this.translation.t('seller.downloadNoFile'));
+        } else {
+          this.message.error(this.translation.t('seller.downloadFailed'));
+        }
+        return;
+      }
+
+      const url = resolveDownloadUrl(res.url, this.auth.accessToken());
+      const ctrl = new AbortController();
+      let ok = false;
+      try {
+        const probe = await fetch(url, { signal: ctrl.signal });
+        ok = probe.ok;
+      } catch {
+        ok = false;
+      } finally {
+        ctrl.abort();
+      }
+
+      if (!ok) {
+        win?.close();
+        this.message.error(this.translation.t('seller.downloadMissingObject'));
+        return;
+      }
+
+      if (win) win.location.href = url;
+    } finally {
+      this.downloadingId.set(null);
+    }
   }
 
   confirmRemove(id: string, title: string): void {

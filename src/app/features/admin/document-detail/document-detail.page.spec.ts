@@ -75,12 +75,22 @@ async function settle(): Promise<void> {
   }
 }
 
-function render(uploadFile: (file: File) => Promise<UploadResponse>) {
+function render(
+  uploadFile: (file: File) => Promise<UploadResponse>,
+  adminOverrides: Partial<AdminService> = {},
+) {
   const fakeSeller: Partial<SellerService> = { uploadFile };
   const fakeAdmin: Partial<AdminService> = {
     adminCategories: signal<Category[]>([]),
     refreshAdminCategories: async () => {},
     getFileDownloadUrl: vi.fn(async () => null),
+    ...adminOverrides,
+  };
+  const message = {
+    success: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
   };
 
   TestBed.configureTestingModule({
@@ -93,13 +103,13 @@ function render(uploadFile: (file: File) => Promise<UploadResponse>) {
       },
       { provide: AdminService, useValue: fakeAdmin },
       { provide: SellerService, useValue: fakeSeller },
-      { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() } },
+      { provide: NzMessageService, useValue: message },
     ],
   });
 
   const fixture = TestBed.createComponent(AdminDocumentDetailPage);
   fixture.detectChanges();
-  return { fixture, component: fixture.componentInstance };
+  return { fixture, component: fixture.componentInstance, message };
 }
 
 // jsdom (the test environment here) does not implement `DataTransfer`, so a real
@@ -272,5 +282,136 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
     expect(openSpy).toHaveBeenCalledWith('', '_blank');
     expect(mockWin.location.href).toContain('orig/main.pdf');
     openSpy.mockRestore();
+  });
+});
+
+/**
+ * document-preview-access-fixes v1 §4.3 / AC-22 — the admin review viewer.
+ *
+ * Context worth keeping: all three marketplace preview routes 404 while a document is pending
+ * (they gate on Approved, correctly, for public traffic), so before this existed an admin
+ * approved documents without ever seeing them. The viewer goes through
+ * `AdminService.getDocumentReviewPdf` → `GET /api/admin/documents/{id}/preview-pdf`, which has no
+ * status gate, and the failure branch (`404 { error: 'file_missing' }`) must stay visible rather
+ * than leaving a blank frame.
+ */
+describe('AdminDocumentDetailPage — admin review viewer (AC-22)', () => {
+  let createdUrls: string[];
+  let revokedUrls: string[];
+  let realCreateObjectURL: typeof URL.createObjectURL;
+  let realRevokeObjectURL: typeof URL.revokeObjectURL;
+
+  beforeEach(() => {
+    createdUrls = [];
+    revokedUrls = [];
+    realCreateObjectURL = URL.createObjectURL;
+    realRevokeObjectURL = URL.revokeObjectURL;
+    // jsdom implements neither, and the component's whole point is that the PDF bytes never
+    // become a navigable URL — stub them so the create/revoke pairing can be asserted.
+    let counter = 0;
+    URL.createObjectURL = vi.fn(() => {
+      const url = `blob:review-${++counter}`;
+      createdUrls.push(url);
+      return url;
+    }) as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn((url: string) => {
+      revokedUrls.push(url);
+    }) as unknown as typeof URL.revokeObjectURL;
+  });
+
+  afterEach(() => {
+    URL.createObjectURL = realCreateObjectURL;
+    URL.revokeObjectURL = realRevokeObjectURL;
+  });
+
+  function pdfBlob(): Blob {
+    return new Blob(['%PDF-1.7 fake'], { type: 'application/pdf' });
+  }
+
+  function noUpload(): Promise<UploadResponse> {
+    return Promise.reject(new Error('uploadFile should not be called by the review viewer'));
+  }
+
+  it('opens a pending document through the admin route and exposes a blob URL to the iframe', async () => {
+    stubLoad();
+    const getDocumentReviewPdf = vi.fn(async () => pdfBlob());
+    const { component } = render(noUpload, { getDocumentReviewPdf });
+    await settle();
+
+    await component.openReviewViewer();
+
+    // watermark=false by default: the admin reviews the seller's real file, not the buyer render.
+    expect(getDocumentReviewPdf).toHaveBeenCalledWith('doc-1', false);
+    expect(component.reviewViewerOpen()).toBe(true);
+    expect(component.reviewViewerLoading()).toBe(false);
+    expect(component.reviewViewerFailed()).toBe(false);
+    expect(component.reviewViewerUrl()).not.toBeNull();
+    expect(createdUrls).toHaveLength(1);
+  });
+
+  it('closing the viewer revokes the object URL and clears the iframe source', async () => {
+    stubLoad();
+    const { component } = render(noUpload, { getDocumentReviewPdf: vi.fn(async () => pdfBlob()) });
+    await settle();
+
+    await component.openReviewViewer();
+    component.closeReviewViewer();
+
+    expect(component.reviewViewerOpen()).toBe(false);
+    expect(component.reviewViewerUrl()).toBeNull();
+    expect(revokedUrls).toEqual([createdUrls[0]]);
+  });
+
+  it('switching to "view as buyer" refetches with watermark=true and revokes the previous blob', async () => {
+    stubLoad();
+    const getDocumentReviewPdf = vi.fn(async () => pdfBlob());
+    const { component } = render(noUpload, { getDocumentReviewPdf });
+    await settle();
+
+    await component.openReviewViewer();
+    component.setReviewAsBuyer(true);
+    await settle();
+
+    expect(component.reviewAsBuyer()).toBe(true);
+    expect(getDocumentReviewPdf).toHaveBeenNthCalledWith(1, 'doc-1', false);
+    expect(getDocumentReviewPdf).toHaveBeenNthCalledWith(2, 'doc-1', true);
+    expect(revokedUrls).toContain(createdUrls[0]);
+    expect(createdUrls).toHaveLength(2);
+  });
+
+  it('surfaces a readable failure and the original-file download when the stored file is missing', async () => {
+    stubLoad();
+    // Exactly what the backend answers for a document whose stored file is gone:
+    // 404 { "error": "file_missing" } — never a synthesised placeholder PDF.
+    const getDocumentReviewPdf = vi.fn(async () => {
+      throw { status: 404, error: 'file_missing' };
+    });
+    const { component, message } = render(noUpload, { getDocumentReviewPdf });
+    await settle();
+
+    await component.openReviewViewer();
+
+    expect(component.reviewViewerFailed()).toBe(true);
+    expect(component.reviewViewerLoading()).toBe(false);
+    expect(component.reviewViewerUrl()).toBeNull();
+    expect(createdUrls).toHaveLength(0);
+    expect(message.error).toHaveBeenCalled();
+    // The escape hatch stays reachable: the raw file straight out of storage.
+    expect(component.reviewOriginalFileUrl()).toContain('orig/main.pdf');
+  });
+
+  it('offers no download link when the document has no storage key at all', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-1', { ...baseDoc, fileStorageKey: null });
+    stubRoute('GET', '/api/admin/documents/doc-1/reports', []);
+    const getDocumentReviewPdf = vi.fn(async () => {
+      throw { status: 404, error: 'file_missing' };
+    });
+    const { component } = render(noUpload, { getDocumentReviewPdf });
+    await settle();
+
+    await component.openReviewViewer();
+
+    expect(component.reviewViewerFailed()).toBe(true);
+    expect(component.reviewOriginalFileUrl()).toBe('');
   });
 });

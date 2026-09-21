@@ -549,3 +549,61 @@ describe('SellerService — getDocumentVersions (document-versioning v1 §3.2/§
     expect(versions).toEqual([]);
   });
 });
+
+/**
+ * document-preview-access-fixes v1 §3.5/§4.2 (D3) — `GET /api/seller/documents/{id}/download-url`
+ * answers `400 { message: "FileStorageKey is missing." }` for a listing that has no file yet, and
+ * that case has to reach the page as its own outcome (it gets a different Thai message and must
+ * not raise a generic failure toast on top of it).
+ */
+describe('SellerService — getDocumentDownloadUrl (document-preview-access-fixes v1 §3.5)', () => {
+  function buildWithReporter(): { service: SellerService; report: ReturnType<typeof vi.fn> } {
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [SellerService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    return { service: TestBed.inject(SellerService), report };
+  }
+
+  it('returns the presigned url on success', async () => {
+    stubRoute('GET', '/api/seller/documents/doc-1/download-url', {
+      url: '/api/files/download/docs/doc-1.pdf',
+      expiresSeconds: 600,
+    });
+    const { service, report } = buildWithReporter();
+
+    const result = await service.getDocumentDownloadUrl('doc-1');
+
+    expect(result).toEqual({ url: '/api/files/download/docs/doc-1.pdf' });
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('maps 400 (FileStorageKey is missing) to no_file without reporting a generic failure', async () => {
+    // Exactly what the controller sends: `BadRequest(new { message })` — no ProblemDetails
+    // `status` field, which is why the service reads `response.status` instead of the body.
+    stubRoute('GET', '/api/seller/documents/doc-1/download-url', { message: 'FileStorageKey is missing.' }, 400);
+    const { service, report } = buildWithReporter();
+
+    const result = await service.getDocumentDownloadUrl('doc-1');
+
+    expect(result).toEqual({ error: 'no_file' });
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('maps any other failure to failed and reports it', async () => {
+    stubRoute('GET', '/api/seller/documents/doc-1/download-url', { message: 'boom' }, 500);
+    const { service, report } = buildWithReporter();
+
+    const result = await service.getDocumentDownloadUrl('doc-1');
+
+    expect(result).toEqual({ error: 'failed' });
+    expect(report).toHaveBeenCalledWith('errors.context.downloadFile', expect.anything());
+  });
+
+  it('treats a blank url in a 200 response as no_file rather than navigating nowhere', async () => {
+    stubRoute('GET', '/api/seller/documents/doc-1/download-url', { url: '   ', expiresSeconds: 600 });
+    const { service } = buildWithReporter();
+
+    expect(await service.getDocumentDownloadUrl('doc-1')).toEqual({ error: 'no_file' });
+  });
+});

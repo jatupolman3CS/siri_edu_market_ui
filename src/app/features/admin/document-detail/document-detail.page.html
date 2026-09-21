@@ -160,6 +160,49 @@
         </div>
       </div>
 
+      <!--
+        document-preview-access-fixes v1 §4.3 — the review viewer sits above the gallery on
+        purpose: an admin has to be able to read the document before deciding on it, and every
+        marketplace preview route 404s while the document is still pending.
+      -->
+      <div class="card-soft p-5 space-y-3">
+        <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.reviewDocumentTitle' | trans }}</h2>
+        <p class="text-[11px] text-ink-muted">{{ 'admin.reviewViewerHint' | trans }}</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            class="btn-primary text-xs inline-flex items-center gap-1"
+            [disabled]="reviewViewerLoading()"
+            (click)="openReviewViewer()"
+          >
+            <app-icon name="eye" [size]="14" />
+            {{ reviewViewerLoading() ? ('common.loading' | trans) : ('admin.openDocumentViewer' | trans) }}
+          </button>
+          <label class="inline-flex items-center gap-2 text-xs text-ink-muted">
+            <nz-switch [ngModel]="reviewAsBuyer()" (ngModelChange)="setReviewAsBuyer($event)" nzSize="small" />
+            {{ 'admin.viewAsBuyer' | trans }}
+          </label>
+        </div>
+        @if (reviewViewerFailed()) {
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-3 space-y-2">
+            <p class="text-xs text-red-700">{{ 'admin.reviewViewerFailed' | trans }}</p>
+            @if (reviewOriginalFileUrl()) {
+              <a
+                class="btn-ghost text-xs inline-flex items-center gap-1 text-pink-600"
+                [href]="reviewOriginalFileUrl()"
+                target="_blank"
+                rel="noopener"
+              >
+                <app-icon name="doc" [size]="14" />
+                {{ 'admin.downloadOriginalFile' | trans }}
+              </a>
+            } @else {
+              <p class="text-xs text-ink-muted">{{ 'admin.noFileToDownload' | trans }}</p>
+            }
+          </div>
+        }
+      </div>
+
       <div class="card-soft p-5 space-y-4">
         <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.filesAndStorage' | trans }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -323,5 +366,50 @@
         </ul>
       </div>
     </div>
+  }
+
+  @if (reviewViewerOpen()) {
+    <nz-modal
+      [nzVisible]="true"
+      [nzTitle]="'admin.reviewDocumentTitle' | trans"
+      [nzWidth]="'96vw'"
+      [nzFooter]="null"
+      (nzOnCancel)="closeReviewViewer()"
+    >
+      <ng-container *nzModalContent>
+        <div class="space-y-3">
+          <p class="text-[11px] text-ink-muted">{{ 'admin.reviewViewerHint' | trans }}</p>
+          @if (reviewViewerLoading()) {
+            <div class="h-[70vh] flex items-center justify-center">
+              <span class="text-sm text-ink-muted">{{ 'common.loading' | trans }}</span>
+            </div>
+          } @else if (reviewViewerFailed()) {
+            <div class="h-[70vh] flex flex-col items-center justify-center gap-3 text-center">
+              <p class="text-sm text-red-700 max-w-lg">{{ 'admin.reviewViewerFailed' | trans }}</p>
+              @if (reviewOriginalFileUrl()) {
+                <a
+                  class="btn-ghost text-xs inline-flex items-center gap-1 text-pink-600"
+                  [href]="reviewOriginalFileUrl()"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <app-icon name="doc" [size]="14" />
+                  {{ 'admin.downloadOriginalFile' | trans }}
+                </a>
+              } @else {
+                <p class="text-xs text-ink-muted">{{ 'admin.noFileToDownload' | trans }}</p>
+              }
+            </div>
+          } @else if (reviewViewerUrl()) {
+            <iframe
+              [src]="reviewViewerUrl()"
+              class="w-full h-[70vh] rounded-xl border border-line bg-white"
+              [title]="'admin.reviewDocumentTitle' | trans"
+              frameborder="0"
+            ></iframe>
+          }
+        </div>
+      </ng-container>
+    </nz-modal>
   }
 </div>

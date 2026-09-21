@@ -115,6 +115,9 @@ import type {
   GetApiAdminDocumentGenerationRunsResponses,
   GetApiAdminDocumentsByIdData,
   GetApiAdminDocumentsByIdErrors,
+  GetApiAdminDocumentsByIdPreviewPdfData,
+  GetApiAdminDocumentsByIdPreviewPdfErrors,
+  GetApiAdminDocumentsByIdPreviewPdfResponses,
   GetApiAdminDocumentsByIdReportsData,
   GetApiAdminDocumentsByIdReportsResponses,
   GetApiAdminDocumentsByIdResponses,
@@ -1658,6 +1661,19 @@ export const getApiAdminUsersByUserIdWalletEntries = <ThrowOnError extends boole
     GetApiAdminUsersByUserIdWalletEntriesErrors,
     ThrowOnError
   >({ url: '/api/admin/users/{userId}/wallet/entries', ...options });
+
+export const getApiAdminDocumentsByIdPreviewPdf = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiAdminDocumentsByIdPreviewPdfData, ThrowOnError>,
+): RequestResult<
+  GetApiAdminDocumentsByIdPreviewPdfResponses,
+  GetApiAdminDocumentsByIdPreviewPdfErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetApiAdminDocumentsByIdPreviewPdfResponses,
+    GetApiAdminDocumentsByIdPreviewPdfErrors,
+    ThrowOnError
+  >({ url: '/api/admin/documents/{id}/preview-pdf', ...options });
 
 export const postApiAdminImagesBackfillVariants = <ThrowOnError extends boolean = false>(
   options: Options<PostApiAdminImagesBackfillVariantsData, ThrowOnError>,

@@ -25,6 +25,7 @@ import {
   getApiSellerDashboard,
   getApiSellerDocuments,
   getApiSellerDocumentsById,
+  getApiSellerDocumentsByIdDownloadUrl,
   getApiSellerDocumentsPricingHint,
   getApiSellerEarnings,
   getApiSellerPayouts,
@@ -530,6 +531,43 @@ export class SellerService {
     } catch (e) {
       this.apiFail.report('errors.context.downloadFile', e);
       return null;
+    }
+  }
+
+  /**
+   * document-preview-access-fixes v1 §3.5/§4.2 (D3) — presigned download URL for the seller's own
+   * listing file (`GET /api/seller/documents/{id}/download-url`).
+   *
+   * Deliberately a different return shape from {@link getMainFileDownloadUrl} (which stays
+   * untouched): the endpoint answers `400 { message: "FileStorageKey is missing." }` for a listing
+   * that has no file yet, and the page must tell that apart from a generic failure so it can show
+   * "เอกสารนี้ยังไม่มีไฟล์ให้ดาวน์โหลด" instead of a misleading error toast. The expected 400 is
+   * therefore not routed through {@link ApiFailureReporter} — the page owns that message.
+   *
+   * `throwOnError: false` for the same reason `seller-application.service` (F-03) opts out: the
+   * client is configured the other way round in `api-runtime`, and that turns this 400 into a
+   * throw carrying no status at all — the endpoint answers `BadRequest(new { message })`, a plain
+   * anonymous object with no ProblemDetails `status` field, so `extractErrorStatus` would see
+   * nothing and the case would silently degrade into the generic error.
+   */
+  async getDocumentDownloadUrl(
+    documentId: string,
+    expiresSeconds = 600,
+  ): Promise<{ url: string } | { error: 'no_file' | 'failed' }> {
+    try {
+      const result = await getApiSellerDocumentsByIdDownloadUrl({
+        path: { id: documentId },
+        query: { expiresSeconds },
+        throwOnError: false,
+      });
+      if (result.response?.status === 400) return { error: 'no_file' };
+      const data = unwrapSdkResult(result);
+      const url = data?.url?.trim();
+      return url ? { url } : { error: 'no_file' };
+    } catch (e) {
+      if (extractErrorStatus(e) === 400) return { error: 'no_file' };
+      this.apiFail.report('errors.context.downloadFile', e);
+      return { error: 'failed' };
     }
   }
 
