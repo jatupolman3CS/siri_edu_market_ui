@@ -4,6 +4,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { from, of } from 'rxjs';
 import { ProfileEditorComponent } from './profile-editor.component';
 import { MeService } from '../../../core/services';
+import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import type {
   UpdateProfileRequest,
   UploadResponse,
@@ -41,10 +42,12 @@ function render(uploadResult: UploadResponse) {
     uploadAvatar: async () => uploadResult,
     updateProfile: (req: UpdateProfileRequest) => {
       updateProfileCalls.push(req);
+      const avatarStorageKey = req.avatarStorageKey ?? profile.avatarStorageKey;
       return of({
         ...profile,
         name: req.name ?? profile.name,
-        avatarStorageKey: req.avatarStorageKey ?? profile.avatarStorageKey,
+        avatarUrl: avatarStorageKey ? downloadUrlForStorageKey(avatarStorageKey) : null,
+        avatarStorageKey,
       });
     },
   };
@@ -98,7 +101,9 @@ describe('ProfileEditorComponent — avatar optimized URL (AC-11)', () => {
 
     await selectAvatarFile(component, buildFile());
 
-    expect(component.avatarUrl()).toBe('https://cdn.example.test/optimized-avatar.webp');
+    expect(component.avatarUrl()).toBe(
+      downloadUrlForStorageKey('users/user-1/2026/09/01/optimized/avatar.webp'),
+    );
     expect(component.avatarStorageKey()).toBe('users/user-1/2026/09/01/optimized/avatar.webp');
     expect(updateProfileCalls).toHaveLength(1);
     // storage-key-persistence v1 §4.1: payload carries the bare key, never a URL.
@@ -118,10 +123,33 @@ describe('ProfileEditorComponent — avatar optimized URL (AC-11)', () => {
 
     await selectAvatarFile(component, buildFile());
 
-    expect(component.avatarUrl()).toBe('https://cdn.example.test/original-avatar.png');
+    expect(component.avatarUrl()).toBe(
+      downloadUrlForStorageKey('users/user-1/2026/09/01/avatar.png'),
+    );
     expect(component.avatarStorageKey()).toBe('users/user-1/2026/09/01/avatar.png');
     expect(updateProfileCalls).toHaveLength(1);
     expect(updateProfileCalls[0].avatarStorageKey).toBe('users/user-1/2026/09/01/avatar.png');
+  });
+
+  it('builds a display URL from the uploaded storage key when the public upload URL is empty', async () => {
+    const { component, updateProfileCalls } = render({
+      key: 'users/user-1/2026/09/01/avatar.png',
+      publicUrl: '',
+      eTag: 'etag-1',
+      optimizedKey: 'users/user-1/2026/09/01/optimized/avatar.webp',
+      optimizedUrl: '',
+    });
+
+    await selectAvatarFile(component, buildFile());
+
+    expect(component.avatarUrl()).toBe(
+      downloadUrlForStorageKey('users/user-1/2026/09/01/optimized/avatar.webp'),
+    );
+    expect(component.avatarStorageKey()).toBe('users/user-1/2026/09/01/optimized/avatar.webp');
+    expect(updateProfileCalls).toHaveLength(1);
+    expect(updateProfileCalls[0].avatarStorageKey).toBe(
+      'users/user-1/2026/09/01/optimized/avatar.webp',
+    );
   });
 
 });

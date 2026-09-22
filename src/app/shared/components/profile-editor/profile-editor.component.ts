@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { firstValueFrom } from 'rxjs';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
+import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import { MeService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -39,6 +40,13 @@ export class ProfileEditorComponent {
 
   readonly avatarSrc = computed(() => resolveAvatarUrl(this.avatarUrl()));
 
+  private static avatarDisplayUrlFromUpload(
+    storageKey: string,
+    displayUrl: string | null | undefined,
+  ): string {
+    return storageKey ? downloadUrlForStorageKey(storageKey) : (displayUrl ?? '');
+  }
+
   constructor() {
     this.me.loadProfile().subscribe({
       next: (p) => {
@@ -66,14 +74,22 @@ export class ProfileEditorComponent {
     this.avatarUploading.set(true);
     try {
       const data = await this.me.uploadAvatar(file);
-      this.avatarUrl.set(data.optimizedUrl ?? data.publicUrl);
-      this.avatarStorageKey.set(data.optimizedKey ?? data.key);
-      await firstValueFrom(
+      const avatarStorageKey = data.optimizedKey ?? data.key;
+      this.avatarStorageKey.set(avatarStorageKey);
+      this.avatarUrl.set(
+        ProfileEditorComponent.avatarDisplayUrlFromUpload(
+          avatarStorageKey,
+          data.optimizedUrl ?? data.publicUrl,
+        ),
+      );
+      const saved = await firstValueFrom(
         this.me.updateProfile({
           name: this.displayName(),
-          avatarStorageKey: this.avatarStorageKey(),
+          avatarStorageKey,
         }),
       );
+      this.avatarUrl.set(saved.avatarUrl ?? this.avatarUrl());
+      this.avatarStorageKey.set(saved.avatarStorageKey ?? avatarStorageKey);
       this.message.success(this.translation.t('shared.profileEditor.uploadSuccess'));
     } catch {
       /* reported by MeService through ApiFailureReporter */
