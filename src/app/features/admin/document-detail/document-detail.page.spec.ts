@@ -267,21 +267,51 @@ describe('AdminDocumentDetailPage — gallery preview vs. payload URL (AC-13)', 
     expect(body.galleryItems?.[0].imageStorageKey).not.toContain('http');
   });
 
-  it('downloadMainFile() opens window with resolved download URL', async () => {
+  it('downloadMainFile() saves the file through a hidden anchor, never a popup', async () => {
     stubLoad();
-    // Pre-open window pattern: window.open('', '_blank') is called synchronously,
-    // then win.location.href is set to the resolved URL after the async presigned-URL fetch.
-    const mockWin = { location: { href: '' }, close: vi.fn() };
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => mockWin as unknown as Window);
-    const { component } = render(async () => {
-      throw new Error('upload should not be called');
-    });
-    await settle();
+    // The pre-opened blank tab is gone: a blocked popup (`window.open` -> null) used to make
+    // this button do nothing at all, silently. The bytes are fetched and saved instead.
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const realCreateObjectURL = URL.createObjectURL;
+    const realRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => 'blob:mock/admin-detail') as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+    const saved: HTMLAnchorElement[] = [];
+    const realCreateElement = document.createElement.bind(document);
+    const createSpy = vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
+      const el = realCreateElement(tag);
+      if (tag === 'a') {
+        const anchor = el as HTMLAnchorElement;
+        anchor.click = () => {
+          saved.push(anchor);
+        };
+      }
+      return el;
+    }) as typeof document.createElement);
 
-    await component.downloadMainFile();
-    expect(openSpy).toHaveBeenCalledWith('', '_blank');
-    expect(mockWin.location.href).toContain('orig/main.pdf');
-    openSpy.mockRestore();
+    // The file itself must answer 200 — the helper's fetch is what actually delivers the bytes.
+    stubRoute('GET', '/api/files/download/orig/main.pdf', { ok: true });
+
+    try {
+      const { component, message } = render(async () => {
+        throw new Error('upload should not be called');
+      });
+      await settle();
+
+      await component.downloadMainFile();
+
+      expect(openSpy).not.toHaveBeenCalled();
+      expect(saved).toHaveLength(1);
+      expect(saved[0].getAttribute('href')).toBe('blob:mock/admin-detail');
+      const fetchedUrls = requests.map((r) => r.path);
+      expect(fetchedUrls.some((u) => u.includes('orig/main.pdf'))).toBe(true);
+      expect(message.error).not.toHaveBeenCalled();
+    } finally {
+      createSpy.mockRestore();
+      openSpy.mockRestore();
+      URL.createObjectURL = realCreateObjectURL;
+      URL.revokeObjectURL = realRevokeObjectURL;
+    }
   });
 });
 

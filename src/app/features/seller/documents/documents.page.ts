@@ -6,6 +6,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { resolveDownloadUrl } from '../../../core/api-runtime';
+import { downloadFileFromUrl } from '../../../core/file-download';
 import { placeholderCoverUrl } from '../../../core/brand-assets';
 import { DocumentItem } from '../../../core/models';
 import { AuthService, SellerService } from '../../../core/services';
@@ -176,24 +177,22 @@ export class SellerDocumentsPage {
   /**
    * document-preview-access-fixes v1 §4.2 (D3) — download the seller's own original file.
    *
-   * The blank tab is opened synchronously *before* the first `await` on purpose: opening it after
-   * one would be blocked as an unrequested popup (same reason as `upload.page.ts`).
+   * No popup is involved anymore: the blank-tab-then-navigate pattern silently did nothing
+   * whenever the browser blocked the tab (`window.open` returns `null`), which is exactly what
+   * a seller hit in practice. `downloadFileFromUrl` fetches the bytes and saves them through a
+   * hidden anchor instead.
    *
-   * The presigned URL resolves even when the storage object is gone (old seed rows whose key is
-   * prefixed `it/`), in which case the real GET answers `404 application/problem+json` — so the
-   * URL is probed before the tab is navigated, otherwise the seller would be dropped on a page of
-   * raw JSON. The probe is a plain GET with no extra headers: the endpoint is `[HttpGet]` (a HEAD
-   * would be `405`) and a custom header would force a needless CORS preflight — the credentials
-   * ride the `?token=` query parameter that `resolveDownloadUrl` appends. The response body is
-   * aborted the moment the status has been read, so the file is not buffered twice.
+   * That single fetch is also the probe this method used to run separately: the presigned URL
+   * resolves even when the storage object is gone (old seed rows whose key is prefixed `it/`),
+   * in which case the real GET answers `404 application/problem+json` — the helper returns
+   * `false` and the seller is told about it, instead of being dropped on a page of raw JSON.
+   * The file is no longer fetched twice.
    */
   async download(doc: DocumentItem): Promise<void> {
-    const win = window.open('', '_blank');
     this.downloadingId.set(doc.id);
     try {
       const res = await this.seller.getDocumentDownloadUrl(doc.id);
       if (!res || 'error' in res) {
-        win?.close();
         if (res && res.error === 'no_file') {
           this.message.warning(this.translation.t('seller.downloadNoFile'));
         } else {
@@ -203,24 +202,10 @@ export class SellerDocumentsPage {
       }
 
       const url = resolveDownloadUrl(res.url, this.auth.accessToken());
-      const ctrl = new AbortController();
-      let ok = false;
-      try {
-        const probe = await fetch(url, { signal: ctrl.signal });
-        ok = probe.ok;
-      } catch {
-        ok = false;
-      } finally {
-        ctrl.abort();
-      }
-
-      if (!ok) {
-        win?.close();
+      const saved = await downloadFileFromUrl(url, doc.title);
+      if (!saved) {
         this.message.error(this.translation.t('seller.downloadMissingObject'));
-        return;
       }
-
-      if (win) win.location.href = url;
     } finally {
       this.downloadingId.set(null);
     }

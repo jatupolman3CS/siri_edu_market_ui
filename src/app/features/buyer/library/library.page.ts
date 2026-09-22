@@ -8,11 +8,13 @@ import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import type { BuyerDocumentVersionInfo } from '../../../core/models';
 import {
   AuthService,
+  type DocumentDownloadResult,
   LibraryFilter,
   LibraryService,
   LoyaltyService,
   SubmitReviewRequest,
 } from '../../../core/services';
+import { downloadFileFromUrl } from '../../../core/file-download';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -23,6 +25,7 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-buyer-library',
@@ -53,6 +56,7 @@ export class BuyerLibraryPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  private readonly translation = inject(TranslationService);
 
   /**
    * Client-side search box next to the filter tabs — filters the already-loaded page of
@@ -88,21 +92,25 @@ export class BuyerLibraryPage {
    * default because the code in it is worth reading.
    */
   async download(documentId: string): Promise<void> {
-    const win = window.open('', '_blank');
+    let result: DocumentDownloadResult | null = null;
     try {
-      const result = await this.library.download(documentId);
-      const url = result?.downloadUrl;
-      if (url && win) {
-        win.location.href = url;
-      } else {
-        win?.close();
-      }
-      const notice = result?.watermarkNotice;
-      if (notice) {
-        this.message.info(notice, { nzDuration: 8000 });
-      }
+      result = await this.library.download(documentId);
     } catch {
-      win?.close();
+      result = null;
+    }
+
+    // The notice describes the copy the backend just minted for this buyer, so it is shown as
+    // soon as it arrives - independently of how the bytes travel.
+    const notice = result?.watermarkNotice;
+    if (notice) {
+      this.message.info(notice, { nzDuration: 8000 });
+    }
+
+    // No pre-opened tab: a blocked popup used to swallow the whole download in silence.
+    const url = result?.downloadUrl;
+    const saved = url ? await downloadFileFromUrl(url) : false;
+    if (!saved) {
+      this.message.error(this.translation.t('library.downloadFailed'));
     }
   }
 

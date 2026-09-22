@@ -60,7 +60,7 @@ async function settle(): Promise<void> {
 }
 
 function render(admin: ReturnType<typeof buildAdmin>) {
-  const messages = { success: vi.fn(), warning: vi.fn(), error: vi.fn() };
+  const messages = { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() };
 
   TestBed.configureTestingModule({
     imports: [AdminApprovalPage],
@@ -155,5 +155,164 @@ describe('AdminApprovalPage — AI prescreen (ai-approval-prescreen v1 §1/AC-7)
     await fixture.componentInstance.runPrescreen('doc-9');
 
     expect(messages.error).toHaveBeenCalledWith('ประเมินความเสี่ยงด้วย AI ไม่สำเร็จ');
+  });
+});
+
+
+/**
+ * Popup-free file delivery on the approval queue.
+ *
+ * Every one of these four handlers used to be `const win = window.open('', '_blank')` followed
+ * by `win.location.href = url`, wrapped in `catch { win?.close(); }`. A blocked popup
+ * (`window.open` → `null`) therefore produced *nothing at all*: no tab, no file, and — because
+ * the catch swallowed everything — no message either. Reproduced live on /admin/approval.
+ */
+describe('AdminApprovalPage — file download/open without popups', () => {
+  const MSG_FAILED = 'ดาวน์โหลดไฟล์ไม่สำเร็จ — ไฟล์อาจถูกลบออกจากระบบจัดเก็บแล้ว';
+  const MSG_BLOCKED = 'เบราว์เซอร์บล็อกการเปิดแท็บใหม่ ระบบจึงบันทึกไฟล์ให้แทน';
+
+  let realFetch: typeof globalThis.fetch;
+  let realOpen: typeof window.open;
+  let realCreateObjectURL: typeof URL.createObjectURL;
+  let realRevokeObjectURL: typeof URL.revokeObjectURL;
+  let realCreateElement: typeof document.createElement;
+  let fetchMock: ReturnType<typeof vi.fn>;
+  let openMock: ReturnType<typeof vi.fn>;
+  let saved: HTMLAnchorElement[];
+
+  function fileResponse(ok = true): Response {
+    return {
+      ok,
+      status: ok ? 200 : 404,
+      headers: new Headers(),
+      blob: async () => new Blob(['bytes'], { type: 'application/pdf' }),
+    } as unknown as Response;
+  }
+
+  beforeEach(() => {
+    realFetch = globalThis.fetch;
+    fetchMock = vi.fn(async () => fileResponse());
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    realOpen = window.open;
+    openMock = vi.fn(() => null);
+    window.open = openMock as unknown as typeof window.open;
+
+    realCreateObjectURL = URL.createObjectURL;
+    realRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => 'blob:mock/admin') as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+
+    saved = [];
+    realCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
+      const el = realCreateElement(tag);
+      if (tag === 'a') {
+        const anchor = el as HTMLAnchorElement;
+        anchor.click = () => {
+          saved.push(anchor);
+        };
+      }
+      return el;
+    }) as typeof document.createElement);
+  });
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    window.open = realOpen;
+    URL.createObjectURL = realCreateObjectURL;
+    URL.revokeObjectURL = realRevokeObjectURL;
+    vi.restoreAllMocks();
+  });
+
+  it('downloadMainFile() saves the file through an anchor and never opens a popup', async () => {
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+
+    await fixture.componentInstance.downloadMainFile('orig/main.pdf');
+
+    expect(admin.getFileDownloadUrl).toHaveBeenCalledWith('orig/main.pdf', false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect((fetchMock.mock.calls[0] as [string])[0]).toContain('orig/main.pdf');
+    expect(saved).toHaveLength(1);
+    expect(openMock).not.toHaveBeenCalled();
+    expect(messages.error).not.toHaveBeenCalled();
+  });
+
+  it('downloadMainFile() reports the failure instead of swallowing it (404 from storage)', async () => {
+    fetchMock.mockResolvedValue(fileResponse(false));
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+
+    await fixture.componentInstance.downloadMainFile('orig/gone.pdf');
+
+    expect(saved).toHaveLength(0);
+    expect(messages.error).toHaveBeenCalledWith(MSG_FAILED);
+  });
+
+  it('downloadMainFile() reports the failure when the network itself fails', async () => {
+    fetchMock.mockRejectedValue(new TypeError('network down'));
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+
+    await fixture.componentInstance.downloadMainFile('orig/main.pdf');
+
+    expect(messages.error).toHaveBeenCalledWith(MSG_FAILED);
+  });
+
+  it('downloadSaleFile() goes through the same path for the sale file key', async () => {
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+    fixture.componentInstance.previewDetail.set({
+      fileStorageKey: 'sale/file.pdf',
+    } as unknown as NonNullable<ReturnType<typeof fixture.componentInstance.previewDetail>>);
+
+    await fixture.componentInstance.downloadSaleFile();
+
+    expect(admin.getFileDownloadUrl).toHaveBeenCalledWith('sale/file.pdf', false);
+    expect(saved).toHaveLength(1);
+    expect(messages.error).not.toHaveBeenCalled();
+  });
+
+  it('openMainFile() opens the blob in a tab when the popup is allowed', async () => {
+    openMock.mockReturnValue({} as Window);
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+
+    await fixture.componentInstance.openMainFile('orig/main.pdf');
+
+    expect(admin.getFileDownloadUrl).toHaveBeenCalledWith('orig/main.pdf', true);
+    expect(openMock).toHaveBeenCalledWith('blob:mock/admin', '_blank');
+    expect(saved).toHaveLength(0);
+    expect(messages.error).not.toHaveBeenCalled();
+  });
+
+  it('openMainFile() falls back to saving the file when the popup is blocked, and says so', async () => {
+    openMock.mockReturnValue(null);
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+
+    await fixture.componentInstance.openMainFile('orig/main.pdf');
+
+    expect(saved).toHaveLength(1);
+    expect(messages.info).toHaveBeenCalledWith(MSG_BLOCKED);
+    expect(messages.error).not.toHaveBeenCalled();
+  });
+
+  it('openMainFile() reports a real failure', async () => {
+    fetchMock.mockResolvedValue(fileResponse(false));
+    const admin = buildAdmin([buildDoc()]);
+    const { fixture, messages } = render(admin);
+    await settle();
+
+    await fixture.componentInstance.openMainFile('orig/gone.pdf');
+
+    expect(messages.error).toHaveBeenCalledWith(MSG_FAILED);
   });
 });

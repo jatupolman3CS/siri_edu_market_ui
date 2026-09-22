@@ -11,6 +11,7 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
+import { downloadFileFromUrl } from '../../../core/file-download';
 import { DocumentItem, DocumentPricingHint, SellerDocumentVersionInfo, WatermarkCapability } from '../../../core/models';
 import { mapSellerDocument } from '../../../core/api-mappers/mappers';
 import { AuthService, CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
@@ -538,21 +539,32 @@ export class SellerUploadPage {
     this.historyModalVisible.set(false);
   }
 
+  /**
+   * The main-file download no longer goes through a pre-opened blank tab: a blocked popup made
+   * the button do nothing at all, without a single word to the seller. `downloadFileFromUrl`
+   * fetches the bytes and saves them, and every failure now says so.
+   */
   downloadMainFile(fileId: string): void {
     const docId = this.editId();
     if (!docId) return;
-    const win = window.open('', '_blank');
     void (async () => {
+      let rawUrl: string | null = null;
       try {
-        const rawUrl = await this.seller.getMainFileDownloadUrl(docId, fileId);
-        const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
-        if (url && win) {
-          win.location.href = url;
-        } else {
-          win?.close();
-        }
+        rawUrl = await this.seller.getMainFileDownloadUrl(docId, fileId);
       } catch {
-        win?.close();
+        this.message.error(this.translation.t('seller.downloadFailed'));
+        return;
+      }
+
+      const url = resolveDownloadUrl(rawUrl, this.auth.accessToken());
+      if (!url) {
+        this.message.error(this.translation.t('seller.downloadFailed'));
+        return;
+      }
+
+      const saved = await downloadFileFromUrl(url);
+      if (!saved) {
+        this.message.error(this.translation.t('seller.downloadMissingObject'));
       }
     })();
   }

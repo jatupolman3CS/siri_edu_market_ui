@@ -4,6 +4,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import type { AdminDocumentDetail } from '../../../core/api/admin-documents.api';
 import { resolvePublicUrl, resolveDownloadUrl, downloadUrlForStorageKey } from '../../../core/api-runtime';
+import { downloadFileFromUrl, openFileFromUrl } from '../../../core/file-download';
 import { AdminService, AuthService } from '../../../core/services';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -202,7 +203,7 @@ export class AdminApprovalPage {
    * link because the browser navigation carries no JWT. `hasSaleFile`/`hasMainFile` stay
    * synchronous (template still gates the button/link on "is there a key at all"); the actual
    * download URL is fetched on click through `AdminService.getFileDownloadUrl`, which calls the
-   * authenticated presigned-URL endpoint before opening the tab.
+   * authenticated presigned-URL endpoint before the file itself is fetched.
    */
   hasSaleFile(): boolean {
     return !!this.previewDetail()?.fileStorageKey?.trim();
@@ -212,52 +213,65 @@ export class AdminApprovalPage {
     return !!storageKey?.trim();
   }
 
+  /**
+   * Opening and downloading both used to pre-open a blank tab and navigate it after the
+   * presigned-URL call, with `catch { win?.close(); }` swallowing every failure. When the
+   * browser blocked that tab — `window.open` returns `null` — the admin got no file, no tab and
+   * no message whatsoever. Both paths now fetch the bytes first: the download saves them, the
+   * open hands them to a tab as an object URL and falls back to saving when the popup is
+   * blocked, so the admin always ends up with the file and always hears about a failure.
+   */
   async openSaleFile(): Promise<void> {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
-    const win = window.open('', '_blank');
-    try {
-      const rawUrl = await this.admin.getFileDownloadUrl(key, true);
-      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
-      if (url && win) { win.location.href = url; } else { win?.close(); }
-    } catch { win?.close(); }
+    await this.openFile(key);
   }
 
   async downloadSaleFile(): Promise<void> {
     const key = this.previewDetail()?.fileStorageKey?.trim();
     if (!key) return;
-    const win = window.open('', '_blank');
-    try {
-      const rawUrl = await this.admin.getFileDownloadUrl(key, false);
-      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
-      if (url && win) { win.location.href = url; } else { win?.close(); }
-    } catch { win?.close(); }
+    await this.downloadFile(key);
   }
 
   async openMainFile(storageKey: string | null | undefined): Promise<void> {
     const key = storageKey?.trim();
     if (!key) return;
-    const win = window.open('', '_blank');
-    try {
-      const rawUrl = await this.admin.getFileDownloadUrl(key, true);
-      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, true);
-      if (url && win) { win.location.href = url; } else { win?.close(); }
-    } catch { win?.close(); }
+    await this.openFile(key);
   }
 
   async downloadMainFile(storageKey: string | null | undefined): Promise<void> {
     const key = storageKey?.trim();
     if (!key) return;
-    const win = window.open('', '_blank');
+    await this.downloadFile(key);
+  }
+
+  /** Resolves the authenticated URL for a storage key; `''` when even that failed. */
+  private async resolveFileUrl(key: string, inline: boolean): Promise<string> {
+    let rawUrl: string | null = null;
     try {
-      const rawUrl = await this.admin.getFileDownloadUrl(key, false);
-      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, false);
-      if (url && win) { win.location.href = url; } else { win?.close(); }
-    } catch { win?.close(); }
+      rawUrl = await this.admin.getFileDownloadUrl(key, inline);
+    } catch {
+      rawUrl = null;
+    }
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+    return resolveDownloadUrl(targetUrl, this.auth.accessToken(), null, inline);
+  }
+
+  private async downloadFile(key: string): Promise<void> {
+    const url = await this.resolveFileUrl(key, false);
+    if (!url || !(await downloadFileFromUrl(url))) {
+      this.message.error(this.translation.t('admin.fileDownloadFailed'));
+    }
+  }
+
+  private async openFile(key: string): Promise<void> {
+    const url = await this.resolveFileUrl(key, true);
+    const outcome = url ? await openFileFromUrl(url) : 'failed';
+    if (outcome === 'failed') {
+      this.message.error(this.translation.t('admin.fileDownloadFailed'));
+    } else if (outcome === 'downloaded') {
+      this.message.info(this.translation.t('admin.filePopupBlockedDownloaded'));
+    }
   }
 
   readonly prescreening = signal<boolean>(false);

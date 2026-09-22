@@ -1394,7 +1394,7 @@ describe('SellerUploadPage — cover image mode (cover-image-mode v1 §1/§4)', 
     expect(component.coverAutoModeAvailable()).toBe(true);
   });
 
-  it('AC-03: selecting auto mode hides the upload box/gallery list/clear-all button and shows the info box', () => {
+  it('AC-03: selecting auto mode hides the upload box/editable gallery list/clear-all button', () => {
     const fixture = render(undefined);
     const component = fixture.componentInstance;
     component.file.set(new File(['x'], 'notes.pdf'));
@@ -1408,7 +1408,6 @@ describe('SellerUploadPage — cover image mode (cover-image-mode v1 §1/§4)', 
     expect(text).not.toContain('คลิกเพื่อเลือกรูป');
     expect(text).not.toContain('เพิ่มรูป');
     expect(text).toContain('ใช้หน้าแรกของเอกสารเป็นรูปปกอัตโนมัติ');
-    expect(text).toContain('ตัวอย่างจริงจะแสดงหลังบันทึก');
   });
 
   it('AC-04: custom mode (default) keeps the existing upload box/gallery list/clear-all button unchanged', () => {
@@ -1483,6 +1482,30 @@ describe('SellerUploadPage — cover image mode (cover-image-mode v1 §1/§4)', 
     const body = updateDocumentCalls[0].body as unknown as CoverModeBodyProbe;
     expect(body.coverImageMode).toBe('auto');
     expect('galleryItems' in body).toBe(false);
+  });
+
+  it('AC-05: auto mode still omits galleryItems even though the generated images are now displayed', async () => {
+    const { fixture, component, updateDocumentCalls } = renderForCoverEdit({ format: 'pdf' });
+    await settleLoad(fixture);
+    fillRequiredFields(component);
+    // What `loadForEdit` leaves behind for an auto-cover document: the generated cover plus its
+    // preview pages. The page shows them read-only; the payload must stay untouched (AC-05).
+    component.galleryItems.set([makeGalleryItem('auto-cover.jpg'), makeGalleryItem('auto-cover-p1.jpg')]);
+    component.coverImageMode.set('auto');
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="auto-cover-strip"]')).toBeTruthy();
+
+    component.submit();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    const body = updateDocumentCalls[0].body as unknown as CoverModeBodyProbe;
+    expect(body.coverImageMode).toBe('auto');
+    expect('galleryItems' in body).toBe(false);
+    expect('galleryImageUrls' in body).toBe(false);
   });
 
   it('AC-05: create mode + custom sends coverImageMode "custom" on both createDocument and the follow-up PUT, galleryImageUrls included', async () => {
@@ -2288,3 +2311,95 @@ describe('SellerUploadPage — version modal watermark override (document-waterm
   });
 });
 
+
+/**
+ * Auto-cover preview strip.
+ *
+ * `seller.previewAfterSaveDesc` promised "ตัวอย่างจริงจะแสดงหลังบันทึก — เปิดหน้านี้อีกครั้ง..." and never
+ * delivered: the auto branch of the template rendered three lines of text and nothing else, so
+ * reopening the page showed no image ever, although `loadForEdit` had already filled
+ * `galleryItems()` from the document's `galleryItems`/`coverUrl`. The strip is strictly
+ * read-only — cover-image-mode v1 §4 AC-05 still requires `submit()` to omit the gallery from
+ * the payload in auto mode, so displaying it must not turn it into a resubmission.
+ */
+describe('SellerUploadPage — auto-generated cover preview strip', () => {
+  const STRIP_SELECTOR = '[data-testid="auto-cover-strip"]';
+  const AFTER_SAVE_COPY = 'ตัวอย่างจริงจะแสดงหลังบันทึก';
+  const STRIP_TITLE = 'รูปปกและตัวอย่างที่ระบบสร้างให้';
+
+  function autoCoverItem(key: string) {
+    return {
+      id: null,
+      key,
+      publicUrl: `https://cdn.example.test/${key}`,
+      previewUrl: `https://cdn.example.test/${key}`,
+    };
+  }
+
+  function renderAuto(items: ReturnType<typeof autoCoverItem>[]) {
+    const fixture = render(undefined);
+    const component = fixture.componentInstance;
+    component.file.set(new File(['x'], 'notes.pdf'));
+    component.galleryItems.set(items);
+    component.coverImageMode.set('auto');
+    fixture.detectChanges();
+    return { fixture, component };
+  }
+
+  it('renders one read-only thumbnail per generated image, cover first', () => {
+    const { fixture } = renderAuto([
+      autoCoverItem('seller-1/gallery/auto-cover-doc.jpg'),
+      autoCoverItem('seller-1/gallery/auto-cover-doc-p1.jpg'),
+      autoCoverItem('seller-1/gallery/auto-cover-doc-p2.jpg'),
+    ]);
+
+    const host = fixture.nativeElement as HTMLElement;
+    const strip = host.querySelector(STRIP_SELECTOR);
+    expect(strip).toBeTruthy();
+
+    const images = Array.from(strip!.querySelectorAll('img'));
+    expect(images).toHaveLength(3);
+    expect(images[0].getAttribute('src')).toContain('auto-cover-doc.jpg');
+    expect(images[2].getAttribute('src')).toContain('auto-cover-doc-p2.jpg');
+
+    const text = host.textContent ?? '';
+    expect(text).toContain(STRIP_TITLE);
+    expect(text).toContain('รูปปกอัตโนมัติ');
+    expect(text).toContain('ตัวอย่างหน้า 1');
+    expect(text).toContain('ตัวอย่างหน้า 2');
+  });
+
+  it('the strip is read-only: no remove button, no drag hint, no upload input', () => {
+    const { fixture } = renderAuto([
+      autoCoverItem('seller-1/gallery/auto-cover-doc.jpg'),
+      autoCoverItem('seller-1/gallery/auto-cover-doc-p1.jpg'),
+    ]);
+
+    const host = fixture.nativeElement as HTMLElement;
+    const strip = host.querySelector(STRIP_SELECTOR)!;
+    expect(strip.querySelectorAll('button')).toHaveLength(0);
+    expect(strip.querySelectorAll('input')).toHaveLength(0);
+
+    const text = host.textContent ?? '';
+    expect(text).not.toContain('ลากเพื่อจัดลำดับ');
+    expect(text).not.toContain('ล้างรูปทั้งหมด');
+  });
+
+  it('keeps the "after save" copy — and only that — while nothing has been generated yet', () => {
+    const { fixture } = renderAuto([]);
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector(STRIP_SELECTOR)).toBeNull();
+    const text = host.textContent ?? '';
+    expect(text).toContain(AFTER_SAVE_COPY);
+    expect(text).not.toContain(STRIP_TITLE);
+  });
+
+  it('drops the "after save" copy once the generated images are there', () => {
+    const { fixture } = renderAuto([autoCoverItem('seller-1/gallery/auto-cover-doc.jpg')]);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain(AFTER_SAVE_COPY);
+    expect(text).toContain(STRIP_TITLE);
+  });
+});

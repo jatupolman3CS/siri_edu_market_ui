@@ -29,6 +29,7 @@ import {
   calcBundleSaveAmount,
   calcBundleSavePercent,
   PreviewPdfError,
+  type DocumentDownloadResult,
   idleActionState,
   loadingActionState,
   type ActionState,
@@ -43,6 +44,7 @@ import {
   type DocumentItem,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
+import { downloadFileFromUrl } from '../../../core/file-download';
 import { ReportDocumentComponent } from '../../../shared/components/report-document/report-document.component';
 
 import type { MarketplaceDocumentPreviewResponse } from '../../../core/api/types.gen';
@@ -461,21 +463,25 @@ export class BuyerDocumentDetailPage {
    * itself is started by `LibraryService` exactly as before.
    */
   private async downloadWithNotice(documentId: string): Promise<void> {
-    const win = window.open('', '_blank');
+    let result: DocumentDownloadResult | null = null;
     try {
-      const result = await this.library.download(documentId);
-      const url = result?.downloadUrl;
-      if (url && win) {
-        win.location.href = url;
-      } else {
-        win?.close();
-      }
-      const notice = result?.watermarkNotice;
-      if (notice) {
-        this.message.info(notice, { nzDuration: 8000 });
-      }
+      result = await this.library.download(documentId);
     } catch {
-      win?.close();
+      result = null;
+    }
+
+    // The notice describes the copy the backend just minted for this buyer, so it is shown as
+    // soon as it arrives - independently of how the bytes travel.
+    const notice = result?.watermarkNotice;
+    if (notice) {
+      this.message.info(notice, { nzDuration: 8000 });
+    }
+
+    // No pre-opened tab: a blocked popup used to swallow the whole download in silence.
+    const url = result?.downloadUrl;
+    const saved = url ? await downloadFileFromUrl(url) : false;
+    if (!saved) {
+      this.message.error(this.translation.t('library.downloadFailed'));
     }
   }
 

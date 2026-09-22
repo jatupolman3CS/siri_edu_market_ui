@@ -195,8 +195,9 @@ export function resolvePublicUrl(url: string | null | undefined): string {
  * Resolves a downloadable file URL:
  * - Converts raw R2 URLs to backend API download URLs
  * - Resolves relative paths to absolute API base URLs
- * - Appends authentication token query param (?token=...) when provided so window.open()
- *   authenticates with ASP.NET Core
+ * - Appends authentication token query param (?token=...) when provided so a plain navigation
+ *   (an `<a href>`, or the header-less `fetch` in `core/file-download`) authenticates with
+ *   ASP.NET Core
  * - Appends optional filename query param (?filename=...) to set Content-Disposition
  */
 export function resolveDownloadUrl(

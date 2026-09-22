@@ -163,9 +163,12 @@ describe('SellerDocumentsPage — rejection reason row (document-rejection-reaso
 
 /**
  * document-preview-access-fixes v1 §4.2 (D3) / AC-23..AC-26 — the seller had no way at all to
- * download their own file. The button is only half the fix: the presigned URL resolves even when
- * the storage object is gone, so the page must probe the URL before navigating the blank tab,
- * and must tell the three failure modes apart with three distinct Thai messages.
+ * download their own file. The button was only half the fix, and the other half was wrong: it
+ * pre-opened a blank tab and navigated it, which a popup blocker turns into a silent no-op
+ * (`window.open` returns `null`) — exactly what sellers hit. The page now fetches the bytes
+ * through `downloadFileFromUrl`, which doubles as the liveness probe (the presigned URL resolves
+ * even when the storage object is gone), and still tells the three failure modes apart with
+ * three distinct Thai messages.
  */
 const DOWNLOAD_TITLE = 'ดาวน์โหลดไฟล์ต้นฉบับ';
 const MSG_NO_FILE = 'เอกสารนี้ยังไม่มีไฟล์ให้ดาวน์โหลด';
@@ -176,24 +179,58 @@ const MSG_FAILED = 'ดาวน์โหลดไม่สำเร็จ ก�
 describe('SellerDocumentsPage — download original file (document-preview-access-fixes v1 §4.2)', () => {
   let realFetch: typeof globalThis.fetch;
   let realOpen: typeof window.open;
+  let realCreateObjectURL: typeof URL.createObjectURL;
+  let realRevokeObjectURL: typeof URL.revokeObjectURL;
+  let realCreateElement: typeof document.createElement;
   let fetchMock: ReturnType<typeof vi.fn>;
   let openMock: ReturnType<typeof vi.fn>;
-  let win: { location: { href: string }; close: ReturnType<typeof vi.fn> };
+  /** Anchors the helper actually clicked — Angular creates unrelated <a> elements too. */
+  let saved: HTMLAnchorElement[];
+
+  function fileResponse(ok = true): Response {
+    return {
+      ok,
+      status: ok ? 200 : 404,
+      headers: new Headers(),
+      blob: async () => new Blob(['bytes'], { type: 'application/pdf' }),
+    } as unknown as Response;
+  }
 
   beforeEach(() => {
     realFetch = globalThis.fetch;
-    fetchMock = vi.fn(async () => ({ ok: true, status: 200 }) as Response);
+    fetchMock = vi.fn(async () => fileResponse());
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    win = { location: { href: '' }, close: vi.fn() };
+    // A blocked popup is the *default* here on purpose: the page must still deliver the file.
     realOpen = window.open;
-    openMock = vi.fn(() => win as unknown as Window);
+    openMock = vi.fn(() => null);
     window.open = openMock as unknown as typeof window.open;
+
+    realCreateObjectURL = URL.createObjectURL;
+    realRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => 'blob:mock/seller') as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+
+    saved = [];
+    realCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
+      const el = realCreateElement(tag);
+      if (tag === 'a') {
+        const anchor = el as HTMLAnchorElement;
+        anchor.click = () => {
+          saved.push(anchor);
+        };
+      }
+      return el;
+    }) as typeof document.createElement);
   });
 
   afterEach(() => {
     globalThis.fetch = realFetch;
     window.open = realOpen;
+    URL.createObjectURL = realCreateObjectURL;
+    URL.revokeObjectURL = realRevokeObjectURL;
+    vi.restoreAllMocks();
   });
 
   function renderWith(
@@ -228,7 +265,7 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
     expect(spy).toHaveBeenCalledWith('doc-43');
   });
 
-  it('AC-26: on success the blank tab is navigated to the token-carrying resolved URL', async () => {
+  it('AC-26: on success the file is saved through a hidden anchor — no popup involved', async () => {
     const fixture = renderWith(
       (async () => ({ url: '/api/files/download/docs/a.pdf' })) as SellerService['getDocumentDownloadUrl'],
     );
@@ -236,15 +273,15 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
 
     await fixture.componentInstance.download(fakeDocument({ id: 'doc-42' }));
 
-    expect(openMock).toHaveBeenCalledWith('', '_blank');
-    expect(win.location.href).toContain('/api/files/download/docs/a.pdf');
-    expect(win.location.href).toContain('token=jwt-token');
-    expect(win.close).not.toHaveBeenCalled();
+    expect(openMock).not.toHaveBeenCalled();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].getAttribute('href')).toBe('blob:mock/seller');
+    expect(saved[0].getAttribute('download')).toBeTruthy();
     expect(message.error).not.toHaveBeenCalled();
     expect(fixture.componentInstance.downloadingId()).toBeNull();
   });
 
-  it('probes with a plain GET — no HEAD (the action is [HttpGet]) and no custom headers (CORS preflight)', async () => {
+  it('fetches the token-carrying resolved URL exactly once (the fetch *is* the probe)', async () => {
     const fixture = renderWith(
       (async () => ({ url: '/api/files/download/docs/a.pdf' })) as SellerService['getDocumentDownloadUrl'],
     );
@@ -253,15 +290,13 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
     await fixture.componentInstance.download(fakeDocument({ id: 'doc-42' }));
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [probedUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined];
-    expect(probedUrl).toBe(win.location.href);
-    expect(init?.method).toBeUndefined();
-    expect(init?.headers).toBeUndefined();
-    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    const [fetchedUrl] = fetchMock.mock.calls[0] as [string];
+    expect(fetchedUrl).toContain('/api/files/download/docs/a.pdf');
+    expect(fetchedUrl).toContain('token=jwt-token');
   });
 
-  it('AC-24: a non-2xx probe (storage object gone) closes the tab and shows the storage message', async () => {
-    fetchMock.mockResolvedValue({ ok: false, status: 404 } as Response);
+  it('AC-24: a non-2xx response (storage object gone) saves nothing and shows the storage message', async () => {
+    fetchMock.mockResolvedValue(fileResponse(false));
     const fixture = renderWith(
       (async () => ({ url: '/api/files/download/it/stale.pdf' })) as SellerService['getDocumentDownloadUrl'],
     );
@@ -269,13 +304,12 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
 
     await fixture.componentInstance.download(fakeDocument({ id: 'doc-42' }));
 
-    expect(win.close).toHaveBeenCalled();
-    expect(win.location.href).toBe('');
+    expect(saved).toHaveLength(0);
     expect(message.error).toHaveBeenCalledWith(MSG_MISSING_OBJECT);
     expect(fixture.componentInstance.downloadingId()).toBeNull();
   });
 
-  it('AC-24: a probe that throws is treated as a failure, not as success', async () => {
+  it('AC-24: a fetch that throws is treated as a failure, not as success', async () => {
     fetchMock.mockRejectedValue(new TypeError('network down'));
     const fixture = renderWith(
       (async () => ({ url: '/api/files/download/docs/a.pdf' })) as SellerService['getDocumentDownloadUrl'],
@@ -284,12 +318,11 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
 
     await fixture.componentInstance.download(fakeDocument({ id: 'doc-42' }));
 
-    expect(win.close).toHaveBeenCalled();
-    expect(win.location.href).toBe('');
+    expect(saved).toHaveLength(0);
     expect(message.error).toHaveBeenCalledWith(MSG_MISSING_OBJECT);
   });
 
-  it('AC-25: a listing with no file (400) warns with its own message and never probes', async () => {
+  it('AC-25: a listing with no file (400) warns with its own message and never fetches', async () => {
     const fixture = renderWith(
       (async () => ({ error: 'no_file' as const })) as SellerService['getDocumentDownloadUrl'],
     );
@@ -300,8 +333,6 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
     expect(message.warning).toHaveBeenCalledWith(MSG_NO_FILE);
     expect(message.error).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(win.close).toHaveBeenCalled();
-    expect(win.location.href).toBe('');
   });
 
   it('a generic service failure shows the generic message, distinct from the other two', async () => {
@@ -315,7 +346,6 @@ describe('SellerDocumentsPage — download original file (document-preview-acces
     expect(message.error).toHaveBeenCalledWith(MSG_FAILED);
     expect(message.warning).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(win.close).toHaveBeenCalled();
     expect(fixture.componentInstance.downloadingId()).toBeNull();
   });
 

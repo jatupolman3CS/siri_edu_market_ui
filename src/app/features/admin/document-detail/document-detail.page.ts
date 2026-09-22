@@ -40,6 +40,7 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
+import { downloadFileFromUrl } from '../../../core/file-download';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const GRADE_PRESET_KEYS = Object.keys(GRADE_LEVEL_LABELS) as GradeLevel[];
@@ -509,23 +510,24 @@ export class AdminDocumentDetailPage {
     return !!this.doc()?.fileStorageKey?.trim();
   }
 
+  /**
+   * No pre-opened blank tab: a blocked popup used to make this button do nothing at all, and
+   * `catch { win?.close(); }` hid every other failure too. The bytes are fetched here and saved
+   * through a hidden anchor, and a failure is reported.
+   */
   async downloadMainFile(): Promise<void> {
     const key = this.doc()?.fileStorageKey?.trim();
     if (!key) return;
-    // Open the window synchronously within the click gesture so popup blockers
-    // don't interfere with the window.open call that would otherwise happen after an await.
-    const win = window.open('', '_blank');
+    let rawUrl: string | null = null;
     try {
-      const rawUrl = await this.admin.getFileDownloadUrl(key);
-      const targetUrl = rawUrl || downloadUrlForStorageKey(key);
-      const url = resolveDownloadUrl(targetUrl, this.auth.accessToken());
-      if (url && win) {
-        win.location.href = url;
-      } else {
-        win?.close();
-      }
+      rawUrl = await this.admin.getFileDownloadUrl(key);
     } catch {
-      win?.close();
+      rawUrl = null;
+    }
+    const targetUrl = rawUrl || downloadUrlForStorageKey(key);
+    const url = resolveDownloadUrl(targetUrl, this.auth.accessToken());
+    if (!url || !(await downloadFileFromUrl(url))) {
+      this.message.error(this.translation.t('admin.fileDownloadFailed'));
     }
   }
 
