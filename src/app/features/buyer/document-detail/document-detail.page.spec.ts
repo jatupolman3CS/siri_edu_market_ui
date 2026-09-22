@@ -699,6 +699,102 @@ describe('BuyerDocumentDetailPage — preview tab empty state (non-PDF vs excerp
 });
 
 /**
+ * preview-rasters-to-r2 v1 §4.2 / §1.2 item 12 — page rasters moved from static
+ * `/Previews/{docId}/page-N.jpg` files to R2, so the backend now hands them over as
+ * `/api/files/download/{sellerId}/previews/{docId}/page-N.jpg?v={epoch}`. That value is
+ * root-relative, and under `ng serve` the SPA (:4200) and the API (:5282) are different origins,
+ * so every raster URL has to be resolved against the API base exactly once before it reaches an
+ * `<img src>`.
+ */
+describe('BuyerDocumentDetailPage — raster preview URL resolution (preview-rasters-to-r2 v1)', () => {
+  function renderWithPreview(
+    doc: DocumentItem,
+    previewResponse: { previewImageUrls?: string[] },
+  ) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const catalog = {
+      ...buildCatalog(doc),
+      loadDocumentPreview: vi.fn(async () => previewResponse),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: catalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function clickOpenPreview(fixture: { nativeElement: HTMLElement; detectChanges: () => void }): void {
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLElement[];
+    const target = buttons.find((el) => (el.textContent ?? '').includes('เปิดพรีวิว'));
+    if (!target) throw new Error('เปิดพรีวิว button not found');
+    target.click();
+    fixture.detectChanges();
+  }
+
+  const relativeRasters = [
+    '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769',
+    '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-2.jpg?v=1789990769',
+  ];
+
+  it('resolves relative previewImageUrls to absolute URLs before rendering them', async () => {
+    const doc = buildDoc({ format: 'zip', previewPages: 2 });
+    const fixture = renderWithPreview(doc, { previewImageUrls: relativeRasters });
+    clickOpenPreview(fixture);
+    await settle();
+    fixture.detectChanges();
+
+    const resolved = fixture.componentInstance.previewRasterUrls();
+    expect(resolved).toHaveLength(2);
+    for (const [index, url] of resolved.entries()) {
+      expect(url).toMatch(/^https?:\/\//);
+      expect(url).toContain(
+        `/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-${index + 1}.jpg`,
+      );
+      // Resolved exactly once — a second pass would stack another download prefix on top.
+      expect(url).not.toContain('/api/files/download/api/files/download/');
+      expect(url).toContain('v=1789990769');
+    }
+
+    const imageSrcs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLImageElement>('img'),
+    )
+      .map((img) => img.getAttribute('src') ?? '')
+      .filter((src) => src.includes('/previews/'));
+    expect(imageSrcs.length).toBeGreaterThan(0);
+    for (const src of imageSrcs) {
+      expect(src).toMatch(/^https?:\/\//);
+      expect(src).not.toContain('/api/files/download/api/files/download/');
+    }
+  });
+
+  it('leaves an absolute raster URL untouched', async () => {
+    const doc = buildDoc({ format: 'zip', previewPages: 1 });
+    const absolute = 'https://cdn.example.test/api/files/download/seller/previews/doc/page-1.jpg?v=1';
+    const fixture = renderWithPreview(doc, { previewImageUrls: [absolute] });
+    clickOpenPreview(fixture);
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.previewRasterUrls()).toEqual([absolute]);
+  });
+});
+
+/**
  * discount-urgency v1 §1/§4 — AC-9/AC-10/AC-11: countdown vs social-proof fallback on the price
  * card, mutually exclusive, and no empty placeholder when neither applies.
  */

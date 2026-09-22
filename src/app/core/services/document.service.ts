@@ -25,7 +25,11 @@ export class DocumentService {
     return firstValueFrom(this.http.post<PdfDocumentUploadResponse>(url, form));
   }
 
-  /** POST seller-only: rasterize stored PDF to JPEG previews under wwwroot/Previews. */
+  /**
+   * POST seller-only: rasterize the stored PDF to watermarked JPEG previews on object storage
+   * (R2 via `IObjectStorage`; preview-rasters-to-r2 v1). `previewImageUrls` comes back as
+   * `/api/files/download/{key}?v={epoch}`; `previewRelativePaths` carries the bare storage keys.
+   */
   generateSellerRasterPreview(documentId: string): Promise<SellerRasterPreviewResponse> {
     const url = `${API_BASE_URL}/api/seller/documents/${encodeURIComponent(documentId)}/preview-raster`;
     return firstValueFrom(this.http.post<SellerRasterPreviewResponse>(url, {}));

@@ -147,9 +147,17 @@ export class BuyerDocumentDetailPage {
     return !this.discountCountdownActive() && (d?.soldThisMonthCount ?? 0) > 0;
   });
 
+  /**
+   * preview-rasters-to-r2 v1 §4.2: the backend returns page rasters as (usually root-relative)
+   * download URLs, so they must go through `resolvePublicUrl` before reaching an `<img src>` —
+   * under `ng serve` the SPA and the API sit on different origins. This is the single resolve
+   * point for raster URLs on this page; callers that only count them stay on the raw values.
+   */
   readonly previewRasterUrls = computed(() => {
     const urls = this.preview()?.previewImageUrls ?? [];
-    return urls.filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
+    return urls
+      .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+      .map((u) => resolvePublicUrl(u));
   });
   readonly related = computed(() => this.catalog.getRelated(this.id(), 4));
   readonly owned = computed(() => {
@@ -295,10 +303,6 @@ export class BuyerDocumentDetailPage {
     return grades
       .map((g) => GRADE_LEVEL_LABELS[g as keyof typeof GRADE_LEVEL_LABELS] ?? g)
       .join(', ');
-  }
-
-  previewImgSrc(pathOrUrl: string): string {
-    return resolvePublicUrl(pathOrUrl);
   }
 
   closePreviewGallery(): void {
@@ -559,6 +563,8 @@ export class BuyerDocumentDetailPage {
       try {
         const data = await this.catalog.loadDocumentPreview(id);
         this.preview.set(data);
+        // Count only — display goes through `previewRasterUrls()`, which resolves the URLs
+        // (preview-rasters-to-r2 v1 §4.2: resolve once, never twice).
         const raster = data.previewImageUrls?.filter((u) => u?.trim()) ?? [];
         if (raster.length > 0) {
           if (forceModal) {

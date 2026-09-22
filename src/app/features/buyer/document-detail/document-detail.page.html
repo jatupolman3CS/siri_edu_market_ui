@@ -156,7 +156,7 @@
                                   <div class="aspect-[1/1.4] overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center relative">
                                     <img
                                       appImgFallback
-                                      [src]="previewImgSrc(path)"
+                                      [src]="path"
                                       [alt]="'product.pageLabel' | trans: { index: $index + 1 }"
                                       class="w-full h-full object-contain select-none transition-transform duration-200 group-hover:scale-102"
                                       loading="lazy"
@@ -950,7 +950,7 @@
                   <figure class="preview-image-card select-none" (contextmenu)="$event.preventDefault()">
                     <img
                       appImgFallback
-                      [src]="previewImgSrc(path)"
+                      [src]="path"
                       [alt]="'product.previewAlt' | trans"
                       class="preview-image-item block h-auto max-h-none w-full max-w-full object-contain select-none"
                       loading="lazy"

@@ -512,37 +512,46 @@ describe('brand asset fallbacks', () => {
   });
 
   /**
-   * document-preview-access-fixes v1 AC-08 (UI half). A document with no gallery rows now gets
-   * its watermarked page rasters from the backend under `/Previews/...`. These are static files,
-   * NOT object-storage keys — if the mapper ever rewrites them the way it rewrites a storage key,
-   * the URL 404s and the buyer is back to the placeholder icon the fix exists to remove.
+   * preview-rasters-to-r2 v1 §4.1 / AC-17 (docs/contracts/preview-rasters-to-r2.md) — supersedes
+   * the `document-preview-access-fixes` v1 pinning of `/Previews/...` static paths. Page rasters
+   * now live on R2 and the backend hands them over as a ready-made download URL
+   * (`/api/files/download/{sellerId}/previews/{docId}/page-N.jpg?v={epoch}`). What this test
+   * protects is that the mapper passes that URL through untouched: no second
+   * `/api/files/download/` prefix on top of the one already there, and no fall back to the
+   * placeholder icon the buyer-side fix exists to remove.
    */
-  it('keeps a /Previews raster cover intact instead of falling back to the placeholder', () => {
+  it('keeps a download-URL raster cover intact instead of falling back to the placeholder', () => {
     const doc = mapDocument({
       id: 'doc-1',
-      galleryPreviewUrls: ['/Previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769'],
+      galleryPreviewUrls: [
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769',
+      ],
     } as MarketplaceDocumentResponse);
 
     expect(doc.cover).not.toBe(placeholderCoverUrl());
-    expect(doc.cover).toContain('/Previews/2c670625a7194445948a3f105204332a/page-1.jpg');
-    expect(doc.cover).not.toContain('/api/files/download/Previews/');
+    expect(doc.cover).toContain('/api/files/download/');
+    expect(doc.cover).toContain('/previews/2c670625a7194445948a3f105204332a/page-1.jpg');
+    expect(doc.cover).not.toContain('/api/files/download/api/files/download/');
+    expect(doc.cover).toContain('v=1789990769');
   });
 
-  it('keeps every /Previews raster page in the detail gallery', () => {
+  it('keeps every raster download URL in the detail gallery', () => {
     const detail = mapDocumentDetail({
       id: 'doc-1',
       title: 'ไม่มีแกลเลอรี',
       galleryUrls: [
-        '/Previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769',
-        '/Previews/2c670625a7194445948a3f105204332a/page-2.jpg?v=1789990769',
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769',
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-2.jpg?v=1789990769',
       ],
     } as MarketplaceDocumentDetailResponse);
 
     expect(detail.gallery).toHaveLength(2);
     expect(detail.cover).toBe(detail.gallery[0]);
     for (const url of detail.gallery) {
-      expect(url).toContain('/Previews/');
-      expect(url).not.toContain('/api/files/download/Previews/');
+      expect(url).toContain('/api/files/download/');
+      expect(url).toContain('/previews/2c670625a7194445948a3f105204332a/');
+      expect(url).not.toContain('/api/files/download/api/files/download/');
+      expect(url).toContain('v=1789990769');
     }
   });
 });

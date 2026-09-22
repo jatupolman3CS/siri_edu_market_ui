@@ -176,10 +176,6 @@ export class WatermarkEditorPage {
     this.downloadWatermarkTemplate.set(`${current} ${tag}`);
   }
 
-  previewImgSrc(pathOrUrl: string): string {
-    return resolvePublicUrl(pathOrUrl);
-  }
-
   openRealPreview(): void {
     if (!this.hasRealPreview()) return;
     this.showPreviewGallery.set(true);
@@ -266,10 +262,12 @@ export class WatermarkEditorPage {
       this.downloadWatermarkFontSize.set(data.personalizedWatermarkFontSize ?? 16);
       this.downloadWatermarkRotation.set(data.personalizedWatermarkRotation ?? -30);
       this.hasMainFile.set(data.hasMainFile ?? false);
+      // preview-rasters-to-r2 v1 §4.3: page rasters come back as download URLs that are usually
+      // root-relative, so they have to be resolved against the API origin before an `<img src>`.
       this.previewImageUrls.set(
-        (data.previewImageUrls ?? []).filter(
-          (u): u is string => typeof u === 'string' && u.trim().length > 0,
-        ),
+        (data.previewImageUrls ?? [])
+          .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+          .map((u) => resolvePublicUrl(u)),
       );
       this.loading.set(false);
     } catch {
@@ -341,10 +339,11 @@ export class WatermarkEditorPage {
       // The endpoint regenerates the watermarked JPEG pages server-side on every save — refresh
       // the real-preview gallery from the same response so it never shows a stale image set.
       this.hasMainFile.set(saved.hasMainFile ?? false);
+      // preview-rasters-to-r2 v1 §4.3: same resolve step as the initial load above.
       this.previewImageUrls.set(
-        (saved.previewImageUrls ?? []).filter(
-          (u): u is string => typeof u === 'string' && u.trim().length > 0,
-        ),
+        (saved.previewImageUrls ?? [])
+          .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+          .map((u) => resolvePublicUrl(u)),
       );
       this.message.success(this.translation.t('seller.saveDocWatermarkSuccess'));
     } catch {

@@ -489,6 +489,84 @@ describe('WatermarkEditorPage', () => {
       expect(modalImages).toEqual(rasterUrls);
     });
 
+    /**
+     * preview-rasters-to-r2 v1 §4.3 / §1.2 item 13 — rasters now live on R2 and arrive as
+     * root-relative download URLs (`/api/files/download/{sellerId}/previews/{docId}/page-N.jpg`).
+     * The seller's editor runs on a different origin than the API under `ng serve`, so those have
+     * to be resolved to absolute URLs once (and only once) before they reach an `<img src>`.
+     */
+    it('should resolve relative raster URLs to absolute ones for the real-preview gallery', async () => {
+      const relativeRasters = [
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990769',
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-2.jpg?v=1789990769',
+      ];
+      stubRoute('GET', watermarkConfigPath('doc-1'), {
+        ...sampleDocumentConfig,
+        hasMainFile: true,
+        previewImageUrls: relativeRasters,
+      });
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+
+      expect(component.hasRealPreview()).toBe(true);
+      const resolved = component.previewImageUrls();
+      expect(resolved).toHaveLength(2);
+      for (const [index, url] of resolved.entries()) {
+        expect(url).toMatch(/^https?:\/\//);
+        expect(url).toContain(
+          `/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-${index + 1}.jpg`,
+        );
+        expect(url).not.toContain('/api/files/download/api/files/download/');
+        expect(url).toContain('v=1789990769');
+      }
+
+      component.openRealPreview();
+      fixture.detectChanges();
+
+      const modalImages = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLImageElement>(
+          '.preview-modal-content img',
+        ),
+      ).map((img) => img.getAttribute('src') ?? '');
+      expect(modalImages).toEqual(resolved);
+    });
+
+    it('should resolve relative raster URLs returned by a save as well', async () => {
+      const savedRasters = [
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-1.jpg?v=1789990770',
+      ];
+      stubRoute('GET', watermarkConfigPath('doc-1'), {
+        ...sampleDocumentConfig,
+        hasMainFile: true,
+        previewImageUrls: [],
+      });
+      stubRoute('POST', watermarkConfigPath('doc-1'), {
+        ...sampleDocumentConfig,
+        hasMainFile: true,
+        previewImageUrls: savedRasters,
+      });
+
+      await setup('doc-1');
+      fixture.detectChanges();
+      await settle();
+
+      component.saveConfig();
+      await settle();
+      fixture.detectChanges();
+
+      const resolved = component.previewImageUrls();
+      expect(resolved).toHaveLength(1);
+      expect(resolved[0]).toMatch(/^https?:\/\//);
+      expect(resolved[0]).toContain(
+        '/api/files/download/3f2504e0-4f89-11d3-9a0c-0305e82c3301/previews/2c670625a7194445948a3f105204332a/page-1.jpg',
+      );
+      expect(resolved[0]).not.toContain('/api/files/download/api/files/download/');
+      expect(resolved[0]).toContain('v=1789990770');
+    });
+
     // Real-preview fix, case (b): hasMainFile=false (or an empty previewImageUrls) shows the
     // informative message instead of the thumbnail grid.
     it('should show the "not generated yet" notice when hasMainFile is false', async () => {
