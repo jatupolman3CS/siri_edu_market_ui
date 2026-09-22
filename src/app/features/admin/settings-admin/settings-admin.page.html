@@ -60,6 +60,26 @@
       </section>
 
       <section class="card-soft p-6 mb-6">
+        <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.loyaltyTitle' | trans }}</h2>
+        <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.loyaltyDesc' | trans }}</p>
+        <div class="max-w-xs">
+          <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.settingsAdmin.loyaltyRateLabel' | trans }}</label>
+          <input
+            class="input-soft"
+            type="number"
+            min="1"
+            max="100000"
+            step="1"
+            [ngModel]="form().loyaltyPointsPerTHB"
+            (ngModelChange)="patch('loyaltyPointsPerTHB', $event)"
+          />
+          <p class="text-[11px] text-ink-muted mt-2">
+            {{ 'admin.settingsAdmin.loyaltyRateHint' | trans: { points: form().loyaltyPointsPerTHB } }}
+          </p>
+        </div>
+      </section>
+
+      <section class="card-soft p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.referralTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.referralDesc' | trans }}</p>
 
@@ -572,4 +592,3 @@
     </ng-container>
   </nz-modal>
 }
-

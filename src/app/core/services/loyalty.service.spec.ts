@@ -41,6 +41,8 @@ function summaryBody(over: Record<string, unknown> = {}) {
     lifetimeEarned: 2000,
     lifetimeSpent: 160,
     asOf: '2026-08-29T00:00:00.000Z',
+    pointsPerTHB: 10,
+    availableBalance: 1840,
     ...over,
   };
 }
@@ -99,6 +101,8 @@ describe('mapLoyaltySummary', () => {
       lifetimeEarned: 2000,
       lifetimeSpent: 160,
       asOf: '2026-08-29T00:00:00.000Z',
+      pointsPerTHB: 10,
+      availableBalance: 1840,
     });
   });
 
@@ -109,6 +113,8 @@ describe('mapLoyaltySummary', () => {
     expect(summary.earnedThisMonth).toBe(0);
     expect(summary.lifetimeEarned).toBe(0);
     expect(summary.lifetimeSpent).toBe(0);
+    expect(summary.pointsPerTHB).toBe(10);
+    expect(summary.availableBalance).toBe(0);
   });
 });
 
@@ -165,6 +171,8 @@ describe('LoyaltyService', () => {
       lifetimeEarned: 2000,
       lifetimeSpent: 160,
       asOf: '2026-08-29T00:00:00.000Z',
+      pointsPerTHB: 10,
+      availableBalance: 1840,
     });
     expect(loyalty.state()).toEqual({ status: 'idle' });
     expect(requests.some((r) => r.method === 'GET' && r.path === '/api/me/loyalty')).toBe(true);

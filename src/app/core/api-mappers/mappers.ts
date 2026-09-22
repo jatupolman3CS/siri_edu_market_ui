@@ -750,6 +750,8 @@ export function mapOrder(o: OrderResponse): Order {
         }
       : undefined,
     discountAmount: Number((o as unknown as { discountAmount?: number | null; discount_amount?: number | null }).discountAmount ?? (o as unknown as { discount_amount?: number | null }).discount_amount ?? 0),
+    loyaltyPointsRedeemed: o.loyaltyPointsRedeemed ?? 0,
+    loyaltyDiscountAmount: o.loyaltyDiscountAmount ?? 0,
   };
 }
 
@@ -1050,6 +1052,8 @@ export function mapLoyaltySummary(d: LoyaltySummaryResponse): LoyaltySummary {
     lifetimeEarned: d.lifetimeEarned ?? 0,
     lifetimeSpent: d.lifetimeSpent ?? 0,
     asOf: d.asOf ?? new Date().toISOString(),
+    pointsPerTHB: Math.max(1, d.pointsPerTHB ?? 10),
+    availableBalance: Math.max(0, d.availableBalance ?? d.balance ?? 0),
   };
 }
 
@@ -1747,4 +1751,3 @@ export function mapAdminAdsCampaign(d: AdminAdsCampaignResponse): AdminAdsCampai
     sellerAvailableBalance: d.sellerAvailableBalance ?? 0,
   };
 }
-

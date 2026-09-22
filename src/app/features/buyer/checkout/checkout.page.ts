@@ -13,6 +13,7 @@ import {
   AuthService,
   CartService,
   OrderService,
+  LoyaltyService,
   PaymentMethodService,
   ReferralService,
   WalletService,
@@ -74,6 +75,7 @@ export class BuyerCheckoutPage implements OnDestroy {
   readonly paymentMethods = inject(PaymentMethodService);
   readonly referral = inject(ReferralService);
   readonly wallet = inject(WalletService);
+  readonly loyalty = inject(LoyaltyService);
   private readonly message = inject(NzMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
@@ -117,6 +119,7 @@ export class BuyerCheckoutPage implements OnDestroy {
   readonly referralValidation = signal<ReferralCodeValidation | null>(null);
   readonly validatingReferral = signal(false);
   readonly useReferralCredit = signal(false);
+  readonly useLoyaltyPoints = signal(false);
   private referralDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly referralDiscount = computed(() => {
@@ -134,7 +137,23 @@ export class BuyerCheckoutPage implements OnDestroy {
 
   readonly payableTotal = computed(() => {
     const rawTotal = this.cart.total();
-    return Math.max(0, rawTotal - this.referralDiscount());
+    return Math.max(0, rawTotal - this.referralDiscount() - this.loyaltyDiscount());
+  });
+
+  readonly loyaltyPointsToRedeem = computed(() => {
+    if (!this.useLoyaltyPoints()) return 0;
+    const summary = this.loyalty.summary();
+    if (!summary) return 0;
+    const rate = Math.max(1, summary.pointsPerTHB ?? 10);
+    const available = summary.availableBalance ?? summary.balance ?? 0;
+    const remainingTotal = Math.max(0, this.cart.total() - this.referralDiscount());
+    const usable = Math.min(available, Math.floor(remainingTotal) * rate);
+    return usable - (usable % rate);
+  });
+
+  readonly loyaltyDiscount = computed(() => {
+    const rate = Math.max(1, this.loyalty.summary()?.pointsPerTHB ?? 10);
+    return this.loyaltyPointsToRedeem() / rate;
   });
 
   /** buyer-wallet v1 §4.4: pay with platform wallet */
@@ -165,6 +184,7 @@ export class BuyerCheckoutPage implements OnDestroy {
     await this.loadSavedCards();
     await this.referral.refreshSummary();
     await this.wallet.refreshSummary();
+    await this.loyalty.refreshSummary();
     this.initReferralHint();
 
     const isTest = typeof (globalThis as any).vi !== 'undefined';
@@ -323,6 +343,9 @@ export class BuyerCheckoutPage implements OnDestroy {
     if (this.useReferralCredit()) {
       createInput.useReferralCredit = true;
     }
+    if (this.useLoyaltyPoints() && this.loyaltyPointsToRedeem() > 0) {
+      createInput.useLoyaltyPoints = true;
+    }
     const affiliateClickToken = getAffiliateClickToken();
     if (affiliateClickToken) {
       createInput.affiliateClickToken = affiliateClickToken;
@@ -354,6 +377,7 @@ export class BuyerCheckoutPage implements OnDestroy {
       if (order.status === 'paid' || order.status === 'fulfilled') {
         this.cart.clear();
         await this.wallet.refreshSummary();
+        await this.loyalty.refreshSummary();
         this.message.success(this.translation.t('checkout.paymentSuccess'));
         await this.ngZone.run(() =>
           this.router.navigateByUrl(this.router.createUrlTree(['/orders'], { queryParams: { success: 1 } })),

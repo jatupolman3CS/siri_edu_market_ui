@@ -422,6 +422,8 @@ export interface Order {
   paidAt?: string;
   paymentHints?: OrderPaymentHints;
   discountAmount: number;
+  loyaltyPointsRedeemed?: number;
+  loyaltyDiscountAmount?: number;
 }
 
 // ====== Order similar documents (order-similar-documents v1 §3.1/§4) ======
@@ -478,6 +480,8 @@ export interface LoyaltySummary {
   lifetimeEarned: number;
   lifetimeSpent: number;
   asOf: string;
+  pointsPerTHB?: number;
+  availableBalance?: number;
 }
 
 export type LoyaltyEntryKind = 'earn' | 'redeem' | 'adjust';

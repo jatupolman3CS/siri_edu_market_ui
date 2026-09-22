@@ -120,6 +120,9 @@ export class NotificationBellComponent {
   onVisibleChange(open: boolean): void {
     if (open) {
       this.feed.loadPreview(DROPDOWN_PREVIEW_SIZE, this.audience());
+      if (this.unreadCount() > 0) {
+        this.feed.markAllRead(this.audience()).subscribe({ error: () => { /* reported via ApiFailureReporter */ } });
+      }
     }
   }
 

@@ -150,6 +150,7 @@ export interface PlatformSettings {
   /** referral-program & affiliate config */
   affiliateCommissionRatePercent: number;
   referralDiscountAmount: number;
+  loyaltyPointsPerTHB: number;
 }
 
 /** watermark-completion v1 §2.2/§3.2 — the 3 values `watermarkPolicy` may hold. */
@@ -185,6 +186,7 @@ export interface PlatformSettingsUpdate {
   /** referral-program & affiliate config */
   affiliateCommissionRatePercent?: number;
   referralDiscountAmount?: number;
+  loyaltyPointsPerTHB?: number;
 }
 
 /**
@@ -340,6 +342,7 @@ function toPlatformSettings(res: PlatformSettingsResponse): PlatformSettings {
     payoutMethodPromptPayQrEnabled: res.payoutMethodPromptPayQrEnabled ?? true,
     affiliateCommissionRatePercent: res.affiliateCommissionRatePercent ?? 5,
     referralDiscountAmount: res.referralDiscountAmount ?? 20,
+    loyaltyPointsPerTHB: Math.max(1, res.loyaltyPointsPerTHB ?? 10),
   };
 }
 

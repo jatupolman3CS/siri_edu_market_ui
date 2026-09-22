@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { BuyerHomePage } from './home.page';
+import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import {
   AdsService,
   AuthService,
@@ -238,6 +240,25 @@ function render(opts: {
 
 afterEach(() => TestBed.resetTestingModule());
 
+describe('BuyerHomePage - document card sizing', () => {
+  it('renders sponsored documents with the same compact card grid as the marketplace', async () => {
+    const sponsoredDoc = mapDocument({
+      id: 'sponsored-1',
+      title: 'Sponsored document',
+      sellerName: 'Test seller',
+    } as MarketplaceDocumentResponse);
+    const fixture = render({ sponsoredDocs: [sponsoredDoc] });
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const card = fixture.debugElement.query(By.directive(DocumentCardComponent));
+    expect(card).not.toBeNull();
+    expect((card.componentInstance as DocumentCardComponent).density()).toBe('compact');
+    expect((card.nativeElement as HTMLElement).parentElement?.classList).toContain('document-card-grid');
+  });
+});
+
 describe('BuyerHomePage — trust stats (real-data-stats v1 §4.2)', () => {
   it('shows a skeleton (not "0") for every counter while stats() is undefined', () => {
     const fixture = render({ stats: undefined });
@@ -317,6 +338,13 @@ describe('BuyerHomePage — categories subtitle (real-data-stats v1 §4.2)', () 
 });
 
 describe('BuyerHomePage — bundle savings subtitle (Group A, §4.2)', () => {
+  it('renders featured bundles in the same responsive grid as document cards', () => {
+    const fixture = render({ bundles: [buildBundle('b-1')] });
+
+    const card = fixture.nativeElement.querySelector('app-bundle-card') as HTMLElement;
+    expect(card.parentElement?.classList).toContain('document-card-grid');
+  });
+
   it('drops "ประหยัดได้สูงสุด N%" entirely when no rendered bundle has a real discount', () => {
     const fixture = render({ bundles: [buildBundle('b-1', { price: 100, originalPrice: 100 })] });
 

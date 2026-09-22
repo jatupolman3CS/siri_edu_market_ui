@@ -784,7 +784,7 @@ describe('BuyerDocumentDetailPage — raster preview URL resolution (preview-ras
 
   it('leaves an absolute raster URL untouched', async () => {
     const doc = buildDoc({ format: 'zip', previewPages: 1 });
-    const absolute = 'https://cdn.example.test/api/files/download/seller/previews/doc/page-1.jpg?v=1';
+    const absolute = 'https://cdn.example.test/seller/previews/doc/page-1.jpg?v=1';
     const fixture = renderWithPreview(doc, { previewImageUrls: [absolute] });
     clickOpenPreview(fixture);
     await settle();

@@ -37,6 +37,7 @@ export interface CreateOrderInput {
   affiliateClickToken?: string;
   /** buyer-wallet v1 §3.1: pay with buyer wallet */
   payWithWallet?: boolean;
+  useLoyaltyPoints?: boolean;
 }
 
 export type CreateOrderOutcome =
@@ -94,6 +95,9 @@ export class OrderService {
         useReferralCredit: input.useReferralCredit,
         affiliateClickToken: input.affiliateClickToken,
         ...(input.payWithWallet !== undefined ? { payWithWallet: input.payWithWallet } : {}),
+        ...(input.useLoyaltyPoints !== undefined
+          ? { useLoyaltyPoints: input.useLoyaltyPoints }
+          : {}),
       };
       const result = await postApiOrders({
         body: body as CreateOrderRequest,

@@ -10,11 +10,13 @@ import {
   PaymentMethodService,
   ReferralService,
   WalletService,
+  LoyaltyService,
 } from '../../../core/services';
 import { idleActionState, type ActionState } from '../../../core/services/action-state';
 import type {
   CartItem,
   DocumentItem,
+  LoyaltySummary,
   ReferralCodeValidation,
   ReferralSummary,
   SavedPaymentMethod,
@@ -179,6 +181,15 @@ function fakeReferralService(initialSummary: ReferralSummary | null = null) {
   };
 }
 
+function fakeLoyaltyService(initialSummary: LoyaltySummary | null = null) {
+  const summary = signal<LoyaltySummary | null>(initialSummary);
+  return {
+    summary: summary.asReadonly(),
+    refreshSummary: vi.fn(async () => {}),
+    setSummary: (s: LoyaltySummary | null) => summary.set(s),
+  };
+}
+
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -189,6 +200,7 @@ function render(
   paymentMethods: ReturnType<typeof fakePaymentMethods> = fakePaymentMethods([]),
   referral: ReturnType<typeof fakeReferralService> = fakeReferralService(),
   wallet: ReturnType<typeof fakeWalletService> = fakeWalletService(),
+  loyalty: ReturnType<typeof fakeLoyaltyService> = fakeLoyaltyService(),
 ) {
   const cart = fakeCart();
   const orders = {
@@ -203,18 +215,19 @@ function render(
     providers: [
       provideRouter([]),
       { provide: CartService, useValue: cart },
-      { provide: AuthService, useValue: { isAuthenticated: () => true } },
+      { provide: AuthService, useValue: { isAuthenticated: () => true, accessToken: () => 'fake-token' } },
       { provide: OrderService, useValue: orders },
       { provide: PaymentMethodService, useValue: paymentMethods },
       { provide: ReferralService, useValue: referral },
       { provide: WalletService, useValue: wallet },
+      { provide: LoyaltyService, useValue: loyalty },
       { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
     ],
   });
 
   const fixture = TestBed.createComponent(BuyerCheckoutPage);
   fixture.detectChanges();
-  return { fixture, cart, orders, referral, wallet };
+  return { fixture, cart, orders, referral, wallet, loyalty };
 }
 
 afterEach(() => TestBed.resetTestingModule());
@@ -546,5 +559,108 @@ describe('BuyerCheckoutPage — pay with wallet (buyer-wallet v1 §4.4, AC-26)',
     expect(fixture.componentInstance.selectedSavedCardId()).toBe('new');
   });
 });
+
+describe('BuyerCheckoutPage — loyalty points redemption at checkout', () => {
+  it('displays loyalty points option and balance when available', async () => {
+    const loyalty = fakeLoyaltyService({
+      balance: 100,
+      availableBalance: 100,
+      pointsPerTHB: 10,
+      earnedThisMonth: 20,
+      lifetimeEarned: 200,
+      lifetimeSpent: 100,
+      asOf: '2026-09-23T00:00:00Z',
+    });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), fakeWalletService(), loyalty);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ใช้คะแนนสะสมเป็นส่วนลด');
+    expect(text).toContain('ใช้ได้ 100 คะแนน · 10 คะแนน = 1 บาท');
+
+    const checkbox = fixture.nativeElement.querySelector('#use-loyalty-points') as HTMLInputElement;
+    expect(checkbox).not.toBeNull();
+    expect(checkbox.disabled).toBe(false);
+  });
+
+  it('calculates points to redeem and discount in Baht, and deducts from payable total', async () => {
+    const loyalty = fakeLoyaltyService({
+      balance: 100,
+      availableBalance: 100,
+      pointsPerTHB: 10,
+      earnedThisMonth: 0,
+      lifetimeEarned: 100,
+      lifetimeSpent: 0,
+      asOf: '2026-09-23T00:00:00Z',
+    });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), fakeWalletService(), loyalty);
+    await settle();
+    fixture.detectChanges();
+
+    const page = fixture.componentInstance;
+    expect(page.cart.total()).toBe(150);
+    expect(page.loyaltyDiscount()).toBe(0);
+    expect(page.payableTotal()).toBe(150);
+
+    // Toggle using loyalty points
+    page.useLoyaltyPoints.set(true);
+    fixture.detectChanges();
+
+    expect(page.loyaltyPointsToRedeem()).toBe(100);
+    expect(page.loyaltyDiscount()).toBe(10);
+    expect(page.payableTotal()).toBe(140);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ใช้ 100 คะแนน ลด 10 บาท');
+  });
+
+  it('disables loyalty points checkbox when available balance < pointsPerTHB', async () => {
+    const loyalty = fakeLoyaltyService({
+      balance: 5,
+      availableBalance: 5,
+      pointsPerTHB: 10,
+      earnedThisMonth: 0,
+      lifetimeEarned: 5,
+      lifetimeSpent: 0,
+      asOf: '2026-09-23T00:00:00Z',
+    });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), fakeWalletService(), loyalty);
+    await settle();
+    fixture.detectChanges();
+
+    const checkbox = fixture.nativeElement.querySelector('#use-loyalty-points') as HTMLInputElement;
+    expect(checkbox).not.toBeNull();
+    expect(checkbox.disabled).toBe(true);
+  });
+
+  it('passes useLoyaltyPoints: true in orders.create payload when option is checked', async () => {
+    const loyalty = fakeLoyaltyService({
+      balance: 50,
+      availableBalance: 50,
+      pointsPerTHB: 10,
+      earnedThisMonth: 0,
+      lifetimeEarned: 50,
+      lifetimeSpent: 0,
+      asOf: '2026-09-23T00:00:00Z',
+    });
+    const { fixture, orders } = render(fakePaymentMethods([]), fakeReferralService(), fakeWalletService(), loyalty);
+    await settle();
+    fixture.detectChanges();
+
+    const page = fixture.componentInstance;
+    page.useLoyaltyPoints.set(true);
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await page.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        useLoyaltyPoints: true,
+      }),
+    );
+  });
+});
+
 
 

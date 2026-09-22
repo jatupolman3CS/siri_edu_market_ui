@@ -93,6 +93,7 @@ function platformSettings(overrides: Partial<PlatformSettings> = {}): PlatformSe
     payoutMethodPromptPayQrEnabled: true,
     affiliateCommissionRatePercent: 5,
     referralDiscountAmount: 20,
+    loyaltyPointsPerTHB: 10,
     ...overrides,
   };
 }
@@ -300,6 +301,7 @@ describe('AdminSettingsPage — watermark policy card (watermark-completion v1 �
       payoutSchedule: 'monthly-15',
       affiliateCommissionRatePercent: 5,
       referralDiscountAmount: 20,
+      loyaltyPointsPerTHB: 10,
       watermarkPolicy: 'required_always',
     });
     expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
@@ -321,6 +323,7 @@ describe('AdminSettingsPage — watermark policy card (watermark-completion v1 �
       payoutSchedule: 'monthly-15',
       affiliateCommissionRatePercent: 5,
       referralDiscountAmount: 20,
+      loyaltyPointsPerTHB: 10,
     });
   });
 
@@ -388,6 +391,7 @@ describe('AdminSettingsPage — payout method master config (payment-method-mast
       payoutSchedule: 'monthly-15',
       affiliateCommissionRatePercent: 5,
       referralDiscountAmount: 20,
+      loyaltyPointsPerTHB: 10,
       payoutMethodBankEnabled: true,
     });
     expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
@@ -409,6 +413,7 @@ describe('AdminSettingsPage — payout method master config (payment-method-mast
       payoutSchedule: 'monthly-15',
       affiliateCommissionRatePercent: 5,
       referralDiscountAmount: 20,
+      loyaltyPointsPerTHB: 10,
     });
   });
 
@@ -429,6 +434,7 @@ describe('AdminSettingsPage — payout method master config (payment-method-mast
       payoutSchedule: 'monthly-15',
       affiliateCommissionRatePercent: 5,
       referralDiscountAmount: 20,
+      loyaltyPointsPerTHB: 10,
       watermarkPolicy: 'required_always',
       payoutMethodPromptPayQrEnabled: false,
     });
@@ -556,7 +562,32 @@ describe('AdminSettingsPage — referral & affiliate settings', () => {
       payoutSchedule: 'monthly-15',
       affiliateCommissionRatePercent: 10,
       referralDiscountAmount: 30,
+      loyaltyPointsPerTHB: 10,
     });
+    expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
+  });
+
+  it('renders and updates loyalty points per THB exchange rate', async () => {
+    const { fixture, admin } = renderPage(platformSettings({ loyaltyPointsPerTHB: 10 }));
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('คะแนนสะสม');
+    expect(text).toContain('จำนวนคะแนนต่อส่วนลด 1 บาท');
+
+    const page = fixture.componentInstance;
+    expect(page.form().loyaltyPointsPerTHB).toBe(10);
+
+    const saveSpy = vi.spyOn(admin, 'saveSettings').mockResolvedValue(platformSettings({ loyaltyPointsPerTHB: 20 }));
+    page.patch('loyaltyPointsPerTHB', 20);
+    await page.save();
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        loyaltyPointsPerTHB: 20,
+      }),
+    );
     expect(messages.success).toContain('บันทึกการตั้งค่าเรียบร้อย');
   });
 });

@@ -126,6 +126,7 @@ export class AdminSettingsPage {
     payoutMethodPromptPayQrEnabled: true,
     affiliateCommissionRatePercent: 5,
     referralDiscountAmount: 20,
+    loyaltyPointsPerTHB: 10,
   });
 
   /** watermark-completion v1 §4.1: only touched watermark fields are sent on save. */
@@ -216,6 +217,7 @@ export class AdminSettingsPage {
         payoutMethodPromptPayQrEnabled: s.payoutMethodPromptPayQrEnabled,
         affiliateCommissionRatePercent: Number(s.affiliateCommissionRatePercent ?? 5),
         referralDiscountAmount: Number(s.referralDiscountAmount ?? 20),
+        loyaltyPointsPerTHB: Number(s.loyaltyPointsPerTHB ?? 10),
       });
     }
     // Reloading discards the pending edits, so nothing is "touched" any more either.
@@ -252,6 +254,7 @@ export class AdminSettingsPage {
       payoutSchedule: f.payoutSchedule,
       affiliateCommissionRatePercent: f.affiliateCommissionRatePercent,
       referralDiscountAmount: f.referralDiscountAmount,
+      loyaltyPointsPerTHB: f.loyaltyPointsPerTHB,
     };
     if (touched.has('watermarkPolicy')) body.watermarkPolicy = f.watermarkPolicy;
     if (touched.has('watermarkDefaultEnabled')) {
@@ -451,4 +454,3 @@ export class AdminSettingsPage {
     }
   }
 }
-

@@ -157,9 +157,9 @@
               <span class="text-xs text-ink-muted">เอกสารพิเศษจากผู้ขายที่ได้รับการแนะนำ</span>
             </div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="document-card-grid">
             @for (doc of homeSponsoredDocs(); track doc.id) {
-              <app-document-card [doc]="doc" />
+              <app-document-card [doc]="doc" density="compact" />
             }
           </div>
         </div>
@@ -278,7 +278,7 @@
         [subtitle]="bundlesSubtitle()"
         link="/bundles"
       />
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="document-card-grid">
         @for (b of bundles.featured(); track b.id) {
           <app-bundle-card [bundle]="b" />
         }

@@ -1070,6 +1070,7 @@ export type CreateOrderRequest = {
   useReferralCredit?: boolean | null;
   affiliateClickToken?: string | null;
   payWithWallet?: boolean;
+  useLoyaltyPoints?: boolean;
 };
 
 export type CreateSubcategoryRequest = {
@@ -1302,6 +1303,8 @@ export type LoyaltySummaryResponse = {
   lifetimeEarned?: number;
   lifetimeSpent?: number;
   asOf?: string;
+  pointsPerTHB?: number;
+  availableBalance?: number;
 };
 
 export type MarketplaceCatalogResponse = {
@@ -1563,6 +1566,8 @@ export type OrderResponse = {
   items?: Array<OrderItemResponse>;
   paymentHints?: OrderPaymentHintsResponse | null;
   discountAmount?: number;
+  loyaltyPointsRedeemed?: number;
+  loyaltyDiscountAmount?: number;
 };
 
 export type OrderSimilarDocumentResponse = {
@@ -1947,6 +1952,7 @@ export type PlatformSettingsResponse = {
   payoutMethodPromptPayQrEnabled?: boolean;
   affiliateCommissionRatePercent?: number;
   referralDiscountAmount?: number;
+  loyaltyPointsPerTHB?: number;
 };
 
 export type PlatformStatsResponse = {
@@ -2828,6 +2834,7 @@ export type UpdatePlatformSettingsRequest = {
   payoutMethodPromptPayQrEnabled?: boolean | null;
   affiliateCommissionRatePercent?: number | null;
   referralDiscountAmount?: number | null;
+  loyaltyPointsPerTHB?: number | null;
 };
 
 export type UpdateProfileRequest = {

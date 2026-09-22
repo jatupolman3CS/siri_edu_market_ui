@@ -130,6 +130,40 @@ describe('NotificationBellComponent', () => {
     expect(trigger.querySelector('span.bg-pink-500')).toBeNull();
   });
 
+  it('opening the dropdown treats visible notifications as read for the current layout', () => {
+    const { fixture, feed } = buildFixture('seller');
+    feed.setPreviewItemsForTest([
+      item({ id: 'seller-a', isRead: false, audience: 'seller' }),
+      item({ id: 'buyer-a', isRead: false, audience: 'buyer' }),
+    ]);
+    feed.setUnreadByAudienceForTest({ buyer: 2, seller: 1, admin: 0 });
+    fixture.detectChanges();
+
+    const loadPreviewSpy = vi.spyOn(feed, 'loadPreview').mockImplementation(() => { /* no network in specs */ });
+    const markAllReadSpy = vi.spyOn(feed, 'markAllRead');
+
+    fixture.componentInstance.onVisibleChange(true);
+
+    expect(loadPreviewSpy).toHaveBeenCalledWith(10, 'seller');
+    expect(markAllReadSpy).toHaveBeenCalledWith('seller');
+    expect(feed.previewItems().find((i) => i.id === 'seller-a')?.isRead).toBe(true);
+    expect(feed.previewItems().find((i) => i.id === 'buyer-a')?.isRead).toBe(false);
+    expect(feed.unreadByAudience()).toEqual({ buyer: 2, seller: 0, admin: 0 });
+  });
+
+  it('opening the dropdown does not mark-read again when the current layout has no unread items', () => {
+    const { fixture, feed } = buildFixture('admin');
+    feed.setUnreadByAudienceForTest({ buyer: 2, seller: 1, admin: 0 });
+    fixture.detectChanges();
+
+    vi.spyOn(feed, 'loadPreview').mockImplementation(() => { /* no network in specs */ });
+    const markAllReadSpy = vi.spyOn(feed, 'markAllRead');
+
+    fixture.componentInstance.onVisibleChange(true);
+
+    expect(markAllReadSpy).not.toHaveBeenCalled();
+  });
+
   it('renders topbar variant with text and badge when unreadCount > 0', () => {
     const { fixture, feed } = buildFixture();
     fixture.componentRef.setInput('variant', 'topbar');
