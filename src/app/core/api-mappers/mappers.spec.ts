@@ -24,7 +24,10 @@ import {
   mapBoughtTogetherItem,
   mapAdminMlRecommendationOverview,
   mapSellerDocument,
+  mapAnnouncementAdmin,
+  mapAnnouncementPopup,
 } from './mappers';
+import { API_BASE_URL } from '../api-runtime';
 import { defaultAvatarUrl, placeholderCoverUrl } from '../brand-assets';
 import { DEFAULT_STORE_READINESS } from '../models';
 import type {
@@ -1494,5 +1497,82 @@ describe('mapSellerDocument — preview watermark flags', () => {
     expect(doc.watermarkPolicyLocked).toBe(true);
     expect(doc.previewWatermarkEnabled).toBe(true);
     expect(doc.previewWatermarkPolicyLocked).toBe(false);
+  });
+});
+
+/**
+ * announcement-popup v1 §1.2 has the backend store and return `imageUrl` verbatim, so the value
+ * the admin page once persisted — `UploadResponse.optimizedUrl`, a raw R2 URL — comes straight
+ * back out. The bucket is not publicly readable, so rendering that URL shows nothing at all; the
+ * mapper is the single point that turns it into the API's download stream, for the buyer popup
+ * and the admin list alike.
+ */
+describe('mapAnnouncementImage (via mapAnnouncementAdmin / mapAnnouncementPopup)', () => {
+  it('rewrites a stored raw R2 URL into the API download stream', () => {
+    const a = mapAnnouncementAdmin({
+      id: 'ann-1',
+      title: 'ประกาศ',
+      isEnabled: true,
+      sortOrder: 0,
+      images: [
+        {
+          id: 'img-1',
+          imageUrl: 'https://pub-abc.r2.dev/siriedumarket/announcements/ann-1/banner.webp',
+          sortOrder: 0,
+        },
+      ],
+    });
+
+    expect(a.images[0].imageUrl).toBe(
+      `${API_BASE_URL}/api/files/download/announcements/ann-1/banner.webp`,
+    );
+  });
+
+  it('re-points an `/api/...` URL built against a foreign origin at the API origin', () => {
+    const popup = mapAnnouncementPopup({
+      id: 'ann-1',
+      title: 'ประกาศ',
+      images: [
+        {
+          id: 'img-1',
+          imageUrl:
+            'https://siriedumarket.example/api/files/download/announcements/ann-1/banner.webp',
+          sortOrder: 0,
+        },
+      ],
+    });
+
+    expect(popup.images[0].imageUrl).toBe(
+      `${API_BASE_URL}/api/files/download/announcements/ann-1/banner.webp`,
+    );
+  });
+
+  it('leaves an already-correct download URL alone and keeps the other fields', () => {
+    const url = `${API_BASE_URL}/api/files/download/announcements/ann-1/banner.webp`;
+    const popup = mapAnnouncementPopup({
+      id: 'ann-1',
+      title: 'ประกาศ',
+      images: [
+        { id: 'img-1', imageUrl: url, linkUrl: '/promo', altText: 'แบนเนอร์', sortOrder: 2 },
+      ],
+    });
+
+    expect(popup.images[0]).toEqual({
+      id: 'img-1',
+      imageUrl: url,
+      linkUrl: '/promo',
+      altText: 'แบนเนอร์',
+      sortOrder: 2,
+    });
+  });
+
+  it('keeps an empty `imageUrl` empty so the `appImgFallback` default still applies', () => {
+    const popup = mapAnnouncementPopup({
+      id: 'ann-1',
+      title: 'ประกาศ',
+      images: [{ id: 'img-1', imageUrl: '', sortOrder: 0 }],
+    });
+
+    expect(popup.images[0].imageUrl).toBe('');
   });
 });

@@ -81,6 +81,13 @@ const PRESIGNED_FILE_PATH = '/api/files/presigned/';
  * help — these URLs are absolute and cross-origin, so they never entered the dev server's
  * proxy — and it is gone rather than left looking load-bearing.
  */
+/**
+ * True when nothing told us where the API is and `defaultApiBaseUrl` fell back to
+ * `http://localhost` — no override, no `environment.apiUrl`, no `window.location` (SSR / a
+ * bare Node context). That value is a guess, so it is not allowed to re-point anything.
+ */
+let _apiBaseUrlIsBlindFallback = false;
+
 function defaultApiBaseUrl(): string {
   const w = globalThis as unknown as { __SIRIEDU_API_BASE_URL__?: unknown } & {
     location?: Location;
@@ -95,10 +102,62 @@ function defaultApiBaseUrl(): string {
   if (origin) return origin;
 
   // `window.location` is unavailable (SSR / unit tests).
+  _apiBaseUrlIsBlindFallback = true;
   return 'http://localhost';
 }
 
 export const API_BASE_URL = defaultApiBaseUrl();
+
+/**
+ * The origin of `API_BASE_URL`, resolved once, or `null` when there is no origin worth trusting:
+ * a relatively-configured `environment.apiUrl` (not absolute, so unparseable on its own), or the
+ * blind `http://localhost` fallback taken when `window` is absent. In both cases the repair in
+ * `repairForeignApiOriginUrl` is skipped entirely rather than guessing at a host.
+ */
+const API_ORIGIN: string | null = (() => {
+  if (_apiBaseUrlIsBlindFallback) return null;
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return null;
+  }
+})();
+
+/** Every URL the API serves lives under this path (`docs/contracts/remove-api-path-base.md`). */
+const API_PATH_PREFIX = '/api/';
+
+/**
+ * Re-point an `/api/...` URL that the API built against the wrong origin.
+ *
+ * `Api:PublicBaseUrl` on the backend is prepended to every public file URL (covers, gallery
+ * images, preview rasters). Pointing it at the *web* origin in a split-origin deployment —
+ * where the SPA host serves only static files and does not proxy `/api/` — makes every one of
+ * those URLs 404 with an HTML body, i.e. no image anywhere in the app, for every role, with no
+ * error to diagnose. The frontend already knows where its API lives, so it can repair the URL.
+ *
+ * Deliberately narrow:
+ * - only paths under `/api/`, which cannot be served by anything but the API;
+ * - only when the origin actually differs — in a single-origin deployment (nginx proxying
+ *   `/api/` to the backend container) the origins are equal and this is a no-op;
+ * - never touches other absolute URLs (CDN images, external links; raw R2 URLs are already
+ *   handled by `resolveR2AssetUrl` before this runs).
+ *
+ * Returns `null` when nothing should change, including for an unparseable URL — a bad URL is
+ * returned to the caller as-is rather than throwing out of an `<img src>` binding.
+ */
+function repairForeignApiOriginUrl(raw: string): string | null {
+  if (!API_ORIGIN) return null;
+
+  try {
+    const parsed = new URL(raw);
+    if (!parsed.pathname.startsWith(API_PATH_PREFIX)) return null;
+    if (parsed.origin === API_ORIGIN) return null;
+
+    return `${API_BASE_URL}${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Resolve a relative API path to an absolute URL.
@@ -184,7 +243,9 @@ export function resolvePublicUrl(url: string | null | undefined): string {
   const r2AssetUrl = resolveR2AssetUrl(raw);
   if (r2AssetUrl) return r2AssetUrl;
 
-  if (/^https?:\/\//i.test(raw)) return raw;
+  // An absolute URL is authoritative — except for an `/api/...` one aimed at an origin that is
+  // not the API's (see `repairForeignApiOriginUrl`), which no browser could ever load.
+  if (/^https?:\/\//i.test(raw)) return repairForeignApiOriginUrl(raw) ?? raw;
 
   // Common case: `/api/...` or `api/...`
   if (raw.startsWith('/')) return `${API_BASE_URL}${raw}`;

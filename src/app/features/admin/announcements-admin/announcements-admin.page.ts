@@ -194,8 +194,16 @@ export class AnnouncementsAdminPage {
   /**
    * §4: "เพิ่มรูป" is the only image-related action button — it both picks file(s) and uploads
    * them (reusing `SellerService.uploadFile`, the one upload endpoint used across the whole admin
-   * area), appending a completed row per file. `imageUrl` is `optimizedUrl ?? downloadUrlForStorageKey(key)`
-   * stored verbatim (§1.2) — never `publicUrl` directly.
+   * area), appending a completed row per file.
+   *
+   * §1.2 has the backend store this string verbatim, so what is chosen here is exactly what every
+   * reader gets back. `UploadResponse.optimizedUrl`/`publicUrl` are raw R2 URLs and the bucket is
+   * not publicly readable, so persisting one wrote a permanently unloadable `<img src>` into the
+   * database; the storage key goes through `downloadUrlForStorageKey` instead, which is the
+   * anonymous `/api/files/download/{key}` stream the rest of the app renders. The optimised object
+   * is still preferred (§1.2's reason — the popup must load fast) via `optimizedKey`, which is the
+   * same object as `optimizedUrl`, only addressed by key. Rows written before this still render:
+   * `mapAnnouncementImage` rewrites a stored raw R2 URL on the way out.
    */
   async onAddImageFiles(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
@@ -209,7 +217,7 @@ export class AnnouncementsAdminPage {
         if (this.formImages().length >= MAX_IMAGES) break;
         try {
           const data = await this.seller.uploadFile(file);
-          const imageUrl = data.optimizedUrl ?? downloadUrlForStorageKey(data.key);
+          const imageUrl = downloadUrlForStorageKey(data.optimizedKey ?? data.key);
           this.formImages.update((rows) => [
             ...rows,
             { key: crypto.randomUUID(), id: null, imageUrl, linkUrl: '', altText: '' },

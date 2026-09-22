@@ -6,10 +6,10 @@ import type { SubscriptionAccessHistoryItem } from '../../../core/models';
 
 /**
  * subscription-membership v2 §1 AC-24 / §3.6 / §4: "/account/subscription/access-history" —
- * paginated list with "ยังเข้าถึงได้"/"หมดสิทธิ์แล้ว" badge per `stillAccessible`. Round 1:
- * `SubscriptionService.accessHistory()` always resolves to an empty page (stub) — the empty
- * state branch is what round 1 can actually exercise for real; the populated-list branch is
- * driven here via a faked service, matching how round 2 (SDK wired) will populate it.
+ * paginated list with "ยังเข้าถึงได้"/"หมดสิทธิ์แล้ว" badge per `stillAccessible`. Both branches
+ * are driven here through a faked `SubscriptionService`, so this is a unit test of the page's
+ * empty/populated wiring; the real service (wired to `GET /api/me/subscription/access-history`,
+ * `coverUrl` resolved by `mapSubscriptionAccessHistoryItem`) is covered by its own specs.
  */
 
 function buildItem(over: Partial<SubscriptionAccessHistoryItem> = {}): SubscriptionAccessHistoryItem {

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AnnouncementPopupService } from './announcement-popup.service';
+import { API_BASE_URL } from '../api-runtime';
 import type { AnnouncementPopup } from '../models';
 
 /**
@@ -263,6 +264,39 @@ describe('AnnouncementPopupService — fetchActive() wiring (announcement-popup 
     const requestUrl =
       firstCallInput instanceof Request ? firstCallInput.url : String(firstCallInput);
     expect(new URL(requestUrl).pathname).toBe('/api/announcements/active');
+  });
+
+  /**
+   * §1.2 stores `imageUrl` verbatim, and the admin page used to persist
+   * `UploadResponse.optimizedUrl` — a raw R2 URL on a bucket that is not publicly readable, so
+   * the popup rendered an empty box. The mapper turns it into the API's download stream, which
+   * is what makes already-stored rows show up without a data migration.
+   */
+  it('rewrites a stored raw R2 image URL into the API download stream', async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse([
+        {
+          id: 'ann-1',
+          title: 'ประกาศทดสอบ',
+          images: [
+            {
+              id: 'img-1',
+              imageUrl: 'https://pub-abc.r2.dev/siriedumarket/announcements/ann-1/banner.webp',
+              linkUrl: null,
+              altText: null,
+              sortOrder: 0,
+            },
+          ],
+        },
+      ]),
+    ) as unknown as typeof globalThis.fetch;
+    const service = buildService();
+
+    await service.initialize();
+
+    expect(service.current()?.images[0].imageUrl).toBe(
+      `${API_BASE_URL}/api/files/download/announcements/ann-1/banner.webp`,
+    );
   });
 
   it('degrades to an empty (never-throwing) queue when the network call fails', async () => {

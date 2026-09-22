@@ -141,6 +141,109 @@ describe('resolveApiUrl / resolvePublicUrl (AC-13)', () => {
     expect(url).toContain('filename=myfile.pdf');
   });
 
+  /**
+   * Production incident: `Api:PublicBaseUrl` pointed at the *web* origin, so the API handed out
+   * `https://siriedumarket.../api/files/download/<key>.jpg` — a host that serves only static
+   * files and 404s every `/api/` path. Covers, gallery images and previews were blank for every
+   * role while the very same objects answered 200 on the API host. The frontend knows where its
+   * API is, so an `/api/...` URL from a foreign origin is re-pointed instead of shown broken.
+   */
+  describe('foreign-origin /api/ URLs', () => {
+    it('re-points an absolute /api/ URL from another origin at the API base', async () => {
+      const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({
+        apiUrl: 'https://api-siriedumarket.test',
+      });
+
+      expect(
+        resolvePublicUrl('https://siriedumarket.test/api/files/download/covers/a.jpg'),
+      ).toBe(`${API_BASE_URL}/api/files/download/covers/a.jpg`);
+    });
+
+    it('keeps the query string and hash of a re-pointed URL', async () => {
+      const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({
+        apiUrl: 'https://api-siriedumarket.test',
+      });
+
+      expect(
+        resolvePublicUrl('https://siriedumarket.test/api/files/download/a.jpg?v=2&inline=true#p1'),
+      ).toBe(`${API_BASE_URL}/api/files/download/a.jpg?v=2&inline=true#p1`);
+    });
+
+    it('leaves an /api/ URL already on the API origin untouched (single-origin nginx deploy)', async () => {
+      const { resolvePublicUrl } = await loadApiRuntime({ apiUrl: 'https://api-siriedumarket.test' });
+
+      const sameOrigin = 'https://api-siriedumarket.test/api/files/download/covers/a.jpg';
+      expect(resolvePublicUrl(sameOrigin)).toBe(sameOrigin);
+    });
+
+    it('leaves a non-/api/ absolute URL on a foreign origin untouched (CDN, external links)', async () => {
+      const { resolvePublicUrl } = await loadApiRuntime({ apiUrl: 'https://api-siriedumarket.test' });
+
+      expect(resolvePublicUrl('https://cdn.example.com/api-docs/x.png')).toBe(
+        'https://cdn.example.com/api-docs/x.png',
+      );
+      expect(resolvePublicUrl('https://siriedumarket.test/assets/logo.svg')).toBe(
+        'https://siriedumarket.test/assets/logo.svg',
+      );
+    });
+
+    it('still resolves a relative /api/ path against the base URL', async () => {
+      const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({
+        apiUrl: 'https://api-siriedumarket.test',
+      });
+
+      expect(resolvePublicUrl('/api/files/download/covers/a.jpg')).toBe(
+        `${API_BASE_URL}/api/files/download/covers/a.jpg`,
+      );
+    });
+
+    it('still sends a raw R2 URL down the resolveR2AssetUrl branch', async () => {
+      const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({
+        apiUrl: 'https://api-siriedumarket.test',
+      });
+
+      expect(
+        resolvePublicUrl('https://acc123.r2.cloudflarestorage.com/siriedumarket/docs/orig.pdf?X-Amz-Signature=1'),
+      ).toBe(`${API_BASE_URL}/api/files/download/docs/orig.pdf`);
+    });
+
+    it('returns a malformed URL unchanged instead of throwing', async () => {
+      const { resolvePublicUrl } = await loadApiRuntime({ apiUrl: 'https://api-siriedumarket.test' });
+
+      expect(() => resolvePublicUrl('https://')).not.toThrow();
+      expect(resolvePublicUrl('https://')).toBe('https://');
+      expect(resolvePublicUrl('http://[oops/api/files/download/a.jpg')).toBe(
+        'http://[oops/api/files/download/a.jpg',
+      );
+    });
+
+    it('never re-points when the base URL is the blind fallback (no window, no apiUrl)', async () => {
+      const { API_BASE_URL, resolvePublicUrl } = await loadApiRuntime({ apiUrl: '', origin: null });
+
+      expect(API_BASE_URL).toBe('http://localhost');
+      // Nothing said where the API is, so `http://localhost` is a guess — rewriting a perfectly
+      // good production URL onto it would be strictly worse than leaving it alone.
+      const absolute = 'https://siriedumarket.test/api/files/download/covers/a.jpg';
+      expect(resolvePublicUrl(absolute)).toBe(absolute);
+    });
+
+    it('resolveDownloadUrl inherits the repair and still appends the token', async () => {
+      const { API_BASE_URL, resolveDownloadUrl } = await loadApiRuntime({
+        apiUrl: 'https://api-siriedumarket.test',
+      });
+
+      const url = resolveDownloadUrl(
+        'https://siriedumarket.test/api/files/download/docs/orig.pdf',
+        'my.jwt.token',
+      );
+      expect(url).toContain(`${API_BASE_URL}/api/files/download/docs/orig.pdf`);
+      // The web origin is a prefix-free check: `api-siriedumarket.test` contains the web host
+      // as a substring, so assert on where the URL actually points instead.
+      expect(url.startsWith('https://siriedumarket.test/')).toBe(false);
+      expect(url).toContain('token=my.jwt.token');
+    });
+  });
+
   it('resolves download URL from an R2 presigned URL with token attached', async () => {
     const { API_BASE_URL, resolveDownloadUrl } = await loadApiRuntime({
       apiUrl: 'http://localhost:5282',

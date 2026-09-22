@@ -290,7 +290,13 @@ describe('AnnouncementsAdminPage (announcement-popup v1 §4 — AC-26)', () => {
     expect(request.images.every((img) => img.linkUrl === null && img.altText === null)).toBe(true);
   });
 
-  it('onAddImageFiles uploads through SellerService and appends a row using optimizedUrl over the raw key', async () => {
+  /**
+   * §1.2 stores this string verbatim, so whatever lands in the row is what every reader renders
+   * forever. `optimizedUrl`/`publicUrl` are raw R2 URLs on a bucket that is not publicly
+   * readable, so they must never be persisted — the optimised object is still preferred, but
+   * addressed by key through the API's download stream.
+   */
+  it('onAddImageFiles persists the optimised object as an API download URL, not the raw R2 one', async () => {
     const uploadFile = vi.fn(
       async (): Promise<UploadResponse> => ({
         key: 'announcements/1.jpg',
@@ -308,10 +314,13 @@ describe('AnnouncementsAdminPage (announcement-popup v1 §4 — AC-26)', () => {
 
     expect(uploadFile).toHaveBeenCalledWith(file);
     expect(page.formImages().length).toBe(1);
-    expect(page.formImages()[0].imageUrl).toBe('https://cdn.example.com/optimized-1.jpg');
+    expect(page.formImages()[0].imageUrl).toBe(
+      downloadUrlForStorageKey('announcements/1-opt.jpg'),
+    );
+    expect(page.formImages()[0].imageUrl).not.toContain('cdn.example.com');
   });
 
-  it('onAddImageFiles falls back to downloadUrlForStorageKey(key) when optimizedUrl is null (§1.2)', async () => {
+  it('onAddImageFiles falls back to the original key when there is no optimised object (§1.2)', async () => {
     const uploadFile = vi.fn(
       async (): Promise<UploadResponse> => ({
         key: 'announcements/2.jpg',
@@ -328,6 +337,28 @@ describe('AnnouncementsAdminPage (announcement-popup v1 §4 — AC-26)', () => {
     await page.onAddImageFiles(buildFileEvent([file]));
 
     expect(page.formImages()[0].imageUrl).toBe(downloadUrlForStorageKey('announcements/2.jpg'));
+  });
+
+  it('the uploaded URL is what save() sends to the API', async () => {
+    const uploadFile = vi.fn(
+      async (): Promise<UploadResponse> => ({
+        key: 'announcements/3.jpg',
+        publicUrl: 'https://cdn.example.com/original-3.jpg',
+        eTag: 'etag-3',
+        optimizedKey: 'announcements/3-opt.jpg',
+        optimizedUrl: 'https://cdn.example.com/optimized-3.jpg',
+      }),
+    );
+    const { page, admin } = renderPage(uploadFile);
+    const createSpy = vi.spyOn(admin, 'createAnnouncement').mockResolvedValue(null);
+    page.openCreate();
+    page.formTitle.set('ประกาศใหม่');
+
+    await page.onAddImageFiles(buildFileEvent([new File(['x'], 'p.jpg', { type: 'image/jpeg' })]));
+    await page.save();
+
+    const [request] = createSpy.mock.calls[0];
+    expect(request.images[0].imageUrl).toBe(downloadUrlForStorageKey('announcements/3-opt.jpg'));
   });
 
   it('onAddImageFiles stops uploading once the 10-image cap is reached', async () => {

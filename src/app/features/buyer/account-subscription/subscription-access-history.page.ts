@@ -10,8 +10,10 @@ import { TranslatePipe } from '../../../core/i18n';
 /**
  * subscription-membership v2 §1 AC-24 / §4: "/account/subscription/access-history" — paginated
  * list of documents accessed via subscription, badge "ยังเข้าถึงได้"/"หมดสิทธิ์แล้ว" per
- * `stillAccessible`. Round 1: `SubscriptionService.accessHistory()` always resolves to an empty
- * page (stub) — see `SubscriptionService`'s class doc.
+ * `stillAccessible`. `SubscriptionService.accessHistory()` is wired to the real
+ * `GET /api/me/subscription/access-history` (the round-1 stub is long gone), and `item.coverUrl`
+ * is already resolved by `mapSubscriptionAccessHistoryItem` via `resolveCoverUrl`, so the
+ * template binds it directly.
  */
 @Component({
   selector: 'app-buyer-subscription-access-history',

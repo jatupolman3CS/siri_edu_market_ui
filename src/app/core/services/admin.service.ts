@@ -455,7 +455,12 @@ function toAdminUserRow(res: AdminUserListItemResponse): AdminUserRow {
     id: res.id,
     displayName: res.displayName,
     email: res.email,
-    avatarUrl: res.avatarUrl ?? null,
+    // The API builds this with `IPublicFileUrlBuilder`, so it carries whatever `Api:PublicBaseUrl`
+    // is set to — the web origin in a split-origin deployment, where `/api/` is not proxied and the
+    // URL 404s. `resolveAvatarUrl` re-points those at the real API origin (and turns a raw R2 URL
+    // into the `/api/files/download/` stream), falling back to the shipped default avatar for a
+    // user who has none — the same treatment every non-admin screen already gives an avatar.
+    avatarUrl: resolveAvatarUrl(res.avatarUrl),
     roles: res.roles ?? [],
     studioName: res.studioName ?? null,
     isEmailVerified: res.isEmailVerified,
@@ -519,7 +524,8 @@ function toAdminUserDetail(res: AdminUserDetailResponse): AdminUserDetail {
     id: res.id,
     displayName: res.displayName,
     email: res.email,
-    avatarUrl: res.avatarUrl ?? null,
+    // Same resolution as `toAdminUserRow` — see the note there.
+    avatarUrl: resolveAvatarUrl(res.avatarUrl),
     roles: res.roles ?? [],
     studioName: res.studioName ?? null,
     isEmailVerified: res.isEmailVerified,
@@ -553,6 +559,7 @@ import {
   mapWalletEntry,
   mapAdminMlRecommendationOverview,
 } from '../api-mappers/mappers';
+import { resolveAvatarUrl } from '../brand-assets';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { TranslationService } from '../i18n/translation.service';
@@ -813,7 +820,8 @@ export class AdminService {
             studioName: s.studioName ?? '',
             ownerName: s.ownerName ?? '',
             email: s.email ?? '',
-            avatarUrl: s.avatarUrl ?? null,
+            // Same resolution as `toAdminUserRow` — see the note there.
+            avatarUrl: resolveAvatarUrl(s.avatarUrl),
             isVerified: s.isVerified ?? false,
             totalDocuments: s.totalDocuments ?? 0,
             totalSales: s.totalSales ?? 0,

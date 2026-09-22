@@ -305,7 +305,13 @@ export function mapSubcategoryAdmin(s: SubcategoryAdminResponse): SubcategoryAdm
 function mapAnnouncementImage(i: AnnouncementImageResponse): AnnouncementImage {
   return {
     id: i.id ?? '',
-    imageUrl: i.imageUrl ?? '',
+    // §1.2 has the backend store and return this string verbatim, so whatever the admin page
+    // persisted is exactly what arrives here — including rows written before the upload path
+    // stopped persisting `UploadResponse.optimizedUrl`, i.e. a raw R2 URL that no browser can
+    // load (the bucket is not public). `resolvePublicUrl` rewrites those into the API's
+    // `/api/files/download/` stream and re-points an `/api/...` URL built against a foreign
+    // origin, which fixes both stored and newly-written rows for the popup and the admin list.
+    imageUrl: resolvePublicUrl(i.imageUrl),
     linkUrl: i.linkUrl ?? null,
     altText: i.altText ?? null,
     sortOrder: i.sortOrder ?? 0,

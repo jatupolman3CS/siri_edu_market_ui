@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { AdminService } from './admin.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { API_BASE_URL } from '../api-runtime';
+import { defaultAvatarUrl } from '../brand-assets';
 
 /**
  * subcategory-admin-crud v1 (docs/contracts/subcategory-admin-crud.md §3-4). These specs drive
@@ -612,7 +614,9 @@ describe('AdminService — admin user management (admin-user-management v2 §3.1
           id: 'user-1',
           displayName: 'สมชาย ใจดี',
           email: 'somchai@example.com',
-          avatarUrl: null,
+          // Not a pass-through any more: an absent avatar resolves to the shipped default, the
+          // same one every non-admin screen shows (see the avatar-resolution cases below).
+          avatarUrl: defaultAvatarUrl(),
           roles: ['buyer', 'seller'],
           studioName: null,
           isEmailVerified: true,
@@ -826,6 +830,120 @@ describe('AdminService — admin user management (admin-user-management v2 §3.1
 
     await expect(admin.banUser('user-1', { reason: 'ซ้ำ' })).rejects.toBeTruthy();
     expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * The API builds `avatarUrl` with `IPublicFileUrlBuilder`, i.e. against `Api:PublicBaseUrl`.
+   * Point that at the web origin — which serves the SPA and does not proxy `/api/` — and every
+   * avatar 404s. These pin the mapper (not the three admin templates) as the place that repairs it.
+   */
+  describe('avatar URL resolution', () => {
+    const FOREIGN = 'https://siriedumarket.example/api/files/download/avatars/user-1.webp';
+    const REPOINTED = `${API_BASE_URL}/api/files/download/avatars/user-1.webp`;
+
+    it('re-points a list avatar built against a foreign origin at the API origin', async () => {
+      stubRoute('GET', '/api/admin/users', {
+        body: {
+          items: [listItem({ avatarUrl: FOREIGN })],
+          page: 1,
+          pageSize: 20,
+          totalCount: 1,
+          totalPages: 1,
+        },
+      });
+      const admin = buildService();
+
+      const result = await admin.searchUsers({ page: 1, pageSize: 20 });
+
+      expect(result.items![0].avatarUrl).toBe(REPOINTED);
+    });
+
+    it('re-points the detail avatar the same way', async () => {
+      stubRoute('GET', '/api/admin/users/user-1', { body: detail({ avatarUrl: FOREIGN }) });
+      const admin = buildService();
+
+      const user = await admin.getUser('user-1');
+
+      expect(user.avatarUrl).toBe(REPOINTED);
+    });
+
+    it('rewrites a raw R2 avatar URL into the API download stream', async () => {
+      stubRoute('GET', '/api/admin/users/user-1', {
+        body: detail({
+          avatarUrl: 'https://pub-abc.r2.dev/siriedumarket/avatars/user-1.webp',
+        }),
+      });
+      const admin = buildService();
+
+      const user = await admin.getUser('user-1');
+
+      expect(user.avatarUrl).toBe(`${API_BASE_URL}/api/files/download/avatars/user-1.webp`);
+    });
+
+    it('falls back to the shipped default avatar when the user has none', async () => {
+      stubRoute('GET', '/api/admin/users', {
+        body: {
+          items: [listItem({ avatarUrl: null }), listItem({ id: 'user-2', avatarUrl: '' })],
+          page: 1,
+          pageSize: 20,
+          totalCount: 2,
+          totalPages: 1,
+        },
+      });
+      stubRoute('GET', '/api/admin/users/user-1', { body: detail({ avatarUrl: null }) });
+      const admin = buildService();
+
+      const result = await admin.searchUsers({ page: 1, pageSize: 20 });
+      const user = await admin.getUser('user-1');
+
+      expect(result.items![0].avatarUrl).toBe(defaultAvatarUrl());
+      expect(result.items![1].avatarUrl).toBe(defaultAvatarUrl());
+      expect(user.avatarUrl).toBe(defaultAvatarUrl());
+    });
+  });
+});
+
+/** Same repair for the seller directory's avatars, which come from the same URL builder. */
+describe('AdminService — searchSellers avatar resolution', () => {
+  function sellerRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      id: 'seller-1',
+      studioName: 'ร้านครูใจดี',
+      ownerName: 'สมชาย ใจดี',
+      email: 'somchai@example.com',
+      avatarUrl: null,
+      isVerified: true,
+      totalDocuments: 12,
+      totalSales: 340,
+      totalRevenue: 15000,
+      joinedAt: '2026-01-15T00:00:00.0000000Z',
+      ...overrides,
+    };
+  }
+
+  it('re-points a foreign-origin avatar and defaults a missing one', async () => {
+    stubRoute('GET', '/api/admin/sellers', {
+      body: {
+        items: [
+          sellerRow({
+            avatarUrl: 'https://siriedumarket.example/api/files/download/avatars/seller-1.webp',
+          }),
+          sellerRow({ id: 'seller-2', avatarUrl: null }),
+        ],
+        page: 1,
+        pageSize: 20,
+        totalCount: 2,
+        totalPages: 1,
+      },
+    });
+    const admin = buildService();
+
+    const result = await admin.searchSellers({ page: 1, pageSize: 20 });
+
+    expect(result.items![0].avatarUrl).toBe(
+      `${API_BASE_URL}/api/files/download/avatars/seller-1.webp`,
+    );
+    expect(result.items![1].avatarUrl).toBe(defaultAvatarUrl());
   });
 });
 
