@@ -1039,3 +1039,105 @@ describe('CatalogService — loadBoughtTogether (ml-embedding-recommendations v1
   });
 });
 
+
+/**
+ * preview-pdf-error-shape-and-watermark-template-length v1 §1.3 / AC-09 / AC-10.
+ *
+ * `loadDocumentPreviewPdf` used to `return result.data as unknown as Blob` no matter what, so a
+ * failure surfaced as `undefined` and only exploded later inside `URL.createObjectURL` — every
+ * cause collapsed into one anonymous catch. These lock in that the reason survives the call.
+ *
+ * The reason comes from the HTTP status on purpose: the server sends `{ "error": "..." }`, not
+ * ProblemDetails, so `extractErrorCode()` (which looks for `code`) can never see it (§3.1).
+ */
+describe('CatalogService — loadDocumentPreviewPdf failure reasons (preview-pdf-error-shape v1 §4.1)', () => {
+  /** Replaces the shared JSON stub: this endpoint answers a PDF stream on success. */
+  function stubPreviewPdfResponse(response: Response): void {
+    globalThis.fetch = vi.fn(async () => response.clone()) as typeof globalThis.fetch;
+  }
+
+  it('returns the Blob when the server streams a PDF', async () => {
+    // A string body, not a Blob: this environment's Response constructor stringifies a Blob
+    // body to "[object Blob]". The client reads `application/pdf` and calls `.blob()` anyway,
+    // which is the behaviour under test.
+    stubPreviewPdfResponse(
+      new Response('%PDF-1.7 pretend-stream', {
+        status: 200,
+        headers: { 'Content-Type': 'application/pdf' },
+      }),
+    );
+    const catalog = buildService();
+
+    const blob = await catalog.loadDocumentPreviewPdf('doc-1');
+
+    expect(blob).toBeInstanceOf(Blob);
+    expect(await blob.text()).toBe('%PDF-1.7 pretend-stream');
+  });
+
+  it('throws reason "not_a_pdf_document" on 400 — the case the JPEG fallback exists for', async () => {
+    stubPreviewPdfResponse(
+      new Response(JSON.stringify({ error: 'not_a_pdf_document' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const catalog = buildService();
+
+    await expect(catalog.loadDocumentPreviewPdf('doc-1')).rejects.toMatchObject({
+      reason: 'not_a_pdf_document',
+      status: 400,
+    });
+  });
+
+  it('throws reason "not_found" on 404 even though that response carries no body at all', async () => {
+    stubPreviewPdfResponse(new Response(null, { status: 404 }));
+    const catalog = buildService();
+
+    await expect(catalog.loadDocumentPreviewPdf('doc-1')).rejects.toMatchObject({
+      reason: 'not_found',
+      status: 404,
+    });
+  });
+
+  it('throws reason "render_failed" on 500', async () => {
+    stubPreviewPdfResponse(
+      new Response(JSON.stringify({ error: 'preview_render_failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const catalog = buildService();
+
+    await expect(catalog.loadDocumentPreviewPdf('doc-1')).rejects.toMatchObject({
+      reason: 'render_failed',
+      status: 500,
+    });
+  });
+
+  it('throws reason "unknown" for a status nobody planned for (e.g. the old empty 406)', async () => {
+    stubPreviewPdfResponse(new Response(null, { status: 406 }));
+    const catalog = buildService();
+
+    await expect(catalog.loadDocumentPreviewPdf('doc-1')).rejects.toMatchObject({
+      reason: 'unknown',
+      status: 406,
+    });
+  });
+
+  it('does not report through ApiFailureReporter — the page owns how this is shown (§4.1)', async () => {
+    stubPreviewPdfResponse(
+      new Response(JSON.stringify({ error: 'not_a_pdf_document' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [CatalogService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const catalog = TestBed.inject(CatalogService);
+
+    await expect(catalog.loadDocumentPreviewPdf('doc-1')).rejects.toBeDefined();
+    expect(report).not.toHaveBeenCalled();
+  });
+});

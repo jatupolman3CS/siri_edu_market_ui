@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { of } from 'rxjs';
 import { BuyerDocumentDetailPage } from './document-detail.page';
 import {
@@ -12,6 +13,7 @@ import {
   FollowService,
   LibraryService,
   NavigationSourceService,
+  PreviewPdfError,
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
@@ -1310,3 +1312,122 @@ describe('BuyerDocumentDetailPage — review counts & labels', () => {
   });
 });
 
+
+/**
+ * preview-pdf-error-shape-and-watermark-template-length v1 §4.2 — AC-09 / AC-10.
+ *
+ * The server used to answer the non-PDF case with an empty 406, so `openPreview` could only ever
+ * show one red toast and the JPEG fallback that pdf-preview-popup-and-i18n-fix v1 §3 designed had
+ * never run in production. It now answers 400, which CatalogService surfaces as
+ * `PreviewPdfError('not_a_pdf_document')` — and only that reason falls back.
+ */
+describe('BuyerDocumentDetailPage — preview-pdf failure fallback (preview-pdf-error-shape v1 §4.2)', () => {
+  function renderWithPreviewPdfFailure(
+    previewPdfError: unknown,
+    previewImageUrls: string[] = ['https://cdn.test/p1.jpg', 'https://cdn.test/p2.jpg'],
+  ) {
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
+    const message = {
+      info: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+      success: vi.fn(),
+      remove: vi.fn(),
+    };
+    const catalog = {
+      ...buildCatalog(doc),
+      loadDocumentPreviewPdf: vi.fn(async () => {
+        throw previewPdfError;
+      }),
+      loadDocumentPreview: vi.fn(async () => ({ excerptLines: [], previewImageUrls })),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: catalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: fakeBundleService },
+        { provide: NzMessageService, useValue: message },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, catalog, message };
+  }
+
+  it('AC-09: a 400 ("not a PDF") opens the JPEG raster gallery instead of only complaining', async () => {
+    const { fixture, catalog, message } = renderWithPreviewPdfFailure(
+      new PreviewPdfError('not_a_pdf_document', 400),
+    );
+
+    // The page loads the preview payload once on init (preview tab), so the gallery being
+    // *opened* — not the payload being fetched — is what proves the fallback ran.
+    expect(fixture.componentInstance.showPreviewGallery()).toBe(false);
+
+    fixture.componentInstance.openPreview(true);
+    await settle();
+    fixture.detectChanges();
+
+    expect(catalog.loadDocumentPreviewPdf).toHaveBeenCalled();
+    expect(fixture.componentInstance.showPreviewGallery()).toBe(true);
+    expect(fixture.componentInstance.previewRasterUrls().length).toBe(2);
+    expect(message.error).not.toHaveBeenCalled();
+  });
+
+  it('AC-09: shows the Thai "opening the image preview instead" info toast, not a red error', async () => {
+    const { fixture, message } = renderWithPreviewPdfFailure(
+      new PreviewPdfError('not_a_pdf_document', 400),
+    );
+
+    fixture.componentInstance.openPreview(true);
+    await settle();
+
+    expect(message.info).toHaveBeenCalledWith(
+      'ไฟล์นี้ไม่ใช่ PDF จึงดูตัวอย่างแบบ PDF ไม่ได้ กำลังเปิดตัวอย่างแบบรูปภาพแทน',
+    );
+  });
+
+  it('AC-10: a 500 (render failed) keeps the original error toast and does not fall back', async () => {
+    const { fixture, message } = renderWithPreviewPdfFailure(new PreviewPdfError('render_failed', 500));
+
+    fixture.componentInstance.openPreview(true);
+    await settle();
+
+    expect(message.error).toHaveBeenCalledWith('เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร');
+    expect(message.info).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.showPreviewGallery()).toBe(false);
+  });
+
+  it('AC-10: a 404 keeps the original error toast', async () => {
+    const { fixture, message } = renderWithPreviewPdfFailure(new PreviewPdfError('not_found', 404));
+
+    fixture.componentInstance.openPreview(true);
+    await settle();
+
+    expect(message.error).toHaveBeenCalledWith('เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร');
+    expect(message.info).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.showPreviewGallery()).toBe(false);
+  });
+
+  it('AC-10: a network failure (not a PreviewPdfError at all) keeps the original error toast', async () => {
+    const { fixture, message } = renderWithPreviewPdfFailure(new TypeError('Failed to fetch'));
+
+    fixture.componentInstance.openPreview(true);
+    await settle();
+
+    expect(message.error).toHaveBeenCalledWith('เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร');
+    expect(message.info).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.showPreviewGallery()).toBe(false);
+  });
+});

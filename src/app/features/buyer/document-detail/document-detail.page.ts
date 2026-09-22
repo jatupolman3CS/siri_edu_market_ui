@@ -28,6 +28,7 @@ import {
   WishlistService,
   calcBundleSaveAmount,
   calcBundleSavePercent,
+  PreviewPdfError,
   idleActionState,
   loadingActionState,
   type ActionState,
@@ -504,7 +505,19 @@ export class BuyerDocumentDetailPage {
           const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
           this.previewPdfUrl.set(safeUrl);
           this.showPdfPreviewModal.set(true);
-        } catch {
+        } catch (err) {
+          // preview-pdf-error-shape-and-watermark-template-length v1 §4.2: the server used to
+          // answer 406 with an empty body for a non-PDF file, so every failure landed here as one
+          // undifferentiated red toast and the JPEG fallback designed in
+          // pdf-preview-popup-and-i18n-fix v1 §3 never actually ran. It now answers 400, which
+          // CatalogService turns into `reason === 'not_a_pdf_document'` — so fall back to the
+          // raster gallery instead of just complaining. Every other reason keeps the old toast.
+          if (err instanceof PreviewPdfError && err.reason === 'not_a_pdf_document') {
+            this.message.info(this.translation.t('product.previewPdfUnavailableFallback'));
+            // `finally` below still clears previewPdfLoading before the raster load resolves.
+            this.openRasterGallery(id, d, forceModal);
+            return;
+          }
           this.message.error(this.translation.t('product.downloadError'));
         } finally {
           this.previewPdfLoading.set(false);
@@ -516,6 +529,15 @@ export class BuyerDocumentDetailPage {
       return;
     }
 
+    this.openRasterGallery(id, d, forceModal);
+  }
+
+  /**
+   * The JPEG raster preview path, lifted verbatim out of {@link openPreview} so the PDF branch
+   * can fall back into it without duplicating a line
+   * (preview-pdf-error-shape-and-watermark-template-length v1 §4.2).
+   */
+  private openRasterGallery(id: string, d: DocumentItem, forceModal: boolean): void {
     const existingRaster = this.previewRasterUrls();
     if (existingRaster.length > 0) {
       if (forceModal) {

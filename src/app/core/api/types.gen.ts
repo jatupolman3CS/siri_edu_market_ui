@@ -6456,7 +6456,7 @@ export type GetApiMarketplaceDocumentsByIdPreviewPdfErrors = {
   /**
    * Internal Server Error
    */
-  500: Blob | File;
+  500: unknown;
 };
 
 export type GetApiMarketplaceDocumentsByIdPreviewPdfError =

@@ -658,4 +658,44 @@ describe('WatermarkEditorPage', () => {
       }
     });
   });
+
+  /**
+   * preview-pdf-error-shape-and-watermark-template-length v1 §4.4 — AC-18.
+   *
+   * The DTO has said `[MaxLength(512)]` all along while the column was `varchar(256)` and the
+   * textarea had no limit at all, so a seller could type 300 characters, save, and get a 500 out
+   * of the DB layer. The column is now 512 and the input is capped at the same number.
+   */
+  describe('(AC-18) personalized watermark template length cap', () => {
+    beforeEach(async () => {
+      await setup(null);
+      component.activeTab.set('personalized');
+      fixture.detectChanges();
+    });
+
+    it('caps the template textarea at 512 characters — the DTO/column limit', () => {
+      const textarea = (fixture.nativeElement as HTMLElement).querySelector(
+        'textarea[data-testid="watermark-template-input"]',
+      ) as HTMLTextAreaElement | null;
+
+      expect(textarea).toBeTruthy();
+      expect(textarea?.getAttribute('maxlength')).toBe('512');
+      expect(textarea?.maxLength).toBe(512);
+    });
+
+    it('shows an n/512 counter that tracks the current template length', () => {
+      component.downloadWatermarkTemplate.set('ก๐'.repeat(7));
+      fixture.detectChanges();
+
+      const counter = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="watermark-template-counter"]',
+      );
+      expect(counter?.textContent?.trim()).toBe('14/512');
+    });
+
+    it('shows the Thai length hint next to the counter', () => {
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(text).toContain('ใช้ได้สูงสุด 512 ตัวอักษร');
+    });
+  });
 });

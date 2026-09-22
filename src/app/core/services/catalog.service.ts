@@ -44,7 +44,7 @@ import type {
   RecommendationExplanationResponse,
   SellerProfileResponse,
 } from '../api/types.gen';
-import { unwrapSdkResult, type SdkResult } from './api-result';
+import { extractErrorStatus, unwrapSdkResult, type SdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { TranslationService } from '../i18n/translation.service';
 import {
@@ -116,6 +116,42 @@ const DEFAULT_FILTERS: CatalogFilters = {
   freeOnly: false,
   sort: 'popular',
 };
+
+/**
+ * Why a preview-PDF request failed, as far as the caller needs to care.
+ *
+ * preview-pdf-error-shape-and-watermark-template-length v1 §4.1.
+ */
+export type PreviewPdfFailureReason =
+  | 'not_a_pdf_document'
+  | 'not_found'
+  | 'render_failed'
+  | 'unknown';
+
+/** Maps the HTTP status of a failed `preview-pdf` call onto a {@link PreviewPdfFailureReason}. */
+function previewPdfReasonFromStatus(status: number | undefined): PreviewPdfFailureReason {
+  switch (status) {
+    case 400:
+      return 'not_a_pdf_document';
+    case 404:
+      return 'not_found';
+    case 500:
+      return 'render_failed';
+    default:
+      return 'unknown';
+  }
+}
+
+/** Thrown by {@link CatalogService.loadDocumentPreviewPdf} so the page can branch on `reason`. */
+export class PreviewPdfError extends Error {
+  constructor(
+    readonly reason: PreviewPdfFailureReason,
+    readonly status: number | undefined,
+  ) {
+    super(`preview-pdf failed: ${reason}`);
+    this.name = 'PreviewPdfError';
+  }
+}
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -1453,10 +1489,33 @@ export class CatalogService {
    * @hey-api/client-fetch uses `parseAs:'auto'` and routes `Content-Type: application/pdf`
    * (starts with "application/") to `response.blob()` at runtime — so `result.data` IS a
    * `Blob` even though TypeScript infers `FileResult` from the generated schema.
+   *
+   * preview-pdf-error-shape-and-watermark-template-length v1 §4.1: this used to
+   * `return result.data as unknown as Blob` unconditionally, so every failure became
+   * `undefined` and blew up later at `URL.createObjectURL` — one undifferentiated `catch`
+   * for "not a PDF", "not found" and "render failed" alike. Now failures throw a
+   * {@link PreviewPdfError} that names the reason so the page can act on it.
+   *
+   * The reason is decided from the **HTTP status**, not the body: the server answers
+   * `{ "error": "not_a_pdf_document" }` (an anonymous object, not ProblemDetails), and
+   * {@link extractErrorCode} only looks for the key `code` — it would never see this. See
+   * docs/contracts/preview-pdf-error-shape-and-watermark-template-length.md §3.1.
+   *
+   * No `ApiFailureReporter` call on purpose — the page decides how (or whether) to surface
+   * this, the same way `admin.service.getDocumentReviewPdf` does.
    */
   async loadDocumentPreviewPdf(documentId: string): Promise<Blob> {
-    const result = await getApiMarketplaceDocumentsByIdPreviewPdf({ path: { id: documentId } });
-    return result.data as unknown as Blob;
+    const result = await getApiMarketplaceDocumentsByIdPreviewPdf({
+      path: { id: documentId },
+      // `throwOnError` is true app-wide (api-runtime.ts), and what the client throws then is the
+      // parsed body alone — for an empty 404 that is literally `{}`, so the status would be lost
+      // exactly where this method needs it. Opting out keeps `result.response` in hand.
+      throwOnError: false,
+    });
+    if (result.data instanceof Blob) return result.data;
+
+    const status = extractErrorStatus(result.error) ?? result.response?.status;
+    throw new PreviewPdfError(previewPdfReasonFromStatus(status), status);
   }
 
   async askDocumentQuestion(documentId: string, question: string): Promise<void> {

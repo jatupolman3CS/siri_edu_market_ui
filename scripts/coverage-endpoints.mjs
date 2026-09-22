@@ -94,12 +94,28 @@ async function parseSdk() {
   return fns;
 }
 
+/**
+ * Generated SDK files re-export or declare every operation, so counting them as "usage" makes
+ * every endpoint look wired and the orphan counts meaningless. The barrel `core/api/index.ts` is
+ * the one that used to slip through — it is auto-generated and re-exports all of sdk.gen.ts.
+ * Hand-written helpers living alongside it (sdk-auth-bridge, the *.api.ts wrappers) still count.
+ */
+function isGeneratedSdkFile(abs) {
+  const path = abs.replaceAll('\\', '/');
+  return (
+    path.endsWith('/sdk.gen.ts') ||
+    path.endsWith('/types.gen.ts') ||
+    path.endsWith('/client.gen.ts') ||
+    path.endsWith('/core/api/index.ts')
+  );
+}
+
 async function findSdkUsage(sdkFns) {
   const used = new Set();
   for await (const file of glob(FEATURES_GLOB, { cwd: UI_ROOT })) {
     const abs = resolve(UI_ROOT, file);
     if (abs.includes('node_modules') || abs.includes('dist')) continue;
-    if (abs.endsWith('sdk.gen.ts')) continue;
+    if (isGeneratedSdkFile(abs)) continue;
     const text = await readFile(abs, 'utf8');
     for (const name of sdkFns.keys()) {
       const re = new RegExp(`\\b${name}\\b`);

@@ -522,12 +522,27 @@
                 </button>
               </div>
 
+              <!-- preview-pdf-error-shape-and-watermark-template-length v1 §4.4: maxlength must
+                   stay equal to the DTO's [MaxLength(512)] and the PERSONALIZED_WATERMARK_TEMPLATE
+                   column (also 512). Without it a longer template used to pass model validation
+                   and then die at the DB layer as a 500. -->
               <textarea
                 rows="4"
+                maxlength="512"
+                data-testid="watermark-template-input"
                 [(ngModel)]="downloadWatermarkTemplate"
                 class="w-full px-4 py-3 rounded-2xl border border-line text-xs font-medium text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
                 [placeholder]="'seller.downloadTextPlaceholder' | trans"
               ></textarea>
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span>{{ 'seller.watermarkTemplateLengthHint' | trans }}</span>
+                <span
+                  class="tabular-nums font-medium"
+                  [class.text-pink-600]="downloadWatermarkTemplate().length >= 512"
+                  data-testid="watermark-template-counter"
+                  >{{ downloadWatermarkTemplate().length }}/512</span
+                >
+              </div>
             </div>
 
             <!-- watermark-completion v5 §4.9: style controls making this tab a first-class peer
