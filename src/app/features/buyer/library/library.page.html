@@ -61,6 +61,17 @@
             } @else {
               <div class="text-xs text-ink-muted">{{ 'library.noPointsThisMonth' | trans }}</div>
             }
+            <div class="text-xs text-ink-muted">
+              {{ 'library.availableBalance' | trans: { balance: (loyaltySummary.availableBalance ?? loyaltySummary.balance) } }}
+            </div>
+            @if ((loyaltySummary.availableBalance ?? loyaltySummary.balance) < loyaltySummary.balance) {
+              <div class="text-[11px] text-amber-600">
+                {{ 'library.pointsReservedNote' | trans }}
+              </div>
+            }
+            <div class="text-[11px] text-ink-muted">
+              {{ 'library.pointsRate' | trans: { rate: (loyaltySummary.pointsPerTHB ?? 10) } }}
+            </div>
           } @else {
             <div class="text-2xl md:text-3xl font-extrabold text-ink">—</div>
           }
@@ -467,6 +478,10 @@
                   <p class="text-sm font-semibold text-ink truncate">
                     @if (entry.reason === 'order_paid' && entry.orderNumber) {
                       {{ 'library.receivedFromOrder' | trans: { orderNumber: entry.orderNumber } }}
+                    } @else if (entry.reason === 'order_discount') {
+                      {{ 'library.reasonOrderDiscount' | trans }}
+                    } @else if (entry.reason === 'order_refunded') {
+                      {{ 'library.reasonOrderRefunded' | trans }}
                     } @else {
                       {{ entry.reason }}
                     }

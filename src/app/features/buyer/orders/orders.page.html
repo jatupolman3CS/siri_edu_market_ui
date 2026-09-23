@@ -68,6 +68,15 @@
                 </div>
               </header>
 
+              @if ((o.loyaltyPointsRedeemed ?? 0) > 0 || (o.loyaltyDiscountAmount ?? 0) > 0) {
+                <div class="-mt-2 mb-3">
+                  <span class="pill bg-pink-50 text-pink-600 border border-pink-100 text-[11px] inline-flex items-center gap-1">
+                    <app-icon name="tag" [size]="10" />
+                    {{ 'orders.loyaltyRedeemedBadge' | trans:{ points: o.loyaltyPointsRedeemed ?? 0, discount: ((o.loyaltyDiscountAmount ?? 0) | thb) } }}
+                  </span>
+                </div>
+              }
+
               @for (item of o.items; track item.document.id) {
                 <div class="flex items-center gap-4 py-2">
                   <img

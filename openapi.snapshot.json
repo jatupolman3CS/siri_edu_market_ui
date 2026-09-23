@@ -22610,6 +22610,9 @@
           },
           "payWithWallet": {
             "type": "boolean"
+          },
+          "useLoyaltyPoints": {
+            "type": "boolean"
           }
         }
       },
@@ -23329,6 +23332,14 @@
           },
           "asOf": {
             "type": "string"
+          },
+          "pointsPerTHB": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableBalance": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -24236,6 +24247,14 @@
             "nullable": true
           },
           "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "loyaltyPointsRedeemed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "loyaltyDiscountAmount": {
             "type": "number",
             "format": "double"
           }
@@ -25574,6 +25593,10 @@
           "referralDiscountAmount": {
             "type": "number",
             "format": "double"
+          },
+          "loyaltyPointsPerTHB": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -28561,6 +28584,13 @@
             "minimum": 0,
             "type": "number",
             "format": "double",
+            "nullable": true
+          },
+          "loyaltyPointsPerTHB": {
+            "maximum": 100000,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         }

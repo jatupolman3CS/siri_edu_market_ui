@@ -311,6 +311,41 @@ describe('BuyerLibraryPage — loyalty stat card (loyalty-points v1 §4)', () =>
     expect(text).toContain('โหลดคะแนนสะสมไม่สำเร็จ');
   });
 
+  it('shows availableBalance and the pointsPerTHB rate when they are equal to the balance (nothing reserved)', () => {
+    const summary: LoyaltySummary = {
+      balance: 500,
+      earnedThisMonth: 0,
+      lifetimeEarned: 500,
+      lifetimeSpent: 0,
+      asOf: '2026-08-29T00:00:00.000Z',
+      pointsPerTHB: 10,
+      availableBalance: 500,
+    };
+    const fixture = renderWithLoyalty(fakeLoyalty({ summary: () => summary }));
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('500 pt');
+    expect(text).toContain('10 pt = ฿1');
+    expect(text).not.toContain('บางส่วนถูกกันไว้สำหรับคำสั่งซื้อที่รอชำระเงิน');
+  });
+
+  it('shows the "reserved for orders awaiting payment" note when availableBalance < balance', () => {
+    const summary: LoyaltySummary = {
+      balance: 500,
+      earnedThisMonth: 0,
+      lifetimeEarned: 500,
+      lifetimeSpent: 0,
+      asOf: '2026-08-29T00:00:00.000Z',
+      pointsPerTHB: 10,
+      availableBalance: 350,
+    };
+    const fixture = renderWithLoyalty(fakeLoyalty({ summary: () => summary }));
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('350 pt');
+    expect(text).toContain('บางส่วนถูกกันไว้สำหรับคำสั่งซื้อที่รอชำระเงิน');
+  });
+
   it('"ดูประวัติคะแนน" opens the drawer and triggers loadLedgerFirst()', () => {
     const loyalty = fakeLoyalty();
     const fixture = renderWithLoyalty(loyalty);
@@ -358,6 +393,42 @@ describe('BuyerLibraryPage — loyalty stat card (loyalty-points v1 §4)', () =>
     const text = document.body.textContent ?? '';
     expect(text).toContain('ได้รับจากคำสั่งซื้อ ORD-0001');
     expect(text).toContain('โหลดเพิ่ม');
+  });
+
+  it('translates the raw "order_discount" and "order_refunded" ledger reasons, never the raw code', () => {
+    const loyalty = fakeLoyalty({
+      ledger: () => [
+        {
+          id: 'entry-discount',
+          points: -150,
+          kind: 'redeem',
+          reason: 'order_discount',
+          orderNumber: 'ORD-0002',
+          occurredAt: '2026-08-02T00:00:00.000Z',
+        },
+        {
+          id: 'entry-refund',
+          points: -10,
+          kind: 'adjust',
+          reason: 'order_refunded',
+          orderNumber: 'ORD-0003',
+          occurredAt: '2026-08-03T00:00:00.000Z',
+        },
+      ],
+    });
+    const fixture = renderWithLoyalty(loyalty);
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    );
+    buttons.find((b) => b.textContent?.trim() === 'ดูประวัติคะแนน')!.click();
+    fixture.detectChanges();
+
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('ใช้แลกส่วนลดค่าสั่งซื้อ');
+    expect(text).toContain('ปรับปรุงคะแนนจากการคืนเงิน');
+    expect(text).not.toContain('order_discount');
+    expect(text).not.toContain('order_refunded');
   });
 });
 

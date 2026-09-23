@@ -337,3 +337,29 @@ describe('BuyerOrdersPage — tabs (AC-11/AC-16)', () => {
     expect(library.ordersTab()).toBe('cancelled_refunded');
   });
 });
+
+/**
+ * loyalty-points v1 — order card badge for `loyaltyPointsRedeemed`/`loyaltyDiscountAmount`
+ * (orders-list-loyalty-badge gap fix): a badge only shows when the order actually redeemed
+ * points; a normal order must not render a stray "ใช้ 0 คะแนน" badge.
+ */
+describe('BuyerOrdersPage — loyalty redeemed badge', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('shows the points-used badge when loyaltyPointsRedeemed/loyaltyDiscountAmount > 0', () => {
+    const order = buildOrder('order-1', 'paid', { loyaltyPointsRedeemed: 150, loyaltyDiscountAmount: 15 });
+    const { fixture } = renderWithOrders([order]);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ใช้ 150 คะแนน');
+    expect(text).toContain('฿15');
+  });
+
+  it('hides the badge when neither loyaltyPointsRedeemed nor loyaltyDiscountAmount is set', () => {
+    const order = buildOrder('order-1', 'paid');
+    const { fixture } = renderWithOrders([order]);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('คะแนน (ลด');
+  });
+});

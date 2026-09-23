@@ -79,7 +79,7 @@ function buildOrderItem(id: string): CartItem {
   };
 }
 
-function buildOrder(status: Order['status']): Order {
+function buildOrder(status: Order['status'], over: Partial<Order> = {}): Order {
   return {
     id: 'order-1',
     orderNumber: 'SE-1',
@@ -92,6 +92,7 @@ function buildOrder(status: Order['status']): Order {
     paymentMethod: 'credit_card',
     createdAt: '2026-01-01T00:00:00Z',
     discountAmount: 0,
+    ...over,
   };
 }
 
@@ -287,5 +288,39 @@ describe('BuyerOrderDetailPage — "เอกสารที่คล้าย�
     const skeletons = root.querySelectorAll('.animate-pulse');
     expect(skeletons.length).toBeGreaterThanOrEqual(4);
     expect(root.textContent ?? '').not.toContain('เอกสารคล้าย');
+  });
+});
+
+/**
+ * loyalty-points v1 — receipt row for `loyaltyDiscountAmount`/`loyaltyPointsRedeemed`
+ * (order-detail-loyalty-discount gap fix): the receipt only shows the loyalty discount line when
+ * the order actually redeemed points — a normal order with no redemption must not show a stray
+ * ฿0 discount row.
+ */
+describe('BuyerOrderDetailPage — receipt loyalty discount row', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('shows the loyalty discount amount and points redeemed when loyaltyDiscountAmount > 0', async () => {
+    const order = buildOrder('paid', { loyaltyDiscountAmount: 15, loyaltyPointsRedeemed: 150 });
+    const fake = buildFakeOrderService(order, { items: [] });
+    const fixture = render(fake);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('ส่วนลดจากคะแนนสะสม');
+    expect(text).toContain('ใช้คะแนนสะสม 150 คะแนน');
+    expect(text).toContain('−฿15');
+  });
+
+  it('hides the loyalty discount row when loyaltyDiscountAmount is 0/undefined', async () => {
+    const order = buildOrder('paid', { loyaltyDiscountAmount: 0, loyaltyPointsRedeemed: 0 });
+    const fake = buildFakeOrderService(order, { items: [] });
+    const fixture = render(fake);
+    await settle();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ส่วนลดจากคะแนนสะสม');
   });
 });
