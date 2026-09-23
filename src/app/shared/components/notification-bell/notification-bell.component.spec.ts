@@ -301,4 +301,29 @@ describe('NotificationBellComponent', () => {
     expect(feed.unreadByAudience()).toEqual({ buyer: 5, seller: 0, admin: 0 });
     expect(feed.unreadCount()).toBe(5);
   });
+
+  it('runs no poll timer of its own (kafka-redis-notifications v1 §4 — one timer in the feed service)', () => {
+    vi.useFakeTimers();
+    try {
+      TestBed.configureTestingModule({
+        imports: [NotificationBellComponent],
+        providers: [provideRouter([]), { provide: ApiFailureReporter, useValue: { report: vi.fn() } }],
+      });
+      const feed = TestBed.inject(NotificationFeedService);
+      const refresh = vi.spyOn(feed, 'refreshUnreadCount').mockImplementation(() => {});
+      vi.spyOn(feed, 'loadPreview').mockImplementation(() => {});
+
+      const first = TestBed.createComponent(NotificationBellComponent);
+      const second = TestBed.createComponent(NotificationBellComponent);
+      first.detectChanges();
+      second.detectChanges();
+      expect(refresh).toHaveBeenCalledTimes(2); // one bootstrap refresh per mount, no more
+
+      vi.advanceTimersByTime(10 * 60_000);
+      expect(refresh).toHaveBeenCalledTimes(2);
+      expect(feed.isPolling()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

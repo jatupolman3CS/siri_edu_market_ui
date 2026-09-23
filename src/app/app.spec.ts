@@ -7,6 +7,7 @@ import {
   AuthService,
   NotificationContextService,
   NotificationFeedService,
+  NotificationStreamService,
 } from './core/services';
 
 describe('App', () => {
@@ -27,8 +28,15 @@ describe('App', () => {
         { provide: NotificationContextService, useValue: { context: signal('buyer') } },
         {
           provide: NotificationFeedService,
-          useValue: { fetchRecentForToast: () => Promise.resolve([]), markRead: () => ({ subscribe: () => {} }) },
+          useValue: {
+            fetchRecentForToast: () => Promise.resolve([]),
+            markRead: () => ({ subscribe: () => {} }),
+            addPollListener: () => () => {},
+          },
         },
+        // kafka-redis-notifications v1 §4: App also force-instantiates the SSE stream service;
+        // stubbed so this spec never opens a stream or starts the poll timer.
+        { provide: NotificationStreamService, useValue: { connected: signal(false) } },
         { provide: NzNotificationService, useValue: { create: () => ({ onClick: { subscribe: () => {} } }), info: () => ({ onClick: { subscribe: () => {} } }) } },
       ],
     }).compileComponents();

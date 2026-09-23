@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DevRoleSwitcherComponent } from './core/dev/dev-role-switcher.component';
-import { NavigationSourceService, NotificationToastService } from './core/services';
+import { NavigationSourceService, NotificationStreamService, NotificationToastService } from './core/services';
 import { LightboxComponent } from './shared/components/lightbox/lightbox.component';
 
 @Component({
@@ -22,4 +22,8 @@ export class App {
   // as `navSource` above, so it starts polling once at app startup instead of being duplicated
   // per layout (buyer/seller/admin all share this one root component).
   private readonly notificationToast = inject(NotificationToastService);
+
+  // kafka-redis-notifications v1 §4: the SSE stream + the single notification poll timer
+  // follow the signed-in user from here, once for the whole app.
+  private readonly notificationStream = inject(NotificationStreamService);
 }

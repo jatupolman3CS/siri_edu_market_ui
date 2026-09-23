@@ -1,7 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import {
   NOTIFICATION_AUDIENCES,
@@ -17,8 +15,6 @@ import {
 import { IconComponent } from '../icon/icon.component';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 
-/** Spec §4.4: badge/list refresh cadence while the app is open — no WebSocket/SSE in v1. */
-const POLL_INTERVAL_MS = 60_000;
 /** Spec §4: dropdown shows a small slice ("page แรก, pageSize เล็ก เช่น 10") of the feed. */
 const DROPDOWN_PREVIEW_SIZE = 10;
 
@@ -57,7 +53,6 @@ export class NotificationBellComponent {
   readonly feed = inject(NotificationFeedService);
   private readonly context = inject(NotificationContextService);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
   readonly translation = inject(TranslationService);
 
   /** Presentation variant: 'icon' (default standalone bell button) or 'topbar' (inline text link with badge) */
@@ -107,9 +102,10 @@ export class NotificationBellComponent {
     // `app-header` survives buyer → seller navigation and would otherwise keep stale rows.
     effect(() => this.feed.loadPreview(DROPDOWN_PREVIEW_SIZE, this.audience()));
 
-    interval(POLL_INTERVAL_MS)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.feed.refreshUnreadCount());
+    // kafka-redis-notifications v1 §4: no timer here any more — every layout renders its own
+    // bell, so the per-instance 60s interval multiplied. The one poll timer lives in
+    // `NotificationFeedService` (driven by `NotificationStreamService`), and pushed SSE signals
+    // refresh the badge and reload this preview through the shared feed service.
   }
 
   getStyle(key: string, title = ''): NotificationStyleInfo {

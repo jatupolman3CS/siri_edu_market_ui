@@ -37,6 +37,11 @@ function build(opts: { authed?: boolean; userId?: string | null } = {}) {
     (size: number, audience?: NotificationAudience) => Promise<NotificationFeedItemResponse[]>
   >().mockResolvedValue([]);
   const markRead = vi.fn(() => ({ subscribe: (_o?: unknown) => {} }));
+  const pollListeners: Array<() => void> = [];
+  const addPollListener = vi.fn((listener: () => void) => {
+    pollListeners.push(listener);
+    return () => void pollListeners.splice(pollListeners.indexOf(listener), 1);
+  });
   const create = vi.fn<
     (type: string, title: string, content: string) => { onClick: Subject<MouseEvent> }
   >(() => ({ onClick: new Subject<MouseEvent>() }));
@@ -56,14 +61,14 @@ function build(opts: { authed?: boolean; userId?: string | null } = {}) {
         },
       },
       { provide: NotificationContextService, useValue: { context: contextSignal } },
-      { provide: NotificationFeedService, useValue: { fetchRecentForToast, markRead } },
+      { provide: NotificationFeedService, useValue: { fetchRecentForToast, markRead, addPollListener } },
       { provide: Router, useValue: { navigateByUrl } },
       { provide: NzNotificationService, useValue: { create, info } },
     ],
   });
 
   const service = TestBed.inject(NotificationToastService);
-  return { service, fetchRecentForToast, markRead, create, info, navigateByUrl, contextSignal };
+  return { service, fetchRecentForToast, markRead, create, info, navigateByUrl, contextSignal, pollListeners };
 }
 
 afterEach(() => TestBed.resetTestingModule());
@@ -195,6 +200,23 @@ describe('NotificationToastService', () => {
     await service.checkForNewNotifications();
 
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('has no timer of its own — it rides the feed service poll listener', async () => {
+    const { fetchRecentForToast, pollListeners } = build();
+    expect(pollListeners).toHaveLength(1);
+    fetchRecentForToast.mockClear();
+
+    pollListeners[0]();
+    await Promise.resolve();
+
+    expect(fetchRecentForToast).toHaveBeenCalledTimes(1);
+  });
+
+  it('unsubscribes its poll listener when destroyed', () => {
+    const { pollListeners } = build();
+    TestBed.resetTestingModule();
+    expect(pollListeners).toHaveLength(0);
   });
 
   describe('severityForNotificationKey', () => {

@@ -1,7 +1,5 @@
 import { DestroyRef, Injectable, effect, inject, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { interval } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { AuthService } from './auth.service';
@@ -14,8 +12,6 @@ import {
 import { NotificationFeedService, type NotificationFeedItemResponse } from './notification-feed.service';
 import { TranslationService } from '../i18n/translation.service';
 
-/** Matches the bell's badge/list refresh cadence (spec §4.4 — no WebSocket/SSE in v1). */
-const POLL_INTERVAL_MS = 60_000;
 /** Page size for the arrival poll — this is "what's new", not a page of history. */
 const POLL_SIZE = 10;
 /** More than this many new arrivals in one poll collapse into a single "+N more" toast. */
@@ -55,9 +51,10 @@ function truncateBody(body: string): string {
  * Feature request: "เมื่อมีการแจ้งเตือนเข้ามาอยากให้มี popup ... เด้งขึ้นด้านขวามือ" — a
  * top-right corner toast per newly-arrived notification, on top of (not replacing) the bell.
  *
- * There is no WebSocket/SSE push (see `notification-bell.component.ts`'s `POLL_INTERVAL_MS`
- * comment), so "new" is entirely derived from polling `NotificationFeedService.fetchRecentForToast`
- * and diffing ids against what this service has already shown a toast for. That "already
+ * "New" is derived from `NotificationFeedService.fetchRecentForToast` diffed against the ids
+ * this service has already shown a toast for — triggered by the feed's single poll timer and,
+ * when the SSE stream is up, by `NotificationStreamService` on a pushed signal
+ * (kafka-redis-notifications v1 §4). The push only says "something changed"; this diff decides. That "already
  * toasted" set is deliberately **in-memory only** (module/instance state, never persisted) —
  * this is a live "just arrived" indicator, not a read-tracking mechanism (the bell + mark-read
  * API already own that).
@@ -94,9 +91,11 @@ export class NotificationToastService {
   constructor() {
     this.lastSeenUserId = untracked(() => this.auth.user()?.id ?? null);
 
-    interval(POLL_INTERVAL_MS)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => void this.checkForNewNotifications());
+    // kafka-redis-notifications v1 §4: no timer of its own any more — it rides the single poll
+    // timer in `NotificationFeedService` (60s while the SSE stream is down, 5 min while it is
+    // up); `NotificationStreamService` calls `checkForNewNotifications()` on a pushed signal.
+    const removePollListener = this.feed.addPollListener(() => void this.checkForNewNotifications());
+    this.destroyRef.onDestroy(removePollListener);
 
     // Poll immediately on mount and on every layout switch (buyer → seller → admin) rather than
     // waiting for the next 60s tick — and never let a second account on the same browser inherit

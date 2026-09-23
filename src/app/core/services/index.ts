@@ -21,6 +21,7 @@ export * from './notification.service';
 export * from './notification-context.service';
 export * from './notification-feed.service';
 export * from './notification-toast.service';
+export * from './notification-stream.service';
 export * from './notification-config.service';
 export * from './line-notification.service';
 export * from './system-status.service';

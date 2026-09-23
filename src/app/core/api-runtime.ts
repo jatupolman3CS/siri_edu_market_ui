@@ -371,6 +371,29 @@ async function notifyIfAccountRestricted(response: Response, input: RequestInfo 
   if (code && ACCOUNT_RESTRICTED_CODES.includes(code)) _accountRestrictedHandler(payload);
 }
 
+/**
+ * The headers every API request carries: `Authorization: Bearer` (when a token is given),
+ * `X-Dev-Role` while the dev auth bypass is on, and a default `Accept-Language`.
+ *
+ * Exported for the few `core/services` callers that must talk to the API without the generated
+ * SDK — e.g. `NotificationStreamService`, whose SSE endpoint is deliberately not in OpenAPI
+ * (docs/contracts/kafka-redis-notifications.md §3.3) — so they send exactly what the SDK sends.
+ */
+export function applyApiRequestHeaders(headers: Headers, token: string | null): Headers {
+  const devRole = _devRoleGetter?.() ?? null;
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (devRole) headers.set('X-Dev-Role', devRole);
+  if (!headers.has('Accept-Language')) {
+    try {
+      const lang = typeof window !== 'undefined' ? window.localStorage?.getItem('siriedu_lang') : null;
+      headers.set('Accept-Language', lang === 'en' ? 'en-US,en;q=0.9' : 'th-TH,th;q=0.9');
+    } catch {
+      headers.set('Accept-Language', 'th-TH,th;q=0.9');
+    }
+  }
+  return headers;
+}
+
 export const createClientConfig: CreateClientConfig = (config) => ({
   ...config,
   baseUrl: API_BASE_URL,
@@ -399,19 +422,10 @@ export const createClientConfig: CreateClientConfig = (config) => ({
         // leaves the browser in dev (`ng serve` :4200 ↔ `dotnet run` :5282 are cross-origin),
         // even though prod is same-origin via the nginx proxy already.
         const request = new Request(input, { ...init, credentials: 'include' });
-        const devRole = _devRoleGetter?.() ?? null;
-
-        const headers = new Headers(request.headers);
-        if (token && !isAuthEndpoint(input)) headers.set('Authorization', `Bearer ${token}`);
-        if (devRole) headers.set('X-Dev-Role', devRole);
-        if (!headers.has('Accept-Language')) {
-          try {
-            const lang = typeof window !== 'undefined' ? window.localStorage?.getItem('siriedu_lang') : null;
-            headers.set('Accept-Language', lang === 'en' ? 'en-US,en;q=0.9' : 'th-TH,th;q=0.9');
-          } catch {
-            headers.set('Accept-Language', 'th-TH,th;q=0.9');
-          }
-        }
+        const headers = applyApiRequestHeaders(
+          new Headers(request.headers),
+          token && !isAuthEndpoint(input) ? token : null,
+        );
         return fetch(new Request(request, { headers, credentials: 'include' }));
       };
 

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import {
@@ -196,6 +196,14 @@ export function getNotificationStyle(key: string, title = ''): NotificationStyle
 /** Matches the backend default in spec §3.3 (clamp [1,50], default 20). */
 const PAGE_SIZE = 20;
 
+/**
+ * kafka-redis-notifications v1 §4: fallback poll cadence. 60s while the SSE stream is down
+ * (same as the old per-bell timer); 5 min while it is connected, as a safety net for signals
+ * the stream could miss (e.g. Worker-written rows while Redis is off).
+ */
+export const NOTIFICATION_POLL_DISCONNECTED_MS = 60_000;
+export const NOTIFICATION_POLL_CONNECTED_MS = 300_000;
+
 function normalizeFeedItem(
   raw: GeneratedNotificationFeedItemResponse,
   fallbackAudience: NotificationAudience,
@@ -255,8 +263,89 @@ export class NotificationFeedService {
   /** Total row count from the server — used to decide whether "โหลดเพิ่มเติม" has more to fetch. */
   readonly totalCount = this._totalCount.asReadonly();
 
+  /** Set by `NotificationStreamService` — true while the SSE stream is delivering frames. */
+  private readonly _streamConnected = signal<boolean>(false);
+  /** kafka-redis-notifications v1 §4: the single poll timer's current cadence. */
+  readonly pollIntervalMs = computed(() =>
+    this._streamConnected() ? NOTIFICATION_POLL_CONNECTED_MS : NOTIFICATION_POLL_DISCONNECTED_MS,
+  );
+
+  private pollTimer: ReturnType<typeof setTimeout> | null = null;
+  private polling = false;
+  private readonly pollListeners = new Set<() => void>();
+  /** Last `loadPreview` arguments, so a stream signal can reload exactly what the bell shows. */
+  private lastPreviewRequest: { size: number; audience?: NotificationAudience } | null = null;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.stopPolling());
+  }
+
+  /**
+   * kafka-redis-notifications v1 §4: the one app-wide poll timer (replaces the 60s timer every
+   * `NotificationBellComponent` instance used to run, and the toast service's own timer).
+   * Idempotent. Started/stopped with the signed-in user by `NotificationStreamService`.
+   */
+  startPolling(): void {
+    if (this.polling) return;
+    this.polling = true;
+    this.schedulePoll();
+  }
+
+  stopPolling(): void {
+    this.polling = false;
+    if (this.pollTimer !== null) {
+      clearTimeout(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  isPolling(): boolean {
+    return this.polling;
+  }
+
+  /** Switches the poll cadence; a running timer is rescheduled with the new interval. */
+  setStreamConnected(connected: boolean): void {
+    if (this._streamConnected() === connected) return;
+    this._streamConnected.set(connected);
+    if (this.polling) this.schedulePoll();
+  }
+
+  /** Runs `listener` on every poll tick (e.g. the toast arrival check). Returns an unsubscribe. */
+  addPollListener(listener: () => void): () => void {
+    this.pollListeners.add(listener);
+    return () => this.pollListeners.delete(listener);
+  }
+
+  /** Re-runs the last `loadPreview` — no-op until the bell has loaded a preview at least once. */
+  reloadPreview(): void {
+    const last = this.lastPreviewRequest;
+    if (last) this.loadPreview(last.size, last.audience);
+  }
+
+  private schedulePoll(): void {
+    if (this.pollTimer !== null) clearTimeout(this.pollTimer);
+    this.pollTimer = setTimeout(() => {
+      this.pollTimer = null;
+      if (!this.polling) return;
+      this.pollTick();
+      this.schedulePoll();
+    }, this.pollIntervalMs());
+  }
+
+  private pollTick(): void {
+    this.refreshUnreadCount();
+    for (const listener of this.pollListeners) {
+      try {
+        listener();
+      } catch {
+        /* a listener failing must not stop the timer */
+      }
+    }
+  }
+
   /** Loads preview slice for the notification bell dropdown without altering the history page's feed. */
   loadPreview(size: number = 10, audience?: NotificationAudience): void {
+    this.lastPreviewRequest = { size, audience };
     void (async () => {
       try {
         const data = await this.fetchFeedPage(1, size, audience);
