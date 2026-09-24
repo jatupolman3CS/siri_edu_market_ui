@@ -16,6 +16,7 @@ import {
   type ActionState,
 } from './action-state';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { AuthService } from './auth.service';
 import { createInfinitePager } from './infinite-pager';
 import { TranslationService } from '../i18n';
 
@@ -23,6 +24,7 @@ import { TranslationService } from '../i18n';
 export class WishlistService {
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly translation = inject(TranslationService);
+  private readonly auth = inject(AuthService);
 
   private readonly _state = signal<ActionState>(idleActionState());
 
@@ -99,7 +101,12 @@ export class WishlistService {
   readonly state = this._state.asReadonly();
 
   constructor() {
-    void this.refresh();
+    // AppHeaderComponent injects this service on every page, guest pages included — only
+    // load if a session already exists. `AuthService.signIn()` triggers `refresh()` itself
+    // right after a successful login.
+    if (this.auth.isAuthenticated()) {
+      void this.refresh();
+    }
   }
 
   async refresh(): Promise<void> {

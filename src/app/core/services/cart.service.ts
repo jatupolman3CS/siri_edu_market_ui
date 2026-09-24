@@ -11,6 +11,7 @@ import {
 } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { AuthService } from './auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslationService } from '../i18n/translation.service';
 
@@ -26,6 +27,7 @@ export class CartService {
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
   private readonly translation = inject(TranslationService);
+  private readonly auth = inject(AuthService);
 
   private readonly _items = signal<CartItem[]>([]);
   private readonly _drawerOpen = signal<boolean>(false);
@@ -73,7 +75,12 @@ export class CartService {
   );
 
   constructor() {
-    this.loadCart();
+    // AppHeaderComponent injects this service on every page, guest pages included — only
+    // load if a session already exists. `AuthService.signIn()` triggers `loadCart()` itself
+    // right after a successful login.
+    if (this.auth.isAuthenticated()) {
+      this.loadCart();
+    }
   }
 
   loadCart(): void {
