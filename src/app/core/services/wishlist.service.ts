@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DocumentItem } from '../models';
 import { defaultAvatarUrl, resolveCoverUrl } from '../brand-assets';
 import {
@@ -27,6 +27,15 @@ export class WishlistService {
   private readonly auth = inject(AuthService);
 
   private readonly _state = signal<ActionState>(idleActionState());
+
+  /**
+   * Identity the account-switch watcher last saw — `null` for a guest. Seeded synchronously
+   * (mirrors `SellerApplicationService.lastSeenUserId`/`NotificationToastService.lastSeenUserId`)
+   * so the effect's first flush is a no-op, and updated by `refresh()` itself so
+   * `AuthService.signIn()`/`verifyEmail()`/external login's own explicit
+   * `reloadCartAndWishlistAfterSignIn()` call (AC-17) for the same id never causes a duplicate.
+   */
+  private lastSeenUserId: string | null;
 
   private readonly pager = createInfinitePager<DocumentItem>({
     pageSize: 24,
@@ -101,15 +110,31 @@ export class WishlistService {
   readonly state = this._state.asReadonly();
 
   constructor() {
-    // AppHeaderComponent injects this service on every page, guest pages included — only
-    // load if a session already exists. `AuthService.signIn()` triggers `refresh()` itself
-    // right after a successful login.
-    if (this.auth.isAuthenticated()) {
+    this.lastSeenUserId = untracked(() => this.auth.user()?.id ?? null);
+
+    // anonymous-cart-wishlist-scoping AC-5/AC-16: the server keeps a cookie-scoped wishlist for
+    // guests too (`WishlistController` no longer requires `[Authorize]`), so this loads
+    // unconditionally — AppHeaderComponent and the `/wishlist` page inject this service for
+    // guests as well, and a guard here would leave a reloaded guest's badge/page empty while
+    // items still sit server-side.
+    void this.refresh();
+
+    // Reload whenever the signed-in identity changes so a login that never called `signIn()`
+    // directly (cross-tab login via the `storage` event, or `applyDevBypassSession` in dev) still
+    // picks up the merged wishlist, and so switching accounts or signing out refreshes state too.
+    // `AuthService.signIn()`/`verifyEmail()`/external login already reload explicitly right after
+    // completing sign-in (AC-17); `refresh()` stamps `lastSeenUserId` synchronously so this
+    // effect's first flush (same id as the constructor's load above) and any reload already done
+    // by `AuthService` are no-ops here instead of a duplicate request.
+    effect(() => {
+      const userId = this.auth.user()?.id ?? null;
+      if (userId === this.lastSeenUserId) return;
       void this.refresh();
-    }
+    });
   }
 
   async refresh(): Promise<void> {
+    this.lastSeenUserId = this.auth.user()?.id ?? null;
     this._state.set(loadingActionState());
     try {
       await this.pager.loadFirst();

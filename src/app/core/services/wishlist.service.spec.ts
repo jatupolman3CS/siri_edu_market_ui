@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { WritableSignal, signal } from '@angular/core';
 import { WishlistService } from './wishlist.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { AuthService } from './auth.service';
@@ -43,17 +44,28 @@ function row(documentId: string, over: Record<string, unknown> = {}) {
   };
 }
 
-/** Defaults to a signed-in session; pass `false` to exercise the anonymous-visitor guard. */
-function buildService(authenticated = true): WishlistService {
+type AuthHarness = {
+  wishlist: WishlistService;
+  user: WritableSignal<{ id: string } | null>;
+};
+
+/** Defaults to a signed-in user; pass `null` to exercise the anonymous-visitor path (AC-5/AC-16). */
+function buildServiceWithAuth(userId: string | null = 'user-1'): AuthHarness {
+  const user = signal<{ id: string } | null>(userId ? { id: userId } : null);
   TestBed.configureTestingModule({
     providers: [
       WishlistService,
       { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
-      { provide: AuthService, useValue: { isAuthenticated: () => authenticated } },
+      { provide: AuthService, useValue: { user } as unknown as AuthService },
     ],
   });
 
-  return TestBed.inject(WishlistService);
+  return { wishlist: TestBed.inject(WishlistService), user };
+}
+
+/** Defaults to a signed-in session. */
+function buildService(userId: string | null = 'user-1'): WishlistService {
+  return buildServiceWithAuth(userId).wishlist;
 }
 
 async function settle(): Promise<void> {
@@ -199,25 +211,100 @@ describe('WishlistService', () => {
 });
 
 /**
- * Construct-time guard: `AppHeaderComponent` injects `WishlistService` on every page, including
- * guest pages, so an anonymous visitor must never fire an authenticated-only `GET /api/wishlist`
- * (it would 401). `AuthService.signIn()` calls `refresh()` itself once a session exists.
+ * anonymous-cart-wishlist-scoping AC-5/AC-16: `WishlistController` no longer requires
+ * `[Authorize]` — the server keeps a cookie-scoped wishlist for guests too, so
+ * `AppHeaderComponent`/the `/wishlist` page injecting `WishlistService` for a guest must load
+ * unconditionally instead of guarding on `isAuthenticated()` (that guard used to leave a
+ * reloaded guest's header badge and `/wishlist` page empty while the server still had their
+ * items).
  */
-describe('WishlistService construct-time auth guard', () => {
-  it('does not call the API for an anonymous visitor', async () => {
+describe('WishlistService construct-time load (anonymous-cart-wishlist-scoping)', () => {
+  it('loads the wishlist on construct for an anonymous visitor too', async () => {
     stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
-    const wishlist = buildService(false);
+    const wishlist = buildService(null);
     await settle();
 
-    expect(wishlist.count()).toBe(0);
-    expect(requests.length).toBe(0);
+    expect(wishlist.count()).toBe(1);
+    expect(requests.length).toBe(1);
   });
 
   it('loads the wishlist on construct for a signed-in user', async () => {
     stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1'), row('doc-2')]));
-    const wishlist = buildService(true);
+    const wishlist = buildService('user-1');
     await settle();
 
     expect(wishlist.count()).toBe(2);
+  });
+});
+
+/**
+ * anonymous-cart-wishlist-scoping AC-17 + the gap the closing gate found: a login that never
+ * calls `AuthService.signIn()` directly (cross-tab login via the `storage` event, or
+ * `applyDevBypassSession` in dev) still has to pick up the server-side merge. `WishlistService`
+ * cannot observe `signIn()` calls, only the identity signal `AuthService.user()` exposes — so
+ * these drive that signal directly, the same seam `AuthService` itself would flip.
+ */
+describe('WishlistService identity-change reload', () => {
+  it('reloads once when the signed-in identity appears (cross-tab login / dev bypass)', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([]));
+    const { wishlist, user } = buildServiceWithAuth(null);
+    await settle();
+    expect(wishlist.count()).toBe(0);
+
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
+    user.set({ id: 'user-1' });
+    TestBed.tick();
+    await settle();
+
+    expect(wishlist.count()).toBe(1);
+    expect(requests.filter((r) => r.method === 'GET' && r.path === '/api/wishlist').length).toBe(2);
+  });
+
+  it('reloads again when the signed-in account switches', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
+    const { wishlist, user } = buildServiceWithAuth('user-1');
+    await settle();
+    expect(wishlist.count()).toBe(1);
+
+    stubRoute('GET', '/api/wishlist', wishlistPage([]));
+    user.set({ id: 'user-2' });
+    TestBed.tick();
+    await settle();
+
+    expect(wishlist.count()).toBe(0);
+    expect(requests.filter((r) => r.method === 'GET' && r.path === '/api/wishlist').length).toBe(2);
+  });
+
+  it('reloads (state cleared server-side) on sign-out', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
+    const { wishlist, user } = buildServiceWithAuth('user-1');
+    await settle();
+    expect(wishlist.count()).toBe(1);
+
+    stubRoute('GET', '/api/wishlist', wishlistPage([]));
+    user.set(null);
+    TestBed.tick();
+    await settle();
+
+    expect(wishlist.count()).toBe(0);
+    expect(requests.filter((r) => r.method === 'GET' && r.path === '/api/wishlist').length).toBe(2);
+  });
+
+  it('does not double-load right after refresh() already ran for the same identity', async () => {
+    // Mirrors what `AuthService.signIn()` does: it calls `completeSignIn()` (flips `user()`) and
+    // then calls `WishlistService.refresh()` explicitly (AC-17) in the same synchronous turn —
+    // before the identity-change effect gets a chance to flush.
+    stubRoute('GET', '/api/wishlist', wishlistPage([]));
+    const { wishlist, user } = buildServiceWithAuth(null);
+    await settle();
+
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
+    user.set({ id: 'user-1' });
+    void wishlist.refresh(); // what AuthService.signIn() does, synchronously, right after flipping user()
+    TestBed.tick(); // flush the identity-change effect afterwards
+    await settle();
+
+    expect(wishlist.count()).toBe(1);
+    expect(requests.filter((r) => r.method === 'GET' && r.path === '/api/wishlist').length).toBe(2);
   });
 });

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { WritableSignal, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { CartService } from './cart.service';
@@ -49,19 +50,30 @@ function cartBody(
   };
 }
 
-/** Defaults to a signed-in session; pass `false` to exercise the anonymous-visitor guard. */
-function buildService(authenticated = true): CartService {
+type AuthHarness = {
+  cart: CartService;
+  user: WritableSignal<{ id: string } | null>;
+};
+
+/** Defaults to a signed-in user; pass `null` to exercise the anonymous-visitor path (AC-5). */
+function buildServiceWithAuth(userId: string | null = 'user-1'): AuthHarness {
+  const user = signal<{ id: string } | null>(userId ? { id: userId } : null);
   TestBed.configureTestingModule({
     providers: [
       CartService,
       { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
       { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn() } },
       { provide: Router, useValue: { navigate: vi.fn() } },
-      { provide: AuthService, useValue: { isAuthenticated: () => authenticated } },
+      { provide: AuthService, useValue: { user } as unknown as AuthService },
     ],
   });
 
-  return TestBed.inject(CartService);
+  return { cart: TestBed.inject(CartService), user };
+}
+
+/** Defaults to a signed-in session. */
+function buildService(userId: string | null = 'user-1'): CartService {
+  return buildServiceWithAuth(userId).cart;
 }
 
 /** Lets the SDK promise chain and the service's fire-and-forget blocks settle. */
@@ -287,25 +299,107 @@ describe('CartService membership and mutation', () => {
 });
 
 /**
- * Construct-time guard: `AppHeaderComponent` injects `CartService` on every page, including
- * guest pages, so an anonymous visitor must never fire an authenticated-only `GET /api/cart`
- * (it would 401). `AuthService.signIn()` calls `loadCart()` itself once a session exists.
+ * anonymous-cart-wishlist-scoping AC-5/AC-16: `CartController` no longer requires
+ * `[Authorize]` — the server keeps a cookie-scoped cart for guests too, so `AppHeaderComponent`
+ * injecting `CartService` on every page (guest pages included) must load unconditionally instead
+ * of guarding on `isAuthenticated()` (that guard used to leave a reloaded guest's header badge
+ * and cart drawer empty while the server still had their items).
  */
-describe('CartService construct-time auth guard', () => {
-  it('does not call the API for an anonymous visitor', async () => {
+describe('CartService construct-time load (anonymous-cart-wishlist-scoping)', () => {
+  it('loads the cart on construct for an anonymous visitor too', async () => {
     stubRoute('GET', '/api/cart', cartBody());
-    const cart = buildService(false);
+    const cart = buildService(null);
     await settle();
 
-    expect(cart.total()).toBe(0);
-    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
+    expect(cart.total()).toBe(214);
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
   });
 
   it('loads the cart on construct for a signed-in user', async () => {
     stubRoute('GET', '/api/cart', cartBody());
-    const cart = buildService(true);
+    const cart = buildService('user-1');
     await settle();
 
     expect(cart.total()).toBe(214);
+  });
+});
+
+/**
+ * anonymous-cart-wishlist-scoping AC-17 + the gap the closing gate found: a login that never
+ * calls `AuthService.signIn()` directly (cross-tab login via the `storage` event, or
+ * `applyDevBypassSession` in dev) still has to pick up the server-side merge. `CartService`
+ * cannot observe `signIn()` calls, only the identity signal `AuthService.user()` exposes — so
+ * these drive that signal directly, the same seam `AuthService` itself would flip.
+ */
+describe('CartService identity-change reload', () => {
+  it('reloads once when the signed-in identity appears (cross-tab login / dev bypass)', async () => {
+    stubRoute('GET', '/api/cart', cartBody({ items: [], subtotal: 0, vatIncluded: 0, total: 0 }));
+    const { cart, user } = buildServiceWithAuth(null);
+    await settle();
+    expect(cart.total()).toBe(0);
+
+    stubRoute('GET', '/api/cart', cartBody());
+    user.set({ id: 'user-1' });
+    TestBed.tick();
+    await settle();
+
+    expect(cart.total()).toBe(214);
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
+  });
+
+  it('reloads again when the signed-in account switches', async () => {
+    stubRoute('GET', '/api/cart', cartBody());
+    const { cart, user } = buildServiceWithAuth('user-1');
+    await settle();
+    expect(cart.total()).toBe(214);
+
+    stubRoute(
+      'GET',
+      '/api/cart',
+      cartBody({ items: [], subtotal: 0, vatIncluded: 0, total: 0 }),
+    );
+    user.set({ id: 'user-2' });
+    TestBed.tick();
+    await settle();
+
+    expect(cart.total()).toBe(0);
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
+  });
+
+  it('reloads (state cleared server-side) on sign-out', async () => {
+    stubRoute('GET', '/api/cart', cartBody());
+    const { cart, user } = buildServiceWithAuth('user-1');
+    await settle();
+    expect(cart.total()).toBe(214);
+
+    stubRoute(
+      'GET',
+      '/api/cart',
+      cartBody({ items: [], subtotal: 0, vatIncluded: 0, total: 0 }),
+    );
+    user.set(null);
+    TestBed.tick();
+    await settle();
+
+    expect(cart.total()).toBe(0);
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
+  });
+
+  it('does not double-load right after loadCart() already ran for the same identity', async () => {
+    // Mirrors what `AuthService.signIn()` does: it calls `completeSignIn()` (flips `user()`) and
+    // then calls `CartService.loadCart()` explicitly (AC-17) in the same synchronous turn —
+    // before the identity-change effect gets a chance to flush.
+    stubRoute('GET', '/api/cart', cartBody({ items: [], subtotal: 0, vatIncluded: 0, total: 0 }));
+    const { cart, user } = buildServiceWithAuth(null);
+    await settle();
+
+    stubRoute('GET', '/api/cart', cartBody());
+    user.set({ id: 'user-1' });
+    cart.loadCart(); // what AuthService.signIn() does, synchronously, right after flipping user()
+    TestBed.tick(); // flush the identity-change effect afterwards
+    await settle();
+
+    expect(cart.total()).toBe(214);
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
   });
 });
