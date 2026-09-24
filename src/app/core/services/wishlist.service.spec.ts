@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { WishlistService } from './wishlist.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { AuthService } from './auth.service';
 import type { DocumentItem } from '../models';
 
 /**
@@ -42,9 +43,14 @@ function row(documentId: string, over: Record<string, unknown> = {}) {
   };
 }
 
-function buildService(): WishlistService {
+/** Defaults to a signed-in session; pass `false` to exercise the anonymous-visitor guard. */
+function buildService(authenticated = true): WishlistService {
   TestBed.configureTestingModule({
-    providers: [WishlistService, { provide: ApiFailureReporter, useValue: { report: vi.fn() } }],
+    providers: [
+      WishlistService,
+      { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+      { provide: AuthService, useValue: { isAuthenticated: () => authenticated } },
+    ],
   });
 
   return TestBed.inject(WishlistService);
@@ -189,5 +195,29 @@ describe('WishlistService', () => {
     await settle();
 
     expect(wishlist.state().status).toBe('error');
+  });
+});
+
+/**
+ * Construct-time guard: `AppHeaderComponent` injects `WishlistService` on every page, including
+ * guest pages, so an anonymous visitor must never fire an authenticated-only `GET /api/wishlist`
+ * (it would 401). `AuthService.signIn()` calls `refresh()` itself once a session exists.
+ */
+describe('WishlistService construct-time auth guard', () => {
+  it('does not call the API for an anonymous visitor', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1')]));
+    const wishlist = buildService(false);
+    await settle();
+
+    expect(wishlist.count()).toBe(0);
+    expect(requests.length).toBe(0);
+  });
+
+  it('loads the wishlist on construct for a signed-in user', async () => {
+    stubRoute('GET', '/api/wishlist', wishlistPage([row('doc-1'), row('doc-2')]));
+    const wishlist = buildService(true);
+    await settle();
+
+    expect(wishlist.count()).toBe(2);
   });
 });

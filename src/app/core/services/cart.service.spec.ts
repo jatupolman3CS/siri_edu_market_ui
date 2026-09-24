@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { CartService } from './cart.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { AuthService } from './auth.service';
 import type { DocumentItem } from '../models';
 
 /**
@@ -48,13 +49,15 @@ function cartBody(
   };
 }
 
-function buildService(): CartService {
+/** Defaults to a signed-in session; pass `false` to exercise the anonymous-visitor guard. */
+function buildService(authenticated = true): CartService {
   TestBed.configureTestingModule({
     providers: [
       CartService,
       { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
       { provide: NzMessageService, useValue: { warning: vi.fn(), error: vi.fn() } },
       { provide: Router, useValue: { navigate: vi.fn() } },
+      { provide: AuthService, useValue: { isAuthenticated: () => authenticated } },
     ],
   });
 
@@ -280,5 +283,29 @@ describe('CartService membership and mutation', () => {
 
     // Leaving it in the cart would let the buyer pay for something they already own.
     expect(cart.count()).toBe(0);
+  });
+});
+
+/**
+ * Construct-time guard: `AppHeaderComponent` injects `CartService` on every page, including
+ * guest pages, so an anonymous visitor must never fire an authenticated-only `GET /api/cart`
+ * (it would 401). `AuthService.signIn()` calls `loadCart()` itself once a session exists.
+ */
+describe('CartService construct-time auth guard', () => {
+  it('does not call the API for an anonymous visitor', async () => {
+    stubRoute('GET', '/api/cart', cartBody());
+    const cart = buildService(false);
+    await settle();
+
+    expect(cart.total()).toBe(0);
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
+  });
+
+  it('loads the cart on construct for a signed-in user', async () => {
+    stubRoute('GET', '/api/cart', cartBody());
+    const cart = buildService(true);
+    await settle();
+
+    expect(cart.total()).toBe(214);
   });
 });
