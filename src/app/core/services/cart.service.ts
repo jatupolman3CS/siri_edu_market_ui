@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartItem, DocumentItem } from '../models';
 import { defaultAvatarUrl, resolveCoverUrl } from '../brand-assets';
@@ -11,6 +11,7 @@ import {
 } from '../api';
 import { unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
+import { AuthService } from './auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslationService } from '../i18n/translation.service';
 
@@ -26,9 +27,19 @@ export class CartService {
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
   private readonly translation = inject(TranslationService);
+  private readonly auth = inject(AuthService);
 
   private readonly _items = signal<CartItem[]>([]);
   private readonly _drawerOpen = signal<boolean>(false);
+
+  /**
+   * Identity the account-switch watcher last saw — `null` for a guest. Seeded synchronously
+   * (mirrors `SellerApplicationService.lastSeenUserId`/`NotificationToastService.lastSeenUserId`)
+   * so the effect's first flush is a no-op, and updated by `loadCart()` itself so
+   * `AuthService.signIn()`/`verifyEmail()`/external login's own explicit
+   * `reloadCartAndWishlistAfterSignIn()` call (AC-17) for the same id never causes a duplicate.
+   */
+  private lastSeenUserId: string | null;
 
   readonly items = this._items.asReadonly();
   readonly drawerOpen = this._drawerOpen.asReadonly();
@@ -73,10 +84,31 @@ export class CartService {
   );
 
   constructor() {
+    this.lastSeenUserId = untracked(() => this.auth.user()?.id ?? null);
+
+    // anonymous-cart-wishlist-scoping AC-5: the server keeps a cookie-scoped cart for guests
+    // too (`CartController` no longer requires `[Authorize]`), so this loads unconditionally —
+    // AppHeaderComponent injects this service on every page, guest pages included, and a guard
+    // here would leave a reloaded guest's header badge/drawer empty while items still sit
+    // server-side.
     this.loadCart();
+
+    // Reload whenever the signed-in identity changes so a login that never called `signIn()`
+    // directly (cross-tab login via the `storage` event, or `applyDevBypassSession` in dev) still
+    // picks up the merged cart, and so switching accounts or signing out refreshes state too.
+    // `AuthService.signIn()`/`verifyEmail()`/external login already reload explicitly right after
+    // completing sign-in (AC-17); `loadCart()` stamps `lastSeenUserId` synchronously so this
+    // effect's first flush (same id as the constructor's load above) and any reload already done
+    // by `AuthService` are no-ops here instead of a duplicate request.
+    effect(() => {
+      const userId = this.auth.user()?.id ?? null;
+      if (userId === this.lastSeenUserId) return;
+      this.loadCart();
+    });
   }
 
   loadCart(): void {
+    this.lastSeenUserId = this.auth.user()?.id ?? null;
     void (async () => {
       try {
         const result = await getApiCart();

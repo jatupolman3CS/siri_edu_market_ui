@@ -82,7 +82,12 @@ export class AuthService {
    * anonymous-cart-wishlist-scoping: the backend merges an anonymous visitor's cart/wishlist
    * into their account transparently on sign-in, but `CartService`/`WishlistService` are
    * `providedIn: 'root'` singletons that already loaded their in-memory state while still
-   * anonymous. Neither injects `AuthService`, so this direction is safe (no circular DI).
+   * anonymous. Both do inject `AuthService` directly (eagerly, to read `user()`/`isAuthenticated()`
+   * for their own construct-time load and identity-change `effect()`) — the cycle stays acyclic
+   * only because `AuthService` reaches back to *them* lazily, through `Injector`, and only after
+   * its own constructor has finished (see `reloadCartAndWishlistAfterSignIn()` below). Injecting
+   * `CartService`/`WishlistService` as eager fields here instead would recreate the circular
+   * construction this comment exists to avoid.
    *
    * BUG-CART-401-RACE: these used to be eager `inject()` fields, which meant *constructing*
    * `AuthService` (e.g. from `provideSdkAuthBridge`'s `APP_INITIALIZER`, before it has called
