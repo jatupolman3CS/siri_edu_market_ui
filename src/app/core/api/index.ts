@@ -770,6 +770,8 @@ export type {
   GetApiMarketplaceRecommendedResponse,
   GetApiMarketplaceRecommendedResponses,
   GetApiMarketplaceSearchData,
+  GetApiMarketplaceSearchError,
+  GetApiMarketplaceSearchErrors,
   GetApiMarketplaceSearchResponse,
   GetApiMarketplaceSearchResponses,
   GetApiMarketplaceStatsData,

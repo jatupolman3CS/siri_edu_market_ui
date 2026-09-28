@@ -6351,9 +6351,20 @@ export type GetApiMarketplaceSearchData = {
     GradeLevel?: string;
     ResourceType?: string;
     Standard?: string;
+    MinRating?: number;
   };
   url: '/api/marketplace/search';
 };
+
+export type GetApiMarketplaceSearchErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiMarketplaceSearchError =
+  GetApiMarketplaceSearchErrors[keyof GetApiMarketplaceSearchErrors];
 
 export type GetApiMarketplaceSearchResponses = {
   /**

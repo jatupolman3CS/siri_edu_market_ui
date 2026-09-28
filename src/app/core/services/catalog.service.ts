@@ -263,15 +263,14 @@ export class CatalogService {
    * ผลลัพธ์ของหน้าปัจจุบันเท่านั้น (ไม่สะสมข้ามหน้าเหมือน catalogPager/freePager) — กรองซ้ำฝั่ง client
    * เฉพาะกรณี multi-select เกิน 1 ค่าต่อ dimension ที่ /marketplace/search รับได้แค่ค่าเดียว
    * (ตรรกะเดียวกับที่ `filtered()` เดิมใช้กับ branch 'search') — กรองเฉพาะ "หน้านี้" ไม่ใช่ทั้งชุด
+   * คะแนน (minRating / แท็บ top-rated) กรองฝั่ง server แล้วผ่าน `MinRating` (marketplace-search-min-rating v1)
+   * จึงไม่กรองซ้ำที่นี่ — totalCount/pager ตรงกับรายการที่เห็นจริง
    */
   readonly marketplaceResults = computed<DocumentItem[]>(() => {
     const f = this._filters();
-    const t = this._tab();
     let docs = [...this.marketplacePager.items()];
-    if (t === 'top-rated') docs = docs.filter((d) => d.rating >= 4.7);
     if (f.categoryIds.length > 1) docs = docs.filter((d) => f.categoryIds.some((id) => d.categoryIds.includes(id)));
     if (f.subcategoryIds.length > 1) docs = docs.filter((d) => d.subcategoryId != null && f.subcategoryIds.includes(d.subcategoryId));
-    if (f.minRating > 0) docs = docs.filter((d) => d.rating >= f.minRating);
     if (f.formats.length > 1) docs = docs.filter((d) => f.formats.includes(d.format));
     if (f.gradeLevels.length > 1) docs = docs.filter((d) => d.gradeLevels.some((g) => f.gradeLevels.includes(g)));
     if (f.resourceTypes.length > 1) docs = docs.filter((d) => f.resourceTypes.includes(d.resourceType));
@@ -308,7 +307,7 @@ export class CatalogService {
     const { PageSize: _pageSize, ...query } = this.buildSearchOptions(1).query ?? {};
     const key = JSON.stringify(query);
     // KI-3: e.g. the header re-submitting the term already on screen, a client-side-only filter
-    // (rating, a 2nd/3rd multi-select value), or coming back from the "แพ็กเกจ" tab unchanged —
+    // (a 2nd/3rd multi-select value), or coming back from the "แพ็กเกจ" tab unchanged —
     // the panel already holds exactly this page 1, so don't ask the server again.
     if (
       key === this._lastMarketplaceRefreshKey &&
@@ -521,6 +520,10 @@ export class CatalogService {
     if (f.gradeLevels.length === 1) query.GradeLevel = f.gradeLevels[0];
     if (f.resourceTypes.length === 1) query.ResourceType = f.resourceTypes[0];
     if (f.standards.length === 1) query.Standard = f.standards[0];
+    // marketplace-search-min-rating v1: rating is filtered server-side (before paging) so the
+    // total/pager match what is shown. Omitted at 0 so the KI-3 dedupe key equals "no filter".
+    const minRating = Math.max(f.minRating, t === 'top-rated' ? 4.7 : 0);
+    if (minRating > 0) query.MinRating = minRating;
     return { query };
   }
 

@@ -613,7 +613,9 @@ describe('CatalogService — one request per change (marketplace-redesign §7 KI
     expect(catalogRequests()).toHaveLength(0);
   });
 
-  it('a client-side-only change (rating) does not hit the server again', async () => {
+  // marketplace-search-min-rating v1 AC-12: rating is server-side now (replaces the old
+  // "a client-side-only change (rating) does not hit the server again" case).
+  it('a rating change = exactly one request carrying MinRating', async () => {
     const catalog = buildService();
     catalog.initForMarketplace();
     await settle();
@@ -622,7 +624,86 @@ describe('CatalogService — one request per change (marketplace-redesign §7 KI
     catalog.setFilters({ minRating: 4 });
     await settle();
 
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.get('MinRating')).toBe('4');
+    expect(searchRequests()[0].query.get('Page')).toBe('1');
+    expect(catalogRequests()).toHaveLength(0);
+  });
+
+  it('clearing the rating drops MinRating from the query', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ minRating: 4.5 });
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ minRating: 0 });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.has('MinRating')).toBe(false);
+  });
+
+  // AC-15: the KI-3 dedupe key now includes MinRating — the same value again is a no-op.
+  it('re-selecting the same rating does not refetch', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ minRating: 4 });
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ minRating: 4 });
+    await settle();
+
     expect(searchRequests()).toHaveLength(0);
+  });
+
+  // AC-13: the server filters by rating, so the page is shown as-is (no client re-filter).
+  it('marketplaceResults does not re-filter by rating (server-side now)', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/search',
+      searchPage([documentRow('doc-low', { averageRating: 3 }), documentRow('doc-high', { averageRating: 4.8 })]),
+    );
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ minRating: 4 });
+    await settle();
+
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-low', 'doc-high']);
+    expect(catalog.marketplaceResults()).toHaveLength(2);
+  });
+
+  // AC-14: the service-level top-rated tab asks the server for >= 4.7 instead of filtering the page.
+  it('top-rated tab sends MinRating 4.7 (or the higher user choice) instead of filtering the page', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/search',
+      searchPage([documentRow('doc-a', { averageRating: 4.2 }), documentRow('doc-b', { averageRating: 4.9 })]),
+    );
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    await settle();
+    requests.length = 0;
+
+    catalog.setTab('top-rated');
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.get('MinRating')).toBe('4.7');
+    expect(searchRequests()[0].query.get('Sort')).toBe('rating');
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-a', 'doc-b']);
+
+    requests.length = 0;
+    catalog.setFilters({ minRating: 4.5 });
+    await settle();
+    // max(4.7, 4.5) = 4.7 → same key → no refetch
+    expect(searchRequests()).toHaveLength(0);
+
+    catalog.setFilters({ minRating: 4.8 });
+    await settle();
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.get('MinRating')).toBe('4.8');
   });
 
   it('does not fetch results while the marketplace page is not mounted (e.g. header search elsewhere)', async () => {

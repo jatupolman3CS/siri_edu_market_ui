@@ -241,6 +241,7 @@ import type {
   GetApiMarketplaceRecommendedData,
   GetApiMarketplaceRecommendedResponses,
   GetApiMarketplaceSearchData,
+  GetApiMarketplaceSearchErrors,
   GetApiMarketplaceSearchResponses,
   GetApiMarketplaceStatsData,
   GetApiMarketplaceStatsResponses,
@@ -2416,11 +2417,12 @@ export const getApiMarketplaceCatalog = <ThrowOnError extends boolean = false>(
 
 export const getApiMarketplaceSearch = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMarketplaceSearchData, ThrowOnError>,
-): RequestResult<GetApiMarketplaceSearchResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<GetApiMarketplaceSearchResponses, unknown, ThrowOnError>({
-    url: '/api/marketplace/search',
-    ...options,
-  });
+): RequestResult<GetApiMarketplaceSearchResponses, GetApiMarketplaceSearchErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiMarketplaceSearchResponses,
+    GetApiMarketplaceSearchErrors,
+    ThrowOnError
+  >({ url: '/api/marketplace/search', ...options });
 
 export const getApiMarketplacePopularSearches = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiMarketplacePopularSearchesData, ThrowOnError>,
