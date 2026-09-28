@@ -253,7 +253,10 @@ describe('CatalogService — catalog vs search response race (Q-07 item 2)', () 
     const catalog = buildService();
 
     catalog.loadCatalog(); // slow /catalog fetch starts (in flight for 500ms)
-    catalog.setFilters({ search: 'คณิต' }); // debounced 320ms, then a fast /search fetch
+    // marketplace-redesign §7 KI-3: setFilters() alone no longer refills `_documents` (it only
+    // drives the marketplace results panel), so the newer list refresh is an explicit reload.
+    catalog.setFilters({ search: 'คณิต' });
+    catalog.loadCatalog(); // fast /search fetch (a search term is set now)
 
     await new Promise((resolve) => setTimeout(resolve, 900)); // both requests have long settled
 
@@ -408,6 +411,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
   it('AC-1a: resetFilters() loads page 1 from /marketplace/search with default page size 40 (10 แถว × 4 คอลัมน์ desktop)', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.resetFilters();
     await settle();
@@ -422,6 +426,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
   it('AC-2: applying a search term resets to page 1 even from another page', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1'), documentRow('doc-2')]));
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.resetFilters();
     await settle();
@@ -452,6 +457,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
     stubRoute('GET', '/api/marketplace/catalog', { documents: searchPage([]) });
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.setTab('all');
     await settle();
@@ -463,6 +469,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
   it('AC-4: changing a filter resets the results panel to page 1 and refetches', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.resetFilters();
     await settle();
@@ -480,6 +487,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
   it('AC-5: loadMarketplaceResultsPage requests a new page without resetting filters', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.resetFilters();
     await settle();
@@ -497,6 +505,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
   it('AC-6: setMarketplacePageSize fetches with the new page size and resets to page 1', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.resetFilters();
     await settle();
@@ -525,6 +534,7 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
   it('AC-8: an error surfaces in marketplaceResultsState and retry re-fetches the same (not page-1) page', async () => {
     stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1'), documentRow('doc-2')]));
     const catalog = buildService();
+    catalog.initForMarketplace();
 
     catalog.resetFilters();
     await settle();
@@ -545,6 +555,122 @@ describe('CatalogService — marketplace results panel (marketplace-paged-result
     expect(last!.query.get('Page')).toBe('3');
     expect(catalog.marketplaceResultsState().status).toBe('idle');
     expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-9']);
+  });
+});
+
+describe('CatalogService — one request per change (marketplace-redesign §7 KI-3/KI-4)', () => {
+  const searchRequests = () => requests.filter((r) => r.path === '/api/marketplace/search');
+  const catalogRequests = () => requests.filter((r) => r.path === '/api/marketplace/catalog');
+
+  beforeEach(() => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    stubRoute('GET', '/api/marketplace/catalog', { documents: searchPage([documentRow('doc-1')]) });
+    stubRoute('GET', '/api/marketplace/categories', []);
+  });
+
+  it('page open (activate + reset + query-param sync in one tick) = exactly one /marketplace/search', async () => {
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    catalog.initForMarketplace();
+    catalog.resetFilters();
+    catalog.setFilters({ search: 'คณิต' });
+    catalog.setFilters({ categoryIds: ['math'] });
+    await new Promise((resolve) => setTimeout(resolve, 500)); // past the 320ms search debounce
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.get('Q')).toBe('คณิต');
+    expect(searchRequests()[0].query.get('CategoryId')).toBe('math');
+    expect(catalogRequests()).toHaveLength(0);
+  });
+
+  it('a tab change (setTab + setFilters) = exactly one request, and never refills documents()', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    await settle();
+    requests.length = 0;
+
+    catalog.setTab('free');
+    catalog.setFilters({ freeOnly: true, minPrice: 0, maxPrice: 1000 });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.get('FreeOnly')).toBe('true');
+    expect(catalogRequests()).toHaveLength(0);
+    expect(catalog.documents()).toEqual([]);
+  });
+
+  it('a single filter change = exactly one request', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ gradeLevels: ['primary-early'] });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(catalogRequests()).toHaveLength(0);
+  });
+
+  it('a client-side-only change (rating) does not hit the server again', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ minRating: 4 });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(0);
+  });
+
+  it('does not fetch results while the marketplace page is not mounted (e.g. header search elsewhere)', async () => {
+    const catalog = buildService();
+
+    catalog.resetFilters();
+    catalog.setFilters({ search: 'คณิต' });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(searchRequests()).toHaveLength(0);
+
+    catalog.initForMarketplace();
+    await settle();
+    catalog.leaveMarketplace();
+    requests.length = 0;
+    catalog.setFilters({ freeOnly: true });
+    await settle();
+    expect(searchRequests()).toHaveLength(0);
+  });
+
+  it('re-opening the page fetches fresh even with the same filters as last time', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    await settle();
+    catalog.leaveMarketplace();
+    requests.length = 0;
+
+    catalog.resetFilters();
+    catalog.initForMarketplace();
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+  });
+
+  it('KI-4: freeTotalCount is the server totalCount of /free, not the loaded page length', async () => {
+    stubRoute('GET', '/api/marketplace/free', {
+      items: [documentRow('f-1', { isFree: true, price: 0 })],
+      page: 1,
+      pageSize: 24,
+      totalCount: 137,
+      totalPages: 6,
+    });
+    const catalog = buildService();
+    expect(catalog.freeTotalCount()).toBeNull();
+
+    catalog.loadFreeResources();
+    await settle();
+
+    expect(catalog.freeTotalCount()).toBe(137);
   });
 });
 

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -16,10 +17,8 @@ import {
   AdsService,
   BundleService,
   CatalogService,
-  PlatformStatsService,
   RecentlyViewedService,
 } from '../../../core/services';
-import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import {
   Bundle,
   DocumentItem,
@@ -75,33 +74,13 @@ export class BuyerMarketplacePage {
   readonly catalog = inject(CatalogService);
   readonly bundles = inject(BundleService);
   readonly recent = inject(RecentlyViewedService);
-  readonly platformStats = inject(PlatformStatsService);
   private readonly ads = inject(AdsService);
   readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly compactPipe = new CompactPipe();
 
   /** Local search input value, submitted only on magnifying glass click or Enter press */
   readonly searchTerm = signal<string>('');
-
-  /**
-   * real-data-stats v1 §4 (project-owner instruction — see round 2 dispatch notes): the hero's
-   * "กว่า 12,000 เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ" was a hardcoded number, same figure the
-   * home page already binds to `platformStats.stats()?.totalApprovedDocuments` (§4.2). Drops the
-   * "กว่า N เอกสาร" clause entirely while stats haven't loaded yet, rather than showing a stale
-   * hardcoded count.
-   *
-   * marketplace-redesign v1 dropped the hero banner from the template (§Overview "ตัดออก"), but
-   * this computed + its dedicated spec describe stay — not rendered anywhere right now, kept as
-   * pre-existing behavior outside this redesign's scope.
-   */
-  readonly heroDescription = computed(() => {
-    const totalDocs = this.platformStats.stats()?.totalApprovedDocuments;
-    return totalDocs != null
-      ? this.i18n.t('marketplace.heroDescWithCount', { count: this.compactPipe.transform(totalDocs) })
-      : this.i18n.t('marketplace.heroDescNoCount');
-  });
 
   readonly formats = ['pdf', 'docx', 'pptx', 'xlsx', 'zip'];
   readonly grades: GradeLevel[] = [
@@ -191,7 +170,7 @@ export class BuyerMarketplacePage {
       return total;
     }
     if (this.cachedAllDocCount > 0) return this.cachedAllDocCount;
-    return total > 0 ? total : this.catalog.documents().length;
+    return total;
   });
 
   readonly marketSubtitle = computed(() => {
@@ -208,29 +187,29 @@ export class BuyerMarketplacePage {
   });
 
   /**
-   * gate-2 deviation B fix (integrator-qa, marketplace-redesign v1 §Screens/Views rail 3 table):
-   * "ถ้า `DocumentItem` มี field ที่บอกว่ามีตัวอย่างให้อ่านฟรี (preview pages) ให้รวมเอกสารเหล่านั้น
-   * ด้วย โดยเรียงฟรีก่อน". Merges `catalog.freeResources()` (`isFree`) with the rest of
-   * `catalog.documents()` that have `previewPages > 0` — the two are disjoint partitions of
-   * `documents()` (an `isFree` doc is already in the first half), so no de-dup pass is needed.
-   * Still the "ฟรี" tab badge's source of truth post-redesign (marketplace-home-redesign v2 §4.2
-   * kept this unchanged — only the rails that used to also read this were removed).
+   * marketplace-redesign §7 KI-4: the "ฟรี" badge used to be `freeResources().length` (only the first
+   * page of `/free`, max 24) plus preview-only *paid* docs from `documents()` — so it was capped and
+   * counted docs the "ฟรี" tab (`FreeOnly=true`) never shows, then jumped on entering the tab. Now:
+   * on the tab itself = the server total of what's on screen; elsewhere = `totalCount` of
+   * `GET /api/marketplace/free` (the same `FreeOnly` search, unfiltered). `null` (no badge) until
+   * that total is known — never a made-up number.
    */
-  readonly freeAndPreviewDocuments = computed<DocumentItem[]>(() => {
-    const free = this.catalog.freeResources();
-    const previewOnly = this.catalog
-      .documents()
-      .filter((d) => !d.isFree && d.previewPages > 0);
-    return [...free, ...previewOnly];
+  readonly freeDocumentsCount = computed<number | null>(() => {
+    // On the tab itself a settled total (0 included — filters can leave no free doc) wins; while
+    // it's still loading it would be the previous tab's total, so fall back to /free's.
+    if (this.activeUiTab() === 'free' && this.catalog.marketplaceResultsState().status === 'idle') {
+      return this.catalog.marketplaceResultsTotalCount();
+    }
+    return this.catalog.freeTotalCount();
   });
 
-  readonly freeDocumentsCount = computed(() => {
-    if (this.activeUiTab() === 'free') {
-      const total = this.catalog.marketplaceResultsTotalCount();
-      if (total > 0) return total;
-    }
-    return this.freeAndPreviewDocuments().length;
-  });
+  /**
+   * marketplace-redesign §7 KI-6 / marketplace-home-redesign v2 §4.2: on the "แพ็กเกจ" tab the
+   * category/grade/resource-type/rating/format/standard groups have no effect (bundles endpoint
+   * takes `Q`/`Sort` only) — the sidebar stays (layout kept, per the 2026-09-17 decision that
+   * un-hid it) but those groups render disabled (`inert`). Price stays live: it leaves the tab.
+   */
+  readonly filtersUnsupported = computed(() => this.activeUiTab() === 'package');
 
   readonly tabs = computed<MarketplaceUiTabViewModel[]>(() => [
     { value: 'all', label: this.i18n.t('marketplace.tabAll'), count: this.allDocumentsCount() },
@@ -314,11 +293,14 @@ export class BuyerMarketplacePage {
 
   constructor() {
     // Explicit init to avoid root service auto-fetching on unrelated pages.
+    // marketplace-redesign §7 KI-3: filters are reset *before* the results panel is activated,
+    // and every filter/tab change made synchronously from here (incl. the queryParamMap
+    // subscriber below, which emits synchronously) coalesces into ONE `/marketplace/search`.
     this.catalog.resetFilters();
     this.catalog.initForMarketplace();
+    inject(DestroyRef).onDestroy(() => this.catalog.leaveMarketplace());
+    // KI-4: only for the "ฟรี" badge's `freeTotalCount()`.
     this.catalog.loadFreeResources();
-    // real-data-stats v1 §4: no-op if another page already loaded this (cached in the service).
-    this.platformStats.loadStats();
 
     effect(() => {
       const status = this.catalog.marketplaceResultsState().status;

@@ -201,6 +201,17 @@ export class CatalogService {
   private readonly _searchPage = signal(1);
   private readonly _searchTotalCount = signal<number | null>(null);
   private _listRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  /**
+   * marketplace-redesign §7 KI-3: the results panel (`marketplacePager`) only refetches while the
+   * marketplace page is mounted (`initForMarketplace()` … `leaveMarketplace()`) — e.g. the header's
+   * search box resets/sets filters from any page, which used to fire a `/marketplace/search` the
+   * user never saw before the navigation even happened.
+   */
+  private _marketplaceActive = false;
+  /** KI-3: a page-1 refresh is already queued for this tick — later changes ride along with it. */
+  private _marketplaceRefreshQueued = false;
+  /** KI-3: query of the last page-1 refresh sent — an identical follow-up is skipped. */
+  private _lastMarketplaceRefreshKey: string | null = null;
   private _fetchGeneration = 0;
 
   private readonly freePager = createInfinitePager<DocumentItem>({
@@ -282,6 +293,7 @@ export class CatalogService {
   }
 
   setMarketplacePageSize(size: number): void {
+    this._lastMarketplaceRefreshKey = null;
     void this.safeMarketplaceFetch(() => this.marketplacePager.onPageSizeChange(size));
   }
 
@@ -291,6 +303,21 @@ export class CatalogService {
   }
 
   private refreshMarketplaceResults(): void {
+    // PageSize is left out on purpose: the pager adopts whatever pageSize the server echoes back,
+    // and a page-size change goes through `setMarketplacePageSize()` (which clears the key).
+    const { PageSize: _pageSize, ...query } = this.buildSearchOptions(1).query ?? {};
+    const key = JSON.stringify(query);
+    // KI-3: e.g. the header re-submitting the term already on screen, a client-side-only filter
+    // (rating, a 2nd/3rd multi-select value), or coming back from the "แพ็กเกจ" tab unchanged —
+    // the panel already holds exactly this page 1, so don't ask the server again.
+    if (
+      key === this._lastMarketplaceRefreshKey &&
+      this.marketplacePager.page() === 1 &&
+      this.marketplacePager.state().status !== 'error'
+    ) {
+      return;
+    }
+    this._lastMarketplaceRefreshKey = key;
     void this.safeMarketplaceFetch(() => this.marketplacePager.reloadFromPage1());
   }
 
@@ -334,6 +361,12 @@ export class CatalogService {
       : this.catalogPager.totalCount();
   });
   readonly freeHasMore = this.freePager.hasMore;
+  /**
+   * marketplace-redesign §7 KI-4: server `totalCount` of `GET /api/marketplace/free` (every free
+   * approved doc — same `FreeOnly` search the marketplace "ฟรี" tab runs, without its other
+   * filters). `null` until `loadFreeResources()` has succeeded.
+   */
+  readonly freeTotalCount = this.freePager.totalCount;
 
   constructor() {
     // Intentionally do not auto-fetch in a root singleton service.
@@ -349,10 +382,28 @@ export class CatalogService {
     void this.syncListWithBackend();
   }
 
-  /** Call from Marketplace page. Loads categories and the list. */
+  /**
+   * Call from Marketplace page. Loads categories and page 1 of the results panel.
+   *
+   * marketplace-redesign §7 KI-3: no longer fills `_documents` (`syncListWithBackend`) — the
+   * marketplace page renders `marketplaceResults()` only, so that was a second, invisible request.
+   */
   initForMarketplace(): void {
     this.loadCategories();
-    void this.syncListWithBackend();
+    this._marketplaceActive = true;
+    // Always fetch fresh on page open, even if the filters match the last visit.
+    this._lastMarketplaceRefreshKey = null;
+    this.scheduleListRefresh(true);
+  }
+
+  /** KI-3: call when the marketplace page is destroyed — filter changes stop refetching. */
+  leaveMarketplace(): void {
+    this._marketplaceActive = false;
+    this._marketplaceRefreshQueued = false;
+    if (this._listRefreshTimer != null) {
+      clearTimeout(this._listRefreshTimer);
+      this._listRefreshTimer = null;
+    }
   }
 
   // ─── API Loaders ────────────────────────────────────────────────────────────
@@ -380,20 +431,34 @@ export class CatalogService {
     })();
   }
 
+  /**
+   * marketplace-redesign §7 KI-3: filter/tab changes only drive the marketplace results panel.
+   * They used to also run `syncListWithBackend()` (refilling `_documents`, which no page that
+   * calls `setFilters`/`setTab`/`resetFilters` renders any more) = 2 requests per change.
+   * Immediate changes are coalesced per tick (a tab switch is `setTab` + `setFilters`, page open
+   * is reset + query-param sync) so one user action = one request; a search-only patch is still
+   * debounced 320ms unless an immediate refresh is already queued (which will carry it).
+   */
   private scheduleListRefresh(immediate: boolean): void {
+    if (!this._marketplaceActive) return;
     if (this._tab() === 'bundles') return;
     if (this._listRefreshTimer != null) {
       clearTimeout(this._listRefreshTimer);
       this._listRefreshTimer = null;
     }
+    if (this._marketplaceRefreshQueued) return;
     if (immediate) {
-      void this.syncListWithBackend();
-      this.refreshMarketplaceResults();
+      this._marketplaceRefreshQueued = true;
+      queueMicrotask(() => {
+        if (!this._marketplaceRefreshQueued) return; // leaveMarketplace() in the same tick
+        this._marketplaceRefreshQueued = false;
+        if (this._tab() === 'bundles') return;
+        this.refreshMarketplaceResults();
+      });
       return;
     }
     this._listRefreshTimer = setTimeout(() => {
       this._listRefreshTimer = null;
-      void this.syncListWithBackend();
       this.refreshMarketplaceResults();
     }, 320);
   }

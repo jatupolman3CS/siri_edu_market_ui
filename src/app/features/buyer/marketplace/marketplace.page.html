@@ -98,8 +98,16 @@
 
         <!-- Filter items: the aside owns desktop scrolling so the header stays locked to the top edge. -->
         <div class="p-1.5 pb-3">
+          <!-- marketplace-redesign §7 KI-6: on the "แพ็กเกจ" tab only the price group still has an effect
+               (it leaves the tab); the bundles endpoint accepts Q/Sort only, so the other groups stay
+               visible (layout + any filter still set is shown) but are disabled via `inert`. -->
+          @if (filtersUnsupported()) {
+            <p class="px-3.5 pt-2 pb-1 text-[12px] leading-snug text-ink-muted" data-testid="package-filters-hint">
+              {{ 'marketplace.packageFiltersHint' | trans }}
+            </p>
+          }
           <!-- Category — ย้ายกลับมาไว้ด้านซ้ายในแผงตัวกรอง (ผู้ใช้สั่ง 2026-09-16 ให้เหมือนก่อน marketplace-redesign v1) -->
-          <div>
+          <div data-filter-group="category" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -164,7 +172,7 @@
           </div>
 
           <!-- Grade -->
-          <div class="border-t border-line">
+          <div class="border-t border-line" data-filter-group="grade" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -205,7 +213,7 @@
           </div>
 
           <!-- Resource type -->
-          <div class="border-t border-line">
+          <div class="border-t border-line" data-filter-group="resourceType" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -246,7 +254,7 @@
           </div>
 
           <!-- Price -->
-          <div class="border-t border-line">
+          <div class="border-t border-line" data-filter-group="price">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -285,7 +293,7 @@
           </div>
 
           <!-- Rating -->
-          <div class="border-t border-line">
+          <div class="border-t border-line" data-filter-group="rating" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -324,7 +332,7 @@
           </div>
 
           <!-- Format -->
-          <div class="border-t border-line">
+          <div class="border-t border-line" data-filter-group="format" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
@@ -365,7 +373,7 @@
           </div>
 
           <!-- Standards -->
-          <div class="border-t border-line">
+          <div class="border-t border-line" data-filter-group="standard" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
               class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"

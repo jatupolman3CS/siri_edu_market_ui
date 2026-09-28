@@ -8,19 +8,14 @@ import {
   BundleService,
   CartService,
   CatalogService,
-  PlatformStatsService,
   RecentlyViewedService,
   WishlistService,
 } from '../../../core/services';
 import { idleActionState, type ActionState } from '../../../core/services/action-state';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { mapDocument } from '../../../core/api-mappers/mappers';
-import type { Bundle, Category, DocumentItem, PlatformStats } from '../../../core/models';
+import type { Bundle, Category, DocumentItem } from '../../../core/models';
 
-/**
- * real-data-stats v1 §4 (project-owner instruction, round 2 dispatch notes) — marketplace hero
- * "กว่า N เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ" now reads `PlatformStatsService.stats()`
- * (same source home/auth-layout already bind to) instead of the hardcoded "กว่า 12,000".
- */
 const DEFAULT_FILTERS = {
   search: '',
   categoryIds: [] as string[],
@@ -46,7 +41,9 @@ function buildCatalogFake(categories: Category[] = []) {
   const filtersSignal = signal({ ...DEFAULT_FILTERS });
   return {
     initForMarketplace: vi.fn(),
+    leaveMarketplace: vi.fn(),
     loadFreeResources: vi.fn(),
+    freeTotalCount: (): number | null => null,
     loadCategoryDetailBySlug: vi.fn(),
     categories: () => categories,
     documents: (): DocumentItem[] => [],
@@ -72,14 +69,6 @@ function buildCatalogFake(categories: Category[] = []) {
     loadMarketplaceResultsPage: vi.fn(),
     setMarketplacePageSize: vi.fn(),
     retryMarketplaceResults: vi.fn(),
-  };
-}
-
-function buildPlatformStatsFake(stats: PlatformStats | undefined) {
-  return {
-    stats: () => stats,
-    statsState: () => idleActionState(),
-    loadStats: vi.fn(),
   };
 }
 
@@ -148,7 +137,6 @@ function buildAdsFake() {
 
 function render(
   catalog: ReturnType<typeof buildCatalogFake>,
-  platformStats: ReturnType<typeof buildPlatformStatsFake>,
   query: Record<string, string> = {},
   bundles: ReturnType<typeof buildBundleFake> = buildBundleFake(),
   ads: ReturnType<typeof buildAdsFake> = buildAdsFake(),
@@ -159,7 +147,6 @@ function render(
       provideRouter([]),
       { provide: CatalogService, useValue: catalog },
       { provide: RecentlyViewedService, useValue: { count: () => 0, items: () => [], clear: vi.fn() } },
-      { provide: PlatformStatsService, useValue: platformStats },
       { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
       { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
       { provide: BundleService, useValue: bundles },
@@ -197,53 +184,16 @@ function buildCategory(over: Partial<Category>): Category {
   };
 }
 
-describe('BuyerMarketplacePage — hero description (real-data-stats v1 §4)', () => {
-  it('drops the "กว่า N เอกสาร" clause while platform stats have not loaded yet', () => {
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
-
-    const page = fixture.componentInstance;
-    expect(page.heroDescription()).toBe(
-      'เอกสารคุณภาพจากครีเอเตอร์ตัวจริงทั่วประเทศ — ใช้ตัวกรองด้านซ้ายเพื่อค้นหาที่ใช่',
-    );
-    expect(page.heroDescription()).not.toMatch(/\d/);
-  });
-
-  it('binds the real totalApprovedDocuments count once platform stats load, replacing the old hardcoded "12,000"', () => {
-    const fixture = render(
-      buildCatalogFake(),
-      buildPlatformStatsFake({
-        totalApprovedDocuments: 15420,
-        totalSellers: 100,
-        totalDownloads: 1,
-        reviewCount: 1,
-        feeRatePercent: 10,
-      }),
-    );
-
-    const page = fixture.componentInstance;
-    expect(page.heroDescription()).toBe(
-      'กว่า 15k เอกสารจากครีเอเตอร์ตัวจริงทั่วประเทศ — ใช้ตัวกรองด้านซ้ายเพื่อค้นหาที่ใช่',
-    );
-  });
-
-  it('calls platformStats.loadStats() on construction (no-op if another page already loaded it)', () => {
-    const platformStats = buildPlatformStatsFake(undefined);
-    render(buildCatalogFake(), platformStats);
-
-    expect(platformStats.loadStats).toHaveBeenCalled();
-  });
-});
-
 describe('Marketplace search URL', () => {
   it('automatically applies the incoming query after clearing previous filters', () => {
     const catalog = buildCatalogFake();
-    render(catalog, buildPlatformStatsFake(undefined), { q: '  TOEIC  ' });
+    render(catalog, { q: '  TOEIC  ' });
     expect(catalog.resetFilters).toHaveBeenCalled();
     expect(catalog.setFilters).toHaveBeenCalledWith({ search: 'TOEIC' });
   });
   it('opens all documents for an empty query', () => {
     const catalog = buildCatalogFake();
-    render(catalog, buildPlatformStatsFake(undefined));
+    render(catalog);
     expect(catalog.resetFilters).toHaveBeenCalled();
     expect(catalog.setFilters).not.toHaveBeenCalled();
   });
@@ -252,7 +202,7 @@ describe('Marketplace search URL', () => {
 describe('Marketplace clear search', () => {
   it('clears search on clearSearch()', () => {
     const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), { q: 'ชีวะ' });
+    const fixture = render(catalog, { q: 'ชีวะ' });
     const page = fixture.componentInstance;
     expect(page.searchTerm()).toBe('ชีวะ');
 
@@ -269,7 +219,7 @@ describe('Marketplace clear search', () => {
  */
 describe('BuyerMarketplacePage — single view, no browse mode (marketplace-home-redesign v2 AC-8a/8c)', () => {
   it('has no dead `view`/`listMode`/`goToBrowse` left over from marketplace-redesign v1', () => {
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const fixture = render(buildCatalogFake());
     const page = fixture.componentInstance as unknown as Record<string, unknown>;
 
     expect(page['view']).toBeUndefined();
@@ -278,7 +228,7 @@ describe('BuyerMarketplacePage — single view, no browse mode (marketplace-home
   });
 
   it('never renders the old "← หน้ารวม" button or the browse-mode closing CTA', () => {
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const fixture = render(buildCatalogFake());
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
     expect(text).not.toContain('หน้ารวม');
@@ -287,7 +237,7 @@ describe('BuyerMarketplacePage — single view, no browse mode (marketplace-home
 
   it('does not render top category chips row (categories are filtered via sidebar)', () => {
     const catalog = buildCatalogFake([buildCategory({ id: 'cat-1', name: 'คณิตศาสตร์' })]);
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const el = fixture.nativeElement as HTMLElement;
 
     // Categories are present in the sidebar filter
@@ -307,7 +257,7 @@ describe('BuyerMarketplacePage — toggleCategory hydrates subcategories (market
   it('AC-2a: selecting exactly one category calls loadCategoryDetailBySlug with its slug', () => {
     const cat = buildCategory({ id: 'cat-math', slug: 'math', name: 'คณิตศาสตร์' });
     const catalog = buildCatalogFake([cat]);
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.toggleCategory('cat-math');
@@ -319,7 +269,7 @@ describe('BuyerMarketplacePage — toggleCategory hydrates subcategories (market
     const catA = buildCategory({ id: 'cat-a', slug: 'a' });
     const catB = buildCategory({ id: 'cat-b', slug: 'b' });
     const catalog = buildCatalogFake([catA, catB]);
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.toggleCategory('cat-a');
@@ -333,7 +283,7 @@ describe('BuyerMarketplacePage — toggleCategory hydrates subcategories (market
     const catA = buildCategory({ id: 'cat-a', slug: 'a' });
     const catB = buildCategory({ id: 'cat-b', slug: 'b' });
     const catalog = buildCatalogFake([catA, catB]);
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.toggleCategory('cat-a');
@@ -348,7 +298,7 @@ describe('BuyerMarketplacePage — toggleCategory hydrates subcategories (market
   it('does not call loadCategoryDetailBySlug when no category ends up selected', () => {
     const cat = buildCategory({ id: 'cat-math', slug: 'math' });
     const catalog = buildCatalogFake([cat]);
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.toggleCategory('cat-math');
@@ -366,7 +316,7 @@ describe('BuyerMarketplacePage — toggleCategory hydrates subcategories (market
  */
 describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-4c/4d/4e)', () => {
   it('AC-4e: exposes exactly 3 tabs in order: all, free, package', () => {
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
+    const fixture = render(buildCatalogFake());
     const page = fixture.componentInstance;
 
     expect(page.tabs().map((t) => t.value)).toEqual(['all', 'free', 'package']);
@@ -374,7 +324,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('the "package" tab badge shows no count until it has been activated once this session (§4.2)', () => {
     const bundles = buildBundleFake([buildBundle('b-1')]);
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, bundles);
+    const fixture = render(buildCatalogFake(), {}, bundles);
     const page = fixture.componentInstance;
 
     expect(page.tabs().find((t) => t.value === 'package')?.count).toBeNull();
@@ -383,7 +333,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
   it('selectTab("package") sets the catalog tab to "bundles" and fetches page 1 with the current search term (AC-4c/4d)', () => {
     const catalog = buildCatalogFake();
     const bundles = buildBundleFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), {}, bundles);
+    const fixture = render(catalog, {}, bundles);
     const page = fixture.componentInstance;
 
     catalog.setFilters({ search: '  TOEIC  ' });
@@ -396,7 +346,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('shows the real badge count once the "package" tab has been activated', () => {
     const bundles = buildBundleFake([buildBundle('b-1'), buildBundle('b-2')]);
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), {}, bundles);
+    const fixture = render(buildCatalogFake(), {}, bundles);
     const page = fixture.componentInstance;
 
     page.selectTab('package');
@@ -407,7 +357,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
   it('selectTab("all") / selectTab("free") set the catalog tab directly and never call BundleService', () => {
     const catalog = buildCatalogFake();
     const bundles = buildBundleFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), {}, bundles);
+    const fixture = render(catalog, {}, bundles);
     const page = fixture.componentInstance;
 
     page.selectTab('free');
@@ -418,7 +368,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('setPriceRangeOption("free") sets freeOnly filter and syncs activeUiTab', () => {
     const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.setPriceRangeOption('free');
@@ -430,7 +380,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('clicking active price option "free" toggles it back to "all"', () => {
     const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.setPriceRangeOption('free');
@@ -445,7 +395,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('selectTab("free") toggles back to "all" when clicked while already active', () => {
     const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
     const page = fixture.componentInstance;
 
     page.selectTab('free');
@@ -458,7 +408,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('§4.2 query param migration: legacy ?tab=new falls back to "all" silently (no throw)', () => {
     const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), { tab: 'new' });
+    const fixture = render(catalog, { tab: 'new' });
 
     expect(fixture.componentInstance.activeUiTab()).toBe('all');
     expect(catalog.setTab).toHaveBeenCalledWith('all');
@@ -466,7 +416,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
 
   it('§4.2 query param migration: legacy ?tab=popular falls back to "all" silently (no throw)', () => {
     const catalog = buildCatalogFake();
-    const fixture = render(catalog, buildPlatformStatsFake(undefined), { tab: 'popular' });
+    const fixture = render(catalog, { tab: 'popular' });
 
     expect(fixture.componentInstance.activeUiTab()).toBe('all');
     expect(catalog.setTab).toHaveBeenCalledWith('all');
@@ -475,7 +425,7 @@ describe('BuyerMarketplacePage — tabs (marketplace-home-redesign v2 §4.2, AC-
   it('AC-4c: a deep link with ?tab=package renders app-bundle-card, not app-document-card', () => {
     const bundle = buildBundle('b-1');
     const bundles = buildBundleFake([bundle]);
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined), { tab: 'package' }, bundles);
+    const fixture = render(buildCatalogFake(), { tab: 'package' }, bundles);
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
@@ -499,7 +449,7 @@ describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.
     catalog.marketplaceResults = () => docs;
     const ads = buildAdsFake();
 
-    render(catalog, buildPlatformStatsFake(undefined), {}, buildBundleFake(), ads);
+    render(catalog, {}, buildBundleFake(), ads);
 
     expect(ads.recordImpressions).toHaveBeenCalledTimes(1);
     expect(ads.recordImpressions).toHaveBeenCalledWith(
@@ -513,7 +463,7 @@ describe('BuyerMarketplacePage — ads impressions (seller-ads-promotion v1 §4.
     catalog.marketplaceResults = () => [buildDoc('doc-1'), buildDoc('doc-2')];
     const ads = buildAdsFake();
 
-    render(catalog, buildPlatformStatsFake(undefined), {}, buildBundleFake(), ads);
+    render(catalog, {}, buildBundleFake(), ads);
 
     expect(ads.recordImpressions).toHaveBeenCalledWith(expect.any(Array), []);
   });
@@ -530,7 +480,7 @@ describe('Marketplace results pagination', () => {
     catalog.marketplaceResultsState = state.asReadonly();
     catalog.marketplaceResultsTotalPages = () => 3;
     catalog.marketplaceResultsTotalCount = () => 60;
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
 
     fixture.componentInstance.loadMoreResults();
     expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);
@@ -550,14 +500,41 @@ describe('Marketplace results pagination', () => {
     expect(fixture.componentInstance.displayedDocs().map((doc) => doc.id)).toEqual(['doc-1']);
   });
 
-  it('keeps the filters sidebar visible on the package tab', () => {
-    const fixture = render(buildCatalogFake(), buildPlatformStatsFake(undefined));
-    const sidebar = (fixture.nativeElement as HTMLElement).querySelector('aside');
+  it('KI-6: keeps the sidebar on the package tab but disables every group except price, with a hint', () => {
+    const fixture = render(buildCatalogFake());
+    const el = fixture.nativeElement as HTMLElement;
+    const sidebar = el.querySelector('aside');
+    const unsupported = ['category', 'grade', 'resourceType', 'rating', 'format', 'standard'];
+
+    // "ทั้งหมด" tab: nothing disabled, no hint.
+    for (const g of unsupported) {
+      expect(el.querySelector(`[data-filter-group="${g}"]`)?.hasAttribute('inert')).toBe(false);
+    }
+    expect(el.querySelector('[data-testid="package-filters-hint"]')).toBeNull();
 
     fixture.componentInstance.selectTab('package');
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('aside')).toBe(sidebar);
+    // Layout kept (the 2026-09-17 decision) — same sidebar element, not re-created or removed.
+    expect(el.querySelector('aside')).toBe(sidebar);
+    for (const g of unsupported) {
+      const group = el.querySelector(`[data-filter-group="${g}"]`);
+      expect(group, g).not.toBeNull();
+      expect(group!.hasAttribute('inert'), g).toBe(true);
+      expect(group!.getAttribute('aria-disabled'), g).toBe('true');
+    }
+    // Price still works on this tab (it switches the user back to a document tab).
+    const price = el.querySelector('[data-filter-group="price"]');
+    expect(price).not.toBeNull();
+    expect(price!.hasAttribute('inert')).toBe(false);
+    expect(price!.closest('[inert]')).toBeNull();
+    expect(el.querySelector('[data-testid="package-filters-hint"]')?.textContent).toContain(
+      'ใช้กับเอกสารเท่านั้น',
+    );
+
+    fixture.componentInstance.selectTab('all');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-filter-group="grade"]')?.hasAttribute('inert')).toBe(false);
   });
 
   it('loads the selected page from the pagination below the document grid', () => {
@@ -581,7 +558,7 @@ describe('Marketplace results pagination', () => {
         seller: { id: 's1', displayName: 'ครูสมชาย', isVerified: true },
       } as any,
     ];
-    const fixture = render(catalog, buildPlatformStatsFake(undefined));
+    const fixture = render(catalog);
 
     const pagination = (fixture.nativeElement as HTMLElement).querySelector('app-pagination');
     const nextButton = pagination?.querySelector('button[aria-label]');
@@ -593,5 +570,153 @@ describe('Marketplace results pagination', () => {
     fixture.detectChanges();
 
     expect(catalog.loadMarketplaceResultsPage).toHaveBeenCalledWith(2);
+  });
+});
+
+/** marketplace-redesign §7 KI-2: the hero is gone, so is the `/marketplace/stats` fetch that fed it. */
+describe('BuyerMarketplacePage — no dead hero stats (marketplace-redesign §7 KI-2)', () => {
+  it('has no heroDescription and needs no PlatformStatsService (no /marketplace/stats call)', () => {
+    // `render()` provides no PlatformStatsService fake: were it still injected, the real one would
+    // be used — this asserts the page no longer depends on it at all.
+    const fixture = render(buildCatalogFake());
+    const page = fixture.componentInstance as unknown as Record<string, unknown>;
+
+    expect(page['heroDescription']).toBeUndefined();
+    expect(page['platformStats']).toBeUndefined();
+  });
+});
+
+/** marketplace-redesign §7 KI-4: "ฟรี" badge off-tab = server total of /free, never page-1 length. */
+describe('BuyerMarketplacePage — "ฟรี" tab badge (marketplace-redesign §7 KI-4)', () => {
+  const freeBadge = (page: BuyerMarketplacePage) => page.tabs().find((t) => t.value === 'free')?.count;
+
+  it('shows the /free totalCount while on another tab', () => {
+    const catalog = buildCatalogFake();
+    catalog.freeTotalCount = () => 137;
+    catalog.freeResources = () => [buildDoc('f-1')]; // page-1 length must not leak into the badge
+    const fixture = render(catalog);
+
+    expect(freeBadge(fixture.componentInstance)).toBe(137);
+  });
+
+  it('shows no number (null) until that total is known — never a made-up count', () => {
+    const catalog = buildCatalogFake();
+    catalog.freeResources = () => [buildDoc('f-1'), buildDoc('f-2')];
+    catalog.documents = () => [{ ...buildDoc('p-1'), previewPages: 3 }];
+    const fixture = render(catalog);
+
+    expect(freeBadge(fixture.componentInstance)).toBeNull();
+  });
+
+  it('on the "ฟรี" tab itself shows the total of the results on screen', () => {
+    const catalog = buildCatalogFake();
+    catalog.freeTotalCount = () => 137;
+    catalog.marketplaceResultsTotalCount = () => 12;
+    const fixture = render(catalog, { tab: 'free' });
+
+    expect(freeBadge(fixture.componentInstance)).toBe(12);
+  });
+});
+
+/**
+ * marketplace-redesign §7 KI-3 — against the REAL CatalogService with a stubbed `fetch`: opening
+ * the page (reset + query-param sync + tab) sends exactly one `/marketplace/search`, never
+ * `/marketplace/catalog` or `/marketplace/stats`, and one filter/tab change = one more request.
+ */
+describe('BuyerMarketplacePage — request count (marketplace-redesign §7 KI-3)', () => {
+  let realFetch: typeof globalThis.fetch;
+  let paths: string[];
+
+  beforeEach(() => {
+    paths = [];
+    realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      const path = new URL(request.url).pathname;
+      paths.push(path);
+      const body =
+        path === '/api/marketplace/categories'
+          ? []
+          : { items: [], page: 1, pageSize: 40, totalCount: 0, totalPages: 1 };
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as typeof globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  async function settle(): Promise<void> {
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  function renderWithRealCatalog(query: Record<string, string>) {
+    TestBed.configureTestingModule({
+      imports: [BuyerMarketplacePage],
+      providers: [
+        provideRouter([]),
+        { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+        { provide: RecentlyViewedService, useValue: { count: () => 0, items: () => [], clear: vi.fn() } },
+        { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
+        { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
+        { provide: BundleService, useValue: buildBundleFake() },
+        { provide: AdsService, useValue: buildAdsFake() },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap(query)) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BuyerMarketplacePage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const count = (path: string) => paths.filter((p) => p === path).length;
+
+  it('page open with ?q=&tab=free = exactly one /marketplace/search', async () => {
+    renderWithRealCatalog({ q: 'คณิต', tab: 'free' });
+    await new Promise((resolve) => setTimeout(resolve, 450)); // past the 320ms search debounce
+
+    expect(count('/api/marketplace/search')).toBe(1);
+    expect(count('/api/marketplace/catalog')).toBe(0);
+    expect(count('/api/marketplace/stats')).toBe(0);
+  });
+
+  it('page open with no query = exactly one /marketplace/search', async () => {
+    renderWithRealCatalog({});
+    await settle();
+
+    expect(count('/api/marketplace/search')).toBe(1);
+    expect(count('/api/marketplace/catalog')).toBe(0);
+  });
+
+  it('one tab change and one filter change = one request each', async () => {
+    const fixture = renderWithRealCatalog({});
+    await settle();
+    paths.length = 0;
+
+    fixture.componentInstance.selectTab('free'); // setTab + setFilters inside
+    await settle();
+    expect(count('/api/marketplace/search')).toBe(1);
+
+    paths.length = 0;
+    fixture.componentInstance.toggleGrade('primary-early');
+    await settle();
+    expect(count('/api/marketplace/search')).toBe(1);
+    expect(count('/api/marketplace/catalog')).toBe(0);
+  });
+
+  it('stops refetching once the page is destroyed', async () => {
+    const fixture = renderWithRealCatalog({});
+    await settle();
+    const catalog = TestBed.inject(CatalogService);
+    fixture.destroy();
+    paths.length = 0;
+
+    catalog.setFilters({ freeOnly: true });
+    await settle();
+
+    expect(count('/api/marketplace/search')).toBe(0);
   });
 });
