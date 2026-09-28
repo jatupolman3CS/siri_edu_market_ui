@@ -720,3 +720,191 @@ describe('BuyerMarketplacePage — request count (marketplace-redesign §7 KI-3)
     expect(count('/api/marketplace/search')).toBe(0);
   });
 });
+
+/** marketplace-search-multi-value-filters v1 AC-21: 20 values per dimension max (server 400s above). */
+describe('BuyerMarketplacePage — per-dimension value cap (marketplace-search-multi-value-filters v1 AC-21)', () => {
+  const twenty = Array.from({ length: 20 }, (_, i) => `cat-${i + 1}`);
+
+  /** render first — the page resets filters on init (query-param sync) — then preset the filters. */
+  function renderWith(catalog: ReturnType<typeof buildCatalogFake>, patch: Record<string, unknown>) {
+    const fixture = render(catalog);
+    catalog.setFilters(patch);
+    catalog.setFilters.mockClear();
+    catalog.loadCategoryDetailBySlug.mockClear();
+    fixture.detectChanges();
+    return fixture;
+  }
+  const hintText = 'เลือกได้สูงสุด 20 รายการต่อกลุ่มตัวกรอง';
+
+  it('toggling a 21st category is a no-op and shows the limit hint', () => {
+    const catalog = buildCatalogFake();
+    const fixture = renderWith(catalog, { categoryIds: twenty });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="category-max-values-hint"]')?.textContent?.trim()).toBe(hintText);
+
+    fixture.componentInstance.toggleCategory('cat-21');
+    fixture.detectChanges();
+
+    expect(catalog.setFilters).not.toHaveBeenCalled();
+    expect(catalog.filters().categoryIds).toEqual(twenty);
+    expect(catalog.loadCategoryDetailBySlug).not.toHaveBeenCalled();
+    expect(el.querySelector('[data-testid="category-max-values-hint"]')?.textContent?.trim()).toBe(hintText);
+  });
+
+  it('removing a value at the cap still works and hides the hint', () => {
+    const catalog = buildCatalogFake();
+    const fixture = renderWith(catalog, { categoryIds: twenty });
+    const el = fixture.nativeElement as HTMLElement;
+
+    fixture.componentInstance.toggleCategory('cat-20');
+    fixture.detectChanges();
+
+    expect(catalog.filters().categoryIds).toEqual(twenty.slice(0, 19));
+    expect(el.querySelector('[data-testid="category-max-values-hint"]')).toBeNull();
+  });
+
+  it('shows no hint below the cap', () => {
+    const fixture = renderWith(buildCatalogFake(), { categoryIds: twenty.slice(0, 19) });
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="category-max-values-hint"]')).toBeNull();
+  });
+
+  it('caps every other dimension the same way (21st value = no-op)', () => {
+    const catalog = buildCatalogFake();
+    const values = Array.from({ length: 20 }, (_, i) => `v-${i + 1}`);
+    const page = renderWith(catalog, {
+      subcategoryIds: values,
+      gradeLevels: values,
+      resourceTypes: values,
+      standards: values,
+      formats: values,
+    }).componentInstance;
+
+    page.toggleSubcategory('v-21');
+    page.toggleGrade('primary-early');
+    page.toggleResourceType('worksheet');
+    page.toggleStandard('v-21');
+    page.toggleFormat('v-21');
+
+    expect(catalog.setFilters).not.toHaveBeenCalled();
+  });
+
+  it('shows the hint under the subcategory list once 20 subcategories are selected', () => {
+    const catalog = buildCatalogFake([
+      buildCategory({
+        id: 'cat-1',
+        subcategories: [{ id: 'sub-1', parentId: 'cat-1', name: 'ย่อย 1', slug: 'sub-1', documentCount: 1 }],
+      }),
+    ]);
+    const fixture = renderWith(catalog, {
+      categoryIds: ['cat-1'],
+      subcategoryIds: Array.from({ length: 20 }, (_, i) => `sub-${i + 1}`),
+    });
+
+    expect(
+      (fixture.nativeElement as HTMLElement)
+        .querySelector('[data-testid="subcategory-max-values-hint"]')
+        ?.textContent?.trim(),
+    ).toBe(hintText);
+  });
+});
+
+/**
+ * marketplace-search-multi-value-filters v1 AC-19 — against the REAL CatalogService: with two
+ * categories selected the toolbar count and the pager come from the server's totalCount/totalPages,
+ * not from how many items of the loaded page survive a client-side re-filter (there is none now).
+ */
+describe('BuyerMarketplacePage — server totals with multi-value filters (marketplace-search-multi-value-filters v1 AC-19)', () => {
+  let realFetch: typeof globalThis.fetch;
+  let searchUrls: URL[];
+
+  function row(id: string, categoryIds: string[]) {
+    return {
+      id,
+      slug: id,
+      title: `เอกสาร ${id}`,
+      shortDescription: '',
+      price: 100,
+      isFree: false,
+      format: 'pdf',
+      resourceType: 'worksheet',
+      averageRating: 4,
+      reviewCount: 2,
+      downloadCount: 10,
+      categoryIds,
+      seller: { id: 'seller-1', studioName: 'Siri Studio' },
+      createdAt: '2026-08-01T00:00:00Z',
+    };
+  }
+
+  beforeEach(() => {
+    searchUrls = [];
+    realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      const url = new URL(request.url);
+      if (url.pathname === '/api/marketplace/search') searchUrls.push(url);
+      const body =
+        url.pathname === '/api/marketplace/categories'
+          ? []
+          : {
+              // page 1 of 57 — including an item outside both categories, which is shown as-is
+              items: [row('doc-math', ['math']), row('doc-sci', ['sci']), row('doc-art', ['art'])],
+              page: 1,
+              pageSize: 40,
+              totalCount: 57,
+              totalPages: 2,
+            };
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as typeof globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  async function settle(): Promise<void> {
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it('with two categories selected, the count and pager come from the server total', async () => {
+    TestBed.configureTestingModule({
+      imports: [BuyerMarketplacePage],
+      providers: [
+        provideRouter([]),
+        { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+        { provide: RecentlyViewedService, useValue: { count: () => 0, items: () => [], clear: vi.fn() } },
+        { provide: CartService, useValue: { has: () => false, add: vi.fn() } },
+        { provide: WishlistService, useValue: { has: () => false, toggle: vi.fn(), refresh: vi.fn() } },
+        { provide: BundleService, useValue: buildBundleFake() },
+        { provide: AdsService, useValue: buildAdsFake() },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BuyerMarketplacePage);
+    fixture.detectChanges();
+    await settle();
+
+    fixture.componentInstance.toggleCategory('math');
+    fixture.componentInstance.toggleCategory('sci');
+    await settle();
+    fixture.detectChanges();
+
+    const last = searchUrls.at(-1)!;
+    expect(last.searchParams.getAll('CategoryId')).toEqual(['math', 'sci']);
+
+    const catalog = TestBed.inject(CatalogService);
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-math', 'doc-sci', 'doc-art']);
+    expect(catalog.marketplaceResultsTotalCount()).toBe(57);
+    expect(catalog.marketplaceResultsTotalPages()).toBe(2);
+    expect(fixture.componentInstance.allDocumentsCount()).toBe(57);
+
+    const el = fixture.nativeElement as HTMLElement;
+    // toolbar "N รายการ" = server total, not the 3 items on this page
+    expect(el.querySelector('span.font-bold.text-ink')?.textContent?.trim()).toBe('57');
+    expect(el.querySelector('app-pagination')).not.toBeNull();
+  });
+});

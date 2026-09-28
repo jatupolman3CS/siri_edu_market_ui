@@ -17,6 +17,7 @@ import {
   AdsService,
   BundleService,
   CatalogService,
+  MAX_FILTER_VALUES_PER_DIMENSION,
   RecentlyViewedService,
 } from '../../../core/services';
 import {
@@ -447,8 +448,17 @@ export class BuyerMarketplacePage {
     this.updateQueryParams({ q: null });
   }
 
+  /** multi-value-filters v1 (AC-21): the server rejects >20 values per dimension (400). */
+  readonly maxFilterValues = MAX_FILTER_VALUES_PER_DIMENSION;
+
+  /** true when toggling `value` would add a value to a dimension already at the cap — callers no-op. */
+  private atFilterCap(list: readonly string[], value: string): boolean {
+    return !list.includes(value) && list.length >= MAX_FILTER_VALUES_PER_DIMENSION;
+  }
+
   toggleCategory(id: string): void {
     const ids = this.catalog.filters().categoryIds;
+    if (this.atFilterCap(ids, id)) return;
     const newIds = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
     // also remove subcategories that don't belong to remaining categories
     const remainingCats = new Set(newIds);
@@ -482,6 +492,7 @@ export class BuyerMarketplacePage {
 
   toggleSubcategory(id: string): void {
     const ids = this.catalog.filters().subcategoryIds;
+    if (this.atFilterCap(ids, id)) return;
     this.catalog.setFilters({
       subcategoryIds: ids.includes(id)
         ? ids.filter((x) => x !== id)
@@ -491,6 +502,7 @@ export class BuyerMarketplacePage {
 
   toggleGrade(g: GradeLevel): void {
     const list = this.catalog.filters().gradeLevels;
+    if (this.atFilterCap(list, g)) return;
     this.catalog.setFilters({
       gradeLevels: list.includes(g) ? list.filter((x) => x !== g) : [...list, g],
     });
@@ -498,6 +510,7 @@ export class BuyerMarketplacePage {
 
   toggleResourceType(t: ResourceType): void {
     const list = this.catalog.filters().resourceTypes;
+    if (this.atFilterCap(list, t)) return;
     this.catalog.setFilters({
       resourceTypes: list.includes(t) ? list.filter((x) => x !== t) : [...list, t],
     });
@@ -505,6 +518,7 @@ export class BuyerMarketplacePage {
 
   toggleStandard(s: string): void {
     const list = this.catalog.filters().standards;
+    if (this.atFilterCap(list, s)) return;
     this.catalog.setFilters({
       standards: list.includes(s) ? list.filter((x) => x !== s) : [...list, s],
     });
@@ -512,6 +526,7 @@ export class BuyerMarketplacePage {
 
   toggleFormat(f: string): void {
     const list = this.catalog.filters().formats;
+    if (this.atFilterCap(list, f)) return;
     this.catalog.setFilters({
       formats: list.includes(f) ? list.filter((x) => x !== f) : [...list, f],
     });

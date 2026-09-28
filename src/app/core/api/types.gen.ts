@@ -6338,8 +6338,8 @@ export type GetApiMarketplaceSearchData = {
   path?: never;
   query?: {
     Q?: string;
-    CategoryId?: string;
-    SubcategoryId?: string;
+    CategoryId?: Array<string>;
+    SubcategoryId?: Array<string>;
     SellerId?: string;
     Sort?: string;
     Page?: number;
@@ -6347,10 +6347,10 @@ export type GetApiMarketplaceSearchData = {
     FreeOnly?: boolean;
     MinPrice?: number;
     MaxPrice?: number;
-    Format?: string;
-    GradeLevel?: string;
-    ResourceType?: string;
-    Standard?: string;
+    Format?: Array<string>;
+    GradeLevel?: Array<string>;
+    ResourceType?: Array<string>;
+    Standard?: Array<string>;
     MinRating?: number;
   };
   url: '/api/marketplace/search';

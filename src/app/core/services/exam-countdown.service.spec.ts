@@ -25,7 +25,7 @@ type Route = { status?: number; body: unknown };
 
 let routes: Map<string, Route>;
 let realFetch: typeof globalThis.fetch;
-let requests: { method: string; path: string; body: string }[];
+let requests: { method: string; path: string; body: string; query: URLSearchParams }[];
 
 function jsonResponse(body: unknown, status = 200): Response {
   // `undefined` = a truly empty body (matches DELETE's real `204`).
@@ -104,9 +104,10 @@ beforeEach(() => {
 
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(input, init);
-    const path = new URL(request.url).pathname;
+    const url = new URL(request.url);
+    const path = url.pathname;
     const body = await request.clone().text();
-    requests.push({ method: request.method, path, body });
+    requests.push({ method: request.method, path, body, query: url.searchParams });
 
     const route = routes.get(`${request.method.toUpperCase()} ${path}`);
     if (!route) return jsonResponse({ title: 'no stub for this route', status: 404 }, 404);
@@ -207,6 +208,9 @@ describe('ExamCountdownService — loadSetting() (§3.1)', () => {
     expect(service.docs().map((d) => d.id)).toEqual(['doc-1']);
     const search = requests.find((r) => r.method === 'GET' && r.path === '/api/marketplace/search');
     expect(search).toBeDefined();
+    // marketplace-search-multi-value-filters v1 AC-20: Standard is an array in the SDK now,
+    // but the exam grid still sends exactly one value (the exam type).
+    expect(search?.query.getAll('Standard')).toEqual(['TGAT']);
   });
 
   it('generic failure (5xx) reports through ApiFailureReporter and sets state=error', async () => {

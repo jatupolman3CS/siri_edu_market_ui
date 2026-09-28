@@ -163,9 +163,19 @@
                             <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
                           </label>
                         }
+                        @if (catalog.filters().subcategoryIds.length >= maxFilterValues) {
+                          <p class="px-2 pt-1 text-[11px] leading-snug text-ink-muted" data-testid="subcategory-max-values-hint">
+                            {{ 'marketplace.filterMaxValues' | trans }}
+                          </p>
+                        }
                       </div>
                     }
                   </div>
+                }
+                @if (catalog.filters().categoryIds.length >= maxFilterValues) {
+                  <p class="px-2.5 pt-1 text-[11px] leading-snug text-ink-muted" data-testid="category-max-values-hint">
+                    {{ 'marketplace.filterMaxValues' | trans }}
+                  </p>
                 }
               </div>
             }

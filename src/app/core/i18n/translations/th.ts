@@ -319,6 +319,7 @@ export const th = {
     "filters": "ตัวกรอง",
     "clearAll": "ล้างทั้งหมด",
     "groupGrade": "ระดับชั้น",
+    "filterMaxValues": "เลือกได้สูงสุด 20 รายการต่อกลุ่มตัวกรอง",
     "groupResourceType": "ประเภทเอกสาร",
     "groupPrice": "ราคา",
     "groupRating": "คะแนนรีวิว",

@@ -79,6 +79,12 @@ function tokenizeSearch(raw: string): string[] {
   return out;
 }
 
+/**
+ * marketplace-search-multi-value-filters v1: max selected values per multi-select dimension —
+ * same as backend `MarketplaceSearchRequest.MaxValuesPerFilter` (more = 400).
+ */
+export const MAX_FILTER_VALUES_PER_DIMENSION = 20;
+
 export interface CatalogFilters {
   search: string;
   categoryIds: string[];
@@ -260,23 +266,11 @@ export class CatalogService {
   readonly marketplacePageSizeOptions = this.marketplacePager.pageSizeOptions;
 
   /**
-   * ผลลัพธ์ของหน้าปัจจุบันเท่านั้น (ไม่สะสมข้ามหน้าเหมือน catalogPager/freePager) — กรองซ้ำฝั่ง client
-   * เฉพาะกรณี multi-select เกิน 1 ค่าต่อ dimension ที่ /marketplace/search รับได้แค่ค่าเดียว
-   * (ตรรกะเดียวกับที่ `filtered()` เดิมใช้กับ branch 'search') — กรองเฉพาะ "หน้านี้" ไม่ใช่ทั้งชุด
-   * คะแนน (minRating / แท็บ top-rated) กรองฝั่ง server แล้วผ่าน `MinRating` (marketplace-search-min-rating v1)
-   * จึงไม่กรองซ้ำที่นี่ — totalCount/pager ตรงกับรายการที่เห็นจริง
+   * ผลลัพธ์ของหน้าปัจจุบันเท่านั้น (ไม่สะสมข้ามหน้าเหมือน catalogPager/freePager)
+   * server กรองครบทุกมิติแล้ว (marketplace-search-multi-value-filters v1 — OR ภายในมิติ, AND ข้ามมิติ)
+   * รวมถึงคะแนน (marketplace-search-min-rating v1) จึงไม่กรองซ้ำฝั่ง client — totalCount/pager ตรงกับรายการที่เห็นจริง
    */
-  readonly marketplaceResults = computed<DocumentItem[]>(() => {
-    const f = this._filters();
-    let docs = [...this.marketplacePager.items()];
-    if (f.categoryIds.length > 1) docs = docs.filter((d) => f.categoryIds.some((id) => d.categoryIds.includes(id)));
-    if (f.subcategoryIds.length > 1) docs = docs.filter((d) => d.subcategoryId != null && f.subcategoryIds.includes(d.subcategoryId));
-    if (f.formats.length > 1) docs = docs.filter((d) => f.formats.includes(d.format));
-    if (f.gradeLevels.length > 1) docs = docs.filter((d) => d.gradeLevels.some((g) => f.gradeLevels.includes(g)));
-    if (f.resourceTypes.length > 1) docs = docs.filter((d) => f.resourceTypes.includes(d.resourceType));
-    if (f.standards.length > 1) docs = docs.filter((d) => (d.standards ?? []).some((s) => f.standards.includes(s)));
-    return docs;
-  });
+  readonly marketplaceResults = computed<DocumentItem[]>(() => this.marketplacePager.items());
 
   loadMarketplaceResultsPage(page: number): void {
     void this.safeMarketplaceFetch(() => this.marketplacePager.onPageChange(page));
@@ -306,8 +300,9 @@ export class CatalogService {
     // and a page-size change goes through `setMarketplacePageSize()` (which clears the key).
     const { PageSize: _pageSize, ...query } = this.buildSearchOptions(1).query ?? {};
     const key = JSON.stringify(query);
-    // KI-3: e.g. the header re-submitting the term already on screen, a client-side-only filter
-    // (a 2nd/3rd multi-select value), or coming back from the "แพ็กเกจ" tab unchanged —
+    // KI-3: e.g. the header re-submitting the term already on screen, re-selecting the same
+    // multi-select set (values are sorted, so order doesn't matter), or coming back from the
+    // "แพ็กเกจ" tab unchanged —
     // the panel already holds exactly this page 1, so don't ask the server again.
     if (
       key === this._lastMarketplaceRefreshKey &&
@@ -511,15 +506,17 @@ export class CatalogService {
     };
     const term = f.search.trim();
     if (term) query.Q = term;
-    if (f.categoryIds.length === 1) query.CategoryId = f.categoryIds[0];
-    if (f.subcategoryIds.length === 1) query.SubcategoryId = f.subcategoryIds[0];
+    // multi-value-filters v1: every selected value goes to the server as a repeated param,
+    // sorted so the KI-3 dedupe key is canonical; omitted when empty (key == "no filter").
+    if (f.categoryIds.length) query.CategoryId = [...f.categoryIds].sort();
+    if (f.subcategoryIds.length) query.SubcategoryId = [...f.subcategoryIds].sort();
     if (f.freeOnly || t === 'free') query.FreeOnly = true;
     if (f.minPrice > 0) query.MinPrice = f.minPrice;
     if (f.maxPrice < 1000) query.MaxPrice = f.maxPrice;
-    if (f.formats.length === 1) query.Format = f.formats[0];
-    if (f.gradeLevels.length === 1) query.GradeLevel = f.gradeLevels[0];
-    if (f.resourceTypes.length === 1) query.ResourceType = f.resourceTypes[0];
-    if (f.standards.length === 1) query.Standard = f.standards[0];
+    if (f.formats.length) query.Format = [...f.formats].sort();
+    if (f.gradeLevels.length) query.GradeLevel = [...f.gradeLevels].sort();
+    if (f.resourceTypes.length) query.ResourceType = [...f.resourceTypes].sort();
+    if (f.standards.length) query.Standard = [...f.standards].sort();
     // marketplace-search-min-rating v1: rating is filtered server-side (before paging) so the
     // total/pager match what is shown. Omitted at 0 so the KI-3 dedupe key equals "no filter".
     const minRating = Math.max(f.minRating, t === 'top-rated' ? 4.7 : 0);
@@ -778,7 +775,7 @@ export class CatalogService {
       try {
         this._categoryDocuments.set(
           await this.fetchScopedDocuments({
-            CategoryId: categoryId,
+            CategoryId: [categoryId],
             Page: 1,
             PageSize: SCOPED_PAGE_SIZE,
             Sort: 'popular',

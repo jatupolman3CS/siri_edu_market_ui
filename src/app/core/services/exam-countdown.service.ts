@@ -59,7 +59,7 @@ export class ExamCountdownService {
         return { items: [], page, pageSize, totalCount: 0, totalPages: 0 };
       }
       const result = await getApiMarketplaceSearch({
-        query: { Standard: examType, Page: page, PageSize: pageSize },
+        query: { Standard: [examType], Page: page, PageSize: pageSize },
       });
       const data = unwrapSdkResult(result);
       return {

@@ -321,6 +321,7 @@ export const en: TranslationKeys = {
     "filters": "Filters",
     "clearAll": "Clear all",
     "groupGrade": "Grade level",
+    "filterMaxValues": "You can select up to 20 options per filter group",
     "groupResourceType": "Document type",
     "groupPrice": "Price",
     "groupRating": "Review rating",

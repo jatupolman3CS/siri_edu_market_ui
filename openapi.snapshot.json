@@ -8885,14 +8885,22 @@
             "name": "CategoryId",
             "in": "query",
             "schema": {
-              "type": "string"
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
             "name": "SubcategoryId",
             "in": "query",
             "schema": {
-              "type": "string"
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -8953,28 +8961,44 @@
             "name": "Format",
             "in": "query",
             "schema": {
-              "type": "string"
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
             "name": "GradeLevel",
             "in": "query",
             "schema": {
-              "type": "string"
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
             "name": "ResourceType",
             "in": "query",
             "schema": {
-              "type": "string"
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
             "name": "Standard",
             "in": "query",
             "schema": {
-              "type": "string"
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {

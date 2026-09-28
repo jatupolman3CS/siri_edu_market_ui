@@ -332,6 +332,26 @@ describe('CatalogService — storefront documents (S-08 / B-03)', () => {
     expect(search!.query.get('CategoryId')).toBe('math');
     expect(catalog.categoryDocuments().length).toBe(1);
   });
+
+  // marketplace-search-multi-value-filters v1 AC-20: the other /search callers still work
+  // after CategoryId/Standard/... became arrays in the SDK.
+  it('AC-20: a category page sends CategoryId exactly once; a storefront sends none of the multi-value params', async () => {
+    stubRoute('GET', '/api/marketplace/search', searchPage([documentRow('doc-1')]));
+    const catalog = buildService();
+
+    catalog.loadCategoryDocuments('math');
+    await settle();
+    const categorySearch = requests.find((r) => r.path === '/api/marketplace/search');
+    expect(categorySearch!.query.getAll('CategoryId')).toEqual(['math']);
+
+    requests.length = 0;
+    catalog.loadSellerDocuments('seller-1');
+    await settle();
+    const sellerSearch = requests.find((r) => r.path === '/api/marketplace/search');
+    for (const key of ['CategoryId', 'SubcategoryId', 'Format', 'GradeLevel', 'ResourceType', 'Standard']) {
+      expect(sellerSearch!.query.has(key)).toBe(false);
+    }
+  });
 });
 
 describe('CatalogService — document preview and questions (F-01)', () => {
@@ -672,6 +692,119 @@ describe('CatalogService — one request per change (marketplace-redesign §7 KI
 
     expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-low', 'doc-high']);
     expect(catalog.marketplaceResults()).toHaveLength(2);
+  });
+
+  // ---- marketplace-search-multi-value-filters v1 (AC-16/17/18) ----
+  // Every multi-select dimension is filtered server-side now (OR within, AND across), so the
+  // old "a 2nd/3rd value is client-side only and does not refetch" meaning of AC-19 is gone.
+
+  it('AC-16: sends every selected value of each multi-select dimension as a repeated, sorted query param', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({
+      categoryIds: ['sci', 'math'],
+      subcategoryIds: ['sub-b', 'sub-a'],
+      formats: ['pptx', 'docx', 'pdf'],
+      gradeLevels: ['secondary-late', 'primary-early'],
+      resourceTypes: ['worksheet', 'lesson-plan'],
+      standards: ['o-net', 'a-level'],
+    });
+    await settle();
+
+    const last = searchRequests().at(-1)!;
+    expect(last.query.getAll('CategoryId')).toEqual(['math', 'sci']);
+    expect(last.query.getAll('SubcategoryId')).toEqual(['sub-a', 'sub-b']);
+    expect(last.query.getAll('Format')).toEqual(['docx', 'pdf', 'pptx']);
+    expect(last.query.getAll('GradeLevel')).toEqual(['primary-early', 'secondary-late']);
+    expect(last.query.getAll('ResourceType')).toEqual(['lesson-plan', 'worksheet']);
+    expect(last.query.getAll('Standard')).toEqual(['a-level', 'o-net']);
+  });
+
+  it('AC-16: a single selected value is still sent once (same wire as before)', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ categoryIds: ['math'], formats: ['pdf'] });
+    await settle();
+
+    const last = searchRequests().at(-1)!;
+    expect(last.query.getAll('CategoryId')).toEqual(['math']);
+    expect(last.query.getAll('Format')).toEqual(['pdf']);
+  });
+
+  it('AC-16: omits a dimension with no selected value', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ categoryIds: ['math', 'sci'] });
+    await settle();
+
+    const last = searchRequests().at(-1)!;
+    for (const key of ['SubcategoryId', 'Format', 'GradeLevel', 'ResourceType', 'Standard']) {
+      expect(last.query.has(key)).toBe(false);
+    }
+    // the URL carries no empty `CategoryId=` either
+    expect(last.query.getAll('CategoryId').every((v) => v.length > 0)).toBe(true);
+  });
+
+  it('AC-17: marketplaceResults does not re-filter multi-select values (server-side now)', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/search',
+      searchPage([
+        documentRow('doc-other', { categoryIds: ['art'], format: 'zip' }),
+        documentRow('doc-math', { categoryIds: ['math'] }),
+        documentRow('doc-sci', { categoryIds: ['sci'] }),
+      ]),
+    );
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ categoryIds: ['math', 'sci'], formats: ['pdf', 'docx'] });
+    await settle();
+
+    // exactly what the server returned, in its order — even the item outside the selection
+    expect(catalog.marketplaceResults().map((d) => d.id)).toEqual(['doc-other', 'doc-math', 'doc-sci']);
+  });
+
+  it('AC-18: adding a second value of a dimension = exactly one request carrying both values', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ categoryIds: ['math'] });
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ categoryIds: ['math', 'sci'] });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.get('Page')).toBe('1');
+    expect(searchRequests()[0].query.getAll('CategoryId')).toEqual(['math', 'sci']);
+    expect(catalogRequests()).toHaveLength(0);
+  });
+
+  it('AC-18: removing one value = exactly one request', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ gradeLevels: ['primary-early', 'primary-late'] });
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ gradeLevels: ['primary-late'] });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(1);
+    expect(searchRequests()[0].query.getAll('GradeLevel')).toEqual(['primary-late']);
+  });
+
+  it('AC-18: re-selecting the same set in another order does not refetch', async () => {
+    const catalog = buildService();
+    catalog.initForMarketplace();
+    catalog.setFilters({ categoryIds: ['math', 'sci'] });
+    await settle();
+    requests.length = 0;
+
+    catalog.setFilters({ categoryIds: ['sci', 'math'] });
+    await settle();
+
+    expect(searchRequests()).toHaveLength(0);
   });
 
   // AC-14: the service-level top-rated tab asks the server for >= 4.7 instead of filtering the page.
