@@ -3239,6 +3239,7 @@ export const th = {
         "document_approved": "อนุมัติแล้ว",
         "document_rejected": "ไม่อนุมัติ",
         "admin_document_submitted": "รออนุมัติ",
+        "admin_seller_application_submitted": "ใบสมัครผู้ขาย",
         "admin_payout_requested": "คำขอถอนเงิน",
         "payout": "ถอนเงิน",
         "new_document_from_followed_seller": "ผลงานใหม่",

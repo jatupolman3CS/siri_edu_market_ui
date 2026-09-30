@@ -289,7 +289,12 @@ describe('AdminPayoutsPage — PromptPay QR', () => {
     const dialog = root.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain(payout.sellerName);
     expect(dialog?.textContent).toContain('9,621');
-    expect(dialog?.querySelector('img')?.getAttribute('src')).toContain(url);
+    expect(dialog?.className).toContain('max-w-lg');
+
+    const qrImage = dialog?.querySelector('[data-testid="payout-qr-image"]') as HTMLImageElement | null;
+    expect(qrImage?.getAttribute('src')).toContain(url);
+    expect(qrImage?.className).toContain('max-w-[26rem]');
+    expect(qrImage?.className).toContain('max-h-[70dvh]');
     (dialog?.querySelector('button[aria-label="ปิด"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(root.querySelector('[role="dialog"]')).toBeNull();

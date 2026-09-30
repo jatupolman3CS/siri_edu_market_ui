@@ -142,13 +142,16 @@
           [description]="'library.notFoundDesc' | trans"
         />
       } @else {
-        <div class="document-card-grid">
+        <div class="document-card-grid items-start" data-testid="library-card-grid">
           @for (item of filteredLibrary(); track item.document.id) {
             <article
               class="group bg-white rounded-3xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-shadow duration-300"
             >
-              <!-- Card Visual / Elevated Icon Header with Motion -->
-              <div class="relative h-44 bg-gradient-to-br from-pink-50/90 via-rose-50/40 to-pink-100/50 border-b border-pink-100/60 flex items-center justify-center overflow-hidden">
+              <!-- Card Visual / full document cover, matching marketplace cards -->
+              <div
+                class="relative aspect-[4/5] bg-pink-50 border-b border-pink-100/60 overflow-hidden"
+                data-testid="library-cover"
+              >
                 <!-- Subtle decorative background blur circles -->
                 <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-pink-200/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500"></div>
                 <div class="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-rose-200/30 blur-lg pointer-events-none"></div>
@@ -171,29 +174,25 @@
                   </span>
                 </div>
 
-                <!-- Center Document Showcase with hover motion -->
-                <div class="relative z-10 flex flex-col items-center justify-center">
-                  @if (hasRealCover(item.document.cover)) {
-                    <div class="relative w-20 h-28 rounded-xl overflow-hidden shadow-soft border-2 border-white group-hover:scale-105 group-hover:-translate-y-1.5 group-hover:shadow-pop transition-all duration-300 ease-out">
-                      <img
-                        appImgFallback
-                        [src]="item.document.cover"
-                        [alt]="item.document.title"
-                        class="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                @if (hasRealCover(item.document.cover)) {
+                  <img
+                    appImgFallback
+                    [src]="item.document.cover"
+                    [alt]="item.document.title"
+                    class="absolute inset-0 z-10 w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                    data-testid="library-cover-image"
+                  />
+                } @else {
+                  <div class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-50/90 via-rose-50/40 to-pink-100/50">
+                    <div class="w-16 h-16 rounded-2xl bg-white border border-pink-100 shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                      <app-icon name="doc" [size]="28" />
                     </div>
-                  } @else {
-                    <div class="relative w-20 h-24 rounded-2xl bg-white border border-pink-100 shadow-soft flex flex-col items-center justify-center gap-1.5 group-hover:scale-110 group-hover:-translate-y-1.5 group-hover:shadow-pop group-hover:border-pink-300 group-hover:rotate-[-2deg] transition-all duration-300 ease-out">
-                      <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
-                        <app-icon name="doc" [size]="20" />
-                      </div>
-                      <span class="text-[10px] font-extrabold uppercase tracking-wider text-ink-muted group-hover:text-pink-600 transition-colors">
-                        {{ item.document.format }}
-                      </span>
-                    </div>
-                  }
-                </div>
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-ink-muted group-hover:text-pink-600 transition-colors">
+                      {{ item.document.format }}
+                    </span>
+                  </div>
+                }
 
               </div>
 

@@ -159,7 +159,7 @@
   <!-- §4.7 custom-overlay contract (F52 / F102): the overlay scrolls, the card is a named modal
        dialog with a focus trap; Escape and the page scroll lock live in the component. -->
   <div class="fixed inset-0 z-50 bg-black/50 flex h-dvh overflow-y-auto overscroll-contain pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="qrModalPayout.set(null)">
-    <div class="m-auto bg-white rounded-lg p-5 w-full max-w-sm text-center" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-qr-title" (click)="$event.stopPropagation()">
+    <div class="m-auto bg-white rounded-2xl p-6 w-full max-w-lg text-center shadow-2xl" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-qr-title" data-testid="payout-qr-dialog" (click)="$event.stopPropagation()">
       <div class="flex justify-between items-center mb-4">
         <h2 id="payout-qr-title" class="font-semibold text-ink">{{ 'admin.payouts.qrModalTitle' | trans }}</h2>
         <button type="button" class="tap-target rounded-full text-ink-soft" [attr.aria-label]="'common.close' | trans" (click)="qrModalPayout.set(null)"><app-icon name="close" [size]="18" /></button>
@@ -169,7 +169,12 @@
         <p class="text-xs text-ink-muted mt-1">{{ payout.payoutAccountHolderName || payout.sellerEmail }}</p>
         <p class="text-2xl font-extrabold text-pink-700 mt-2">{{ payout.netAmount | thb }}</p>
       </div>
-      <img [src]="qrImageUrl(payout)" [alt]="'admin.payouts.qrAlt' | trans" class="w-full max-w-64 mx-auto object-contain" />
+      <img
+        [src]="qrImageUrl(payout)"
+        [alt]="'admin.payouts.qrAlt' | trans"
+        class="w-full max-w-[26rem] max-h-[70dvh] mx-auto object-contain"
+        data-testid="payout-qr-image"
+      />
     </div>
   </div>
 }

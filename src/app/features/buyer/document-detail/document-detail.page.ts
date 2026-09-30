@@ -505,12 +505,6 @@ export class BuyerDocumentDetailPage {
     }
   }
 
-  onPreviewTabSelect(): void {
-    if (!this.preview() && !this.previewLoading()) {
-      this.openPreview(false);
-    }
-  }
-
   openPreview(forceModal = true): void {
     const id = this.id();
     const d = this.doc();
@@ -603,9 +597,6 @@ export class BuyerDocumentDetailPage {
             this.showPreviewGallery.set(true);
           }
         } else if (forceModal) {
-          if (typeof document !== 'undefined') {
-            document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
           if (d.format && d.format !== 'pdf') {
             this.message.info(
               this.translation.t('product.noRasterDesc'),

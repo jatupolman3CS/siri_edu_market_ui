@@ -3241,6 +3241,7 @@ export const en: TranslationKeys = {
         "document_approved": "Approved",
         "document_rejected": "Not approved",
         "admin_document_submitted": "Pending approval",
+        "admin_seller_application_submitted": "Seller application",
         "admin_payout_requested": "Payout request",
         "payout": "Payout",
         "new_document_from_followed_seller": "New document",

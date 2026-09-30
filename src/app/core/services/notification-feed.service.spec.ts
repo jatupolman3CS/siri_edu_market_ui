@@ -460,19 +460,19 @@ describe('NotificationFeedService', () => {
   });
 
   /**
-   * notification-master-config v1 §3.1 / §4.1 — the 18-key catalog style map, extended to 19
+   * notification-master-config v1 §3.1 / §4.1 — the 18-key catalog style map, extended beyond 19
    * keys by crm-targeted-document-alerts v2 §3.1/AC-1 (`new_document_for_interest`).
    */
   describe('getNotificationStyle', () => {
-    it('resolves every one of the 19 catalog keys to a distinct label', () => {
+    it('resolves every catalog key to a known label', () => {
       const keys = [
         'sale', 'review', 'qna_question', 'seller_follow', 'store_visit_digest',
         'cart_add_digest', 'wishlist_add_digest', 'review_reply', 'qna_answer',
         'document_submitted', 'document_approved', 'document_rejected',
-        'admin_document_submitted', 'admin_payout_requested', 'payout',
+        'admin_document_submitted', 'admin_seller_application_submitted', 'admin_payout_requested', 'payout',
         'new_document_from_followed_seller', 'new_document_for_interest', 'announcement', 'tips',
       ];
-      expect(keys.length).toBe(19);
+      expect(keys.length).toBe(20);
       for (const key of keys) {
         expect(getNotificationStyle(key).label).not.toBe('shared.notifications.types.unknown');
       }

@@ -143,6 +143,7 @@ const STYLE_BY_KEY: Readonly<Record<string, NotificationStyleInfo>> = {
   document_approved: toneStyle('check', 'shared.notifications.types.document_approved', 'emerald'),
   document_rejected: toneStyle('x', 'shared.notifications.types.document_rejected', 'rose'),
   admin_document_submitted: toneStyle('shield', 'shared.notifications.types.admin_document_submitted', 'purple'),
+  admin_seller_application_submitted: toneStyle('shield', 'shared.notifications.types.admin_seller_application_submitted', 'sky'),
   admin_payout_requested: toneStyle('wallet', 'shared.notifications.types.admin_payout_requested', 'amber'),
   payout: toneStyle('wallet', 'shared.notifications.types.payout', 'emerald'),
   new_document_from_followed_seller: toneStyle('doc', 'shared.notifications.types.new_document_from_followed_seller', 'pink'),

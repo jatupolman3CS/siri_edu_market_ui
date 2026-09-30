@@ -82,6 +82,52 @@ function render(admin: ReturnType<typeof buildAdmin>) {
 
 afterEach(() => TestBed.resetTestingModule());
 
+describe('AdminApprovalPage - marketplace-style preview', () => {
+  it('keeps the list and preview panels the same desktop height', async () => {
+    const admin = buildAdmin([buildDoc({ id: 'doc-panel' })]);
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const list = root.querySelector<HTMLElement>('[data-testid="approval-list"]');
+    const detail = root.querySelector<HTMLElement>('[data-testid="approval-detail"]');
+    const card = detail?.querySelector<HTMLElement>('.card-soft');
+
+    expect(list?.classList.contains('lg:h-[calc(100dvh-180px)]')).toBe(true);
+    expect(detail?.classList.contains('lg:h-[calc(100dvh-180px)]')).toBe(true);
+    expect(card?.classList.contains('lg:h-full')).toBe(true);
+  });
+
+  it('renders the admin preview with the same hero and thumbnail pattern as marketplace', async () => {
+    const doc = { ...buildDoc({ id: 'doc-gallery', coverUrl: '/covers/cover.jpg' }), previewPages: 5 };
+    const admin = buildAdmin([doc]);
+    admin.fetchAdminDocumentDetail.mockResolvedValueOnce({
+      id: 'doc-gallery',
+      coverUrl: '/covers/cover.jpg',
+      previewPages: 5,
+      galleryItems: [
+        { id: 'g1', imageUrl: '/gallery/page-1.jpg' },
+        { id: 'g2', imageUrl: '/gallery/page-2.jpg' },
+      ],
+      fileStorageKey: 'seller/main.pdf',
+      tags: [],
+    } as any);
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const hero = root.querySelector<HTMLElement>('[data-testid="admin-marketplace-preview-hero"]');
+    const thumbnails = root.querySelectorAll('[data-testid="admin-marketplace-preview-thumbnails"] button');
+
+    expect(hero?.classList.contains('aspect-[4/5]')).toBe(true);
+    expect(thumbnails.length).toBe(2);
+    expect(root.textContent).toContain('ดูตัวอย่าง');
+    expect(root.textContent).not.toContain('รูปปกและภาพตัวอย่างแกลเลอรี');
+  });
+});
+
 describe('AdminApprovalPage — AI prescreen (ai-approval-prescreen v1 §1/AC-7)', () => {
   it('shows "ยังไม่ได้ประเมิน" when aiPrescreenRiskLevel is null', async () => {
     const admin = buildAdmin([buildDoc({ aiPrescreenRiskLevel: null })]);

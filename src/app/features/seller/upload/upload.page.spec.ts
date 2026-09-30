@@ -2162,9 +2162,9 @@ describe('SellerUploadPage — preview/download watermark switches (document-wat
     });
     await settleLoad(fixture);
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'ไฟล์เวอร์ชันใหม่จะใช้การตั้งค่าลายน้ำเดิมของเอกสารนี้',
-    );
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="main-file-name"]')).toBeNull();
+    expect(root.textContent).not.toContain('f1.pdf');
   });
 });
 
@@ -2630,10 +2630,6 @@ describe('SellerUploadPage — responsive v1.4 fixes', () => {
     ]);
     fixture.detectChanges();
 
-    const name = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="main-file-name"]') as HTMLElement;
-    expect(name.classList.contains('truncate')).toBe(false);
-    expect(name.classList.contains('min-w-[7rem]')).toBe(true);
-    expect(name.classList.contains('[overflow-wrap:anywhere]')).toBe(true);
-    expect(name.parentElement?.classList.contains('flex-wrap')).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="main-file-name"]')).toBeNull();
   });
 });

@@ -72,6 +72,7 @@ export class AdminApprovalPage {
 
   readonly previewDetail = signal<AdminDocumentDetail | null>(null);
   readonly previewDetailLoading = signal(false);
+  readonly selectedPreviewImage = signal(0);
 
   readonly pending = computed(() => this.admin.pendingDocuments());
 
@@ -114,6 +115,21 @@ export class AdminApprovalPage {
     return this.selected()?.cover ?? '';
   });
 
+  readonly marketplacePreviewImages = computed(() => {
+    const pd = this.previewDetail();
+    const images =
+      pd?.galleryItems?.map((g) => this.galleryImageSrc(g.imageUrl)).filter(Boolean)
+      ?? pd?.galleryUrls?.map((url) => resolvePublicUrl(url.replaceAll('%2F', '/'))).filter(Boolean)
+      ?? [];
+    const cover = this.heroCoverUrl();
+    return images.length > 0 ? images : cover ? [cover] : [];
+  });
+
+  readonly selectedPreviewImageUrl = computed(() => {
+    const images = this.marketplacePreviewImages();
+    return images[this.selectedPreviewImage()] ?? images[0] ?? '';
+  });
+
   /** Returns a fresh unchecked list — used for initialization and reset. */
   private freshChecks(): { label: string; checked: boolean }[] {
     return [
@@ -152,6 +168,7 @@ export class AdminApprovalPage {
           const row = await this.admin.fetchAdminDocumentDetail(id);
           if (cancelled) return;
           this.previewDetail.set(row);
+          this.selectedPreviewImage.set(0);
         } finally {
           if (!cancelled) this.previewDetailLoading.set(false);
         }

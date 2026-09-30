@@ -617,14 +617,9 @@ describe('BuyerDocumentDetailPage — FAQ tab (document-faq-tab v1)', () => {
   });
 });
 
-/**
- * Preview-tab empty state regression: `GetPreviewAsync` on the backend always returns a
- * non-empty `excerptLines` (real content, or its own hardcoded "Preview not available."
- * fallback when there's nothing else) — so the non-PDF "ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้"
- * message must be decided BEFORE the `excerptLines?.length` check, not as a trailing
- * `@else if` after it (which QA found was permanently unreachable).
- */
-describe('BuyerDocumentDetailPage — preview tab empty state (non-PDF vs excerpt fallback)', () => {
+describe('BuyerDocumentDetailPage — preview entry points', () => {
+  afterEach(() => setPdfViewerEnabled(undefined));
+
   function renderWithPreview(doc: DocumentItem, previewResponse: { excerptTitle?: string; excerptLines?: string[]; previewImageUrls?: string[] }) {
     const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
     const fakeBundleService = { loadBundlesContainingDocument: vi.fn(async () => []) };
@@ -654,59 +649,53 @@ describe('BuyerDocumentDetailPage — preview tab empty state (non-PDF vs excerp
     return fixture;
   }
 
-  function clickOpenPreview(fixture: { nativeElement: HTMLElement; detectChanges: () => void }): void {
+  function clickTopPreviewButton(fixture: { nativeElement: HTMLElement; detectChanges: () => void }): void {
     const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLElement[];
-    const target = buttons.find((el) => (el.textContent ?? '').includes('เปิดพรีวิว'));
-    if (!target) throw new Error('เปิดพรีวิว button not found');
+    const target = buttons.find((el) => (el.textContent ?? '').includes('ดูตัวอย่างเอกสาร'));
+    if (!target) throw new Error('ดูตัวอย่างเอกสาร button not found');
     target.click();
     fixture.detectChanges();
   }
 
-  it('non-PDF doc with no raster previews shows "ไม่มีตัวอย่างแบบภาพ" even though excerptLines is non-empty (backend fallback text)', async () => {
+  it('does not render the redundant preview tab, while keeping the top preview button', () => {
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const fixture = renderWithPreview(doc, {
+      previewImageUrls: ['https://cdn.test/p1.jpg'],
+    });
+    const root = fixture.nativeElement as HTMLElement;
+    const tabs = Array.from(root.querySelectorAll('[role="tab"]')) as HTMLElement[];
+
+    expect(tabs.map((tab) => tab.textContent?.trim())).not.toContain('พรีวิว');
+    expect(root.textContent ?? '').toContain('ดูตัวอย่างเอกสาร');
+  });
+
+  it('opens the preview gallery from the top preview button when raster pages are available', async () => {
+    setPdfViewerEnabled(false);
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const fixture = renderWithPreview(doc, {
+      previewImageUrls: ['https://cdn.test/p1.jpg'],
+    });
+    await settle();
+
+    clickTopPreviewButton(fixture);
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.showPreviewGallery()).toBe(true);
+  });
+
+  it('does not show the removed inline preview panel text when preview data is prefetched', async () => {
     const doc = buildDoc({ format: 'zip', previewPages: 3 });
     const fixture = renderWithPreview(doc, {
       excerptLines: ['Preview not available.'],
       previewImageUrls: [],
     });
-    clickOpenPreview(fixture);
     await settle();
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้');
     expect(text).not.toContain('Preview not available.');
-  });
-
-  it('PDF doc with real excerpt content still shows its excerpt text normally (regression)', async () => {
-    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
-    const fixture = renderWithPreview(doc, {
-      excerptTitle: 'บทที่ 1',
-      excerptLines: ['เนื้อหาตัวอย่างบรรทัดที่ 1', 'เนื้อหาตัวอย่างบรรทัดที่ 2'],
-      previewImageUrls: [],
-    });
-    clickOpenPreview(fixture);
-    await settle();
-    fixture.detectChanges();
-
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('บทที่ 1');
-    expect(text).toContain('เนื้อหาตัวอย่างบรรทัดที่ 1');
-    expect(text).toContain('เนื้อหาตัวอย่างบรรทัดที่ 2');
     expect(text).not.toContain('ไม่มีตัวอย่างแบบภาพสำหรับไฟล์ประเภทนี้');
-  });
-
-  it('PDF doc with no rasters and empty excerptLines still shows the "ยังไม่มีตัวอย่างพรีวิว" processing message (unchanged)', async () => {
-    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
-    const fixture = renderWithPreview(doc, {
-      excerptLines: [],
-      previewImageUrls: [],
-    });
-    clickOpenPreview(fixture);
-    await settle();
-    fixture.detectChanges();
-
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('ยังไม่มีตัวอย่างพรีวิว');
   });
 });
 
@@ -752,8 +741,8 @@ describe('BuyerDocumentDetailPage — raster preview URL resolution (preview-ras
 
   function clickOpenPreview(fixture: { nativeElement: HTMLElement; detectChanges: () => void }): void {
     const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLElement[];
-    const target = buttons.find((el) => (el.textContent ?? '').includes('เปิดพรีวิว'));
-    if (!target) throw new Error('เปิดพรีวิว button not found');
+    const target = buttons.find((el) => (el.textContent ?? '').includes('ดูตัวอย่างเอกสาร'));
+    if (!target) throw new Error('ดูตัวอย่างเอกสาร button not found');
     target.click();
     fixture.detectChanges();
   }

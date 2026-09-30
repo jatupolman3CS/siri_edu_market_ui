@@ -38,7 +38,6 @@ import type {
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
-import { FileNamePipe } from '../../../shared/pipes/file-name.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const MAX_GALLERY_IMAGES = 10;
@@ -85,7 +84,6 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     IconComponent,
     StickyActionBarComponent,
     ThbPipe,
-    FileNamePipe,
     CdkDropList,
     CdkDrag,
     SlicePipe,

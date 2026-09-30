@@ -223,6 +223,28 @@ describe('BuyerLibraryPage — card states (AC-10)', () => {
     expect(card?.textContent).not.toContain('ORD-doc-101');
   });
 
+  it('keeps expanded cards from stretching their grid siblings and renders covers full-size like marketplace cards', () => {
+    const fixture = renderWithItems([
+      buildItem('doc-101', {
+        document: { ...buildItem('doc-101').document, cover: '/covers/doc-101.jpg' },
+      }),
+      buildItem('doc-102'),
+    ]);
+
+    const root = fixture.nativeElement as HTMLElement;
+    const grid = root.querySelector<HTMLElement>('[data-testid="library-card-grid"]');
+    const cover = root.querySelector<HTMLElement>('[data-testid="library-cover"]');
+    const image = root.querySelector<HTMLImageElement>('[data-testid="library-cover-image"]');
+
+    expect(grid?.classList.contains('items-start')).toBe(true);
+    expect(cover?.classList.contains('aspect-[4/5]')).toBe(true);
+    expect(image?.classList.contains('absolute')).toBe(true);
+    expect(image?.classList.contains('inset-0')).toBe(true);
+    expect(image?.classList.contains('w-full')).toBe(true);
+    expect(image?.classList.contains('h-full')).toBe(true);
+    expect(image?.classList.contains('object-cover')).toBe(true);
+  });
+
   it('reveals document metadata and secondary actions after expand', () => {
     const fixture = renderWithItems([buildItem('doc-101', { isReviewed: false })]);
 
