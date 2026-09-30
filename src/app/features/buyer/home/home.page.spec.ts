@@ -770,3 +770,122 @@ describe('BuyerHomePage — CRM discovery block (marketplace-home-redesign v2 §
     expect(page.showDiscoveryBlock()).toBe(false);
   });
 });
+
+/**
+ * responsive-ui v1 follow-up — the seller CTA banner put white text on the light
+ * `#FFB8CE → #F2638E` gradient (≈ 1.6–3:1). The gradient token is now primary → primary-hover;
+ * these guard the per-element choices that keep every text layer on top of it at ≥ 4.5:1.
+ */
+describe('BuyerHomePage — seller CTA contrast', () => {
+  function banner(): HTMLElement {
+    const fixture = render({});
+    const el = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('[data-testid="seller-cta"]');
+    expect(el).not.toBeNull();
+    return el as HTMLElement;
+  }
+
+  it('keeps the dark gradient behind white text', () => {
+    const el = banner();
+    expect(el.classList).toContain('bg-gradient-pink-strong');
+    expect(el.classList).toContain('text-white');
+    // ng-zorro's global CSS gives h1–h6 `color: rgba(0,0,0,.85)`, so the heading does NOT inherit
+    // the wrapper's white — without its own text-white it renders near-black on the dark gradient.
+    expect(el.querySelector('h2')?.classList).toContain('text-white');
+  });
+
+  it('never stacks a light translucent layer or a tinted-light colour under its text', () => {
+    const el = banner();
+    const pill = el.querySelector('.pill') as HTMLElement;
+    expect(pill.className).not.toMatch(/bg-white\//);
+    expect(el.querySelector('.text-pink-50, .text-pink-100')).toBeNull();
+
+    // The two decorative circles overlap under the paragraph on phones; at white/10 each that
+    // spot measured 4.47:1, so they stay at 7%.
+    const circles = Array.from(el.querySelectorAll<HTMLElement>(':scope > .absolute.rounded-full'));
+    expect(circles).toHaveLength(2);
+    for (const circle of circles) {
+      expect(circle.classList).toContain('bg-white/[.07]');
+    }
+
+    const links = Array.from(el.querySelectorAll<HTMLElement>('a'));
+    expect(links[0].classList).toContain('text-primary');
+    expect(links[0].className).not.toMatch(/text-pink-(500|600)/);
+    expect(links[1].className).not.toMatch(/hover:bg-white\//);
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-17 (F147): opening the "set exam date" form must not tear it down. The form
+ * reloads the setting on init, which flips the service state to loading; the prompt section used
+ * to be guarded on `state() !== 'loading'`, so it destroyed and re-created the form in a loop.
+ */
+describe('BuyerHomePage — exam prompt keeps the form mounted while it reloads (F147)', () => {
+  it('the opened form survives the loading state its own init causes, with one extra GET', () => {
+    const examCountdown = fakeExamCountdownService(null, idleActionState());
+    const fixture = render({ isAuthenticated: true, examCountdown });
+    const el = fixture.nativeElement as HTMLElement;
+
+    fixture.componentInstance.openExamCountdownEdit();
+    fixture.detectChanges();
+    const form = el.querySelector('app-exam-countdown-form');
+    expect(form).not.toBeNull();
+
+    examCountdown._state.set(loadingActionState());
+    fixture.detectChanges();
+    expect(el.querySelector('app-exam-countdown-form')).toBe(form);
+
+    examCountdown._state.set(idleActionState());
+    fixture.detectChanges();
+    expect(el.querySelector('app-exam-countdown-form')).toBe(form);
+    // home init + the form's own init — never a re-create loop.
+    expect(examCountdown.loadSetting.mock.calls.length).toBeLessThanOrEqual(2);
+  });
+});
+
+/**
+ * responsive-ui G-31a: the "how it works" steps used to render the raw key paths
+ * `home.step1Desc`, `home.step2Desc`, `home.step3Title` and `home.step3Desc` on '/', because those
+ * keys never existed in th.ts / en.ts. Every step key must resolve in both dictionaries, and the
+ * rendered steps must show the translation, never the key path.
+ */
+describe('BuyerHomePage — how-it-works steps are translated (G-31a)', () => {
+  it('every step title/description key is a string in both th and en', async () => {
+    const { th } = await import('../../../core/i18n/translations/th');
+    const { en } = await import('../../../core/i18n/translations/en');
+    const leaf = (dict: unknown, key: string): unknown =>
+      key.split('.').reduce<unknown>((node, part) => (node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined), dict);
+    const fixture = render({});
+    const keys = fixture.componentInstance.howItWorks.flatMap((s) => [s.titleKey, s.descKey]);
+
+    expect(keys).toHaveLength(6);
+    for (const key of keys) {
+      expect(typeof leaf(th, key), `th ${key}`).toBe('string');
+      expect(typeof leaf(en, key), `en ${key}`).toBe('string');
+    }
+  });
+
+  it('renders no raw home.step* key path', () => {
+    const fixture = render({});
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).not.toMatch(/home\.step\d(Title|Desc)/);
+    expect(text).toContain('เก็บไว้ในคลังของคุณ');
+  });
+});
+
+/**
+ * responsive-ui v1.4 G-14e: at 744 the seller-CTA grid column (~276px) is narrower than the 288px
+ * (w-72) illustration card, which stuck out 6px on each side of its flex container.
+ */
+describe('BuyerHomePage — seller CTA illustration containment (G-14e)', () => {
+  it('caps the illustration card and its wrapper at the column width', () => {
+    const fixture = render({});
+    const cta = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('[data-testid="seller-cta"]')!;
+    const card = cta.querySelector<HTMLElement>('.shadow-pop.w-72')!;
+    const wrapper = card.parentElement as HTMLElement;
+    expect(wrapper.parentElement?.getAttribute('class')).toContain('md:flex');
+    expect(wrapper.classList).toContain('min-w-0');
+    expect(wrapper.classList).toContain('max-w-full');
+    expect(card.classList).toContain('max-w-full');
+  });
+});

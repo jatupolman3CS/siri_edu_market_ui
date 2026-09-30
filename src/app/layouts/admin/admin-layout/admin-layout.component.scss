@@ -1,17 +1,44 @@
-nav::-webkit-scrollbar {
+.admin-scroll::-webkit-scrollbar {
   width: 5px;
 }
-nav::-webkit-scrollbar-track {
+.admin-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
-nav::-webkit-scrollbar-thumb {
+.admin-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 999px;
 }
-nav::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+@media (hover: hover) {
+  .admin-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
 }
-nav {
+.admin-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* G-12 / R-2 ("selects are 44 tall"): the admin pages' native text inputs, date inputs and selects
+   (`.input-soft !py-2`, the transactions search box) render 37-42px tall, below the 44px touch
+   target. One coarse-pointer floor for every page under this layout (and the filter sheets they
+   render in place) instead of a class on ~60 controls. Mouse density is unchanged. The nz-select
+   search input is excluded: its `.ant-select-selector` is the target and is sized globally. */
+@media (pointer: coarse) {
+  :host ::ng-deep :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='hidden'], [type='color']), select):not(.ant-select-selection-search-input) {
+    min-height: 44px;
+  }
+}
+
+/* Phone menu drawer on short (landscape) phones: the pinned header (~120px) and footer (~190px)
+   left the nav 32-63px, i.e. no usable item. There the whole panel scrolls as one list instead. */
+@media (max-height: 500px) {
+  .drawer-panel {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .drawer-panel > nav {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+  }
 }

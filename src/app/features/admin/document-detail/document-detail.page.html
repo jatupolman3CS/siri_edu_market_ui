@@ -1,23 +1,45 @@
-<div class="max-w-4xl">
+<div class="min-w-0">
   <div class="flex items-center gap-3 mb-6">
-    <a routerLink="/admin/documents" class="btn-icon !w-9 !h-9" [title]="'admin.back' | trans">
+    <a routerLink="/admin/documents" class="btn-icon !w-9 !h-9 shrink-0" [title]="'admin.back' | trans">
       <app-icon name="arrow-left" [size]="18" />
     </a>
-    <div>
-      <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.docDetailTitle' | trans }}</h1>
+    <div class="min-w-0">
+      <h1 class="heading-1 font-extrabold text-ink">{{ 'admin.docDetailTitle' | trans }}</h1>
       @if (doc()) {
-        <p class="text-xs text-ink-muted font-mono">{{ doc()!.id }}</p>
+        <p class="text-xs text-ink-muted font-mono break-all">{{ doc()!.id }}</p>
       }
     </div>
   </div>
 
   @if (loading()) {
     <p class="text-ink-muted text-sm">{{ 'common.loading' | trans }}</p>
+  } @else if (notFound()) {
+    <!-- R-17 / F116: an unknown id is its own state (it used to show the list page's "no documents
+         match the filter" copy), with a way back to the list and no toast. -->
+    <div class="card-soft p-8 text-center space-y-3" data-testid="not-found" role="status">
+      <div class="text-4xl" aria-hidden="true">🔍</div>
+      <h2 class="text-lg font-bold text-ink">{{ 'product.notFoundTitle' | trans }}</h2>
+      <p class="text-sm text-ink-soft">{{ 'product.notFoundDesc' | trans }}</p>
+      <a routerLink="/admin/documents" class="btn-pink min-h-11 inline-flex !justify-center" data-testid="not-found-cta">
+        <app-icon name="arrow-left" [size]="16" />
+        {{ 'admin.nav.documents' | trans }}
+      </a>
+    </div>
   } @else if (!doc()) {
-    <app-empty-state emoji="😕" [title]="'admin.noDocsFound' | trans" [description]="'seller.docLoadFailed' | trans" />
+    <div class="card-soft p-8 text-center space-y-3" data-testid="load-error" role="alert">
+      <p class="text-sm text-ink-soft">{{ 'errors.loadDocDetailFailed' | trans }}</p>
+      <button type="button" class="btn-ghost min-h-11 !justify-center" data-testid="load-retry" (click)="retry()">
+        {{ 'common.retry' | trans }}
+      </button>
+    </div>
   } @else {
-    <div class="space-y-6">
-      <div class="card-soft p-5 space-y-4">
+    <!-- responsive-ui v1.5 R-26 item 3: from xl a main column (document info, review viewer, files) plus a
+         side column (save, reports, audit). Both groups are contiguous in the DOM, so below xl — one
+         minmax(0,1fr) track, gap-6 = the old space-y-6 — the order and spacing are unchanged. The side
+         column stays 360px at 2xl: at 1920 a 420px column is 27% of the page, over G-34(e)'s 25%. -->
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 xl:items-start">
+    <div class="min-w-0 space-y-6" data-testid="doc-detail-main">
+      <div class="card-soft p-4 md:p-5 space-y-4">
         <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.mainInfo' | trans }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="sm:col-span-2">
@@ -50,7 +72,7 @@
               @for (c of admin.adminCategories(); track c.id) {
                 <label
                   nz-checkbox
-                  class="px-2 py-1 rounded-xl hover:bg-pink-50"
+                  class="px-2 py-1 rounded-xl hover:bg-pink-50 [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="(doc()!.categoryIds ?? []).includes(c.id)"
                   (nzCheckedChange)="patchDoc({ categoryIds: ((doc()!.categoryIds ?? []).includes(c.id)
                     ? (doc()!.categoryIds ?? []).filter((id) => id !== c.id)
@@ -129,7 +151,7 @@
               @for (g of gradePresets; track g.value) {
                 <label
                   nz-checkbox
-                  class="text-xs bg-pink-50/80 px-2 py-1 rounded-lg"
+                  class="text-xs bg-pink-50/80 px-2 py-1 rounded-lg [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="gradeChecked(g.value)"
                   (nzCheckedChange)="toggleGrade(g.value, $event)"
                 >
@@ -146,7 +168,7 @@
               @for (s of standardPresets; track s) {
                 <label
                   nz-checkbox
-                  class="text-xs bg-slate-50 px-2 py-1 rounded-lg border border-line"
+                  class="text-xs bg-slate-50 px-2 py-1 rounded-lg border border-line [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="standardChecked(s)"
                   (nzCheckedChange)="toggleStandard(s, $event)"
                 >
@@ -165,13 +187,13 @@
         purpose: an admin has to be able to read the document before deciding on it, and every
         marketplace preview route 404s while the document is still pending.
       -->
-      <div class="card-soft p-5 space-y-3">
+      <div class="card-soft p-4 md:p-5 space-y-3">
         <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.reviewDocumentTitle' | trans }}</h2>
         <p class="text-[11px] text-ink-muted">{{ 'admin.reviewViewerHint' | trans }}</p>
         <div class="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            class="btn-primary text-xs inline-flex items-center gap-1"
+            class="btn-pink text-xs inline-flex items-center gap-1"
             [disabled]="reviewViewerLoading()"
             (click)="openReviewViewer()"
           >
@@ -203,7 +225,7 @@
         }
       </div>
 
-      <div class="card-soft p-5 space-y-4">
+      <div class="card-soft p-4 md:p-5 space-y-4">
         <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.filesAndStorage' | trans }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2 space-y-2">
@@ -231,7 +253,9 @@
                   class="divide-y divide-line"
                 >
                   @for (item of galleryItems(); track $index; let i = $index) {
-                    <li cdkDrag class="p-3 flex items-center gap-3">
+                    <!-- R-22 (F66): a touch drag starts only after a 300ms press, so a vertical swipe
+                         over a row scrolls the page instead of reordering the gallery. -->
+                    <li cdkDrag [cdkDragStartDelay]="{ touch: 300, mouse: 0 }" class="p-3 flex items-center gap-3">
                       <img appImgFallback [src]="item.previewUrl" alt="" class="w-16 h-20 object-cover rounded-xl border border-line" />
                       <div class="flex-1 min-w-0">
                         @if (i === 0) {
@@ -312,14 +336,16 @@
           </div>
         </div>
       </div>
+    </div>
 
+    <div class="min-w-0 space-y-6" data-testid="doc-detail-side">
       <div class="flex gap-2">
-        <button type="button" class="btn-pink" [disabled]="saving()" (click)="save()">
+        <button type="button" class="btn-pink w-full sm:w-auto xl:w-full !justify-center" [disabled]="saving()" (click)="save()">
           @if (saving()) { {{ 'common.saving' | trans }} } @else { {{ 'common.save' | trans }} }
         </button>
       </div>
 
-      <div class="card-soft p-5 space-y-3">
+      <div class="card-soft p-4 md:p-5 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.reportsModeration' | trans }}</h2>
           @if (reports().some((r) => !r.resolvedAt)) {
@@ -327,7 +353,7 @@
           }
         </div>
         <div class="flex gap-2 flex-wrap">
-          <input class="input-soft flex-1 min-w-[200px] !py-2" [placeholder]="'admin.newReportReasonPlaceholder' | trans" [ngModel]="newReportReason()" (ngModelChange)="newReportReason.set($event)" />
+          <input class="input-soft w-full sm:w-auto sm:flex-1 sm:min-w-[200px] !py-2" [placeholder]="'admin.newReportReasonPlaceholder' | trans" [ngModel]="newReportReason()" (ngModelChange)="newReportReason.set($event)" />
           <button type="button" class="btn-ghost text-xs" (click)="addReport()">{{ 'admin.addReportBtn' | trans }}</button>
         </div>
         <ul class="divide-y divide-line text-sm">
@@ -349,7 +375,7 @@
         </ul>
       </div>
 
-      <div class="card-soft p-5 space-y-2">
+      <div class="card-soft p-4 md:p-5 space-y-2">
         <h2 class="text-sm font-bold text-ink uppercase tracking-wider">{{ 'admin.recentAudit' | trans }}</h2>
         <ul class="text-xs font-mono space-y-1 max-h-48 overflow-y-auto">
           @for (a of doc()!.recentAudit; track a.id) {
@@ -366,6 +392,7 @@
         </ul>
       </div>
     </div>
+    </div>
   }
 
   @if (reviewViewerOpen()) {
@@ -373,6 +400,7 @@
       [nzVisible]="true"
       [nzTitle]="'admin.reviewDocumentTitle' | trans"
       [nzWidth]="'96vw'"
+      nzClassName="modal-wide"
       [nzFooter]="null"
       (nzOnCancel)="closeReviewViewer()"
     >
@@ -380,33 +408,50 @@
         <div class="space-y-3">
           <p class="text-[11px] text-ink-muted">{{ 'admin.reviewViewerHint' | trans }}</p>
           @if (reviewViewerLoading()) {
-            <div class="h-[70vh] flex items-center justify-center">
+            <div class="h-[70dvh] flex items-center justify-center">
               <span class="text-sm text-ink-muted">{{ 'common.loading' | trans }}</span>
             </div>
           } @else if (reviewViewerFailed()) {
-            <div class="h-[70vh] flex flex-col items-center justify-center gap-3 text-center">
+            <div class="h-[70dvh] flex flex-col items-center justify-center gap-3 text-center">
               <p class="text-sm text-red-700 max-w-lg">{{ 'admin.reviewViewerFailed' | trans }}</p>
               @if (reviewOriginalFileUrl()) {
-                <a
-                  class="btn-ghost text-xs inline-flex items-center gap-1 text-pink-600"
-                  [href]="reviewOriginalFileUrl()"
-                  target="_blank"
-                  rel="noopener"
+                <!-- R-24: saves the file in place (downloadMainFile) instead of a target=_blank popup. -->
+                <button
+                  type="button"
+                  class="btn-ghost text-xs min-h-11 inline-flex items-center gap-1 text-pink-600"
+                  data-testid="review-download-original"
+                  (click)="downloadMainFile()"
                 >
                   <app-icon name="doc" [size]="14" />
                   {{ 'admin.downloadOriginalFile' | trans }}
-                </a>
+                </button>
               } @else {
                 <p class="text-xs text-ink-muted">{{ 'admin.noFileToDownload' | trans }}</p>
               }
             </div>
           } @else if (reviewViewerUrl()) {
-            <iframe
-              [src]="reviewViewerUrl()"
-              class="w-full h-[70vh] rounded-xl border border-line bg-white"
-              [title]="'admin.reviewDocumentTitle' | trans"
-              frameborder="0"
-            ></iframe>
+            <!-- R-24 (F67): a no-popup download of the same PDF always sits next to the frame, and the
+                 frame itself only renders where the browser has a PDF viewer (phones and tablets
+                 without one showed a blank box). -->
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <a
+                class="btn-ghost text-xs min-h-11 inline-flex items-center gap-1"
+                data-testid="review-download"
+                [href]="reviewBlobHref()"
+                [attr.download]="reviewDownloadName()"
+              >
+                <app-icon name="download" [size]="14" />
+                {{ 'seller.download' | trans }}
+              </a>
+            </div>
+            @if (pdfViewerEnabled) {
+              <iframe
+                [src]="reviewViewerUrl()"
+                class="w-full h-[70dvh] rounded-xl border border-line bg-white"
+                [title]="'admin.reviewDocumentTitle' | trans"
+                frameborder="0"
+              ></iframe>
+            }
           }
         </div>
       </ng-container>

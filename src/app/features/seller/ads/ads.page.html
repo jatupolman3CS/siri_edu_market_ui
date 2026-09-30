@@ -1,7 +1,7 @@
-<div class="max-w-6xl">
+<div class="w-full min-w-0">
   <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'sellerAds.pageTitle' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'sellerAds.pageTitle' | trans }}</h1>
       <p class="text-sm text-ink-soft">{{ 'sellerAds.pageSubtitle' | trans }}</p>
     </div>
     <button type="button" class="btn-pink !px-6 !py-3" (click)="openCreate()">
@@ -12,7 +12,7 @@
 
   <div class="card-tile mb-6 bg-gradient-pink">
     <div class="text-xs text-ink-muted mb-1">{{ 'sellerAds.balanceLabel' | trans }}</div>
-    <div class="text-4xl md:text-5xl font-extrabold text-pink-700">{{ availableBalance() | thb }}</div>
+    <div class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-pink-700 break-words">{{ availableBalance() | thb }}</div>
     <p class="text-sm text-ink-soft mt-2">{{ 'sellerAds.balanceDesc' | trans }}</p>
   </div>
 
@@ -27,48 +27,43 @@
     </div>
 
     @if (campaigns().length > 0) {
-      <div class="card-tile-body table-scroll overflow-x-auto -mx-5 px-5 md:-mx-6 md:px-6 pb-2">
-        <table class="w-full min-w-[860px]">
+      <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper; a new page, page
+           size or status filter scrolls it back to the top. -->
+      <div
+        class="card-tile-body table-scroll overflow-x-auto -mx-5 px-5 md:-mx-6 md:px-6 pb-2"
+        appTableViewport
+        [rtLabel]="'sellerAds.campaignsTitle' | trans"
+        [rtResetKey]="page() + '|' + pageSize() + '|' + statusFilter()"
+      >
+        <table class="rtable w-full">
           <thead class="bg-pink-50">
+            <!-- R-27 item 11 / §4.5 table mode: px-2 (px-3 from 1024, px-5 >=1280) so the 744 table,
+                 capped or not, fits its card without sideways scroll in th and en. -->
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colDocument' | trans }}</th>
-              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colPlacement' | trans }}</th>
-              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colDateRange' | trans }}</th>
-              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colPricePerDay' | trans }}</th>
-              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colTotal' | trans }}</th>
-              <th class="px-5 py-3 font-semibold">{{ 'sellerAds.colStatus' | trans }}</th>
-              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colImpressions' | trans }}</th>
-              <th class="px-5 py-3 font-semibold text-right">{{ 'sellerAds.colClicks' | trans }}</th>
-              <th class="px-5 py-3 font-semibold"></th>
+              <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'sellerAds.colDocument' | trans }}</th>
+              <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'sellerAds.colStatus' | trans }}</th>
+              <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'sellerAds.colDateRange' | trans }}</th>
+              <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold text-right">{{ 'sellerAds.colTotal' | trans }}</th>
+              <th class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'sellerAds.colPlacement' | trans }}</th>
+              <th class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 font-semibold text-right">{{ 'sellerAds.colPricePerDay' | trans }}</th>
+              <th class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 font-semibold text-right">{{ 'sellerAds.colImpressions' | trans }}</th>
+              <th class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 font-semibold text-right">{{ 'sellerAds.colClicks' | trans }}</th>
+              <th class="rt-more px-2 py-3"></th>
+              <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold"></th>
             </tr>
           </thead>
           <tbody>
             @for (c of campaigns(); track c.id) {
               <tr class="border-t border-line align-top">
-                <td class="px-5 py-3 text-sm text-ink">
+                <td class="rt-title px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink">
+                  <!-- §4.5 table mode: no thumbnail at 744–1023 (as on /seller/documents), so the title
+                       box keeps >=110px and the 744 table fits. -->
                   <div class="flex items-center gap-2.5">
-                    <img appImgFallback [src]="c.documentCoverUrl" [alt]="c.documentTitle" class="w-10 h-10 rounded-xl object-cover shrink-0" />
-                    <span class="font-semibold line-clamp-2 max-w-[220px]">{{ c.documentTitle }}</span>
+                    <img appImgFallback [src]="c.documentCoverUrl" [alt]="c.documentTitle" class="w-10 h-10 rounded-xl object-cover shrink-0 md:max-lg:hidden" />
+                    <span class="font-semibold line-clamp-2 max-w-[220px] md:min-w-[110px]">{{ c.documentTitle }}</span>
                   </div>
                 </td>
-                <td class="px-5 py-3 text-sm text-ink-soft whitespace-nowrap">
-                  {{ c.placementName }}
-                  @if (c.targetLabel) {
-                    <div class="text-xs text-ink-muted">{{ c.targetLabel }}</div>
-                  }
-                </td>
-                <td class="px-5 py-3 text-sm text-ink-soft whitespace-nowrap">
-                  {{ c.startDate | date: 'd MMM yy' }} – {{ c.endDate | date: 'd MMM yy' }}
-                  <div class="text-xs text-ink-muted">{{ c.dayCount }} {{ 'sellerAds.dayUnit' | trans }}</div>
-                </td>
-                <td class="px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.pricePerDay | thb }}</td>
-                <td class="px-5 py-3 text-sm font-bold text-ink text-right whitespace-nowrap">
-                  {{ c.totalAmount | thb }}
-                  @if (c.refundedAmount > 0) {
-                    <div class="text-xs text-emerald-600 font-normal">{{ 'sellerAds.refundedPrefix' | trans }} {{ c.refundedAmount | thb }}</div>
-                  }
-                </td>
-                <td class="px-5 py-3 whitespace-nowrap">
+                <td class="rt-status px-2 lg:px-3 xl:px-5 py-3 whitespace-nowrap">
                   @switch (c.status) {
                     @case ('active') { <span class="pill bg-emerald-100 text-emerald-700">{{ statusLabel(c.status) }}</span> }
                     @case ('scheduled') { <span class="pill bg-sky-100 text-sky-700">{{ statusLabel(c.status) }}</span> }
@@ -77,15 +72,44 @@
                     @default { <span class="pill bg-rose-100 text-rose-700">{{ statusLabel(c.status) }}</span> }
                   }
                   @if (c.status === 'stopped' && stopReasonLabel(c.stopReason); as reasonLabel) {
-                    <div class="text-xs text-ink-muted mt-1">{{ reasonLabel }}</div>
+                    <div class="text-xs text-ink-muted mt-1 whitespace-normal">{{ reasonLabel }}</div>
                     @if (c.stopNote) {
-                      <div class="text-xs text-ink-muted">{{ c.stopNote }}</div>
+                      <div class="text-xs text-ink-muted whitespace-normal">{{ c.stopNote }}</div>
                     }
                   }
                 </td>
-                <td class="px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.impressions }}</td>
-                <td class="px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.clicks }}</td>
-                <td class="px-5 py-3 text-sm text-right whitespace-nowrap">
+                <td class="rt-key px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink-soft" [attr.data-label]="'sellerAds.colDateRange' | trans">
+                  <!-- The range may break after the dash (never inside a date) when the 744 table needs it;
+                       &ngsp; keeps the space between the two halves. -->
+                  <span class="whitespace-nowrap">{{ c.startDate | date: 'd MMM yy' }} –</span>&ngsp;<span class="whitespace-nowrap">{{ c.endDate | date: 'd MMM yy' }}</span>
+                  <span class="text-xs text-ink-muted md:block"> · {{ c.dayCount }} {{ 'sellerAds.dayUnit' | trans }}</span>
+                </td>
+                <td class="rt-key px-2 lg:px-3 xl:px-5 py-3 text-sm font-bold text-ink md:text-right whitespace-nowrap" [attr.data-label]="'sellerAds.colTotal' | trans">
+                  {{ c.totalAmount | thb }}
+                  @if (c.refundedAmount > 0) {
+                    <span class="text-xs text-emerald-600 font-normal md:block md:whitespace-normal xl:whitespace-nowrap">{{ 'sellerAds.refundedPrefix' | trans }} {{ c.refundedAmount | thb }}</span>
+                  }
+                </td>
+                <td class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink-soft whitespace-nowrap">
+                  {{ c.placementName }}
+                  @if (c.targetLabel) {
+                    <div class="text-xs text-ink-muted">{{ c.targetLabel }}</div>
+                  }
+                </td>
+                <td class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.pricePerDay | thb }}</td>
+                <td class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.impressions }}</td>
+                <td class="rt-secondary px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink text-right whitespace-nowrap">{{ c.clicks }}</td>
+                <td class="rt-more px-2 py-3">
+                  <app-row-more
+                    [items]="[
+                      { label: 'sellerAds.colPlacement' | trans, value: c.targetLabel ? c.placementName + ' · ' + c.targetLabel : c.placementName },
+                      { label: 'sellerAds.colPricePerDay' | trans, value: c.pricePerDay | thb },
+                      { label: 'sellerAds.colImpressions' | trans, value: c.impressions },
+                      { label: 'sellerAds.colClicks' | trans, value: c.clicks }
+                    ]"
+                  />
+                </td>
+                <td class="rt-action px-2 lg:px-3 xl:px-5 py-3 text-sm text-right whitespace-nowrap">
                   @if (canCancel(c)) {
                     <button
                       type="button"
@@ -102,10 +126,12 @@
           </tbody>
         </table>
       </div>
-      <p class="text-xs text-ink-muted mt-4">{{ 'sellerAds.statsDisclaimer' | trans }}</p>
+      <!-- R-27 / G-35(d): the pagination sits directly below the table (0–64px); the stats footnote
+           moved under it. -->
       <div class="mt-6 pt-3 border-t border-line">
         <app-pagination [page]="page()" [pageSize]="pageSize()" [total]="total()" (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)" />
       </div>
+      <p class="text-xs text-ink-muted mt-2">{{ 'sellerAds.statsDisclaimer' | trans }}</p>
     } @else if (!loadingList()) {
       <app-empty-state emoji="📢" [title]="'sellerAds.emptyTitle' | trans" [description]="'sellerAds.emptyDesc' | trans" />
     }

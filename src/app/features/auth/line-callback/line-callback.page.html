@@ -25,6 +25,8 @@
           <input
             type="email"
             [(ngModel)]="retryEmail"
+            inputmode="email"
+            autocomplete="email"
             class="input-soft w-full text-sm"
             placeholder="yourname@example.com"
             (keydown.enter)="retryWithEmail()"
@@ -34,7 +36,7 @@
           }
           <button
             type="button"
-            class="w-full py-2.5 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white text-sm font-semibold transition-all shadow-md shadow-[#06C755]/20"
+            class="w-full min-h-11 py-2.5 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white text-sm font-semibold transition-all shadow-md shadow-[#06C755]/20"
             (click)="retryWithEmail()"
           >
             {{ 'auth.lineLoginWithThisEmail' | trans }}
@@ -44,7 +46,7 @@
 
       <a
         routerLink="/auth/login"
-        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-semibold text-sm transition-all"
+        class="inline-flex items-center justify-center gap-2 min-h-11 px-6 py-3 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition-all"
       >
         {{ 'auth.backToLogin' | trans }}
       </a>

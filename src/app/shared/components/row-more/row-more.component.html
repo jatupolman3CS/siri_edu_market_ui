@@ -1,0 +1,24 @@
+<button
+  type="button"
+  class="row-more__button"
+  data-testid="row-more-button"
+  nz-popover
+  nzPopoverTrigger="click"
+  [nzPopoverPlacement]="placements"
+  nzPopoverOverlayClassName="row-more-popover"
+  [nzPopoverContent]="details"
+  [attr.aria-label]="'responsive.table.more' | trans"
+>
+  <app-icon name="more" [size]="20" />
+</button>
+
+<ng-template #details>
+  <dl class="row-more__list" data-testid="row-more-list">
+    @for (item of visibleItems(); track $index) {
+      <div class="row-more__row">
+        <dt class="row-more__label">{{ item.label }}</dt>
+        <dd class="row-more__value">{{ item.value }}</dd>
+      </div>
+    }
+  </dl>
+</ng-template>

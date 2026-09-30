@@ -1,16 +1,16 @@
 <!-- ===================== HERO (marketplace-home-redesign v2 §1 ข้อ 3/§4.3: ย่อลง) ===================== -->
-    <section class="relative max-w-7xl mx-auto px-4 lg:px-6 pt-6 pb-8">
-      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink border border-line p-5 sm:p-6 md:p-9">
+    <section class="relative page-container pt-4 md:pt-6 pb-6 md:pb-8">
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-pink border border-line p-5 sm:p-6 md:p-9">
         <div class="absolute -top-32 -right-24 w-96 h-96 rounded-full glass-blob"></div>
         <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full glass-blob opacity-60"></div>
 
-        <div class="relative grid xl:grid-cols-12 gap-6 items-center">
+        <div class="relative grid grid-cols-1 xl:grid-cols-12 gap-6 items-center">
           <div class="xl:col-span-7">
             <span class="pill-pink mb-4 animate-fade-in">
               <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
               {{ 'home.newArrivalsTitle' | trans }} + {{ catalog.newArrivals().length || '' }}
             </span>
-            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-ink leading-[1.08] mb-3">
+            <h1 class="heading-1 font-extrabold tracking-tight text-ink leading-tight mb-3">
               {{ 'home.heroTitle' | trans }}
             </h1>
             <p class="text-sm md:text-base text-ink-soft max-w-xl mb-5 leading-relaxed">
@@ -22,7 +22,7 @@
               <button
                 type="submit"
                 [attr.aria-label]="'common.search' | trans"
-                class="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                class="absolute left-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                 [attr.title]="'common.search' | trans"
               >
                 <app-icon name="search" [size]="20" />
@@ -30,6 +30,8 @@
               <input
                 type="search"
                 name="q"
+                inputmode="search"
+                enterkeyhint="search"
                 [attr.aria-label]="'common.search' | trans"
                 [placeholder]="'home.searchPlaceholder' | trans"
                 class="w-full pl-14 pr-24 sm:pr-32 py-4 rounded-full bg-white shadow-soft border border-line focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-base"
@@ -47,7 +49,7 @@
             />
 
             <!-- Trust stats (real-data-stats v1 §4.2) -->
-            <div class="flex flex-wrap gap-x-8 gap-y-3 mt-5 pt-4 border-t border-pink-200/60">
+            <div class="flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-3 mt-5 pt-4 border-t border-pink-200/60">
               <div>
                 @if (platformStats.stats(); as ps) {
                   <div class="text-2xl font-extrabold text-ink">{{ ps.totalApprovedDocuments | compact }}+</div>
@@ -146,11 +148,11 @@
 
     <!-- ===================== SPONSORED ADS (home_top) ===================== -->
     @if (homeSponsoredDocs().length > 0) {
-      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-8">
+      <section class="page-container mb-8">
         <div class="rounded-3xl bg-gradient-to-r from-pink-50/80 via-white to-pink-50/50 border border-pink-200/80 p-5 md:p-6 shadow-soft">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-              <span class="pill bg-pink-500 text-white font-bold text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <span class="pill bg-primary text-white font-bold text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                 <app-icon name="sparkle" [size]="12" />
                 โฆษณาแนะนำ
               </span>
@@ -169,7 +171,7 @@
     <!-- ===================== EXAM COUNTDOWN (exam-countdown-mode v1) ===================== -->
     @if (auth.isAuthenticated()) {
       @if (examCountdownActive()) {
-        <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+        <section class="page-container mb-8 md:mb-12">
           <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
             <div>
               <p class="text-sm text-ink-muted">{{ 'home.examMode' | trans }}</p>
@@ -207,7 +209,7 @@
           </div>
         </section>
       } @else if (examCountdown.setting()?.isEnabled && examIsPast()) {
-        <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+        <section class="page-container mb-8 md:mb-12">
           <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p class="text-base font-semibold text-ink">{{ 'home.examPast' | trans:{ exam: (examCountdown.setting()?.examType ?? '') } }}</p>
             <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">{{ 'home.setNewExamDate' | trans }}</button>
@@ -218,8 +220,8 @@
             </div>
           }
         </section>
-      } @else if (examCountdown.setting() === null && examCountdown.state().status !== 'loading') {
-        <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+      } @else if (examPromptVisible()) {
+        <section class="page-container mb-8 md:mb-12">
           <div class="rounded-2xl bg-gradient-pink border border-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p class="text-base font-semibold text-ink">{{ 'home.setExamPrompt' | trans }}</p>
             <button type="button" class="btn-pink !px-6" (click)="openExamCountdownEdit()">{{ 'home.setExamDateBtn' | trans }}</button>
@@ -239,7 +241,7 @@
          bundles.featured()) ไม่เปลี่ยน, แค่ reorder -->
 
     <!-- ===================== FREE STRIP ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+    <section class="page-container mb-10 md:mb-16">
       <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-pink-50 border-emerald-200">
         <div class="flex items-end justify-between mb-6">
           <div>
@@ -247,7 +249,7 @@
             <h2 class="section-title">{{ 'home.freeTitle' | trans }}</h2>
             <p class="section-subtitle">{{ 'home.freeSubtitle' | trans }}</p>
           </div>
-          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 group">
+          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 min-h-11 text-sm font-bold text-pink-600 hover:text-pink-700 group">
             {{ 'home.viewMore' | trans }}
             <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
           </a>
@@ -271,7 +273,7 @@
     </section>
 
     <!-- ===================== BUNDLES STRIP ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+    <section class="page-container mb-10 md:mb-16">
       <app-section-header
         [eyebrow]="'home.bundlesEyebrow' | trans"
         [title]="'home.bundlesHeaderTitle' | trans"
@@ -287,7 +289,7 @@
 
     <!-- ===================== RECENTLY VIEWED ===================== -->
     @if (recent.count() > 0) {
-      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-12">
+      <section class="page-container mb-8 md:mb-12">
         <header class="flex items-center justify-between mb-5">
           <div>
             <span class="text-xs font-semibold text-pink-500 tracking-[0.18em] uppercase">{{ 'home.recentlyViewedEyebrow' | trans }}</span>
@@ -312,7 +314,7 @@
 
     <!-- ===================== RECOMMENDED FOR YOU (crm-driven-discovery v1 §3.3/§4.3) ===================== -->
     @if (catalog.recommended().length > 0) {
-      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <section class="page-container mb-10 md:mb-16">
         <app-section-header
           [eyebrow]="'home.recommendedEyebrow' | trans"
           [title]="recommendedTitle()"
@@ -333,14 +335,14 @@
 
     <!-- ===================== CATEGORIES (with sub-cat preview) — marketplace-home-redesign v2
          §1 ข้อ 7/§4.3: เลื่อนแนวนอนได้จริงแทน static grid เดิม (เนื้อหาการ์ดไม่เปลี่ยน) ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+    <section class="page-container mb-10 md:mb-16">
       <app-section-header
         [eyebrow]="'home.categoriesEyebrow' | trans"
         [title]="'home.categoriesHeaderTitle' | trans"
         [subtitle]="categoriesSubtitle()"
         link="/categories"
       />
-      <div class="flex gap-4 overflow-x-auto pb-2">
+      <div class="chip-row gap-3 md:gap-4 pb-2">
         @for (cat of catalog.categories(); track cat.id) {
           <a
             [routerLink]="['/category', cat.slug]"
@@ -351,10 +353,10 @@
               <div class="w-12 h-12 rounded-2xl bg-white shadow-soft flex items-center justify-center text-2xl mb-4">
                 {{ cat.icon }}
               </div>
-              <h3 class="text-base font-bold text-ink mb-1 group-hover:text-pink-700 transition-colors">
+              <h3 class="text-base font-bold text-ink mb-1 group-hover:text-pink-700 transition-colors [overflow-wrap:anywhere]">
                 {{ cat.name }}
               </h3>
-              <p class="text-xs text-ink-soft line-clamp-2 mb-3">{{ cat.description }}</p>
+              <p class="text-xs text-ink-soft line-clamp-2 mb-3 [overflow-wrap:anywhere]">{{ cat.description }}</p>
               <div class="text-[10px] text-ink-muted line-clamp-1 mb-3">
                 @for (sub of (cat.subcategories ?? []).slice(0, 3); track sub.id) {
                   <span class="mr-1.5">{{ sub.name }} ·</span>
@@ -362,7 +364,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-ink-muted">{{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
-                <span class="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-pink-500 group-hover:text-white transition-all">
+                <span class="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-primary group-hover:text-white transition-all">
                   <app-icon name="arrow-right" [size]="14" />
                 </span>
               </div>
@@ -375,12 +377,12 @@
     <!-- ===================== CRM DISCOVERY BLOCK (crm-driven-discovery v1 §3.2/§4.3) — moved here
          from marketplace.page.html by marketplace-home-redesign v2 §1 ข้อ 8/§4.3 ===================== -->
     @if (showDiscoverySkeleton()) {
-      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <section class="page-container mb-10 md:mb-16">
         <div class="bg-white rounded-2xl border border-line h-40 animate-pulse" aria-hidden="true"></div>
       </section>
     } @else if (showDiscoveryBlock()) {
       @let d = discovery.discovery()!;
-      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16 flex flex-col gap-6">
+      <section class="page-container mb-16 flex flex-col gap-6">
         <app-popular-search-chips
           [terms]="d.popularTerms"
           [label]="'marketplace.popularSearchLabel' | trans"
@@ -392,7 +394,7 @@
     }
 
     <!-- ===================== TRENDING ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+    <section class="page-container mb-10 md:mb-16">
       <app-section-header
         [eyebrow]="'home.trendingEyebrow' | trans"
         [title]="'home.trendingTitle' | trans"
@@ -407,13 +409,13 @@
     </section>
 
     <!-- ===================== HOW IT WORKS ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
-      <div class="card-cream p-8 md:p-12">
-        <div class="grid md:grid-cols-3 gap-8">
+    <section class="page-container mb-10 md:mb-16">
+      <div class="card-cream p-5 sm:p-8 md:p-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           @for (step of howItWorks; track step.no; let i = $index) {
             <div class="relative">
               <div class="flex items-center gap-3 mb-4">
-                <span class="w-12 h-12 rounded-2xl bg-pink-500 text-white font-extrabold text-xl flex items-center justify-center shadow-soft">
+                <span class="w-12 h-12 rounded-2xl bg-primary text-white font-extrabold text-xl flex items-center justify-center shadow-soft">
                   {{ step.no }}
                 </span>
                 <span class="text-3xl">{{ step.emoji }}</span>
@@ -433,7 +435,7 @@
 
     <!-- ===================== EDITOR'S PICKS ===================== -->
     @if (catalog.editorsPicks().length) {
-      <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+      <section class="page-container mb-10 md:mb-16">
         <app-section-header
           [eyebrow]="'home.editorsPicksEyebrow' | trans"
           [title]="'home.editorsPicksTitle' | trans"
@@ -449,7 +451,7 @@
     }
 
     <!-- ===================== FEATURED SELLERS ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+    <section class="page-container mb-10 md:mb-16">
       <app-section-header
         [eyebrow]="'home.featuredSellersEyebrow' | trans"
         [title]="'home.featuredSellersTitle' | trans"
@@ -474,7 +476,7 @@
                 }
               </div>
               <p class="text-xs text-ink-muted line-clamp-2 mb-2">{{ s.bio }}</p>
-              <div class="flex items-center gap-3 text-xs text-ink-soft">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0 text-xs text-ink-soft">
                 <span class="font-semibold text-pink-600">★ {{ s.rating }}</span>
                 <span>•</span>
                 <span>{{ 'home.docCount' | trans:{ count: s.totalDocuments } }}</span>
@@ -488,7 +490,7 @@
     </section>
 
     <!-- ===================== NEW ARRIVALS ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-16">
+    <section class="page-container mb-10 md:mb-16">
       <app-section-header
         [eyebrow]="'home.newArrivalsEyebrow' | trans"
         [title]="'home.newArrivalsHeaderTitle' | trans"
@@ -502,34 +504,42 @@
     </section>
 
     <!-- ===================== SELLER CTA ===================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 mb-20">
-      <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-pink-strong p-8 md:p-14 text-white">
-        <div class="absolute -top-20 -right-12 w-72 h-72 bg-white/10 rounded-full"></div>
-        <div class="absolute -bottom-20 -left-12 w-72 h-72 bg-white/10 rounded-full"></div>
-        <div class="relative grid md:grid-cols-2 gap-8 items-center">
+    <section class="page-container mb-12 md:mb-20">
+      <!-- WCAG AA: the gradient runs primary → primary-hover (tailwind.config.js), so white text is
+           ≥ 5.5:1 even at its lightest stop. Keep every layer that sits under text dark: the two
+           decorative circles are 7% white (at 10% the phone layout overlaps them under the
+           paragraph → 4.47:1), the pill is a translucent primary-hover (a white/20 pill over a
+           circle drops to ~3.9:1), and the ghost button darkens on hover instead of lightening.
+           Headings need their own text-white — ng-zorro colours h1–h6 near-black globally. -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-pink-strong p-6 sm:p-8 md:p-14 text-white" data-testid="seller-cta">
+        <div class="absolute -top-20 -right-12 w-72 h-72 bg-white/[.07] rounded-full"></div>
+        <div class="absolute -bottom-20 -left-12 w-72 h-72 bg-white/[.07] rounded-full"></div>
+        <div class="relative grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
-            <span class="pill bg-white/20 text-white backdrop-blur mb-4">💼 {{ 'home.forSellers' | trans }}</span>
-            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-4 leading-tight">
+            <span class="pill bg-primary-hover/80 text-white ring-1 ring-inset ring-white/30 backdrop-blur mb-4">💼 {{ 'home.forSellers' | trans }}</span>
+            <h2 class="heading-1 text-white font-extrabold tracking-tight mb-4 leading-tight">
               {{ 'home.becomeSellerBannerTitle' | trans }}
             </h2>
-            <p class="text-pink-50 mb-6 text-base leading-relaxed max-w-md">
+            <p class="text-white mb-6 text-base leading-relaxed max-w-md">
               {{ 'home.becomeSellerBannerDesc' | trans }}
             </p>
             <div class="flex flex-wrap gap-3">
-              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-pink-600 font-bold hover:scale-105 transition-transform">
+              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-primary font-bold hover:scale-105 transition-transform">
                 {{ 'home.openShopNow' | trans }}
                 <app-icon name="arrow-right" [size]="16" />
               </a>
-              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/40 text-white hover:bg-white/10 transition-colors">
+              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/40 text-white hover:bg-black/10 transition-colors">
                 <app-icon name="play" [size]="14" />
                 {{ 'home.watchHowItWorks' | trans }}
               </a>
             </div>
           </div>
+          <!-- G-14e: at 744 the grid column is ~276px, narrower than the 288px (w-72) card, which
+               stuck out 6px on each side; the card now caps at the column width. -->
           <div class="hidden md:flex justify-center">
-            <div class="relative">
+            <div class="relative min-w-0 max-w-full">
               <div class="w-48 h-48 rounded-3xl bg-white/15 backdrop-blur rotate-6 absolute"></div>
-              <div class="relative bg-white rounded-3xl p-6 w-72 shadow-pop">
+              <div class="relative bg-white rounded-3xl p-6 w-72 max-w-full shadow-pop">
                 <div class="flex items-center gap-2 mb-3">
                   <span class="text-pink-500">
                     <app-icon name="chart" [size]="20" />
@@ -538,7 +548,7 @@
                 </div>
                 <div class="text-3xl font-extrabold text-ink mb-1">฿38,240</div>
                 <div class="flex items-center gap-1 text-xs">
-                  <span class="text-emerald-500 font-bold">+18%</span>
+                  <span class="text-emerald-700 font-bold">+18%</span>
                   <span class="text-ink-muted">{{ 'home.vsLastMonth' | trans }}</span>
                 </div>
                 <div class="mt-4 pt-4 border-t border-line flex items-center justify-between text-xs text-ink-muted">

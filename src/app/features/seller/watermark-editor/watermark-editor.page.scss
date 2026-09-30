@@ -7,6 +7,26 @@ input[type='range'] {
   border-radius: 3px;
 }
 
+/* responsive-ui v1.4 R-2 / G-12: on touch screens every field of the editor — including the ones
+   rendered inside the settings sheet (the sheet shows this component's own templates, so these
+   rules still apply there) — gets a 44px hit area. Desktop (fine pointer) density is unchanged.
+   A 44px-tall range input keeps its track and thumb centred; only the hit box grows. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select {
+    min-height: 44px;
+  }
+
+  input[type='range'] {
+    height: 44px;
+  }
+
+  input[type='color'] {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* ─── Real-preview modal (actual watermarked JPEG pages, server-rendered) ───
    Same pattern as `features/buyer/document-detail/document-detail.page.scss` — kept as a
    separate copy per this repo's templateUrl/styleUrl-per-component convention. */
@@ -18,7 +38,9 @@ input[type='range'] {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  height: 100dvh;
+  padding: max(1rem, var(--safe-top)) max(1rem, var(--safe-right)) max(1rem, var(--safe-bottom))
+    max(1rem, var(--safe-left));
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(6px);
@@ -28,7 +50,7 @@ input[type='range'] {
   display: flex;
   flex-direction: column;
   width: min(960px, 100%);
-  max-height: min(90vh, 100dvh - 2rem);
+  max-height: min(90dvh, 100dvh - 2rem - var(--safe-top) - var(--safe-bottom));
   min-height: 0;
   background: #fff;
   border-radius: 1.25rem;

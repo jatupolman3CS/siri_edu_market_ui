@@ -93,6 +93,19 @@ export class BuyerHomePage {
     return Boolean(s?.isEnabled && !this.examIsPast());
   });
 
+  /**
+   * responsive-ui v1.4 R-17 (F147): "set your exam date" prompt. `<app-exam-countdown-form>` reloads
+   * the setting on init, which flips `state()` to `loading`; guarding the section on
+   * `state() !== 'loading'` destroyed the form it had just opened, the next idle state re-created
+   * it, and the loop fired dozens of GETs a second with the form never rendering. Once the form is
+   * open the section stays mounted while it reloads.
+   */
+  readonly examPromptVisible = computed(
+    () =>
+      this.examCountdown.setting() === null &&
+      (this.examCountdown.state().status !== 'loading' || this.examCountdownFormOpen()),
+  );
+
   openExamCountdownEdit(): void {
     this.examCountdownFormOpen.set(true);
   }

@@ -31,6 +31,8 @@ export class LineNotificationComponent {
   readonly settings = this.lineNotification.settings;
 
   readonly busy = signal(false);
+  /** Key whose settings PUT is in flight — one save at a time (the PUT carries the full map). */
+  readonly savingKey = signal<string | null>(null);
 
   readonly loadError = computed(() => {
     const s = this.lineNotification.state();
@@ -103,8 +105,13 @@ export class LineNotificationComponent {
     }
   }
 
+  /**
+   * responsive-ui v1.4 R-17 (F148): the switch is `nzControl`led, so it keeps showing the saved
+   * value until the service replaces `settings()` with the server's answer. A failure used to be
+   * silent (and the switch stayed flipped) — it now says so, and the switch simply stays put.
+   */
   toggle(key: string | undefined, enabled: boolean): void {
-    if (!key) return;
+    if (!key || this.savingKey()) return;
 
     const settings = this.settings();
     const target = settings.find((setting) => setting.key === key);
@@ -117,8 +124,16 @@ export class LineNotificationComponent {
       map[k] = k === key ? enabled : setting.isEnabled;
     }
 
-    void this.lineNotification.updateSettings({ settings: map }).then((ok) => {
-      if (ok) this.message.success(this.translation.t('shared.lineNotification.updatedSuccess'));
-    });
+    this.savingKey.set(key);
+    void this.lineNotification
+      .updateSettings({ settings: map })
+      .then((ok) => {
+        if (ok) {
+          this.message.success(this.translation.t('shared.lineNotification.updatedSuccess'));
+        } else {
+          this.message.error(this.translation.t('notifConfigErrors.saveFailed'));
+        }
+      })
+      .finally(() => this.savingKey.set(null));
   }
 }

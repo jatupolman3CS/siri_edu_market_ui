@@ -1,14 +1,24 @@
-<div class="max-w-6xl space-y-6">
+<div class="w-full min-w-0 space-y-6">
   <header>
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.settingsTitle' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'seller.settingsTitle' | trans }}</h1>
     <p class="text-sm text-ink-soft">{{ 'seller.settingsDesc' | trans }}</p>
   </header>
 
-  <app-profile-editor [secondaryLabel]="studioLabel()" [secondaryLabelText]="'seller.shopNameFromSystem' | trans" />
+  <!-- responsive-ui v1.5 R-26 item 3: >=1280 the sections flow into 2 columns in reading order
+       (account cards | notification cards); below that one column in the same order as before.
+       Flex columns blockify the hosts, so every card gets the same 24px gap (the inline hosts used
+       to swallow space-y margins), and an empty payout host (no seller profile) adds no gap. -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 items-start gap-6" data-testid="seller-settings-sections">
+    <div class="flex min-w-0 flex-col gap-6 [&>:empty]:hidden">
+      <app-profile-editor [secondaryLabel]="studioLabel()" [secondaryLabelText]="'seller.shopNameFromSystem' | trans" />
 
-  <app-payout-account-form />
+      <app-payout-account-form />
+    </div>
 
-  <app-notification-settings />
+    <div class="flex min-w-0 flex-col gap-6">
+      <app-notification-settings />
 
-  <app-line-notification />
+      <app-line-notification />
+    </div>
+  </div>
 </div>

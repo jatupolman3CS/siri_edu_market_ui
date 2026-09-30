@@ -1,11 +1,12 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-5 md:py-8">
   <!-- Breadcrumb -->
-  <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
-    <a routerLink="/" class="hover:text-pink-600">{{ 'categoryDetail.breadcrumbHome' | trans }}</a>
+  <nav class="flex items-center gap-2 text-sm text-ink-muted mb-4 md:mb-6 flex-wrap min-w-0">
+    <!-- responsive-ui v1.4 R-2 (F15): breadcrumb links are 44px targets. -->
+    <a routerLink="/" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'categoryDetail.breadcrumbHome' | trans }}</a>
     <app-icon name="chevron-right" [size]="14" />
-    <a routerLink="/categories" class="hover:text-pink-600">{{ 'categoryDetail.breadcrumbCategories' | trans }}</a>
+    <a routerLink="/categories" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'categoryDetail.breadcrumbCategories' | trans }}</a>
     <app-icon name="chevron-right" [size]="14" />
-    <span class="text-ink font-medium">{{ category()?.name ?? '' }}</span>
+    <span class="text-ink font-medium min-w-0 break-words [overflow-wrap:anywhere]">{{ category()?.name ?? '' }}</span>
     @if (selectedSub(); as sub) {
       <app-icon name="chevron-right" [size]="14" />
       <span class="text-pink-600 font-medium">{{ sub.name }}</span>
@@ -15,14 +16,14 @@
   @if (category(); as cat) {
     <!-- Header Card -->
     <header
-      class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+      class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
     >
-      <div class="flex items-start gap-5 flex-wrap">
-        <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white shadow-soft border border-pink-100 flex items-center justify-center text-4xl flex-shrink-0">
+      <div class="flex items-start gap-3 sm:gap-5">
+        <div class="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-white shadow-soft border border-pink-100 flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0">
           {{ cat.icon }}
         </div>
         <div class="flex-1 min-w-0">
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">
+          <h1 class="heading-1 font-extrabold text-ink mb-1.5 break-words [overflow-wrap:anywhere]">
             {{ cat.name }}
           </h1>
           @if (cat.description) {
@@ -41,23 +42,25 @@
 
     <!-- Sub-categories drill-down -->
     @if (cat.subcategories?.length) {
-      <section class="mb-10">
+      <section class="mb-8 md:mb-10">
         <header class="flex items-center justify-between mb-5 gap-3 flex-wrap">
           <h2 class="section-title">{{ 'categoryDetail.selectSubcategory' | trans }}</h2>
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="relative">
+          <div class="flex items-center gap-3 flex-wrap w-full sm:w-auto">
+            <div class="relative flex-1 sm:flex-none">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
                 <app-icon name="search" [size]="14" />
               </span>
               <input
                 type="search"
+                inputmode="search"
+                [attr.aria-label]="'categoryDetail.searchSubPlaceholder' | trans"
                 [ngModel]="subSearch()"
                 (ngModelChange)="subSearch.set($event)"
                 [placeholder]="'categoryDetail.searchSubPlaceholder' | trans"
-                class="pl-9 pr-3 py-2 rounded-2xl border border-line bg-white text-sm focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 w-56"
+                class="pl-9 pr-3 py-2 rounded-2xl border border-line bg-white text-sm focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 w-full sm:w-56"
               />
             </div>
-            <button class="text-xs text-pink-600 font-bold hover:underline" (click)="selectedSubId.set('')">
+            <button type="button" class="min-h-11 text-xs text-pink-700 font-bold hover:underline" (click)="selectedSubId.set('')">
               {{ 'categories.viewAll' | trans }}
             </button>
           </div>
@@ -110,11 +113,12 @@
     </div>
 
     <!-- Sort tabs -->
-    <div class="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+    <div class="chip-row mb-5 pb-1">
       @for (s of sorts; track s.value) {
         <button
-          class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
-          [class.bg-pink-500]="sort() === s.value"
+          type="button"
+          class="px-4 min-h-11 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
+          [class.bg-primary]="sort() === s.value"
           [class.text-white]="sort() === s.value"
           [class.bg-white]="sort() !== s.value"
           [class.text-ink-soft]="sort() !== s.value"

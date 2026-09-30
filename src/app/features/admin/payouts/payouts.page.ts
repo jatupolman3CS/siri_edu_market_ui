@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { CommonModule, DOCUMENT, DatePipe } from '@angular/common';
+import { A11yModule } from '@angular/cdk/a11y';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -13,8 +14,10 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 
 type PayoutFilter = 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled' | 'all';
 
@@ -58,9 +61,12 @@ const MISMATCH_REASON_KEYS: Record<string, string> = {
     IconComponent,
     PaginationComponent,
     TranslatePipe,
+    A11yModule,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './payouts.page.html',
+  host: { '(document:keydown.escape)': 'onEscape($event)' },
 })
 export class AdminPayoutsPage {
   private readonly admin = inject(AdminService);
@@ -122,9 +128,46 @@ export class AdminPayoutsPage {
   readonly batchResult = signal<BatchPayoutSlipsResponse | null>(null);
   readonly batchError = signal<string | null>(null);
 
+  /** Any of the five custom overlays is open (§4.7 / R-10: the page behind must not scroll). */
+  readonly anyOverlayOpen = computed(
+    () =>
+      !!this.qrModalPayout() ||
+      !!this.slipModalPayout() ||
+      this.manualModalOpen() ||
+      !!this.failModalPayoutId() ||
+      this.batchModalOpen(),
+  );
+
+  private readonly document = inject(DOCUMENT);
+  private scrollLocked = false;
+
   constructor() {
+    effect(() => this.setScrollLock(this.anyOverlayOpen()));
+    inject(DestroyRef).onDestroy(() => this.setScrollLock(false));
     void this.reload();
     void this.loadNextPayoutDate();
+  }
+
+  /** One counted page lock for all overlays (R-10: body visible first, then html hidden). */
+  private setScrollLock(on: boolean): void {
+    if (on === this.scrollLocked) return;
+    this.scrollLocked = on;
+    if (on) acquirePageScrollLock(this.document);
+    else releasePageScrollLock(this.document);
+  }
+
+  /**
+   * Escape closes the topmost overlay only (batch z-70 > manual / fail z-60 > slip / QR z-50),
+   * and leaves an Escape that an inner layer already handled alone (R-11).
+   */
+  onEscape(event: Event): void {
+    if (event.defaultPrevented || !this.anyOverlayOpen()) return;
+    if (this.batchModalOpen()) this.closeBatchModal();
+    else if (this.manualModalOpen()) this.closeManualModal();
+    else if (this.failModalPayoutId()) this.closeFailModal();
+    else if (this.slipModalPayout()) this.closeSlipModal();
+    else this.qrModalPayout.set(null);
+    event.preventDefault();
   }
 
   async loadNextPayoutDate(): Promise<void> {

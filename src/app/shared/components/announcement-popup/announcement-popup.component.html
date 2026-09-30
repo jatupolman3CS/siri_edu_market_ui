@@ -28,7 +28,7 @@
                 appImgFallback
                 [src]="image.imageUrl"
                 [alt]="image.altText || fallbackAlt(image, i)"
-                class="w-full aspect-[4/3] object-cover transition-opacity duration-200"
+                class="w-full aspect-[4/3] max-h-[40dvh] md:max-h-none object-cover transition-opacity duration-200"
                 [class.cursor-pointer]="!!image.linkUrl"
                 (click)="onImageClick(image)"
               />
@@ -44,7 +44,7 @@
             <!-- Navigation buttons -->
             <button
               type="button"
-              class="absolute top-1/2 left-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
+              class="absolute top-1/2 left-3 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
               [attr.aria-label]="'shared.announcementPopup.prevImage' | trans"
               (click)="prevImage()"
             >
@@ -52,7 +52,7 @@
             </button>
             <button
               type="button"
-              class="absolute top-1/2 right-3 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
+              class="absolute top-1/2 right-3 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
               [attr.aria-label]="'shared.announcementPopup.nextImage' | trans"
               (click)="nextImage()"
             >
@@ -83,8 +83,8 @@
 
   <ng-template #modalFooter>
     @if (popup.current(); as announcement) {
-      <div class="w-full flex items-center justify-between gap-3">
-        <label class="inline-flex items-center gap-2 text-xs md:text-sm text-ink-soft hover:text-ink cursor-pointer select-none">
+      <div class="w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <label class="inline-flex items-center gap-2 min-h-11 text-xs md:text-sm text-ink-soft hover:text-ink cursor-pointer select-none">
           <input
             type="checkbox"
             [checked]="dontShowAgainChecked()"
@@ -94,7 +94,7 @@
           <span>{{ 'shared.announcementPopup.dontShowAgain' | trans }}</span>
         </label>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-col-reverse sm:flex-row sm:items-center gap-2">
           @if (announcement.images[currentImageIndex()]?.linkUrl) {
             <button
               type="button"

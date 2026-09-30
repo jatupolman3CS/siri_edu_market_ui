@@ -41,3 +41,53 @@ describe('app.routes — /seller/dashboard compatibility alias', () => {
     expect(dashboardAlias?.pathMatch).toBe('full');
   });
 });
+
+/**
+ * Seller / admin pages without a `title` fell back to the generic 'SIRIEDUMARKET', so a route change
+ * inside Siri Studio or the admin panel was never announced. Every page route (not redirects) under
+ * /seller and /admin carries a `routes.*` key that exists in both dictionaries.
+ */
+describe('app.routes — every seller/admin page has a translated title', () => {
+  it.each(['seller', 'admin'])('/%s children', async (root) => {
+    const { th } = await import('./core/i18n/translations/th');
+    const { en } = await import('./core/i18n/translations/en');
+    const titles: Record<string, string> = th.routes;
+    const titlesEn: Record<string, string> = en.routes;
+    const children = routes.find((r) => r.path === root)?.children ?? [];
+    const pages = children.filter((c) => !c.redirectTo);
+
+    expect(pages.length).toBeGreaterThan(0);
+    for (const page of pages) {
+      expect(typeof page.title, `/${root}/${page.path}`).toBe('string');
+      const key = String(page.title).replace(/^routes\./, '');
+      expect(titles[key], `th routes.${key}`).toBeTruthy();
+      expect(titlesEn[key], `en routes.${key}`).toBeTruthy();
+    }
+  });
+});
+
+/**
+ * responsive-ui G-30d: `/bundle/:id` and `/store/:id` had no `title`, so their tab title was the
+ * bare 'SIRIEDUMARKET' — for a bundle always, and for a store whenever its profile failed to load
+ * (the store name only arrives through SeoMetaService after a successful load).
+ */
+describe('app.routes — buyer detail routes have a translated fallback title', () => {
+  it.each([
+    ['bundle/:id', 'routes.bundleDetail'],
+    ['store/:id', 'routes.store'],
+  ])('%s → %s', async (path, key) => {
+    const { th } = await import('./core/i18n/translations/th');
+    const { en } = await import('./core/i18n/translations/en');
+    const buyerRoot = routes.find((r) => r.path === '' && r.children?.some((c) => c.path === path));
+    const route = buyerRoot?.children?.find((c) => c.path === path);
+
+    expect(route?.title).toBe(key);
+    const leaf = key.replace(/^routes\./, '');
+    const titles: Record<string, string> = th.routes;
+    const titlesEn: Record<string, string> = en.routes;
+    expect(titles[leaf]).toBeTruthy();
+    expect(titlesEn[leaf]).toBeTruthy();
+    expect(titles[leaf]).not.toBe('SIRIEDUMARKET');
+    expect(titlesEn[leaf]).not.toBe('SIRIEDUMARKET');
+  });
+});

@@ -1,9 +1,12 @@
-import { signal } from '@angular/core';
+import { ApplicationRef, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { CdkDrag } from '@angular/cdk/drag-drop';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SellerUploadPage } from './upload.page';
+import { LayoutChromeService, ViewportService } from '../../../core/layout';
 import { CatalogService, PlatformStatsService, SellerService } from '../../../core/services';
 import {
   SellerWatermarkTemplateService,
@@ -2401,5 +2404,236 @@ describe('SellerUploadPage — auto-generated cover preview strip', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain(AFTER_SAVE_COPY);
     expect(text).toContain(STRIP_TITLE);
+  });
+});
+
+describe('SellerUploadPage — phone sticky action bar (responsive-ui v1 §4.6 C / U3-3)', () => {
+  function renderOnPhone() {
+    const fakeRoute = { queryParamMap: of(convertToParamMap({})) };
+    const fakePlatformStats = { stats: () => undefined, loadStats: vi.fn() };
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: SellerService, useValue: fakeSeller },
+        { provide: NzMessageService, useValue: fakeMessage },
+        { provide: PlatformStatsService, useValue: fakePlatformStats },
+        {
+          provide: ViewportService,
+          useValue: {
+            tier: signal('phone'),
+            isPhone: signal(true),
+            isTabletUp: signal(false),
+            isLaptopUp: signal(false),
+            isDesktop: signal(false),
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function bar(fixture: { nativeElement: unknown }): HTMLElement {
+    return (fixture.nativeElement as HTMLElement).querySelector('[data-testid="upload-action-bar"]') as HTMLElement;
+  }
+
+  it('registers the action bar on phone so the layout hides the bottom tab bar', () => {
+    renderOnPhone();
+    expect(TestBed.inject(LayoutChromeService).actionBarActive()).toBe(true);
+  });
+
+  it('step 1: only a next button, disabled like the inline one', () => {
+    const fixture = renderOnPhone();
+    const buttons = bar(fixture).querySelectorAll('button');
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].disabled).toBe(fixture.componentInstance.step1NextDisabled());
+  });
+
+  it('steps 2–3: prev + next call the same handlers as the inline buttons', () => {
+    const fixture = renderOnPhone();
+    const page = fixture.componentInstance;
+    page.step.set(2);
+    fixture.detectChanges();
+    const prev = vi.spyOn(page, 'prev');
+    const next = vi.spyOn(page, 'next').mockImplementation(() => undefined);
+
+    const buttons = bar(fixture).querySelectorAll('button');
+    expect(buttons).toHaveLength(2);
+    buttons[0].click();
+    buttons[1].click();
+    expect(prev).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('step 4: the primary action is submit()', () => {
+    const fixture = renderOnPhone();
+    const page = fixture.componentInstance;
+    page.step.set(4);
+    fixture.detectChanges();
+    const submit = vi.spyOn(page, 'submit').mockImplementation(() => undefined);
+
+    const buttons = bar(fixture).querySelectorAll('button');
+    buttons[buttons.length - 1].click();
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('inline step buttons are hidden below 744 (md:flex only)', () => {
+    const fixture = renderOnPhone();
+    const inline = (fixture.nativeElement as HTMLElement).querySelector('section .mt-8.justify-end');
+    expect(inline?.classList.contains('hidden')).toBe(true);
+    expect(inline?.classList.contains('md:flex')).toBe(true);
+  });
+});
+
+/**
+ * responsive-ui v1.4 gate fixes (G1-5) on /seller/upload: F149 (file card bound to the real upload
+ * state), F66 (touch drag needs a long-press), F139 (the stepper comes back into view on a step
+ * change) and F153 (edit-mode file names keep a width floor and wrap).
+ */
+describe('SellerUploadPage — responsive v1.4 fixes', () => {
+  function renderWith(uploadFile: (file: File) => Promise<UploadResponse>) {
+    const fakeRoute = { queryParamMap: of(convertToParamMap({})) };
+    const fakePlatformStats = { stats: () => undefined, loadStats: vi.fn() };
+    const seller = { ...fakeSeller, uploadFile: vi.fn(uploadFile) };
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: CatalogService, useValue: fakeCatalog },
+        { provide: SellerService, useValue: seller },
+        { provide: NzMessageService, useValue: fakeMessage },
+        { provide: PlatformStatsService, useValue: fakePlatformStats },
+      ],
+    });
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, seller };
+  }
+
+  function pick(fixture: { componentInstance: SellerUploadPage }, name = 'notes.docx'): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    Object.defineProperty(input, 'files', { value: [new File(['x'], name)], writable: false });
+    fixture.componentInstance.onFile({ target: input } as unknown as Event);
+  }
+
+  const status = (fixture: { nativeElement: unknown }) =>
+    ((fixture.nativeElement as HTMLElement).querySelector('[data-testid="upload-file-status"]')?.textContent ?? '').trim();
+  const fullBar = (fixture: { nativeElement: unknown }) =>
+    (fixture.nativeElement as HTMLElement).querySelector('[data-testid="upload-progress"] [style*="width: 100%"]');
+
+  async function flush(): Promise<void> {
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it('F149: while the upload runs the card says so — no full bar and no "upload complete"', async () => {
+    const { fixture } = renderWith(() => new Promise<UploadResponse>(() => undefined));
+    pick(fixture);
+    await flush();
+    fixture.detectChanges();
+
+    expect(status(fixture)).toBe('กำลังอัปโหลด…');
+    expect(fullBar(fixture)).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('อัปโหลดเรียบร้อย');
+  });
+
+  it('F149 / G-27g: a failed upload (e.g. 413) shows a failure line, never a full bar or "upload complete"', async () => {
+    const { fixture } = renderWith(async () => {
+      throw new Error('413 Payload Too Large');
+    });
+    pick(fixture);
+    await flush();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.uploadFailed()).toBe(true);
+    expect(status(fixture)).toContain('อัปโหลดไฟล์ไม่สำเร็จ');
+    expect(fullBar(fixture)).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('อัปโหลดเรียบร้อย');
+  });
+
+  it('F149: only a finished upload shows the full bar and "upload complete"; resetFile clears the failure', async () => {
+    const { fixture } = renderWith(async () => ({ key: 'k/notes.docx', publicUrl: '/api/files/download/k/notes.docx' }) as UploadResponse);
+    pick(fixture);
+    await flush();
+    fixture.detectChanges();
+
+    expect(status(fixture)).toContain('อัปโหลดเรียบร้อย');
+    expect(fullBar(fixture)).not.toBeNull();
+
+    fixture.componentInstance.uploadFailed.set(true);
+    fixture.componentInstance.resetFile();
+    expect(fixture.componentInstance.uploadFailed()).toBe(false);
+  });
+
+  it('F66 / G-32: gallery rows start a touch drag only after a 300ms long-press (mouse unchanged)', () => {
+    const { fixture } = renderWith(async () => ({}) as UploadResponse);
+    fixture.componentInstance.galleryItems.set([
+      { key: 'a.jpg', publicUrl: '/a.jpg', previewUrl: '/a.jpg' },
+      { key: 'b.jpg', publicUrl: '/b.jpg', previewUrl: '/b.jpg' },
+    ]);
+    fixture.detectChanges();
+
+    const drags = fixture.debugElement.queryAll(By.directive(CdkDrag));
+    expect(drags).toHaveLength(2);
+    for (const d of drags) {
+      expect(d.injector.get(CdkDrag).dragStartDelay).toEqual({ touch: 300, mouse: 0 });
+    }
+  });
+
+  it('F139 / R-25: a step change scrolls the stepper back into view when it has scrolled above the top bar', () => {
+    const { fixture } = renderWith(async () => ({}) as UploadResponse);
+    const ol = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="upload-stepper"]') as HTMLElement;
+    const scrollIntoView = vi.fn();
+    Object.assign(ol, { scrollIntoView });
+    vi.spyOn(ol, 'getBoundingClientRect').mockReturnValue({ top: -640 } as DOMRect);
+
+    fixture.componentInstance.next();
+    fixture.detectChanges();
+    TestBed.inject(ApplicationRef).tick();
+
+    expect(fixture.componentInstance.step()).toBe(2);
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView.mock.calls[0][0]).toMatchObject({ block: 'start' });
+  });
+
+  it('F139: the stepper is left alone when it is already in view', () => {
+    const { fixture } = renderWith(async () => ({}) as UploadResponse);
+    const ol = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="upload-stepper"]') as HTMLElement;
+    const scrollIntoView = vi.fn();
+    Object.assign(ol, { scrollIntoView });
+    vi.spyOn(ol, 'getBoundingClientRect').mockReturnValue({ top: 120 } as DOMRect);
+
+    fixture.componentInstance.goToStep(3);
+    fixture.detectChanges();
+    TestBed.inject(ApplicationRef).tick();
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('F153: edit-mode file names keep a 7rem floor and wrap instead of truncating to one glyph', () => {
+    const { fixture } = renderWith(async () => ({}) as UploadResponse);
+    const page = fixture.componentInstance;
+    page.editId.set('doc-1');
+    page.mainFiles.set([
+      {
+        id: 'f1',
+        storageKey: 'k/f1.pdf',
+        originalFileName: 'สรุปเนื้อหาคณิตศาสตร์เพิ่มเติม_ม6_เทอม2_ฉบับปรับปรุงล่าสุด_final.pdf',
+        uploadedAt: '2026-09-01T00:00:00Z',
+        isListedForSale: true,
+      },
+    ]);
+    fixture.detectChanges();
+
+    const name = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="main-file-name"]') as HTMLElement;
+    expect(name.classList.contains('truncate')).toBe(false);
+    expect(name.classList.contains('min-w-[7rem]')).toBe(true);
+    expect(name.classList.contains('[overflow-wrap:anywhere]')).toBe(true);
+    expect(name.parentElement?.classList.contains('flex-wrap')).toBe(true);
   });
 });

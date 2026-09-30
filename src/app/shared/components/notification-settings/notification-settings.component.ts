@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
@@ -53,6 +54,9 @@ export class NotificationSettingsComponent {
   private readonly message = inject(NzMessageService);
   private readonly translation = inject(TranslationService);
 
+  /** Key whose settings PUT is in flight — spins that switch and blocks a second save. */
+  readonly savingKey = signal<string | null>(null);
+
   readonly groups = computed<NotificationSettingGroup[]>(() => {
     const settings = this.notifications.settings();
     return AUDIENCE_ORDER.map((audience) => ({
@@ -66,8 +70,14 @@ export class NotificationSettingsComponent {
     this.notifications.loadSettings();
   }
 
+  /**
+   * responsive-ui v1.4 R-17 (F148): the switch is `nzControl`led, so it keeps showing the saved
+   * value until `NotificationService` replaces `settings()` with the server's answer — a failed
+   * PUT (already reported by the service) leaves it where it was. One save at a time: the PUT
+   * carries the whole map, so a second flip mid-flight would race the first.
+   */
   toggle(key: string | undefined, enabled: boolean): void {
-    if (!key) return;
+    if (!key || this.savingKey()) return;
 
     const settings = this.notifications.settings();
     const target = settings.find((setting) => setting.key === key);
@@ -83,11 +93,15 @@ export class NotificationSettingsComponent {
       map[k] = k === key ? enabled : setting.isEnabled;
     }
 
-    this.notifications.updateSettings({ settings: map }).subscribe({
-      next: () => this.message.success(this.translation.t('shared.notificationSettings.updateSuccess')),
-      error: () => {
-        /* reported by NotificationService through ApiFailureReporter */
-      },
-    });
+    this.savingKey.set(key);
+    this.notifications
+      .updateSettings({ settings: map })
+      .pipe(finalize(() => this.savingKey.set(null)))
+      .subscribe({
+        next: () => this.message.success(this.translation.t('shared.notificationSettings.updateSuccess')),
+        error: () => {
+          /* reported by NotificationService through ApiFailureReporter */
+        },
+      });
   }
 }

@@ -1,5 +1,5 @@
 @if (sellerLoading()) {
-  <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+  <div class="page-container py-16">
     <app-empty-state emoji="⏳" [title]="'storefront.loadingTitle' | trans" [description]="'storefront.loadingDesc' | trans" />
   </div>
 } @else if (seller(); as s) {
@@ -14,9 +14,9 @@
         }
       </section>
 
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 -mt-20 relative">
+      <div class="page-container -mt-20 relative">
         <!-- Profile card -->
-        <header class="card-soft p-6 md:p-8 mb-8">
+        <header class="card-soft p-4 sm:p-6 md:p-8 mb-6 md:mb-8">
           <div class="flex flex-col md:flex-row gap-6 md:items-end">
             <img
               appImgFallback
@@ -26,7 +26,8 @@
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-1">
-                <h1 class="text-3xl font-extrabold text-ink">{{ s.studioName }}</h1>
+                <!-- responsive-ui v1.4 R-5 (F96): a long store name wraps (it widened the page to 1473px). -->
+                <h1 class="heading-1 font-extrabold text-ink min-w-0 max-w-full [overflow-wrap:anywhere]">{{ s.studioName }}</h1>
                 @if (s.isVerified) {
                   <svg viewBox="0 0 16 16" class="w-6 h-6 text-pink-500" fill="currentColor">
                     <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
@@ -37,7 +38,7 @@
                   <span class="pill-pink !text-[10px]">{{ b }}</span>
                 }
               </div>
-              <p class="text-sm text-ink-muted mb-3">{{ 'storefront.byOwner' | trans:{ owner: s.ownerName ?? '', year: joinedYear() } }}</p>
+              <p class="text-sm text-ink-muted mb-3 [overflow-wrap:anywhere]">{{ 'storefront.byOwner' | trans:{ owner: s.ownerName ?? '', year: joinedYear() } }}</p>
               <p class="text-sm text-ink-soft max-w-2xl mb-4 leading-relaxed">{{ s.bio }}</p>
 
               <div class="flex flex-wrap gap-2">
@@ -107,13 +108,15 @@
 
         <!-- Sales-by-month chart (seller-pricing-and-storefront-stats v1 §3.3/§4) -->
         @if (totalUnitsSoldInWindow() > 0) {
-          <section class="card-soft p-6 mb-8">
+          <!-- responsive-ui v1.4 R-1 (F64): the chart gives up its min-w-[320px] and scales with the
+               card, so the current month (the right-most bar) is never scrolled out of view. -->
+          <section class="card-soft p-4 sm:p-6 mb-8">
             <h2 class="text-lg font-bold text-ink mb-1">{{ 'storefront.monthlySales' | trans }}</h2>
             <p class="text-xs text-ink-muted mb-5">{{ 'storefront.monthlySalesDesc' | trans }}</p>
-            <div class="overflow-x-auto -mx-2">
-              <div class="grid grid-cols-6 gap-3 items-end h-40 min-w-[320px] px-2">
+            <div>
+              <div class="grid grid-cols-6 gap-1.5 sm:gap-3 items-end h-40">
                 @for (m of salesByMonth(); track m.month) {
-                  <div class="flex flex-col items-center gap-2 h-full justify-end">
+                  <div class="flex flex-col items-center gap-2 h-full justify-end min-w-0">
                     <span class="text-xs font-bold text-ink">{{ m.unitsSold }}</span>
                     <div
                       class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
@@ -121,7 +124,7 @@
                     >
                       <div class="absolute inset-x-0 top-0 h-1 bg-pink-500 rounded-t-2xl"></div>
                     </div>
-                    <span class="text-xs text-ink-muted">{{ m.month }}</span>
+                    <span class="text-[11px] sm:text-xs text-ink-muted text-center leading-tight [overflow-wrap:anywhere]">{{ m.month }}</span>
                   </div>
                 }
               </div>
@@ -130,13 +133,14 @@
         }
 
         <!-- Tabs -->
-        <nav class="flex items-center gap-2 mb-6 overflow-x-auto">
+        <nav class="chip-row mb-6">
           @for (t of tabs(); track t.value) {
             <button
-              class="px-5 py-2.5 rounded-full text-sm font-medium border whitespace-nowrap transition-colors"
-              [class.bg-pink-500]="tab() === t.value"
+              type="button"
+              class="px-5 min-h-11 rounded-full text-sm font-medium border whitespace-nowrap transition-colors"
+              [class.bg-primary]="tab() === t.value"
               [class.text-white]="tab() === t.value"
-              [class.border-pink-500]="tab() === t.value"
+              [class.border-primary]="tab() === t.value"
               [class.bg-white]="tab() !== t.value"
               [class.text-ink-soft]="tab() !== t.value"
               [class.border-line]="tab() !== t.value"
@@ -198,7 +202,7 @@
         }
       </div>
     } @else {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+      <div class="page-container py-16">
         <app-empty-state
           emoji="🏪"
           [title]="'storefront.notFoundTitle' | trans"

@@ -607,3 +607,78 @@ describe('SellerService — getDocumentDownloadUrl (document-preview-access-fixe
     expect(await service.getDocumentDownloadUrl('doc-1')).toEqual({ error: 'no_file' });
   });
 });
+
+/**
+ * responsive-ui v1.4 R-17 (G-27, F88): the studio pages render loading / error + retry / data from
+ * these load states, so the zeroed `stats()` default is never mistaken for "a store with no sales".
+ */
+describe('SellerService — load states for the studio pages (R-17)', () => {
+  it('refreshDashboard(): idle → loading → success, and dashboardLoaded flips on', async () => {
+    stubRoute('GET', '/api/seller/dashboard', { totalRevenue: 10 });
+    const service = buildService();
+    expect(service.dashboardState().status).toBe('idle');
+    expect(service.dashboardLoaded()).toBe(false);
+
+    const pending = service.refreshDashboard();
+    expect(service.dashboardState().status).toBe('loading');
+    await pending;
+
+    expect(service.dashboardState().status).toBe('success');
+    expect(service.dashboardLoaded()).toBe(true);
+  });
+
+  it('refreshDashboard(): a failure is an error state and never counts as loaded', async () => {
+    stubRoute('GET', '/api/seller/dashboard', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    const service = buildService();
+
+    await service.refreshDashboard();
+
+    expect(service.dashboardState().status).toBe('error');
+    expect(service.dashboardLoaded()).toBe(false);
+  });
+
+  it('refreshDashboard(): a failed refresh after a success keeps dashboardLoaded', async () => {
+    stubRoute('GET', '/api/seller/dashboard', { totalRevenue: 10 });
+    const service = buildService();
+    await service.refreshDashboard();
+    stubRoute('GET', '/api/seller/dashboard', { title: 'boom', status: 500, statusCode: 500 }, 500);
+
+    await service.refreshDashboard();
+
+    expect(service.dashboardState().status).toBe('error');
+    expect(service.dashboardLoaded()).toBe(true);
+  });
+
+  it('loadEarnings(): loading → success, or error on failure', async () => {
+    stubRoute('GET', '/api/seller/earnings', { totalEarnings: 1, payouts: [] });
+    const service = buildService();
+    const pending = service.loadEarnings();
+    expect(service.earningsState().status).toBe('loading');
+    await pending;
+    expect(service.earningsState().status).toBe('success');
+
+    stubRoute('GET', '/api/seller/earnings', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    await service.loadEarnings();
+    expect(service.earningsState().status).toBe('error');
+  });
+
+  it('listDocumentsPaged(): flags a failed request with failed: true (still an empty page for other callers)', async () => {
+    stubRoute('GET', '/api/seller/documents', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    const service = buildService();
+
+    const res = await service.listDocumentsPaged({ page: 1, pageSize: 10 });
+
+    expect(res.failed).toBe(true);
+    expect(res.items).toEqual([]);
+  });
+
+  it('listDocumentsPaged(): a successful answer has no failed flag', async () => {
+    stubRoute('GET', '/api/seller/documents', { items: [], page: 1, pageSize: 10, totalCount: 0, totalPages: 1 });
+    const service = buildService();
+
+    const res = await service.listDocumentsPaged({ page: 1, pageSize: 10 });
+
+    expect(res.failed).toBeUndefined();
+    expect(res.totalCount).toBe(0);
+  });
+});

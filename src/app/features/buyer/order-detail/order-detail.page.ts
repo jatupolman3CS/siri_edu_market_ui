@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   signal,
@@ -17,6 +18,7 @@ import { DocumentCardComponent } from '../../../shared/components/document-card/
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 
 @Component({
   selector: 'app-buyer-order-detail',
@@ -30,6 +32,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     ImgFallbackDirective,
     ThbPipe,
     TimeAgoPipe,
+    StickyActionBarComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +51,18 @@ export class BuyerOrderDetailPage {
   readonly loading = signal(true);
   readonly payingWithWallet = signal(false);
   readonly order = this.orderService.detail;
+  /** responsive-ui v1.4 R-17 (F88): `'failed'` → error + retry; `'not_found'` → the not-found state. */
+  readonly detailError = this.orderService.detailError;
+
+  /**
+   * R-17 (F91): only true once the wallet balance is actually known — while it loads, the pay
+   * button just stays disabled as before instead of flashing a "top up" link.
+   */
+  readonly walletInsufficient = computed(() => {
+    const o = this.order();
+    const balance = this.wallet.summary()?.balance;
+    return !!o && balance != null && balance < o.total;
+  });
   // order-similar-documents v1 §4: "เอกสารที่คล้ายกับคำสั่งซื้อนี้" — hidden entirely when empty
   // or errored (§1.6), never rendered for anything but paid/fulfilled orders (§4 AC-16).
   readonly similar = this.orderService.similar;
@@ -64,12 +79,7 @@ export class BuyerOrderDetailPage {
 
     void this.wallet.refreshSummary();
 
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      void this.orderService.loadDetail(id).finally(() => this.loading.set(false));
-    } else {
-      this.loading.set(false);
-    }
+    this.loadOrder();
 
     effect((onCleanup) => {
       const o = this.order();
@@ -92,6 +102,21 @@ export class BuyerOrderDetailPage {
       this.similarRequested = true;
       void this.orderService.loadSimilar(o.id);
     });
+  }
+
+  private loadOrder(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.loading.set(true);
+      void this.orderService.loadDetail(id).finally(() => this.loading.set(false));
+    } else {
+      this.loading.set(false);
+    }
+  }
+
+  /** R-17: the error state's retry re-issues the same GET. */
+  retryLoad(): void {
+    this.loadOrder();
   }
 
   statusLabel(s: string): string {

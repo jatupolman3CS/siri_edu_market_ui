@@ -14,14 +14,15 @@
     @if (showPageSize()) {
       <div class="inline-flex items-center gap-1.5">
         <span class="text-xs text-ink-muted">{{ 'shared.pagination.perPage' | trans }}</span>
+        <!-- Each option carries its own [selected]: a [value] on the <select> is applied before the
+             @for options exist, so a pager created at 50 showed "10" and picking 10 fired no change. -->
         <select
-          class="bg-white border border-line rounded-lg px-2 py-1 text-xs text-ink font-medium focus:outline-none focus:border-pink-500 hover:border-pink-300 transition-colors cursor-pointer shadow-xs"
-          [value]="pageSize()"
+          class="min-h-11 bg-white border border-line rounded-lg px-2 py-1 text-xs text-ink font-medium focus:outline-none focus:border-pink-500 hover:border-pink-300 transition-colors cursor-pointer shadow-xs"
           (change)="onPageSizeChange($event)"
           [attr.aria-label]="'shared.pagination.selectPerPageAria' | trans"
         >
           @for (opt of pageSizeOptions(); track opt) {
-            <option [value]="opt">{{ 'shared.pagination.itemsUnit' | trans: { count: opt } }}</option>
+            <option [value]="opt" [selected]="opt === pageSize()">{{ 'shared.pagination.itemsUnit' | trans: { count: opt } }}</option>
           }
         </select>
       </div>
@@ -30,11 +31,11 @@
 
   <!-- Page Controls -->
   @if (computedTotalPages() > 1) {
-    <nav class="flex items-center gap-1 ml-auto" aria-label="Pagination Navigation">
+    <nav class="flex flex-wrap items-center gap-1 w-full justify-center sm:w-auto sm:ml-auto" aria-label="Pagination Navigation">
       <!-- Prev Button -->
       <button
         type="button"
-        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
+        class="inline-flex items-center justify-center gap-1 min-w-[44px] min-h-[44px] px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
         [disabled]="page() <= 1"
         (click)="prev()"
         [attr.aria-label]="'shared.pagination.prevAria' | trans"
@@ -43,16 +44,21 @@
         <span class="hidden sm:inline">{{ 'shared.pagination.prev' | trans }}</span>
       </button>
 
-      <!-- Page Numbers -->
-      <div class="flex items-center gap-1">
+      <!-- Phone: compact "page / total" between the 44px prev/next buttons -->
+      <span class="sm:hidden px-3 text-sm font-semibold text-ink tabular-nums" aria-live="polite">
+        {{ page() }} / {{ computedTotalPages() }}
+      </span>
+
+      <!-- Page Numbers (>=640). 36px on a mouse, 44px on touch (G-12 / R-2). -->
+      <div class="hidden sm:flex flex-wrap items-center gap-1">
         @for (p of pages(); track $index) {
           @if (p === '...') {
-            <span class="w-8 h-8 flex items-center justify-center text-xs text-ink-muted font-bold">…</span>
+            <span class="w-9 h-9 flex items-center justify-center text-xs text-ink-muted font-bold">…</span>
           } @else {
             <button
               type="button"
-              class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center cursor-pointer"
-              [class.bg-pink-500]="page() === p"
+              class="w-9 h-9 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center cursor-pointer"
+              [class.bg-primary]="page() === p"
               [class.text-white]="page() === p"
               [class.shadow-soft]="page() === p"
               [class.text-ink]="page() !== p"
@@ -70,7 +76,7 @@
       <!-- Next Button -->
       <button
         type="button"
-        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
+        class="inline-flex items-center justify-center gap-1 min-w-[44px] min-h-[44px] px-3 py-1.5 rounded-xl border border-line bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 disabled:opacity-40 disabled:pointer-events-none transition-all text-xs font-medium cursor-pointer"
         [disabled]="page() >= computedTotalPages()"
         (click)="next()"
         [attr.aria-label]="'shared.pagination.nextAria' | trans"

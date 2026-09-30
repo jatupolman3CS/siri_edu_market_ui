@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-5 md:py-8">
   <app-page-hero
     [eyebrow]="'categories.heroEyebrow' | trans"
     [title]="'categories.heroTitle' | trans"
@@ -14,29 +14,32 @@
       </button>
     </app-empty-state>
   } @else {
-    <div class="space-y-8">
+    <div class="space-y-5 md:space-y-8">
       @for (cat of catalog.categories(); track cat.id) {
-        <section class="card-soft p-6 md:p-8">
-          <header class="flex items-start gap-5 mb-6">
+        <section class="card-soft p-4 sm:p-6 md:p-8">
+          <header class="flex items-start gap-3 sm:gap-5 mb-5 md:mb-6">
             <div
-              class="w-16 h-16 rounded-3xl bg-gradient-to-br from-pink-100 to-pink-50 shadow-soft flex items-center justify-center text-3xl flex-shrink-0"
+              class="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-br from-pink-100 to-pink-50 shadow-soft flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0"
             >
               {{ cat.icon }}
             </div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-3 flex-wrap">
-                <h2 class="text-xl md:text-2xl font-extrabold text-ink">
-                  <a [routerLink]="['/category', cat.slug]" class="hover:text-pink-600">
+              <div class="flex items-center gap-x-3 gap-y-1 flex-wrap min-w-0">
+                <h2 class="heading-3 font-extrabold text-ink min-w-0 max-w-full break-words [overflow-wrap:anywhere]">
+                  <!-- R-2: the name link is a 44px target (as an inline link it was a 22px line box). -->
+                  <a [routerLink]="['/category', cat.slug]" class="inline-flex items-center min-h-11 min-w-11 hover:text-pink-600">
                     {{ cat.name }}
                   </a>
                 </h2>
                 <span class="pill-soft">{{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
               </div>
-              <p class="text-sm text-ink-soft mt-1.5 leading-relaxed">{{ cat.description }}</p>
+              <!-- responsive-ui v1.4 R-5 (F113): admin-authored description wraps anywhere (a long
+                   unbroken token widened /categories to 502px at 360). -->
+              <p class="text-sm text-ink-soft mt-1.5 leading-relaxed [overflow-wrap:anywhere]">{{ cat.description }}</p>
             </div>
             <a
               [routerLink]="['/category', cat.slug]"
-              class="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-pink-600 hover:text-pink-700 group"
+              class="hidden sm:inline-flex items-center gap-1.5 min-h-11 shrink-0 text-sm font-bold text-pink-600 hover:text-pink-700 group"
             >
               {{ 'categories.viewAll' | trans }}
               <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />

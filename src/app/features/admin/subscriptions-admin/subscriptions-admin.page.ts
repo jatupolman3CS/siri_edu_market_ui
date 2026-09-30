@@ -11,6 +11,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import type { AdminSubscriptionListItem, SubscriptionStatus } from '../../../core/models';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * subscription-membership v2 §1 AC-24 / §3.2 / §4: "/admin/subscriptions" — read-only paginated
@@ -20,7 +22,15 @@ import type { AdminSubscriptionListItem, SubscriptionStatus } from '../../../cor
 @Component({
   selector: 'app-admin-subscriptions',
   standalone: true,
-  imports: [DatePipe, ThbPipe, EmptyStateComponent, PaginationComponent, TranslatePipe],
+  imports: [
+    DatePipe,
+    ThbPipe,
+    EmptyStateComponent,
+    PaginationComponent,
+    TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subscriptions-admin.page.html',
 })

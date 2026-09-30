@@ -1,4 +1,4 @@
-<div class="max-w-6xl">
+<div class="w-full min-w-0">
       @if (seller.sellerProfileRequired()) {
         <div class="card-soft">
           <app-empty-state emoji="🏪" [title]="'seller.noShopTitleEarnings' | trans" [description]="'seller.noShopDesc' | trans">
@@ -7,7 +7,7 @@
         </div>
       } @else {
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.reviewsTitle' | trans }}</h1>
+        <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'seller.reviewsTitle' | trans }}</h1>
         <p class="text-sm text-ink-soft">
           {{ 'seller.reviewsSubtitle' | trans }}
         </p>
@@ -32,7 +32,8 @@
           <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-emerald-600">{{ reviewStats().positivePct }}%</div>
-              <div class="text-xs text-ink-muted mt-1">{{ 'seller.positiveReviews' | trans }}</div>
+              <!-- The key carries {count}; without the param the label rendered a raw "{count}%". -->
+              <div class="text-xs text-ink-muted mt-1">{{ 'seller.positiveReviews' | trans: { count: reviewStats().positivePct } }}</div>
             </div>
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-pink-600">
@@ -46,7 +47,7 @@
             </div>
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-ink">{{ reviewStats().replyPct }}%</div>
-              <div class="text-xs text-ink-muted mt-1">{{ 'seller.repliedPct' | trans }}</div>
+              <div class="text-xs text-ink-muted mt-1">{{ 'seller.repliedPct' | trans: { pct: reviewStats().replyPct } }}</div>
             </div>
           </div>
         </div>
@@ -94,7 +95,7 @@
                 </a>
                 <a
                   [routerLink]="['/document', rv.documentSlug || rv.documentId || rv.id]"
-                  class="text-[11px] font-semibold text-pink-600 hover:text-pink-700 flex items-center gap-1 flex-shrink-0"
+                  class="text-[11px] font-semibold text-pink-600 hover:text-pink-700 flex items-center gap-1 flex-shrink-0 [@media(pointer:coarse)]:min-h-11"
                 >
                   <span>{{ 'seller.viewDoc' | trans }}</span>
                   <app-icon name="arrow-right" [size]="12" />
@@ -111,15 +112,15 @@
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between mb-2 gap-3">
-                    <div>
-                      <div class="text-sm font-bold text-ink">{{ rv.buyerName }}</div>
+                    <div class="min-w-0">
+                      <div class="text-sm font-bold text-ink [overflow-wrap:anywhere]">{{ rv.buyerName }}</div>
                       <div class="flex items-center gap-2 mt-0.5">
                         <app-rating-stars [value]="rv.rating" [size]="13" [showValue]="false" />
                         <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
                       </div>
                     </div>
                   </div>
-                  <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-wrap">{{ rv.comment }}</p>
+                  <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">{{ rv.comment }}</p>
 
                   <!-- Existing Seller Reply -->
                   @if (rv.sellerReplyText && replyingReviewId() !== rv.id) {
@@ -134,26 +135,26 @@
                         <button
                           type="button"
                           (click)="startReply(rv)"
-                          class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1"
+                          class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1 shrink-0 [@media(pointer:coarse)]:min-h-11"
                         >
                           <app-icon name="edit" [size]="12" />
                           <span>{{ 'common.edit' | trans }}</span>
                         </button>
                       </div>
-                      <p class="text-xs sm:text-sm text-ink-soft whitespace-pre-wrap leading-relaxed">{{ rv.sellerReplyText }}</p>
+                      <p class="text-xs sm:text-sm text-ink-soft whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{{ rv.sellerReplyText }}</p>
                     </div>
                   }
 
                   <!-- Reply Editor Box -->
                   @if (replyingReviewId() === rv.id) {
                     <div class="mt-3.5 p-4 rounded-xl bg-slate-50 border border-line flex flex-col gap-2.5">
-                      <div class="text-xs font-bold text-ink flex items-center justify-between">
+                      <div class="text-xs font-bold text-ink flex flex-wrap items-center justify-between gap-x-2">
                         <span>{{ rv.sellerReplyText ? ('seller.editReplyTitle' | trans) : ('seller.replyBuyerTitle' | trans) }}</span>
                         <span class="text-[11px] font-normal text-ink-muted">{{ 'seller.buyerWillBeNotified' | trans }}</span>
                       </div>
                       <textarea
                         rows="3"
-                        class="w-full text-sm p-3 rounded-xl border border-line focus:ring-2 focus:ring-pink-500 focus:outline-none bg-white resize-none"
+                        class="w-full text-sm p-3 rounded-xl border border-line-strong focus:ring-2 focus:ring-pink-500 focus:outline-none bg-white resize-none"
                         [placeholder]="'seller.replyPlaceholder' | trans"
                         [value]="replyDraft()"
                         (input)="replyDraft.set($any($event.target).value)"
@@ -191,7 +192,7 @@
                       <button
                         type="button"
                         (click)="startReply(rv)"
-                        class="text-xs text-pink-600 font-bold hover:underline flex items-center gap-1"
+                        class="text-xs text-pink-600 font-bold hover:underline flex items-center gap-1 [@media(pointer:coarse)]:min-h-11"
                       >
                         <app-icon name="mail" [size]="13" />
                         <span>{{ 'seller.replyCta' | trans }}</span>

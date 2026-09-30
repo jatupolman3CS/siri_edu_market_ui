@@ -15,6 +15,7 @@ import { idleActionState, type ActionState } from '../../../core/services/action
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { mapDocument } from '../../../core/api-mappers/mappers';
 import type { Bundle, Category, DocumentItem } from '../../../core/models';
+import { ViewportService } from '../../../core/layout';
 
 const DEFAULT_FILTERS = {
   search: '',
@@ -906,5 +907,99 @@ describe('BuyerMarketplacePage — server totals with multi-value filters (marke
     // toolbar "N รายการ" = server total, not the 3 items on this page
     expect(el.querySelector('span.font-bold.text-ink')?.textContent?.trim()).toBe('57');
     expect(el.querySelector('app-pagination')).not.toBeNull();
+  });
+});
+
+describe('BuyerMarketplacePage — filter sheet below 1024 (responsive-ui v1 §4.6 / U2-3)', () => {
+  function renderAt(tier: 'phone' | 'tablet' | 'desktop', patch: Record<string, unknown> = {}) {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: ViewportService,
+          useValue: {
+            tier: signal(tier),
+            isPhone: signal(tier === 'phone'),
+            isTabletUp: signal(tier !== 'phone'),
+            isLaptopUp: signal(tier === 'desktop'),
+            isDesktop: signal(tier === 'desktop'),
+          },
+        },
+      ],
+    });
+    const catalog = buildCatalogFake([buildCategory({ id: 'cat-1', name: 'คณิตศาสตร์' })]);
+    const fixture = render(catalog);
+    // The page resets filters on init, so the scenario's filters are applied afterwards.
+    if (Object.keys(patch).length) {
+      catalog.setFilters(patch);
+      fixture.detectChanges();
+    }
+    return { fixture, catalog, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('at phone width the filter column is not rendered in page flow; a filter button is', () => {
+    const { el } = renderAt('phone');
+    expect(el.querySelector('aside')).toBeNull();
+    const button = el.querySelector('[data-testid="filter-sheet-button"]') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    expect(button.textContent?.trim()).toBe('ตัวกรอง');
+    expect(el.querySelector('app-bottom-sheet [role="dialog"]')).toBeNull();
+  });
+
+  it('the filter button shows the active filter count', () => {
+    const { el, fixture } = renderAt('phone', {
+      categoryIds: ['cat-1'],
+      gradeLevels: ['primary-early', 'university'],
+      freeOnly: true,
+      minRating: 4,
+    });
+    expect(fixture.componentInstance.activeFilterCount()).toBe(5);
+    const button = el.querySelector('[data-testid="filter-sheet-button"]') as HTMLButtonElement;
+    expect(button.textContent?.replace(/\s+/g, ' ').trim()).toBe('ตัวกรอง (5)');
+  });
+
+  it('opens the bottom sheet with the filter groups + sticky footer; ดูผลลัพธ์ only closes it', () => {
+    const { el, fixture, catalog } = renderAt('phone');
+    (el.querySelector('[data-testid="filter-sheet-button"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const dialog = el.querySelector('app-bottom-sheet [role="dialog"]') as HTMLElement;
+    expect(dialog).toBeTruthy();
+    expect(dialog.querySelector('[data-filter-group="category"]')?.textContent).toContain('คณิตศาสตร์');
+    expect(dialog.querySelector('[data-filter-group="price"]')).toBeTruthy();
+    const footer = dialog.querySelector('[data-testid="sheet-footer"]') as HTMLElement;
+    expect(footer.textContent).toContain('ล้างทั้งหมด');
+    expect(footer.textContent).toContain('ดูผลลัพธ์');
+
+    // Filters still apply live from inside the sheet.
+    (dialog.querySelector('[data-filter-group="grade"] .flex-wrap button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(catalog.filters().gradeLevels.length).toBe(1);
+
+    const resetCalls = catalog.resetFilters.mock.calls.length;
+    (el.querySelector('[data-testid="filter-sheet-apply"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-bottom-sheet [role="dialog"]')).toBeNull();
+    expect(catalog.resetFilters.mock.calls.length).toBe(resetCalls);
+    expect(catalog.filters().gradeLevels.length).toBe(1);
+  });
+
+  it('ล้างทั้งหมด in the sheet footer resets the filters', () => {
+    const { el, fixture, catalog } = renderAt('tablet', { gradeLevels: ['university'] });
+    fixture.componentInstance.openFilterSheet();
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="filter-sheet-clear"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(catalog.filters().gradeLevels).toEqual([]);
+  });
+
+  it('at >=1024 renders the left filter column and no filter button; results use --with-filters', () => {
+    const catalog = buildCatalogFake();
+    catalog.marketplaceResults = () => [buildDoc('d1')];
+    TestBed.configureTestingModule({});
+    const fixture = render(catalog);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('aside[data-testid="filter-aside"]')).toBeTruthy();
+    expect(el.querySelector('[data-testid="filter-sheet-button"]')).toBeNull();
+    expect(el.querySelector('.document-card-grid')?.classList).toContain('document-card-grid--with-filters');
   });
 });

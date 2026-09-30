@@ -5,7 +5,8 @@
     [nzDropdownMenu]="notifMenu"
     nzPlacement="bottomRight"
     nzTrigger="click"
-    (nzVisibleChange)="onVisibleChange($event)"
+    [nzVisible]="menuOpen()"
+    (nzVisibleChange)="menuOpen.set($event); onVisibleChange($event)"
     class="hover:text-pink-600 transition-colors inline-flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 text-xs text-ink-muted group"
     [attr.aria-label]="'shared.notifications.unreadCountAria' | trans: { count: unreadCount() }"
     [title]="'shared.notifications.title' | trans"
@@ -14,7 +15,7 @@
     <span class="group-hover:text-pink-600 transition-colors">{{ 'shared.notifications.title' | trans }}</span>
     @if (unreadCount() > 0) {
       <span
-        class="px-1.5 py-0.2 rounded-full bg-pink-500 text-white text-[10px] font-bold leading-tight"
+        class="px-1.5 py-0.2 rounded-full bg-primary text-white text-[10px] font-bold leading-tight"
       >
         {{ unreadCount() }}
       </span>
@@ -27,9 +28,10 @@
     [nzDropdownMenu]="notifMenu"
     nzPlacement="bottomRight"
     nzTrigger="click"
-    (nzVisibleChange)="onVisibleChange($event)"
+    [nzVisible]="menuOpen()"
+    (nzVisibleChange)="menuOpen.set($event); onVisibleChange($event)"
     [class]="theme() === 'dark'
-      ? 'relative inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-pink-100 hover:text-white transition-all hover:scale-105 cursor-pointer'
+      ? 'relative inline-flex items-center justify-center w-11 h-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-pink-100 hover:text-white transition-all hover:scale-105 cursor-pointer'
       : 'relative btn-icon transition-transform hover:scale-105 cursor-pointer'"
     [attr.aria-label]="'shared.notifications.unreadCountAria' | trans: { count: unreadCount() }"
     [title]="'shared.notifications.title' | trans"
@@ -37,7 +39,7 @@
     <app-icon name="bell" [size]="18" />
     @if (unreadCount() > 0) {
       <span
-        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center border-2 shadow-sm"
+        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center border-2 shadow-sm"
         [class]="theme() === 'dark' ? 'border-ink' : 'border-white'"
       >
         {{ unreadCount() }}
@@ -47,9 +49,14 @@
 }
 
 <nz-dropdown-menu #notifMenu="nzDropdownMenu">
-  <div class="!rounded-2xl !shadow-2xl !w-[360px] max-w-[92vw] bg-white border border-line overflow-hidden">
+  <!-- Height-capped column: on landscape phones the header + 380px list + links + footer were
+       taller than the screen and the fixed overlay cut off the footer with no scroll path. -->
+  <div
+    data-testid="notification-menu"
+    class="flex flex-col !rounded-2xl !shadow-2xl !w-[360px] max-w-[92vw] max-h-[calc(100dvh-var(--safe-top)-72px)] bg-white border border-line overflow-hidden"
+  >
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-pink-50/80 to-white border-b border-line">
+    <div class="shrink-0 flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-pink-50/80 to-white border-b border-line">
       <div class="flex items-center gap-2">
         <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center">
           <app-icon name="bell" [size]="13" />
@@ -74,7 +81,7 @@
     </div>
 
     <!-- Feed Items List -->
-    <ul nz-menu class="!p-2 max-h-[380px] overflow-y-auto divide-y divide-line/40">
+    <ul nz-menu class="!p-2 flex-1 min-h-0 max-h-[380px] overflow-y-auto divide-y divide-line/40">
       @if (previewItems().length === 0) {
         <li class="px-4 py-8 text-center">
           <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center">
@@ -88,9 +95,13 @@
           @let style = getStyle(item.key, item.title);
           <li
             nz-menu-item
+            tabindex="0"
+            data-testid="notification-menu-item"
             class="!h-auto !leading-normal !whitespace-normal !p-3 !rounded-xl transition-colors"
             [class.bg-pink-50/60]="!item.isRead"
             (click)="onItemClick(item)"
+            (keydown.enter)="onItemClick(item)"
+            (keydown.space)="$event.preventDefault(); onItemClick(item)"
           >
             <div class="flex items-start gap-3 w-full">
               <div
@@ -127,10 +138,11 @@
 
     <!-- Cross-context links -->
     @if (crossContextLinks().length > 0) {
-      <div class="border-t border-line bg-amber-50/50 px-3 py-2 flex flex-col gap-1">
+      <div class="shrink-0 border-t border-line bg-amber-50/50 px-3 py-2 flex flex-col gap-1">
         @for (link of crossContextLinks(); track link.audience) {
           <a
             [routerLink]="link.route"
+            (click)="menuOpen.set(false)"
             class="inline-flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100/70 transition-colors"
           >
             <span class="inline-flex items-center gap-1.5">
@@ -144,9 +156,10 @@
     }
 
     <!-- Footer -->
-    <div class="border-t border-line px-4 py-2.5 bg-pink-50/30 text-center">
+    <div class="shrink-0 border-t border-line px-4 py-2.5 bg-pink-50/30 text-center">
       <a
         [routerLink]="allNotificationsRoute()"
+        (click)="menuOpen.set(false)"
         class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline transition-all"
       >
         <span>{{ 'shared.notifications.viewAll' | trans }}</span>

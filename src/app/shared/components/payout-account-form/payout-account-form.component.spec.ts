@@ -665,3 +665,33 @@ describe('PayoutAccountFormComponent — reveal/hide (AC-17)', () => {
     expect(fake.clearRevealed).toHaveBeenCalledTimes(1);
   });
 });
+
+/** responsive-ui v1.4 gate fix (G1-5) F34 / R-16: the method toggles expose their selection. */
+describe('PayoutAccountFormComponent — method toggles (responsive v1.4)', () => {
+  it('marks the chosen channel and PromptPay sub-type with aria-pressed and sizes them for touch', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          hasAccount: false,
+          accountType: null,
+          payoutMethodBankEnabled: true,
+          payoutMethodPromptPayPhoneEnabled: true,
+          payoutMethodPromptPayNationalIdEnabled: true,
+          payoutMethodPromptPayQrEnabled: true,
+        }),
+      ),
+    );
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.detectChanges();
+
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button[aria-pressed]'));
+    const pressed = (label: string) => buttons.find((b) => b.textContent?.includes(label))?.getAttribute('aria-pressed');
+    expect(pressed('โอนเข้าบัญชีธนาคาร')).toBe('false');
+    expect(pressed('พร้อมเพย์')).toBe('true');
+    expect(pressed('เบอร์โทรศัพท์')).toBe('true');
+    expect(pressed('QR Code')).toBe('false');
+    for (const b of buttons) {
+      expect(b.classList.contains('[@media(pointer:coarse)]:min-h-11')).toBe(true);
+    }
+  });
+});

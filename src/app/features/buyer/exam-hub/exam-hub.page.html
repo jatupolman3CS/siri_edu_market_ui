@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-5 md:py-8">
   <!-- Hero Card -->
   <header
     class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
@@ -7,7 +7,7 @@
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
       <span>{{ 'examHub.tag' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight mb-1.5">
+    <h1 class="heading-1 font-extrabold text-ink tracking-tight mb-1.5">
       {{ page()?.title }}
     </h1>
     @if (page()?.introText) {
@@ -75,7 +75,7 @@
     @if (sponsoredDocs().length > 0) {
       <div class="rounded-2xl bg-gradient-to-r from-pink-50/70 via-white to-pink-50/40 border border-pink-100 p-4 mb-6 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
-          <span class="pill bg-pink-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+          <span class="pill bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
             <app-icon name="sparkle" [size]="12" />
             เอกสารสอบแนะนำ
           </span>

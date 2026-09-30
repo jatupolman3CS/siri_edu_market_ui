@@ -17,6 +17,8 @@ import { SellerWatermarkService } from '../../../core/services/seller-watermark.
 import type { SellerWatermarkConfigRequest } from '../../../core/api';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { BottomSheetComponent } from '../../../shared/components/bottom-sheet/bottom-sheet.component';
+import { ViewportService } from '../../../core/layout';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -31,7 +33,15 @@ export interface PositionOption {
 @Component({
   selector: 'app-watermark-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, IconComponent, ImgFallbackDirective, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    IconComponent,
+    ImgFallbackDirective,
+    TranslatePipe,
+    BottomSheetComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './watermark-editor.page.html',
   styleUrl: './watermark-editor.page.scss',
@@ -44,9 +54,30 @@ export class WatermarkEditorPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly translation = inject(TranslationService);
+  /** responsive-ui v1 §4.6 G: settings panel inline >=1280, bottom sheet / slide-over below. */
+  readonly viewport = inject(ViewportService);
+  readonly settingsOpen = signal(false);
 
   // Active Tab: 'web-preview' | 'personalized'
   readonly activeTab = signal<'web-preview' | 'personalized'>('web-preview');
+
+  openSettings(): void {
+    this.settingsOpen.set(true);
+  }
+
+  /**
+   * responsive-ui v1.4 §4.6 G / R-1 (F26): the live web-preview frame is a size container
+   * (`container-type: inline-size`, max 420px), so the watermark font scales with it. `scale` is
+   * the per-layout factor the mockup always used (tile 0.4 · diagonal 0.65 · 9-grid 0.5); at the
+   * 420px desktop frame 1cqw = 4.2px, so the result there is identical to the old px value.
+   */
+  previewFontSize(scale: number): string {
+    return `${((this.watermarkFontSize() * scale) / 4.2).toFixed(3)}cqw`;
+  }
+
+  closeSettings(): void {
+    this.settingsOpen.set(false);
+  }
 
   // watermark-editor-document-mode v1 §4: null = template mode (`/seller/watermark`),
   // a document id = document mode (`/seller/documents/:id/watermark`) — read once at init.
@@ -199,6 +230,16 @@ export class WatermarkEditorPage {
     } else {
       this.loadTemplateConfig();
     }
+
+    // responsive-ui v1.4 §4.6 G / R-9 (F42, F43): the settings sheet only exists below 1280. When
+    // the viewport reaches the desktop tier (rotation, resize) the right panel takes over, so the
+    // sheet's open state is reset — otherwise it re-opened by itself (and re-locked page scroll)
+    // on the way back below 1280. Reads only the viewport signal (marketplace pattern).
+    effect(() => {
+      if (this.viewport.isDesktop()) {
+        this.settingsOpen.set(false);
+      }
+    });
 
     effect((onCleanup) => {
       if (typeof document === 'undefined') return;

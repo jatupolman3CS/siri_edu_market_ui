@@ -99,3 +99,41 @@ describe('BundleCardComponent — savings (Q-07 item 3)', () => {
     expect(addBundle).toHaveBeenCalledWith('bun-1');
   });
 });
+
+describe('BundleCardComponent — narrow 2-column cards (F17 / F168)', () => {
+  it('bounds the cover badge row and lets it wrap instead of clipping the savings pill', () => {
+    const fixture = render(buildBundle({ price: 120, originalPrice: 200 }));
+    const row = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="bundle-card-badges"]') as HTMLElement;
+    expect(row.className).toContain('right-2');
+    expect(row.className).toContain('flex-wrap');
+    const pill = row.querySelector('[data-testid="bundle-card-savings-pill"]') as HTMLElement;
+    expect(pill.className).toContain('whitespace-nowrap');
+  });
+
+  it('wraps long title/description tokens so line-clamp is the only (ellipsised) truncation (G1-2)', () => {
+    const fixture = render(buildBundle({ title: 'แพ็กเกจ QDefaultParitye7a0b1c2d3e4f5a6b7c8d9' }));
+    const el = fixture.nativeElement as HTMLElement;
+    const h3 = el.querySelector('h3') as HTMLElement;
+    expect(h3.textContent?.trim()).toBe('แพ็กเกจ QDefaultParitye7a0b1c2d3e4f5a6b7c8d9');
+    for (const clamp of [h3, h3.nextElementSibling as HTMLElement]) {
+      expect(clamp.className).toContain('line-clamp-2');
+      expect(clamp.className).toContain('text-ellipsis');
+      expect(clamp.className).toContain('[overflow-wrap:anywhere]');
+    }
+  });
+
+  it('wraps the studio name instead of truncating it in the <96px box beside the avatar (G1-2)', () => {
+    const fixture = render(buildBundle());
+    const name = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="bundle-card-studio"]') as HTMLElement;
+    expect(name.textContent?.trim()).toBe('ครูเอ');
+    expect(name.className).not.toContain('truncate');
+    expect(name.className).toContain('min-w-0');
+    expect(name.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  it('keeps the BUNDLE label for screen readers when phones show only the 📦 chip', () => {
+    const fixture = render(buildBundle());
+    const row = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="bundle-card-badges"]') as HTMLElement;
+    expect(row.querySelector('.sr-only')?.textContent?.trim()).toBe('BUNDLE');
+  });
+});

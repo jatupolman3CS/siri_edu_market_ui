@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Router } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { FeedbackModalComponent } from './feedback-modal.component';
 import { FeedbackService } from '../../../core/services/feedback.service';
 import type { MyFeedbackResponse } from '../../../core/models';
@@ -52,7 +53,11 @@ describe('FeedbackModalComponent', () => {
     });
   });
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    // nz-modal renders into the CDK overlay container on <body>, which outlives the fixture.
+    document.querySelectorAll('.cdk-overlay-container').forEach((node) => (node.innerHTML = ''));
+    TestBed.resetTestingModule();
+  });
 
   it('submit button is disabled when subject or details is empty', () => {
     const fixture = TestBed.createComponent(FeedbackModalComponent);
@@ -68,6 +73,33 @@ describe('FeedbackModalComponent', () => {
 
     comp.details = 'รายละเอียดปัญหาที่พบ';
     expect(comp.isSubmitDisabled).toBe(false);
+  });
+
+  it('each attachment ✕ is a named 44×44 control that removes only its own file (G-12 / R-2, F73)', async () => {
+    TestBed.configureTestingModule({ providers: [provideNoopAnimations()] });
+    const fixture = TestBed.createComponent(FeedbackModalComponent);
+    const comp = fixture.componentInstance;
+    comp.show();
+    comp.attachments.set([
+      { file: new File([''], '1.png', { type: 'image/png' }), previewUrl: '' },
+      { file: new File([''], '2.png', { type: 'image/png' }), previewUrl: '' },
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const buttons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-testid="feedback-attachment-remove"]'),
+    );
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-label')).toBe('ลบรูปนี้');
+      expect(button.classList).toContain('w-11');
+      expect(button.classList).toContain('h-11');
+    }
+
+    buttons[0].click();
+    expect(comp.attachments().map((a) => a.file.name)).toEqual(['2.png']);
   });
 
   it('rejects adding a 4th file with Thai warning message', () => {

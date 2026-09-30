@@ -403,3 +403,44 @@ describe('CartService identity-change reload', () => {
     expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
   });
 });
+
+/**
+ * responsive-ui v1.4 R-17 (F88): `/checkout` needs to tell "still loading" and "failed" apart from
+ * an empty cart, so the service exposes whether the cart has ever loaded.
+ */
+describe('CartService loadStatus (F88)', () => {
+  it('is loading until the first response, then loaded', async () => {
+    stubRoute('GET', '/api/cart', cartBody());
+    const cart = buildService();
+    expect(cart.loadStatus()).toBe('loading');
+    await settle();
+    expect(cart.loadStatus()).toBe('loaded');
+  });
+
+  it('is error when the first load fails, and a retry goes back through loading to loaded', async () => {
+    stubRoute('GET', '/api/cart', { title: 'boom' }, 500);
+    const cart = buildService();
+    await settle();
+    expect(cart.loadStatus()).toBe('error');
+    expect(cart.count()).toBe(0);
+
+    stubRoute('GET', '/api/cart', cartBody());
+    cart.loadCart();
+    expect(cart.loadStatus()).toBe('loading');
+    await settle();
+    expect(cart.loadStatus()).toBe('loaded');
+    expect(cart.count()).toBe(1);
+  });
+
+  it('a failed reload after a successful load keeps loaded (and the items already shown)', async () => {
+    stubRoute('GET', '/api/cart', cartBody());
+    const cart = buildService();
+    await settle();
+
+    stubRoute('GET', '/api/cart', { title: 'boom' }, 500);
+    cart.loadCart();
+    await settle();
+    expect(cart.loadStatus()).toBe('loaded');
+    expect(cart.count()).toBe(1);
+  });
+});

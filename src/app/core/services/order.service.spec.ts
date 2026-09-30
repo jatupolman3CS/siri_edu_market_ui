@@ -247,3 +247,50 @@ describe('OrderService.loadSimilar — order-similar-documents v1', () => {
     expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadSimilarDocuments', expect.anything());
   });
 });
+
+/**
+ * responsive-ui v1.4 R-17 (F88): `/orders/:id` shows a 404 as "not found" (no toast) and any other
+ * failure as an error with a retry, so the service records which one happened.
+ */
+describe('OrderService.loadDetail — detailError (F88)', () => {
+  function build(apiFail = { report: vi.fn() }): OrderService {
+    TestBed.configureTestingModule({
+      providers: [OrderService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    return TestBed.inject(OrderService);
+  }
+
+  it('a 404 sets detailError to not_found and raises no toast', async () => {
+    routes.set('GET /api/orders/order-404', { body: { title: 'Not Found', status: 404 }, status: 404 });
+    const apiFail = { report: vi.fn() };
+    const service = build(apiFail);
+
+    expect(await service.loadDetail('order-404')).toBeNull();
+    expect(service.detailError()).toBe('not_found');
+    expect(apiFail.report).not.toHaveBeenCalled();
+  });
+
+  it('a 500 sets detailError to failed and reports it', async () => {
+    routes.set('GET /api/orders/order-500', { body: { title: 'Server error', status: 500 }, status: 500 });
+    const apiFail = { report: vi.fn() };
+    const service = build(apiFail);
+
+    expect(await service.loadDetail('order-500')).toBeNull();
+    expect(service.detailError()).toBe('failed');
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadOrderDetail', expect.anything());
+  });
+
+  it('a successful load clears detailError', async () => {
+    routes.set('GET /api/orders/order-500', { body: { title: 'Server error', status: 500 }, status: 500 });
+    const service = build();
+    await service.loadDetail('order-500');
+    routes.set('GET /api/orders/order-500', {
+      body: { id: 'order-500', orderNumber: 'SE-500', status: 'paid', items: [], total: 0 },
+      status: 200,
+    });
+
+    await service.loadDetail('order-500');
+    expect(service.detail()?.id).toBe('order-500');
+    expect(service.detailError()).toBeNull();
+  });
+});

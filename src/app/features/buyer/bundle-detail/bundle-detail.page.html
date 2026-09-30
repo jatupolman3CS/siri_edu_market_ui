@@ -1,17 +1,18 @@
 @if (bundle(); as b) {
-  <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+  <div class="page-container py-5 md:py-8">
     <!-- Breadcrumb -->
-    <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
-      <a routerLink="/" class="hover:text-pink-600">{{ 'bundleDetail.breadcrumbHome' | trans }}</a>
+    <nav class="flex items-center gap-2 text-sm text-ink-muted mb-4 md:mb-6 flex-wrap min-w-0">
+      <a routerLink="/" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'bundleDetail.breadcrumbHome' | trans }}</a>
       <app-icon name="chevron-right" [size]="14" />
-      <a routerLink="/bundles" class="hover:text-pink-600">{{ 'bundleDetail.breadcrumbBundles' | trans }}</a>
+      <a routerLink="/bundles" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'bundleDetail.breadcrumbBundles' | trans }}</a>
       <app-icon name="chevron-right" [size]="14" />
-      <span class="text-ink line-clamp-1 max-w-md">{{ b.title }}</span>
+      <span class="text-ink line-clamp-1 min-w-0 max-w-full sm:max-w-md [overflow-wrap:anywhere]">{{ b.title }}</span>
     </nav>
 
     <!-- Hero -->
-    <section class="grid lg:grid-cols-12 gap-8 mb-12">
-      <div class="lg:col-span-7">
+    <!-- responsive-ui v1 §4.6 (B): 1 column <744 · content + 300px side 744–1023 · 7/5 split >=1024 -->
+    <section class="grid grid-cols-1 gap-6 lg:gap-8 md:grid-cols-[minmax(0,1fr)_300px] lg:grid-cols-12 mb-10 md:mb-12">
+      <div class="lg:col-span-7 min-w-0">
         <div class="relative card-soft overflow-hidden aspect-[16/10]">
           <img appImgFallback [src]="b.cover" [alt]="b.title" class="absolute inset-0 w-full h-full object-cover" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
@@ -19,22 +20,22 @@
             {{ 'bundleDetail.tag' | trans }}
           </span>
           @if (savingsPercent() > 0) {
-            <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
+            <span class="absolute top-4 right-4 pill bg-primary text-white shadow-soft">
               {{ 'bundleDetail.savePercent' | trans:{ percent: savingsPercent() } }}
             </span>
           }
         </div>
       </div>
-      <div class="lg:col-span-5 flex flex-col">
+      <div class="lg:col-span-5 min-w-0 flex flex-col md:sticky md:top-[132px] xl:top-[188px] md:self-start" data-testid="bundle-side">
         <span class="pill-pink mb-3 self-start">
           {{ 'bundleDetail.itemsInBundle' | trans:{ count: items().length } }}
         </span>
-        <h1 class="text-3xl md:text-4xl font-extrabold text-ink leading-tight mb-3">
+        <h1 class="heading-1 font-extrabold text-ink leading-tight mb-3 min-w-0 [overflow-wrap:anywhere]">
           {{ b.title }}
         </h1>
-        <p class="text-base text-ink-soft mb-5 leading-relaxed">{{ b.description }}</p>
+        <p class="text-sm sm:text-base text-ink-soft mb-5 leading-relaxed [overflow-wrap:anywhere]">{{ b.description }}</p>
 
-        <div class="flex items-center gap-4 mb-5 text-sm">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5 text-sm">
           <span class="text-pink-600 font-bold">★ {{ b.rating }}</span>
           <span class="text-ink-muted">{{ 'bundleDetail.reviewsCount' | trans:{ count: b.reviewCount } }}</span>
           <span class="text-ink-muted">·</span>
@@ -45,40 +46,63 @@
         </div>
 
         <!-- Price -->
-        <div class="card-soft p-5 mt-auto">
-          <div class="flex items-baseline gap-3 mb-1">
-            <span class="text-3xl sm:text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
+        <div class="card-soft p-4 sm:p-5 mt-auto" data-testid="bundle-price-card">
+          <div class="flex flex-wrap items-baseline gap-3 mb-1">
+            <span class="text-3xl lg:text-4xl font-extrabold text-ink">{{ b.price | thb }}</span>
             <span class="text-base text-ink-muted line-through">{{ b.originalPrice | thb }}</span>
           </div>
           @if (savings() > 0) {
             <div class="text-sm text-emerald-600 font-bold mb-4">
-              {{ 'bundleDetail.savingsBanner' | trans:{ amount: (savings() | thb), percent: savingsPercent() } }}
+              {{ 'bundleDetail.savingsBanner' | trans:{ amount: (savings() | thb: false), percent: savingsPercent() } }}
             </div>
           }
 
           <div class="flex flex-col gap-2">
-            <button class="btn-pink !py-3.5" (click)="addAllToCart()">
+            <button type="button" class="btn-pink !py-3.5" (click)="addAllToCart()">
               <app-icon name="cart" [size]="16" />
               {{ 'bundleDetail.addAllToCart' | trans }}
             </button>
-            <button class="btn-ghost" (click)="addAllToCart()">
+            <button type="button" class="btn-ghost" (click)="addAllToCart()">
               {{ 'bundleDetail.buyNow' | trans }}
             </button>
           </div>
 
-          <div class="flex items-center gap-3 mt-4 pt-4 border-t border-line">
-            <img appImgFallback [src]="b.seller.avatar" class="w-10 h-10 rounded-2xl object-cover ring-2 ring-pink-100" alt="" />
-            <div class="text-xs">
+          <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-line">
+            <img appImgFallback [src]="b.seller.avatar" class="w-10 h-10 rounded-2xl object-cover ring-2 ring-pink-100 shrink-0" alt="" />
+            <div class="text-xs min-w-0 flex-1 basis-[7rem] [overflow-wrap:anywhere]">
               <div class="font-bold text-ink">{{ b.seller.studioName }}</div>
               <div class="text-ink-muted">★ {{ b.seller.rating }} · {{ 'home.docCount' | trans:{ count: b.seller.totalDocuments } }}</div>
             </div>
-            <a [routerLink]="['/store', b.seller.id]" class="ml-auto text-xs text-pink-600 font-bold hover:underline">
+            <a [routerLink]="['/store', b.seller.id]" class="ml-auto inline-flex items-center min-h-11 text-xs text-pink-700 font-bold hover:underline">
               {{ 'bundleDetail.viewStore' | trans }}
             </a>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- responsive-ui v1 §4.6 (B) / U2-4: phone sticky action bar, same handler as the price card. -->
+    <app-sticky-action-bar>
+      <div class="flex w-full items-center gap-3 min-w-0" data-testid="bundle-action-bar">
+        <div class="flex-shrink-0 flex flex-col leading-tight">
+          <span class="text-lg font-extrabold text-ink">{{ b.price | thb }}</span>
+          @if (savings() > 0) {
+            <span class="text-xs text-ink-muted line-through">{{ b.originalPrice | thb }}</span>
+          }
+        </div>
+        <!-- Same tight two-button row as /document/:id: a 5-digit bundle price leaves ~75px of
+             label per button at 360, so labels wrap rather than end in "…". -->
+        <div class="flex-1 min-w-0 flex items-center justify-end gap-2">
+          <button type="button" class="btn-ghost flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bundle-bar-add" (click)="addAllToCart()">
+            <app-icon name="cart" [size]="16" />
+            <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.addToCartBtn' | trans }}</span>
+          </button>
+          <button type="button" class="btn-pink flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bundle-bar-buy" (click)="addAllToCart()">
+            <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'bundleDetail.buyNow' | trans }}</span>
+          </button>
+        </div>
+      </div>
+    </app-sticky-action-bar>
 
     <!-- Items in bundle -->
     <section>
@@ -90,8 +114,23 @@
       </div>
     </section>
   </div>
+} @else if (loading()) {
+  <!-- responsive-ui v1.4 R-17/R-18: a skeleton while the bundle loads (it used to show the
+       not-found state until the GET answered). -->
+  <div class="page-container py-5 md:py-8" aria-busy="true" data-testid="bundle-detail-loading">
+    <div class="h-11 w-2/3 max-w-sm rounded-xl bg-line/60 animate-pulse mb-4 md:mb-6" aria-hidden="true"></div>
+    <div class="grid grid-cols-1 gap-6 lg:gap-8 md:grid-cols-[minmax(0,1fr)_300px] lg:grid-cols-12" aria-hidden="true">
+      <div class="lg:col-span-7 min-w-0 card-soft aspect-[16/10] animate-pulse"></div>
+      <div class="lg:col-span-5 min-w-0 flex flex-col gap-4">
+        <div class="h-8 w-1/3 rounded-xl bg-line/60 animate-pulse"></div>
+        <div class="h-24 rounded-2xl bg-line/60 animate-pulse"></div>
+        <div class="card-soft h-64 animate-pulse"></div>
+      </div>
+    </div>
+    <p class="sr-only">{{ 'common.loading' | trans }}</p>
+  </div>
 } @else {
-  <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+  <div class="page-container py-16">
     <app-empty-state
       emoji="📦"
       [title]="'bundleDetail.notFoundTitle' | trans"

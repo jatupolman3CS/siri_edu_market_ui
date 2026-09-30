@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -18,6 +18,7 @@ import type {
   FeedbackStatus,
   FeedbackType,
 } from '../../../core/models';
+import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
 @Component({
   selector: 'app-admin-feedback',
@@ -30,6 +31,7 @@ import type {
     EmptyStateComponent,
     PaginationComponent,
     TranslatePipe,
+    AdminFilterPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './feedback-admin.page.html',
@@ -53,6 +55,11 @@ export class AdminFeedbackPage {
   readonly statusFilter = signal<string>('all');
   readonly typeFilter = signal<string>('all');
   readonly roleFilter = signal<string>('all');
+
+  /** Non-default filters (drives the phone ตัวกรอง (n) button). */
+  readonly activeFilterCount = computed(
+    () => [this.statusFilter(), this.typeFilter(), this.roleFilter()].filter((v) => v !== 'all').length,
+  );
 
   // Detail Modal
   readonly detailModalOpen = signal(false);
@@ -149,6 +156,15 @@ export class AdminFeedbackPage {
 
   setRoleFilter(r: string): void {
     this.roleFilter.set(r);
+    this.page.set(1);
+    void this.reload();
+  }
+
+  /** Filter sheet "ล้างทั้งหมด": all three back to 'all', reloaded once. */
+  clearFilters(): void {
+    this.statusFilter.set('all');
+    this.typeFilter.set('all');
+    this.roleFilter.set('all');
     this.page.set(1);
     void this.reload();
   }

@@ -7,7 +7,12 @@ import {
   PaymentMethodService,
   SubscriptionService,
 } from '../../../core/services';
-import { errorActionState } from '../../../core/services/action-state';
+import {
+  errorActionState,
+  idleActionState,
+  loadingActionState,
+  type ActionState,
+} from '../../../core/services/action-state';
 import type { Category, SavedPaymentMethod, Subscription } from '../../../core/models';
 
 /**
@@ -48,16 +53,19 @@ function buildSavedCard(over: Partial<SavedPaymentMethod> = {}): SavedPaymentMet
   };
 }
 
-function buildCatalogFake(categories: Category[]) {
+function buildCatalogFake(categories: Category[], categoriesState: ActionState = idleActionState()) {
   return {
     categories: () => categories,
+    categoriesState: () => categoriesState,
     ensureCategories: vi.fn(),
+    loadCategories: vi.fn(),
   };
 }
 
-function buildPaymentMethodsFake(list: SavedPaymentMethod[]) {
+function buildPaymentMethodsFake(list: SavedPaymentMethod[], state: ActionState = idleActionState()) {
   return {
     list: () => list,
+    state: () => state,
     refreshList: vi.fn(async () => {}),
   };
 }
@@ -82,7 +90,11 @@ function buildSubscription(over: Partial<Subscription> = {}): Subscription {
   };
 }
 
-function buildSubscriptionFake(createImpl?: () => Promise<Subscription>) {
+function buildSubscriptionFake(
+  createImpl?: () => Promise<Subscription>,
+  current: Subscription | null = null,
+  state: ActionState = idleActionState(),
+) {
   return {
     create: vi.fn(
       createImpl ??
@@ -91,6 +103,10 @@ function buildSubscriptionFake(createImpl?: () => Promise<Subscription>) {
         }),
     ),
     createState: () => errorActionState('ระบบสมัครสมาชิกยังไม่พร้อมใช้งาน'),
+    // responsive-ui v1.4 (F117): the page reads the current subscription on entry.
+    current: () => current,
+    state: () => state,
+    loadCurrent: vi.fn(async () => {}),
   };
 }
 
@@ -121,13 +137,15 @@ function render(
   savedCards: SavedPaymentMethod[],
   subscriptionFake = buildSubscriptionFake(),
   ordersFake = buildOrdersFake(),
+  catalogFake = buildCatalogFake(categories),
+  paymentMethodsFake = buildPaymentMethodsFake(savedCards),
 ) {
   TestBed.configureTestingModule({
     imports: [BuyerSubscribePage],
     providers: [
       provideRouter([]),
-      { provide: CatalogService, useValue: buildCatalogFake(categories) },
-      { provide: PaymentMethodService, useValue: buildPaymentMethodsFake(savedCards) },
+      { provide: CatalogService, useValue: catalogFake },
+      { provide: PaymentMethodService, useValue: paymentMethodsFake },
       { provide: SubscriptionService, useValue: subscriptionFake },
       { provide: OrderService, useValue: ordersFake },
     ],
@@ -161,6 +179,27 @@ describe('BuyerSubscribePage', () => {
       'input[type="checkbox"]',
     );
     expect(checkboxes.length).toBe(1);
+  });
+
+  // responsive-ui G-6 / U5-6: with only an `lg:` template the implicit column below lg sized itself to
+  // the nowrap `.truncate` category name, so a long priced category overflowed the page at 360.
+  it('the page grid has a base single-column template below lg, so a long category name truncates instead of overflowing', () => {
+    const longName = 'หมวดหมู่ที่มีชื่อยาวมากเป็นพิเศษสำหรับทดสอบการล้นของหน้าจอโทรศัพท์มือถือขนาดเล็ก';
+    const { fixture } = render(
+      [buildCategory({ id: 'cat-long', name: longName, subscriptionMonthlyPrice: 199 })],
+      [buildSavedCard()],
+    );
+    const root = fixture.nativeElement as HTMLElement;
+
+    const layout = root.querySelector('[data-testid="subscribe-layout"]') as HTMLElement;
+    expect(layout).not.toBeNull();
+    expect(layout.classList.contains('grid')).toBe(true);
+    expect(layout.classList.contains('grid-cols-1')).toBe(true);
+    expect(layout.classList.contains('lg:grid-cols-[minmax(0,1fr)_20rem]')).toBe(true);
+
+    const name = Array.from(root.querySelectorAll('.truncate')).find((el) => el.textContent?.trim() === longName);
+    expect(name).toBeDefined();
+    expect(layout.contains(name as Element)).toBe(true);
   });
 
   it('updates the running total in real time as categories are toggled', () => {
@@ -326,6 +365,62 @@ describe('BuyerSubscribePage — Stripe payment confirmation (real-money bug fix
     expect(fixture.componentInstance.pendingClientSecret()).toBeNull();
   });
 
+  it('retry state: the phone sticky bar shows the short "ยืนยันการชำระเงิน" label (the summary card keeps the long retry label)', async () => {
+    const card = buildSavedCard({ stripePaymentMethodId: 'pm_default', isDefault: true });
+    const subscriptionFake = buildSubscriptionFake(async () => buildSubscription());
+    const { fixture } = render([buildCategory()], [card], subscriptionFake);
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    stubWindowStripe(async () => ({ paymentIntent: { status: 'requires_action' } }));
+
+    fixture.componentInstance.toggleCategory('cat-1');
+    await fixture.componentInstance.subscribe();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const barButton = root.querySelector(
+      'app-sticky-action-bar [data-testid="subscribe-bar-retry"]',
+    ) as HTMLButtonElement | null;
+    expect(barButton).not.toBeNull();
+    expect(barButton?.textContent?.trim()).toBe('ยืนยันการชำระเงิน');
+    expect(barButton?.disabled).toBe(false);
+    // v1.4 §4.3: bar labels wrap — no line-clamp, no truncate.
+    const label = barButton?.querySelector('span') as HTMLElement;
+    expect(label.classList.contains('line-clamp-2')).toBe(false);
+    expect(label.classList.contains('truncate')).toBe(false);
+    expect(root.querySelector('app-sticky-action-bar [data-testid="subscribe-bar-submit"]')).toBeNull();
+
+    const cardButtons = Array.from(root.querySelectorAll('aside button'));
+    expect(cardButtons.some((b) => b.textContent?.includes('ลองยืนยันการชำระเงินอีกครั้ง'))).toBe(true);
+  });
+
+  it('retry state while re-confirming: the phone sticky bar reads "กำลังยืนยัน…" and is disabled', () => {
+    const { fixture } = render([buildCategory()], [buildSavedCard()]);
+    const component = fixture.componentInstance;
+    component.pendingClientSecret.set('pi_1_secret_abc');
+    component.paymentFailed.set(true);
+    component.confirmingPayment.set(true);
+    fixture.detectChanges();
+
+    const barButton = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-sticky-action-bar [data-testid="subscribe-bar-retry"]',
+    ) as HTMLButtonElement;
+    expect(barButton.textContent?.trim()).toBe('กำลังยืนยัน…');
+    expect(barButton.disabled).toBe(true);
+  });
+
+  it('first-attempt confirmation (submitting + confirming): the phone sticky bar reads "กำลังยืนยัน…"', () => {
+    const { fixture } = render([buildCategory()], [buildSavedCard()]);
+    const component = fixture.componentInstance;
+    component.submitting.set(true);
+    component.confirmingPayment.set(true);
+    fixture.detectChanges();
+
+    const barButton = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-sticky-action-bar [data-testid="subscribe-bar-submit"]',
+    ) as HTMLButtonElement;
+    expect(barButton.textContent?.trim()).toBe('กำลังยืนยัน…');
+  });
+
   it('shows an error and does not navigate when Stripe.js itself fails to configure (no publishable key)', async () => {
     const card = buildSavedCard({ stripePaymentMethodId: 'pm_default', isDefault: true });
     const subscriptionFake = buildSubscriptionFake(async () => buildSubscription());
@@ -340,5 +435,85 @@ describe('BuyerSubscribePage — Stripe payment confirmation (real-money bug fix
 
     expect(navigateSpy).not.toHaveBeenCalled();
     expect(fixture.componentInstance.paymentFailed()).toBe(true);
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-17/R-18 (F89, F114, F117): the page renders loading, error, empty, member and
+ * sign-up states. It used to say "กำลังโหลดหมวดหมู่…" forever on a failed load (with a dead sticky
+ * "subscribe" bar), show "please add a card" when the card list failed, and offer the sign-up form
+ * to an active member.
+ */
+describe('BuyerSubscribePage — data states (F89, F114, F117)', () => {
+  function el(fixture: { nativeElement: unknown }): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('while the categories load: a skeleton only — no summary card, no sticky bar, no "no card" prompt', () => {
+    const { fixture } = render([], [], undefined, undefined, buildCatalogFake([], loadingActionState()));
+    const root = el(fixture);
+    expect(root.querySelector('[data-testid="subscribe-loading"]')).not.toBeNull();
+    expect(root.querySelector('aside')).toBeNull();
+    expect(root.querySelector('app-sticky-action-bar')).toBeNull();
+    expect(root.textContent).not.toContain('กรุณาเพิ่มบัตรเครดิต/เดบิตก่อนสมัครสมาชิก');
+  });
+
+  it('while the membership check is pending the page stays on the skeleton', () => {
+    const subscriptionFake = buildSubscriptionFake(undefined, null, loadingActionState());
+    const { fixture } = render([buildCategory()], [buildSavedCard()], subscriptionFake);
+    expect(el(fixture).querySelector('[data-testid="subscribe-loading"]')).not.toBeNull();
+    expect(el(fixture).querySelector('input[type="checkbox"]')).toBeNull();
+  });
+
+  it('categories error: shows the error and a retry that reloads the categories, and no sticky bar', () => {
+    const catalogFake = buildCatalogFake([], errorActionState('โหลดหมวดหมู่ไม่สำเร็จ'));
+    const { fixture } = render([], [buildSavedCard()], undefined, undefined, catalogFake);
+    const root = el(fixture);
+
+    expect(root.querySelector('[data-testid="subscribe-categories-error"]')).not.toBeNull();
+    expect(root.textContent).toContain('โหลดหมวดหมู่ไม่สำเร็จ');
+    expect(root.textContent).not.toContain('กำลังโหลดหมวดหมู่');
+    expect(root.querySelector('app-sticky-action-bar')).toBeNull();
+
+    (root.querySelector('[data-testid="subscribe-categories-retry"]') as HTMLButtonElement).click();
+    expect(catalogFake.loadCategories).toHaveBeenCalledTimes(1);
+  });
+
+  it('empty list: says no category is open for subscription (not "loading")', () => {
+    const { fixture } = render([], [buildSavedCard()]);
+    const text = el(fixture).textContent ?? '';
+    expect(text).toContain('ยังไม่มีหมวดหมู่ที่เปิดให้สมัครสมาชิกในตอนนี้');
+    expect(text).not.toContain('กำลังโหลดหมวดหมู่');
+  });
+
+  it('active member: a card linking to /account/subscription, no category picker and no sticky bar', () => {
+    const member = buildSubscription({ status: 'active', paymentHints: null });
+    const { fixture } = render([buildCategory()], [buildSavedCard()], buildSubscriptionFake(undefined, member));
+    const root = el(fixture);
+
+    expect(root.querySelector('[data-testid="subscribe-member"]')).not.toBeNull();
+    expect(root.querySelector('a[href="/account/subscription"]')).not.toBeNull();
+    expect(root.textContent).toContain('คุณเป็นสมาชิก');
+    expect(root.textContent).toContain('จัดการสมาชิก');
+    expect(root.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+    expect(root.querySelector('app-sticky-action-bar')).toBeNull();
+  });
+
+  it('a canceled subscription still gets the sign-up form', () => {
+    const canceled = buildSubscription({ status: 'canceled', paymentHints: null });
+    const { fixture } = render([buildCategory()], [buildSavedCard()], buildSubscriptionFake(undefined, canceled));
+    expect(el(fixture).querySelector('[data-testid="subscribe-member"]')).toBeNull();
+    expect(el(fixture).querySelectorAll('input[type="checkbox"]').length).toBe(1);
+  });
+
+  it('saved-card list error: shows the error and a retry instead of "please add a card"', () => {
+    const cards = buildPaymentMethodsFake([], errorActionState('โหลดรายการบัตรไม่สำเร็จ'));
+    const { fixture } = render([buildCategory()], [], undefined, undefined, undefined, cards);
+    const root = el(fixture);
+
+    expect(root.querySelector('[data-testid="subscribe-cards-error"]')).not.toBeNull();
+    expect(root.textContent).not.toContain('กรุณาเพิ่มบัตรเครดิต/เดบิตก่อนสมัครสมาชิก');
+    (root.querySelector('[data-testid="subscribe-cards-retry"]') as HTMLButtonElement).click();
+    expect(cards.refreshList).toHaveBeenCalledTimes(2);
   });
 });

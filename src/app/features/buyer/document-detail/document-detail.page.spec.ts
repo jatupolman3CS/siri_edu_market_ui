@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { BuyerDocumentDetailPage } from './document-detail.page';
 import {
   AdsService,
@@ -95,6 +95,18 @@ function buildBundle(id: string, over: Partial<Bundle> = {}): Bundle {
     downloads: 340,
     ...over,
   };
+}
+
+/**
+ * responsive-ui v1.4 R-24 (F65): the PDF iframe is used only where `navigator.pdfViewerEnabled`
+ * is `true`. The test DOM doesn't set it, so the PDF-modal specs opt in explicitly.
+ */
+function setPdfViewerEnabled(value: boolean | undefined): void {
+  if (value === undefined) {
+    Reflect.deleteProperty(navigator, 'pdfViewerEnabled');
+    return;
+  }
+  Object.defineProperty(navigator, 'pdfViewerEnabled', { configurable: true, get: () => value });
 }
 
 function buildCatalog(doc: DocumentItem | undefined) {
@@ -1310,6 +1322,9 @@ describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
  * openPreview(true) on a PDF-format document must open the PDF iframe modal (not the JPEG gallery).
  */
 describe('BuyerDocumentDetailPage — PDF preview modal (pdf-preview-popup-and-i18n-fix v1)', () => {
+  beforeEach(() => setPdfViewerEnabled(true));
+  afterEach(() => setPdfViewerEnabled(undefined));
+
   async function renderWithPdfDoc() {
     const doc = buildDoc({ format: 'pdf', previewPages: 3 });
     const pdfBlob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
@@ -1418,6 +1433,9 @@ describe('BuyerDocumentDetailPage — review counts & labels', () => {
  * `PreviewPdfError('not_a_pdf_document')` — and only that reason falls back.
  */
 describe('BuyerDocumentDetailPage — preview-pdf failure fallback (preview-pdf-error-shape v1 §4.2)', () => {
+  beforeEach(() => setPdfViewerEnabled(true));
+  afterEach(() => setPdfViewerEnabled(undefined));
+
   function renderWithPreviewPdfFailure(
     previewPdfError: unknown,
     previewImageUrls: string[] = ['https://cdn.test/p1.jpg', 'https://cdn.test/p2.jpg'],
@@ -1526,4 +1544,234 @@ describe('BuyerDocumentDetailPage — preview-pdf failure fallback (preview-pdf-
     expect(message.info).not.toHaveBeenCalled();
     expect(fixture.componentInstance.showPreviewGallery()).toBe(false);
   });
+});
+
+describe('BuyerDocumentDetailPage — phone sticky action bar (responsive-ui v1 §4.6 / U2-4)', () => {
+  function renderBar(doc: DocumentItem, opts: { owned?: boolean; inCart?: boolean } = {}) {
+    const cart = { has: () => opts.inCart ?? false, openDrawer: vi.fn(), add: vi.fn() };
+    const library = {
+      library: () => (opts.owned ? [{ document: doc }] : []),
+      refreshLibraryOnce: vi.fn(async () => {}),
+      download: vi.fn(),
+    };
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: doc.id })) } },
+        { provide: AuthService, useValue: { isAuthenticated: () => true, accessToken: () => 'token', user: () => null } },
+        { provide: CatalogService, useValue: buildCatalog(doc) },
+        { provide: CartService, useValue: cart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: library },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const bar = el.querySelector('app-sticky-action-bar [data-testid="doc-action-bar"]') as HTMLElement;
+    return { fixture, el, bar, cart, library };
+  }
+
+  it('renders price + ใส่ตะกร้า + ซื้อเลย wired to the same handlers as the price card', () => {
+    const doc = buildDoc({ price: 49 });
+    const { fixture, bar, cart } = renderBar(doc);
+    const buyNow = vi.spyOn(fixture.componentInstance, 'buyNow').mockImplementation(() => {});
+
+    expect(bar).toBeTruthy();
+    expect(bar.textContent).toContain('49');
+    // Two buttons at 360 leave ~80px per label: labels wrap, never end in "…" and are never
+    // clamped (v1.4 §4.3, F125 — a clamp cut them off under 150–200% text).
+    expect(bar.querySelectorAll('button span.line-clamp-2').length).toBe(0);
+    expect(bar.querySelector('button span.truncate')).toBeNull();
+    bar.querySelectorAll('button span').forEach((span) => {
+      expect(span.className).toContain('[overflow-wrap:anywhere]');
+    });
+    (bar.querySelector('[data-testid="bar-add-to-cart"]') as HTMLButtonElement).click();
+    expect(cart.add).toHaveBeenCalledWith(doc);
+    (bar.querySelector('[data-testid="bar-buy-now"]') as HTMLButtonElement).click();
+    expect(buyNow).toHaveBeenCalledWith(doc.id);
+  });
+
+  it('owned documents get the download CTA instead of buy buttons', () => {
+    const doc = buildDoc();
+    const { fixture, bar } = renderBar(doc, { owned: true });
+    const downloadOwned = vi.spyOn(fixture.componentInstance, 'downloadOwned').mockImplementation(() => {});
+
+    expect(bar.querySelector('[data-testid="bar-buy-now"]')).toBeNull();
+    (bar.querySelector('[data-testid="bar-download-owned"]') as HTMLButtonElement).click();
+    expect(downloadOwned).toHaveBeenCalled();
+  });
+
+  it('free documents download directly; in-cart documents open the cart', () => {
+    const free = buildDoc({ isFree: true, price: 0 });
+    const first = renderBar(free);
+    const downloadFree = vi.spyOn(first.fixture.componentInstance, 'downloadFree').mockImplementation(() => {});
+    (first.bar.querySelector('[data-testid="bar-download-free"]') as HTMLButtonElement).click();
+    expect(downloadFree).toHaveBeenCalled();
+    TestBed.resetTestingModule();
+
+    const second = renderBar(buildDoc(), { inCart: true });
+    (second.bar.querySelector('[data-testid="bar-view-cart"]') as HTMLButtonElement).click();
+    expect(second.cart.openDrawer).toHaveBeenCalled();
+  });
+
+  it('keeps the side column as the sticky card (>=744) in a 300px column at tablet width', () => {
+    const { el } = renderBar(buildDoc());
+    const side = el.querySelector('[data-testid="detail-side"]') as HTMLElement;
+    expect(side.classList).toContain('detail-side');
+    expect(side.closest('.grid')?.className).toContain('md:grid-cols-[minmax(0,1fr)_300px]');
+    expect(side.querySelector('[data-testid="price-card"]')).toBeTruthy();
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-24 (F65): phones and tablets without an inline PDF viewer rendered a blank
+ * iframe; they get the raster page gallery instead. R-9 (F134): a new `paramMap` (the component is
+ * reused for /document/A → /document/B and back) closes the PDF preview.
+ */
+describe('BuyerDocumentDetailPage — preview without an inline PDF viewer, and paramMap reuse (F65, F134)', () => {
+  afterEach(() => {
+    setPdfViewerEnabled(undefined);
+    TestBed.resetTestingModule();
+  });
+
+  function renderPdfDoc(paramMap$ = new BehaviorSubject(convertToParamMap({ id: 'doc-1' }))) {
+    const doc = buildDoc({ format: 'pdf', previewPages: 3 });
+    const catalog = {
+      ...buildCatalog(doc),
+      loadDocumentPreview: vi.fn(async () => ({ excerptLines: [], previewImageUrls: ['https://cdn.test/p1.jpg'] })),
+    };
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$.asObservable() } },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: catalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, catalog, paramMap$ };
+  }
+
+  it('pdfViewerEnabled !== true: openPreview(true) opens the raster gallery and never loads the PDF', async () => {
+    setPdfViewerEnabled(false);
+    const { component, catalog } = renderPdfDoc();
+    await settle();
+
+    component.openPreview(true);
+    await settle();
+
+    expect(component.showPreviewGallery()).toBe(true);
+    expect(component.showPdfPreviewModal()).toBe(false);
+    expect(catalog.loadDocumentPreviewPdf).not.toHaveBeenCalled();
+  });
+
+  it('a new paramMap closes an open PDF preview (F134)', async () => {
+    setPdfViewerEnabled(true);
+    const { component, paramMap$ } = renderPdfDoc();
+    await settle();
+
+    component.openPreview(true);
+    await settle();
+    expect(component.showPdfPreviewModal()).toBe(true);
+
+    paramMap$.next(convertToParamMap({ id: 'doc-2' }));
+    expect(component.showPdfPreviewModal()).toBe(false);
+    expect(component.previewPdfUrl()).toBeNull();
+  });
+
+  it('a PDF that resolves after the route moved on is not opened over the new document (F134)', async () => {
+    setPdfViewerEnabled(true);
+    const { component, catalog, paramMap$ } = renderPdfDoc();
+    let resolvePdf: (b: Blob) => void = () => {};
+    catalog.loadDocumentPreviewPdf.mockImplementation(() => new Promise<Blob>((r) => (resolvePdf = r)));
+    await settle();
+
+    component.openPreview(true);
+    paramMap$.next(convertToParamMap({ id: 'doc-2' }));
+    resolvePdf(new Blob(['%PDF-1.4'], { type: 'application/pdf' }));
+    await settle();
+
+    expect(component.showPdfPreviewModal()).toBe(false);
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-10 / R-11 (F107): both preview overlays are named modal dialogs whose panel
+ * carries the focus trap (its anchors sit inside the fixed overlay), Escape closes them unless an
+ * inner layer already handled it, and the page lock is the shared counted one (body `visible`,
+ * html `hidden`), restored exactly on close.
+ */
+describe('BuyerDocumentDetailPage — preview overlays are modal dialogs (R-10, R-11)', () => {
+  afterEach(() => {
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  });
+
+  const escape = () => new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+  const cases = [
+    { name: 'raster gallery', overlay: '.preview-modal-overlay', panel: '.preview-modal-content', flag: 'showPreviewGallery' },
+    { name: 'PDF preview', overlay: '.pdf-preview-overlay', panel: '.pdf-preview-container', flag: 'showPdfPreviewModal' },
+  ] as const;
+
+  for (const c of cases) {
+    it(`${c.name}: the panel is a named modal dialog with a focus trap inside the overlay`, async () => {
+      const { fixture } = render(async () => []);
+      await settle();
+      fixture.componentInstance[c.flag].set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const host = fixture.nativeElement as HTMLElement;
+      const overlay = host.querySelector<HTMLElement>(c.overlay)!;
+      const panel = host.querySelector<HTMLElement>(c.panel)!;
+      expect(overlay.getAttribute('role')).toBeNull();
+      expect(panel.getAttribute('role')).toBe('dialog');
+      expect(panel.getAttribute('aria-modal')).toBe('true');
+      expect(document.getElementById(panel.getAttribute('aria-labelledby') ?? '')?.textContent?.trim()).toBe(
+        'พรีวิวตัวอย่างเอกสาร',
+      );
+      const anchors = Array.from(overlay.children).filter((el) => el.classList.contains('cdk-focus-trap-anchor'));
+      expect(anchors).toHaveLength(2);
+    });
+
+    it(`${c.name}: Escape closes it (not when already handled) and the page lock is restored`, async () => {
+      document.body.style.overflow = 'clip';
+      const { fixture } = render(async () => []);
+      await settle();
+      const page = fixture.componentInstance;
+      page[c.flag].set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(document.documentElement.style.overflow).toBe('hidden');
+      expect(document.body.style.overflow).toBe('visible');
+
+      const handled = escape();
+      handled.preventDefault();
+      document.dispatchEvent(handled);
+      expect(page[c.flag]()).toBe(true);
+
+      const plain = escape();
+      document.dispatchEvent(plain);
+      expect(page[c.flag]()).toBe(false);
+      expect(plain.defaultPrevented).toBe(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(document.documentElement.style.overflow).toBe('');
+      expect(document.body.style.overflow).toBe('clip');
+    });
+  }
 });

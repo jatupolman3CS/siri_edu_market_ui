@@ -1,6 +1,6 @@
-<div class="max-w-6xl">
+<div class="min-w-0">
   <header class="mb-6">
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.sellers.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.sellers.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">{{ 'admin.sellers.subtitle' | trans }}</p>
   </header>
 
@@ -8,22 +8,38 @@
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider">{{ 'common.search' | trans }}</label>
       <input
-        class="input-soft sm:col-span-3 !py-2"
+        class="input-soft w-full sm:col-span-3 !py-2"
         type="search"
         [placeholder]="'admin.sellers.searchPlaceholder' | trans"
         [ngModel]="q()"
         (ngModelChange)="q.set($event)"
       />
     </div>
+    <ng-template #filterFields>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellers.joinedFrom' | trans }}</label>
+          <input class="input-soft w-full !py-2" type="date" [ngModel]="joinedFrom()" (ngModelChange)="joinedFrom.set($event)" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellers.joinedTo' | trans }}</label>
+          <input class="input-soft w-full !py-2" type="date" [ngModel]="joinedTo()" (ngModelChange)="joinedTo.set($event)" />
+        </div>
+        <div class="flex flex-col gap-2 justify-end">
+          <label class="flex items-center gap-2 min-h-[44px] text-sm text-ink cursor-pointer">
+            <input type="checkbox" [ngModel]="verifiedOnly()" (ngModelChange)="verifiedOnly.set($event)" />
+            {{ 'admin.sellers.verifiedOnly' | trans }}
+          </label>
+        </div>
+      </div>
+    </ng-template>
+    <app-admin-filter-panel
+      [fields]="filterFields"
+      [activeCount]="activeFilterCount()"
+      (showResults)="applyFilters()"
+      (clearAll)="clearFilters()"
+    />
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellers.joinedFrom' | trans }}</label>
-        <input class="input-soft w-full !py-2" type="date" [ngModel]="joinedFrom()" (ngModelChange)="joinedFrom.set($event)" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellers.joinedTo' | trans }}</label>
-        <input class="input-soft w-full !py-2" type="date" [ngModel]="joinedTo()" (ngModelChange)="joinedTo.set($event)" />
-      </div>
       <div>
         <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellers.sortLabel' | trans }}</label>
         <select class="input-soft w-full !py-2" [ngModel]="sort()" (ngModelChange)="sort.set($event)">
@@ -32,15 +48,9 @@
           }
         </select>
       </div>
-      <div class="flex flex-col gap-2 justify-end">
-        <label class="flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" [ngModel]="verifiedOnly()" (ngModelChange)="verifiedOnly.set($event)" />
-          {{ 'admin.sellers.verifiedOnly' | trans }}
-        </label>
-      </div>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="btn-ghost" (click)="applyFilters()">
+      <button type="button" class="btn-ghost w-full sm:w-auto !justify-center" (click)="applyFilters()">
         <app-icon name="filter" [size]="16" />
         {{ 'common.search' | trans }}
       </button>
@@ -50,29 +60,32 @@
     </div>
   </div>
 
-  <div class="card-soft table-scroll overflow-x-auto pb-2">
-    <table class="w-full min-w-[840px]">
+  <!-- Table: at >=744 at most 10 rows show, the rest scroll inside the wrapper (R-27). The reset key is
+       the query the rows were requested with, so typing in a filter doesn't move the table; applying it does. -->
+  <div
+    class="card-soft table-scroll overflow-x-auto pb-2"
+    appTableViewport
+    [rtLabel]="'admin.sellers.title' | trans"
+    [rtResetKey]="listQueryKey()"
+  >
+    <table class="rtable w-full">
       <thead class="bg-pink-50">
         <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-          <th class="px-3 py-3 w-12 text-center"></th>
           <th class="px-3 py-3 font-semibold">{{ 'admin.sellers.colSeller' | trans }}</th>
-          <th class="px-3 py-3 font-semibold">{{ 'admin.sellers.colEmail' | trans }}</th>
           <th class="px-3 py-3 font-semibold">{{ 'admin.sellers.colVerified' | trans }}</th>
-          <th class="px-3 py-3 font-semibold text-right">{{ 'admin.sellers.colDocuments' | trans }}</th>
-          <th class="px-3 py-3 font-semibold text-right">{{ 'admin.sellers.colSales' | trans }}</th>
           <th class="px-3 py-3 font-semibold text-right">{{ 'admin.sellers.colRevenue' | trans }}</th>
-          <th class="px-3 py-3 font-semibold">{{ 'admin.sellers.colJoined' | trans }}</th>
+          <th class="px-3 py-3 font-semibold text-right">{{ 'admin.sellers.colDocuments' | trans }}</th>
+          <th class="rt-secondary px-3 py-3 font-semibold">{{ 'admin.sellers.colEmail' | trans }}</th>
+          <th class="rt-secondary px-3 py-3 font-semibold text-right">{{ 'admin.sellers.colSales' | trans }}</th>
+          <th class="rt-secondary px-3 py-3 font-semibold">{{ 'admin.sellers.colJoined' | trans }}</th>
+          <th class="rt-more"></th>
+          <th class="px-3 py-3 w-12 text-center"></th>
         </tr>
       </thead>
       <tbody>
         @for (s of items(); track s.id) {
           <tr class="border-t border-line hover:bg-pink-50/40">
-            <td class="px-3 py-3 text-center">
-              <a [routerLink]="['/store', s.id]" class="btn-icon !w-8 !h-8 inline-flex" [title]="'admin.sellers.viewStore' | trans">
-                <app-icon name="eye" [size]="14" />
-              </a>
-            </td>
-            <td class="px-3 py-3">
+            <td class="rt-title px-3 py-3">
               <div class="flex items-center gap-3">
                 <img
                   appImgFallback
@@ -82,26 +95,40 @@
                 />
                 <div class="min-w-0">
                   <div class="font-bold text-ink text-sm line-clamp-1">{{ s.studioName }}</div>
-                  <div class="text-xs text-ink-muted line-clamp-1">{{ s.ownerName }}</div>
+                  <div class="text-xs text-ink-muted font-normal line-clamp-1">{{ s.ownerName }}</div>
                 </div>
               </div>
             </td>
-            <td class="px-3 py-3 text-sm text-ink-soft">{{ s.email }}</td>
-            <td class="px-3 py-3">
+            <td class="rt-status px-3 py-3">
               @if (s.isVerified) {
                 <span class="pill-green text-[10px] font-bold">{{ 'admin.sellers.verified' | trans }}</span>
               } @else {
                 <span class="pill-soft text-[10px] font-bold">{{ 'admin.sellers.notVerified' | trans }}</span>
               }
             </td>
-            <td class="px-3 py-3 text-sm text-right whitespace-nowrap">{{ s.totalDocuments | compact }}</td>
-            <td class="px-3 py-3 text-sm text-right whitespace-nowrap">{{ s.totalSales | compact }}</td>
-            <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ s.totalRevenue | thb }}</td>
-            <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ s.joinedAt | date: 'dd MMM yyyy' }}</td>
+            <td class="rt-key px-3 py-3 text-sm font-bold text-right whitespace-nowrap" [attr.data-label]="'admin.sellers.colRevenue' | trans">{{ s.totalRevenue | thb }}</td>
+            <td class="rt-key px-3 py-3 text-sm text-right whitespace-nowrap" [attr.data-label]="'admin.sellers.colDocuments' | trans">{{ s.totalDocuments | compact }}</td>
+            <td class="rt-secondary px-3 py-3 text-sm text-ink-soft break-all">{{ s.email }}</td>
+            <td class="rt-secondary px-3 py-3 text-sm text-right whitespace-nowrap">{{ s.totalSales | compact }}</td>
+            <td class="rt-secondary px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ s.joinedAt | date: 'dd MMM yyyy' }}</td>
+            <td class="rt-more px-1 py-3">
+              <app-row-more
+                [items]="[
+                  { label: ('admin.sellers.colEmail' | trans), value: s.email },
+                  { label: ('admin.sellers.colSales' | trans), value: (s.totalSales | compact) },
+                  { label: ('admin.sellers.colJoined' | trans), value: (s.joinedAt | date: 'dd MMM yyyy') }
+                ]"
+              />
+            </td>
+            <td class="rt-action px-3 py-3 text-center">
+              <a [routerLink]="['/store', s.id]" class="btn-icon !w-8 !h-8 inline-flex" [title]="'admin.sellers.viewStore' | trans" [attr.aria-label]="'admin.sellers.viewStore' | trans">
+                <app-icon name="eye" [size]="14" />
+              </a>
+            </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="8" class="px-5 py-10 text-center text-ink-muted text-sm">{{ 'admin.sellers.empty' | trans }}</td>
+            <td colspan="9" class="px-5 py-10 text-center text-ink-muted text-sm">{{ 'admin.sellers.empty' | trans }}</td>
           </tr>
         }
       </tbody>

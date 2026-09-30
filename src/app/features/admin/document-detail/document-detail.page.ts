@@ -35,9 +35,8 @@ import {
 import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SellerService } from '../../../core/services/seller.service';
-import { unwrapSdkResult } from '../../../core/services/api-result';
+import { extractErrorStatus, unwrapSdkResult } from '../../../core/services/api-result';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
 import { downloadFileFromUrl } from '../../../core/file-download';
@@ -65,7 +64,6 @@ type GalleryItem = { id?: string | null; key: string; publicUrl: string; preview
     NzCheckboxModule,
     NzModalModule,
     NzSwitchModule,
-    EmptyStateComponent,
     IconComponent,
     DatePipe,
     CdkDropList,
@@ -93,6 +91,8 @@ export class AdminDocumentDetailPage {
   readonly doc = signal<AdminDocumentDetail | null>(null);
   readonly reports = signal<AdminDocumentReport[]>([]);
   readonly loading = signal(true);
+  /** The document GET answered 404 (R-17 / F116): not-found state, no toast. */
+  readonly notFound = signal(false);
   readonly saving = signal(false);
   readonly newReportReason = signal('');
 
@@ -121,6 +121,22 @@ export class AdminDocumentDetailPage {
   /** "ดูแบบที่ผู้ซื้อเห็น" — sends `?watermark=true` so the admin can check the buyer-facing render. */
   readonly reviewAsBuyer = signal(false);
   private readonly _reviewBlobUrl = signal<string | null>(null);
+
+  /**
+   * R-24: the review PDF goes into an iframe only where the browser has a built-in PDF viewer
+   * (`navigator.pdfViewerEnabled === true`); elsewhere the viewer offers the download alone.
+   */
+  readonly pdfViewerEnabled = typeof navigator !== 'undefined' && navigator.pdfViewerEnabled === true;
+
+  /** Object URL of the fetched review PDF, for the no-popup download link next to the frame. */
+  reviewBlobHref(): string {
+    return this._reviewBlobUrl() ?? '';
+  }
+
+  reviewDownloadName(): string {
+    const base = (this.doc()?.title ?? '').trim() || this.documentId || 'document';
+    return base.toLowerCase().endsWith('.pdf') ? base : base + '.pdf';
+  }
 
   readonly maxGalleryImages = MAX_GALLERY_IMAGES;
   readonly galleryItems = signal<GalleryItem[]>([]);
@@ -200,8 +216,14 @@ export class AdminDocumentDetailPage {
     return [...new Set([...this.selectedStandards(), ...extra])];
   }
 
+  /** Error-state retry: re-issues the same document + reports GETs. */
+  retry(): void {
+    void this.load();
+  }
+
   private async load(): Promise<void> {
     this.loading.set(true);
+    this.notFound.set(false);
     try {
       const [dRes, rRes] = await Promise.all([
         getApiAdminDocumentById({ path: { id: this.documentId } }),
@@ -240,7 +262,8 @@ export class AdminDocumentDetailPage {
       this.parseStandardsFromDoc(d.standards);
       this.reports.set(unwrapSdkResult(rRes) ?? []);
     } catch (e) {
-      this.apiFail.report('Load document details', e);
+      if (extractErrorStatus(e) === 404) this.notFound.set(true);
+      else this.apiFail.report('Load document details', e);
       this.doc.set(null);
     } finally {
       this.loading.set(false);

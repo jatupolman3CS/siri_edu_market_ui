@@ -1,110 +1,217 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-6 sm:py-8">
   <header
-    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
       <span>{{ 'subscribe.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'subscribe.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'subscribe.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">
       {{ 'subscribe.desc' | trans }}
     </p>
   </header>
 
-  <div class="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
-    <section class="card-soft p-6">
-      <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.selectCategoriesTitle' | trans }}</h2>
-
-      @if (catalog.categories().length === 0) {
-        <p class="text-sm text-ink-muted">{{ 'subscribe.loadingCategories' | trans }}</p>
-      } @else {
-        <ul class="divide-y divide-line">
-          @for (c of eligibleCategories(); track c.id) {
-            <li class="py-3 flex items-center justify-between gap-3">
-              <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-                <input
-                  type="checkbox"
-                  class="w-5 h-5 accent-pink-500 rounded shrink-0"
-                  [checked]="isSelected(c.id)"
-                  (change)="toggleCategory(c.id)"
-                />
-                <span class="text-xl shrink-0">{{ c.icon }}</span>
-                <span class="text-sm font-semibold text-ink truncate">{{ c.name }}</span>
-              </label>
-              <span class="text-sm font-bold text-pink-600 whitespace-nowrap">
-                {{ c.subscriptionMonthlyPrice | thb }}{{ 'subscribe.perMonth' | trans }}
-              </span>
-            </li>
-          } @empty {
-            <li class="py-6 text-sm text-ink-muted text-center">
-              {{ 'subscribe.noCategoriesAvailable' | trans }}
+  <!-- responsive-ui v1.4 R-17/R-18 (F89, F114, F117):
+       · loading — a skeleton of the category card only; the summary card and the phone sticky bar
+         appear once the data is in (they used to sit high on the page and jump down, CLS 0.5);
+       · an existing member gets a manage card instead of the sign-up form;
+       · a failed category / card list shows its own error and retry (it used to say "loading"
+         forever, or "please add a card"). -->
+  @if (pageState() === 'loading') {
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start" aria-busy="true" data-testid="subscribe-loading">
+      <section class="card-soft p-4 sm:p-6">
+        <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.selectCategoriesTitle' | trans }}</h2>
+        <p class="sr-only">{{ 'subscribe.loadingCategories' | trans }}</p>
+        <ul class="divide-y divide-line" aria-hidden="true">
+          @for (row of skeletonRows; track row) {
+            <li class="py-3 flex items-center gap-3">
+              <span class="w-5 h-5 rounded bg-line/70 animate-pulse shrink-0"></span>
+              <span class="h-4 flex-1 max-w-[12rem] rounded bg-line/70 animate-pulse"></span>
+              <span class="h-4 w-16 rounded bg-line/70 animate-pulse ml-auto"></span>
             </li>
           }
         </ul>
-
-        @if (ineligibleCategories().length > 0) {
-          <div class="mt-4 pt-4 border-t border-line">
-            <p class="text-xs font-semibold text-ink-muted mb-2">{{ 'subscribe.ineligibleTitle' | trans }}</p>
-            <ul class="flex flex-wrap gap-2">
-              @for (c of ineligibleCategories(); track c.id) {
-                <li class="pill-soft text-xs opacity-70">{{ c.name }}</li>
-              }
-            </ul>
-          </div>
-        }
-      }
-    </section>
-
-    <aside>
-      <div class="card-soft p-6 lg:sticky lg:top-[88px]">
-        <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.summaryTitle' | trans }}</h2>
-
-        <p class="text-sm text-ink-soft mb-1">{{ 'subscribe.totalPrice' | trans:{ total: ((totalPrice() | thb: false) ?? '0') } }}</p>
-        <p class="text-xs text-ink-muted mb-5">{{ 'subscribe.selectedCount' | trans:{ count: selectedCategoryIds().length } }}</p>
-
-        @if (!hasSavedCard()) {
-          <div
-            class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed mb-4"
-          >
-            <p class="font-bold mb-1">{{ 'subscribe.needCard' | trans }}</p>
-            <a [routerLink]="['/account']" fragment="cards" class="text-pink-600 font-semibold underline">
-              {{ 'subscribe.addCardLink' | trans }}
-            </a>
-          </div>
-        }
-
-        @if (paymentFailed()) {
-          <div
-            class="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-relaxed mb-4"
-          >
-            <p class="font-bold mb-1">{{ 'subscribe.paymentFailedTitle' | trans }}</p>
-            <p>{{ 'subscribe.paymentFailedDesc' | trans }}</p>
-          </div>
-        }
-
-        @if (pendingClientSecret()) {
-          <button
-            type="button"
-            class="btn-pink w-full !py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="confirmingPayment()"
-            (click)="retryPayment()"
-          >
-            <app-icon name="lock" [size]="16" />
-            {{ confirmingPayment() ? ('subscribe.confirmingPayment' | trans) : ('subscribe.retryPayment' | trans) }}
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="btn-pink w-full !py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="!canSubmit()"
-            (click)="subscribe()"
-          >
-            <app-icon name="lock" [size]="16" />
-            {{ submitting() ? (confirmingPayment() ? ('subscribe.confirmingPayment' | trans) : ('subscribe.submitting' | trans)) : ('subscribe.submitBtn' | trans) }}
-          </button>
-        }
+      </section>
+    </div>
+  } @else if (existingMembership(); as member) {
+    <section class="card-soft p-5 sm:p-8 max-w-[640px] mx-auto text-center" data-testid="subscribe-member">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4" aria-hidden="true">
+        ✓
       </div>
-    </aside>
-  </div>
+      <h2 class="text-xl font-extrabold text-ink mb-2">{{ 'subscribe.alreadySubscribedTitle' | trans }}</h2>
+      <p class="text-sm text-ink-soft mb-6">{{ 'subscribe.alreadySubscribedDesc' | trans }}</p>
+      <a routerLink="/account/subscription" class="btn-pink">
+        {{ 'subscribe.manageLink' | trans }}
+        <app-icon name="arrow-right" [size]="14" />
+      </a>
+    </section>
+  } @else {
+    <!-- grid-cols-1 is load-bearing (G-6/U5-6): without a base template the implicit track sizes to the
+         nowrap `.truncate` category name and a long priced category pushes the page wider than 360. -->
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start" data-testid="subscribe-layout">
+      <section class="card-soft p-4 sm:p-6">
+        <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.selectCategoriesTitle' | trans }}</h2>
+
+        @if (categoriesFailed()) {
+          <div class="py-6 text-center" role="alert" data-testid="subscribe-categories-error">
+            <p class="text-sm font-semibold text-rose-600">{{ 'categories.loadFailed' | trans }}</p>
+            <button type="button" class="btn-pink mt-4" data-testid="subscribe-categories-retry" (click)="retryCategories()">
+              {{ 'common.retry' | trans }}
+            </button>
+          </div>
+        } @else {
+          <ul class="divide-y divide-line">
+            @for (c of eligibleCategories(); track c.id) {
+              <li class="py-3 min-h-11 flex items-center justify-between gap-3">
+                <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0 min-h-11">
+                  <input
+                    type="checkbox"
+                    class="w-5 h-5 accent-pink-500 rounded shrink-0"
+                    [checked]="isSelected(c.id)"
+                    (change)="toggleCategory(c.id)"
+                  />
+                  <span class="text-xl shrink-0">{{ c.icon }}</span>
+                  <span class="text-sm font-semibold text-ink truncate">{{ c.name }}</span>
+                </label>
+                <span class="text-sm font-bold text-pink-600 whitespace-nowrap">
+                  {{ c.subscriptionMonthlyPrice | thb }}{{ 'subscribe.perMonth' | trans }}
+                </span>
+              </li>
+            } @empty {
+              <li class="py-6 text-sm text-ink-muted text-center">
+                {{ 'subscribe.noCategoriesAvailable' | trans }}
+              </li>
+            }
+          </ul>
+
+          @if (ineligibleCategories().length > 0) {
+            <div class="mt-4 pt-4 border-t border-line">
+              <p class="text-xs font-semibold text-ink-muted mb-2">{{ 'subscribe.ineligibleTitle' | trans }}</p>
+              <ul class="flex flex-wrap gap-2 min-w-0">
+                @for (c of ineligibleCategories(); track c.id) {
+                  <li class="pill-soft text-xs opacity-70 max-w-full min-w-0 [overflow-wrap:anywhere]">{{ c.name }}</li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </section>
+
+      <!-- self-stretch: the grid is items-start, which left the aside exactly as tall as its card,
+           so the sticky card below had no room to stick and scrolled away with the page.
+           Hidden while the categories failed to load: a "0 baht/month" summary with a dead submit
+           is noise next to the error (F89). -->
+      @if (!categoriesFailed()) {
+      <aside class="self-stretch">
+        <!-- responsive-ui v1.4 §4.4 (F41/G-29b): sticks 16px below the pinned header (114px at
+             744–1279, 171px at ≥1280). -->
+        <div class="card-soft p-4 sm:p-6 lg:sticky lg:top-[130px] xl:top-[187px]">
+          <h2 class="text-base font-bold text-ink mb-4">{{ 'subscribe.summaryTitle' | trans }}</h2>
+
+          <p class="text-sm text-ink-soft mb-1">{{ 'subscribe.totalPrice' | trans:{ total: ((totalPrice() | thb: false) ?? '0') } }}</p>
+          <p class="text-xs text-ink-muted mb-5">{{ 'subscribe.selectedCount' | trans:{ count: selectedCategoryIds().length } }}</p>
+
+          @if (cardsState() === 'error') {
+            <div
+              class="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-relaxed mb-4"
+              role="alert"
+              data-testid="subscribe-cards-error"
+            >
+              <p class="font-bold mb-1">{{ 'payment.loadCardsFailed' | trans }}</p>
+              <button type="button" class="btn-ghost mt-2 bg-white" data-testid="subscribe-cards-retry" (click)="retryCards()">
+                {{ 'common.retry' | trans }}
+              </button>
+            </div>
+          } @else if (cardsState() === 'loading') {
+            <div class="h-20 rounded-xl bg-line/60 animate-pulse mb-4" aria-hidden="true" data-testid="subscribe-cards-loading"></div>
+          } @else if (!hasSavedCard()) {
+            <div
+              class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 leading-relaxed mb-4"
+            >
+              <p class="font-bold mb-1">{{ 'subscribe.needCard' | trans }}</p>
+              <a
+                [routerLink]="['/account']"
+                fragment="cards"
+                class="inline-flex items-center min-h-11 text-pink-600 font-semibold underline"
+              >
+                {{ 'subscribe.addCardLink' | trans }}
+              </a>
+            </div>
+          }
+
+          @if (paymentFailed()) {
+            <div
+              class="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-relaxed mb-4"
+            >
+              <p class="font-bold mb-1">{{ 'subscribe.paymentFailedTitle' | trans }}</p>
+              <p>{{ 'subscribe.paymentFailedDesc' | trans }}</p>
+            </div>
+          }
+
+          @if (pendingClientSecret()) {
+            <button
+              type="button"
+              class="btn-pink w-full !py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              [disabled]="confirmingPayment()"
+              (click)="retryPayment()"
+            >
+              <app-icon name="lock" [size]="16" />
+              {{ confirmingPayment() ? ('subscribe.confirmingPayment' | trans) : ('subscribe.retryPayment' | trans) }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-pink w-full !py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              [disabled]="!canSubmit()"
+              (click)="subscribe()"
+            >
+              <app-icon name="lock" [size]="16" />
+              {{ submitting() ? (confirmingPayment() ? ('subscribe.confirmingPayment' | trans) : ('subscribe.submitting' | trans)) : ('subscribe.submitBtn' | trans) }}
+            </button>
+          }
+        </div>
+      </aside>
+      }
+    </div>
+
+    <!-- responsive-ui v1 §4.6 C: phone-only sticky submit (same handlers/state as the summary card).
+         The bar gets ~150px of label at 360, too little for "ลองยืนยันการชำระเงินอีกครั้ง" /
+         "Confirming payment…", so the payment-confirmation states use the short checkout labels
+         here; the summary card above (in flow on phone) keeps the long ones and the failure notice.
+         Labels wrap (no line-clamp, v1.4 §4.3) rather than end in "…". Not rendered while the
+         category list failed to load (F89: it used to offer a dead "subscribe" button). -->
+    @if (!categoriesFailed()) {
+      <app-sticky-action-bar>
+        <div class="flex w-full min-w-0 items-center gap-3" data-testid="subscribe-action-bar">
+          <div class="min-w-0 flex-1 text-sm font-semibold text-ink leading-tight">
+            {{ 'subscribe.totalPrice' | trans:{ total: ((totalPrice() | thb: false) ?? '0') } }}
+          </div>
+          @if (pendingClientSecret()) {
+            <button
+              type="button"
+              class="btn-pink !py-3 min-h-11 shrink-0 max-w-[65%] disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="subscribe-bar-retry"
+              [disabled]="confirmingPayment()"
+              (click)="retryPayment()"
+            >
+              <app-icon name="lock" [size]="16" />
+              <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ confirmingPayment() ? ('checkout.confirming' | trans) : ('checkout.confirmPayment' | trans) }}</span>
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-pink !py-3 min-h-11 shrink-0 max-w-[65%] disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="subscribe-bar-submit"
+              [disabled]="!canSubmit()"
+              (click)="subscribe()"
+            >
+              <app-icon name="lock" [size]="16" />
+              <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ submitting() ? (confirmingPayment() ? ('checkout.confirming' | trans) : ('subscribe.submitting' | trans)) : ('subscribe.submitBtn' | trans) }}</span>
+            </button>
+          }
+        </div>
+      </app-sticky-action-bar>
+    }
+  }
 </div>

@@ -44,6 +44,15 @@ export class CartService {
   readonly items = this._items.asReadonly();
   readonly drawerOpen = this._drawerOpen.asReadonly();
 
+  /**
+   * responsive-ui v1.4 R-17 (F88): whether the cart has been fetched at least once, so `/checkout`
+   * can tell "still loading" and "the load failed" apart from "the cart is empty" (it used to show
+   * "ตะกร้าของคุณว่างอยู่" for all three). `'loading'` until the first response, `'error'` only while
+   * no load has ever succeeded — a failed background reload keeps the items already shown.
+   */
+  private readonly _loadStatus = signal<'loading' | 'loaded' | 'error'>('loading');
+  readonly loadStatus = this._loadStatus.asReadonly();
+
   readonly count = computed(() => this._items().length);
 
   /**
@@ -109,6 +118,7 @@ export class CartService {
 
   loadCart(): void {
     this.lastSeenUserId = this.auth.user()?.id ?? null;
+    if (this._loadStatus() === 'error') this._loadStatus.set('loading');
     void (async () => {
       try {
         const result = await getApiCart();
@@ -169,8 +179,10 @@ export class CartService {
           vatIncluded: data.vatIncluded ?? 0,
           total: data.total ?? 0,
         });
+        this._loadStatus.set('loaded');
       } catch (e) {
         this.apiFail.report('errors.context.loadCart', e);
+        if (this._loadStatus() !== 'loaded') this._loadStatus.set('error');
       }
     })();
   }

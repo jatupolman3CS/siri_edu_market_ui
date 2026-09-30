@@ -19,6 +19,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { TranslatePipe } from '../../../core/i18n';
 
 @Component({
@@ -32,6 +33,7 @@ import { TranslatePipe } from '../../../core/i18n';
     ThbPipe,
     CompactPipe,
     ImgFallbackDirective,
+    StickyActionBarComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,6 +48,9 @@ export class BuyerBundleDetailPage {
   readonly id = signal<string>('');
 
   readonly bundle = computed(() => this.bundleService.getById(this.id()));
+
+  /** True while this bundle's detail GET is in flight and nothing is cached for it yet. */
+  readonly loading = computed(() => this.bundleService.bundleDetailState().status === 'loading');
 
   /**
    * Q-04: reads straight from `BundleService`'s full-detail cache (populated by

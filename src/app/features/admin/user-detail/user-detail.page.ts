@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AdminService, AuthService, ApiFailureReporter } from '../../../core/services';
+import { extractErrorStatus } from '../../../core/services/api-result';
 import type {
   AdminUserDetail,
   AdminUserAccountStatus,
@@ -16,6 +17,9 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 @Component({
   selector: 'app-admin-user-detail',
@@ -30,6 +34,10 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     ThbPipe,
     ImgFallbackDirective,
     TranslatePipe,
+    RowMoreComponent,
+    StickyActionBarComponent,
+    NgTemplateOutlet,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-detail.page.html',
@@ -46,6 +54,10 @@ export class AdminUserDetailPage {
 
   readonly user = signal<AdminUserDetail | null>(null);
   readonly loading = signal(true);
+  /** The API answered 404 for this id (R-17 / F116): render the not-found state, load nothing else. */
+  readonly notFound = signal(false);
+  /** Any other load failure: an error line with a retry instead of a blank page. */
+  readonly loadError = signal(false);
   readonly submitting = signal(false);
 
   // buyer-wallet v1 §4.6: read-only wallet summary + short ledger for admin user-detail.
@@ -108,15 +120,28 @@ export class AdminUserDetailPage {
 
   async loadUser(userId: string): Promise<void> {
     this.loading.set(true);
+    this.notFound.set(false);
+    this.loadError.set(false);
+    let loaded = false;
     try {
       const detail = await this.admin.getUser(userId);
       this.user.set(detail);
+      loaded = true;
     } catch (e) {
-      this.apiFail.report('errors.context.loadUserDetail', e);
+      // AdminService.getUser has already shown the one failure toast; reporting here again (plus
+      // the two wallet calls below failing the same way) stacked four toasts on an unknown id.
+      if (extractErrorStatus(e) === 404) this.notFound.set(true);
+      else this.loadError.set(true);
     } finally {
       this.loading.set(false);
     }
-    void this.loadWallet(userId);
+    if (loaded) void this.loadWallet(userId);
+  }
+
+  /** Error-state retry: re-issues the same GET for the id in the URL. */
+  retry(): void {
+    const userId = this.route.snapshot.paramMap.get('userId');
+    if (userId) void this.loadUser(userId);
   }
 
   // ===== buyer-wallet v1 §3.8/§3.9/§4.6 — read-only wallet section =====

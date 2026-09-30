@@ -7,9 +7,10 @@ import {
   PaymentMethodService,
   SubscriptionService,
 } from '../../../core/services';
-import type { SavedPaymentMethod } from '../../../core/models';
+import type { SavedPaymentMethod, Subscription } from '../../../core/models';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
 
@@ -34,7 +35,7 @@ import { TranslatePipe, TranslationService } from '../../../core/i18n';
 @Component({
   selector: 'app-buyer-subscribe',
   standalone: true,
-  imports: [RouterLink, ThbPipe, IconComponent, TranslatePipe],
+  imports: [RouterLink, ThbPipe, IconComponent, StickyActionBarComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subscribe.page.html',
   styleUrl: './subscribe.page.scss',
@@ -81,6 +82,39 @@ export class BuyerSubscribePage {
 
   readonly hasSavedCard = computed(() => this.paymentMethods.list().length > 0);
 
+  // ===== responsive-ui v1.4 R-17 (F89, F114, F117) =====
+
+  /** Rows of the loading skeleton — roughly the height of a short category list. */
+  readonly skeletonRows = [1, 2, 3, 4, 5, 6];
+
+  /** True once `GET /api/me/subscription` (§3 v1.4 F117, approved) has answered, success or not. */
+  readonly membershipChecked = computed(() => this.subscription.state().status !== 'loading');
+
+  /** Set when this page starts its own sign-up, so the `Incomplete` row `create()` returns never flips the page into the member card mid-payment. */
+  private readonly signupStarted = signal(false);
+
+  /**
+   * The buyer's current subscription — anything not `canceled` means they are already a member and
+   * get a manage card instead of the sign-up form (a second `create()` would 409 anyway).
+   */
+  readonly existingMembership = computed<Subscription | null>(() => {
+    if (this.signupStarted()) return null;
+    const current = this.subscription.current();
+    return current && current.status !== 'canceled' ? current : null;
+  });
+
+  readonly categoriesFailed = computed(() => this.catalog.categoriesState().status === 'error');
+
+  /** `'loading'` | `'idle'` | `'error'` of the saved-card list — "please add a card" only when it really loaded empty. */
+  readonly cardsState = computed(() => this.paymentMethods.state().status);
+
+  readonly pageState = computed<'loading' | 'member' | 'form'>(() => {
+    if (!this.membershipChecked()) return 'loading';
+    if (this.existingMembership()) return 'member';
+    if (this.catalog.categoriesState().status === 'loading') return 'loading';
+    return 'form';
+  });
+
   readonly totalPrice = computed(() => {
     const selected = new Set(this.selectedCategoryIds());
     return this.eligibleCategories()
@@ -95,7 +129,20 @@ export class BuyerSubscribePage {
   constructor() {
     this.catalog.ensureCategories();
     void this.paymentMethods.refreshList();
+    // `loadCurrent()` maps a 404 (never subscribed) to `null` without a toast and never rejects.
+    void this.subscription.loadCurrent();
   }
+
+  /** R-17: re-issues the category GET after a failure. */
+  retryCategories(): void {
+    this.catalog.loadCategories();
+  }
+
+  /** R-17: re-issues the saved-card GET after a failure. */
+  retryCards(): void {
+    void this.paymentMethods.refreshList();
+  }
+
 
   isSelected(categoryId: string): boolean {
     return this.selectedCategoryIds().includes(categoryId);
@@ -121,6 +168,7 @@ export class BuyerSubscribePage {
     if (this.submitting() || this.pendingClientSecret()) return;
 
     this.submitting.set(true);
+    this.signupStarted.set(true);
     try {
       const sub = await this.subscription.create(categoryIds);
       const clientSecret = sub.paymentHints?.clientSecret ?? null;

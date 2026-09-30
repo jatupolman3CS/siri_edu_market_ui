@@ -191,3 +191,78 @@ describe('NotificationsListComponent', () => {
     expect(text).not.toContain('ค้นหาร้านที่ชอบ');
   });
 });
+
+/**
+ * responsive-ui v1.4 R-4 (G-14d): the title next to the type pill was `truncate`d and squeezed to
+ * 17–94px at 320/360 ('ส…'). It now wraps, gets its own full-width row on phones, and sits inline
+ * (still wrapping) from 744.
+ */
+describe('NotificationsListComponent — title containment (G-14d)', () => {
+  function renderOne(overrides: Partial<NotificationFeedItemResponse>) {
+    const { feed } = buildTestBed();
+    vi.spyOn(feed, 'loadFeed').mockImplementation(() => { /* no-op */ });
+    feed.setItemsForTest([item({ id: 'a', ...overrides })]);
+    const el = createFixture('seller').nativeElement as HTMLElement;
+    return {
+      head: el.querySelector('[data-testid="notification-head"]') as HTMLElement,
+      title: el.querySelector('[data-testid="notification-title"]') as HTMLElement,
+      newPill: el.querySelector('[data-testid="notification-new"]') as HTMLElement | null,
+    };
+  }
+
+  it('wraps the full title instead of truncating it', () => {
+    const { head, title } = renderOne({ title: 'ส่งเอกสารเข้าตรวจสอบแล้ว' });
+
+    expect(title.textContent?.trim()).toBe('ส่งเอกสารเข้าตรวจสอบแล้ว');
+    expect(title.classList).not.toContain('truncate');
+    expect(title.classList).toContain('[overflow-wrap:anywhere]');
+    expect(head.classList).toContain('flex-wrap');
+  });
+
+  it('gives the title a full-width row below 744 and an inline flexible slot from 744', () => {
+    const { title } = renderOne({ isRead: true });
+
+    expect(title.classList).toContain('basis-full');
+    expect(title.classList).toContain('md:basis-48');
+    expect(title.classList).toContain('grow');
+    expect(title.classList).toContain('min-w-0');
+  });
+
+  it('keeps the "ใหม่" pill on the type-pill row on phones and after the title from 744', () => {
+    const { head, title, newPill } = renderOne({ isRead: false });
+
+    expect(newPill).not.toBeNull();
+    const children = Array.from(head.children);
+    // DOM order: [type pill, ใหม่, title] — on phones the title wraps to its own row under both pills.
+    expect(children.indexOf(newPill!)).toBeLessThan(children.indexOf(title));
+    expect(newPill!.classList).toContain('ml-auto');
+    expect(newPill!.classList).toContain('md:order-last');
+  });
+
+  it('renders no "ใหม่" pill for a read notification', () => {
+    const { newPill } = renderOne({ isRead: true });
+    expect(newPill).toBeNull();
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-17 (F88): a failed feed load is an error with a retry — it used to show
+ * "ยังไม่มีการแจ้งเตือน" as if the account had no notifications.
+ */
+describe('NotificationsListComponent — load failure (F88)', () => {
+  it('shows an error with a retry instead of the empty copy, and retry reloads page 1', () => {
+    const { feed } = buildTestBed();
+    const loadFeedSpy = vi.spyOn(feed, 'loadFeed').mockImplementation(() => { /* no-op */ });
+    vi.spyOn(feed, 'feedError').mockReturnValue(true);
+
+    const fixture = createFixture('buyer');
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="notifications-error"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('ยังไม่มีการแจ้งเตือน');
+
+    loadFeedSpy.mockClear();
+    (el.querySelector('[data-testid="notifications-retry"]') as HTMLButtonElement).click();
+    expect(loadFeedSpy).toHaveBeenCalledWith(1, 'buyer');
+  });
+});

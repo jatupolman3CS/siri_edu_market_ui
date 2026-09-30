@@ -17,7 +17,9 @@ import type {
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -87,7 +89,9 @@ function formatBaht(v: number): string {
     EmptyStateComponent,
     IconComponent,
     PaginationComponent,
+    RowMoreComponent,
     ImgFallbackDirective,
+    TableViewportDirective,
     ThbPipe,
     TranslatePipe,
   ],

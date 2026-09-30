@@ -3,7 +3,12 @@ import { provideRouter } from '@angular/router';
 import { BuyerOrdersPage } from './orders.page';
 import { AuthService, LibraryService, OrderService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
-import { idleActionState } from '../../../core/services/action-state';
+import {
+  errorActionState,
+  idleActionState,
+  loadingActionState,
+  type ActionState,
+} from '../../../core/services/action-state';
 import { mapOrder } from '../../../core/api-mappers/mappers';
 import type { Order } from '../../../core/models';
 import type { OrderTabFilter } from '../../../core/services/library.service';
@@ -37,11 +42,18 @@ function buildOrder(id: string, status: string, over: Record<string, unknown> = 
   });
 }
 
-function fakeLibrary(orders: Order[], ordersTab: OrderTabFilter = 'all') {
+function fakeLibrary(
+  orders: Order[],
+  ordersTab: OrderTabFilter = 'all',
+  ordersStatus: ActionState = idleActionState(),
+  ordersLoaded = true,
+) {
   return {
     orders: () => orders,
     ordersHasMore: () => false,
     ordersTab: () => ordersTab,
+    ordersState: () => ordersStatus,
+    ordersLoaded: () => ordersLoaded,
     setOrdersTab: vi.fn(async () => {}),
     refreshOrders: vi.fn(async () => {}),
     loadMoreOrders: vi.fn(async () => {}),
@@ -58,9 +70,9 @@ type FakeOrderService = { cancel: (id: string) => Promise<Order | null> };
 
 function renderWithOrders(
   orders: Order[],
-  options: { ordersTab?: OrderTabFilter; orderService?: FakeOrderService } = {},
+  options: { ordersTab?: OrderTabFilter; orderService?: FakeOrderService; ordersState?: ActionState; ordersLoaded?: boolean } = {},
 ): { fixture: ReturnType<typeof TestBed.createComponent<BuyerOrdersPage>>; library: FakeLibrary; orderService: FakeOrderService } {
-  const library = fakeLibrary(orders, options.ordersTab ?? 'all');
+  const library = fakeLibrary(orders, options.ordersTab ?? 'all', options.ordersState, options.ordersLoaded ?? true);
   const orderService = options.orderService ?? fakeOrderService();
 
   TestBed.configureTestingModule({
@@ -257,11 +269,10 @@ describe('BuyerOrdersPage — tabs (AC-11/AC-16)', () => {
   }
 
   /**
-   * ng-zorro's `nz-tabs` renders the clickable nav item as `.ant-tabs-tab` — mirrors
-   * `clickTabByLabel` in `document-detail.page.spec.ts`.
+   * responsive-ui v1 U5-3: the tab strip is a `.chip-row` of `role="tab"` buttons (was nz-tabs).
    */
   function clickTabByLabel(fixture: { nativeElement: HTMLElement; detectChanges: () => void }, label: string): void {
-    const tabs = Array.from(fixture.nativeElement.querySelectorAll('.ant-tabs-tab')) as HTMLElement[];
+    const tabs = Array.from(fixture.nativeElement.querySelectorAll('.chip-row [role="tab"]')) as HTMLElement[];
     const target = tabs.find((el) => (el.textContent ?? '').trim() === label);
     if (!target) throw new Error(`tab not found: ${label}`);
     target.click();
@@ -288,7 +299,7 @@ describe('BuyerOrdersPage — tabs (AC-11/AC-16)', () => {
     const library = TestBed.inject(LibraryService);
     expect(library.ordersTab()).toBe('all');
 
-    const activeTab = fixture.nativeElement.querySelector('.ant-tabs-tab-active');
+    const activeTab = fixture.nativeElement.querySelector('.chip-row [role="tab"][aria-selected="true"]');
     expect(activeTab?.textContent?.trim()).toBe('ทั้งหมด');
   });
 
@@ -361,5 +372,67 @@ describe('BuyerOrdersPage — loyalty redeemed badge', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('คะแนน (ลด');
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-17 (F88): "ยังไม่มีคำสั่งซื้อ" only for a list that really loaded empty — the
+ * page used to show it while the GET was pending and after it failed, with no retry.
+ */
+describe('BuyerOrdersPage — data states (F88)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('shows a loading skeleton, not the empty copy, while the first page is pending', () => {
+    const { fixture } = renderWithOrders([], { ordersState: loadingActionState(), ordersLoaded: false });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="orders-loading"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('ยังไม่มีคำสั่งซื้อ');
+  });
+
+  it('shows an error with a retry that re-issues the GET, not the empty copy', () => {
+    const { fixture, library } = renderWithOrders([], { ordersState: errorActionState('โหลดคำสั่งซื้อไม่สำเร็จ'), ordersLoaded: false });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="orders-error"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('ยังไม่มีคำสั่งซื้อ');
+    const before = library.refreshOrders.mock.calls.length;
+    (el.querySelector('[data-testid="orders-retry"]') as HTMLButtonElement).click();
+    expect(library.refreshOrders.mock.calls.length).toBe(before + 1);
+  });
+
+  it('shows the empty copy only once a page has loaded with no orders', () => {
+    const { fixture } = renderWithOrders([], { ordersState: idleActionState(), ordersLoaded: true });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('ยังไม่มีคำสั่งซื้อ');
+    expect(el.querySelector('[data-testid="orders-loading"]')).toBeNull();
+    expect(el.querySelector('[data-testid="orders-error"]')).toBeNull();
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-1 (G2-8): at 320 en the shrink-0 "View product" button squeezed the item
+ * title to ~70px. The title column now has a 7rem floor and the row wraps, so the button drops to
+ * its own (right-aligned) line instead.
+ */
+describe('BuyerOrdersPage — order item row at narrow widths (R-1, G2-8)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('floors the title column and lets the view-product button wrap to its own line', () => {
+    const order = buildOrder('order-1', 'paid', {
+      items: [{ id: 'i1', documentId: 'doc-1', title: 'E2E cover test document', priceAtPurchase: 99 }],
+    });
+    const { fixture } = renderWithOrders([order]);
+    const row = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="order-item-row"]') as HTMLElement;
+
+    expect(row).not.toBeNull();
+    expect(row.classList).toContain('flex-wrap');
+    const titleColumn = row.children[1] as HTMLElement;
+    expect(titleColumn.classList).toContain('flex-1');
+    expect(titleColumn.classList).toContain('min-w-[7rem]');
+    expect(titleColumn.classList).not.toContain('min-w-0');
+    const link = row.querySelector('a') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/document/doc-1');
+    expect(link.classList).toContain('shrink-0');
+    expect(link.classList).toContain('ml-auto');
+    expect(link.classList).toContain('min-h-11');
   });
 });

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NotificationSettingsComponent } from './notification-settings.component';
 import { NotificationService, type NotificationSettingItem } from '../../../core/services';
@@ -116,5 +116,82 @@ describe('NotificationSettingsComponent (notification-master-config v1 §3.6)', 
     component.toggle('payout', false);
 
     expect(updateSpy).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * responsive-ui v1.4 gate fix (G2-6) F148: the switches are `nzControl`led, so they show only the
+ * server-confirmed `isEnabled` — a failed PUT (reported by NotificationService) leaves the switch
+ * where it was, a successful one shows what the server answered with.
+ */
+describe('NotificationSettingsComponent — save-on-change (responsive v1.4 F148)', () => {
+  function switchButton(fixture: { nativeElement: HTMLElement }, key: string): HTMLButtonElement {
+    const button = fixture.nativeElement.querySelector<HTMLButtonElement>(`nz-switch[name="notif-switch-${key}"] button`);
+    if (!button) throw new Error(`switch not rendered: ${key}`);
+    return button;
+  }
+
+  /** `[ngModel]` writes into the switch on a microtask, so settle → render twice. */
+  async function flush(fixture: { detectChanges: () => void }): Promise<void> {
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < 4; j++) await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+    }
+  }
+
+  it('a failed save keeps the switch on its saved value and toasts no success', async () => {
+    const { fixture, component, updateSpy } = renderCard([setting({ key: 'review', isEnabled: true })]);
+    const success = vi.spyOn(TestBed.inject(NzMessageService), 'success');
+    updateSpy.mockReturnValue(throwError(() => new Error('500')));
+    await flush(fixture);
+    const button = switchButton(fixture, 'review');
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+
+    button.click();
+    await flush(fixture);
+
+    expect(updateSpy).toHaveBeenCalledWith({ settings: { review: false } });
+    expect(success).not.toHaveBeenCalled();
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+    expect(component.savingKey()).toBeNull();
+  });
+
+  it('a successful save shows the value the server answered with', async () => {
+    const { fixture, updateSpy } = renderCard([setting({ key: 'review', isEnabled: true })]);
+    const notifications = TestBed.inject(NotificationService);
+    const success = vi.spyOn(TestBed.inject(NzMessageService), 'success');
+    updateSpy.mockImplementation((request) => {
+      // mirrors NotificationService.updateSettings: settings() is replaced from the PUT response
+      const saved = [setting({ key: 'review', isEnabled: request.settings?.['review'] ?? true })];
+      notifications.setSettingsForTest(saved);
+      return of(saved);
+    });
+    await flush(fixture);
+
+    switchButton(fixture, 'review').click();
+    await flush(fixture);
+
+    expect(switchButton(fixture, 'review').classList.contains('ant-switch-checked')).toBe(false);
+    expect(success).toHaveBeenCalledWith('อัปเดตการแจ้งเตือนแล้ว');
+  });
+
+  it('the flipped switch spins, stays put, and a second flip mid-save sends nothing', async () => {
+    const { fixture, component, updateSpy } = renderCard([
+      setting({ key: 'review', isEnabled: true }),
+      setting({ key: 'sale', isEnabled: false }),
+    ]);
+    updateSpy.mockReturnValue(NEVER);
+    await flush(fixture);
+
+    switchButton(fixture, 'review').click();
+    await flush(fixture);
+
+    expect(switchButton(fixture, 'review').classList.contains('ant-switch-loading')).toBe(true);
+    expect(switchButton(fixture, 'review').classList.contains('ant-switch-checked')).toBe(true);
+    expect(switchButton(fixture, 'sale').classList.contains('ant-switch-loading')).toBe(false);
+
+    component.toggle('sale', true);
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AdminUsersPage } from './users.page';
 import { AdminService } from '../../../core/services';
 import type { AdminUserRow } from '../../../core/models';
 import type { PagedResult } from '../../../core/services/infinite-pager';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 function userRow(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
   return {
@@ -142,5 +145,118 @@ describe('AdminUsersPage', () => {
     expect(page.pageSize()).toBe(50);
     expect(page.page()).toBe(1);
     expect(searchSpy).toHaveBeenCalledWith(expect.objectContaining({ page: 1, pageSize: 50 }));
+  });
+});
+
+describe('AdminUsersPage — responsive table + filter sheet (responsive-ui v1 U4-2 / U4-5)', () => {
+  it('renders an .rtable: one title, one status, max 2 keys, secondaries behind the ⋯ button', async () => {
+    const { fixture } = renderPage({ items: [userRow()] });
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const table = el.querySelector('table') as HTMLTableElement;
+    expect(table.classList.contains('rtable')).toBe(true);
+    expect(table.className).not.toMatch(/min-w-\[/);
+    expect(table.querySelectorAll('thead th.rt-more').length).toBe(1);
+
+    const row = table.querySelector('tbody tr') as HTMLTableRowElement;
+    expect(row.querySelectorAll('td.rt-title').length).toBe(1);
+    expect(row.querySelectorAll('td.rt-status').length).toBe(1);
+    const keys = row.querySelectorAll('td.rt-key');
+    expect(keys.length).toBe(2);
+    keys.forEach((k) => expect(k.getAttribute('data-label')).toBeTruthy());
+    expect(row.querySelectorAll('td.rt-secondary').length).toBe(2);
+    expect(row.querySelector('td.rt-more app-row-more')).not.toBeNull();
+    expect(row.querySelector('td.rt-action a[href="/admin/users/user-1"]')).not.toBeNull();
+  });
+
+  it('counts the sheet filters (sort excluded) and clears them without touching the search', async () => {
+    const { fixture } = renderPage();
+    await settle();
+    const page = fixture.componentInstance;
+
+    page.q.set('somchai');
+    page.sort.set('oldest');
+    expect(page.activeFilterCount()).toBe(0);
+
+    page.role.set('seller');
+    page.status.set('banned');
+    page.joinedFrom.set('2026-01-01');
+    expect(page.activeFilterCount()).toBe(3);
+
+    page.clearFilters();
+    expect(page.activeFilterCount()).toBe(0);
+    expect(page.q()).toBe('somchai');
+    expect(page.sort()).toBe('oldest');
+  });
+
+  it('renders the filter fields inline and offers the phone ตัวกรอง (n) button', async () => {
+    const { fixture } = renderPage();
+    await settle();
+    fixture.componentInstance.role.set('admin');
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="filter-inline"] select')).not.toBeNull();
+    expect(el.querySelector('[data-testid="filter-sheet-button"]')?.textContent).toContain('(1)');
+  });
+});
+
+describe('AdminUsersPage — table viewport (responsive-ui v1.6 R-27)', () => {
+  const rows = (n: number) => Array.from({ length: n }, (_, i) => userRow({ id: `user-${i + 1}` }));
+
+  it('starts at 10 rows per page: the first list request carries pageSize 10 and the selector shows 10', async () => {
+    const { fixture, searchSpy } = renderPage({ items: rows(12), totalCount: 40, totalPages: 4 });
+    await settle();
+    fixture.detectChanges();
+
+    expect(searchSpy).toHaveBeenCalled();
+    expect(searchSpy.mock.calls[0][0]).toEqual(expect.objectContaining({ page: 1, pageSize: 10 }));
+    const pagination = fixture.debugElement.query(By.directive(PaginationComponent)).componentInstance as PaginationComponent;
+    expect(pagination.pageSize()).toBe(10);
+    const select = (fixture.nativeElement as HTMLElement).querySelector('app-pagination select') as HTMLSelectElement;
+    expect(select.value).toBe('10');
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['10', '20', '50', '100']);
+  });
+
+  it('puts the table in a named table viewport with the pagination after it, outside', async () => {
+    const { fixture } = renderPage({ items: rows(12) });
+    await settle();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapper = (root.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const viewport = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    expect(viewport.rtLabel()).toBe('ผู้ใช้ทั้งหมด');
+  });
+
+  it('a new page, page size or applied filter scrolls the table to its top; a draft or the same query does not', async () => {
+    const { fixture } = renderPage({ items: rows(12), totalCount: 40, totalPages: 4 });
+    await settle();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const wrapper = ((fixture.nativeElement as HTMLElement).querySelector('table.rtable') as HTMLTableElement)
+      .parentElement as HTMLElement;
+    const scrollTopAfter = async (act: () => void): Promise<number> => {
+      wrapper.scrollTop = 300;
+      act();
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      return wrapper.scrollTop;
+    };
+
+    expect(await scrollTopAfter(() => page.onPageChange(2))).toBe(0);
+    expect(await scrollTopAfter(() => page.onPageSizeChange(50))).toBe(0);
+    expect(await scrollTopAfter(() => page.q.set('somchai'))).toBe(300);
+    expect(await scrollTopAfter(() => page.applyFilters())).toBe(0);
+    expect(await scrollTopAfter(() => page.applyFilters())).toBe(300);
+    expect(await scrollTopAfter(() => page.role.set('seller'))).toBe(300);
+    expect(await scrollTopAfter(() => page.applyFilters())).toBe(0);
   });
 });

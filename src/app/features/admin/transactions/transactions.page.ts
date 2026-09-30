@@ -11,6 +11,8 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 @Component({
   selector: 'app-admin-transactions',
@@ -23,6 +25,8 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     ThbPipe,
     TimeAgoPipe,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transactions.page.html',

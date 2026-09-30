@@ -16,6 +16,7 @@ import {
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import type { AnnouncementAdmin } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -70,6 +71,7 @@ const STATUS_KEYS: Record<AnnouncementStatus, string> = {
     PaginationComponent,
     ImgFallbackDirective,
     TranslatePipe,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './announcements-admin.page.html',

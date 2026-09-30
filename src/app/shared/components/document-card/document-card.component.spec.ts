@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { DocumentCardComponent } from './document-card.component';
 import { OptimizedImageComponent } from '../optimized-image/optimized-image.component';
 import { AdsService, CartService, QuickViewService, WishlistService } from '../../../core/services';
@@ -108,7 +108,7 @@ describe('DocumentCardComponent — marketplace-cover-preview-count v1 §4 (AC-1
     const fixture = render(buildDoc({ gallery }), vi.fn(), 'compact');
     const component = fixture.componentInstance;
 
-    const dots = (fixture.nativeElement as HTMLElement).querySelectorAll('a.relative.block span.transition-colors');
+    const dots = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="compact-cover"] > a span.transition-colors');
     expect(dots.length).toBe(gallery.length);
     expect(component.activeGalleryIndex()).toBe(0);
   });
@@ -116,7 +116,7 @@ describe('DocumentCardComponent — marketplace-cover-preview-count v1 §4 (AC-1
   it('AC-10: renders no dots when the card has 1 or fewer gallery images', () => {
     const fixture = render(buildDoc({ gallery: ['/img/only.jpg'] }), vi.fn(), 'compact');
 
-    const dots = (fixture.nativeElement as HTMLElement).querySelectorAll('a.relative.block span.transition-colors');
+    const dots = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="compact-cover"] > a span.transition-colors');
     expect(dots.length).toBe(0);
   });
 
@@ -223,5 +223,66 @@ describe('DocumentCardComponent — image-upload-optimization v2 (AC-28)', () =>
     const optimizedImage = fixture.debugElement.query(By.directive(OptimizedImageComponent));
 
     expect((optimizedImage.componentInstance as OptimizedImageComponent).lightbox()).toBe(false);
+  });
+});
+
+/** responsive-ui F5 / F168: compact-card touch targets and narrow-width wrapping. */
+describe('DocumentCardComponent — compact touch targets (F5 / F168)', () => {
+  it('renders the wishlist heart outside the cover link (no <button> inside <a href>)', () => {
+    const fixture = render(buildDoc(), vi.fn(), 'compact');
+    const heart = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="compact-wishlist"]') as HTMLElement;
+    expect(heart).not.toBeNull();
+    expect(heart.closest('a[href]')).toBeNull();
+    expect(heart.classList.contains('hit-44')).toBe(true);
+  });
+
+  it('toggles the wishlist on tap without navigating to the document', async () => {
+    const fixture = render(buildDoc(), vi.fn(), 'compact');
+    const router = TestBed.inject(Router);
+    const wishlist = TestBed.inject(WishlistService) as unknown as { toggle: ReturnType<typeof vi.fn> };
+    const heart = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="compact-wishlist"]') as HTMLButtonElement;
+    heart.click();
+    await fixture.whenStable();
+    expect(wishlist.toggle).toHaveBeenCalledTimes(1);
+    expect(router.url).toBe('/');
+  });
+
+  it('gives the add-to-cart button a touch hit area and keeps it from shrinking', () => {
+    const fixture = render(buildDoc(), vi.fn(), 'compact');
+    const cart = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="compact-add-to-cart"]') as HTMLElement;
+    expect(cart.classList.contains('hit-44')).toBe(true);
+    expect(cart.classList.contains('shrink-0')).toBe(true);
+  });
+});
+
+/** responsive-ui v1.4 closing gate, item G1-2 (G-12 title link, G-14d studio name + title clipping). */
+describe('DocumentCardComponent — compact title link and truncation (G1-2)', () => {
+  it('makes the title link a 44px touch target that still leads to the document', () => {
+    const fixture = render(buildDoc(), vi.fn(), 'compact');
+    const link = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="compact-title-link"]') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/document/doc-1');
+    expect(link.className).toContain('block');
+    expect(link.className).toContain('[@media(pointer:coarse)]:min-h-11');
+    expect(link.querySelector('h3')?.textContent?.trim()).toBe('สรุปเคมี ม.6');
+  });
+
+  it('wraps long unbroken title tokens so line-clamp is the only (ellipsised) truncation', () => {
+    const fixture = render(buildDoc({ title: 'เอกสารทดสอบ tokx52d8ec4b0123456789abcdef' }), vi.fn(), 'compact');
+    const h3 = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="compact-title-link"] h3') as HTMLElement;
+    expect(h3.className).toContain('line-clamp-2');
+    expect(h3.className).toContain('text-ellipsis');
+    expect(h3.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  it('lets the studio name drop to its own line instead of truncating beside the type pill', () => {
+    const doc = buildDoc();
+    const fixture = render({ ...doc, seller: { ...doc.seller, studioName: 'สตูดิโอครูสมศรีคณิตศาสตร์ ม.ปลาย' } }, vi.fn(), 'compact');
+    const name = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="compact-studio"]') as HTMLElement;
+    expect(name.textContent?.trim()).toBe('สตูดิโอครูสมศรีคณิตศาสตร์ ม.ปลาย');
+    expect(name.className).toContain('truncate');
+    expect(name.className).toContain('max-w-full');
+    const row = name.parentElement as HTMLElement;
+    expect(row.className).toContain('flex-wrap');
+    expect(row.className).toContain('justify-between');
   });
 });

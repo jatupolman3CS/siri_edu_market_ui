@@ -46,11 +46,16 @@
                   nz-tooltip
                   [nzTooltipTitle]="n.isLocked ? (n.lockReason ?? '') : ''"
                 >
+                  <!-- responsive-ui v1.4 R-17 (F148): nzControl — the switch shows only the
+                       server-confirmed n.isEnabled (the service replaces settings() from the PUT
+                       response), so a failed save no longer leaves it showing the new value. -->
                   <nz-switch
                     [attr.name]="'notif-switch-' + n.key"
                     [ngModel]="n.isEnabled"
+                    [nzControl]="true"
+                    [nzLoading]="savingKey() === n.key"
                     [nzDisabled]="n.isLocked"
-                    (ngModelChange)="toggle(n.key, $event)"
+                    (click)="toggle(n.key, !n.isEnabled)"
                   />
                 </span>
               </div>

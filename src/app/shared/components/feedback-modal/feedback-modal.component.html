@@ -66,14 +66,22 @@
 
         <div class="flex flex-wrap gap-2 mb-2">
           @for (att of attachments(); track $index) {
-            <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-border bg-slate-100 group">
-              <img [src]="att.previewUrl" [alt]="att.file.name" class="w-full h-full object-cover" />
+            <div class="relative w-20 h-20 group">
+              <!-- Only the image is clipped to the rounded box: the ✕ below sits outside the clip, so
+                   the rounded corner cannot cut into its hit area (G-12, G-14c). -->
+              <div class="w-full h-full rounded-lg overflow-hidden border border-border bg-slate-100">
+                <img [src]="att.previewUrl" [alt]="att.file.name" class="w-full h-full object-cover" />
+              </div>
+              <!-- 44×44 hit area in the thumbnail's top-right corner (G-12 / R-2); the visible dot stays
+                   20px, 6px in, fully inside the rounded corner. -->
               <button
                 type="button"
-                class="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center text-xs opacity-80 hover:opacity-100"
+                class="absolute top-0 right-0 w-11 h-11 p-1.5 flex items-start justify-end text-white opacity-80 hover:opacity-100"
+                [attr.aria-label]="'common.deleteImage' | trans"
+                data-testid="feedback-attachment-remove"
                 (click)="removeAttachment($index)"
               >
-                ✕
+                <span aria-hidden="true" class="w-5 h-5 bg-black/60 rounded-full flex items-center justify-center text-xs">✕</span>
               </button>
             </div>
           }

@@ -367,7 +367,8 @@ describe('CrmService — segment users pager (§3.5)', () => {
       (r) => r.method === 'GET' && r.path === '/api/admin/crm/segments/repeat_buyer/users',
     );
     expect(call?.search).toContain('Page=1');
-    expect(call?.search).toContain('PageSize=20');
+    // responsive-ui v1.6 R-27 item 10: every paginated table starts at 10 rows per page.
+    expect(call?.search).toMatch(/[?&]PageSize=10(&|$)/);
   });
 
   it('onSegmentUsersPageChange() re-fetches with the same code and the new page', async () => {
@@ -525,7 +526,8 @@ describe('CrmService — admin demand gaps pager (crm-driven-discovery v1 §3.4)
     expect(service.demandGapsLoading()).toBe(false);
     const call = requests.find((r) => r.method === 'GET' && r.path === '/api/admin/crm/demand-gaps');
     expect(call?.search).toContain('Page=1');
-    expect(call?.search).toContain('PageSize=20');
+    // responsive-ui v1.6 R-27 item 10: every paginated table starts at 10 rows per page.
+    expect(call?.search).toMatch(/[?&]PageSize=10(&|$)/);
   });
 
   it('a row with matchedFacetLabel: null maps through as-is (§3.4 "หมวดที่เกี่ยวข้อง" = "—")', async () => {

@@ -1,7 +1,7 @@
 <div class="space-y-6">
-  <header class="flex items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.sellerApps.title' | trans }}</h1>
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="heading-1 font-extrabold text-ink">{{ 'admin.sellerApps.title' | trans }}</h1>
       <p class="text-sm text-ink-soft">{{ 'admin.sellerApps.desc' | trans }}</p>
     </div>
     <button class="btn-ghost" [disabled]="loading()" (click)="reload()">
@@ -20,11 +20,12 @@
   } @else {
     <div class="space-y-4">
       @for (item of items(); track item.userId) {
-        <article class="card-soft p-6">
+        <article class="card-soft p-4 md:p-6">
           <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0">
-              <h2 class="text-lg font-bold text-ink">{{ item.studioName }}</h2>
-              <p class="text-sm text-ink-soft">
+            <!-- R-5 (F150): applicant text (studio name, bio, URLs, specialties) breaks anywhere. -->
+            <div class="min-w-0 flex-1 basis-[12rem]">
+              <h2 class="text-lg font-bold text-ink [overflow-wrap:anywhere]">{{ item.studioName }}</h2>
+              <p class="text-sm text-ink-soft [overflow-wrap:anywhere]">
                 {{ item.ownerName }} · {{ item.email }}
               </p>
               @if (item.appliedAt) {
@@ -53,13 +54,13 @@
           </div>
 
           @if (item.bio) {
-            <p class="text-sm text-ink-soft mt-4 whitespace-pre-line">{{ item.bio }}</p>
+            <p class="text-sm text-ink-soft mt-4 whitespace-pre-line [overflow-wrap:anywhere]">{{ item.bio }}</p>
           }
 
           @if (item.specialties?.length) {
             <ul class="flex flex-wrap gap-2 mt-4">
               @for (specialty of item.specialties; track specialty) {
-                <li class="pill-pink font-semibold">
+                <li class="pill-pink font-semibold max-w-full [overflow-wrap:anywhere]">
                   {{ specialty }}
                 </li>
               }

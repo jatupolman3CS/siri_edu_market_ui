@@ -1,4 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { CrmUserPanelComponent } from './crm-user-panel.component';
 import { CrmService } from '../../../core/services';
 import type { CrmUserDetail } from '../../../core/models';
@@ -67,7 +70,7 @@ function buildCrmFake(detail: CrmUserDetail | null) {
 function render(crmFake: ReturnType<typeof buildCrmFake>, userId = 'user-1') {
   TestBed.configureTestingModule({
     imports: [CrmUserPanelComponent],
-    providers: [{ provide: CrmService, useValue: crmFake }],
+    providers: [{ provide: CrmService, useValue: crmFake }, provideNoopAnimations()],
   });
   const fixture = TestBed.createComponent(CrmUserPanelComponent);
   fixture.componentRef.setInput('userId', userId);
@@ -93,8 +96,30 @@ describe('CrmUserPanelComponent', () => {
     expect(text).toContain('ซื้อซ้ำ');
     expect(text).toContain('ความมั่นใจในการวิเคราะห์ 62%');
 
-    const segmentEl = fixture.nativeElement.querySelector('[title]') as HTMLElement | null;
-    expect(segmentEl?.getAttribute('title')).toBe('ซื้อไปแล้ว 2 รายการ');
+    // The reason is an nz-tooltip (opens on tap/hover/focus), not a native title= that touch
+    // browsers never show (responsive fix F70).
+    const segmentDe = fixture.debugElement.query(By.directive(NzTooltipDirective));
+    expect(segmentDe).toBeTruthy();
+    expect(segmentDe.injector.get(NzTooltipDirective).title).toBe('ซื้อไปแล้ว 2 รายการ');
+    const segmentEl = segmentDe.nativeElement as HTMLElement;
+    expect(segmentEl.hasAttribute('title')).toBe(false);
+    expect(segmentEl.getAttribute('tabindex')).toBe('0');
+    // Screen readers get the reason in the pill's own text.
+    expect(segmentEl.textContent).toContain('ซื้อไปแล้ว 2 รายการ');
+  });
+
+  it('shows the segment reason tooltip when the pill receives keyboard focus and hides it on blur', () => {
+    const fixture = render(buildCrmFake(buildDetail()));
+    const segmentDe = fixture.debugElement.query(By.directive(NzTooltipDirective));
+    const tooltip = segmentDe.injector.get(NzTooltipDirective);
+    const show = vi.spyOn(tooltip, 'show');
+    const hide = vi.spyOn(tooltip, 'hide');
+
+    segmentDe.triggerEventHandler('focus', new FocusEvent('focus'));
+    expect(show).toHaveBeenCalled();
+
+    segmentDe.triggerEventHandler('blur', new FocusEvent('blur'));
+    expect(hide).toHaveBeenCalled();
   });
 
   it('shows the "ปฏิเสธการติดตามพฤติกรรม" banner instead of facets when trackingEnabled is false', () => {

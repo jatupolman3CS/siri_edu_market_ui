@@ -13,10 +13,12 @@ import { AuthService, SellerService } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -29,11 +31,13 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     EmptyStateComponent,
     IconComponent,
     PaginationComponent,
+    RowMoreComponent,
     NzModalModule,
     ThbPipe,
     CompactPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
+    TableViewportDirective,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +57,19 @@ export class SellerDocumentsPage {
   readonly total = signal(0);
   readonly items = signal<DocumentItem[]>([]);
   readonly loading = signal(false);
+  /** True when the last list request failed (R-17: error state + retry, not "no documents"). */
+  readonly loadFailed = signal(false);
+
+  /**
+   * responsive-ui v1.4 R-17 (G-27, F88): four distinct states. While a request is pending the rows
+   * already on screen stay (paging / filtering doesn't blank the table); with none yet it is a
+   * skeleton. "ยังไม่มีเอกสาร" only shows for a request that answered with zero rows.
+   */
+  readonly listState = computed<'loading' | 'error' | 'empty' | 'data'>(() => {
+    if (this.loading() && this.items().length === 0) return 'loading';
+    if (this.loadFailed()) return 'error';
+    return this.items().length === 0 ? 'empty' : 'data';
+  });
 
   readonly searchInput = signal<string>('');
   readonly search = signal<string>('');
@@ -81,6 +98,7 @@ export class SellerDocumentsPage {
 
   async reload(): Promise<void> {
     this.loading.set(true);
+    this.loadFailed.set(false);
     try {
       const res = await this.seller.listDocumentsPaged({
         status: this.status(),
@@ -88,6 +106,10 @@ export class SellerDocumentsPage {
         page: this.page(),
         pageSize: this.pageSize(),
       });
+      if (res.failed) {
+        this.loadFailed.set(true);
+        return;
+      }
       this.items.set(res.items ?? []);
       this.total.set(res.totalCount ?? 0);
     } finally {

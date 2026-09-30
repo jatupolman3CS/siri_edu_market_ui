@@ -1,12 +1,12 @@
-<div class="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container max-w-4xl py-6 sm:py-8">
   <header
-    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <app-icon name="shield" [size]="14" />
       <span>{{ 'accountPrivacy.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'accountPrivacy.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'accountPrivacy.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">
       {{ 'accountPrivacy.desc' | trans }}
     </p>
@@ -21,7 +21,7 @@
       <!-- Tracking toggle -->
       <section class="card-tile">
         <div class="flex items-start justify-between gap-4">
-          <div>
+          <div class="min-w-0">
             <h2 class="text-lg font-bold text-ink mb-1">{{ 'accountPrivacy.trackingTitle' | trans }}</h2>
             @if (profile && !profile.trackingEnabled) {
               <p class="text-xs text-amber-700">
@@ -29,11 +29,15 @@
               </p>
             }
           </div>
+          <!-- responsive-ui v1.4 R-17 (F148): nzControl — the switch shows only the
+               server-confirmed trackingEnabled (setTracking replaces myProfile from the PUT
+               response), so a failed save no longer leaves it showing the new value. -->
           <nz-switch
             name="crm-tracking-switch"
             [ngModel]="profile?.trackingEnabled ?? true"
+            [nzControl]="true"
             [nzLoading]="togglingTracking()"
-            (ngModelChange)="onToggleTracking($event)"
+            (click)="onToggleTracking(!(profile?.trackingEnabled ?? true))"
           />
         </div>
       </section>
@@ -51,7 +55,7 @@
             @for (interest of profile.topInterests; track interest.facetType + interest.value) {
               <li class="p-3 rounded-2xl border border-line">
                 <div class="flex items-center justify-between gap-3">
-                  <span class="text-sm font-semibold text-ink">{{ interest.label }}</span>
+                  <span class="text-sm font-semibold text-ink min-w-0 break-words">{{ interest.label }}</span>
                   <span class="text-xs font-bold text-pink-600">{{ interest.score * 100 | number: '1.0-0' }}%</span>
                 </div>
                 <p class="text-xs text-ink-muted mt-1">{{ interest.reason }}</p>

@@ -10,6 +10,8 @@
  *      entry points: `core/api/sdk.gen`, `core/api/client.gen`, or the `core/api`
  *      barrel that re-exports both. Calls go through a service in `core/services/`.
  *   2. Templates must NOT interpolate a raw date field (B-04 / S-09).
+ *   3. Templates must NOT put a `.safe-*` safe-area helper next to a padding utility on the same
+ *      side (responsive-ui v1) — the helper replaces that padding with the bare inset.
  */
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname, relative } from 'node:path';
@@ -86,7 +88,49 @@ function findSdkImportsInFeatures(text) {
   return hits;
 }
 
+/**
+ * responsive-ui v1 gate: `.safe-top` / `.safe-bottom` / `.safe-x` (styles.scss) set a padding
+ * side to the safe-area inset ALONE. Next to `px-4 sm:px-6 py-8` they zeroed the 404 page's
+ * padding (CTA flush against the screen edge at 375px), the LINE modal's `p-4` and the admin
+ * rail footer's `py-2` — on every device, because the inset is 0 wherever there is no notch.
+ * An element that has its own padding on a side must compose the inset into that padding with
+ * an arbitrary value (`pb-[calc(0.5rem+var(--safe-bottom))]`, `pl-[max(1rem,var(--safe-left))]`)
+ * instead of adding the helper.
+ *
+ * Matches one `class="…"` attribute at a time, variants included (`sm:px-6` clashes with
+ * `safe-x` just as much as `px-6` does).
+ */
+const SAFE_AREA_CLASHES = {
+  'safe-top': /^(?:p|py|pt)-/,
+  'safe-bottom': /^(?:p|py|pb)-/,
+  'safe-x': /^(?:p|px|pl|pr|ps|pe)-/,
+};
+
+function findSafeAreaPaddingClashes(text) {
+  const hits = [];
+  for (const match of text.matchAll(/(?:^|\s)class\s*=\s*"([^"]*)"/g)) {
+    const tokens = match[1].split(/\s+/).filter(Boolean);
+    // `sm:!-pt-2` → `pt-2`: strip variants, the important flag and a negative sign.
+    const bare = tokens.map((t) => t.split(':').pop().replace(/^!/, '').replace(/^-/, ''));
+    for (const [helper, clashRe] of Object.entries(SAFE_AREA_CLASHES)) {
+      if (!bare.includes(helper)) continue;
+      const clashing = tokens.filter((t, i) => clashRe.test(bare[i]));
+      if (clashing.length === 0) continue;
+      const line = text.slice(0, match.index).split(/\r?\n/).length + (match[0].startsWith('\n') ? 1 : 0);
+      hits.push(`${line}: ${helper} + ${clashing.join(' ')}`);
+    }
+  }
+  return hits;
+}
+
 const RULES = [
+  {
+    id: 'no-safe-area-padding-clash',
+    pattern: 'src/app/**/*.html',
+    matches: findSafeAreaPaddingClashes,
+    message:
+      '.safe-top/.safe-bottom/.safe-x replace that padding side with the bare safe-area inset (0 on most devices), wiping the co-located padding utility. Compose the inset into the padding instead, e.g. pb-[calc(0.5rem+var(--safe-bottom))] or pl-[max(1rem,var(--safe-left))] — see styles.scss "Safe-area helpers".',
+  },
   {
     id: 'no-sdk-in-features',
     pattern: 'src/app/features/**/*.ts',

@@ -18,6 +18,8 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import type { Category, SubcategoryAdmin } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /** Subcategory being deleted while `subcategoryState()` is holding a 409 — see confirmDeleteSubcategory. */
 interface DeleteConflict {
@@ -59,6 +61,8 @@ function parseSubscriptionPriceInput(
     CompactPipe,
     ThbPipe,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories-admin.page.html',

@@ -102,6 +102,8 @@ export class NotificationConfigAdminPage {
 
   /** eventKey currently mid-request — disables that row and guards against double submits. */
   readonly savingKey = signal<string | null>(null);
+  /** The switch whose flip is in flight — the only one of the row that shows a spinner. */
+  readonly savingSwitch = signal<NotificationConfigSwitch | null>(null);
 
   /** §4.4: numeric edits live here until they are committed, so typing never fires a PUT. */
   private readonly drafts = signal<Readonly<Record<string, NumberDraft>>>({});
@@ -159,6 +161,10 @@ export class NotificationConfigAdminPage {
     return this.isRowBusy(item) || !this.supportsChannel(item, field);
   }
 
+  isSwitchSaving(item: NotificationEventConfigItem, field: NotificationConfigSwitch): boolean {
+    return this.isRowBusy(item) && this.savingSwitch() === field;
+  }
+
   throttleDraft(item: NotificationEventConfigItem): number {
     return this.drafts()[item.eventKey]?.throttleWindowMinutes ?? item.throttleWindowMinutes;
   }
@@ -194,10 +200,20 @@ export class NotificationConfigAdminPage {
     });
   }
 
-  /** Switches save on flip (same pattern as the job toggles on `/admin/settings`). */
+  /**
+   * Switches save on flip (same pattern as the job toggles on `/admin/settings`).
+   *
+   * responsive-ui v1.4 R-17 (F148): the switch is `nzControl`led and bound to `item[field]`, so it
+   * keeps the saved value until `config.update` replaces the row with the server's answer — a
+   * failed PUT leaves it where it was. A flip while any row is saving is ignored (it used to move
+   * the switch without sending anything).
+   */
   toggle(item: NotificationEventConfigItem, field: NotificationConfigSwitch, value: boolean): void {
-    if (this.switchDisabled(item, field)) return;
-    void this.save(item, { ...this.requestOf(item), [field]: value });
+    if (this.savingKey() || this.switchDisabled(item, field)) return;
+    this.savingSwitch.set(field);
+    void this.save(item, { ...this.requestOf(item), [field]: value }).finally(() =>
+      this.savingSwitch.set(null),
+    );
   }
 
   /** §4.4: called on blur and by the row's confirm button — never while typing. */

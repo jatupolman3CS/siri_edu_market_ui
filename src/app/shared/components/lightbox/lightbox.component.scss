@@ -1,3 +1,22 @@
 :host {
   display: contents;
 }
+
+/* Full dynamic-viewport height (responsive-ui.md §4.6: custom fixed overlays). The fixed root holds
+   the dialog plus cdkTrapFocus's anchors; the dialog fills it. */
+.lightbox-root {
+  height: 100dvh;
+}
+
+/* Safe-area insets on the dialog itself, so the image never sits under a notch or home bar. */
+.lightbox-overlay {
+  padding-top: max(16px, var(--safe-top));
+  padding-bottom: max(16px, var(--safe-bottom));
+  padding-left: max(16px, var(--safe-left));
+  padding-right: max(16px, var(--safe-right));
+}
+
+.lightbox-close {
+  top: calc(12px + var(--safe-top));
+  right: calc(12px + var(--safe-right));
+}

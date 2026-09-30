@@ -407,3 +407,65 @@ describe('LineNotificationComponent — query param handling (§5)', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * responsive-ui v1.4 gate fix (G1-5) F148: the LINE switches show only the server-confirmed value,
+ * and a failed save is reported instead of failing silently.
+ */
+describe('LineNotificationComponent — save-on-change (responsive v1.4 F148)', () => {
+  it('a failed save shows an error and the switch keeps its saved state', async () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), settingsFixture());
+    fake.updateSettings.mockImplementation(async () => false);
+    const messages: Messages = { success: [], info: [], warning: [], error: [] };
+    const { fixture } = render(fake, messages);
+    await settle();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const button = el.querySelector<HTMLButtonElement>('nz-switch[name="line-notif-switch-sale"] button') as HTMLButtonElement;
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+
+    button.click();
+    await settle();
+    fixture.detectChanges();
+
+    expect(fake.updateSettings).toHaveBeenCalledWith({ settings: { sale: false, review: false } });
+    expect(messages.error).toEqual(['บันทึกไม่สำเร็จ กรุณาลองใหม่']);
+    expect(messages.success).toEqual([]);
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+    expect(fixture.componentInstance.savingKey()).toBeNull();
+  });
+
+  it('a successful save shows the value the server answered with', async () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), settingsFixture());
+    fake.updateSettings.mockImplementation(async () => {
+      fake._settings.set([
+        setting({ key: 'sale', label: 'ขายได้', isEnabled: false }),
+        setting({ key: 'review', label: 'รีวิวใหม่', isEnabled: false }),
+      ]);
+      return true;
+    });
+    const messages: Messages = { success: [], info: [], warning: [], error: [] };
+    const { fixture } = render(fake, messages);
+    await settle();
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('nz-switch[name="line-notif-switch-sale"] button')!.click();
+    await settle();
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('nz-switch[name="line-notif-switch-sale"] button')!;
+    expect(button.classList.contains('ant-switch-checked')).toBe(false);
+    expect(messages.success).toContain('อัปเดตการแจ้งเตือน LINE แล้ว');
+  });
+
+  it('ignores a second toggle while a save is still in flight', async () => {
+    const fake = fakeLineNotification(statusFixture(), idleActionState(), settingsFixture());
+    fake.updateSettings.mockImplementation(() => new Promise<boolean>(() => undefined));
+    const { fixture } = render(fake);
+
+    fixture.componentInstance.toggle('sale', false);
+    fixture.componentInstance.toggle('review', true);
+
+    expect(fake.updateSettings).toHaveBeenCalledTimes(1);
+  });
+});

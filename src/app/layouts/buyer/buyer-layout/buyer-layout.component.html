@@ -1,11 +1,20 @@
-<div class="min-h-screen flex flex-col bg-canvas">
-      <app-global-loader />
-      <app-header />
-      <main class="flex-1">
-        <router-outlet />
-      </main>
-      <app-footer />
-      <app-cart-drawer />
-      <app-quick-view-modal />
-      <app-announcement-popup />
-    </div>
+<div
+  class="min-h-dvh flex flex-col bg-canvas"
+  [class.pb-bottom-nav]="!chrome.actionBarActive()"
+  [style.padding-bottom]="actionBarReserve()"
+  data-testid="buyer-layout-root"
+>
+  <app-global-loader />
+  <app-header />
+  <!-- responsive-ui v1.4 R-18 (F90): the footer starts below the fold, so a short loading block
+       no longer lays the footer out mid-screen and shifts it away when the data arrives. -->
+  <main class="flex-1 min-w-0 min-h-dvh">
+    <router-outlet />
+  </main>
+  <app-footer />
+  <app-cart-drawer />
+  <app-quick-view-modal />
+  <app-announcement-popup />
+  <!-- responsive-ui v1 §4.4: phone-only bottom tab bar (hidden >=744 and while a sticky action bar is alive). -->
+  <app-bottom-tab-bar [items]="tabItems()" />
+</div>

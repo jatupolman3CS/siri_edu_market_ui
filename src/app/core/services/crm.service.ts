@@ -418,7 +418,7 @@ export class CrmService {
    */
   private readonly segmentUsersPagerInstance: ServerPager<CrmSegmentUser, string> =
     createServerPager<CrmSegmentUser, string>({
-      pageSize: 20,
+      pageSize: 10,
       errorMessage: this.translation.t('crm.loadSegmentUsersFailed'),
       fetch: async (page, pageSize, code) => {
         const data = unwrapSdkResult(
@@ -493,7 +493,7 @@ export class CrmService {
    */
   private readonly demandGapsPagerInstance: ServerPager<AdminDemandGap> =
     createServerPager<AdminDemandGap>({
-      pageSize: 20,
+      pageSize: 10,
       errorMessage: this.translation.t('crm.loadDemandGapsFailed'),
       fetch: async (page, pageSize) => {
         const data = unwrapSdkResult(

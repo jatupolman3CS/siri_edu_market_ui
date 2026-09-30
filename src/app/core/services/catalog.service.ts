@@ -1531,7 +1531,8 @@ export class CatalogService {
         .map(mapBoughtTogetherItem)
         .filter((item): item is BoughtTogetherItem => item !== null);
     } catch (e) {
-      this.apiFail.report('errors.context.loadFrequentlyBought', e);
+      // responsive-ui v1.4 R-17 (F116): no toast for a 404 — the document page shows not-found.
+      if (extractErrorStatus(e) !== 404) this.apiFail.report('errors.context.loadFrequentlyBought', e);
       return [];
     }
   }

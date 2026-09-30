@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,6 +15,19 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import {
+  BottomTabBarComponent,
+  type BottomTabItem,
+} from '../../../shared/components/bottom-tab-bar/bottom-tab-bar.component';
+import {
+  LayoutChromeService,
+  ViewportService,
+  acquirePageScrollLock,
+  releasePageScrollLock,
+} from '../../../core/layout';
+import { DropdownBackResetDirective } from '../../../shared/directives/dropdown-back-reset.directive';
 
 @Component({
   selector: 'app-seller-layout',
@@ -29,6 +43,11 @@ import { LanguageSwitcherComponent } from '../../../shared/components/language-s
     ImgFallbackDirective,
     TranslatePipe,
     LanguageSwitcherComponent,
+    NgTemplateOutlet,
+    NzDropDownModule,
+    BottomTabBarComponent,
+    A11yModule,
+    DropdownBackResetDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-layout.component.html',
@@ -37,11 +56,26 @@ import { LanguageSwitcherComponent } from '../../../shared/components/language-s
 export class SellerLayoutComponent {
   readonly auth = inject(AuthService);
   readonly translation = inject(TranslationService);
+  readonly chrome = inject(LayoutChromeService);
   private readonly me = inject(MeService);
   private readonly router = inject(Router);
   private readonly message = inject(NzMessageService);
+  private readonly viewport = inject(ViewportService);
+  private readonly document = inject(DOCUMENT);
 
-  /** Mobile sidebar drawer state — toggled by hamburger button */
+  /**
+   * Phone bottom tab bar (docs/contracts/responsive-ui.md §4.4). Labels are i18n keys (the tab
+   * bar pipes them through `trans`); เมนู opens the drawer with every `navItems` entry.
+   */
+  readonly tabItems: readonly BottomTabItem[] = [
+    { label: 'responsive.seller.tab.overview', icon: 'dashboard', href: '/seller', exact: true },
+    { label: 'responsive.seller.tab.documents', icon: 'doc', href: '/seller/documents' },
+    { label: 'responsive.seller.tab.upload', icon: 'upload', href: '/seller/upload', raised: true },
+    { label: 'responsive.seller.tab.earnings', icon: 'wallet', href: '/seller/earnings' },
+    { label: 'responsive.tab.menu', icon: 'menu', action: 'menu' },
+  ];
+
+  /** Phone menu drawer state — opened by the เมนู tab */
   readonly sidebarOpen = signal(false);
 
   readonly avatarSrc = computed(() => {
@@ -66,10 +100,52 @@ export class SellerLayoutComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.sidebarOpen.set(false));
+
+    // The drawer is only hidden by CSS (md:hidden) at >=744, so its open state survived a rotation
+    // to landscape and it re-appeared back in portrait. Close it on the phone -> tablet transition
+    // (tracking the previous tier keeps this from firing on first render, e.g. jsdom = desktop).
+    let wasTabletUp: boolean | null = null;
+    effect(() => {
+      const tabletUp = this.viewport.isTabletUp();
+      if (tabletUp && wasTabletUp === false) untracked(() => this.sidebarOpen.set(false));
+      wasTabletUp = tabletUp;
+    });
+
+    // Page scroll lock while the phone drawer is open (§4.3 overlay pattern).
+    effect(() => this.setScrollLock(this.sidebarOpen()));
+    inject(DestroyRef).onDestroy(() => this.setScrollLock(false));
+  }
+
+  private scrollLocked = false;
+
+  private setScrollLock(on: boolean): void {
+    if (on === this.scrollLocked) return;
+    this.scrollLocked = on;
+    if (on) acquirePageScrollLock(this.document);
+    else releasePageScrollLock(this.document);
+  }
+
+  /**
+   * The avatar menu renders at the end of <body> (CDK overlay), so after opening it the Tab order
+   * continued through the page. Move focus to its first item once it is attached (the dropdown
+   * emits before attaching, hence the timeout). Escape already closes it and refocuses the trigger.
+   */
+  onAvatarMenuVisible(visible: boolean): void {
+    if (!visible) return;
+    setTimeout(() => {
+      const first = this.document.querySelector<HTMLElement>(
+        '[data-testid="seller-avatar-menu"] :is(a[href], button:not([disabled]))',
+      );
+      first?.focus();
+    });
   }
 
   toggleSidebar(): void {
     this.sidebarOpen.update((v) => !v);
+  }
+
+  openSidebar(): void {
+    this.sidebarOpen.set(true);
   }
 
   closeSidebar(): void {

@@ -1,13 +1,16 @@
-<div class="min-h-screen bg-canvas flex flex-col lg:flex-row">
+<div class="min-h-dvh bg-canvas flex flex-col md:flex-row">
       <app-global-loader />
+
+      <!-- Desktop (>=1280): full sidebar -->
       <aside
-        class="hidden lg:flex flex-col w-72 bg-ink text-pink-50 p-5 sticky top-0 h-screen overflow-hidden shrink-0 z-30"
+        data-testid="admin-sidebar"
+        class="hidden xl:flex flex-col w-72 bg-ink text-pink-50 p-5 sticky top-0 h-dvh overflow-hidden shrink-0 z-30"
       >
         <div class="shrink-0 mb-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <span class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 shadow-soft">
-                <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-white">
+              <span class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 text-white shadow-soft">
+                <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6">
                   <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
                   <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -30,20 +33,19 @@
           </div>
         </div>
 
-        <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
+        <nav class="admin-scroll flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
           @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-white/10 !text-white"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              ariaCurrentWhenActive="page"
               class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
             >
               <app-icon [name]="item.icon" [size]="18" />
               <span class="flex-1 truncate">{{ item.label }}</span>
-              @if (item.href === '/admin/approval' && pendingCount() > 0) {
-                <span class="pill bg-pink-500 text-white !py-0 !px-2 !text-[10px]">{{ pendingCount() }}</span>
-              } @else if (item.badge) {
-                <span class="pill bg-pink-500 text-white !py-0 !px-2 !text-[10px]">{{ item.badge }}</span>
+              @if (badgeFor(item); as badge) {
+                <span class="pill bg-primary text-white !py-0 !px-2 !text-[10px]">{{ badge }}</span>
               }
             </a>
           }
@@ -82,68 +84,152 @@
         </div>
       </aside>
 
-      <!-- Mobile -->
-      <header class="lg:hidden sticky top-0 z-20 bg-ink text-white w-full">
-        <div class="flex items-center justify-between px-4 h-16">
-          <div class="flex items-center gap-2">
-            <!-- Hamburger to open sidebar drawer -->
-            <button
-              type="button"
-              (click)="toggleSidebar()"
-              class="flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-              [attr.aria-label]="sidebarOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
-              [attr.aria-expanded]="sidebarOpen()"
-            >
-              <app-icon [name]="sidebarOpen() ? 'close' : 'menu'" [size]="20" />
-            </button>
-            <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500"></span>
-            <span class="text-sm font-bold">ADMIN</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <app-notification-bell variant="icon" theme="dark" />
-            <a routerLink="/" class="text-xs text-pink-200">{{ 'nav.backToMarket' | trans }}</a>
-            <button
-              type="button"
-              (click)="signOut()"
-              class="flex items-center gap-1 text-xs text-rose-300"
-            >
-              <app-icon name="logout" [size]="14" />
-              {{ 'nav.signOut' | trans }}
-            </button>
-          </div>
-        </div>
-        <nav class="flex overflow-x-auto px-4 pb-3 gap-2">
+      <!-- Tablet / laptop (744–1279): 88px icon rail -->
+      <aside
+        data-testid="admin-rail"
+        class="hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-ink text-pink-50 sticky top-0 h-dvh z-30 safe-top"
+      >
+        <a routerLink="/admin" class="shrink-0 flex items-center justify-center py-3" aria-label="ADMIN PANEL">
+          <span class="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 text-white shadow-soft">
+            <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6">
+              <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+        <nav class="admin-scroll flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 px-1.5" [attr.aria-label]="'responsive.nav.primary' | trans">
           @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
-              routerLinkActive="!bg-pink-500"
+              routerLinkActive="!bg-white/10 !text-white"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-              class="px-3 py-1.5 rounded-full bg-white/10 text-pink-100 text-xs whitespace-nowrap inline-flex items-center gap-1.5"
+              ariaCurrentWhenActive="page"
+              data-testid="admin-rail-item"
+              [attr.title]="item.label"
+              class="relative flex shrink-0 flex-col items-center justify-center gap-1 min-h-[64px] px-1 py-2 rounded-2xl text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
             >
-              <span>{{ item.label }}</span>
-              @if (item.badge) {
-                <span class="pill bg-pink-500 text-white !py-0 !px-1.5 !text-[9px]">{{ item.badge }}</span>
+              <app-icon [name]="item.icon" [size]="22" />
+              <span class="text-[11px] leading-tight text-center line-clamp-2 break-words w-full">{{ item.label }}</span>
+              @if (badgeFor(item); as badge) {
+                <span data-testid="rail-badge" class="absolute top-1 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold leading-[18px] text-center">{{ badge }}</span>
               }
             </a>
           }
         </nav>
+        <div class="shrink-0 border-t border-white/10 flex flex-col items-center gap-1 pt-2 pb-[calc(0.5rem+var(--safe-bottom))]">
+          <a
+            routerLink="/"
+            class="tap-target rounded-2xl text-pink-100/70 hover:bg-white/5 hover:text-white"
+            [attr.aria-label]="'responsive.backToStore' | trans"
+            [attr.title]="'responsive.backToStore' | trans"
+          >
+            <app-icon name="arrow-left" [size]="20" />
+          </a>
+          <button
+            type="button"
+            (click)="signOut()"
+            class="tap-target rounded-2xl text-rose-300 hover:bg-white/5 hover:text-rose-200"
+            [attr.aria-label]="'nav.signOut' | trans"
+            [attr.title]="'nav.signOut' | trans"
+          >
+            <app-icon name="logout" [size]="20" />
+          </button>
+        </div>
+      </aside>
+
+      <!-- Phone (<744): sticky top bar -->
+      <header
+        data-testid="admin-phone-topbar"
+        class="md:hidden sticky top-0 bg-ink text-white w-full safe-top safe-x"
+        [class.z-30]="!accountMenuOpen()"
+        [class.z-50]="accountMenuOpen()"
+      >
+        <div class="flex items-center justify-between px-4 h-14">
+          <a routerLink="/admin" class="flex items-center gap-2 min-h-11">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500"></span>
+            <span class="text-sm font-bold">ADMIN</span>
+          </a>
+          <div class="flex items-center gap-1">
+            <app-notification-bell variant="icon" theme="dark" />
+            <div class="relative" (keydown.escape)="closeAccountMenu(); accountBtn.focus()">
+              <button
+                #accountBtn
+                type="button"
+                class="tap-target rounded-full"
+                data-testid="admin-account-button"
+                (click)="toggleAccountMenu()"
+                [attr.aria-expanded]="accountMenuOpen()"
+                aria-haspopup="menu"
+                [attr.aria-label]="auth.user()?.name ?? 'Admin'"
+              >
+                <img
+                  appImgFallback
+                  [src]="avatarSrc()"
+                  class="w-8 h-8 rounded-full object-cover ring-2 ring-white/20"
+                  alt=""
+                />
+              </button>
+              @if (accountMenuOpen()) {
+                <div class="fixed inset-0 z-[899]" (click)="closeAccountMenu()"></div>
+                <div
+                  role="menu"
+                  data-testid="admin-account-menu"
+                  class="absolute right-0 top-full mt-2 z-[900] w-56 rounded-2xl bg-white text-ink shadow-pop border border-line p-2"
+                >
+                  <a
+                    role="menuitem"
+                    routerLink="/"
+                    (click)="closeAccountMenu()"
+                    class="flex items-center gap-2 px-3 min-h-[44px] rounded-xl text-sm hover:bg-pink-50"
+                  >
+                    <app-icon name="arrow-left" [size]="16" />
+                    {{ 'responsive.backToStore' | trans }}
+                  </a>
+                  <div class="px-3 py-2">
+                    <app-language-switcher variant="dropdown" placement="bottomRight" />
+                  </div>
+                  <button
+                    role="menuitem"
+                    type="button"
+                    (click)="closeAccountMenu(); signOut()"
+                    class="w-full flex items-center gap-2 px-3 min-h-[44px] rounded-xl text-sm text-rose-600 hover:bg-rose-50"
+                  >
+                    <app-icon name="logout" [size]="16" />
+                    {{ 'nav.signOut' | trans }}
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
       </header>
 
-      <!-- Mobile sidebar drawer overlay -->
+      <!-- Phone sidebar drawer (opened from the เมนู tab) -->
       @if (sidebarOpen()) {
-        <div class="lg:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
+        <div
+          class="md:hidden fixed inset-0 z-[900]"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-label]="'responsive.tab.menu' | trans"
+          data-testid="admin-drawer"
+          (keydown.escape)="closeSidebar()"
+        >
           <!-- Backdrop -->
           <div
-            class="absolute inset-0 bg-ink/50 backdrop-blur-sm"
+            class="absolute inset-0 bg-ink/50 backdrop-blur-sm touch-none"
             (click)="closeSidebar()"
           ></div>
           <!-- Sidebar panel -->
-          <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-ink text-pink-50 shadow-pop overflow-hidden">
-            <div class="shrink-0 p-5 border-b border-white/10">
+          <aside
+            class="drawer-panel relative flex flex-col w-[min(320px,85vw)] h-dvh bg-ink text-pink-50 shadow-pop overflow-hidden safe-top forced-colors:border-r-2"
+            cdkTrapFocus
+            [cdkTrapFocusAutoCapture]="true"
+          >
+            <div class="shrink-0 p-5 border-b border-white/10" [style.padding-left]="'max(20px, var(--safe-left))'">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                  <span class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 shadow-soft">
-                    <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-white">
+                  <span class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 text-white shadow-soft">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6">
                       <path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
                       <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -153,17 +239,14 @@
                     <div class="text-[10px] uppercase tracking-[0.2em] text-pink-300 mt-1">SIRIEDUMARKET</div>
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5">
-                  <app-notification-bell variant="icon" theme="dark" />
-                  <button
-                    type="button"
-                    (click)="closeSidebar()"
-                    class="flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                    [attr.aria-label]="'header.closeMenu' | trans"
-                  >
-                    <app-icon name="close" [size]="18" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  (click)="closeSidebar()"
+                  class="tap-target rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                  [attr.aria-label]="'responsive.nav.closeMenu' | trans"
+                >
+                  <app-icon name="close" [size]="18" />
+                </button>
               </div>
               <div class="mt-2.5 pl-1">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-200 text-[10px] font-bold uppercase tracking-wider">
@@ -173,30 +256,30 @@
               </div>
             </div>
 
-            <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto p-4 pr-5">
+            <nav class="admin-scroll flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 pr-5" [style.padding-left]="'max(16px, var(--safe-left))'">
               @for (item of navItems(); track item.href) {
                 <a
                   [routerLink]="item.href"
                   routerLinkActive="!bg-white/10 !text-white"
                   [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-                  class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
+                  ariaCurrentWhenActive="page"
+                  class="flex items-center gap-3 px-3.5 min-h-[44px] rounded-2xl text-sm font-medium text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
+                  data-testid="admin-drawer-item"
                   (click)="closeSidebar()"
                 >
                   <app-icon [name]="item.icon" [size]="18" />
                   <span class="flex-1 truncate">{{ item.label }}</span>
-                  @if (item.href === '/admin/approval' && pendingCount() > 0) {
-                    <span class="pill bg-pink-500 text-white !py-0 !px-2 !text-[10px]">{{ pendingCount() }}</span>
-                  } @else if (item.badge) {
-                    <span class="pill bg-pink-500 text-white !py-0 !px-2 !text-[10px]">{{ item.badge }}</span>
+                  @if (badgeFor(item); as badge) {
+                    <span class="pill bg-primary text-white !py-0 !px-2 !text-[10px]">{{ badge }}</span>
                   }
                 </a>
               }
             </nav>
 
-            <div class="shrink-0 p-4 pt-3 border-t border-white/10 flex flex-col gap-1">
+            <div class="shrink-0 p-4 pt-3 border-t border-white/10 flex flex-col gap-1 pb-[calc(16px+var(--safe-bottom))]" [style.padding-left]="'max(16px, var(--safe-left))'">
               <a
                 routerLink="/"
-                class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
+                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-pink-100/70 hover:bg-white/5 hover:text-white transition-colors"
                 (click)="closeSidebar()"
               >
                 <app-icon name="arrow-left" [size]="16" />
@@ -205,7 +288,7 @@
               <button
                 type="button"
                 (click)="signOut(); closeSidebar()"
-                class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-rose-300 hover:bg-white/5 hover:text-rose-200 transition-colors"
+                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-rose-300 hover:bg-white/5 hover:text-rose-200 transition-colors"
               >
                 <app-icon name="logout" [size]="16" />
                 {{ 'nav.signOut' | trans }}
@@ -230,9 +313,44 @@
         </div>
       }
 
-      <main class="flex-1 min-w-0">
-        <div class="p-4 sm:p-6 lg:p-10">
-          <router-outlet />
+      <main class="flex-1 min-w-0 flex flex-col">
+        <!-- Tablet / laptop (744–1279): slim top bar over main -->
+        <div
+          data-testid="admin-tablet-topbar"
+          class="hidden md:flex xl:hidden sticky top-0 z-30 items-center justify-end gap-2 min-h-[calc(3.5rem+var(--safe-top))] pl-6 lg:pl-8 pr-[max(24px,var(--safe-right))] lg:pr-[max(32px,var(--safe-right))] bg-white/90 backdrop-blur border-b border-line safe-top"
+        >
+          <app-notification-bell variant="icon" />
+          <app-language-switcher variant="dropdown" placement="bottomRight" />
+          @if (auth.user(); as u) {
+            <div class="flex items-center gap-2 pl-2">
+              <img
+                appImgFallback
+                [src]="avatarSrc()"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-pink-100"
+                [alt]="u.name"
+              />
+              <span class="text-sm font-semibold text-ink max-w-[160px] truncate">{{ u.name }}</span>
+            </div>
+          }
+        </div>
+
+        <div
+          class="flex-1 py-4 md:py-6 lg:py-8 xl:py-10 pl-[max(16px,var(--safe-left))] pr-[max(16px,var(--safe-right))] md:pl-6 md:pr-[max(24px,var(--safe-right))] lg:pl-8 lg:pr-[max(32px,var(--safe-right))] xl:px-10"
+          data-testid="admin-main-content"
+          [class.pb-bottom-nav]="!chrome.actionBarActive()"
+        >
+          <!-- R-26: the single width cap for admin pages — fills the area up to 1920px, centred above. -->
+          <div data-testid="admin-page-frame" class="mx-auto w-full min-w-0 max-w-[1920px]">
+            <router-outlet />
+          </div>
+          @if (!chrome.actionBarActive()) {
+            <!-- .pb-bottom-nav replaces this wrapper's own bottom padding with exactly the tab bar's
+                 height, so a page's last control (e.g. /admin/approval "load more") ended flush
+                 against the bar and its lower hit area landed on the bar (G-12). -->
+            <div class="md:hidden h-4" aria-hidden="true" data-testid="admin-tabbar-gap"></div>
+          }
         </div>
       </main>
+
+      <app-bottom-tab-bar [items]="tabItems()" theme="dark" (menu)="toggleSidebar()" />
     </div>

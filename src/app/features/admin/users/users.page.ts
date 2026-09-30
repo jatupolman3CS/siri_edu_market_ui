@@ -3,13 +3,16 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../core/services';
-import type { AdminUserRow, AdminUsersSort, AdminUserAccountStatus } from '../../../core/models';
+import type { AdminUserRow, AdminUsersQuery, AdminUsersSort, AdminUserAccountStatus } from '../../../core/models';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
+import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
@@ -24,6 +27,9 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     DatePipe,
     ImgFallbackDirective,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
+    AdminFilterPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './users.page.html',
@@ -34,7 +40,16 @@ export class AdminUsersPage {
   readonly translation = inject(TranslationService);
 
   readonly page = signal(1);
-  readonly pageSize = signal(20);
+  /** R-27 item 10: every paginated table starts at 10 rows per page. */
+  readonly pageSize = signal(10);
+
+  /**
+   * R-27 (`rtResetKey`): the query the table's rows were requested with. The filter signals below are
+   * bound to the form, so they change while the admin types; this one changes only when a request
+   * goes out with a different page, page size, filter, search or sort, which scrolls the table back
+   * to its top. Re-running the same search leaves the scroll position alone.
+   */
+  readonly listQueryKey = signal('');
 
   readonly q = signal<string>('');
   readonly role = signal<string>('');
@@ -70,6 +85,11 @@ export class AdminUsersPage {
     { value: 'name_asc', label: this.translation.t('common.userSorts.nameAsc') },
   ]);
 
+  /** Non-default filters inside the phone filter sheet (sort stays outside). */
+  readonly activeFilterCount = computed(
+    () => [this.role(), this.status(), this.joinedFrom().trim(), this.joinedTo().trim()].filter((v) => !!v).length,
+  );
+
   readonly totalPagesSafe = computed(() => Math.max(1, this.totalPages() || 1));
 
   constructor() {
@@ -79,7 +99,7 @@ export class AdminUsersPage {
   async fetchList(): Promise<void> {
     this.loading.set(true);
     try {
-      const result = await this.admin.searchUsers({
+      const query: AdminUsersQuery = {
         page: this.page(),
         pageSize: this.pageSize(),
         q: this.q().trim() || undefined,
@@ -88,7 +108,9 @@ export class AdminUsersPage {
         joinedFrom: this.joinedFrom().trim() || undefined,
         joinedTo: this.joinedTo().trim() || undefined,
         sort: this.sort(),
-      });
+      };
+      this.listQueryKey.set(JSON.stringify(query));
+      const result = await this.admin.searchUsers(query);
       this.items.set(result.items ?? []);
       this.totalCount.set(result.totalCount ?? 0);
       this.totalPages.set(result.totalPages ?? 0);
@@ -100,6 +122,14 @@ export class AdminUsersPage {
   applyFilters(): void {
     this.page.set(1);
     void this.fetchList();
+  }
+
+  /** Filter sheet "ล้างทั้งหมด": resets the sheet's filters; results refresh on ดูผลลัพธ์. */
+  clearFilters(): void {
+    this.role.set('');
+    this.status.set('');
+    this.joinedFrom.set('');
+    this.joinedTo.set('');
   }
 
   onPageChange(page: number): void {

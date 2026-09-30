@@ -117,7 +117,26 @@ describe('BundleService — loadBundlesContainingDocument (SDK wired)', () => {
     expect(url.searchParams.get('PageSize')).toBe('5');
   });
 
-  it('resolves to [] instead of throwing when the request fails (e.g. 404)', async () => {
+  it('resolves to [] instead of throwing when the request fails (e.g. 500) and reports it', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/documents/doc-broken/bundles',
+      { title: 'Server error', status: 500, statusCode: 500 },
+      500,
+    );
+    const apiFail = { report: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [BundleService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    const service = TestBed.inject(BundleService);
+
+    const result = await service.loadBundlesContainingDocument('doc-broken');
+
+    expect(result).toEqual([]);
+    expect(apiFail.report).toHaveBeenCalled();
+  });
+
+  it('responsive-ui v1.4 R-17 (F116): a 404 resolves to [] without a toast (the page shows not-found)', async () => {
     stubRoute(
       'GET',
       '/api/marketplace/documents/doc-missing/bundles',
@@ -133,7 +152,7 @@ describe('BundleService — loadBundlesContainingDocument (SDK wired)', () => {
     const result = await service.loadBundlesContainingDocument('doc-missing');
 
     expect(result).toEqual([]);
-    expect(apiFail.report).toHaveBeenCalled();
+    expect(apiFail.report).not.toHaveBeenCalled();
   });
 
   it('resolves to [] when the document has no bundles (empty items)', async () => {
@@ -195,8 +214,8 @@ describe('BundleService — loadBundleDetail / getDocuments (Q-04)', () => {
     stubRoute(
       'GET',
       '/api/marketplace/bundles/bun-missing',
-      { title: 'Not Found', status: 404, statusCode: 404 },
-      404,
+      { title: 'Server error', status: 500, statusCode: 500 },
+      500,
     );
     const apiFail = { report: vi.fn() };
     TestBed.configureTestingModule({
@@ -209,6 +228,26 @@ describe('BundleService — loadBundleDetail / getDocuments (Q-04)', () => {
 
     expect(service.getDocuments('bun-missing')).toEqual([]);
     expect(service.getById('bun-missing')).toBeUndefined();
+  });
+
+  it('responsive-ui v1.4 R-17: a 404 bundle raises no toast and ends in the error state (the page shows not-found)', async () => {
+    stubRoute(
+      'GET',
+      '/api/marketplace/bundles/bun-gone',
+      { title: 'Not Found', status: 404, statusCode: 404 },
+      404,
+    );
+    const apiFail = { report: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [BundleService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    const service = TestBed.inject(BundleService);
+
+    service.loadBundleDetail('bun-gone');
+    await vi.waitFor(() => expect(service.bundleDetailState().status).toBe('error'));
+
+    expect(apiFail.report).not.toHaveBeenCalled();
+    expect(service.getById('bun-gone')).toBeUndefined();
   });
 
   it('is a no-op for an empty id', () => {

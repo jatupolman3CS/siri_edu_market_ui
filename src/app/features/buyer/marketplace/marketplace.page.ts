@@ -12,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import {
   AdsService,
@@ -35,6 +36,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
+import { ViewportService } from '../../../core/layout';
+import { BottomSheetComponent } from '../../../shared/components/bottom-sheet/bottom-sheet.component';
 
 /**
  * marketplace-home-redesign v2 §1 ข้อ 8 / §4.2: หน้านี้เหลือ view เดียว (chip หมวดหมู่ + sidebar
@@ -58,7 +61,9 @@ interface MarketplaceUiTabViewModel {
   imports: [
     RouterLink,
     FormsModule,
+    NgTemplateOutlet,
     NzSelectModule,
+    BottomSheetComponent,
     DocumentCardComponent,
     BundleCardComponent,
     IconComponent,
@@ -79,6 +84,14 @@ export class BuyerMarketplacePage {
   readonly i18n = inject(TranslationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly viewport = inject(ViewportService);
+
+  /**
+   * responsive-ui v1 §4.6 (archetype A): below 1024 the filter column is replaced by a
+   * "ตัวกรอง (n)" button that opens a bottom sheet (<744) / slide-over (744–1023).
+   * Filters still apply live; "ดูผลลัพธ์" only closes the sheet.
+   */
+  readonly filterSheetOpen = signal(false);
 
   /** Local search input value, submitted only on magnifying glass click or Enter press */
   readonly searchTerm = signal<string>('');
@@ -150,6 +163,22 @@ export class BuyerMarketplacePage {
       f.minPrice > 0 ||
       f.maxPrice < 1000 ||
       f.minRating > 0
+    );
+  });
+
+  /** Number of active filter selections shown on the phone/tablet "ตัวกรอง (n)" button (search excluded). */
+  readonly activeFilterCount = computed(() => {
+    const f = this.catalog.filters();
+    const price = f.freeOnly || f.minPrice > 0 || f.maxPrice < 1000 ? 1 : 0;
+    return (
+      f.categoryIds.length +
+      f.subcategoryIds.length +
+      f.gradeLevels.length +
+      f.resourceTypes.length +
+      f.formats.length +
+      f.standards.length +
+      price +
+      (f.minRating > 0 ? 1 : 0)
     );
   });
 
@@ -288,6 +317,14 @@ export class BuyerMarketplacePage {
     this.catalog.loadMarketplaceResultsPage(next);
   }
 
+  openFilterSheet(): void {
+    this.filterSheetOpen.set(true);
+  }
+
+  closeFilterSheet(): void {
+    this.filterSheetOpen.set(false);
+  }
+
   retryBundleResults(): void {
     this.bundles.retryBundleResults();
   }
@@ -302,6 +339,14 @@ export class BuyerMarketplacePage {
     inject(DestroyRef).onDestroy(() => this.catalog.leaveMarketplace());
     // KI-4: only for the "ฟรี" badge's `freeTotalCount()`.
     this.catalog.loadFreeResources();
+
+    // The sheet only exists below 1024; growing past it (rotation / resize) closes it so the
+    // scroll lock is released and the left filter column takes over.
+    effect(() => {
+      if (this.viewport.isLaptopUp()) {
+        this.filterSheetOpen.set(false);
+      }
+    });
 
     effect(() => {
       const status = this.catalog.marketplaceResultsState().status;

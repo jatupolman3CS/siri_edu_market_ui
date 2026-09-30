@@ -1,6 +1,6 @@
-<div class="max-w-6xl">
+<div class="min-w-0">
   <header class="mb-6">
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.manageDocsTitle' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.manageDocsTitle' | trans }}</h1>
     <p class="text-sm text-ink-soft">{{ 'admin.manageDocsSubtitle' | trans }}</p>
   </header>
 
@@ -8,48 +8,70 @@
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider">{{ 'admin.searchLabel' | trans }}</label>
       <input
-        class="input-soft sm:col-span-3 !py-2"
+        class="input-soft w-full sm:col-span-3 !py-2"
         type="search"
         [placeholder]="'admin.searchTitleDescPlaceholder' | trans"
         [ngModel]="q()"
         (ngModelChange)="q.set($event)"
       />
     </div>
+    <ng-template #filterFields>
+     <div class="space-y-3">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.statusLabel' | trans }}</label>
+          <select class="input-soft w-full !py-2" [ngModel]="status()" (ngModelChange)="status.set($event)">
+            @for (o of statuses; track o.value) {
+              <option [value]="o.value">{{ o.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.formatLabel' | trans }}</label>
+          <select class="input-soft w-full !py-2" [ngModel]="format()" (ngModelChange)="format.set($event)">
+            @for (o of formats; track o.value) {
+              <option [value]="o.value">{{ o.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.categoryLabel' | trans }}</label>
+          <input class="input-soft w-full !py-2" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellerNameLabel' | trans }}</label>
+          <input class="input-soft w-full !py-2" [ngModel]="sellerName()" (ngModelChange)="sellerName.set($event)" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.dateFromLabel' | trans }}</label>
+          <input class="input-soft w-full !py-2" type="date" [ngModel]="postedFrom()" (ngModelChange)="postedFrom.set($event)" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.dateToLabel' | trans }}</label>
+          <input class="input-soft w-full !py-2" type="date" [ngModel]="postedTo()" (ngModelChange)="postedTo.set($event)" />
+        </div>
+        <div class="flex flex-col gap-2 justify-end">
+          <label class="flex items-center gap-2 text-sm text-ink cursor-pointer [@media(pointer:coarse)]:min-h-11">
+            <input type="checkbox" class="shrink-0" [ngModel]="featuredOnly()" (ngModelChange)="featuredOnly.set($event)" />
+            {{ 'admin.featuredOnly' | trans }}
+          </label>
+          <label class="flex items-center gap-2 text-sm text-ink cursor-pointer [@media(pointer:coarse)]:min-h-11">
+            <input type="checkbox" class="shrink-0" [ngModel]="hasOpenReportsOnly()" (ngModelChange)="hasOpenReportsOnly.set($event)" />
+            {{ 'admin.hasPendingReports' | trans }}
+          </label>
+        </div>
+      </div>
+     </div>
+    </ng-template>
+    <app-admin-filter-panel
+      [fields]="filterFields"
+      [activeCount]="activeFilterCount()"
+      (showResults)="applyFilters()"
+      (clearAll)="clearFilters()"
+    />
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.statusLabel' | trans }}</label>
-        <select class="input-soft w-full !py-2" [ngModel]="status()" (ngModelChange)="status.set($event)">
-          @for (o of statuses; track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.formatLabel' | trans }}</label>
-        <select class="input-soft w-full !py-2" [ngModel]="format()" (ngModelChange)="format.set($event)">
-          @for (o of formats; track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.categoryLabel' | trans }}</label>
-        <input class="input-soft w-full !py-2" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sellerNameLabel' | trans }}</label>
-        <input class="input-soft w-full !py-2" [ngModel]="sellerName()" (ngModelChange)="sellerName.set($event)" />
-      </div>
-    </div>
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.dateFromLabel' | trans }}</label>
-        <input class="input-soft w-full !py-2" type="date" [ngModel]="postedFrom()" (ngModelChange)="postedFrom.set($event)" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.dateToLabel' | trans }}</label>
-        <input class="input-soft w-full !py-2" type="date" [ngModel]="postedTo()" (ngModelChange)="postedTo.set($event)" />
-      </div>
       <div>
         <label class="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{{ 'admin.sortLabel' | trans }}</label>
         <select class="input-soft w-full !py-2" [ngModel]="sort()" (ngModelChange)="sort.set($event)">
@@ -58,19 +80,9 @@
           }
         </select>
       </div>
-      <div class="flex flex-col gap-2 justify-end">
-        <label class="flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" [ngModel]="featuredOnly()" (ngModelChange)="featuredOnly.set($event)" />
-          {{ 'admin.featuredOnly' | trans }}
-        </label>
-        <label class="flex items-center gap-2 text-sm text-ink cursor-pointer">
-          <input type="checkbox" [ngModel]="hasOpenReportsOnly()" (ngModelChange)="hasOpenReportsOnly.set($event)" />
-          {{ 'admin.hasPendingReports' | trans }}
-        </label>
-      </div>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="btn-ghost" (click)="applyFilters()">
+      <button type="button" class="btn-ghost w-full sm:w-auto !justify-center" (click)="applyFilters()">
         <app-icon name="filter" [size]="16" />
         {{ 'admin.searchLabel' | trans }}
       </button>
@@ -84,7 +96,7 @@
     <div class="card-soft p-4 mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
       <span class="text-sm font-bold text-ink">{{ 'admin.selectedItemsCount' | trans: { count: selectedIds().size } }}</span>
       <input
-        class="input-soft flex-1 min-w-[200px] !py-2"
+        class="input-soft w-full sm:w-auto sm:flex-1 sm:min-w-[200px] !py-2"
         [placeholder]="'admin.bulkRejectReasonPlaceholder' | trans"
         [ngModel]="bulkReason()"
         (ngModelChange)="bulkReason.set($event)"
@@ -98,57 +110,85 @@
     </div>
   }
 
-  <div class="card-soft table-scroll overflow-x-auto pb-2">
-    <table class="w-full min-w-[840px]">
+  @if (items().length > 0) {
+    <label
+      class="md:hidden flex items-center gap-2 min-h-[44px] mb-2 px-1 text-sm text-ink"
+      data-testid="phone-select-all"
+      nz-checkbox
+      [nzChecked]="selectedIds().size === items().length"
+      (nzCheckedChange)="toggleSelectAll($event)"
+    >{{ 'admin.selectedItemsCount' | trans: { count: selectedIds().size } }}</label>
+  }
+
+  <!-- Table: at >=744 at most 10 rows show, the rest scroll inside the wrapper (R-27). The reset key is
+       the query the rows were requested with, so typing in a filter doesn't move the table; applying it does. -->
+  <div
+    class="card-soft table-scroll overflow-x-auto pb-2"
+    appTableViewport
+    [rtLabel]="'admin.manageDocsTitle' | trans"
+    [rtResetKey]="listQueryKey()"
+  >
+    <table class="rtable w-full">
       <thead class="bg-pink-50">
         <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-          <th class="px-3 py-3 w-10">
-            <label
-              nz-checkbox
-              [nzChecked]="items().length > 0 && selectedIds().size === items().length"
-              (nzCheckedChange)="toggleSelectAll($event)"
-            ></label>
+          <th class="px-3 py-3 font-semibold">
+            <div class="flex items-center gap-3">
+              <!-- R-2 (F72): 44x44 on touch. R-27 item 12 (GR3-f): no negative margin, so with the cell's
+                   12px padding the box starts 13px in from the rounded wrapper's corner and every G-12 point
+                   stays inside its curve (it was -my-3, which put the top-left point outside at 744/820). -->
+              <!-- Below 744 the thead is visually hidden and the phone "select all" row above the cards
+                   does this job, so the duplicate stays out of the way there. -->
+              <label
+                nz-checkbox
+                data-testid="table-select-all"
+                class="max-md:!hidden [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:!justify-center [@media(pointer:coarse)]:!items-center"
+                [nzChecked]="items().length > 0 && selectedIds().size === items().length"
+                (nzCheckedChange)="toggleSelectAll($event)"
+              ></label>
+              <span>{{ 'admin.colDoc' | trans }}</span>
+            </div>
           </th>
-          <th class="px-3 py-3 w-12 text-center"></th>
-          <th class="px-3 py-3 font-semibold">{{ 'admin.colDoc' | trans }}</th>
-          <th class="px-3 py-3 font-semibold">{{ 'admin.colBuyer' | trans }}</th>
           <th class="px-3 py-3 font-semibold">{{ 'admin.colStatus' | trans }}</th>
-          <th class="px-3 py-3 font-semibold text-center">{{ 'admin.colStars' | trans }}</th>
-          <th class="px-3 py-3 font-semibold text-center">{{ 'admin.colDownloads' | trans }}</th>
+          <th class="px-3 py-3 font-semibold">{{ 'admin.colBuyer' | trans }}</th>
           <th class="px-3 py-3 font-semibold text-right">{{ 'admin.colPrice' | trans }}</th>
-          <th class="px-3 py-3 font-semibold">{{ 'admin.colUpdated' | trans }}</th>
+          <th class="rt-secondary px-3 py-3 font-semibold text-center">{{ 'admin.colStars' | trans }}</th>
+          <th class="rt-secondary px-3 py-3 font-semibold text-center">{{ 'admin.colDownloads' | trans }}</th>
+          <th class="rt-secondary px-3 py-3 font-semibold">{{ 'admin.colUpdated' | trans }}</th>
+          <th class="rt-more"></th>
+          <th class="px-3 py-3 w-12 text-center"></th>
         </tr>
       </thead>
       <tbody>
         @for (d of items(); track d.id) {
           <tr class="border-t border-line hover:bg-pink-50/40">
-            <td class="px-3 py-3">
-              <label
-                nz-checkbox
-                [nzChecked]="selectedIds().has(d.id)"
-                (nzCheckedChange)="toggleSelect(d.id, $event)"
-              ></label>
+            <td class="rt-title px-3 py-3">
+              <div class="flex items-start gap-3">
+                <!-- R-2 (F72): the row checkbox is a 44x44 box on touch (it was 16x24). -->
+                <label
+                  class="shrink-0 pt-0.5 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:!justify-center [@media(pointer:coarse)]:!items-center [@media(pointer:coarse)]:pt-0"
+                  nz-checkbox
+                  [nzChecked]="selectedIds().has(d.id)"
+                  (nzCheckedChange)="toggleSelect(d.id, $event)"
+                  [attr.aria-label]="d.title"
+                ></label>
+                <div class="min-w-0">
+                  <div class="font-bold text-ink text-sm line-clamp-2 md:line-clamp-1">{{ d.title }}</div>
+                  <div class="text-xs text-ink-muted font-normal line-clamp-1">{{ d.shortDescription }}</div>
+                  @if (d.isFeatured) {
+                    <span class="pill-pink text-[10px] mt-1">{{ 'admin.featured' | trans }}</span>
+                  }
+                  @if (d.openReportCount > 0) {
+                    <span class="pill-amber text-[10px] mt-1 ml-1">{{ 'admin.reportBadge' | trans: { count: d.openReportCount } }}</span>
+                  }
+                </div>
+              </div>
             </td>
-            <td class="px-3 py-3 text-center">
-              <a [routerLink]="['/admin/documents', d.id]" class="btn-icon !w-8 !h-8 inline-flex" [title]="'admin.viewDetailAria' | trans">
-                <app-icon name="edit" [size]="14" />
-              </a>
-            </td>
-            <td class="px-3 py-3">
-              <div class="font-bold text-ink text-sm line-clamp-1">{{ d.title }}</div>
-              <div class="text-xs text-ink-muted line-clamp-1">{{ d.shortDescription }}</div>
-              @if (d.isFeatured) {
-                <span class="pill-pink text-[10px] mt-1">{{ 'admin.featured' | trans }}</span>
-              }
-              @if (d.openReportCount > 0) {
-                <span class="pill-amber text-[10px] mt-1 ml-1">{{ 'admin.reportBadge' | trans: { count: d.openReportCount } }}</span>
-              }
-            </td>
-            <td class="px-3 py-3 text-sm text-ink-soft">{{ d.sellerName }}</td>
-            <td class="px-3 py-3">
+            <td class="rt-status px-3 py-3">
               <span class="pill text-[10px] font-bold" [class]="statusClass(d.status)">{{ statusLabel(d.status) }}</span>
             </td>
-            <td class="px-3 py-3 text-center whitespace-nowrap">
+            <td class="rt-key px-3 py-3 text-sm text-ink-soft" [attr.data-label]="'admin.colBuyer' | trans">{{ d.sellerName }}</td>
+            <td class="rt-key px-3 py-3 text-sm font-bold text-right whitespace-nowrap" [attr.data-label]="'admin.colPrice' | trans">{{ d.price | thb }}</td>
+            <td class="rt-secondary px-3 py-3 text-center whitespace-nowrap">
               @if (d.reviewCount > 0) {
                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                   <app-icon name="star" [size]="12" class="text-amber-500" />
@@ -159,14 +199,27 @@
                 <span class="text-xs text-ink-muted">-</span>
               }
             </td>
-            <td class="px-3 py-3 text-center whitespace-nowrap">
+            <td class="rt-secondary px-3 py-3 text-center whitespace-nowrap">
               <span class="inline-flex items-center gap-1 text-xs font-medium text-ink-soft">
                 <app-icon name="download" [size]="12" class="text-ink-muted" />
                 {{ d.downloadCount | number }}
               </span>
             </td>
-            <td class="px-3 py-3 text-sm font-bold text-right whitespace-nowrap">{{ d.price | thb }}</td>
-            <td class="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ d.updatedAt | timeAgo }}</td>
+            <td class="rt-secondary px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ d.updatedAt | timeAgo }}</td>
+            <td class="rt-more px-1 py-3">
+              <app-row-more
+                [items]="[
+                  { label: ('admin.colStars' | trans), value: ratingText(d) },
+                  { label: ('admin.colDownloads' | trans), value: (d.downloadCount | number) },
+                  { label: ('admin.colUpdated' | trans), value: (d.updatedAt | timeAgo) }
+                ]"
+              />
+            </td>
+            <td class="rt-action px-3 py-3 text-center">
+              <a [routerLink]="['/admin/documents', d.id]" class="btn-icon !w-8 !h-8 inline-flex" [title]="'admin.viewDetailAria' | trans" [attr.aria-label]="'admin.viewDetailAria' | trans">
+                <app-icon name="edit" [size]="14" />
+              </a>
+            </td>
           </tr>
         } @empty {
           <tr>

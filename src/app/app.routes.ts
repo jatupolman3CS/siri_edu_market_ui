@@ -62,6 +62,7 @@ export const routes: Routes = [
           import('./features/buyer/bundle-detail/bundle-detail.page').then(
             (m) => m.BuyerBundleDetailPage,
           ),
+        title: 'routes.bundleDetail',
       },
       {
         path: 'free',
@@ -75,6 +76,9 @@ export const routes: Routes = [
           import('./features/buyer/storefront/storefront.page').then(
             (m) => m.BuyerStorefrontPage,
           ),
+        // Fallback until the store profile loads (the page then sets "<store name> — SIRIEDUMARKET"
+        // through SeoMetaService), and the title that stays when the profile is not found.
+        title: 'routes.store',
       },
       // Wishlist is guest-accessible — backend now scopes anonymous visitors via a
       // cookie-backed session (see docs/contracts/anonymous-cart-wishlist-scoping.md)
@@ -296,6 +300,7 @@ export const routes: Routes = [
           import('./features/seller/documents/documents.page').then(
             (m) => m.SellerDocumentsPage,
           ),
+        title: 'routes.sellerDocuments',
       },
       {
         path: 'upload',
@@ -303,6 +308,7 @@ export const routes: Routes = [
           import('./features/seller/upload/upload.page').then(
             (m) => m.SellerUploadPage,
           ),
+        title: 'routes.sellerUpload',
       },
       {
         path: 'pdf-preview',
@@ -333,6 +339,7 @@ export const routes: Routes = [
         path: 'qna',
         loadComponent: () =>
           import('./features/seller/qna/qna.page').then((m) => m.SellerQnaPage),
+        title: 'routes.sellerQna',
       },
       {
         path: 'store-sections',
@@ -340,12 +347,14 @@ export const routes: Routes = [
           import('./features/seller/store-sections/store-sections.page').then(
             (m) => m.SellerStoreSectionsPage,
           ),
+        title: 'routes.sellerStoreSections',
       },
       // F-04: bundles could be bought but never created — this is the missing half.
       {
         path: 'bundles',
         loadComponent: () =>
           import('./features/seller/bundles/bundles.page').then((m) => m.SellerBundlesPage),
+        title: 'routes.sellerBundles',
       },
       {
         path: 'earnings',
@@ -353,6 +362,7 @@ export const routes: Routes = [
           import('./features/seller/earnings/earnings.page').then(
             (m) => m.SellerEarningsPage,
           ),
+        title: 'routes.sellerEarnings',
       },
       // seller-ads-promotion v1 §4.1: flat-fee ad campaigns bought with the seller's ledger balance.
       {
@@ -367,6 +377,7 @@ export const routes: Routes = [
           import('./features/seller/reviews/reviews.page').then(
             (m) => m.SellerReviewsPage,
           ),
+        title: 'routes.sellerReviews',
       },
       {
         path: 'settings',
@@ -374,6 +385,7 @@ export const routes: Routes = [
           import('./features/seller/settings/settings.page').then(
             (m) => m.SellerSettingsPage,
           ),
+        title: 'routes.sellerSettings',
       },
       // notification-master-config v1 §4.1 (AC-7): seller notification history, inside the
       // seller layout — previously the seller bell/sidebar linked to the buyer `/notifications`.
@@ -429,6 +441,7 @@ export const routes: Routes = [
           import('./features/admin/approval/approval.page').then(
             (m) => m.AdminApprovalPage,
           ),
+        title: 'routes.adminApproval',
       },
       {
         path: 'transactions',
@@ -436,6 +449,7 @@ export const routes: Routes = [
           import('./features/admin/transactions/transactions.page').then(
             (m) => m.AdminTransactionsPage,
           ),
+        title: 'routes.adminTransactions',
       },
       {
         path: 'users',
@@ -459,18 +473,21 @@ export const routes: Routes = [
           import('./features/admin/sellers/sellers.page').then(
             (m) => m.AdminSellersPage,
           ),
+        title: 'routes.adminSellers',
       },
       // F-10: the whole admin audit log, not just one document's slice of it.
       {
         path: 'audit',
         loadComponent: () =>
           import('./features/admin/audit/audit.page').then((m) => m.AdminAuditPage),
+        title: 'routes.adminAudit',
       },
       // F-09: one place to read document reports, instead of opening documents to find them.
       {
         path: 'reports',
         loadComponent: () =>
           import('./features/admin/reports/reports.page').then((m) => m.AdminReportsPage),
+        title: 'routes.adminReports',
       },
       // system-feedback v1 §4.4: admin queue for feedback & bug reports.
       {
@@ -487,6 +504,7 @@ export const routes: Routes = [
           import('./features/admin/payouts/payouts.page').then(
             (m) => m.AdminPayoutsPage,
           ),
+        title: 'routes.adminPayouts',
       },
       // referral-program v2 §4.1: admin management for affiliate links.
       {
@@ -510,6 +528,7 @@ export const routes: Routes = [
           import(
             './features/admin/seller-applications/seller-applications.page'
           ).then((m) => m.AdminSellerApplicationsPage),
+        title: 'routes.adminSellerApplications',
       },
       {
         path: 'categories',
@@ -517,6 +536,7 @@ export const routes: Routes = [
           import('./features/admin/categories-admin/categories-admin.page').then(
             (m) => m.AdminCategoriesPage,
           ),
+        title: 'routes.adminCategories',
       },
       // subscription-membership v2 §3.2/§4: read-only paginated list of all subscriptions.
       {
@@ -565,6 +585,7 @@ export const routes: Routes = [
           import('./features/admin/settings-admin/settings-admin.page').then(
             (m) => m.AdminSettingsPage,
           ),
+        title: 'routes.adminSettings',
       },
       // announcement-popup v1: CRUD for the buyer-facing popup announcements.
       {

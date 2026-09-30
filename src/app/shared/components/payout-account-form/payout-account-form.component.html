@@ -18,17 +18,20 @@
     } @else if (!account()) {
       <p class="text-sm text-ink-soft">{{ 'common.loading' | trans }}</p>
     } @else if (showForm()) {
-      <div class="flex gap-2 mb-5">
+      <div class="flex flex-wrap gap-2 mb-5">
         @if (bankEnabled()) {
-          <button type="button" class="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
-            [class]="accountTypeSelection() === 'bank' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+          <!-- R-2 (F34): 44px on touch screens; R-16: the chosen method is exposed as aria-pressed. -->
+          <button type="button" class="px-4 py-2 [@media(pointer:coarse)]:min-h-11 rounded-full text-sm font-semibold transition-colors"
+            [attr.aria-pressed]="accountTypeSelection() === 'bank'"
+            [class]="accountTypeSelection() === 'bank' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
             (click)="selectAccountType('bank')">
             {{ 'shared.payoutAccount.bankTransfer' | trans }}
           </button>
         }
         @if (promptPayEnabled()) {
-          <button type="button" class="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
-            [class]="accountTypeSelection() === 'promptpay' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+          <button type="button" class="px-4 py-2 [@media(pointer:coarse)]:min-h-11 rounded-full text-sm font-semibold transition-colors"
+            [attr.aria-pressed]="accountTypeSelection() === 'promptpay'"
+            [class]="accountTypeSelection() === 'promptpay' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
             (click)="selectAccountType('promptpay')">
             {{ 'shared.payoutAccount.promptPay' | trans }}
           </button>
@@ -43,6 +46,7 @@
             [ngModel]="accountHolderName()"
             (ngModelChange)="accountHolderName.set($event)"
             name="accountHolderName"
+            autocomplete="name"
             [placeholder]="'shared.payoutAccount.accountNamePlaceholder' | trans"
             maxlength="200"
           />
@@ -89,22 +93,25 @@
           <div class="sm:col-span-2">
             <div class="flex gap-2 mb-3 flex-wrap">
               @if (promptPayPhoneEnabled()) {
-                <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                  [class]="promptPayTypeSelection() === 'phone' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                <button type="button" class="px-3 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-full text-xs font-semibold transition-colors"
+                  [attr.aria-pressed]="promptPayTypeSelection() === 'phone'"
+                  [class]="promptPayTypeSelection() === 'phone' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
                   (click)="selectPromptPayType('phone')">
                   {{ 'shared.payoutAccount.phoneType' | trans }}
                 </button>
               }
               @if (promptPayNationalIdEnabled()) {
-                <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                  [class]="promptPayTypeSelection() === 'national_id' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                <button type="button" class="px-3 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-full text-xs font-semibold transition-colors"
+                  [attr.aria-pressed]="promptPayTypeSelection() === 'national_id'"
+                  [class]="promptPayTypeSelection() === 'national_id' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
                   (click)="selectPromptPayType('national_id')">
                   {{ 'shared.payoutAccount.nationalIdType' | trans }}
                 </button>
               }
               @if (promptPayQrEnabled()) {
-                <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                  [class]="promptPayTypeSelection() === 'qr_code' ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                <button type="button" class="px-3 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-full text-xs font-semibold transition-colors"
+                  [attr.aria-pressed]="promptPayTypeSelection() === 'qr_code'"
+                  [class]="promptPayTypeSelection() === 'qr_code' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
                   (click)="selectPromptPayType('qr_code')">
                   {{ 'shared.payoutAccount.qrType' | trans }}
                 </button>
@@ -146,7 +153,9 @@
                 name="promptPayId"
                 [placeholder]="(promptPayTypeSelection() === 'phone' ? 'shared.payoutAccount.phonePlaceholder' : 'shared.payoutAccount.nationalIdPlaceholder') | trans"
                 [maxlength]="promptPayTypeSelection() === 'phone' ? 10 : 13"
-                inputmode="numeric"
+                [attr.type]="promptPayTypeSelection() === 'phone' ? 'tel' : 'text'"
+                [attr.inputmode]="promptPayTypeSelection() === 'phone' ? 'tel' : 'numeric'"
+                [attr.autocomplete]="promptPayTypeSelection() === 'phone' ? 'tel' : 'off'"
               />
               @if (fieldErrors().promptPayId) {
                 <p class="text-xs text-rose-600 mt-1">{{ fieldErrors().promptPayId }}</p>
@@ -169,7 +178,7 @@
         </div>
       }
 
-      <div class="flex justify-end gap-2 mt-6">
+      <div class="flex flex-wrap justify-end gap-2 mt-6">
         @if (account()!.hasAccount && editing()) {
           <button type="button" class="btn-ghost !px-6" [disabled]="saving()" (click)="cancelEdit()">
             {{ 'common.cancel' | trans }}

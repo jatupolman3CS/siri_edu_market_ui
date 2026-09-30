@@ -1,4 +1,52 @@
 export const th = {
+  "responsive": {
+    "nav": {
+      "primary": "เมนูหลัก",
+      "openMenu": "เปิดเมนู",
+      "closeMenu": "ปิดเมนู"
+    },
+    "tab": {
+      "home": "หน้าแรก",
+      "marketplace": "ตลาด",
+      "library": "คลังของฉัน",
+      "orders": "คำสั่งซื้อ",
+      "account": "บัญชี",
+      "menu": "เมนู"
+    },
+    "seller": {
+      "tab": {
+        "overview": "ภาพรวม",
+        "documents": "เอกสาร",
+        "upload": "อัปโหลด",
+        "earnings": "รายได้"
+      }
+    },
+    "admin": {
+      "tab": {
+        "overview": "ภาพรวม",
+        "approval": "อนุมัติ",
+        "users": "ผู้ใช้",
+        "transactions": "ธุรกรรม"
+      }
+    },
+    "filters": {
+      "title": "ตัวกรอง",
+      "button": "ตัวกรอง ({count})",
+      "buttonNoCount": "ตัวกรอง",
+      "clearAll": "ล้างทั้งหมด",
+      "showResults": "ดูผลลัพธ์"
+    },
+    "sheet": {
+      "close": "ปิด"
+    },
+    "table": {
+      "more": "ดูข้อมูลเพิ่มเติม"
+    },
+    "editor": {
+      "settings": "ตั้งค่า"
+    },
+    "backToStore": "กลับหน้าร้าน"
+  },
   "nav": {
     "home": "หน้าแรก",
     "marketplace": "ตลาด",
@@ -108,7 +156,9 @@ export const th = {
     "marketplace": "ตลาดเอกสาร — SIRIEDUMARKET",
     "categories": "หมวดหมู่ — SIRIEDUMARKET",
     "bundles": "แพ็กเกจ — SIRIEDUMARKET",
+    "bundleDetail": "รายละเอียดแพ็กเกจ — SIRIEDUMARKET",
     "free": "เอกสารฟรี — SIRIEDUMARKET",
+    "store": "หน้าร้านค้า — SIRIEDUMARKET",
     "wishlist": "รายการโปรด — SIRIEDUMARKET",
     "tcas": "TCAS — ระบบคัดเลือกเข้ามหาวิทยาลัย — SIRIEDUMARKET",
     "tgatTpat": "TGAT/TPAT — SIRIEDUMARKET",
@@ -134,6 +184,14 @@ export const th = {
     "sellerWatermarkDoc": "จัดการลายน้ำเอกสาร — Siri Studio",
     "sellerAds": "โปรโมตเอกสารของคุณ — Siri Studio",
     "sellerNotifications": "การแจ้งเตือนของร้าน — Siri Studio",
+    "sellerDocuments": "จัดการเอกสาร — Siri Studio",
+    "sellerUpload": "อัปโหลดเอกสารใหม่ — Siri Studio",
+    "sellerQna": "คำถามจากผู้ซื้อ — Siri Studio",
+    "sellerStoreSections": "หมวดหน้าร้าน — Siri Studio",
+    "sellerBundles": "แพ็กเกจเอกสาร — Siri Studio",
+    "sellerEarnings": "บัญชีและการรับเงิน — Siri Studio",
+    "sellerReviews": "รีวิวและความคิดเห็น — Siri Studio",
+    "sellerSettings": "ตั้งค่าร้านค้า — Siri Studio",
     "adminOverview": "Admin — SIRIEDUMARKET",
     "adminDocuments": "จัดการเอกสาร — Admin",
     "adminDocumentDetail": "รายละเอียดเอกสาร — Admin",
@@ -153,6 +211,15 @@ export const th = {
     "adminNotifications": "การแจ้งเตือนของผู้ดูแลระบบ — Admin",
     "adminNotificationConfig": "ตั้งค่าการแจ้งเตือนของระบบ — Admin",
     "adminMlRecommendations": "สถานะระบบแนะนำสินค้า — Admin",
+    "adminApproval": "อนุมัติเอกสาร — Admin",
+    "adminTransactions": "ธุรกรรม — Admin",
+    "adminSellers": "ผู้ขาย — Admin",
+    "adminAudit": "ประวัติการทำงาน — Admin",
+    "adminReports": "รายงานเอกสาร — Admin",
+    "adminPayouts": "ถอนเงินผู้ขาย — Admin",
+    "adminSellerApplications": "ใบสมัครผู้ขาย — Admin",
+    "adminCategories": "หมวดหมู่ — Admin",
+    "adminSettings": "ตั้งค่าแพลตฟอร์ม — Admin",
     "signIn": "เข้าสู่ระบบ — SIRIEDUMARKET",
     "register": "สมัครสมาชิก — SIRIEDUMARKET",
     "forgotPassword": "ลืมรหัสผ่าน — SIRIEDUMARKET",
@@ -241,7 +308,11 @@ export const th = {
     "recommendedStrategyInterest": "จากหมวดที่คุณเลือกไว้",
     "recommendedStrategyPopular": "ยอดนิยมตอนนี้",
     "step1Title": "ค้นหาเอกสารที่ใช่",
+    "step1Desc": "กรองหมวดหมู่ ระดับชั้น และคะแนนรีวิว เลือกเอกสารที่ตรงกับความต้องการของคุณ พร้อมพรีวิวก่อนซื้อ",
     "step2Title": "ชำระอย่างปลอดภัย",
+    "step2Desc": "ชำระผ่าน PromptPay / บัตรเครดิต ไฟล์มีลายน้ำเฉพาะคุณ ดาวน์โหลดได้ทันทีหลังชำระเงิน",
+    "step3Title": "เก็บไว้ในคลังของคุณ",
+    "step3Desc": "ดาวน์โหลดได้ตลอดเวลาในคลังเอกสารส่วนตัว และให้คะแนน + รีวิวเพื่อช่วยผู้ซื้อท่านอื่น",
     "bundlesEyebrow": "แพ็กเกจ",
     "bundlesHeaderTitle": "แพ็กเกจคุ้มค่า ประหยัดกว่าซื้อแยก",
     "bundlesSubtitleBase": "ครีเอเตอร์รวมเอกสารที่เข้ากันให้แล้ว",
@@ -905,6 +976,9 @@ export const th = {
   },
   "subscribe": {
     "badge": "แพ็กเกจสมาชิก",
+    "alreadySubscribedTitle": "คุณเป็นสมาชิกอยู่แล้ว",
+    "alreadySubscribedDesc": "ดูหมวดหมู่ที่สมัครไว้ รอบบิล และจัดการการสมัครสมาชิกได้ที่หน้าสมาชิกรายเดือน",
+    "manageLink": "จัดการสมาชิก",
     "title": "สมัครสมาชิกรายเดือน",
     "desc": "เลือกหมวดหมู่ที่ต้องการ แล้วดาวน์โหลดเอกสารในหมวดที่เลือกได้ไม่จำกัดตลอดรอบบิล",
     "selectCategoriesTitle": "เลือกหมวดหมู่ที่ต้องการ",
@@ -1355,8 +1429,8 @@ export const th = {
     "trafficSourceSubtitle": "สัดส่วนที่มาของคนที่เปิดดูเอกสารในร้าน",
     "noTrafficData": "ยังไม่มีข้อมูล traffic",
     "recentDocuments": "เอกสารล่าสุด",
-    "downloadCount": "ดาวน์โหลด",
-    "soldCount": "ยอดขาย",
+    "downloadCount": "ดาวน์โหลด {count}",
+    "soldCount": "ขายแล้ว {count}",
     "avgPrice": "ราคาเฉลี่ย",
     "avgReplyTime": "เวลาตอบเฉลี่ย",
     "repliedPct": "ตอบแล้ว {pct}%",
@@ -1728,6 +1802,7 @@ export const th = {
       "reports": "รายงานเอกสาร",
       "feedback": "ข้อเสนอแนะผู้ใช้",
       "payouts": "ถอนเงินผู้ขาย",
+      "subscriptions": "สมาชิกรายเดือน",
       "affiliates": "ลิงก์พันธมิตร",
       "ads": "โฆษณา",
       "sellerApplications": "ใบสมัครผู้ขาย",
@@ -2530,9 +2605,35 @@ export const th = {
       "actionPayoutApprove": "อนุมัติการถอนเงิน",
       "actionPayoutReject": "ปฏิเสธการถอนเงิน",
       "actionOrderRefund": "คืนเงินคำสั่งซื้อ",
+      "actionUserSuspend": "ระงับบัญชีผู้ใช้ชั่วคราว",
+      "actionUserBan": "แบนบัญชีผู้ใช้ถาวร",
+      "actionUserReinstate": "ปลดระงับบัญชีผู้ใช้",
+      "actionPayoutRequested": "ขอถอนเงิน",
+      "actionPayoutCancelled": "ยกเลิกคำขอถอนเงิน",
+      "actionPayoutStatusChanged": "อัปเดตสถานะการถอนเงิน",
+      "actionPayoutSlipUploaded": "อัปโหลดสลิปการโอนเงิน",
+      "actionPayoutCompleteManual": "ยืนยันการโอนเงินด้วยตนเอง",
+      "actionPayoutCompletedAuto": "ยืนยันการโอนเงินอัตโนมัติ",
+      "actionSellerPayoutAccountCreate": "เพิ่มบัญชีรับเงินของผู้ขาย",
+      "actionSellerPayoutAccountUpdate": "แก้ไขบัญชีรับเงินของผู้ขาย",
+      "actionSellerPayoutAccountReveal": "แสดงเลขบัญชีรับเงินเต็ม",
+      "actionAdsCampaignCreated": "สร้างแคมเปญโฆษณา",
+      "actionAdsCampaignCancelled": "ยกเลิกแคมเปญโฆษณา",
+      "actionAdsCampaignStopped": "ระงับแคมเปญโฆษณา",
+      "actionAdsCampaignAutoRefunded": "คืนเงินแคมเปญโฆษณาอัตโนมัติ",
+      "actionAdsPlacementUpdated": "แก้ไขตำแหน่งโฆษณา",
+      "actionAffiliateSettingsUpdated": "แก้ไขการตั้งค่าลิงก์พันธมิตร",
+      "actionFeedbackStatusChange": "เปลี่ยนสถานะเรื่องแจ้งปัญหา",
+      "actionFeedbackDelete": "ลบเรื่องแจ้งปัญหา",
       "entityDocument": "เอกสาร",
       "entityPayout": "การถอนเงิน",
       "entityOrder": "คำสั่งซื้อ",
+      "entityUser": "ผู้ใช้",
+      "entityAdsCampaign": "แคมเปญโฆษณา",
+      "entityAdsPlacement": "ตำแหน่งโฆษณา",
+      "entityAffiliateLink": "ลิงก์พันธมิตร",
+      "entitySellerPayoutAccount": "บัญชีรับเงินของผู้ขาย",
+      "entityFeedback": "เรื่องแจ้งปัญหา",
       "detailLabel": "ข้อมูล",
       "boolTrue": "ใช่",
       "boolFalse": "ไม่ใช่",
@@ -2623,6 +2724,8 @@ export const th = {
     "payoutBatchFileSkipped": "บางไฟล์ถูกข้าม — รองรับเฉพาะไฟล์รูปภาพหรือ PDF",
     "userDetailAdmin": {
       "title": "รายละเอียดผู้ใช้",
+      "notFoundTitle": "ไม่พบผู้ใช้",
+      "notFoundDesc": "ผู้ใช้นี้อาจถูกลบไปแล้ว หรือลิงก์ไม่ถูกต้อง",
       "loading": "กำลังโหลดข้อมูลผู้ใช้…",
       "joinedAt": "สมัครเมื่อ:",
       "cantSuspendAdmin": "ไม่สามารถระงับบัญชีผู้ดูแลระบบได้",
@@ -3100,7 +3203,7 @@ export const th = {
       "pageTotal": "หน้า {page} / {total}",
       "totalZero": "ทั้งหมด 0 รายการ",
       "perPage": "ต่อหน้า:",
-      "itemsUnit": "รายการ",
+      "itemsUnit": "{count} รายการ",
       "prev": "ก่อนหน้า",
       "next": "ถัดไป",
       "selectPerPageAria": "เลือกจำนวนรายการต่อหน้า",
@@ -3296,7 +3399,9 @@ export const th = {
       "uploading": "กำลังอัปโหลด…",
       "accountHolderNameRequired": "กรุณากรอกชื่อบัญชี",
       "bankRequired": "กรุณาเลือกธนาคาร",
-      "accountNumberInvalid": "เลขที่บัญชีไม่ถูกต้อง"
+      "accountNumberInvalid": "เลขที่บัญชีไม่ถูกต้อง",
+      "phonePlaceholder": "เช่น 0812345678",
+      "nationalIdPlaceholder": "เลขบัตรประชาชน 13 หลัก"
     },
     "affiliate": {
       "heading": "ลิงก์พันธมิตร รับค่าคอมมิชชัน {percent}%",

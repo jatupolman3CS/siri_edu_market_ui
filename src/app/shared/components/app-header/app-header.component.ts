@@ -2,12 +2,16 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { A11yModule } from '@angular/cdk/a11y';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -31,6 +35,17 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { DropdownBackResetDirective } from '../../directives/dropdown-back-reset.directive';
+import { ViewportService, acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
+
+/** Browse (archetype A) routes that show the phone search row — responsive-ui v1 §1.3. */
+const BROWSE_ROUTE =
+  /^\/(?:marketplace|categories|category\/[^/]+|bundles|free|store\/[^/]+|tcas|tgat-tpat|a-level|onet)?\/?$/;
+
+export function isBrowseRoute(url: string): boolean {
+  const path = url.split(/[?#]/)[0] || '/';
+  return BROWSE_ROUTE.test(path);
+}
 
 @Component({
   selector: 'app-header',
@@ -46,6 +61,8 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
     ImgFallbackDirective,
     LanguageSwitcherComponent,
     TranslatePipe,
+    A11yModule,
+    DropdownBackResetDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-header.component.html',
@@ -63,8 +80,25 @@ export class AppHeaderComponent {
   private readonly router = inject(Router);
   private readonly catalog = inject(CatalogService);
   private readonly message = inject(NzMessageService);
+  private readonly viewport = inject(ViewportService);
+  private readonly document = inject(DOCUMENT);
 
   readonly query = signal<string>('');
+
+  /** Current router URL (updated on every NavigationEnd). */
+  private readonly currentUrl = signal<string>(this.router.url);
+
+  /**
+   * หมวดหมู่ owns both /categories and /category/:slug. `routerLinkActive` on '/categories' only
+   * matches the former, so category pages marked nothing in the chip nav, drawer or desktop nav.
+   */
+  readonly categoriesActive = computed(() => /^\/categor(?:y|ies)(?:[/?#]|$)/.test(this.currentUrl()));
+
+  /**
+   * responsive-ui v1 §1.3 item 2: the phone search row only appears on browse (archetype A)
+   * routes; every other route gets the bare 56px top bar.
+   */
+  readonly showPhoneSearch = computed(() => isBrowseRoute(this.currentUrl()));
 
   /** Trending / popular search tags displayed below the prominent search bar */
   readonly quickSearches = computed(() => this.translation.list('header.quickSearchItems'));
@@ -95,6 +129,7 @@ export class AppHeaderComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => {
+        this.currentUrl.set(this.router.url);
         const q = this.router.parseUrl(this.router.url).queryParams['q'];
         this.query.set(typeof q === 'string' ? q : '');
         // Close the mobile menu on every navigation so it never lingers open over the next page.
@@ -120,6 +155,45 @@ export class AppHeaderComponent {
         this.mobileMenuToggle()?.nativeElement.focus();
       }
       wasOpen = open;
+    });
+
+    // F49: page scroll lock while the ☰ drawer is open (§4.3 overlay pattern) — drags on the
+    // backdrop used to scroll the page behind the open menu.
+    effect(() => this.setScrollLock(this.mobileMenuOpen()));
+    inject(DestroyRef).onDestroy(() => this.setScrollLock(false));
+
+    // F42: the ☰ toggle is md:hidden for signed-in users (xl:hidden for guests) but the drawer is
+    // only xl:hidden, so a drawer opened in portrait stayed open (and scroll-locked) after rotating
+    // to a tier without the toggle. Close it on that transition; the first run only records the
+    // tier so mounting (jsdom = desktop) never closes anything.
+    let wasToggleHidden: boolean | null = null;
+    effect(() => {
+      const toggleHidden = this.auth.isAuthenticated() ? this.viewport.isTabletUp() : this.viewport.isDesktop();
+      if (toggleHidden && wasToggleHidden === false) untracked(() => this.mobileMenuOpen.set(false));
+      wasToggleHidden = toggleHidden;
+    });
+  }
+
+  private scrollLocked = false;
+
+  private setScrollLock(on: boolean): void {
+    if (on === this.scrollLocked) return;
+    this.scrollLocked = on;
+    if (on) acquirePageScrollLock(this.document);
+    else releasePageScrollLock(this.document);
+  }
+
+  /**
+   * F86: the avatar menu renders at the end of <body> (CDK overlay), so after opening it the Tab
+   * order continued through the page. Move focus to its first item once it is attached (the
+   * dropdown emits before attaching, hence the timeout). Escape closes it and refocuses the trigger.
+   */
+  onAvatarMenuVisible(visible: boolean): void {
+    if (!visible) return;
+    setTimeout(() => {
+      this.document
+        .querySelector<HTMLElement>('[data-testid="header-avatar-menu"] :is(a[href], button:not([disabled]))')
+        ?.focus();
     });
   }
 

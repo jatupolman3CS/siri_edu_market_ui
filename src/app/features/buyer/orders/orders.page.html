@@ -1,12 +1,12 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-6 sm:py-8">
       @if (showSuccess()) {
         <div
-          class="card-soft p-6 mb-6 flex items-start gap-4 bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200"
+          class="card-soft p-4 sm:p-6 mb-6 flex items-start gap-3 sm:gap-4 bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200"
         >
           <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
             <app-icon name="check" [size]="22" />
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <h3 class="text-lg font-bold text-ink">{{ 'orders.paymentSuccessTitle' | trans }}</h3>
             <p class="text-sm text-ink-soft mt-1">
               {{ 'orders.paymentSuccessDesc' | trans }}
@@ -16,7 +16,7 @@
               <app-icon name="arrow-right" [size]="14" />
             </a>
           </div>
-          <button class="btn-icon" (click)="dismissSuccess()">
+          <button type="button" class="btn-icon shrink-0" (click)="dismissSuccess()">
             <app-icon name="close" [size]="16" />
           </button>
         </div>
@@ -30,14 +30,44 @@
 
       <!-- order-status-tabs v1 §4: tab strip only — the order list below is shared content,
            fetched fresh per tab via library.setOrdersTab (not client-side filtered). -->
-      <nz-tabs [nzSelectedIndex]="selectedTabIndex()" (nzSelectChange)="onTabChange($event)">
-        <nz-tab [nzTitle]="'orders.tabAll' | trans" />
-        <nz-tab [nzTitle]="'orders.tabAwaitingPayment' | trans" />
-        <nz-tab [nzTitle]="'orders.tabSuccessful' | trans" />
-        <nz-tab [nzTitle]="'orders.tabCancelledRefunded' | trans" />
-      </nz-tabs>
+      <!-- responsive-ui v1 U5-3: single-line horizontally scrolling chip row (was nz-tabs). -->
+      <div class="chip-row mb-4 sm:mb-6" role="tablist" [attr.aria-label]="'orders.heroTitle' | trans">
+        @for (tab of tabs; track tab.value; let i = $index) {
+          <button
+            type="button"
+            role="tab"
+            class="order-tab pill min-h-11 whitespace-nowrap border transition-colors"
+            [attr.aria-selected]="selectedTabIndex() === i"
+            [class.bg-primary]="selectedTabIndex() === i"
+            [class.text-white]="selectedTabIndex() === i"
+            [class.border-transparent]="selectedTabIndex() === i"
+            [class.bg-white]="selectedTabIndex() !== i"
+            [class.text-ink-soft]="selectedTabIndex() !== i"
+            [class.border-line]="selectedTabIndex() !== i"
+            (click)="selectTab(i)"
+          >
+            {{ tab.labelKey | trans }}
+          </button>
+        }
+      </div>
 
-      @if (library.orders().length === 0) {
+      @if (listState() === 'loading') {
+        <div class="flex flex-col gap-4" aria-busy="true" data-testid="orders-loading">
+          @for (row of [1, 2, 3]; track row) {
+            <div class="card-soft p-4 sm:p-5 h-48 animate-pulse" aria-hidden="true"></div>
+          }
+          <p class="sr-only">{{ 'common.loading' | trans }}</p>
+        </div>
+      } @else if (listState() === 'error') {
+        <div class="card-soft p-6 sm:p-10 text-center" role="alert" data-testid="orders-error">
+          <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+          <p class="text-base font-bold text-ink">{{ 'orders.loadFailed' | trans }}</p>
+          <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+          <button type="button" class="btn-pink mt-5" data-testid="orders-retry" (click)="retryOrders()">
+            {{ 'common.retry' | trans }}
+          </button>
+        </div>
+      } @else if (listState() === 'empty') {
         <app-empty-state
           emoji="📜"
           [title]="'orders.emptyTitle' | trans"
@@ -48,14 +78,14 @@
       } @else {
         <div class="flex flex-col gap-4">
           @for (o of library.orders(); track o.id) {
-            <article class="card-soft p-5">
+            <article class="card-soft p-4 sm:p-5">
               <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-line">
-                <div class="flex items-center gap-3">
-                  <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
                     <app-icon name="doc" [size]="18" />
                   </span>
-                  <div>
-                    <div class="text-sm font-bold text-ink">{{ o.orderNumber }}</div>
+                  <div class="min-w-0">
+                    <div class="text-sm font-bold text-ink break-all">{{ o.orderNumber }}</div>
                     <div class="text-xs text-ink-muted">{{ o.createdAt | timeAgo }}</div>
                   </div>
                 </div>
@@ -78,38 +108,41 @@
               }
 
               @for (item of o.items; track item.document.id) {
-                <div class="flex items-center gap-4 py-2">
+                <!-- R-1 (G2-8): the title column has a 7rem floor and the row wraps, so on narrow
+                     phones (320 en) the shrink-0 "view product" button drops to its own line,
+                     right-aligned, instead of squeezing the title to ~70px. -->
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 py-2" data-testid="order-item-row">
                   <img
                     appImgFallback
                     [src]="item.document.cover"
                     [alt]="item.document.title"
                     class="w-14 h-16 object-cover rounded-xl flex-shrink-0"
                   />
-                  <div class="flex-1 min-w-0">
-                    <div class="text-xs text-ink-muted">{{ item.document.seller.studioName }}</div>
-                    <div class="text-sm font-bold text-ink line-clamp-1">{{ item.document.title }}</div>
+                  <div class="flex-1 min-w-[7rem]">
+                    <div class="text-xs text-ink-muted [overflow-wrap:anywhere]">{{ item.document.seller.studioName }}</div>
+                    <div class="text-sm font-bold text-ink line-clamp-1 [overflow-wrap:anywhere]">{{ item.document.title }}</div>
                     <div class="text-xs text-ink-muted uppercase">{{ item.document.format }} · {{ item.document.pages }} {{ 'orders.pagesUnit' | trans }}</div>
                   </div>
                   <a
                     [routerLink]="['/document', item.document.id]"
-                    class="btn-ghost !py-2 !px-3 text-xs"
+                    class="btn-ghost !py-2 !px-3 min-h-11 shrink-0 ml-auto text-xs"
                   >
                     {{ 'orders.viewProduct' | trans }}
                   </a>
                 </div>
               }
 
-              <footer class="flex flex-wrap items-center gap-3 pt-3 mt-2 border-t border-line text-xs text-ink-muted">
+              <footer class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 mt-2 border-t border-line text-xs text-ink-muted">
                 <span class="inline-flex items-center gap-1">
                   <app-icon name="qr" [size]="12" />
                   {{ 'orders.paidVia' | trans:{ method: paymentLabel(o.paymentMethod) } }}
                 </span>
                 <span>·</span>
-                <a [routerLink]="['/orders', o.id]" class="text-pink-600 hover:underline font-semibold">
+                <a [routerLink]="['/orders', o.id]" class="inline-flex items-center min-h-11 text-pink-600 hover:underline font-semibold">
                   {{ 'orders.details' | trans }}
                 </a>
                 <span>·</span>
-                <a routerLink="/library" class="text-pink-600 hover:underline font-semibold">
+                <a routerLink="/library" class="inline-flex items-center min-h-11 text-pink-600 hover:underline font-semibold">
                   {{ 'orders.download' | trans }}
                 </a>
                 <!-- order-status-tabs v1 §4/AC-12: same condition + copy/disabled state as
@@ -119,7 +152,7 @@
                   <span>·</span>
                   <button
                     type="button"
-                    class="btn-pink bg-emerald-600 hover:bg-emerald-700 text-white !py-1 !px-2.5 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm disabled:opacity-50"
+                    class="btn-pink !bg-emerald-700 hover:!bg-emerald-800 text-white !py-1 !px-2.5 min-h-11 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm disabled:opacity-50"
                     [disabled]="payingWalletId() !== null || (wallet.summary()?.balance ?? 0) < o.total"
                     (click)="payWithWallet(o.id)"
                   >
@@ -129,7 +162,7 @@
                   <span>·</span>
                   <button
                     type="button"
-                    class="btn-ghost !py-1.5 !px-3 text-xs"
+                    class="btn-ghost !py-1.5 !px-3 min-h-11 text-xs"
                     [disabled]="cancellingId() !== null"
                     (click)="cancelOrder(o.id)"
                   >

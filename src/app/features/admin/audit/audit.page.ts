@@ -9,6 +9,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { AUDIT_ACTION_KEYS, AUDIT_ENTITY_KEYS, auditValueLabel } from './audit-labels';
 
 /**
  * F-10: the admin audit log.
@@ -65,23 +66,12 @@ export class AdminAuditPage {
     this.expandedId.update((current) => (current === id ? null : id));
   }
 
-  /** Action mapping to human-readable label (via i18n) */
+  /**
+   * The action pill's text (GR3-e, §4.8 v1.6.1): the mapped key of one of the 30 known codes, else
+   * the code humanized — never the raw code. An empty code gives `admin.audit.actionDefault`.
+   */
   actionLabel(action: string | undefined): string {
-    if (!action) return this.translation.t('admin.audit.actionDefault');
-    const keyMap: Record<string, string> = {
-      'document.approve': 'admin.audit.actionDocumentApprove',
-      'document.reject': 'admin.audit.actionDocumentReject',
-      'document.patch': 'admin.audit.actionDocumentPatch',
-      'document.bulk': 'admin.audit.actionDocumentBulk',
-      'document.report.create': 'admin.audit.actionDocumentReportCreate',
-      'document.report.resolve': 'admin.audit.actionDocumentReportResolve',
-      'document.report.resolve_all': 'admin.audit.actionDocumentReportResolveAll',
-      'payout.approve': 'admin.audit.actionPayoutApprove',
-      'payout.reject': 'admin.audit.actionPayoutReject',
-      'order.refund': 'admin.audit.actionOrderRefund',
-    };
-    const tKey = keyMap[action];
-    return tKey ? this.translation.t(tKey) : action;
+    return auditValueLabel(action, AUDIT_ACTION_KEYS, 'admin.audit.actionDefault', (key) => this.translation.t(key));
   }
 
   /** Action color style */
@@ -94,16 +84,12 @@ export class AdminAuditPage {
     return 'bg-pink-50 text-pink-700 border-pink-200';
   }
 
-  /** Entity type label via i18n */
+  /**
+   * The entity type's label (GR3-e): the mapped key of one of the 9 known types, else the type
+   * humanized — never the raw type. An empty type gives `admin.audit.entityDefault`.
+   */
   entityTypeLabel(type: string | undefined): string {
-    if (!type) return this.translation.t('admin.audit.entityDefault');
-    const keyMap: Record<string, string> = {
-      Document: 'admin.audit.entityDocument',
-      Payout: 'admin.audit.entityPayout',
-      Order: 'admin.audit.entityOrder',
-    };
-    const tKey = keyMap[type];
-    return tKey ? this.translation.t(tKey) : type;
+    return auditValueLabel(type, AUDIT_ENTITY_KEYS, 'admin.audit.entityDefault', (key) => this.translation.t(key));
   }
 
   /**

@@ -1,11 +1,11 @@
 @switch (mode()) {
   @case ('manage') {
-    <section class="card-soft p-6" id="cards">
+    <section class="card-soft p-4 sm:p-6" id="cards">
       <div class="flex items-start gap-3 mb-5">
         <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
           <app-icon name="wallet" [size]="18" />
         </div>
-        <div>
+        <div class="min-w-0">
           <h2 class="text-lg font-bold text-ink mb-1">{{ 'shared.savedCards.title' | trans }}</h2>
           <p class="text-xs text-ink-muted">{{ 'shared.savedCards.subtitle' | trans }}</p>
         </div>
@@ -24,8 +24,8 @@
       } @else {
         <ul class="space-y-3 mb-4">
           @for (card of paymentMethods.list(); track card.id) {
-            <li class="flex items-center justify-between gap-3 p-3 rounded-2xl border border-line">
-              <div>
+            <li class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-line">
+              <div class="min-w-0">
                 <div class="text-sm font-semibold text-ink capitalize flex items-center gap-2 flex-wrap">
                   <span>{{ card.brand }} •••• {{ card.last4 }}</span>
                   @if (card.isDefault) {
@@ -39,11 +39,11 @@
                   {{ 'shared.savedCards.expires' | trans: { month: card.expMonth, year: card.expYear } }}
                 </div>
               </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-2 flex-shrink-0 ml-auto">
                 @if (!card.isDefault) {
                   <button
                     type="button"
-                    class="btn-ghost !py-1.5 !px-3 text-xs"
+                    class="btn-ghost !py-1.5 !px-3 min-h-11 text-xs"
                     [disabled]="busy()"
                     (click)="setDefault(card.id)"
                   >
@@ -52,7 +52,7 @@
                 }
                 <button
                   type="button"
-                  class="text-xs text-rose-500 hover:text-rose-600"
+                  class="tap-target px-2 text-xs text-rose-500 hover:text-rose-600"
                   [disabled]="busy()"
                   (click)="confirmRemove(card)"
                 >
@@ -70,7 +70,7 @@
         </button>
       } @else {
         <div id="saved-cards-setup-element" class="min-h-[200px] mb-3"></div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <button type="button" class="btn-pink" [disabled]="busy()" (click)="confirmAddCard()">
             {{ 'shared.savedCards.saveCard' | trans }}
           </button>
@@ -90,7 +90,7 @@
         <div class="space-y-2">
           @for (card of paymentMethods.list(); track card.id) {
             <label
-              class="flex items-center gap-3 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300"
+              class="flex items-center gap-3 min-h-11 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300"
               [class.opacity-50]="isExpired(card)"
               [class.cursor-not-allowed]="isExpired(card)"
             >
@@ -102,7 +102,7 @@
                 [disabled]="isExpired(card)"
                 (change)="selectCard(card.id)"
               />
-              <span class="text-sm text-ink flex items-center gap-2 flex-wrap">
+              <span class="text-sm text-ink flex items-center gap-2 flex-wrap min-w-0">
                 <span>{{ card.brand }} •••• {{ card.last4 }} — {{ 'shared.savedCards.expires' | trans: { month: card.expMonth, year: card.expYear } }}</span>
                 @if (card.isDefault) {
                   <span class="pill-pink">{{ 'shared.savedCards.primaryBadge' | trans }}</span>
@@ -113,7 +113,7 @@
               </span>
             </label>
           }
-          <label class="flex items-center gap-3 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
+          <label class="flex items-center gap-3 min-h-11 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
             <input
               type="radio"
               name="saved-card-select"

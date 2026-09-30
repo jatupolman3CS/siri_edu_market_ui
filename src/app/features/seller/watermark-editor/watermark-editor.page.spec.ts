@@ -5,6 +5,8 @@ import { AuthService } from '../../../core/services';
 import { SellerWatermarkTemplateService } from '../../../core/services/seller-watermark-template.service';
 import type { SellerWatermarkConfigRequest } from '../../../core/api';
 import { WatermarkEditorPage } from './watermark-editor.page';
+import { ViewportService } from '../../../core/layout';
+import { signal } from '@angular/core';
 
 // `SellerWatermarkService` (real, non-mocked instance via `providedIn: 'root'`) calls the
 // generated SDK, which ultimately calls `fetch` — rather than mocking the service itself, this
@@ -775,5 +777,213 @@ describe('WatermarkEditorPage', () => {
       const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(text).toContain('ใช้ได้สูงสุด 512 ตัวอักษร');
     });
+  });
+});
+
+describe('WatermarkEditorPage — responsive settings panel (responsive-ui v1 §4.6 G / U3-4)', () => {
+  const templateService = {
+    loadOrDefault: vi.fn(() => ({
+      enabled: true,
+      previewWatermarkSubtitle: '',
+      previewWatermarkFontFamily: 'Noto Sans Thai',
+      config: {
+        previewWatermarkPosition: 'center-diagonal',
+        previewWatermarkOpacity: 0.25,
+        previewWatermarkColor: '#E11D48',
+        previewWatermarkFontSize: 42,
+        previewWatermarkRotation: -30,
+        personalizedWatermarkPosition: 'footer',
+        personalizedWatermarkTemplate: '',
+      },
+    })),
+    save: vi.fn(() => true),
+    load: vi.fn(() => null),
+  };
+  let savedFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    savedFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => jsonResponse({ title: 'no stub', status: 404 }, 404)) as typeof globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = savedFetch;
+    TestBed.resetTestingModule();
+  });
+
+  function renderAt(desktop: boolean): ComponentFixture<WatermarkEditorPage> {
+    TestBed.configureTestingModule({
+      imports: [WatermarkEditorPage],
+      providers: [
+        { provide: AuthService, useValue: { user: () => ({ id: 's1', email: 's@test.com' }) } },
+        { provide: NzMessageService, useValue: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() } },
+        { provide: SellerWatermarkTemplateService, useValue: templateService },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({}) } } },
+        {
+          provide: ViewportService,
+          useValue: {
+            tier: signal(desktop ? 'desktop' : 'phone'),
+            isPhone: signal(!desktop),
+            isTabletUp: signal(desktop),
+            isLaptopUp: signal(desktop),
+            isDesktop: signal(desktop),
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(WatermarkEditorPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const q = (fixture: ComponentFixture<WatermarkEditorPage>, sel: string) =>
+    (fixture.nativeElement as HTMLElement).querySelector(sel);
+
+  it('>=1280: settings render inline in the right panel, no settings button, no sheet', () => {
+    const fixture = renderAt(true);
+    expect(q(fixture, '[data-testid="editor-settings-panel"]')).not.toBeNull();
+    expect(q(fixture, '[data-testid="editor-settings-button"]')).toBeNull();
+    expect(q(fixture, 'app-bottom-sheet')).toBeNull();
+    // same fields as before: opacity/font-size/rotation sliders are present
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('input[type="range"]').length).toBeGreaterThan(0);
+  });
+
+  it('<1280: canvas only until ตั้งค่า opens the sheet with the full settings form + save in the footer', () => {
+    const fixture = renderAt(false);
+    expect(q(fixture, '[data-testid="editor-settings-panel"]')).toBeNull();
+    expect(q(fixture, '[role="dialog"]')).toBeNull();
+
+    (q(fixture, '[data-testid="editor-settings-button"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const body = q(fixture, '[data-testid="editor-settings-sheet-body"]') as HTMLElement;
+    expect(body).not.toBeNull();
+    expect(body.querySelectorAll('input[type="range"]').length).toBeGreaterThan(0);
+    const footer = q(fixture, '[data-testid="sheet-footer"]') as HTMLElement;
+    expect(footer.querySelector('button')).not.toBeNull();
+  });
+
+  it('<1280: the sheet follows the active tab (download settings on the personalized tab)', () => {
+    const fixture = renderAt(false);
+    fixture.componentInstance.activeTab.set('personalized');
+    fixture.componentInstance.openSettings();
+    fixture.detectChanges();
+
+    const body = q(fixture, '[data-testid="editor-settings-sheet-body"]') as HTMLElement;
+    expect(body.querySelector('textarea')).not.toBeNull();
+
+    fixture.componentInstance.closeSettings();
+    fixture.detectChanges();
+    expect(q(fixture, '[data-testid="editor-settings-sheet-body"]')).toBeNull();
+  });
+});
+
+/**
+ * responsive-ui v1.4 gate fixes (G1-5): F42/F43 (sheet state across the 1280 boundary), F26 (the
+ * web preview scales with its frame) and F25 (swatch row wraps, swatches keep their shape).
+ */
+describe('WatermarkEditorPage — responsive v1.4 fixes', () => {
+  const templateService = {
+    loadOrDefault: vi.fn(() => ({
+      enabled: true,
+      previewWatermarkSubtitle: '',
+      previewWatermarkFontFamily: 'Noto Sans Thai',
+      config: {
+        previewWatermarkPosition: 'center-diagonal',
+        previewWatermarkOpacity: 0.25,
+        previewWatermarkColor: '#E11D48',
+        previewWatermarkFontSize: 42,
+        previewWatermarkRotation: -30,
+        personalizedWatermarkPosition: 'footer',
+        personalizedWatermarkTemplate: '',
+      },
+    })),
+    save: vi.fn(() => true),
+    load: vi.fn(() => null),
+  };
+  let savedFetch: typeof globalThis.fetch;
+  const desktop = signal(false);
+
+  beforeEach(() => {
+    savedFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => jsonResponse({ title: 'no stub', status: 404 }, 404)) as typeof globalThis.fetch;
+    desktop.set(false);
+  });
+
+  afterEach(() => {
+    globalThis.fetch = savedFetch;
+    TestBed.resetTestingModule();
+  });
+
+  function render(): ComponentFixture<WatermarkEditorPage> {
+    TestBed.configureTestingModule({
+      imports: [WatermarkEditorPage],
+      providers: [
+        { provide: AuthService, useValue: { user: () => ({ id: 's1', email: 's@test.com' }) } },
+        { provide: NzMessageService, useValue: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() } },
+        { provide: SellerWatermarkTemplateService, useValue: templateService },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({}) } } },
+        {
+          provide: ViewportService,
+          useValue: {
+            tier: signal('tablet'),
+            isPhone: signal(false),
+            isTabletUp: signal(true),
+            isLaptopUp: signal(false),
+            isDesktop: desktop,
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(WatermarkEditorPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('F42/F43: reaching >=1280 closes the settings sheet, and it stays closed when the viewport comes back', () => {
+    const fixture = render();
+    const page = fixture.componentInstance;
+    page.openSettings();
+    fixture.detectChanges();
+    expect(page.settingsOpen()).toBe(true);
+
+    desktop.set(true);
+    fixture.detectChanges();
+    expect(page.settingsOpen()).toBe(false);
+
+    desktop.set(false);
+    fixture.detectChanges();
+    expect(page.settingsOpen()).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="editor-settings-sheet-body"]')).toBeNull();
+  });
+
+  it('F26: the preview frame is a size container and the watermark font is in cqw of the 420px frame', () => {
+    const fixture = render();
+    const page = fixture.componentInstance;
+    const frame = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="watermark-preview-frame"]') as HTMLElement;
+    expect(frame.classList.contains('[container-type:inline-size]')).toBe(true);
+    // 42px × 0.65 = 27.3px at the 420px desktop frame (1cqw = 4.2px)
+    expect(page.previewFontSize(0.65)).toBe('6.500cqw');
+    // the desktop min-height only applies from md: up
+    expect(frame.parentElement?.classList.contains('md:min-h-[620px]')).toBe(true);
+    expect(frame.parentElement?.classList.contains('min-h-[620px]')).toBe(false);
+  });
+
+  it('F25: the swatch rows wrap and every swatch keeps its size (shrink-0), with its state exposed', () => {
+    const fixture = render();
+    fixture.componentInstance.openSettings();
+    fixture.detectChanges();
+    const body = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="editor-settings-sheet-body"]') as HTMLElement;
+    const swatches = Array.from(body.querySelectorAll<HTMLButtonElement>('button[style*="background-color"]'));
+    expect(swatches.length).toBe(6);
+    const row = swatches[0].parentElement as HTMLElement;
+    expect(row.classList.contains('flex-wrap')).toBe(true);
+    for (const s of swatches) {
+      expect(s.classList.contains('shrink-0')).toBe(true);
+      expect(s.getAttribute('aria-label')).toBeTruthy();
+    }
+    expect(swatches.filter((s) => s.getAttribute('aria-pressed') === 'true')).toHaveLength(1);
   });
 });

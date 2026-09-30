@@ -30,6 +30,7 @@ import { SavedCardsComponent } from '../../../shared/components/saved-cards/save
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
 import { isSavedCardEntryExpired } from '../../../core/util/saved-card.util';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 
 /**
  * S-04: checkout in two moves. First it creates the order, which opens a Stripe PaymentIntent
@@ -60,6 +61,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     EmptyStateComponent,
     ImgFallbackDirective,
     SavedCardsComponent,
+    StickyActionBarComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

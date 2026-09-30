@@ -1,32 +1,36 @@
-<div class="max-w-5xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container max-w-5xl py-6 sm:py-8">
   <header
-    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
   >
-    <div>
+    <div class="min-w-0">
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
         <span>{{ 'feedback.tag' | trans }}</span>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'feedback.title' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'feedback.title' | trans }}</h1>
       <p class="text-sm sm:text-base text-ink-soft">{{ 'feedback.subtitle' | trans }}</p>
     </div>
+    <!-- R-1 (G2-8): `.btn-pink` sets min-width:44px on coarse pointers, which replaces the flex
+         item's min-width:auto — in the >=640 row the button shrank below its label (744 en: label
+         28px wider than the content box). `shrink-0` keeps the label inside; the text column
+         (min-w-0) gives way instead, and the label may wrap rather than overflow a narrow row. -->
     <button
       type="button"
-      class="btn-primary !py-2.5 !px-5 whitespace-nowrap self-start sm:self-auto flex items-center gap-2"
+      class="btn-pink !py-2.5 !px-5 min-h-11 shrink-0 max-w-full self-start sm:self-auto"
       (click)="feedbackModal.show('buyer')"
     >
-      <app-icon name="plus" [size]="18" />
-      <span>{{ 'feedback.submitNew' | trans }}</span>
+      <app-icon name="plus" [size]="18" class="shrink-0" />
+      <span class="min-w-0 text-center">{{ 'feedback.submitNew' | trans }}</span>
     </button>
   </header>
 
   <!-- Filter tabs -->
-  <div class="flex flex-wrap gap-2 mb-6">
+  <div class="chip-row mb-6">
     @for (tab of statusTabs; track tab.value) {
       <button
         type="button"
-        class="pill"
-        [class]="status() === tab.value ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
+        class="pill min-h-11 whitespace-nowrap"
+        [class]="status() === tab.value ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
         (click)="setStatus(tab.value)"
       >
         {{ tab.labelKey | trans }}
@@ -48,7 +52,7 @@
     <ul class="flex flex-col gap-4">
       @for (item of items(); track item.id) {
         <li
-          class="card-soft p-5 transition-all border border-line hover:border-pink-200"
+          class="card-soft p-4 sm:p-5 transition-all border border-line hover:border-pink-200"
         >
           <div
             class="flex flex-wrap items-start justify-between gap-3 cursor-pointer"
@@ -81,7 +85,7 @@
                   </span>
                 }
               </div>
-              <h3 class="text-base font-bold text-ink hover:text-pink-600 transition-colors">
+              <h3 class="text-base font-bold text-ink hover:text-pink-600 transition-colors break-words">
                 {{ item.subject }}
               </h3>
               <p class="text-xs text-ink-muted mt-1">
@@ -90,7 +94,7 @@
             </div>
             <button
               type="button"
-              class="btn-ghost !p-2 text-ink-muted hover:text-ink shrink-0"
+              class="btn-ghost !p-2 min-w-11 min-h-11 text-ink-muted hover:text-ink shrink-0"
               [attr.aria-label]="isExpanded(item.id) ? ('feedback.collapse' | trans) : ('feedback.expand' | trans)"
               (click)="toggleExpand(item.id); $event.stopPropagation()"
             >

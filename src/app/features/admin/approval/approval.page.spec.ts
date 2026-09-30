@@ -4,7 +4,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminApprovalPage } from './approval.page';
 import { AdminService } from '../../../core/services';
 import { mapAdminPendingToDocumentItem } from '../../../core/api-mappers/mappers';
-import { idleActionState } from '../../../core/services/action-state';
+import { errorActionState, idleActionState, loadingActionState, type ActionState } from '../../../core/services/action-state';
 import type { DocumentItem } from '../../../core/models';
 import type { AdminPendingDocumentResponse } from '../../../core/api/types.gen';
 
@@ -33,12 +33,17 @@ function buildDoc(over: Partial<AdminPendingDocumentResponse> = {}): DocumentIte
   });
 }
 
-function buildAdmin(docs: DocumentItem[]) {
+function buildAdmin(docs: DocumentItem[], total: number | null = null) {
   const pendingDocuments = signal<DocumentItem[]>(docs);
+  const pendingTotal = signal<number | null>(total);
+  const pendingState = signal<ActionState>(idleActionState());
   return {
     pendingDocuments: pendingDocuments.asReadonly(),
+    pendingTotal: pendingTotal.asReadonly(),
+    _pendingTotalSignal: pendingTotal,
     pendingHasMore: signal(false).asReadonly(),
-    pendingState: signal(idleActionState()).asReadonly(),
+    pendingState: pendingState.asReadonly(),
+    _pendingStateSignal: pendingState,
     refreshPendingDocuments: vi.fn(async () => {}),
     loadMorePendingDocuments: vi.fn(async () => {}),
     fetchAdminDocumentDetail: vi.fn(async () => null),
@@ -314,5 +319,257 @@ describe('AdminApprovalPage — file download/open without popups', () => {
     await fixture.componentInstance.openMainFile('orig/gone.pdf');
 
     expect(messages.error).toHaveBeenCalledWith(MSG_FAILED);
+  });
+});
+
+describe('AdminApprovalPage — responsive master-detail (responsive-ui v1 U4-3)', () => {
+  function el(fixture: { nativeElement: unknown }, testId: string): HTMLElement {
+    return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`) as HTMLElement;
+  }
+
+  it('starts on the list view below 1024px (detail column hidden there, both shown at lg)', async () => {
+    const { fixture } = render(buildAdmin([buildDoc()]));
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.detailOpen()).toBe(false);
+    expect(el(fixture, 'approval-list').className).not.toContain('max-lg:hidden');
+    expect(el(fixture, 'approval-detail').className).toContain('max-lg:hidden');
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-sticky-action-bar')).toBeNull();
+  });
+
+  it('selecting a row switches to the full-width detail view with a back button', async () => {
+    const admin = buildAdmin([buildDoc({ id: 'doc-1' }), buildDoc({ id: 'doc-2', title: 'เอกสารที่สอง' })]);
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+
+    const rows = el(fixture, 'approval-list').querySelectorAll('button.card-soft');
+    (rows[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.detailOpen()).toBe(true);
+    expect(fixture.componentInstance.selected()?.id).toBe('doc-2');
+    expect(el(fixture, 'approval-list').className).toContain('max-lg:hidden');
+    expect(el(fixture, 'approval-detail').className).not.toContain('max-lg:hidden');
+
+    el(fixture, 'approval-back').click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.detailOpen()).toBe(false);
+    expect(el(fixture, 'approval-list').className).not.toContain('max-lg:hidden');
+  });
+
+  it('puts approve / reject in a phone sticky action bar while the detail view is open', async () => {
+    const admin = buildAdmin([buildDoc({ id: 'doc-1' })]);
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+
+    fixture.componentInstance.openDetail('doc-1');
+    fixture.detectChanges();
+
+    const sticky = el(fixture, 'approval-actions-sticky');
+    expect(sticky).not.toBeNull();
+    expect(sticky.closest('app-sticky-action-bar')).not.toBeNull();
+    const buttons = sticky.querySelectorAll('button');
+    expect(buttons.length).toBe(2);
+
+    (buttons[1] as HTMLButtonElement).click();
+    await settle();
+    fixture.detectChanges();
+
+    expect(admin.approveDocument).toHaveBeenCalledWith('doc-1');
+    // back to the list once the document leaves the queue
+    expect(fixture.componentInstance.detailOpen()).toBe(false);
+  });
+
+  it('keeps the inline approve / reject buttons for >=744', async () => {
+    const { fixture } = render(buildAdmin([buildDoc()]));
+    await settle();
+    fixture.detectChanges();
+
+    const inline = el(fixture, 'approval-actions-inline');
+    expect(inline.className).toContain('md:grid');
+    expect(inline.querySelectorAll('button').length).toBe(2);
+  });
+
+  it('header count shows the server total of the queue, not the loaded rows (F87)', async () => {
+    const admin = buildAdmin([buildDoc({ id: 'doc-1' }), buildDoc({ id: 'doc-2' })], 1234);
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+    expect(el(fixture, 'approval-total').textContent?.trim()).toBe('1234');
+
+    admin._pendingTotalSignal.set(null);
+    fixture.detectChanges();
+    expect(el(fixture, 'approval-total').textContent?.trim()).toBe('2');
+  });
+
+  it('back from the <1024 detail view returns the list to the offset it was left at (F138)', async () => {
+    const admin = buildAdmin([buildDoc({ id: 'doc-1' }), buildDoc({ id: 'doc-2' })]);
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const scrollY = vi.spyOn(window, 'scrollY', 'get').mockReturnValue(640);
+    const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(390);
+    try {
+      fixture.componentInstance.openDetail('doc-2');
+      fixture.detectChanges();
+      expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'instant' });
+
+      el(fixture, 'approval-back').click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(scrollTo).toHaveBeenLastCalledWith({ top: 640, behavior: 'instant' });
+    } finally {
+      scrollTo.mockRestore();
+      scrollY.mockRestore();
+      width.mockRestore();
+    }
+  });
+
+  it('does not move the page when a row is picked at >=1024 (both columns stay)', async () => {
+    const { fixture } = render(buildAdmin([buildDoc({ id: 'doc-1' })]));
+    await settle();
+    fixture.detectChanges();
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1280);
+    try {
+      fixture.componentInstance.openDetail('doc-1');
+      expect(scrollTo).not.toHaveBeenCalled();
+    } finally {
+      scrollTo.mockRestore();
+      width.mockRestore();
+    }
+  });
+
+  it('counts only the sheet filters (seller name + dates) and clears them', () => {
+    const { fixture } = render(buildAdmin([buildDoc()]));
+    const page = fixture.componentInstance;
+    page.titleQuery.set('คณิต');
+    page.sellerNameQuery.set('ครูเอ');
+    page.postedFrom.set('2026-09-01');
+    expect(page.activeFilterCount()).toBe(2);
+
+    page.clearFilters();
+    expect(page.activeFilterCount()).toBe(0);
+    expect(page.titleQuery()).toBe('คณิต');
+  });
+});
+
+describe('AdminApprovalPage — data states (responsive-ui v1.4 R-17, G-27)', () => {
+  function el(fixture: { nativeElement: unknown }, testId: string): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
+  }
+
+  it('shows a skeleton — not "ไม่มีเอกสารรออนุมัติ" — before the first queue answer', async () => {
+    const admin = buildAdmin([], null);
+    admin._pendingStateSignal.set(loadingActionState());
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.listState()).toBe('loading');
+    expect(el(fixture, 'approval-loading')?.getAttribute('aria-busy')).toBe('true');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ไม่มีเอกสารรออนุมัติ');
+    expect(text).not.toContain('เลือกเอกสารที่ต้องการตรวจสอบ');
+    expect(el(fixture, 'approval-total')?.textContent?.trim()).toBe('—');
+  });
+
+  it('treats idle with an unknown total (search not answered yet) as loading', () => {
+    const { fixture } = render(buildAdmin([], null));
+    expect(fixture.componentInstance.listState()).toBe('loading');
+  });
+
+  it('shows a message and a common.retry that re-runs the search with the current filters on failure', async () => {
+    const admin = buildAdmin([], null);
+    admin._pendingStateSignal.set(errorActionState('โหลดไม่สำเร็จ'));
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+    fixture.componentInstance.titleQuery.set('คณิต');
+
+    expect(fixture.componentInstance.listState()).toBe('error');
+    const error = el(fixture, 'approval-error');
+    expect(error?.getAttribute('role')).toBe('alert');
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ไม่มีเอกสารรออนุมัติ');
+    expect(text).not.toContain('เลือกเอกสารที่ต้องการตรวจสอบ');
+    expect(el(fixture, 'approval-total')?.textContent?.trim()).toBe('—');
+
+    admin.refreshPendingDocuments.mockClear();
+    const retry = el(fixture, 'approval-retry') as HTMLButtonElement;
+    expect(retry.textContent?.trim()).toBe('ลองใหม่อีกครั้ง');
+    expect(retry.classList).toContain('btn-pink');
+    retry.click();
+    expect(admin.refreshPendingDocuments).toHaveBeenCalledWith(expect.objectContaining({ title: 'คณิต' }));
+  });
+
+  it('shows the "ไม่มีเอกสารรออนุมัติ" empty state only for a queue that answered with zero rows', async () => {
+    const { fixture } = render(buildAdmin([], 0));
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.listState()).toBe('empty');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('ไม่มีเอกสารรออนุมัติ');
+    expect(el(fixture, 'approval-loading')).toBeNull();
+    expect(el(fixture, 'approval-error')).toBeNull();
+    expect(el(fixture, 'approval-total')?.textContent?.trim()).toBe('0');
+  });
+
+  it('searches once on entry — the queue flipping its own load state does not re-run the search', async () => {
+    const admin = buildAdmin([], null);
+    admin.refreshPendingDocuments.mockImplementation(async () => {
+      // Like the real pager: reads its own state synchronously, then flips it around the request.
+      admin.pendingState();
+      admin._pendingStateSignal.set(loadingActionState());
+      await Promise.resolve();
+      admin._pendingStateSignal.set(errorActionState('โหลดไม่สำเร็จ'));
+    });
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 450)); // past the 400ms filter debounce
+    fixture.detectChanges();
+    await settle();
+
+    expect(admin.refreshPendingDocuments).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance.listState()).toBe('error');
+  });
+
+  it('keeps the loaded rows on screen while a refresh is in flight', async () => {
+    const admin = buildAdmin([buildDoc()], 1);
+    admin._pendingStateSignal.set(loadingActionState());
+    const { fixture } = render(admin);
+    await settle();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.listState()).toBe('data');
+    expect(el(fixture, 'approval-list')?.querySelectorAll('button.card-soft').length).toBe(1);
+  });
+});
+
+describe('AdminApprovalPage — reject modal actions (responsive-ui v1.4 R-2, G2-8)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('stacks cancel / confirm below 744 and gives the confirm button a 44px coarse-pointer height', async () => {
+    const { fixture } = render(buildAdmin([buildDoc({ id: 'doc-1', title: 'เอกสาร A' })]));
+    await settle();
+    fixture.componentInstance.reject('doc-1', 'เอกสาร A');
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const actions = document.querySelector('[data-testid="reject-modal-actions"]') as HTMLElement | null;
+    expect(actions).not.toBeNull();
+    expect(actions!.className).toContain('flex-col');
+    expect(actions!.className).toContain('md:flex-row');
+    const confirm = document.querySelector('[data-testid="reject-modal-confirm"]') as HTMLButtonElement;
+    expect(confirm.className).toContain('[@media(pointer:coarse)]:min-h-11');
+    expect(confirm.className).toContain('justify-center');
+    // the cancel button is a .btn-ghost, which the global touch rule already makes 44px
+    expect(actions!.querySelector('button')?.classList).toContain('btn-ghost');
   });
 });

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminPayoutsPage } from './payouts.page';
@@ -7,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import type { AdminPayoutResponse } from '../../../core/api';
 import type { BatchPayoutSlipsResponse, PayoutSlip } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * payout-request-slip-verification v1 (docs/contracts/payout-request-slip-verification.md
@@ -506,5 +508,158 @@ describe('AdminPayoutsPage — "อัปโหลดสลิป (หลาย�
 
     expect(fixture.componentInstance.batchModalOpen()).toBe(false);
     expect(fixture.componentInstance.batchResult()).toBeNull();
+  });
+});
+
+describe('AdminPayoutsPage — custom overlay contract (responsive-ui v1.4 §4.7, F52 / F102 / F160)', () => {
+  function openDialogs(root: HTMLElement): HTMLElement[] {
+    return Array.from(root.querySelectorAll('[role="dialog"]')) as HTMLElement[];
+  }
+
+  it('every overlay is a named modal dialog in a scrolling, safe-area padded 100dvh layer, with the card at m-auto', async () => {
+    const { fixture } = render();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    const root = fixture.nativeElement as HTMLElement;
+    const openers: Array<[string, () => void, () => void]> = [
+      ['batch', () => page.openBatchModal(), () => page.closeBatchModal()],
+      ['manual', () => page.manualModalOpen.set(true), () => page.closeManualModal()],
+      ['fail', () => page.failModalPayoutId.set('payout-1'), () => page.closeFailModal()],
+      ['qr', () => page.qrModalPayout.set(payoutFixture()), () => page.qrModalPayout.set(null)],
+    ];
+    for (const [name, open, close] of openers) {
+      open();
+      fixture.detectChanges();
+      const [dialog] = openDialogs(root);
+      expect(dialog, name).toBeTruthy();
+      expect(dialog.getAttribute('aria-modal'), name).toBe('true');
+      const titleId = dialog.getAttribute('aria-labelledby');
+      expect(titleId, name).toBeTruthy();
+      expect(root.querySelector('#' + titleId)?.textContent?.trim(), name).toBeTruthy();
+      expect(dialog.className, name).toContain('m-auto');
+      const layer = dialog.parentElement as HTMLElement;
+      for (const cls of ['overflow-y-auto', 'overscroll-contain', 'h-dvh', 'pl-[max(16px,var(--safe-left))]', 'pr-[max(16px,var(--safe-right))]']) {
+        expect(layer.className, name + ' ' + cls).toContain(cls);
+      }
+      expect(layer.className, name).not.toContain('items-center');
+      close();
+      fixture.detectChanges();
+    }
+  });
+
+  it('locks page scroll while any overlay is open and releases it after the last one closes (R-10)', async () => {
+    const { fixture } = render();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    expect(document.documentElement.style.overflow).toBe('');
+
+    page.openBatchModal();
+    fixture.detectChanges();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.overflow).toBe('visible');
+
+    page.manualModalOpen.set(true); // stacked
+    fixture.detectChanges();
+    page.closeBatchModal();
+    fixture.detectChanges();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    page.closeManualModal();
+    fixture.detectChanges();
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('Escape closes only the topmost overlay, and ignores an Escape an inner layer already handled', async () => {
+    const { fixture } = render();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    page.slipModalPayout.set(payoutFixture());
+    page.manualModalOpen.set(true);
+    fixture.detectChanges();
+
+    const handled = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    handled.preventDefault();
+    document.dispatchEvent(handled);
+    fixture.detectChanges();
+    expect(page.manualModalOpen()).toBe(true);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(page.manualModalOpen()).toBe(false);
+    expect(page.slipModalPayout()).not.toBeNull();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(page.slipModalPayout()).toBeNull();
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
+  it('batch file remove buttons are 44px touch targets (F160)', async () => {
+    const { fixture } = render();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    page.openBatchModal();
+    page.batchFiles.set([new File(['x'], 'a.png', { type: 'image/png' })]);
+    fixture.detectChanges();
+    const remove = (fixture.nativeElement as HTMLElement).querySelector('[role="dialog"] ul li button') as HTMLElement;
+    expect(remove.className).toContain('[@media(pointer:coarse)]:min-w-11');
+    expect(remove.className).toContain('[@media(pointer:coarse)]:min-h-11');
+  });
+});
+
+describe('AdminPayoutsPage — table viewports (responsive-ui v1.6 R-27)', () => {
+  async function ticks(fixture: ReturnType<typeof render>['fixture']): Promise<void> {
+    fixture.detectChanges();
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+  const viewports = (fixture: ReturnType<typeof render>['fixture']) =>
+    fixture.debugElement.queryAll(By.directive(TableViewportDirective)).map((d) => d.injector.get(TableViewportDirective));
+
+  it('the payout list sits in a named viewport keyed on page, page size and filter, with the pagination outside', async () => {
+    const items = Array.from({ length: 12 }, (_, i) => payoutFixture({ id: `payout-${i + 1}` }));
+    const { fixture } = render({ items });
+    await ticks(fixture);
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapperOf = () => (root.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+    expect(wrapperOf().classList).toContain('rt-viewport');
+    expect(wrapperOf().contains(pagination)).toBe(false);
+    expect(wrapperOf().compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(viewports(fixture).map((v) => [v.rtLabel(), v.rtResetKey()])).toEqual([['การถอนเงินผู้ขาย', '1|10|pending']]);
+
+    wrapperOf().scrollTop = 300;
+    fixture.componentInstance.setFilter('paid');
+    await ticks(fixture);
+    expect(viewports(fixture)[0].rtResetKey()).toBe('1|10|paid');
+    expect(wrapperOf().scrollTop).toBe(0);
+
+    wrapperOf().scrollTop = 300;
+    fixture.componentInstance.onPageChange(2);
+    await ticks(fixture);
+    expect(viewports(fixture)[0].rtResetKey()).toBe('2|10|paid');
+    expect(wrapperOf().scrollTop).toBe(0);
+  });
+
+  it('the batch-result table sits in its own viewport, named by the dialog heading, with no reset key', async () => {
+    const { fixture } = render({ uploadBatchPayoutSlips: vi.fn(async () => batchResultFixture()) });
+    await ticks(fixture);
+    fixture.componentInstance.openBatchModal();
+    fixture.componentInstance.onBatchFilesInputChange({
+      target: { files: [new File([new Uint8Array(10)], 'slip-1.png', { type: 'image/png' })], value: '' },
+    } as unknown as Event);
+    await fixture.componentInstance.submitBatchUpload();
+    await ticks(fixture);
+
+    const root = fixture.nativeElement as HTMLElement;
+    const batchTable = root.querySelector('[role="dialog"] table.rtable') as HTMLTableElement;
+    expect(batchTable.parentElement?.classList).toContain('rt-viewport');
+    const [list, batch] = viewports(fixture);
+    expect(list.rtLabel()).toBe('การถอนเงินผู้ขาย');
+    expect(batch.rtLabelledBy()).toBe('payout-batch-title');
+    expect(batch.rtResetKey()).toBeUndefined();
+    expect(root.querySelector('#payout-batch-title')?.textContent?.trim()).toBe('อัปโหลดสลิปหลายไฟล์ — จับคู่อัตโนมัติ');
   });
 });

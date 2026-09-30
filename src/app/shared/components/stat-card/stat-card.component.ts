@@ -13,6 +13,12 @@ export class StatCardComponent {
 
   readonly label = input.required<string>();
   readonly value = input.required<string>();
+  /** Optional unit rendered after the value in a smaller weight ('documents', 'รายการ'); the value
+   *  itself then never wraps. Pass only the number as `value`. */
+  readonly unit = input<string>('');
+  /** Optional full value for the tooltip / long-press, e.g. the full `| thb` amount behind a
+   *  compact '฿1.23M'. */
+  readonly valueTitle = input<string>('');
   readonly icon = input<string>('✨');
   readonly trend = input<string | null>(null);
   readonly trendLabel = input<string>('');

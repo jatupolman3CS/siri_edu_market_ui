@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { WritableSignal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminSettingsPage } from './settings-admin.page';
@@ -11,6 +12,7 @@ import {
   type SystemConfigJobToggle,
 } from '../../../core/services';
 import type { AdminAdsPlacement } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * system-config-job-toggle v1 (docs/contracts/system-config-job-toggle.md §4).
@@ -628,3 +630,94 @@ describe('AdminSettingsPage — ad placements & pricing config', () => {
   });
 });
 
+
+/**
+ * responsive-ui v1.4 gate fix (G2-6) F148: the job switch is `nzControl`led — it shows only the
+ * server-confirmed `job.enabled`, so a 500 no longer leaves it showing the new value.
+ */
+describe('AdminSettingsPage — job switch shows the saved value (responsive v1.4 F148)', () => {
+  const firstJob = 'job.application-log-cleanup.enabled';
+
+  function jobSwitch(fixture: { nativeElement: HTMLElement }, jobKey: string): HTMLButtonElement {
+    const button = fixture.nativeElement.querySelector<HTMLButtonElement>(`nz-switch[name="job-switch-${jobKey}"] button`);
+    if (!button) throw new Error(`job switch not rendered: ${jobKey}`);
+    return button;
+  }
+
+  /** `[ngModel]` writes into the switch on a microtask, so settle → render twice. */
+  async function flush(fixture: { detectChanges: () => void }): Promise<void> {
+    for (let i = 0; i < 2; i++) {
+      await settle();
+      fixture.detectChanges();
+    }
+  }
+
+  it('a failed save keeps the switch on its saved value and toasts no success', async () => {
+    const { fixture, admin } = renderPage();
+    await flush(fixture);
+    const updateSpy = vi.spyOn(admin, 'updateJobToggle').mockRejectedValue(new Error('500'));
+    const button = jobSwitch(fixture, firstJob);
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+
+    button.click();
+    await flush(fixture);
+
+    expect(updateSpy).toHaveBeenCalledWith(firstJob, false);
+    expect(messages.success).toEqual([]);
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+    expect(fixture.componentInstance.savingJobKey()).toBeNull();
+  });
+
+  it('a successful save shows the value the server answered with', async () => {
+    const { fixture, admin } = renderPage();
+    await flush(fixture);
+    vi.spyOn(admin, 'updateJobToggle').mockImplementation(async (jobKey, enabled) => {
+      // mirrors AdminService.updateJobToggle: the row is replaced from the PUT response
+      const saved = { ...fourJobToggles[0], enabled, updatedAt: '2026-09-30T00:00:00Z' };
+      seedJobToggles(admin, fourJobToggles.map((t) => (t.jobKey === jobKey ? saved : t)));
+      return saved;
+    });
+
+    jobSwitch(fixture, firstJob).click();
+    await flush(fixture);
+
+    expect(jobSwitch(fixture, firstJob).classList.contains('ant-switch-checked')).toBe(false);
+    expect(messages.success).toContain('อัปเดตสถานะงานเรียบร้อย');
+  });
+
+  it('the switch spins and does not move while the save is in flight', async () => {
+    const { fixture, admin } = renderPage();
+    await flush(fixture);
+    vi.spyOn(admin, 'updateJobToggle').mockImplementation(() => new Promise<SystemConfigJobToggle | null>(() => undefined));
+
+    jobSwitch(fixture, firstJob).click();
+    await flush(fixture);
+
+    const button = jobSwitch(fixture, firstJob);
+    expect(button.classList.contains('ant-switch-loading')).toBe(true);
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+  });
+});
+
+describe('AdminSettingsPage — table viewports (responsive-ui v1.6 R-27)', () => {
+  it('the ad-placement and watermark-copy tables each sit in their own named viewport, with no reset key', async () => {
+    const { fixture, admin } = renderPage(platformSettings());
+    await settle();
+    fixture.detectChanges();
+    vi.spyOn(admin, 'searchWatermarkCopies').mockResolvedValue([watermarkCopy()]);
+    fixture.componentInstance.copyToken.set('WMK-ABC12345');
+    await fixture.componentInstance.searchWatermarkCopy();
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const tables = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('table.rtable'));
+    expect(tables.length).toBe(2);
+    tables.forEach((t) => expect(t.parentElement?.classList).toContain('rt-viewport'));
+    const viewports = fixture.debugElement
+      .queryAll(By.directive(TableViewportDirective))
+      .map((d) => d.injector.get(TableViewportDirective));
+    expect(viewports.map((v) => v.rtLabel())).toEqual(['ตำแหน่งโฆษณาและราคาโปรโมต', 'ตรวจสอบรหัสสำเนาเอกสาร']);
+    expect(viewports.map((v) => v.rtResetKey())).toEqual([undefined, undefined]);
+  });
+});

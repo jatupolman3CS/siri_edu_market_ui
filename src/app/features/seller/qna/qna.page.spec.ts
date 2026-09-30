@@ -205,3 +205,48 @@ describe('SellerQnaPage — requestAiDraft (ai-qna-draft v1 §1)', () => {
     expect(fixture.componentInstance.draftingAi()).toBe(false);
   });
 });
+
+/**
+ * responsive-ui v1.4 gate fixes (G1-5): F148 (the pin switch only shows the server-confirmed
+ * value) and F155 (the disabled-switch tooltip is anchored left so it fits a phone screen).
+ */
+describe('SellerQnaPage — responsive v1.4 fixes', () => {
+  it('F148: tapping the switch asks to pin, and a failed save leaves it unpinned', async () => {
+    const q = buildQuestion({ answerText: 'มีค่ะ', answeredAt: '2026-08-02T00:00:00Z' });
+    const { fixture, seller, apiFail } = render([q], async () => {
+      throw new Error('500');
+    });
+    await settle();
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button.ant-switch') as HTMLButtonElement;
+    button.click();
+    await settle();
+    fixture.detectChanges();
+
+    expect(seller.setQnaFaq).toHaveBeenCalledWith('q-1', true, 0);
+    expect(apiFail.report).toHaveBeenCalledWith('อัปเดต FAQ ไม่สำเร็จ', expect.any(Error));
+    expect(button.classList.contains('ant-switch-checked')).toBe(false);
+  });
+
+  it('F148: an unanswered question never reaches the service, even when the host is clicked', async () => {
+    const { fixture, seller } = render([buildQuestion({ answerText: null })]);
+    await settle();
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('nz-switch') as HTMLElement).click();
+    await settle();
+
+    expect(seller.setQnaFaq).not.toHaveBeenCalled();
+  });
+
+  it('F155: the tooltip prefers topLeft and is pushed into the viewport', async () => {
+    const { fixture } = render([buildQuestion({ answerText: null })]);
+    await settle();
+    fixture.detectChanges();
+
+    const directive = fixture.debugElement.query(By.directive(NzTooltipDirective)).injector.get(NzTooltipDirective);
+    expect(directive.placement).toEqual(['topLeft', 'bottomLeft', 'top', 'bottom']);
+    expect(directive.cdkConnectedOverlayPush).toBe(true);
+  });
+});

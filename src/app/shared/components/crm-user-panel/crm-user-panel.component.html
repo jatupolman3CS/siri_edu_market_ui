@@ -1,4 +1,4 @@
-<div class="card-soft p-6">
+<div class="card-soft p-4 md:p-6">
   @if (crm.loadingUserDetail()) {
     <div class="text-center text-sm text-ink-soft py-8">{{ 'common.loading' | trans }}</div>
   } @else {
@@ -7,10 +7,10 @@
     @if (!detail) {
       <app-empty-state emoji="🔍" [title]="'shared.crmPanel.noData' | trans" [description]="'shared.crmPanel.noProfile' | trans" />
     } @else {
-      <div class="flex items-center justify-between gap-3 mb-5">
-        <div>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="min-w-0">
           <h2 class="text-lg font-bold text-ink">{{ detail.displayName }}</h2>
-          <p class="text-xs text-ink-muted">{{ detail.email }}</p>
+          <p class="text-xs text-ink-muted break-all">{{ detail.email }}</p>
         </div>
         @if (detail.computedAt) {
           <span class="text-xs text-ink-muted whitespace-nowrap">
@@ -19,6 +19,12 @@
         }
       </div>
 
+      <!-- responsive-ui v1.5 R-26 item 3 (/admin/crm/users/:id): from xl the interest profile (confidence,
+           facets, segments, declared categories) is the main column and the signal counts are a 360px side
+           column. Both groups are contiguous in the DOM, so below xl (one minmax(0,1fr) track, the sections
+           keep their own margins) nothing moves. -->
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-x-8">
+      <div class="min-w-0">
       @if (!detail.trackingEnabled) {
         <div class="card-soft p-4 border border-amber-200 bg-amber-50 text-amber-800 text-sm mb-5">
           {{ 'shared.crmPanel.trackingDisabled' | trans }}
@@ -43,7 +49,7 @@
           @if (detail.facets.length === 0) {
             <app-empty-state [title]="'shared.crmPanel.noData' | trans" />
           } @else {
-            <ul class="space-y-2.5">
+            <ul class="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
               @for (facet of detail.facets; track facet.facetType + facet.value) {
                 <li class="p-3 rounded-2xl border border-line">
                   <div class="flex items-center justify-between gap-3">
@@ -75,14 +81,26 @@
         } @else {
           <ul class="flex flex-wrap gap-2">
             @for (segment of detail.segments; track segment.code) {
-              <li class="pill-soft" [title]="segment.reason">{{ segment.label }}</li>
+              <!-- nz-tooltip, not title=: touch browsers never show a native title (F70). Focus opens
+                   it too; the reason is also in the pill's text for screen readers. -->
+              <li
+                class="pill-soft"
+                tabindex="0"
+                nz-tooltip
+                #reasonTip="nzTooltip"
+                [nzTooltipTitle]="segment.reason"
+                (focus)="reasonTip.show()"
+                (blur)="reasonTip.hide()"
+              >
+                {{ segment.label }}<span class="sr-only">: {{ segment.reason }}</span>
+              </li>
             }
           </ul>
         }
       </section>
 
       <!-- Declared categories -->
-      <section class="mb-6">
+      <section class="mb-6 xl:mb-0">
         <h3 class="text-sm font-bold text-ink mb-3">{{ 'shared.crmPanel.declaredTitle' | trans }}</h3>
         @if (detail.declaredCategories.length === 0) {
           <app-empty-state [title]="'shared.crmPanel.noData' | trans" />
@@ -94,11 +112,13 @@
           </ul>
         }
       </section>
+      </div>
 
+      <div class="min-w-0">
       <!-- Signal breakdown -->
       <section>
         <h3 class="text-sm font-bold text-ink mb-3">{{ 'shared.crmPanel.dataAnalyzed' | trans }}</h3>
-        <dl class="grid grid-cols-3 sm:grid-cols-5 gap-2.5 text-center">
+        <dl class="grid grid-cols-3 sm:grid-cols-5 xl:grid-cols-3 gap-2.5 text-center">
           <div class="p-2.5 rounded-xl bg-pink-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.views' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.documentViews }}</dd>
@@ -137,6 +157,8 @@
           </div>
         </dl>
       </section>
+      </div>
+      </div>
     }
   }
 </div>

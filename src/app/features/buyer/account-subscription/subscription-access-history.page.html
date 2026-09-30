@@ -1,16 +1,16 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-6 sm:py-8">
   <header
-    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
   >
-    <div>
+    <div class="min-w-0">
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
         <span>{{ 'subscriptionAccessHistory.badge' | trans }}</span>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'subscriptionAccessHistory.title' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'subscriptionAccessHistory.title' | trans }}</h1>
       <p class="text-sm sm:text-base text-ink-soft">{{ 'subscriptionAccessHistory.desc' | trans }}</p>
     </div>
-    <a routerLink="/account/subscription" class="btn-ghost !py-2.5 whitespace-nowrap self-start sm:self-auto">
+    <a routerLink="/account/subscription" class="btn-ghost !py-2.5 min-h-11 whitespace-nowrap self-start sm:self-auto">
       {{ 'subscriptionAccessHistory.backToSubscription' | trans }}
     </a>
   </header>
@@ -26,10 +26,10 @@
       <a routerLink="/subscribe" class="btn-pink mt-4">{{ 'subscriptionAccessHistory.subscribeBtn' | trans }}</a>
     </app-empty-state>
   } @else {
-    <div class="card-soft p-6">
+    <div class="card-soft p-4 sm:p-6">
       <ul class="divide-y divide-line">
         @for (item of subscription.accessHistory(); track item.documentId) {
-          <li class="py-3 flex items-center gap-4">
+          <li class="py-3 flex items-center gap-3 sm:gap-4">
             <img
               appImgFallback
               [src]="item.coverUrl"

@@ -1,18 +1,21 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-6 sm:py-8">
   <header
-    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
   >
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
       <span>{{ 'account.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'account.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'account.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">{{ 'account.desc' | trans }}</p>
   </header>
 
-  <div class="grid lg:grid-cols-[17rem_minmax(0,1fr)] gap-6 items-start">
+  <!-- responsive-ui v1.4 §4.6 C (F120): one column capped at 640px below 1024 (the profile form
+       stretched to 646–722px at 744–1023); the aside sticks 16px below the pinned header (§4.4:
+       114px at 744–1279, 171px at ≥1280). -->
+  <div class="grid grid-cols-1 lg:grid-cols-[17rem_minmax(0,1fr)] gap-6 items-start max-w-[640px] mx-auto lg:max-w-none">
     <!-- Section nav -->
-    <aside class="lg:sticky lg:top-6 flex flex-col gap-4 min-w-0">
+    <aside class="lg:sticky lg:top-[130px] xl:top-[187px] flex flex-col gap-4 min-w-0">
       @if (auth.user(); as u) {
         <div class="card-soft p-4 flex items-center gap-3">
           <img
@@ -28,12 +31,12 @@
         </div>
       }
 
-      <nav class="card-soft p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
+      <nav class="card-soft p-2 chip-row gap-1 lg:flex-col lg:overflow-visible">
         @for (item of sectionNav; track item.fragment) {
           <a
             [routerLink]="['/account']"
             [fragment]="item.fragment"
-            class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+            class="flex items-center gap-3 min-h-11 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
           >
             <app-icon [name]="item.icon" [size]="18" />
             <span class="flex-1">{{ item.label }}</span>
@@ -55,7 +58,7 @@
       <app-saved-cards mode="manage" class="block" />
 
       <!-- buyer-wallet v1 §4.1: wallet summary card -->
-      <section id="wallet" class="card-soft p-6 border border-line">
+      <section id="wallet" class="card-soft p-4 sm:p-6 border border-line">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div class="flex items-center gap-2 text-ink-muted text-xs font-semibold mb-1">
@@ -73,7 +76,7 @@
           </div>
           <a
             [routerLink]="['/wallet']"
-            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-sm transition-colors"
+            class="inline-flex items-center justify-center gap-2 min-h-11 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-sm transition-colors"
           >
             <app-icon name="plus" [size]="16" />
             <span>{{ 'account.walletManageBtn' | trans }}</span>
@@ -87,11 +90,11 @@
       <!-- exam-countdown-mode v1 §4: set/edit/clear form + current status -->
       <app-exam-countdown-form class="block" />
 
-      <section class="card-soft p-6" id="shortcuts">
+      <section class="card-soft p-4 sm:p-6" id="shortcuts">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'account.shortcutsTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'account.shortcutsDesc' | trans }}</p>
 
-        <ul class="grid sm:grid-cols-3 gap-3">
+        <ul class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           @for (shortcut of shortcuts; track shortcut.href) {
             <li>
               <a

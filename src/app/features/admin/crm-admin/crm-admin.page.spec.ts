@@ -1,8 +1,11 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { CrmAdminPage } from './crm-admin.page';
 import { CrmService } from '../../../core/services';
 import type { AdminDemandGap, CrmOverview } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * crm-core v1 §1.3/§4.3 (`docs/contracts/crm-core.md`) — AC-23: every segment code the backend
@@ -45,19 +48,25 @@ function buildDemandGap(overrides: Partial<AdminDemandGap> = {}): AdminDemandGap
 }
 
 function buildCrmFake(overview: CrmOverview | null, demandGaps: AdminDemandGap[] = []) {
+  // Writable like the real ServerPager's, so a page / page-size change reaches the template.
+  const demandGapsPage = signal(1);
+  const demandGapsPageSize = signal(10);
   return {
     adminOverview: () => overview,
     loadingOverview: () => false,
     loadOverview: vi.fn(async () => {}),
     demandGaps: () => demandGaps,
-    demandGapsPage: () => 1,
-    demandGapsPageSize: () => 20,
+    demandGapsPage,
+    demandGapsPageSize,
     demandGapsTotalCount: () => demandGaps.length,
     demandGapsTotalPages: () => 1,
     demandGapsLoading: () => false,
     loadDemandGaps: vi.fn(async () => {}),
-    onDemandGapsPageChange: vi.fn(async () => {}),
-    onDemandGapsPageSizeChange: vi.fn(async () => {}),
+    onDemandGapsPageChange: vi.fn(async (page: number) => demandGapsPage.set(page)),
+    onDemandGapsPageSizeChange: vi.fn(async (size: number) => {
+      demandGapsPageSize.set(size);
+      demandGapsPage.set(1);
+    }),
   };
 }
 
@@ -165,5 +174,87 @@ describe('CrmAdminPage — คำค้นที่หาแล้วไม่�
     const fixture = render(buildCrmFake(buildOverview(), []));
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ยังไม่มีข้อมูล');
+  });
+});
+
+/**
+ * responsive-ui v1.6 R-27 (§4.5 v1.6 inventory rows 12–15, §4.3 v1.6): each of the 4 tables sits in
+ * its own table viewport, named by its own section heading. Only the paginated demand-gaps table
+ * has a reset key; the other three list every row.
+ */
+describe('CrmAdminPage — table viewports (responsive-ui v1.6 R-27)', () => {
+  function renderAllTables() {
+    const crmFake = buildCrmFake(
+      buildOverview({
+        topSearchTerms: [{ term: 'คณิต', searchCount: 50, zeroResultCount: 2, userCount: 30 }],
+        topFacets: [{ facetType: 'category', value: 'cat-1', label: 'คณิตศาสตร์', userCount: 40, averageScore: 0.6 }],
+      }),
+      [buildDemandGap()],
+    );
+    const fixture = render(crmFake);
+    const root = fixture.nativeElement as HTMLElement;
+    const wrappers = Array.from(root.querySelectorAll('table')).map((table) => table.parentElement as HTMLElement);
+    const directives = fixture.debugElement
+      .queryAll(By.directive(TableViewportDirective))
+      .map((host) => host.injector.get(TableViewportDirective));
+    return { fixture, crmFake, root, wrappers, directives };
+  }
+
+  it('puts each of the 4 tables in its own rt-viewport wrapper (the table\'s direct parent)', () => {
+    const { wrappers, directives } = renderAllTables();
+    expect(wrappers.length).toBe(4);
+    expect(directives.length).toBe(4);
+    expect(wrappers.every((wrapper) => wrapper.classList.contains('rt-viewport'))).toBe(true);
+    expect(new Set(wrappers).size).toBe(4);
+  });
+
+  it('names every wrapper by its own section heading, so the 4 regions have different names', () => {
+    const { root, directives } = renderAllTables();
+    const headings = directives.map((directive) => {
+      const id = directive.rtLabelledBy();
+      return id ? root.querySelector<HTMLElement>(`#${id}`) : null;
+    });
+    expect(headings.every((heading) => heading?.tagName === 'H2')).toBe(true);
+    const names = headings.map((heading) => heading?.textContent?.trim() ?? '');
+    expect(names).toEqual([
+      'กลุ่มลูกค้า',
+      'คำค้นยอดนิยม 7 วันล่าสุด',
+      'หมวดหมู่ที่คนสนใจมากที่สุด',
+      'คำค้นที่หาแล้วไม่เจอ (30 วันล่าสุด)',
+    ]);
+  });
+
+  it('binds a reset key only on the paginated demand-gaps table, and keeps its pagination outside the wrapper', () => {
+    const { root, wrappers, directives } = renderAllTables();
+    expect(directives.slice(0, 3).map((directive) => directive.rtResetKey())).toEqual([undefined, undefined, undefined]);
+    expect(directives[3].rtResetKey()).toBe('1|10');
+
+    const pagination = root.querySelectorAll('app-pagination');
+    expect(pagination.length).toBe(1);
+    expect(wrappers.some((wrapper) => wrapper.contains(pagination[0]))).toBe(false);
+    // A sibling after the demand-gaps wrapper, never inside it.
+    expect(wrappers[3].compareDocumentPosition(pagination[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('a new demand-gaps page or page size scrolls that table back to its top, and only that table', async () => {
+    const { fixture, wrappers } = renderAllTables();
+    await fixture.whenStable();
+    const [segments, , , demandGaps] = wrappers;
+
+    segments.scrollTop = 120;
+    demandGaps.scrollTop = 300;
+    expect(demandGaps.scrollTop).toBe(300);
+
+    await fixture.componentInstance.onDemandGapsPageChange(2);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(demandGaps.scrollTop).toBe(0);
+    expect(segments.scrollTop).toBe(120);
+
+    demandGaps.scrollTop = 300;
+    await fixture.componentInstance.onDemandGapsPageSizeChange(50);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(demandGaps.scrollTop).toBe(0);
   });
 });

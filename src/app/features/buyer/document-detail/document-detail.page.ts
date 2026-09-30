@@ -3,14 +3,14 @@ import {
   Component,
   computed,
   effect,
-  HostListener,
   inject,
   signal,
 } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
+import { DOCUMENT, DatePipe } from '@angular/common';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -44,6 +44,7 @@ import {
   type DocumentItem,
 } from '../../../core/models';
 import { resolvePublicUrl } from '../../../core/api-runtime';
+import { acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 import { downloadFileFromUrl } from '../../../core/file-download';
 import { ReportDocumentComponent } from '../../../shared/components/report-document/report-document.component';
 
@@ -56,6 +57,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -63,6 +65,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
   selector: 'app-buyer-document-detail',
   standalone: true,
   imports: [
+    A11yModule,
     FormsModule,
     RouterLink,
     NzTabsModule,
@@ -72,6 +75,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     IconComponent,
     EmptyStateComponent,
     ReportDocumentComponent,
+    StickyActionBarComponent,
     ThbPipe,
     CompactPipe,
     TimeAgoPipe,
@@ -79,6 +83,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.escape)': 'onEscapeCloseGallery($event)' },
   templateUrl: './document-detail.page.html',
   styleUrl: './document-detail.page.scss',
 })
@@ -100,6 +105,7 @@ export class BuyerDocumentDetailPage {
   private readonly ads = inject(AdsService);
 
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly document = inject(DOCUMENT);
 
   readonly id = signal<string>('');
   readonly sponsoredDocs = signal<DocumentItem[]>([]);
@@ -317,10 +323,16 @@ export class BuyerDocumentDetailPage {
     this.showPdfPreviewModal.set(false);
   }
 
-  @HostListener('document:keydown.escape')
-  onEscapeCloseGallery(): void {
+  /**
+   * Escape closes the open preview overlay (R-11). An Escape that an inner layer already handled
+   * (`defaultPrevented`) is left alone, and the one handled here is marked for the layers below.
+   */
+  onEscapeCloseGallery(event?: Event): void {
+    if (event?.defaultPrevented) return;
+    if (!this.showPreviewGallery() && !this.showPdfPreviewModal()) return;
     if (this.showPreviewGallery()) this.closePreviewGallery();
     if (this.showPdfPreviewModal()) this.closePdfPreviewModal();
+    event?.preventDefault();
   }
 
   constructor() {
@@ -329,6 +341,10 @@ export class BuyerDocumentDetailPage {
       this.id.set(id);
       this.selectedImage.set(0);
       this.showPreviewGallery.set(false);
+      // responsive-ui v1.4 R-9 (F134): this component is reused across /document/A → /document/B
+      // (and back), so a PDF preview opened for one id must not survive the switch — it stayed open
+      // over the other document with the page scroll still locked.
+      if (this.showPdfPreviewModal()) this.closePdfPreviewModal();
       this.preview.set(null);
       // seller-analytics-insights v1 §4 (AC-16/17/18/19): the full detail page (not quick-view,
       // not the preview sub-view) is the only mount point that counts as a "view" — classify the
@@ -387,13 +403,13 @@ export class BuyerDocumentDetailPage {
       if (!id) return;
       void this.library.refreshLibraryOnce();
     });
+    // responsive-ui v1.4 R-10: the preview overlays take the shared counted page lock (body
+    // `visible` first, then html `hidden`; restored in reverse) instead of blanking body's inline
+    // overflow on close, which also dropped a lock another overlay still held.
     effect((onCleanup) => {
-      if (typeof document === 'undefined') return;
       if (!this.showPreviewGallery() && !this.showPdfPreviewModal()) return;
-      document.body.style.overflow = 'hidden';
-      onCleanup(() => {
-        document.body.style.overflow = '';
-      });
+      acquirePageScrollLock(this.document);
+      onCleanup(() => releasePageScrollLock(this.document));
     });
   }
 
@@ -504,12 +520,23 @@ export class BuyerDocumentDetailPage {
       return;
     }
 
+    // responsive-ui v1.4 R-24 (F65): a PDF goes into an <iframe> only where the browser can show
+    // one inline (`navigator.pdfViewerEnabled === true`). Chrome for Android and most phones and
+    // tablets report false and rendered a blank frame, so they get the raster page gallery (or,
+    // when no raster exists yet, the preview section's "generating" notice).
+    if (d.format === 'pdf' && forceModal && !this.canShowInlinePdf()) {
+      this.openRasterGallery(id, d, forceModal);
+      return;
+    }
+
     if (d.format === 'pdf' && forceModal) {
       if (this.previewPdfLoading()) return;
       void (async () => {
         this.previewPdfLoading.set(true);
         try {
           const blob = await this.catalog.loadDocumentPreviewPdf(id);
+          // R-9: ignore the result when the route moved to another document meanwhile.
+          if (this.id() !== id) return;
           const blobUrl = URL.createObjectURL(blob);
           this._previewPdfBlobUrl.set(blobUrl);
           const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
@@ -540,6 +567,11 @@ export class BuyerDocumentDetailPage {
     }
 
     this.openRasterGallery(id, d, forceModal);
+  }
+
+  /** R-24: true only when the browser renders PDFs inline (`navigator.pdfViewerEnabled`). */
+  private canShowInlinePdf(): boolean {
+    return typeof navigator !== 'undefined' && navigator.pdfViewerEnabled === true;
   }
 
   /**

@@ -74,8 +74,15 @@ export class AccountPrivacyPage {
     }
   }
 
-  /** §4.3 toggle "ให้ระบบเรียนรู้ความสนใจของฉัน" — calls the service exactly once per switch (AC-21). */
+  /**
+   * §4.3 toggle "ให้ระบบเรียนรู้ความสนใจของฉัน" — calls the service exactly once per switch (AC-21).
+   *
+   * responsive-ui v1.4 R-17 (F148): the switch is `nzControl`led, so it keeps showing the saved
+   * value until `setTracking` replaces `myProfile()` with the server's answer; a failed PUT leaves
+   * it where it was. The host `(click)` still fires while the switch spins, hence the guard.
+   */
   async onToggleTracking(enabled: boolean): Promise<void> {
+    if (this.togglingTracking()) return;
     this.togglingTracking.set(true);
     try {
       await this.crm.setTracking(enabled);

@@ -1,4 +1,6 @@
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { CdkDrag } from '@angular/cdk/drag-drop';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -443,5 +445,102 @@ describe('AdminDocumentDetailPage — admin review viewer (AC-22)', () => {
 
     expect(component.reviewViewerFailed()).toBe(true);
     expect(component.reviewOriginalFileUrl()).toBe('');
+  });
+});
+
+describe('AdminDocumentDetailPage — data states and touch (responsive-ui v1.4 F116 / F66)', () => {
+  it('an unknown id (404) renders the not-found state with a 44px way back and raises no toast', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-1', { title: 'Not Found', status: 404 }, 404);
+    stubRoute('GET', '/api/admin/documents/doc-1/reports', { title: 'Not Found', status: 404 }, 404);
+    const { fixture, component, message } = render(async () => { throw new Error('no upload'); });
+    await settle();
+    fixture.detectChanges();
+
+    expect(component.notFound()).toBe(true);
+    const el = fixture.nativeElement as HTMLElement;
+    const nf = el.querySelector('[data-testid="not-found"]') as HTMLElement;
+    expect(nf).not.toBeNull();
+    expect(nf.textContent).toContain('ไม่พบเอกสารนี้');
+    // not the list page's "no documents match the filter" copy any more
+    expect(el.textContent).not.toContain('ไม่พบเอกสารตามเงื่อนไขที่เลือก');
+    const cta = nf.querySelector('a[href="/admin/documents"]') as HTMLElement;
+    expect(cta.className).toContain('min-h-11');
+    expect(message.error).not.toHaveBeenCalled();
+  });
+
+  it('another failure shows an error line whose retry re-issues the GET', async () => {
+    stubRoute('GET', '/api/admin/documents/doc-1', { title: 'boom', status: 500 }, 500);
+    stubRoute('GET', '/api/admin/documents/doc-1/reports', []);
+    const { fixture, component } = render(async () => { throw new Error('no upload'); });
+    await settle();
+    fixture.detectChanges();
+
+    expect(component.notFound()).toBe(false);
+    const retry = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="load-retry"]') as HTMLButtonElement;
+    expect(retry).not.toBeNull();
+    const before = requests.filter((r) => r.path === '/api/admin/documents/doc-1').length;
+
+    stubLoad();
+    retry.click();
+    await settle();
+    fixture.detectChanges();
+    expect(requests.filter((r) => r.path === '/api/admin/documents/doc-1').length).toBe(before + 1);
+    expect(component.doc()?.id).toBe('doc-1');
+  });
+
+  it('gallery rows only start a touch drag after a 300ms press (F66)', async () => {
+    stubLoad();
+    const { fixture } = render(async () => { throw new Error('no upload'); });
+    await settle();
+    fixture.detectChanges();
+    const drag = fixture.debugElement.query(By.directive(CdkDrag)).injector.get(CdkDrag);
+    expect(drag.dragStartDelay).toEqual({ touch: 300, mouse: 0 });
+  });
+});
+
+describe('AdminDocumentDetailPage — review viewer download (responsive-ui v1.4 F67 / R-24)', () => {
+  const realCreate = URL.createObjectURL;
+  const realRevoke = URL.revokeObjectURL;
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => 'blob:review-1') as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+  });
+  afterEach(() => {
+    URL.createObjectURL = realCreate;
+    URL.revokeObjectURL = realRevoke;
+    delete (navigator as unknown as Record<string, unknown>)['pdfViewerEnabled'];
+  });
+
+  async function open(pdfViewer: boolean) {
+    Object.defineProperty(navigator, 'pdfViewerEnabled', { value: pdfViewer, configurable: true });
+    stubLoad();
+    const getDocumentReviewPdf = vi.fn(async () => new Blob(['%PDF-1.7'], { type: 'application/pdf' }));
+    const { fixture, component } = render(async () => { throw new Error('no upload'); }, { getDocumentReviewPdf });
+    await settle();
+    await component.openReviewViewer();
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+    return { fixture, component };
+  }
+
+  it('puts a no-popup download of the fetched PDF next to the frame', async () => {
+    const { component } = await open(true);
+    expect(component.pdfViewerEnabled).toBe(true);
+    expect(component.reviewBlobHref()).toBe('blob:review-1');
+    expect(component.reviewDownloadName()).toBe('เอกสารทดสอบ.pdf');
+    const link = document.body.querySelector('[data-testid="review-download"]') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('blob:review-1');
+    expect(link.hasAttribute('download')).toBe(true);
+    expect(link.getAttribute('target')).toBeNull();
+    expect(document.body.querySelector('.ant-modal-body iframe')).not.toBeNull();
+  });
+
+  it('renders no iframe without a built-in PDF viewer, only the download', async () => {
+    const { component } = await open(false);
+    expect(component.pdfViewerEnabled).toBe(false);
+    expect(document.body.querySelector('[data-testid="review-download"]')).not.toBeNull();
+    expect(document.body.querySelector('.ant-modal-body iframe')).toBeNull();
   });
 });

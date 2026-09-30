@@ -22,8 +22,11 @@
   &::-webkit-scrollbar-thumb {
     background-color: rgba(242, 99, 142, 0.25);
     border-radius: 9999px;
+  }
 
-    &:hover {
+  /* responsive-ui v1 §4.1: hover styles only where a real hover exists. */
+  @media (hover: hover) {
+    &::-webkit-scrollbar-thumb:hover {
       background-color: rgba(242, 99, 142, 0.5);
     }
   }

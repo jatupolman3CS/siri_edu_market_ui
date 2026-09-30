@@ -1,10 +1,10 @@
-<div class="max-w-6xl space-y-6">
+<div class="w-full min-w-0 space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.qnaTitle' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'seller.qnaTitle' | trans }}</h1>
       <p class="text-sm text-ink-soft">{{ 'seller.qnaSubtitle' | trans }}</p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2">
       <button class="btn-ghost !py-2 !px-4 text-sm" (click)="toggleFilter()">
         {{ unansweredOnly() ? ('seller.showAll' | trans) : ('seller.unansweredOnly' | trans) }}
       </button>
@@ -30,8 +30,8 @@
         <li class="card-tile">
           <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
             <div class="min-w-0 flex-1">
-              <div class="text-sm font-bold text-ink line-clamp-2">{{ q.documentTitle }}</div>
-              <div class="text-xs text-ink-muted">
+              <div class="text-sm font-bold text-ink line-clamp-2 [overflow-wrap:anywhere]">{{ q.documentTitle }}</div>
+              <div class="text-xs text-ink-muted [overflow-wrap:anywhere]">
                 {{ q.buyerName }} · {{ q.askedAt | date: 'dd MMM yyyy' }}
               </div>
             </div>
@@ -46,22 +46,22 @@
             }
           </div>
 
-          <p class="text-sm text-ink leading-relaxed whitespace-pre-line">{{ q.question }}</p>
+          <p class="text-sm text-ink leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">{{ q.question }}</p>
 
           @if (q.answerText && answeringId() !== q.id) {
             <div class="mt-4 pl-4 border-l-2 border-pink-300">
               <div class="text-xs font-bold text-pink-700 mb-1">{{ 'seller.yourAnswer' | trans }}</div>
-              <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-line">{{ q.answerText }}</p>
+              <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">{{ q.answerText }}</p>
             </div>
           }
 
           @if (answeringId() === q.id) {
             <div class="mt-4 space-y-3">
-              <div class="flex items-center justify-between">
+              <div class="flex flex-wrap items-center justify-between gap-2">
                 <span class="text-xs text-ink-muted">{{ 'seller.yourAnswerDesc' | trans }}</span>
                 <button
                   type="button"
-                  class="text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
+                  class="tap-target text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
                   [disabled]="draftingAi()"
                   (click)="requestAiDraft(q.id)"
                 >
@@ -101,16 +101,25 @@
 
           <!-- document-faq-tab v1 §3.1/§4: pin/unpin as FAQ — disabled until the question is answered. -->
           <div class="mt-4 pt-4 border-t border-line flex flex-wrap items-center gap-5">
+            <!-- responsive-ui v1.4 R-8 (F155): topLeft first — the default "top" centred a 210–250px
+                 tooltip on a switch 37px from the screen edge and cut it off on every phone.
+                 R-17 (F148): nzControl — the switch no longer flips itself; it shows q.isFaq, which
+                 only changes after the server confirmed the pin (reload), so a failed save can't
+                 leave it showing the new state. -->
             <span
               nz-tooltip
               [nzTooltipTitle]="!q.answerText ? ('seller.pinFaqDisabledTooltip' | trans) : null"
+              [nzTooltipPlacement]="['topLeft', 'bottomLeft', 'top', 'bottom']"
+              [cdkConnectedOverlayPush]="true"
               class="inline-flex items-center gap-2"
             >
               <nz-switch
                 [attr.name]="'faq-switch-' + q.id"
                 [ngModel]="q.isFaq"
+                [nzControl]="true"
+                [nzLoading]="savingFaqId() === q.id"
                 [nzDisabled]="!q.answerText || savingFaqId() === q.id"
-                (ngModelChange)="toggleFaq(q, $event)"
+                (click)="toggleFaq(q, !q.isFaq)"
               />
               <span class="text-sm text-ink">{{ 'seller.pinFaq' | trans }}</span>
             </span>
@@ -119,6 +128,7 @@
               {{ 'seller.displayOrder' | trans }}
               <input
                 type="number"
+                inputmode="numeric"
                 [attr.name]="'faq-sort-' + q.id"
                 class="input-soft !w-20 !py-1.5"
                 min="0"

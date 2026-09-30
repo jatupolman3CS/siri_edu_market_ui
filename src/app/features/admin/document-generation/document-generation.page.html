@@ -1,13 +1,13 @@
 <div class="space-y-6">
   <header>
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.docGen.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.docGen.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">
       {{ 'admin.docGen.desc' | trans }}
     </p>
   </header>
 
   <!-- ส่วนสถานะ toggle (อ่านอย่างเดียว — คุมสวิตช์จริงที่หน้าตั้งค่า) -->
-  <section class="card-soft p-5 flex items-center justify-between gap-4 flex-wrap">
+  <section class="card-soft p-4 md:p-5 flex items-center justify-between gap-4 flex-wrap">
     <div>
       <div class="text-sm font-bold text-ink">
         {{ 'admin.docGen.statusText' | trans }} {{ toggleEnabled() ? ('admin.docGen.statusEnabled' | trans) : ('admin.docGen.statusDisabled' | trans) }}
@@ -21,13 +21,13 @@
     </a>
   </section>
 
-  <!-- ส่วนสั่งสร้าง -->
-  <section class="card-soft p-6 space-y-4">
-    <h2 class="text-lg font-bold text-ink">{{ 'admin.docGen.runTitle' | trans }}</h2>
-
+  <!-- ส่วนสั่งสร้าง — responsive-ui §4.6 G: rendered once, shown in the right panel (>=1280)
+       or in a bottom sheet / slide-over behind the "ตั้งค่า" button (<1280). -->
+  <ng-template #runFields>
+    <div class="space-y-4">
     <div>
       <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'admin.docGen.categoryLabel' | trans }}</label>
-      <select class="input-soft w-full sm:w-96 !py-2" [ngModel]="selectedCategoryId() ?? ''"
+      <select class="input-soft w-full !py-2" [ngModel]="selectedCategoryId() ?? ''"
         (ngModelChange)="selectCategory($event)" [disabled]="submitting()">
         <option value="">{{ 'admin.docGen.categoryDefault' | trans }}</option>
         @for (c of categories(); track c.categoryId) {
@@ -55,7 +55,14 @@
     </ul>
     }
 
-    <div class="flex flex-wrap gap-3">
+    @if (triggerError(); as err) {
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+      {{ err }}
+    </div>
+    }
+    </div>
+  </ng-template>
+  <ng-template #runButtons>
       <button class="btn-pink !py-2 !px-5 text-sm" type="button" [disabled]="!canRunSelected()"
         (click)="runForSelectedCategory()">
         {{ 'admin.docGen.runSelected' | trans }}
@@ -63,17 +70,39 @@
       <button class="btn-ghost !py-2 !px-5 text-sm" type="button" [disabled]="!canRunSweep()" (click)="runSweep()">
         {{ 'admin.docGen.runSweep' | trans }}
       </button>
-    </div>
+  </ng-template>
 
-    @if (triggerError(); as err) {
-    <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-      {{ err }}
-    </div>
-    }
-  </section>
+  <div class="xl:hidden">
+    <button
+      type="button"
+      class="btn-ghost tap-target w-full sm:w-auto !justify-center"
+      data-testid="docgen-settings-button"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="settingsOpen()"
+      (click)="settingsOpen.set(true)"
+    >
+      <app-icon name="gear" [size]="16" />
+      {{ 'responsive.editor.settings' | trans }}
+    </button>
+  </div>
 
+  <app-bottom-sheet
+    [open]="settingsOpen()"
+    [title]="'admin.docGen.runTitle' | trans"
+    tabletMode="slide-over"
+    (closed)="settingsOpen.set(false)"
+  >
+    <ng-container [ngTemplateOutlet]="runFields" />
+    <!-- Stacked full width, primary (runSelected, rendered first) at the bottom: two long labels
+         side by side wrapped to 3-4 lines on phones. -->
+    <div sheetFooter class="flex w-full flex-col-reverse gap-2 [&>button]:w-full [&>button]:!justify-center">
+      <ng-container [ngTemplateOutlet]="runButtons" />
+    </div>
+  </app-bottom-sheet>
+
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
   <!-- ตารางประวัติการรัน -->
-  <section class="card-soft p-6 space-y-4">
+  <section class="card-soft p-4 md:p-6 space-y-4 min-w-0 xl:order-1">
     <h2 class="text-lg font-bold text-ink">{{ 'admin.docGen.historyTitle' | trans }}</h2>
 
     @if (runsLoading()) {
@@ -130,6 +159,16 @@
     </div>
     }
   </section>
+
+
+  <aside class="hidden xl:block xl:order-2 card-soft p-6 space-y-4 sticky top-6" data-testid="docgen-settings-panel">
+    <h2 class="text-lg font-bold text-ink">{{ 'admin.docGen.runTitle' | trans }}</h2>
+    <ng-container [ngTemplateOutlet]="runFields" />
+    <div class="flex flex-wrap gap-3">
+      <ng-container [ngTemplateOutlet]="runButtons" />
+    </div>
+  </aside>
+  </div>
 
   <!-- หมายเหตุท้ายหน้า -->
   <p class="text-xs text-ink-muted text-center">

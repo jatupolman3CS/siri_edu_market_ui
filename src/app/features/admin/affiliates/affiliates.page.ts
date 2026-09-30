@@ -12,6 +12,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * referral-program v2 §3.10 / §3.11 / §4.1:
@@ -29,6 +31,8 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     IconComponent,
     ThbPipe,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './affiliates.page.html',

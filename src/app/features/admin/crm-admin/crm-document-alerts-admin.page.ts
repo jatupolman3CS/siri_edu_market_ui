@@ -6,6 +6,8 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /** crm-targeted-document-alerts v2 §4.2 — the only 3 choices the admin can pick from. */
 const DAY_OPTIONS = [7, 14, 30] as const;
@@ -22,7 +24,15 @@ const DAY_OPTIONS = [7, 14, 30] as const;
 @Component({
   selector: 'app-crm-document-alerts-admin',
   standalone: true,
-  imports: [RouterLink, DatePipe, EmptyStateComponent, StatCardComponent, TranslatePipe],
+  imports: [
+    RouterLink,
+    DatePipe,
+    EmptyStateComponent,
+    StatCardComponent,
+    TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-document-alerts-admin.page.html',
 })

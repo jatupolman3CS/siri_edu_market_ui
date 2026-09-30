@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { AdminSubscriptionsPage } from './subscriptions-admin.page';
 import { SubscriptionService } from '../../../core/services';
 import type { AdminSubscriptionListItem } from '../../../core/models';
 import type { PagedResult } from '../../../core/services/infinite-pager';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * subscription-membership v3 §1 AC-24 / §3.2 / §4: "/admin/subscriptions" — read-only paginated
@@ -107,5 +109,43 @@ describe('AdminSubscriptionsPage', () => {
     await settle();
 
     expect(subscriptionFake.listAdmin).toHaveBeenLastCalledWith('all', 2, 10);
+  });
+});
+
+describe('AdminSubscriptionsPage — table viewport (responsive-ui v1.6 R-27)', () => {
+  it('puts the table in a named table viewport keyed on page, page size and filter, with the pagination outside', async () => {
+    const rows = Array.from({ length: 12 }, (_, i) => buildRow({ id: `sub-${i + 1}` }));
+    const subscriptionFake = buildSubscriptionFake({ items: rows, page: 1, pageSize: 10, totalCount: 40, totalPages: 4 });
+    const fixture = render(subscriptionFake);
+    await settle();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapperOf = () => (root.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+    const viewportOf = () =>
+      fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+
+    const wrapper = wrapperOf();
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(viewportOf().rtLabel()).toBe('สมาชิกรายเดือน');
+    expect(viewportOf().rtResetKey()).toBe('1|10|all');
+
+    wrapper.scrollTop = 300;
+    fixture.componentInstance.setFilter('active');
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+    expect(viewportOf().rtResetKey()).toBe('1|10|active');
+    expect(wrapperOf().scrollTop).toBe(0);
+
+    wrapperOf().scrollTop = 300;
+    fixture.componentInstance.onPageChange(2);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+    expect(viewportOf().rtResetKey()).toBe('2|10|active');
+    expect(wrapperOf().scrollTop).toBe(0);
   });
 });

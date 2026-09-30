@@ -19,6 +19,7 @@ import type { WalletEntry, WalletTopUp } from '../../../core/models';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
 
 /**
@@ -35,6 +36,7 @@ import { loadStripeScript } from '../../../core/util/load-stripe-script';
     FormsModule,
     ThbPipe,
     IconComponent,
+    TableViewportDirective,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +57,12 @@ export class WalletPage implements OnInit, OnDestroy {
   readonly amount = signal<number | null>(null);
   readonly busy = signal<boolean>(false);
   readonly mountingPayment = signal<boolean>(false);
+  /**
+   * True only once the Stripe Payment Element is actually mounted for `currentTopUp()`. The confirm
+   * button is bound to it, so a failed Stripe.js load can never leave an enabled button that does
+   * nothing (responsive-ui F152).
+   */
+  readonly paymentReady = signal<boolean>(false);
   readonly currentTopUp = signal<WalletTopUp | null>(null);
 
   readonly stateErrorMessage = computed(() => {
@@ -73,6 +81,7 @@ export class WalletPage implements OnInit, OnDestroy {
   private stripe: ReturnType<NonNullable<Window['Stripe']>> | null = null;
   private elements: ReturnType<NonNullable<typeof this.stripe>['elements']> | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private mountTimer: ReturnType<typeof setTimeout> | null = null;
   private visibilityListener: (() => void) | null = null;
 
   async ngOnInit(): Promise<void> {
@@ -103,6 +112,7 @@ export class WalletPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.clearMountTimer();
     if (typeof document !== 'undefined' && this.visibilityListener) {
       document.removeEventListener('visibilitychange', this.visibilityListener);
       this.visibilityListener = null;
@@ -159,18 +169,30 @@ export class WalletPage implements OnInit, OnDestroy {
       }
 
       this.currentTopUp.set(topup);
+      this.paymentReady.set(false);
       this.startPolling(topup.id);
 
       if (topup.clientSecret) {
         this.mountingPayment.set(true);
         this.cdr.markForCheck();
         // Allow container to render before mounting element
-        setTimeout(async () => {
+        this.clearMountTimer();
+        this.mountTimer = setTimeout(async () => {
+          this.mountTimer = null;
           try {
             await this.mountPaymentElement(topup.clientSecret!);
+            if (this.currentTopUp()?.id === topup.id) {
+              this.paymentReady.set(true);
+            }
           } catch (e) {
             const msg = e instanceof Error ? e.message : this.translation.t('wallet.paymentSystemLoadFailed');
             this.message.error(msg);
+            // F152: without a mounted Payment Element this panel is a dead end, so return the buyer
+            // to the amount form (amount kept) to retry. The server row just stays `pending`, which
+            // buyer-wallet §2.5/§3.6 allows — a new top-up can always be opened.
+            if (this.currentTopUp()?.id === topup.id) {
+              this.cancelTopUp();
+            }
           } finally {
             this.mountingPayment.set(false);
             this.cdr.markForCheck();
@@ -184,7 +206,12 @@ export class WalletPage implements OnInit, OnDestroy {
   }
 
   async confirmPayment(): Promise<void> {
-    if (this.busy() || !this.stripe || !this.elements || !this.currentTopUp()) {
+    if (this.busy() || !this.currentTopUp()) {
+      return;
+    }
+    if (!this.stripe || !this.elements || !this.paymentReady()) {
+      // F152: never a silent no-op — the button is disabled in this state, but say why if reached.
+      this.message.error(this.translation.t('wallet.paymentSystemLoadFailed'));
       return;
     }
 
@@ -222,9 +249,19 @@ export class WalletPage implements OnInit, OnDestroy {
 
   cancelTopUp(): void {
     this.stopPolling();
+    this.clearMountTimer();
+    this.mountingPayment.set(false);
     this.currentTopUp.set(null);
+    this.paymentReady.set(false);
     this.stripe = null;
     this.elements = null;
+  }
+
+  private clearMountTimer(): void {
+    if (this.mountTimer) {
+      clearTimeout(this.mountTimer);
+      this.mountTimer = null;
+    }
   }
 
   private async mountPaymentElement(clientSecret: string): Promise<void> {
@@ -283,6 +320,7 @@ export class WalletPage implements OnInit, OnDestroy {
       this.message.info(this.translation.t('wallet.topUpProcessing'));
     }
     this.currentTopUp.set(null);
+    this.paymentReady.set(false);
     this.amount.set(null);
     await this.wallet.refreshSummary();
     await this.wallet.loadLedgerFirst();

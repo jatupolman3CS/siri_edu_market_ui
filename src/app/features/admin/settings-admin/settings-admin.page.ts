@@ -19,6 +19,8 @@ import type { AdminAdsPlacement } from '../../../core/models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * watermark-completion v1 §3.2/§4.1: the 5 watermark fields of `PUT /api/admin/settings` are
@@ -75,6 +77,8 @@ const RETENTION_DAYS_MAX = 3650;
     RouterLink,
     ThbPipe,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-admin.page.html',
@@ -389,6 +393,8 @@ export class AdminSettingsPage {
    * system-config-job-toggle v1 §4: saves immediately on flip (not batched with `save()` above).
    * The bound value is `admin.jobToggles()` itself, so on failure the row simply falls back to
    * whatever `_jobToggles` still holds (untouched by a failed PUT) — no manual "revert" needed.
+   * responsive-ui v1.4 R-17 (F148): that only holds because the switch is `nzControl`led — an
+   * uncontrolled nz-switch flipped itself on click and stayed flipped after a 500.
    */
   async toggleJob(item: SystemConfigJobToggle, enabled: boolean): Promise<void> {
     if (this.savingJobKey()) return;

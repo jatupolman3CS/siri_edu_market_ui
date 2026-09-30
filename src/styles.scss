@@ -26,14 +26,48 @@
 
   --ink: #2A1B22;
   --ink-soft: #5A4751;
-  --ink-muted: #8A7A82;
+  --ink-muted: #76646D;
   --line: #F3E6EC;
   --surface: #FFFFFF;
   --canvas: #FFF7FA;
 
-  --radius-card: 2.5rem;
+  /* responsive-ui.md §4.1 — contrast fixes */
+  --primary: #B83864;         /* filled buttons/badges with white text */
+  --primary-hover: #8A2C4D;
+  --line-strong: #A07F90;     /* input/select/textarea borders */
+
+  /* Signature card radius (tailwind `rounded-3xl` = this var): 24px phone / 32px >=744 / 40px >=1280 */
+  --radius-card: 1.5rem;
+  /* Horizontal page gutter used by .page-container: 16 / 20 (>=640) / 24 (>=744) / 32 (>=1024) / 48 (>=1280) */
+  --page-gutter: 16px;
+  /* Fixed chrome heights (excluding safe-area) */
+  --bottom-nav-h: 64px;
+  --action-bar-h: 72px;
+  /* Safe-area insets (index.html has viewport-fit=cover) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
   --shadow-soft: 0 4px 16px -4px rgba(242, 99, 142, 0.10);
   --shadow-pop:  0 10px 30px -8px rgba(242, 99, 142, 0.18);
+}
+
+/* Z-index scale (responsive-ui.md §4.1 — every unit uses these):
+   header/top bar 30 · rail/sidebar 30 · bottom tab bar 40 · sticky action bar 45 ·
+   bottom sheet / slide-over / layout drawers 900 (below the CDK overlay's 1000 so nz-select /
+   nz-dropdown opened inside a sheet render on top) · nz-modal / nz-drawer / notifications = NG-Zorro defaults. */
+
+@media (min-width: 640px) {
+  :root { --page-gutter: 20px; }
+}
+@media (min-width: 744px) {
+  :root { --radius-card: 2rem; --page-gutter: 24px; }
+}
+@media (min-width: 1024px) {
+  :root { --page-gutter: 32px; }
+}
+@media (min-width: 1280px) {
+  :root { --radius-card: 2.5rem; --page-gutter: 48px; }
 }
 
 /* ---------------- Base ---------------- */
@@ -52,13 +86,35 @@ html, body {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
+  line-height: 1.6;
   overflow-x: hidden;
+}
+
+/* Thai glyphs (tone marks / vowels above & below) clip at tight leading. `leading-none` is
+   left alone on purpose — it is used for icons and badges. */
+html[lang="th"] :is(.leading-tight, .leading-snug) {
+  line-height: 1.5;
 }
 
 ::selection {
   background: var(--pink-200);
   color: var(--ink);
+}
+
+/* Keyboard focus ring for links. ng-zorro's global reset (imported above) sets
+   `a, a:focus { outline: 0 }`, which left every <a> — rail, sidebar, header nav, drawers, footer,
+   cards, row icon-links — with no focus indicator at all. Same specificity as ng-zorro's
+   `a:focus` and later in the file, so this wins; an explicit `focus:outline-none` /
+   `focus-visible:*` utility on an element still wins (higher specificity). The negative offset
+   keeps the ring inside the overflow-clipped rail / sidebar navs. */
+a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+/* Dark admin chrome (ink background): --primary on ink is below 3:1. */
+app-admin-layout aside a:focus-visible {
+  outline-color: var(--pink-300);
 }
 
 html {
@@ -77,14 +133,15 @@ html {
   background: var(--pink-200);
   border-radius: 999px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--pink-400);
+@media (hover: hover) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--pink-400);
+  }
 }
 
 /* ---------------- Table & List Scrollbars ---------------- */
 .table-scroll,
-.table-responsive,
-div:has(> table) {
+.table-responsive {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -92,30 +149,28 @@ div:has(> table) {
 }
 
 .table-scroll::-webkit-scrollbar,
-.table-responsive::-webkit-scrollbar,
-div:has(> table)::-webkit-scrollbar {
+.table-responsive::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
 
 .table-scroll::-webkit-scrollbar-track,
-.table-responsive::-webkit-scrollbar-track,
-div:has(> table)::-webkit-scrollbar-track {
+.table-responsive::-webkit-scrollbar-track {
   background: var(--pink-100);
   border-radius: 999px;
 }
 
 .table-scroll::-webkit-scrollbar-thumb,
-.table-responsive::-webkit-scrollbar-thumb,
-div:has(> table)::-webkit-scrollbar-thumb {
+.table-responsive::-webkit-scrollbar-thumb {
   background: var(--pink-300);
   border-radius: 999px;
 }
 
-.table-scroll::-webkit-scrollbar-thumb:hover,
-.table-responsive::-webkit-scrollbar-thumb:hover,
-div:has(> table)::-webkit-scrollbar-thumb:hover {
-  background: var(--pink-400);
+@media (hover: hover) {
+  .table-scroll::-webkit-scrollbar-thumb:hover,
+  .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--pink-400);
+  }
 }
 
 /* ---------------- NG-ZORRO theme overrides ---------------- */
@@ -127,18 +182,24 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 }
 
 .ant-btn-primary {
-  background: var(--pink-500) !important;
-  border-color: var(--pink-500) !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
   border-radius: 9999px !important;
   font-weight: 600;
   color: #ffffff !important;
   box-shadow: 0 4px 16px -4px rgba(242, 99, 142, 0.4) !important;
 }
-.ant-btn-primary:hover,
 .ant-btn-primary:focus {
-  background: var(--pink-600) !important;
-  border-color: var(--pink-600) !important;
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
   color: #ffffff !important;
+}
+@media (hover: hover) {
+  .ant-btn-primary:hover {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    color: #ffffff !important;
+  }
 }
 
 /* Default & Cancel buttons (.ant-btn default / unstyled) matching system .btn-ghost */
@@ -152,11 +213,13 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   box-shadow: none !important;
 }
 
-.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):hover,
-.ant-btn-default:hover {
-  border-color: var(--pink-300) !important;
-  color: var(--pink-600) !important;
-  background: var(--pink-50) !important;
+@media (hover: hover) {
+  .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):hover,
+  .ant-btn-default:hover {
+    border-color: var(--pink-300) !important;
+    color: var(--pink-600) !important;
+    background: var(--pink-50) !important;
+  }
 }
 
 .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):focus,
@@ -193,14 +256,21 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 .ant-select-selector,
 .ant-input-number {
   border-radius: 1rem !important;
-  border-color: var(--line) !important;
+  border-color: var(--line-strong) !important;
   background: var(--surface) !important;
 }
-.ant-input:hover,
-.ant-input-affix-wrapper:hover,
-.ant-select:hover .ant-select-selector,
-.ant-input-number:hover {
-  border-color: var(--pink-300) !important;
+/* An .ant-input nested inside an affix wrapper / input-number is borderless — keep it that way. */
+.ant-input-affix-wrapper > .ant-input,
+.ant-input-number .ant-input {
+  border-color: transparent !important;
+}
+@media (hover: hover) {
+  .ant-input:hover,
+  .ant-input-affix-wrapper:hover,
+  .ant-select:hover .ant-select-selector,
+  .ant-input-number:hover {
+    border-color: var(--pink-300) !important;
+  }
 }
 .ant-input:focus,
 .ant-input-affix-wrapper-focused,
@@ -305,14 +375,29 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.ant-modal-close:hover {
-  background: var(--pink-100) !important;
-  color: var(--pink-600) !important;
-  transform: scale(1.06) !important;
+@media (hover: hover) {
+  .ant-modal-close:hover {
+    background: var(--pink-100) !important;
+    color: var(--pink-600) !important;
+    transform: scale(1.06) !important;
+  }
 }
 
 .ant-modal-close:active {
   transform: scale(0.95) !important;
+}
+
+/* A long title must not run under the ✕ (1.25rem inset + up to 44px on touch + 8px gap). The
+   <744 sheet adds the right safe-area on top of this (overlay section). */
+.ant-modal-content:has(> .ant-modal-close) > .ant-modal-header {
+  padding-right: calc(1.25rem + 52px) !important;
+}
+
+/* ng-zorro sets `.ant-modal-close { outline: 0 }` and the modal auto-focuses the ✕ — without
+   this, keyboard focus on it only nudged the icon colour. */
+.ant-modal-close:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
 }
 
 .ant-modal-close-x {
@@ -368,10 +453,12 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   box-shadow: none !important;
 }
 
-.ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover {
-  border-color: var(--pink-300) !important;
-  color: var(--pink-600) !important;
-  background: var(--pink-50) !important;
+@media (hover: hover) {
+  .ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover {
+    border-color: var(--pink-300) !important;
+    color: var(--pink-600) !important;
+    background: var(--pink-50) !important;
+  }
 }
 
 .ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus,
@@ -509,10 +596,12 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   box-shadow: none !important;
 }
 
-.ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover {
-  border-color: var(--pink-300) !important;
-  color: var(--pink-600) !important;
-  background: var(--pink-50) !important;
+@media (hover: hover) {
+  .ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover {
+    border-color: var(--pink-300) !important;
+    color: var(--pink-600) !important;
+    background: var(--pink-50) !important;
+  }
 }
 
 .ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus,
@@ -534,11 +623,13 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 4px 16px -2px rgba(225, 29, 72, 0.35) !important;
 }
 
-.ant-btn-dangerous:hover,
-.ant-btn-primary.ant-btn-dangerous:hover {
-  background: #BE123C !important;
-  border-color: #BE123C !important;
-  color: #ffffff !important;
+@media (hover: hover) {
+  .ant-btn-dangerous:hover,
+  .ant-btn-primary.ant-btn-dangerous:hover {
+    background: #BE123C !important;
+    border-color: #BE123C !important;
+    color: #ffffff !important;
+  }
 }
 
 /* ---------------- Notifications & Alerts Redesign ---------------- */
@@ -548,6 +639,7 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   pointer-events: none !important;
   z-index: 2050 !important;
 }
+
 
 .ant-message-notice {
   padding: 6px 0 !important;
@@ -570,6 +662,16 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   font-weight: 600 !important;
   color: var(--ink) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Touch: toasts are text-only in this app, so let taps fall through to whatever sits under the
+   toast (a phone sheet's ✕ lands exactly in the toast band) — and a tap can no longer pin the
+   toast via pause-on-hover. Mouse users keep pause-on-hover. (After the rule above: same
+   specificity, both !important — source order decides.) */
+@media (pointer: coarse) {
+  .ant-message-notice-content {
+    pointer-events: none !important;
+  }
 }
 
 .ant-message-custom-content {
@@ -615,11 +717,25 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   background: var(--pink-50) !important;
 }
 
-/* Floating Rich Notification Card (NzNotificationService) */
+/* Floating Rich Notification Card (NzNotificationService)
+   ng-zorro renders all six placement containers (topLeft … bottom) whenever any toast exists.
+   Position only the one placement the app uses (app.config.ts nzPlacement 'topRight'): the old
+   `.ant-notification { top; right }` also stretched the empty bottom* containers (which keep an
+   inline `bottom:24px`) into near-full-screen boxes at z 2050 that ate every tap — including the
+   toast's own ✕. Empty containers never take pointer events; only the notice cards do. */
 .ant-notification {
+  z-index: 2050 !important;
+  pointer-events: none;
+}
+
+.ant-notification-topRight {
   top: 24px !important;
   right: 24px !important;
-  z-index: 2050 !important;
+}
+
+.ant-notification-notice-wrapper,
+.ant-notification-notice {
+  pointer-events: auto;
 }
 
 .ant-notification-notice {
@@ -654,8 +770,10 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   transition: color 0.2s ease !important;
 }
 
-.ant-notification-notice-close:hover {
-  color: var(--pink-600) !important;
+@media (hover: hover) {
+  .ant-notification-notice-close:hover {
+    color: var(--pink-600) !important;
+  }
 }
 
 .ant-table {
@@ -670,8 +788,10 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
 .ant-table-tbody > tr > td {
   border-bottom: 1px solid var(--line) !important;
 }
-.ant-table-tbody > tr:hover > td {
-  background: var(--pink-50) !important;
+@media (hover: hover) {
+  .ant-table-tbody > tr:hover > td {
+    background: var(--pink-50) !important;
+  }
 }
 
 /* ---------------- Custom utility classes ---------------- */
@@ -697,15 +817,18 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
     @apply flex-1;
   }
 
+  /* Card grid: 2 cols gap 12 · >=640 3 cols gap 16 · >=1024 4 cols · >=1280 5 cols gap 20.
+     `--with-filters` sits next to the >=1024 filter column → one column fewer (3 / 4). */
   .document-card-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: 12px;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 640px) {
     .document-card-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
     }
   }
 
@@ -713,11 +836,18 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
     .document-card-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+    .document-card-grid.document-card-grid--with-filters {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   @media (min-width: 1280px) {
     .document-card-grid {
       grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 20px;
+    }
+    .document-card-grid.document-card-grid--with-filters {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
@@ -746,7 +876,7 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   }
 
   .btn-pink {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-semibold shadow-soft transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold shadow-soft transition-all duration-200;
   }
 
   .btn-ghost {
@@ -754,15 +884,106 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   }
 
   .btn-icon {
-    @apply inline-flex items-center justify-center w-10 h-10 rounded-full border border-line hover:border-pink-300 hover:bg-pink-50 text-ink-soft hover:text-pink-600 transition-all duration-200;
+    @apply inline-flex items-center justify-center w-11 h-11 rounded-full border border-line hover:border-pink-300 hover:bg-pink-50 text-ink-soft hover:text-pink-600 transition-all duration-200;
   }
 
   .input-soft {
-    @apply w-full px-4 py-3 rounded-2xl border border-line bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 transition-all;
+    @apply w-full px-4 py-3 rounded-2xl border border-line-strong bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 transition-all;
+  }
+
+  /* Fluid headings (responsive-ui.md §4.2) */
+  .heading-1 {
+    font-size: clamp(1.5rem, 1.1rem + 2vw, 2.5rem);
+    line-height: 1.5;
+    font-weight: 700;
+  }
+
+  .heading-2 {
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.875rem);
+    line-height: 1.5;
+    font-weight: 700;
+  }
+
+  .heading-3 {
+    font-size: clamp(1.0625rem, 0.95rem + 0.6vw, 1.375rem);
+    line-height: 1.5;
+    font-weight: 700;
   }
 
   .section-title {
-    @apply text-2xl md:text-3xl font-bold text-ink tracking-tight;
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.875rem); /* = .heading-2 */
+    line-height: 1.5;
+    font-weight: 700;
+    @apply text-ink tracking-tight;
+  }
+
+  /* ---- Responsive layout utilities (names are a cross-unit contract — do not rename) ---- */
+  .page-container {
+    width: 100%;
+    margin-inline: auto;
+    max-width: calc(1280px + 2 * var(--page-gutter));
+    padding-inline: max(var(--page-gutter), var(--safe-left)) max(var(--page-gutter), var(--safe-right));
+  }
+
+  /* Horizontal single-line scroller for tab / segment / chip rows (never wraps). */
+  .chip-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .chip-row::-webkit-scrollbar {
+    display: none;
+  }
+  .chip-row > * {
+    flex: none;
+    scroll-snap-align: start;
+  }
+  /* overflow-x:auto also clips the y axis and the row has no inner padding, so a focus ring drawn
+     outside a full-height chip was cut at the row's edges — draw it inside the chip instead. */
+  .chip-row > :focus-visible {
+    outline-offset: -3px;
+  }
+  /* G-22a: the inside offset only fixes the ring's top/bottom — a chip that sticks out past the row's
+     side edge was still cut off when it took keyboard focus. revealFocusedChip() (core/layout,
+     registered in App) scrolls the focused chip into the row; while it has keyboard focus the row
+     keeps 4px clear on each side and stops snapping, otherwise the proximity snap pulls the chip
+     straight back out to a chip-start position. Touch/mouse snapping is unchanged. */
+  .chip-row:has(:focus-visible) {
+    scroll-padding-inline: 4px;
+    scroll-snap-type: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tap-target {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hit-area expanders — grow what a finger can hit to 44×44 on touch without changing layout
+     or the visual size. The expanding pseudo-element is only added under `(pointer: coarse)`
+     (see "Touch targets" below). Both need a positioned element: `position: relative` here is a
+     default only — a Tailwind `absolute` / `fixed` utility on the same element wins.
+     · `.hit-44`     small icon controls (e.g. a 32px round button): a ≥44×44 box centred on it.
+     · `.tap-inline` a text link inside a sentence / next to other text: 12px above and below,
+                     6px left and right — the line box keeps its height (no-scroll pages stay put),
+                     and an adjacent control that sits later in the DOM still wins the overlap. */
+  .hit-44,
+  .tap-inline {
+    position: relative;
   }
 
   .section-subtitle {
@@ -774,35 +995,535 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
   }
 }
 
-/* ---------------- Mobile Responsive Overrides (< 576px) ---------------- */
-@media (max-width: 575px) {
-  /* NG-ZORRO Modal — responsive on small screens */
+/* ==========================================================
+   Responsive foundation (docs/contracts/responsive-ui.md §4.2)
+   Tiers: phone <744 · tablet 744–1023 · laptop 1024–1279 · desktop >=1280
+   Class names below are a contract between units — do not rename.
+   ========================================================== */
+
+/* ---------------- Safe-area helpers ----------------
+   `.safe-top` / `.safe-bottom` / `.safe-x` set that padding side to the inset ALONE (0 on any
+   device without a notch/home indicator). They are only for elements that have no padding of
+   their own on that side. Never put one next to a padding utility on the same side
+   (`p-*`, `py-*`/`pt-*` for safe-top, `py-*`/`pb-*`/`pb-bottom-nav` for safe-bottom,
+   `px-*`/`pl-*`/`pr-*`/`ps-*`/`pe-*` for safe-x) — that element needs the inset composed INTO
+   its own padding instead, as an arbitrary value:
+     pt-[calc(2rem+var(--safe-top))]      pb-[calc(0.5rem+var(--safe-bottom))]   (inset added)
+     pl-[max(1rem,var(--safe-left))]      pr-[max(1rem,var(--safe-right))]       (gutter or inset)
+   `npm run audit:guard` (rule `no-safe-area-padding-clash`) fails the build on the combination.
+   They live in the components layer so that, should a clash slip through anyway, the co-located
+   Tailwind padding utility wins (the element keeps its padding and only loses the inset) instead
+   of the old failure mode where the helper silently zeroed the padding on every device. */
+@layer components {
+  .safe-top {
+    padding-top: var(--safe-top);
+  }
+  .safe-bottom {
+    padding-bottom: var(--safe-bottom);
+  }
+  .safe-x {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+}
+
+/* Reserve room for the fixed bottom tab bar on phone. At >=744 there is no tab bar, so this
+   class adds nothing there (the element keeps whatever padding-bottom it already has). */
+@media (max-width: 743.98px) {
+  .pb-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom)) !important;
+  }
+}
+
+/* ---------------- Touch targets ----------------
+   One coarse-pointer rule set for every control type: buttons, ng-zorro selects / switches /
+   modal ✕, and the hit-area expanders. Fine pointers (mouse) keep the desktop density. */
+@media (pointer: coarse) {
+  .btn-icon,
+  .btn-pink,
+  .btn-ghost,
+  .ant-btn,
+  .tap-target,
+  .ant-pagination-item,
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Modal ✕ (a plain `button.ant-modal-close`, not `.ant-btn`): min-* beats the 2.25rem
+     `!important` width/height above; nudged up/right so the 44px button stays inside the header. */
+  .ant-modal-close {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    top: 0.75rem !important;
+    right: 1rem !important;
+  }
+
+  /* nz-select: 32px selector and 32px options on touch otherwise. The option height matches
+     `nzOptionHeightPx` (app.config.ts sets 44 on coarse pointers) — the dropdown is a fixed-size
+     virtual scroll, so CSS and config must agree. */
+  .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+    height: 44px !important;
+  }
+  .ant-select-single .ant-select-selector .ant-select-selection-item,
+  .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+    line-height: 42px !important;
+  }
+  .ant-select-single .ant-select-selector .ant-select-selection-search-input {
+    height: 42px !important;
+  }
+  .ant-select-item-option {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  /* nz-switch: ng-zorro toggles on a click on the HOST, so the 44×44 target goes there and takes
+     layout space (neighbouring switches can't overlap). The 44×22 pill track itself is untouched —
+     stretching `.ant-switch` would misplace the handle. Also covers nzSize="small" (28×16). */
+  nz-switch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    vertical-align: middle;
+  }
+
+  .hit-44::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  .tap-inline::after {
+    content: '';
+    position: absolute;
+    inset: -12px -6px;
+  }
+}
+
+/* ---------------- Phone inputs: >=16px stops iOS Safari zooming on focus ---------------- */
+@media (max-width: 743.98px) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+  select,
+  textarea,
+  .ant-input,
+  .ant-input-number-input,
+  .ant-select-selector,
+  .ant-select-selection-search-input,
+  .ant-picker-input > input {
+    font-size: 16px !important;
+  }
+}
+
+/* ---------------- Responsive table → cards (.rtable, §4.5) ----------------
+   Markup: td.rt-title (1) · td.rt-status (0–1) · td.rt-key[data-label] (0–2) · td.rt-secondary (any)
+           · td.rt-more (<app-row-more>) · td.rt-action (optional); empty th.rt-more in thead.
+   phone  : each row is a card; secondary hidden; ⋯ + actions share the last row, right-aligned.
+   tablet/laptop (744–1279): normal table, secondary hidden, ⋯ visible, no horizontal scroll.
+   desktop (>=1280): every column visible, ⋯ hidden. */
+@media (max-width: 743.98px) {
+  .table-scroll:has(> .rtable),
+  .table-responsive:has(> .rtable) {
+    overflow: visible;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .rtable,
+  .rtable > tbody {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .rtable > thead {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  .rtable > tbody > tr {
+    /* col 1 = title / keys (flex), col 2 = ⋯, col 3 = status / actions.
+       col 3 is capped at 45% of the card: an `auto` track grows to its widest item's
+       max-content, so a 5-button rt-action (or a multi-line rt-status) used to push the title in
+       row 1 down to a few px. Past the cap, rt-action's flex-wrap wraps the buttons instead;
+       fit-content() never goes below the widest unbreakable item, so nothing overflows. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto fit-content(45%);
+    gap: 4px 12px;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: #fff;
+    margin-bottom: 12px;
+  }
+
+  .rtable > tbody > tr > td {
+    display: block;
+    min-width: 0;
+    /* Column-width hints (e.g. payouts' `w-[24%]` / `w-[14%]`) are for table layout; on a grid
+       item a % width resolves against its grid area, so the title/status shrank to a sliver. */
+    width: auto;
+    padding: 0 !important;
+    border: 0 !important;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .rtable > tbody > tr > td.rt-title {
+    grid-column: 1 / 3;
+    font-weight: 700;
+    color: var(--ink);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  /* Col 3 of row 1 only ever holds td.rt-status. Without one it stayed empty, yet it was still
+     sized by the rt-action cell on the last row (two 44px buttons), so the title lost ~104px for
+     nothing (/admin/categories: 50px left for the name at 320). rt-more / rt-action are still
+     auto-placed on the following row(s), so the action row does not change. */
+  .rtable > tbody > tr:not(:has(> td.rt-status)):has(> td.rt-more) > td.rt-title {
+    grid-column: 1 / -1;
+  }
+
+  .rtable > tbody > tr > td.rt-status {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .rtable > tbody > tr > td.rt-key {
+    grid-column: 1 / -1;
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+  }
+
+  .rtable > tbody > tr > td.rt-key[data-label]::before {
+    content: attr(data-label) ": ";
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+
+  .rtable > tbody > tr > td.rt-secondary {
+    display: none;
+  }
+
+  .rtable > tbody > tr > td.rt-more {
+    grid-column: 2;
+    justify-self: end;
+    margin-top: 4px;
+  }
+
+  .rtable > tbody > tr > td.rt-action {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  /* §4.5 "⋯ + actions share the last row, right-aligned". With no real action in the row, ⋯ sat
+     in col 2 and ended one status-pill width (+ gap) short of the card's right edge — a different
+     x on every row. Span it to the edge instead, and drop an empty rt-action cell so it doesn't
+     leave a blank grid row behind. */
+  .rtable > tbody > tr:not(:has(> td.rt-action :is(a, button))) > td.rt-more {
+    grid-column: 2 / -1;
+  }
+
+  .rtable > tbody > tr > td.rt-action:not(:has(*)) {
+    display: none;
+  }
+
+  .rtable > tbody > tr > td.rt-action :is(a, button) {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 744px) and (max-width: 1279.98px) {
+  .rtable {
+    table-layout: auto;
+    min-width: 0 !important;
+  }
+
+  .rtable .rt-secondary {
+    display: none;
+  }
+}
+
+/* Phone cards AND the 744–1279 table. Tablet: an auto-layout table can never be narrower than the
+   sum of its columns' min-content widths, and a title/key cell's min-content is its longest
+   unbreakable token — a 32-char hex id in a seller/category/document name pinned the title column
+   at 290–350px and made /admin/sellers, /admin/ads and /admin/categories scroll sideways at 744.
+   Phone: the rt-title is a 2-line clamp (overflow:hidden) that cut such a token sideways mid-glyph,
+   and a free-text rt-key (seller/buyer name) spilled out of its card and widened the whole page.
+   `anywhere` (unlike `break-word`) also lowers min-content, so those tokens wrap instead (inherited
+   by the page's inner title spans); cells that must stay on one line (prices, dates) already carry
+   `whitespace-nowrap`, which this does not override. */
+@media (max-width: 1279.98px) {
+  .rtable > tbody > tr > :is(td.rt-title, td.rt-key) {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (min-width: 1280px) {
+  .rtable .rt-more {
+    display: none;
+  }
+}
+
+/* Numeric report matrix only (>=4 numeric columns, no per-row actions): keeps horizontal
+   scroll inside .table-scroll, first column pinned. */
+.rtable-pinned > thead > tr > :first-child,
+.rtable-pinned > tbody > tr > :first-child,
+.rtable-pinned > tfoot > tr > :first-child {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+  box-shadow: 6px 0 8px -6px rgba(42, 27, 34, 0.18);
+}
+
+/* ---------------- Table viewport (R-27, §4.5 v1.6) ----------------
+   Every .rtable / .rtable-pinned wrapper carries [appTableViewport] (TableViewportDirective), which
+   adds .rt-viewport. At >=744, with more than 10 body rows, the directive sets data-rt-capped plus
+   --rt-viewport-max (the 10th row's bottom, measured) and --rt-head-h (thead height); this caps the
+   wrapper there (clamped on short windows) and keeps the header row visible. <=10 rows, phones
+   (card mode, overflow visible) and print are unchanged. The names are the contract. */
+:root {
+  --rt-viewport-floor: min(240px, 60dvh);  /* header + about 3 rows; at most 60% of a short window */
+  --rt-viewport-chrome: 200px;             /* the tallest pinned header next to a table (buyer >=1280: 171px) + a free band */
+}
+:is(.rtable, .rtable-pinned) > thead.bg-pink-50 { --rt-head-bg: var(--pink-50); }
+
+@media screen and (min-width: 744px) {
+  .rt-viewport[data-rt-capped] {
+    max-height: min(var(--rt-viewport-max), max(var(--rt-viewport-floor), calc(100dvh - var(--rt-viewport-chrome))));
+    overflow-y: auto;
+    overscroll-behavior-y: auto;                     /* chain to the page at either end: no trap */
+    scroll-padding-top: calc(var(--rt-head-h, 0px) + 8px);
+    scroll-padding-bottom: 8px;
+  }
+  /* The same cap, rounded DOWN to a whole px. A fractional cap (60dvh = 235.8px at 852x393) left a
+     sub-pixel scroll remainder at the table's end, and the first wheel there was spent on it instead
+     of carrying on to the page (G-35(g)). Gated by @supports rather than a plain second declaration:
+     the value holds var(), so a browser without round() would not fall back to the line above, it
+     would drop max-height to `none` (invalid at computed-value time). 100dvh keeps Sass from folding
+     the test value. */
+  @supports (max-height: round(down, 100dvh, 1px)) {
+    .rt-viewport[data-rt-capped] {
+      max-height: round(down, min(var(--rt-viewport-max), max(var(--rt-viewport-floor), calc(100dvh - var(--rt-viewport-chrome)))), 1px);
+    }
+  }
+  /* A focused header control (e.g. the /admin/documents select-all) must not make the table jump. */
+  .rt-viewport[data-rt-capped]:has(> :is(.rtable, .rtable-pinned) > thead :focus) {
+    scroll-padding-top: 0;
+  }
+  .rt-viewport[data-rt-capped] > :is(.rtable, .rtable-pinned) > thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 3;                                      /* above the body, including the pinned column (z 1) */
+    background-color: var(--rt-head-bg, #fff);       /* opaque */
+    box-shadow: inset 0 -1px 0 var(--line);          /* the header rule moves with the sticky cells */
+  }
+  .rt-viewport[data-rt-capped] > .rtable-pinned > thead > tr > th:first-child {
+    left: 0;
+    z-index: 4;                                      /* sticky on both axes, above every other cell */
+    box-shadow: inset 0 -1px 0 var(--line), 6px 0 8px -6px rgba(42, 27, 34, 0.18);
+  }
+  .rt-viewport[data-rt-scrollable]:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;                            /* inside the box: never clipped (R-12) */
+  }
+  /* Positioned header cells paint over an inset outline, so they redraw its top edge. */
+  .rt-viewport[data-rt-capped]:focus-visible > :is(.rtable, .rtable-pinned) > thead > tr > th {
+    box-shadow: inset 0 2px 0 var(--primary), inset 0 -1px 0 var(--line);
+  }
+  .rt-viewport[data-rt-capped]:focus-visible > .rtable-pinned > thead > tr > th:first-child {
+    box-shadow: inset 0 2px 0 var(--primary), inset 0 -1px 0 var(--line), 6px 0 8px -6px rgba(42, 27, 34, 0.18);
+  }
+}
+@media screen and (min-width: 744px) and (forced-colors: active) {
+  .rt-viewport[data-rt-capped] > :is(.rtable, .rtable-pinned) > thead > tr > th {
+    border-bottom: 1px solid CanvasText;             /* forced colors drop box-shadow */
+  }
+}
+@media print {
+  .rt-viewport { max-height: none !important; overflow: visible !important; }  /* every row prints, across pages */
+  .rt-viewport > :is(.rtable, .rtable-pinned) > thead > tr > th { position: static !important; }
+}
+
+/* ---------------- Overlays (global — every nz-modal / nz-drawer / notification) ---------------- */
+
+/* >=744: centered dialog, max 560 unless the component opts out with nzClassName="modal-wide". */
+@media (min-width: 744px) {
   .ant-modal {
-    max-width: calc(100vw - 32px) !important;
-    margin: 16px auto !important;
-    border-radius: 1.25rem !important;
+    max-width: min(560px, calc(100vw - 48px));
+  }
+}
+.ant-modal.modal-wide {
+  max-width: min(960px, calc(100vw - 48px)) !important;
+}
+
+/* >=744 on short screens (landscape phones in the tablet tier, 1024×600 laptops): ng-zorro's
+   default top:100px + an uncapped content pushed the footer buttons 160–250px below the fold.
+   Same pattern as the <744 sheet: title and footer stay on screen, only the body scrolls. */
+@media (min-width: 744px) and (max-height: 640px) {
+  .ant-modal-wrap:not(.ant-modal-centered) .ant-modal {
+    top: 16px !important;
+    padding-bottom: 16px;
   }
 
   .ant-modal-content {
-    border-radius: 1.25rem !important;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
   }
 
-  .ant-modal-header {
-    border-radius: 1.25rem 1.25rem 0 0 !important;
-    padding: 1rem 1.25rem 0.875rem 1.25rem !important;
-  }
-
+  .ant-modal-header,
   .ant-modal-footer {
-    border-radius: 0 0 1.25rem 1.25rem !important;
-    padding: 0.875rem 1.25rem !important;
+    flex: none;
   }
 
   .ant-modal-body {
-    padding: 1rem !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* A closed nz-drawer keeps its content in the DOM, only translated off-screen, so Tab walked into
+   the closed cart ("ดำเนินการชำระเงิน" focused below the viewport, under the phone action bar).
+   Hide it once the 0.3s slide-out has finished; opening shows it again immediately. */
+.ant-drawer:not(.ant-drawer-open) > .ant-drawer-content-wrapper {
+  visibility: hidden;
+  transition: all 0.3s, visibility 0s linear 0.3s;
+}
+
+/* Drawers never reach into the notch / rounded corners: the inset is the only padding on
+   .ant-drawer-content (the drawer's own gutters live inside it), so this adds nothing where the
+   insets are 0. Below 744 the left/right drawers are 100vw, so they take both insets (below). */
+.ant-drawer-right .ant-drawer-content {
+  padding-right: var(--safe-right);
+}
+.ant-drawer-left .ant-drawer-content {
+  padding-left: var(--safe-left);
+}
+.ant-drawer-top .ant-drawer-content,
+.ant-drawer-bottom .ant-drawer-content {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* <744: every modal / confirm becomes a bottom sheet. */
+@media (max-width: 743.98px) {
+  /* .ant-modal-wrap keeps its full-screen box; the dialog itself is pinned to the bottom edge. */
+  .ant-modal,
+  .ant-modal.modal-wide {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    vertical-align: bottom;
   }
 
+  .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - var(--safe-top) - 16px);
+    border-radius: 24px 24px 0 0 !important;
+    border-bottom: 0 !important;
+  }
+
+  /* Side paddings take the left/right safe-area (landscape notch) — `max()` = the gutter, or the
+     inset when that is larger. */
+  .ant-modal-header {
+    flex: none;
+    border-radius: 24px 24px 0 0 !important;
+    padding: 1rem max(1.25rem, var(--safe-right)) 0.875rem max(1.25rem, var(--safe-left)) !important;
+  }
+
+  /* A long title must not run under the ✕ (44px on touch + 8px gap). */
+  .ant-modal-content:has(> .ant-modal-close) > .ant-modal-header {
+    padding-right: calc(max(1rem, var(--safe-right)) + 52px) !important;
+  }
+
+  .ant-modal-close {
+    right: max(1rem, var(--safe-right)) !important;
+  }
+
+  .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem max(1rem, var(--safe-right)) 1rem max(1rem, var(--safe-left)) !important;
+  }
+
+  .ant-modal-footer {
+    flex: none;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    border-radius: 0 !important;
+    padding: 12px max(16px, var(--safe-right)) calc(12px + var(--safe-bottom)) max(16px, var(--safe-left)) !important;
+  }
+
+  /* Footer-less sheets ([nzFooter]="null": quick-view, approval reject, review viewer, …) ended
+     with only the body's 16px — their last action sat under the home indicator. Reserve the inset
+     below the scrolling body. (Confirm dialogs pad their content themselves — the rule after this
+     one overrides it for them.) */
+  .ant-modal-content:not(:has(> .ant-modal-footer)) {
+    padding-bottom: var(--safe-bottom) !important;
+  }
+
+  .ant-modal-footer .ant-btn,
+  .ant-modal-confirm-btns .ant-btn {
+    width: 100% !important;
+    margin: 0 !important;
+    min-height: 44px !important;
+  }
+
+  /* Confirm dialogs: same sheet treatment; buttons stacked, primary last (bottom). */
   .ant-modal-confirm .ant-modal-content {
-    padding: 1.25rem !important;
+    padding: 1.25rem max(1.25rem, var(--safe-right)) calc(1.25rem + var(--safe-bottom)) max(1.25rem, var(--safe-left)) !important;
+    overflow-y: auto !important;
+  }
+
+  .ant-modal-confirm .ant-modal-body {
+    overflow: visible;
+  }
+
+  .ant-modal-confirm-btns {
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
 
   .ant-modal-confirm-body {
@@ -827,13 +1548,205 @@ div:has(> table)::-webkit-scrollbar-thumb:hover {
     font-size: 0.85rem !important;
   }
 
-  /* NG-ZORRO Drawer — full-width and padded on mobile */
-  .ant-drawer-body {
-    padding: 16px !important;
+  /* Drawers: left/right become full-width; bottom drawers get a sheet radius. */
+  .ant-drawer-left .ant-drawer-content-wrapper,
+  .ant-drawer-right .ant-drawer-content-wrapper {
+    width: 100vw !important;
   }
 
-  .ant-drawer-content-wrapper {
-    width: 100vw !important;
+  .ant-drawer-left .ant-drawer-content,
+  .ant-drawer-right .ant-drawer-content {
+    border-radius: 0 !important;
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  .ant-drawer-body {
+    padding: 16px 16px calc(16px + var(--safe-bottom)) 16px !important;
+  }
+
+  /* Notification toasts: full-width card under the status bar (the app's only placement). */
+  .ant-notification-topRight {
+    right: 16px !important;
+    left: 16px !important;
+    top: calc(var(--safe-top) + 8px) !important;
+    width: auto !important;
+    margin-right: 0 !important;
+  }
+
+  .ant-notification-notice {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Message toasts: the inline-flex pill shrink-wrapped a long message to the full screen width,
+     touching both edges — keep the same 16px (or safe-area) gutters as the notification card, and
+     a card radius once it wraps to several lines. */
+  .ant-message-notice-content {
+    max-width: calc(100vw - 2 * max(16px, var(--safe-left), var(--safe-right)));
+    border-radius: 1.25rem !important;
+  }
+
+  /* nz-range-picker: two 280px month panels side by side (560px) ran off every phone, and the only
+     forward-navigation buttons live on the right-hand panel. Show one month and give it the
+     ›/» buttons (ng-zorro hides them on the left panel with inline visibility:hidden). */
+  .ant-picker-dropdown-range .ant-picker-panels > :last-child {
+    display: none !important;
+  }
+  .ant-picker-dropdown-range .ant-picker-header-next-btn,
+  .ant-picker-dropdown-range .ant-picker-header-super-next-btn {
+    visibility: visible !important;
+  }
+  .ant-picker-dropdown-range .ant-picker-panel-container {
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+  }
+
+  /* Keyboard focus moved below the fold stopped at the viewport edge — under the fixed tab bar or
+     sticky action bar, fully hidden (WCAG 2.4.11). Reserve the fixed chrome for scroll-into-view.
+     --action-bar-live-h is the tallest live action bar's measured height (LayoutChromeService);
+     it grows past --action-bar-h when a label wraps (G-11).
+     No scroll-padding-top on purpose: the top bars are `sticky`, and with a top padding focusing
+     any control inside them made Chrome scroll the page (500 → 132 on /seller/documents). */
+  html {
+    scroll-padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom));
+  }
+  html:has(app-sticky-action-bar) {
+    scroll-padding-bottom: var(--action-bar-live-h, calc(var(--action-bar-h) + var(--safe-bottom)));
+  }
+}
+
+/* Short phone viewports (landscape, or the on-screen keyboard up): with a pinned header and a
+   stacked footer the sheet body collapsed to ~32px, so a focused textarea and its label could not
+   be seen together. Let the whole sheet scroll as one unit instead. Portrait heights: no change. */
+@media (max-width: 743.98px) and (max-height: 480px) {
+  .ant-modal-content {
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  .ant-modal-body {
+    flex: none !important;
+    overflow: visible !important;
+  }
+}
+
+.ant-drawer-bottom .ant-drawer-content {
+  border-radius: 24px 24px 0 0 !important;
+}
+
+/* prefers-reduced-motion for every NG-Zorro overlay (§4.3: sheets must not slide). All of them
+   render inside the CDK overlay container: drawer slide, modal/confirm zoom, dropdown / select /
+   popover scale, message and notification slide-in. A near-zero duration — not `animation:none` —
+   so the animationend / transitionend events that Angular's leave animations and NG-Zorro wait on
+   still fire. app-bottom-sheet, the ☰ drawer and the tab bar are not in the container and keep
+   their own reduced-motion rules. */
+@media (prefers-reduced-motion: reduce) {
+  .cdk-overlay-container *,
+  .cdk-overlay-container *::before,
+  .cdk-overlay-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------- Forced colors (Windows high contrast) ----------------
+   Forced colors replaces every background with Canvas and drops box-shadow, so anything that was
+   drawn only with a fill (switch track, pink button, active nav pill, sheet edge) disappears.
+   These rules only apply in forced-colors mode; normal rendering is unchanged. */
+@media (forced-colors: active) {
+  /* nz-switch: track and knob are backgrounds only → the switch left no pixels at all. */
+  .ant-switch {
+    border: 1px solid ButtonText;
+  }
+  .ant-switch .ant-switch-handle::before {
+    forced-color-adjust: none;
+    background: ButtonText;
+  }
+  .ant-switch.ant-switch-checked {
+    forced-color-adjust: none;
+    background: Highlight !important;
+    border-color: Highlight;
+  }
+  .ant-switch.ant-switch-checked .ant-switch-handle::before {
+    background: HighlightText;
+  }
+  .ant-switch.ant-switch-disabled {
+    border-color: GrayText;
+  }
+
+  /* Primary CTAs: a borderless fill turned into bare text while the secondary .btn-ghost next to it
+     kept its outline, reversing the emphasis of every CTA pair. (button/a.bg-primary = the header
+     search button and other utility-styled primary buttons.) */
+  .btn-pink,
+  button.bg-primary,
+  a.bg-primary {
+    border: 1px solid ButtonText;
+  }
+
+  /* Current navigation item (tab bar, rails, sidebars, header nav, drawers): its colour/pill cue is
+     neutralised, so frame it. Links only — a filled Highlight here would sit under the item's own
+     icon pill. */
+  a[aria-current='page'] {
+    outline: 2px solid Highlight !important;
+    outline-offset: -2px;
+  }
+
+  /* Selected chips / current page button / active tab: fill with the system selection colours. */
+  :is(button, a)[aria-pressed='true'],
+  button[aria-current='page'],
+  [role='tab'][aria-selected='true'] {
+    forced-color-adjust: none;
+    background-color: Highlight !important;
+    color: HighlightText !important;
+    border-color: Highlight !important;
+  }
+  .ant-tabs-ink-bar {
+    forced-color-adjust: none;
+    background: Highlight !important;
+  }
+
+  /* Overlay edges: the nz-drawer (cart, points history) and the ☰ drawer were a white fill + shadow
+     only and blended into the page. Keep the backdrops' dimming. */
+  .ant-drawer-content {
+    outline: 2px solid CanvasText;
+    outline-offset: -2px;
+  }
+  .header-drawer {
+    border-right: 2px solid CanvasText;
+  }
+  .ant-drawer-mask,
+  .header-drawer__backdrop {
+    forced-color-adjust: none;
+  }
+}
+
+/* ---------------- Print (e.g. the order receipt, window.print) ----------------
+   A printed page is narrower than 744px, so the phone tier applies on every device: the fixed
+   sticky action bar and tab bar repeated on every page over the items, the header/footer printed,
+   and a phone session also printed the closed bottom cart drawer. */
+@media print {
+  app-header,
+  app-footer,
+  app-bottom-tab-bar,
+  app-sticky-action-bar,
+  app-global-loader,
+  app-dev-role-switcher,
+  .cdk-overlay-container {
+    display: none !important;
+  }
+
+  /* The layouts reserve room for the chrome hidden above (inline action-bar padding, .pb-bottom-nav). */
+  [data-testid='buyer-layout-root'],
+  .pb-bottom-nav {
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
   }
 }
 

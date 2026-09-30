@@ -1,17 +1,34 @@
 @if (catalog.documentDetailState().status === 'loading') {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
-        <app-empty-state emoji="⏳" [title]="'common.loading' | trans" [description]="'common.pleaseWait' | trans" />
+      <!-- responsive-ui v1.4 R-18 (F90): a skeleton of the detail layout (breadcrumb, cover, side
+           card) instead of a one-line "Loading…", so nothing jumps when the document arrives. -->
+      <div class="page-container py-5 md:py-8" aria-busy="true" data-testid="document-detail-loading">
+        <div class="h-11 w-2/3 max-w-sm rounded-xl bg-line/60 animate-pulse mb-4 md:mb-6" aria-hidden="true"></div>
+        <div class="grid grid-cols-1 gap-6 lg:gap-8 md:grid-cols-[minmax(0,1fr)_300px] lg:grid-cols-12" aria-hidden="true">
+          <div class="lg:col-span-7 min-w-0 flex flex-col gap-6">
+            <div class="card-soft aspect-[16/10] animate-pulse"></div>
+            <div class="card-soft h-64 animate-pulse"></div>
+          </div>
+          <div class="lg:col-span-5 min-w-0 flex flex-col gap-4">
+            <div class="h-8 w-1/3 rounded-xl bg-line/60 animate-pulse"></div>
+            <div class="h-24 rounded-2xl bg-line/60 animate-pulse"></div>
+            <div class="card-soft h-72 animate-pulse"></div>
+          </div>
+        </div>
+        <p class="sr-only">{{ 'common.loading' | trans }}</p>
       </div>
     } @else if (catalog.documentDetailState().status === 'error') {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+      <div class="page-container py-16">
         <!-- Bug #8: a 404 (document doesn't exist / was removed) is not a transient failure —
              no retry button, since retrying can never succeed for this case. -->
         @if (catalog.documentDetailNotFound()) {
+          <!-- R-17 (F116): not-found is its own state with a CTA back to a list. -->
           <app-empty-state
             emoji="🔍"
             [title]="'product.notFoundTitle' | trans"
             [description]="'product.notFoundDesc' | trans"
-          />
+          >
+            <a routerLink="/marketplace" class="btn-pink mt-4" data-testid="document-not-found-cta">{{ 'product.backToMarket' | trans }}</a>
+          </app-empty-state>
         } @else {
           <app-empty-state emoji="⚠️" [title]="'common.loadFailed' | trans" [description]="'common.retry' | trans">
             <button class="btn-pink mt-4" type="button" (click)="catalog.loadDocumentDetail(id())">
@@ -21,22 +38,22 @@
         }
       </div>
     } @else if (doc(); as d) {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+      <div class="page-container py-5 md:py-8">
         <!-- Breadcrumb -->
-        <nav class="flex items-center gap-2 text-sm text-ink-muted mb-6 flex-wrap">
-          <a routerLink="/" class="hover:text-pink-600">{{ 'nav.home' | trans }}</a>
+        <nav class="flex items-center gap-2 text-sm text-ink-muted mb-4 md:mb-6 flex-wrap min-w-0">
+          <a routerLink="/" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'nav.home' | trans }}</a>
           <app-icon name="chevron-right" [size]="14" />
-          <a routerLink="/marketplace" class="hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a>
+          <a routerLink="/marketplace" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a>
           <app-icon name="chevron-right" [size]="14" />
           @for (cid of d.categoryIds; track cid; let last = $last) {
             @if (catalog.getCategoryById(cid); as c) {
-              <a [routerLink]="['/category', c.slug]" class="hover:text-pink-600">{{ c.name }}</a>
+              <a [routerLink]="['/category', c.slug]" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600 [overflow-wrap:anywhere]">{{ c.name }}</a>
               <app-icon name="chevron-right" [size]="14" />
               @if (last && d.subcategoryId && catalog.getSubcategoryById(d.subcategoryId); as sub) {
                 <a
                   [routerLink]="['/category', c.slug]"
                   [queryParams]="{ sub: sub.slug }"
-                  class="hover:text-pink-600"
+                  class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600 [overflow-wrap:anywhere]"
                 >
                   {{ sub.name }}
                 </a>
@@ -44,12 +61,13 @@
               }
             }
           }
-          <span class="text-ink line-clamp-1 max-w-xs">{{ d.title }}</span>
+          <span class="text-ink line-clamp-1 min-w-0 max-w-full sm:max-w-xs [overflow-wrap:anywhere]">{{ d.title }}</span>
         </nav>
 
-        <div class="grid lg:grid-cols-12 gap-8">
+        <!-- responsive-ui v1 §4.6 (B): 1 column <744 · content + 300px side column 744–1023 · 7/5 split >=1024 -->
+        <div class="grid grid-cols-1 gap-6 lg:gap-8 md:grid-cols-[minmax(0,1fr)_300px] lg:grid-cols-12">
           <!-- Left: gallery + tabs -->
-          <div class="lg:col-span-7">
+          <div class="lg:col-span-7 min-w-0">
             <!-- Cover -->
             <div class="relative card-soft overflow-hidden">
               <div class="aspect-[16/10] relative">
@@ -69,16 +87,16 @@
                     🆓 {{ 'product.freePill' | trans }}
                   </span>
                 } @else if (discountPercent()) {
-                  <span class="absolute top-4 right-4 pill bg-pink-500 text-white shadow-soft">
+                  <span class="absolute top-4 right-4 pill bg-primary text-white shadow-soft">
                     -{{ discountPercent() }}% {{ 'product.discountLabel' | trans }}
                   </span>
                 }
               </div>
-              <div class="flex gap-2 p-3 bg-white">
+              <div class="flex gap-2 p-3 bg-white overflow-x-auto overflow-y-hidden no-scrollbar">
                 @for (img of d.gallery; track img; let i = $index) {
                   <button
                     type="button"
-                    class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all"
+                    class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 transition-all"
                     [class.border-pink-500]="selectedImage() === i"
                     [class.border-transparent]="selectedImage() !== i"
                     (click)="selectedImage.set(i)"
@@ -87,14 +105,14 @@
                   </button>
                 } @empty {
                   @if (d.cover) {
-                    <button type="button" class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-pink-500" aria-current="true">
+                    <button type="button" class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-pink-500" aria-current="true">
                       <img appImgFallback [src]="d.cover" class="w-full h-full object-cover" alt="" />
                     </button>
                   }
                 }
               </div>
               @if (d.previewPages > 0) {
-                <div class="px-3 pb-3 bg-white flex items-center justify-between border-t border-line/60 pt-2.5">
+                <div class="px-3 pb-3 bg-white flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5">
                   <div class="flex items-center gap-1.5 text-xs text-ink-muted">
                     <app-icon name="eye" [size]="14" className="text-pink-500" />
                     <span>{{ 'product.hasPreviewPages' | trans: { count: d.previewPages } }}</span>
@@ -117,12 +135,12 @@
             </div>
 
             <!-- Tabs -->
-            <div class="mt-8">
+            <div class="mt-6 md:mt-8 min-w-0">
               <nz-tabs>
                 @if (d.previewPages > 0) {
                   <nz-tab [nzTitle]="'product.previewTab' | trans" (nzSelect)="onPreviewTabSelect()">
-                    <div id="preview-section" class="mt-4 card-cream p-6">
-                      <div class="flex items-start justify-between gap-4 mb-4">
+                    <div id="preview-section" class="mt-4 card-cream p-4 sm:p-6">
+                      <div class="flex flex-wrap items-start justify-between gap-3 sm:gap-4 mb-4">
                         <div>
                           <div class="text-sm font-bold text-ink">{{ 'product.previewFreeTitle' | trans }}</div>
                           <div class="text-xs text-ink-muted mt-1">
@@ -169,9 +187,12 @@
                                       </span>
                                     </div>
                                   </div>
-                                  <div class="mt-2 flex items-center justify-between text-xs text-ink-muted px-1">
-                                    <span>{{ 'product.pageLabel' | trans: { index: $index + 1 } }}</span>
-                                    <span class="text-pink-600 font-medium group-hover:underline flex items-center gap-0.5">
+                                  <!-- G-14e: a narrow thumbnail (3 columns in the 744 main column) had
+                                       no room for both labels; the zoom hint wraps below instead of
+                                       being clipped by the card's overflow-hidden. -->
+                                  <div class="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs text-ink-muted px-1">
+                                    <span class="min-w-0">{{ 'product.pageLabel' | trans: { index: $index + 1 } }}</span>
+                                    <span class="min-w-0 text-pink-600 font-medium group-hover:underline flex items-center gap-0.5">
                                       <app-icon name="eye" [size]="12" /> {{ 'product.zoom' | trans }}
                                     </span>
                                   </div>
@@ -226,7 +247,7 @@
 
                 <nz-tab [nzTitle]="'product.detailsTab' | trans">
                   <div class="prose prose-sm max-w-none mt-4">
-                    <p class="text-ink-soft leading-relaxed">{{ d.description }}</p>
+                    <p class="text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ d.description }}</p>
 
                     <!-- Resource info grid (TpT-style) -->
                     <ul class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -351,9 +372,9 @@
                                 [alt]="rv.buyerName"
                                 class="w-11 h-11 rounded-full object-cover flex-shrink-0"
                               />
-                              <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                  <span class="text-sm font-bold text-ink">{{ rv.buyerName }}</span>
+                              <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
+                                  <span class="min-w-0 text-sm font-bold text-ink [overflow-wrap:anywhere]">{{ rv.buyerName }}</span>
                                   @if (rv.verified) {
                                     <span class="pill-pink !py-0">
                                       <app-icon name="check" [size]="11" />
@@ -365,7 +386,7 @@
                                   <app-rating-stars [value]="rv.rating" [size]="13" [showValue]="false" />
                                   <span class="text-xs text-ink-muted">{{ rv.createdAt | timeAgo }}</span>
                                 </div>
-                                <p class="text-sm text-ink-soft leading-relaxed">{{ rv.comment }}</p>
+                                <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ rv.comment }}</p>
                                 <div class="flex items-center gap-4 mt-3">
                                   <button class="text-xs text-ink-muted hover:text-pink-600 inline-flex items-center gap-1">
                                     👍 {{ 'product.helpfulCount' | trans: { count: rv.helpful ?? 0 } }}
@@ -377,13 +398,13 @@
                             @if (rv.sellerReply; as reply) {
                               <div class="mt-4 ml-15 pl-4 border-l-2 border-pink-300 flex gap-3">
                                 <img appImgFallback [src]="d.seller.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
-                                <div class="flex-1">
-                                  <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
+                                <div class="flex-1 min-w-0">
+                                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
+                                    <span class="min-w-0 text-xs font-bold text-pink-700 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
                                     <span class="pill-pink !py-0 !text-[10px]">{{ 'product.sellerLabel' | trans }}</span>
                                     <span class="text-[11px] text-ink-muted">{{ reply.createdAt | timeAgo }}</span>
                                   </div>
-                                  <p class="text-sm text-ink-soft leading-relaxed">{{ reply.text }}</p>
+                                  <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ reply.text }}</p>
                                 </div>
                               </div>
                             }
@@ -407,11 +428,11 @@
                         <ul class="flex flex-col gap-3">
                           @for (q of faqItems(); track q.id) {
                             <li class="card-soft p-5">
-                              <p class="text-sm font-bold text-ink leading-relaxed mb-3">{{ q.question }}</p>
+                              <p class="text-sm font-bold text-ink leading-relaxed mb-3 [overflow-wrap:anywhere]">{{ q.question }}</p>
                               @if (q.answer; as a) {
                                 <div class="pl-4 border-l-2 border-pink-300">
                                   <div class="text-xs font-bold text-pink-700 mb-1">{{ 'product.sellerAnswer' | trans }}</div>
-                                  <p class="text-sm text-ink-soft leading-relaxed">{{ a.text }}</p>
+                                  <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ a.text }}</p>
                                 </div>
                               }
                             </li>
@@ -470,23 +491,23 @@
                           <li class="card-soft p-5">
                             <div class="flex items-start gap-3">
                               <img appImgFallback [src]="q.buyerAvatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
-                              <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1.5">
-                                  <span class="text-sm font-bold text-ink">{{ q.buyerName }}</span>
+                              <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5 min-w-0">
+                                  <span class="min-w-0 text-sm font-bold text-ink [overflow-wrap:anywhere]">{{ q.buyerName }}</span>
                                   <span class="text-[11px] text-ink-muted">{{ q.askedAt | timeAgo }}</span>
                                 </div>
-                                <p class="text-sm text-ink leading-relaxed">{{ q.question }}</p>
+                                <p class="text-sm text-ink leading-relaxed [overflow-wrap:anywhere]">{{ q.question }}</p>
 
                                 @if (q.answer; as a) {
                                   <div class="mt-3 pl-4 border-l-2 border-pink-300 flex gap-3 items-start">
                                     <img appImgFallback [src]="d.seller.avatar" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
-                                    <div class="flex-1">
-                                      <div class="flex items-center gap-2 mb-1">
-                                        <span class="text-xs font-bold text-pink-700">{{ d.seller.studioName }}</span>
+                                    <div class="flex-1 min-w-0">
+                                      <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
+                                        <span class="min-w-0 text-xs font-bold text-pink-700 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
                                         <span class="pill-pink !py-0 !text-[10px]">{{ 'product.sellerLabel' | trans }}</span>
                                         <span class="text-[11px] text-ink-muted">{{ a.answeredAt | timeAgo }}</span>
                                       </div>
-                                      <p class="text-sm text-ink-soft leading-relaxed">{{ a.text }}</p>
+                                      <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ a.text }}</p>
                                     </div>
                                   </div>
                                 } @else {
@@ -507,8 +528,8 @@
           </div>
 
           <!-- Right: purchase panel -->
-          <div class="lg:col-span-5">
-            <div class="sticky top-[88px] space-y-4">
+          <div class="lg:col-span-5 min-w-0">
+            <div class="detail-side space-y-4" data-testid="detail-side">
               <!-- Title + tags -->
               <div>
                 <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -527,10 +548,10 @@
                     </span>
                   }
                 </div>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-ink leading-tight mb-3">
+                <h1 class="heading-1 font-extrabold text-ink leading-tight mb-3 min-w-0 [overflow-wrap:anywhere]">
                   {{ d.title }}
                 </h1>
-                <p class="text-sm text-ink-soft leading-relaxed mb-4">
+                <p class="text-sm text-ink-soft leading-relaxed mb-4 [overflow-wrap:anywhere]">
                   {{ d.shortDescription }}
                 </p>
 
@@ -561,13 +582,13 @@
               </div>
 
               <!-- Price card -->
-              <div class="card-soft p-6">
-                <div class="flex items-end gap-3 mb-5">
+              <div class="card-soft p-4 sm:p-6" data-testid="price-card">
+                <div class="flex flex-wrap items-end gap-3 mb-5">
                   @if (d.isFree) {
-                    <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">{{ 'product.freePill' | trans }}</span>
+                    <span class="text-3xl lg:text-4xl font-extrabold text-emerald-600 leading-none">{{ 'product.freePill' | trans }}</span>
                     <span class="text-xs text-emerald-600">{{ 'product.downloadImmediately' | trans }}</span>
                   } @else {
-                    <span class="text-3xl sm:text-4xl font-extrabold text-ink leading-none">{{ d.price | thb }}</span>
+                    <span class="text-3xl lg:text-4xl font-extrabold text-ink leading-none">{{ d.price | thb }}</span>
                     @if (d.originalPrice) {
                       <div class="flex flex-col">
                         <span class="text-base text-ink-muted line-through leading-none">{{ d.originalPrice | thb }}</span>
@@ -628,7 +649,8 @@
 
                   <!-- Wishlist -->
                   <button
-                    class="flex items-center justify-center gap-2 py-2 text-sm font-medium transition-colors"
+                    type="button"
+                    class="flex items-center justify-center gap-2 min-h-11 py-2 text-sm font-medium transition-colors"
                     [class.text-pink-600]="wishlist.has(d.id)"
                     [class.text-ink-muted]="!wishlist.has(d.id)"
                     (click)="wishlist.toggle(d)"
@@ -661,8 +683,8 @@
                     <img appImgFallback [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100" />
                   </a>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-1.5">
-                      <a [routerLink]="['/store', d.seller.id]" class="text-sm font-bold text-ink hover:text-pink-600">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <a [routerLink]="['/store', d.seller.id]" class="inline-flex items-center min-h-11 min-w-0 text-sm font-bold text-ink hover:text-pink-600 [overflow-wrap:anywhere]">
                         {{ d.seller.studioName }}
                       </a>
                       @if (d.seller.badges.includes('Verified')) {
@@ -672,7 +694,7 @@
                         </svg>
                       }
                     </div>
-                    <div class="text-xs text-ink-muted mb-2">{{ 'product.byAuthor' | trans: { name: d.seller.ownerName } }}</div>
+                    <div class="text-xs text-ink-muted mb-2 [overflow-wrap:anywhere]">{{ 'product.byAuthor' | trans: { name: d.seller.ownerName } }}</div>
                     <div class="flex items-center gap-3 text-xs flex-wrap mb-3">
                       <span class="font-bold text-pink-600">★ {{ d.seller.rating }}</span>
                       <span>·</span>
@@ -717,12 +739,64 @@
           </div>
         </div>
 
+        <!--
+          responsive-ui v1 §4.6 (B) / U2-4: phone (<744) sticky action bar — price + the same CTA
+          handlers as the price card above (which stays the sticky side card >=744).
+        -->
+        <app-sticky-action-bar>
+          <div class="action-bar-row w-full" data-testid="doc-action-bar">
+            <div class="flex-shrink-0 min-w-0 flex flex-col leading-tight">
+              @if (d.isFree) {
+                <span class="text-lg font-extrabold text-emerald-600">{{ 'product.freePill' | trans }}</span>
+              } @else {
+                <span class="text-lg font-extrabold text-ink">{{ d.price | thb }}</span>
+                @if (d.originalPrice) {
+                  <span class="text-xs text-ink-muted line-through">{{ d.originalPrice | thb }}</span>
+                }
+              }
+            </div>
+            <!-- Two buttons at 360 leave ~75px of label each; the tighter padding/icon gap keeps
+                 "เพิ่มลงตะกร้า" on one line, and a longer label wraps rather than ending in "…". -->
+            <div class="flex-1 min-w-0 flex items-center justify-end gap-2">
+              @if (cart.has(d.id)) {
+                <button type="button" class="btn-pink flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bar-view-cart" (click)="cart.openDrawer()">
+                  <app-icon name="cart" [size]="16" />
+                  <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.viewCartBtn' | trans }}</span>
+                </button>
+              } @else if (d.isFree) {
+                <button type="button" class="btn-pink flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bar-download-free" (click)="downloadFree()">
+                  <app-icon name="download" [size]="16" />
+                  <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.downloadFreeBtn' | trans }}</span>
+                </button>
+              } @else if (owned()) {
+                <button type="button" class="btn-pink flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bar-download-owned" (click)="downloadOwned()">
+                  <app-icon name="download" [size]="16" />
+                  <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.downloadOwnedBtn' | trans }}</span>
+                </button>
+              } @else if (accessibleViaSubscription()) {
+                <button type="button" class="btn-pink flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bar-download-sub" (click)="downloadViaSubscription()">
+                  <app-icon name="download" [size]="16" />
+                  <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.downloadSubBtn' | trans }}</span>
+                </button>
+              } @else {
+                <button type="button" class="btn-ghost flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bar-add-to-cart" (click)="cart.add(d)">
+                  <app-icon name="cart" [size]="16" />
+                  <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.addToCartBtn' | trans }}</span>
+                </button>
+                <button type="button" class="btn-pink flex-1 min-w-0 min-h-11 !px-2.5 !gap-1.5 text-sm" data-testid="bar-buy-now" (click)="buyNow(d.id)">
+                  <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'product.buyNowBtn' | trans }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        </app-sticky-action-bar>
+
         <!-- document-bundle-cross-sell v1: "ในแพ็กเกจที่คุ้มกว่า" -->
         @if (showCrossSell()) {
-          <section class="mt-16">
+          <section class="mt-10 md:mt-16">
             <h2 class="section-title mb-2">{{ 'product.bundlesCrossSellTitle' | trans }}</h2>
             <p class="text-sm text-ink-muted mb-6">{{ 'product.bundlesCrossSellDesc' | trans }}</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 xl:gap-5">
               @if (crossSellLoading()) {
                 @for (i of [1, 2, 3]; track i) {
                   <div class="card-soft overflow-hidden animate-pulse" aria-hidden="true">
@@ -755,7 +829,7 @@
                         <div class="absolute top-3 left-3 flex gap-2">
                           <span class="pill bg-violet-500 text-white shadow-soft">📦 {{ 'product.bundleTag' | trans }}</span>
                           @if (card.savePercent > 0) {
-                            <span class="pill bg-pink-500 text-white shadow-soft">
+                            <span class="pill bg-primary text-white shadow-soft">
                               {{ 'product.savePercent' | trans: { percent: card.savePercent } }}
                             </span>
                           }
@@ -859,8 +933,8 @@
         <!-- More from this seller -->
         @if (moreFromSeller().length) {
           <section class="mt-12">
-            <header class="flex items-end justify-between mb-6">
-              <div>
+            <header class="flex flex-wrap items-end justify-between gap-2 mb-6">
+              <div class="min-w-0">
                 <h2 class="section-title">{{ 'product.moreFromSeller' | trans: { name: d.seller.studioName } }}</h2>
                 <p class="section-subtitle">{{ 'product.moreFromSellerDesc' | trans }}</p>
               </div>
@@ -879,7 +953,7 @@
         <!-- Related & Sponsored (doc_detail_related) -->
         @if (sponsoredDocs().length || related().length) {
           <section class="mt-12">
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
               <h2 class="section-title mb-0">{{ 'product.relatedDocsTitle' | trans }}</h2>
               @if (sponsoredDocs().length) {
                 <span class="pill bg-pink-100 text-pink-700 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
@@ -899,17 +973,23 @@
           </section>
         }
 
+        <!-- R-11 (F107): the panel is the modal dialog and traps focus; auto-capture moves focus in
+             on open and back to the trigger on close. cdkTrapFocus inserts its two tab anchors as
+             siblings of the panel, i.e. inside the fixed overlay, so a Tab onto one never scrolls
+             the locked page behind. Escape and the page lock live in the component. -->
         @if (showPdfPreviewModal()) {
-          <div
-            class="pdf-preview-overlay"
-            role="dialog"
-            aria-modal="true"
-            [attr.aria-label]="'product.previewModalTitle' | trans"
-            (click)="closePdfPreviewModal()"
-          >
-            <div class="pdf-preview-container" (click)="$event.stopPropagation()">
+          <div class="pdf-preview-overlay" (click)="closePdfPreviewModal()">
+            <div
+              class="pdf-preview-container"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="pdf-preview-title"
+              cdkTrapFocus
+              [cdkTrapFocusAutoCapture]="true"
+              (click)="$event.stopPropagation()"
+            >
               <header class="pdf-preview-header">
-                <span class="text-sm font-bold text-ink">{{ 'product.previewModalTitle' | trans }}</span>
+                <span id="pdf-preview-title" class="text-sm font-bold text-ink">{{ 'product.previewModalTitle' | trans }}</span>
                 <button type="button" class="btn-ghost !py-2 !px-4 text-sm" (click)="closePdfPreviewModal()">
                   {{ 'product.close' | trans }}
                 </button>
@@ -931,16 +1011,18 @@
         }
 
         @if (showPreviewGallery()) {
-          <div
-            class="preview-modal-overlay"
-            role="dialog"
-            aria-modal="true"
-            [attr.aria-label]="'product.previewModalTitle' | trans"
-            (click)="closePreviewGallery()"
-          >
-            <div class="preview-modal-content" (click)="$event.stopPropagation()">
+          <div class="preview-modal-overlay" (click)="closePreviewGallery()">
+            <div
+              class="preview-modal-content"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="preview-gallery-title"
+              cdkTrapFocus
+              [cdkTrapFocusAutoCapture]="true"
+              (click)="$event.stopPropagation()"
+            >
               <header class="preview-modal-header">
-                <span class="text-sm font-bold text-ink">{{ 'product.previewModalTitle' | trans }}</span>
+                <span id="preview-gallery-title" class="text-sm font-bold text-ink">{{ 'product.previewModalTitle' | trans }}</span>
                 <button type="button" class="btn-ghost !py-2 !px-4 text-sm" (click)="closePreviewGallery()">
                   {{ 'product.close' | trans }}
                 </button>
@@ -966,7 +1048,7 @@
         }
       </div>
     } @else {
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-16">
+      <div class="page-container py-16">
         <app-empty-state
           emoji="📭"
           [title]="'product.notFoundTitle' | trans"

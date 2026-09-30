@@ -13,11 +13,14 @@
 
     <ul class="space-y-2.5">
       @for (item of items(); track item.key) {
+        <!-- responsive-ui F157: the label wraps instead of truncating (it carries the "(n/target)"
+             count), and on narrow phones the action link drops under it (flex-wrap + basis-48),
+             indented by ms-9 (dot w-6 + gap-3) so it lines up with the label text. -->
         <li
-          class="flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5"
+          class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl px-3 py-2.5"
           [class.bg-pink-50]="item.key === nextActionItemKey()"
         >
-          <div class="flex items-center gap-3 min-w-0">
+          <div class="flex flex-1 basis-48 items-center gap-3 min-w-0">
             <span
               class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
               [class]="item.done ? 'bg-emerald-100 text-emerald-600' : 'bg-pink-100 text-pink-400'"
@@ -28,10 +31,10 @@
                 <span class="w-2 h-2 rounded-full bg-pink-400"></span>
               }
             </span>
-            <span class="text-sm font-medium text-ink truncate">
+            <span class="text-sm font-medium text-ink min-w-0 break-words">
               {{ item.label }}
               @if (hasCount(item)) {
-                <span class="text-ink-muted font-normal">({{ item.currentCount }}/{{ item.targetCount }})</span>
+                <span class="text-ink-muted font-normal whitespace-nowrap">({{ item.currentCount }}/{{ item.targetCount }})</span>
               }
             </span>
           </div>
@@ -39,7 +42,7 @@
           @if (!item.done) {
             <a
               [routerLink]="item.actionRoute"
-              class="flex-shrink-0 text-xs font-semibold rounded-full transition-colors"
+              class="flex-shrink-0 ms-9 text-xs font-semibold rounded-full transition-colors"
               [class]="
                 item.key === nextActionItemKey()
                   ? 'btn-pink !py-1.5 !px-4'

@@ -126,10 +126,18 @@ function buildCards(): SavedPaymentMethod[] {
   ];
 }
 
-function fakeCart() {
-  const items = signal<CartItem[]>([cartItem()]);
+function fakeCart(
+  initial: CartItem[] = [cartItem()],
+  loadStatus: 'loading' | 'loaded' | 'error' = 'loaded',
+) {
+  const items = signal<CartItem[]>(initial);
+  const status = signal<'loading' | 'loaded' | 'error'>(loadStatus);
   return {
     items: items.asReadonly(),
+    // responsive-ui v1.4 R-17 (F88): /checkout tells loading / error / empty apart.
+    loadStatus: status.asReadonly(),
+    loadCart: vi.fn(),
+    setLoadStatus: (s: 'loading' | 'loaded' | 'error') => status.set(s),
     count: () => items().length,
     subtotal: () => 150,
     savings: () => 0,
@@ -201,8 +209,8 @@ function render(
   referral: ReturnType<typeof fakeReferralService> = fakeReferralService(),
   wallet: ReturnType<typeof fakeWalletService> = fakeWalletService(),
   loyalty: ReturnType<typeof fakeLoyaltyService> = fakeLoyaltyService(),
+  cart: ReturnType<typeof fakeCart> = fakeCart(),
 ) {
-  const cart = fakeCart();
   const orders = {
     checkoutState: signal(idleActionState()).asReadonly(),
     getStripePublishableKey: vi.fn(async () => 'pk_test_123'),
@@ -664,3 +672,102 @@ describe('BuyerCheckoutPage — loyalty points redemption at checkout', () => {
 
 
 
+
+describe('BuyerCheckoutPage — phone sticky pay bar (responsive-ui v1 U5-2)', () => {
+  it('renders the sticky action bar with the payable total and a pay button wired to submitPayment()', async () => {
+    const { fixture } = render();
+    await settle();
+    fixture.detectChanges();
+
+    const bar = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-sticky-action-bar [data-testid="checkout-action-bar"]',
+    ) as HTMLElement | null;
+    expect(bar).not.toBeNull();
+    expect(bar?.textContent ?? '').toContain('฿150');
+
+    const page = fixture.componentInstance;
+    const spy = vi.spyOn(page, 'submitPayment').mockResolvedValue(undefined);
+    const button = bar?.querySelector('button') as HTMLButtonElement;
+    // "Payment Unavailable" needs ~140px at 360: the label wraps rather than ending in "…"
+    // (v1.4 §4.3: no line-clamp on bar labels either).
+    expect(button.querySelector('span.line-clamp-2')).toBeNull();
+    expect(button.querySelector('span.truncate')).toBeNull();
+    expect(button.disabled).toBe(page.paymentUnderReview() || page.busy() || page.paymentsUnavailable());
+    button.disabled = false;
+    button.click();
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-17 (F88): "ตะกร้าของคุณว่างอยู่" is only for a cart that loaded empty — it used
+ * to show while the cart GET was pending and after it failed, with no retry.
+ */
+describe('BuyerCheckoutPage — cart data states (F88)', () => {
+  it('shows a loading skeleton, not the empty-cart copy, while the cart is loading', () => {
+    const { fixture } = render(undefined, undefined, undefined, undefined, fakeCart([], 'loading'));
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="checkout-loading"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('ตะกร้าของคุณว่างอยู่');
+  });
+
+  it('shows an error with a retry that reloads the cart when the cart failed to load', () => {
+    const cart = fakeCart([], 'error');
+    const { fixture } = render(undefined, undefined, undefined, undefined, cart);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="checkout-error"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('ตะกร้าของคุณว่างอยู่');
+    (el.querySelector('[data-testid="checkout-retry"]') as HTMLButtonElement).click();
+    expect(cart.loadCart).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the empty-cart copy once the cart loaded empty', () => {
+    const { fixture } = render(undefined, undefined, undefined, undefined, fakeCart([], 'loaded'));
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('ตะกร้าของคุณว่างอยู่');
+  });
+});
+
+/**
+ * responsive-ui v1.4 R-3 (G-13) / R-16 (F164) / R-22 (F140): the wallet option is a plain toggle
+ * button (aria-pressed) with the top-up link *outside* it, and there is no href="#" left.
+ */
+describe('BuyerCheckoutPage — wallet option markup (G-13, F164, F140)', () => {
+  it('exposes the selected state through aria-pressed', async () => {
+    const wallet = fakeWalletService({ balance: 200, asOf: '2026-09-15T00:00:00Z' });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), wallet);
+    await settle();
+    fixture.detectChanges();
+    const option = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="checkout-wallet-option"]',
+    ) as HTMLButtonElement;
+    expect(option.getAttribute('aria-pressed')).toBe('false');
+
+    fixture.componentInstance.selectWallet();
+    fixture.detectChanges();
+    expect(option.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('insufficient balance: the top-up link is a sibling of the (disabled) option, not nested in it', async () => {
+    const wallet = fakeWalletService({ balance: 50, asOf: '2026-09-15T00:00:00Z' });
+    const { fixture } = render(fakePaymentMethods([]), fakeReferralService(), wallet);
+    await settle();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const option = el.querySelector('[data-testid="checkout-wallet-option"]') as HTMLButtonElement;
+    expect(option.disabled).toBe(true);
+    expect(option.querySelector('a')).toBeNull();
+    const topUp = el.querySelector('a[data-testid="checkout-wallet-topup"]') as HTMLAnchorElement;
+    expect(topUp).not.toBeNull();
+    expect(topUp.getAttribute('href')).toBe('/wallet');
+    expect(el.querySelectorAll('button a[href], a[href] button').length).toBe(0);
+  });
+
+  it('renders no href="#" links', async () => {
+    const { fixture } = render();
+    await settle();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a[href="#"]').length).toBe(0);
+  });
+});

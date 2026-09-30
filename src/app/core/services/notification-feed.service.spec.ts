@@ -148,6 +148,22 @@ describe('NotificationFeedService', () => {
       expect(service.items()).toEqual([]);
       expect(apiFail.report).toHaveBeenCalledWith('errors.context.loadNotifications', expect.anything());
     });
+
+    it('responsive-ui v1.4 R-17 (F88): flags feedError on failure and clears it on the next successful load', async () => {
+      stubRoute('GET', '/api/notifications/feed', { title: 'Server Error', status: 500 }, 500);
+      const { service } = buildService();
+
+      service.loadFeed(1);
+      await settle();
+      expect(service.feedError()).toBe(true);
+
+      stubRoute('GET', '/api/notifications/feed', pagedResponse([feedItemBody({ id: 'a' })], 1));
+      service.loadFeed(1);
+      expect(service.feedError()).toBe(false);
+      await settle();
+      expect(service.feedError()).toBe(false);
+      expect(service.items().length).toBe(1);
+    });
   });
 
   describe('fetchRecentForToast', () => {

@@ -1,12 +1,15 @@
 import {
   ApplicationConfig,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
   importProvidersFrom,
+  inject,
   LOCALE_ID,
 } from '@angular/core';
 import { provideRouter, withInMemoryScrolling, TitleStrategy } from '@angular/router';
 import { I18nTitleStrategy } from './core/i18n';
+import { ModalA11yService, ScrollRestorationService } from './core/layout';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -28,6 +31,16 @@ import { routes } from './app.routes';
 registerLocaleData(en);
 registerLocaleData(th);
 
+/**
+ * nz-select dropdowns are a fixed-size virtual scroll: the option height the CSS renders must match
+ * `nzOptionHeightPx`. styles.scss makes options 44px under `(pointer: coarse)` (touch target), so
+ * the config follows the same media query (read once at bootstrap).
+ */
+const SELECT_OPTION_HEIGHT_PX =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+    ? 44
+    : 32;
+
 
 
 export const appConfig: ApplicationConfig = {
@@ -36,8 +49,10 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(
       routes,
+      // Position restoration is done by ScrollRestorationService (below): 'top' also sent back /
+      // forward navigations to the top, and 'enabled' restores before async lists have loaded.
       withInMemoryScrolling({
-        scrollPositionRestoration: 'top',
+        scrollPositionRestoration: 'disabled',
         anchorScrolling: 'enabled',
       }),
     ),
@@ -66,10 +81,19 @@ export const appConfig: ApplicationConfig = {
       modal: {
         nzMaskClosable: true,
       },
+      select: {
+        nzOptionHeightPx: SELECT_OPTION_HEIGHT_PX,
+      },
     }),
     { provide: LOCALE_ID, useValue: 'th-TH' },
     { provide: TitleStrategy, useClass: I18nTitleStrategy },
     importProvidersFrom(FormsModule, NzIconModule, NzModalModule),
+    // App-wide layout behaviour with no component of its own: back/forward scroll restoration and
+    // dialog semantics (aria-modal + accessible name) for every nz-modal.
+    provideAppInitializer(() => {
+      inject(ScrollRestorationService);
+      inject(ModalA11yService);
+    }),
   ],
 };
 

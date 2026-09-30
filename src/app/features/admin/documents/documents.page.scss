@@ -1,3 +1,19 @@
 :host {
   display: block;
 }
+
+// G-14(d) (F72 side effect): below 375 the phone card's row 1 held the 44x44 row checkbox, the title
+// and the status pill (up to 99px in en, "Pending review"), which left the title 74-87px and clamped it.
+// There the title takes the whole first row and the status moves to a row of its own, left-aligned
+// like the key rows under it. From 375 the shared .rtable card layout (§4.5) is unchanged.
+@media (max-width: 374.98px) {
+  .rtable > tbody > tr > td.rt-title {
+    grid-column: 1 / -1;
+  }
+
+  .rtable > tbody > tr > td.rt-status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
+}

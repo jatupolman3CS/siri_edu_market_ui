@@ -1,13 +1,13 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-6 sm:py-8">
   <app-page-hero
     [eyebrow]="'becomeSeller.heroEyebrow' | trans"
     [title]="'becomeSeller.title' | trans"
     [description]="'becomeSeller.desc' | trans"
   />
 
-  <div class="max-w-2xl mx-auto">
+  <div class="max-w-[640px] mx-auto">
     @if (isSeller()) {
-      <div class="card-soft p-8 text-center">
+      <div class="card-soft p-5 sm:p-8 text-center">
         <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4">
           ✓
         </div>
@@ -17,6 +17,17 @@
       </div>
     } @else if (loading()) {
       <div class="card-soft p-8 text-center text-ink-soft text-sm">{{ 'common.loading' | trans }}</div>
+    } @else if (loadFailed()) {
+      <!-- responsive-ui v1.4 R-17 (F88): a failed lookup is not "never applied" — hide the form
+           (an existing applicant would otherwise see a fresh application form) and offer a retry. -->
+      <div class="card-soft p-6 sm:p-10 text-center" role="alert" data-testid="become-seller-error">
+        <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+        <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+        <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+        <button type="button" class="btn-pink mt-5" data-testid="become-seller-retry" (click)="retry()">
+          {{ 'common.retry' | trans }}
+        </button>
+      </div>
     } @else {
       @if (status() === 'pending') {
         <div class="card-soft p-6 mb-6 border-l-4 border-amber-400">
@@ -49,13 +60,14 @@
         </div>
       }
 
-      <form class="card-soft p-6 space-y-5" (ngSubmit)="onSubmit()">
+      <form class="card-soft p-4 sm:p-6 space-y-5" (ngSubmit)="onSubmit()">
         <div>
           <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'becomeSeller.studioNameLabel' | trans }}</label>
           <input
             type="text"
             [(ngModel)]="studioName"
             name="studioName"
+            autocomplete="organization"
             class="input-soft"
             [placeholder]="'becomeSeller.studioNamePlaceholder' | trans"
             maxlength="200"

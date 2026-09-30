@@ -1,16 +1,30 @@
 <nz-drawer
       [nzVisible]="cart.drawerOpen()"
-      nzPlacement="right"
-      [nzWidth]="drawerWidth()"
+      [nzPlacement]="placement()"
+      [nzWidth]="drawerWidth"
+      [nzHeight]="drawerHeight"
+      nzWrapClassName="cart-drawer-wrap"
       [nzClosable]="false"
       [nzBodyStyle]="{ padding: '0' }"
       (nzOnClose)="cart.closeDrawer()"
+      (nzVisibleChange)="onVisibleChange($event)"
     >
       <ng-container *nzDrawerContent>
-        <div class="flex flex-col h-full bg-canvas">
+        <!-- inert while closed: the off-canvas content must not stay in the Tab order / a11y tree.
+             cdkTrapFocus keeps Tab / Shift+Tab inside while open: NG-Zorro's own trap is destroyed
+             on the first close and never rebuilt, so from the second open Tab walked out onto the
+             page. Its anchors sit next to this root, inside the drawer body. -->
+        <div
+          class="cart-drawer__root flex flex-col h-full bg-canvas"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cart-drawer-title"
+          [cdkTrapFocus]="cart.drawerOpen()"
+          [attr.inert]="cart.drawerOpen() ? null : ''"
+        >
           <!-- Header -->
           <header
-            class="flex items-center justify-between px-6 py-5 border-b border-line bg-white"
+            class="cart-drawer__header flex items-center justify-between px-4 md:px-6 py-3 md:py-5 border-b border-line bg-white"
           >
             <div class="flex items-center gap-2.5">
               <span
@@ -19,19 +33,19 @@
                 <app-icon name="cart" [size]="18" />
               </span>
               <div>
-                <h3 class="text-base font-bold text-ink">{{ 'cartDrawer.title' | trans }}</h3>
+                <h3 id="cart-drawer-title" class="text-base font-bold text-ink">{{ 'cartDrawer.title' | trans }}</h3>
                 <span class="text-xs text-ink-muted">
                   {{ 'cartDrawer.itemCount' | trans:{ count: cart.count() } }}
                 </span>
               </div>
             </div>
-            <button class="btn-icon" (click)="cart.closeDrawer()">
+            <button #closeBtn type="button" class="btn-icon" [attr.aria-label]="'responsive.sheet.close' | trans" (click)="cart.closeDrawer()">
               <app-icon name="close" [size]="18" />
             </button>
           </header>
 
           <!-- Items -->
-          <div class="flex-1 overflow-y-auto px-6 py-4">
+          <div class="cart-drawer__list flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 md:px-6 py-4">
             @if (cart.count() === 0) {
               <app-empty-state
                 emoji="🛒"
@@ -64,7 +78,8 @@
                           {{ item.document.price | thb }}
                         </span>
                         <button
-                          class="text-xs text-ink-muted hover:text-rose-500 inline-flex items-center gap-1"
+                          type="button"
+                          class="min-h-11 min-w-11 -my-2 justify-center text-xs text-ink-muted hover:text-rose-500 inline-flex items-center gap-1"
                           (click)="cart.remove(item.document.id)"
                         >
                           <app-icon name="trash" [size]="14" />
@@ -80,39 +95,39 @@
 
           <!-- Summary -->
           @if (cart.count() > 0) {
-            <footer class="bg-white border-t border-line px-6 py-5">
+            <footer class="cart-drawer__footer bg-white border-t border-line px-4 md:px-6 pt-4 md:pt-5" data-testid="cart-drawer-footer">
               <dl class="space-y-2 text-sm mb-4">
-                <div class="flex justify-between text-ink-soft">
+                <div class="cart-drawer__breakdown flex justify-between text-ink-soft">
                   <dt>{{ 'cartDrawer.subtotal' | trans }}</dt>
                   <dd>{{ cart.subtotal() | thb }}</dd>
                 </div>
                 @if (cart.savings() > 0) {
-                  <div class="flex justify-between text-emerald-600">
+                  <div class="cart-drawer__breakdown flex justify-between text-emerald-600">
                     <dt>{{ 'cartDrawer.discount' | trans }}</dt>
                     <dd>- {{ cart.savings() | thb }}</dd>
                   </div>
                 }
-                <div class="flex justify-between text-ink-soft">
+                <div class="cart-drawer__breakdown flex justify-between text-ink-soft">
                   <dt>{{ 'cartDrawer.vatIncluded' | trans }}</dt>
                   <dd>{{ cart.vatIncluded() | thb }}</dd>
                 </div>
                 <div
-                  class="flex justify-between pt-3 border-t border-line text-base font-bold text-ink"
+                  class="cart-drawer__total flex justify-between pt-3 border-t border-line text-base font-bold text-ink"
                 >
                   <dt>{{ 'cartDrawer.total' | trans }}</dt>
                   <dd>{{ cart.total() | thb }}</dd>
                 </div>
               </dl>
               <div class="flex gap-3">
-                <button class="btn-ghost flex-1" (click)="cart.closeDrawer()">
+                <button type="button" class="btn-ghost flex-1" (click)="cart.closeDrawer()">
                   {{ 'cartDrawer.continueShopping' | trans }}
                 </button>
-                <button class="btn-pink flex-1" (click)="checkout()">
+                <button type="button" class="btn-pink flex-1" (click)="checkout()">
                   {{ 'cartDrawer.checkout' | trans }}
                   <app-icon name="arrow-right" [size]="16" />
                 </button>
               </div>
-              <p class="text-[11px] text-ink-muted text-center mt-3">
+              <p class="cart-drawer__note text-[11px] text-ink-muted text-center mt-3">
                 <app-icon name="lock" [size]="11" /> {{ 'cartDrawer.securePayment' | trans }}
               </p>
             </footer>

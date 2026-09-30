@@ -4,8 +4,15 @@ module.exports = {
     './src/**/*.{html,ts}',
   ],
   theme: {
+    // Responsive tiers (responsive-ui.md §1): phone <744, tablet 744–1023, laptop 1024–1279, desktop ≥1280.
+    // Replaces Tailwind's defaults on purpose (NOT in extend) — md is 744 (iPad mini portrait), not 768.
+    screens: { sm: '640px', md: '744px', lg: '1024px', xl: '1280px', '2xl': '1536px' },
     extend: {
       colors: {
+        // Filled buttons/badges with white text (WCAG AA contrast — pink-500 + white fails).
+        primary: { DEFAULT: '#B83864', hover: '#8A2C4D' },
+        // Input/select/textarea borders.
+        'line-strong': '#A07F90',
         // Minimal Light Pink palette
         pink: {
           50:  '#FFF7FA',
@@ -23,7 +30,7 @@ module.exports = {
         ink: {
           DEFAULT: '#2A1B22',
           soft: '#5A4751',
-          muted: '#8A7A82',
+          muted: '#76646D',
         },
         line: '#F3E6EC',
         surface: '#FFFFFF',
@@ -40,7 +47,7 @@ module.exports = {
         'lg': '1.25rem',
         'xl': '1.5rem',
         '2xl': '2rem',
-        '3xl': '2.5rem', // signature radius
+        '3xl': 'var(--radius-card)', // signature radius — 24px phone / 32px ≥744 / 40px ≥1280 (styles.scss)
         '4xl': '3rem',
       },
       boxShadow: {
@@ -50,7 +57,9 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-pink': 'linear-gradient(135deg, #FFF7FA 0%, #FFE2EC 100%)',
-        'gradient-pink-strong': 'linear-gradient(135deg, #FFB8CE 0%, #F2638E 100%)',
+        // Only used behind white text (home seller CTA, auth-layout aside). primary → primary-hover
+        // so white text stays ≥ 5.5:1 at the lightest stop (the old #FFB8CE → #F2638E was ≈ 1.6–3:1).
+        'gradient-pink-strong': 'linear-gradient(135deg, #B83864 0%, #8A2C4D 100%)',
         'gradient-cream': 'linear-gradient(180deg, #FFFBF7 0%, #FFF7FA 100%)',
       },
       animation: {
@@ -73,6 +82,10 @@ module.exports = {
         },
       },
     },
+  },
+  // Every `hover:` utility is emitted inside @media (hover: hover) so touch devices never get sticky hover.
+  future: {
+    hoverOnlyWhenSupported: true,
   },
   plugins: [],
   corePlugins: {

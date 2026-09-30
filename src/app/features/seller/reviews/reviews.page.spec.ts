@@ -157,3 +157,37 @@ describe('SellerReviewsPage — review rows', () => {
     expect(stats.avgHours).toBeCloseTo(2.0); // 2 hours
   });
 });
+
+/** responsive-ui v1.4 gate fix (G1-5) F93 / R-5: authored text wraps instead of widening the page. */
+describe('SellerReviewsPage — long authored text (responsive v1.4)', () => {
+  it('buyer name, comment and reply break long tokens, and the name column can shrink', async () => {
+    const long = 'Studio' + 'x'.repeat(60);
+    const fixture = render({
+      reviews: [
+        {
+          id: 'r1',
+          documentTitle: long,
+          buyerName: long,
+          buyerAvatarUrl: '',
+          rating: 4,
+          comment: long,
+          createdAt: '2026-01-01T00:00:00Z',
+          sellerReplyText: long,
+          sellerRepliedAt: '2026-01-02T00:00:00Z',
+        },
+      ],
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const holders = Array.from(root.querySelectorAll<HTMLElement>('li.card-tile *')).filter(
+      (el) => el.children.length === 0 && el.textContent?.trim() === long,
+    );
+    // buyer name, comment and seller reply (the document title is a one-line ellipsis inside its link)
+    const wrapped = holders.filter((el) => el.classList.contains('[overflow-wrap:anywhere]'));
+    expect(wrapped.length).toBe(3);
+    const name = wrapped[0];
+    expect(name.parentElement?.classList.contains('min-w-0')).toBe(true);
+  });
+});

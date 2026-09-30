@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-type IconName =
+export type IconName =
   | 'search'
   | 'cart'
   | 'heart'
@@ -42,7 +42,8 @@ type IconName =
   | 'logout'
   | 'mail'
   | 'phone'
-  | 'qr';
+  | 'qr'
+  | 'more';
 
 @Component({
   selector: 'app-icon',

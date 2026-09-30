@@ -1,23 +1,23 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-20 bg-canvas">
+<div class="page-container pt-5 md:pt-8 pb-12 md:pb-20 bg-canvas">
   <!-- Page header -->
-  <header class="mb-8">
-    <h1 class="text-[32px] font-extrabold tracking-[-0.02em] text-ink">{{ 'marketplace.title' | trans }}</h1>
+  <header class="mb-5 md:mb-8">
+    <h1 class="heading-1 font-extrabold tracking-[-0.02em] text-ink">{{ 'marketplace.title' | trans }}</h1>
     <p class="text-sm text-ink-muted mt-1.5">{{ marketSubtitle() }}</p>
   </header>
 
   <!-- Recently viewed strip (unaffected by the redesign) -->
   @if (recent.count() > 0) {
-    <section class="card-soft p-5 mb-9">
+    <section class="card-soft p-4 md:p-5 mb-6 md:mb-9">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-bold text-ink flex items-center gap-2">
           <app-icon name="eye" [size]="14" className="text-pink-500" />
           {{ 'home.recentlyViewedTitle' | trans }}
         </h3>
-        <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">
+        <button type="button" class="min-h-11 px-1 text-xs text-pink-700 font-bold hover:underline" (click)="recent.clear()">
           {{ 'home.clearRecent' | trans }}
         </button>
       </div>
-      <div class="flex gap-3 overflow-x-auto pb-1">
+      <div class="chip-row gap-3 pb-1">
         @for (d of recent.items(); track d.id) {
           <a
             [routerLink]="['/document', d.id]"
@@ -40,37 +40,60 @@
 
   <!-- ========================= Results (marketplace-home-redesign v2 §1 ข้อ 8: view เดียว) ========================= -->
   <div class="animate-slide-up">
-    <!-- Toolbar -->
-    <div class="flex items-center gap-3 mb-5 overflow-x-auto pb-1">
-      <div class="inline-flex p-1 rounded-full bg-white border border-line gap-0.5 flex-shrink-0">
-        @for (t of tabs(); track t.value) {
+    <!-- Toolbar: tabs (own scrolling row) · [ตัวกรอง (n) <1024] · count · sort -->
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
+      <div class="max-w-full overflow-x-auto no-scrollbar flex-shrink-0">
+        <div class="inline-flex p-1 rounded-full bg-white border border-line gap-0.5">
+          @for (t of tabs(); track t.value) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 px-4 min-h-11 rounded-full text-[13px] font-semibold transition-colors duration-200 whitespace-nowrap cursor-pointer"
+              [class.bg-primary]="activeUiTab() === t.value"
+              [class.text-white]="activeUiTab() === t.value"
+              [class.bg-transparent]="activeUiTab() !== t.value"
+              [class.text-ink-soft]="activeUiTab() !== t.value"
+              (click)="selectTab(t.value)"
+            >
+              {{ t.label }}
+              @if (t.count !== null) {
+                <span class="text-xs font-medium opacity-70">{{ t.count }}</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- responsive-ui v1.4 R-4 (F63): below 640 the sort select wraps onto its own full-width row;
+           squeezed next to the filter button and the count it always cut its label off ("เรียงตาม: ความ…"). -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto min-w-0">
+        <!-- responsive-ui v1 §4.6: <1024 the filter column becomes this button + sheet -->
+        @if (!viewport.isLaptopUp()) {
           <button
             type="button"
-            class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors duration-200 whitespace-nowrap cursor-pointer"
-            [class.bg-pink-500]="activeUiTab() === t.value"
-            [class.text-white]="activeUiTab() === t.value"
-            [class.bg-transparent]="activeUiTab() !== t.value"
-            [class.text-ink-soft]="activeUiTab() !== t.value"
-            (click)="selectTab(t.value)"
+            class="inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full bg-white border border-line-strong text-[13px] font-semibold text-ink whitespace-nowrap flex-shrink-0 cursor-pointer"
+            data-testid="filter-sheet-button"
+            aria-haspopup="dialog"
+            [attr.aria-expanded]="filterSheetOpen()"
+            (click)="openFilterSheet()"
           >
-            {{ t.label }}
-            @if (t.count !== null) {
-              <span class="text-xs font-medium opacity-70">{{ t.count }}</span>
+            <app-icon name="filter" [size]="16" />
+            @if (activeFilterCount() > 0) {
+              {{ 'responsive.filters.button' | trans: { count: activeFilterCount() } }}
+            } @else {
+              {{ 'responsive.filters.buttonNoCount' | trans }}
             }
           </button>
         }
-      </div>
 
-      @if (activeUiTab() !== 'package') {
-        <div class="ml-auto flex items-center gap-3 flex-shrink-0">
-          <span class="text-sm whitespace-nowrap">
+        @if (activeUiTab() !== 'package') {
+          <span class="text-sm whitespace-nowrap ml-auto sm:ml-0">
             <span class="font-bold text-ink">{{ catalog.marketplaceResultsTotalCount() }}</span>
             <span class="text-ink-muted"> {{ 'common.items' | trans }}</span>
           </span>
           <nz-select
+            class="marketplace-sort min-w-0 w-full sm:w-[190px] sm:shrink-0"
             [ngModel]="catalog.filters().sort"
             (ngModelChange)="catalog.setFilters({ sort: $event })"
-            style="min-width: 170px"
           >
             <nz-option nzValue="popular" [nzLabel]="'marketplace.sortOptionPopular' | trans" />
             <nz-option nzValue="newest" [nzLabel]="'marketplace.sortOptionNewest' | trans" />
@@ -78,13 +101,16 @@
             <nz-option nzValue="price-asc" [nzLabel]="'marketplace.sortOptionPriceAsc' | trans" />
             <nz-option nzValue="price-desc" [nzLabel]="'marketplace.sortOptionPriceDesc' | trans" />
           </nz-select>
-        </div>
-      }
+        }
+      </div>
     </div>
 
     <div [class]="resultsGridClass()">
-      <!-- Sidebar filters -->
-      <aside class="bg-white rounded-2xl border border-line shadow-soft flex flex-col overflow-hidden lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto lg:overscroll-contain filter-scrollbar">
+      <!-- Sidebar filters (>=1024 only — below that the same groups render inside the filter sheet) -->
+      @if (viewport.isLaptopUp()) {
+      <!-- responsive-ui v1.4 §4.4 (F41/G-29b): sticks 16px below the pinned header (114px at 1024–1279,
+           171px at ≥1280) and caps its height to the space left under it, so it scrolls inside. -->
+      <aside data-testid="filter-aside" class="bg-white rounded-2xl border border-line shadow-soft flex flex-col overflow-hidden lg:sticky lg:top-[130px] lg:max-h-[calc(100dvh-146px)] xl:top-[187px] xl:max-h-[calc(100dvh-203px)] lg:overflow-y-auto lg:overscroll-contain filter-scrollbar">
         <!-- Header: Locked at top of card -->
         <div class="shrink-0 lg:sticky lg:top-0 flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-line/60 bg-white rounded-t-2xl z-10">
           <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
@@ -98,332 +124,10 @@
 
         <!-- Filter items: the aside owns desktop scrolling so the header stays locked to the top edge. -->
         <div class="p-1.5 pb-3">
-          <!-- marketplace-redesign §7 KI-6: on the "แพ็กเกจ" tab only the price group still has an effect
-               (it leaves the tab); the bundles endpoint accepts Q/Sort only, so the other groups stay
-               visible (layout + any filter still set is shown) but are disabled via `inert`. -->
-          @if (filtersUnsupported()) {
-            <p class="px-3.5 pt-2 pb-1 text-[12px] leading-snug text-ink-muted" data-testid="package-filters-hint">
-              {{ 'marketplace.packageFiltersHint' | trans }}
-            </p>
-          }
-          <!-- Category — ย้ายกลับมาไว้ด้านซ้ายในแผงตัวกรอง (ผู้ใช้สั่ง 2026-09-16 ให้เหมือนก่อน marketplace-redesign v1) -->
-          <div data-filter-group="category" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('category')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'footer.categories' | trans }}</span>
-              @if (catalog.filters().categoryIds.length > 0) {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
-                  {{ catalog.filters().categoryIds.length }}
-                </span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().category ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().category) {
-              <div class="flex flex-col gap-0.5 px-3.5 pb-3.5">
-                @for (cat of catalog.categories(); track cat.id) {
-                  @let catActive = catalog.filters().categoryIds.includes(cat.id);
-                  <div>
-                    <button
-                      type="button"
-                      class="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-pink-50 transition-colors duration-200 text-left"
-                      [class.bg-pink-50]="catActive"
-                      (click)="toggleCategory(cat.id)"
-                    >
-                      <span class="text-sm">{{ cat.icon }}</span>
-                      <span class="text-[13px] text-ink flex-1">{{ cat.name }}</span>
-                      <span class="text-[11px] text-ink-muted">{{ cat.documentCount }}</span>
-                      @if (cat.subcategories?.length) {
-                        <app-icon
-                          name="chevron-down"
-                          [size]="12"
-                          [className]="catActive ? 'text-pink-500 rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-                        />
-                      }
-                    </button>
-                    @if (catActive && cat.subcategories?.length) {
-                      <div class="pl-7 py-1 flex flex-col gap-0.5">
-                        @for (sub of cat.subcategories; track sub.id) {
-                          @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
-                          <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-pink-50/60 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              class="w-3.5 h-3.5 accent-pink-500"
-                              [checked]="subActive"
-                              (change)="toggleSubcategory(sub.id)"
-                            />
-                            @if (sub.icon) { <span class="text-xs">{{ sub.icon }}</span> }
-                            <span class="text-xs text-ink-soft flex-1">{{ sub.name }}</span>
-                            <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
-                          </label>
-                        }
-                        @if (catalog.filters().subcategoryIds.length >= maxFilterValues) {
-                          <p class="px-2 pt-1 text-[11px] leading-snug text-ink-muted" data-testid="subcategory-max-values-hint">
-                            {{ 'marketplace.filterMaxValues' | trans }}
-                          </p>
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-                @if (catalog.filters().categoryIds.length >= maxFilterValues) {
-                  <p class="px-2.5 pt-1 text-[11px] leading-snug text-ink-muted" data-testid="category-max-values-hint">
-                    {{ 'marketplace.filterMaxValues' | trans }}
-                  </p>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Grade -->
-          <div class="border-t border-line" data-filter-group="grade" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('grade')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupGrade' | trans }}</span>
-              @if (catalog.filters().gradeLevels.length > 0) {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
-                  {{ catalog.filters().gradeLevels.length }}
-                </span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().grade ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().grade) {
-              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
-                @for (g of grades; track g) {
-                  @let active = catalog.filters().gradeLevels.includes(g);
-                  <button
-                    type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
-                    [class.text-ink-soft]="!active"
-                    [class.border-line]="!active"
-                    (click)="toggleGrade(g)"
-                  >
-                    {{ gradeLabel(g) }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Resource type -->
-          <div class="border-t border-line" data-filter-group="resourceType" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('resourceType')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupResourceType' | trans }}</span>
-              @if (catalog.filters().resourceTypes.length > 0) {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
-                  {{ catalog.filters().resourceTypes.length }}
-                </span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().resourceType ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().resourceType) {
-              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
-                @for (rt of resourceTypes; track rt) {
-                  @let active = catalog.filters().resourceTypes.includes(rt);
-                  <button
-                    type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
-                    [class.text-ink-soft]="!active"
-                    [class.border-line]="!active"
-                    (click)="toggleResourceType(rt)"
-                  >
-                    {{ resourceLabel(rt) }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Price -->
-          <div class="border-t border-line" data-filter-group="price">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('price')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupPrice' | trans }}</span>
-              @if (priceRange() !== 'all') {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">1</span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().price ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().price) {
-              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
-                @for (opt of priceOptions; track opt.value) {
-                  @let active = priceRange() === opt.value;
-                  <button
-                    type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300 cursor-pointer"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
-                    [class.text-ink-soft]="!active"
-                    [class.border-line]="!active"
-                    (click)="setPriceRangeOption(opt.value)"
-                  >
-                    {{ opt.labelKey | trans }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Rating -->
-          <div class="border-t border-line" data-filter-group="rating" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('rating')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupRating' | trans }}</span>
-              @if (catalog.filters().minRating > 0) {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">1</span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().rating ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().rating) {
-              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
-                @for (r of ratingOptions; track r.value) {
-                  @let active = catalog.filters().minRating === r.value;
-                  <button
-                    type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
-                    [class.text-ink-soft]="!active"
-                    [class.border-line]="!active"
-                    (click)="catalog.setFilters({ minRating: r.value })"
-                  >
-                    {{ r.labelKey | trans }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Format -->
-          <div class="border-t border-line" data-filter-group="format" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('format')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupFormat' | trans }}</span>
-              @if (catalog.filters().formats.length > 0) {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
-                  {{ catalog.filters().formats.length }}
-                </span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().format ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().format) {
-              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
-                @for (fmt of formats; track fmt) {
-                  @let active = catalog.filters().formats.includes(fmt);
-                  <button
-                    type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium uppercase border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
-                    [class.text-ink-soft]="!active"
-                    [class.border-line]="!active"
-                    (click)="toggleFormat(fmt)"
-                  >
-                    {{ fmt }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Standards -->
-          <div class="border-t border-line" data-filter-group="standard" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
-              (click)="toggleGroup('standard')"
-            >
-              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupStandard' | trans }}</span>
-              @if (catalog.filters().standards.length > 0) {
-                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold">
-                  {{ catalog.filters().standards.length }}
-                </span>
-              }
-              <app-icon
-                name="chevron-down"
-                [size]="14"
-                [className]="openGroups().standard ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
-              />
-            </button>
-            @if (openGroups().standard) {
-              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
-                @for (s of standards; track s) {
-                  @let active = catalog.filters().standards.includes(s);
-                  <button
-                    type="button"
-                    class="px-3 py-[7px] rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
-                    [class.text-ink-soft]="!active"
-                    [class.border-line]="!active"
-                    (click)="toggleStandard(s)"
-                  >
-                    {{ s }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
+          <ng-container [ngTemplateOutlet]="filterGroups" />
         </div>
       </aside>
+      }
 
       <!-- Results -->
       <div>
@@ -490,7 +194,7 @@
 
         @if (activeUiTab() === 'package') {
           <!-- ================= "แพ็กเกจ" tab (marketplace-home-redesign v2 §4.2, round 1 stub) ================= -->
-          <div class="relative min-h-[420px] pr-1">
+          <div class="relative min-h-[420px] lg:pr-1">
             @if (bundles.bundleResultsState().status === 'error' && displayedBundles().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="retryBundleResults()">
@@ -509,7 +213,7 @@
                 }
               </div>
             } @else {
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 xl:gap-5">
                 @for (b of displayedBundles(); track b.id) {
                   <app-bundle-card [bundle]="b" />
                 }
@@ -550,7 +254,7 @@
           </div>
         } @else {
           <!-- Result panel -->
-          <div class="relative min-h-[420px] pr-1">
+          <div class="relative min-h-[420px] lg:pr-1">
             @if (catalog.marketplaceResultsState().status === 'error' && displayedDocs().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
@@ -567,7 +271,7 @@
                 <button class="btn-pink mt-4" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
               </div>
             } @else {
-              <div class="document-card-grid">
+              <div class="document-card-grid document-card-grid--with-filters">
                 @for (doc of displayedDocs(); track doc.id) {
                   <app-document-card [doc]="doc" density="compact" />
                 }
@@ -611,3 +315,352 @@
     </div>
   </div>
 </div>
+
+<!-- Filter groups — rendered once here and reused by the >=1024 column and the <1024 sheet (§4.6). -->
+<ng-template #filterGroups>
+          <!-- marketplace-redesign §7 KI-6: on the "แพ็กเกจ" tab only the price group still has an effect
+               (it leaves the tab); the bundles endpoint accepts Q/Sort only, so the other groups stay
+               visible (layout + any filter still set is shown) but are disabled via `inert`. -->
+          @if (filtersUnsupported()) {
+            <p class="px-3.5 pt-2 pb-1 text-[12px] leading-snug text-ink-muted" data-testid="package-filters-hint">
+              {{ 'marketplace.packageFiltersHint' | trans }}
+            </p>
+          }
+          <!-- Category — ย้ายกลับมาไว้ด้านซ้ายในแผงตัวกรอง (ผู้ใช้สั่ง 2026-09-16 ให้เหมือนก่อน marketplace-redesign v1) -->
+          <div data-filter-group="category" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('category')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'footer.categories' | trans }}</span>
+              @if (catalog.filters().categoryIds.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">
+                  {{ catalog.filters().categoryIds.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().category ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().category) {
+              <div class="flex flex-col gap-0.5 px-3.5 pb-3.5">
+                @for (cat of catalog.categories(); track cat.id) {
+                  @let catActive = catalog.filters().categoryIds.includes(cat.id);
+                  <div>
+                    <button
+                      type="button"
+                      class="w-full flex items-center gap-2 px-2.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl hover:bg-pink-50 transition-colors duration-200 text-left"
+                      [class.bg-pink-50]="catActive"
+                      (click)="toggleCategory(cat.id)"
+                    >
+                      <span class="text-sm">{{ cat.icon }}</span>
+                      <span class="text-[13px] text-ink flex-1">{{ cat.name }}</span>
+                      <span class="text-[11px] text-ink-muted">{{ cat.documentCount }}</span>
+                      @if (cat.subcategories?.length) {
+                        <app-icon
+                          name="chevron-down"
+                          [size]="12"
+                          [className]="catActive ? 'text-pink-500 rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+                        />
+                      }
+                    </button>
+                    @if (catActive && cat.subcategories?.length) {
+                      <div class="pl-7 py-1 flex flex-col gap-0.5">
+                        @for (sub of cat.subcategories; track sub.id) {
+                          @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
+                          <label class="flex items-center gap-2 px-2 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-lg hover:bg-pink-50/60 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              class="w-3.5 h-3.5 shrink-0 accent-pink-500"
+                              [checked]="subActive"
+                              (change)="toggleSubcategory(sub.id)"
+                            />
+                            @if (sub.icon) { <span class="text-xs">{{ sub.icon }}</span> }
+                            <span class="text-xs text-ink-soft flex-1">{{ sub.name }}</span>
+                            <span class="text-[10px] text-ink-muted">{{ sub.documentCount }}</span>
+                          </label>
+                        }
+                        @if (catalog.filters().subcategoryIds.length >= maxFilterValues) {
+                          <p class="px-2 pt-1 text-[11px] leading-snug text-ink-muted" data-testid="subcategory-max-values-hint">
+                            {{ 'marketplace.filterMaxValues' | trans }}
+                          </p>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+                @if (catalog.filters().categoryIds.length >= maxFilterValues) {
+                  <p class="px-2.5 pt-1 text-[11px] leading-snug text-ink-muted" data-testid="category-max-values-hint">
+                    {{ 'marketplace.filterMaxValues' | trans }}
+                  </p>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Grade -->
+          <div class="border-t border-line" data-filter-group="grade" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('grade')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupGrade' | trans }}</span>
+              @if (catalog.filters().gradeLevels.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">
+                  {{ catalog.filters().gradeLevels.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().grade ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().grade) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (g of grades; track g) {
+                  @let active = catalog.filters().gradeLevels.includes(g);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleGrade(g)"
+                  >
+                    {{ gradeLabel(g) }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Resource type -->
+          <div class="border-t border-line" data-filter-group="resourceType" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('resourceType')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupResourceType' | trans }}</span>
+              @if (catalog.filters().resourceTypes.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">
+                  {{ catalog.filters().resourceTypes.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().resourceType ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().resourceType) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (rt of resourceTypes; track rt) {
+                  @let active = catalog.filters().resourceTypes.includes(rt);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleResourceType(rt)"
+                  >
+                    {{ resourceLabel(rt) }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Price -->
+          <div class="border-t border-line" data-filter-group="price">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('price')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupPrice' | trans }}</span>
+              @if (priceRange() !== 'all') {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">1</span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().price ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().price) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (opt of priceOptions; track opt.value) {
+                  @let active = priceRange() === opt.value;
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300 cursor-pointer"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="setPriceRangeOption(opt.value)"
+                  >
+                    {{ opt.labelKey | trans }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Rating -->
+          <div class="border-t border-line" data-filter-group="rating" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('rating')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupRating' | trans }}</span>
+              @if (catalog.filters().minRating > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">1</span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().rating ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().rating) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (r of ratingOptions; track r.value) {
+                  @let active = catalog.filters().minRating === r.value;
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="catalog.setFilters({ minRating: r.value })"
+                  >
+                    {{ r.labelKey | trans }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Format -->
+          <div class="border-t border-line" data-filter-group="format" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('format')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupFormat' | trans }}</span>
+              @if (catalog.filters().formats.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">
+                  {{ catalog.filters().formats.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().format ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().format) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (fmt of formats; track fmt) {
+                  @let active = catalog.filters().formats.includes(fmt);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium uppercase border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleFormat(fmt)"
+                  >
+                    {{ fmt }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Standards -->
+          <div class="border-t border-line" data-filter-group="standard" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              (click)="toggleGroup('standard')"
+            >
+              <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupStandard' | trans }}</span>
+              @if (catalog.filters().standards.length > 0) {
+                <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold">
+                  {{ catalog.filters().standards.length }}
+                </span>
+              }
+              <app-icon
+                name="chevron-down"
+                [size]="14"
+                [className]="openGroups().standard ? 'text-ink-muted rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+              />
+            </button>
+            @if (openGroups().standard) {
+              <div class="flex flex-wrap gap-1.5 px-3.5 pb-3.5">
+                @for (s of standards; track s) {
+                  @let active = catalog.filters().standards.includes(s);
+                  <button
+                    type="button"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
+                    [class.bg-pink-100]="active"
+                    [class.text-pink-700]="active"
+                    [class.border-pink-500]="active"
+                    [class.bg-white]="!active"
+                    [class.text-ink-soft]="!active"
+                    [class.border-line]="!active"
+                    (click)="toggleStandard(s)"
+                  >
+                    {{ s }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+</ng-template>
+
+<app-bottom-sheet
+  [open]="filterSheetOpen()"
+  [title]="'responsive.filters.title' | trans"
+  tabletMode="slide-over"
+  (closed)="closeFilterSheet()"
+>
+  @if (filterSheetOpen()) {
+    <div class="-mx-1" data-testid="filter-sheet-body">
+      <ng-container [ngTemplateOutlet]="filterGroups" />
+    </div>
+  }
+  <div sheetFooter class="flex w-full gap-3">
+    <button type="button" class="btn-ghost flex-1" data-testid="filter-sheet-clear" (click)="reset()">
+      {{ 'responsive.filters.clearAll' | trans }}
+    </button>
+    <button type="button" class="btn-pink flex-1" data-testid="filter-sheet-apply" (click)="closeFilterSheet()">
+      {{ 'responsive.filters.showResults' | trans }}
+    </button>
+  </div>
+</app-bottom-sheet>

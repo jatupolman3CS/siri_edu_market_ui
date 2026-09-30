@@ -1,8 +1,11 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { CrmDocumentAlertsAdminPage } from './crm-document-alerts-admin.page';
 import { CrmService } from '../../../core/services';
 import type { CrmDocumentAlertOverview } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * crm-targeted-document-alerts v2 §3.3, §4.1, §4.3 (`docs/contracts/crm-targeted-document-alerts.md`,
@@ -167,5 +170,67 @@ describe('CrmDocumentAlertsAdminPage', () => {
       (a) => a.getAttribute('href') === '/admin/notification-config',
     );
     expect(link).toBeTruthy();
+  });
+});
+
+/**
+ * responsive-ui v1.6 R-27 (§4.5 v1.6 inventory row 16): the documents table lists every row, so its
+ * viewport has a name but no reset key and no pagination.
+ */
+describe('CrmDocumentAlertsAdminPage — table viewport (responsive-ui v1.6 R-27)', () => {
+  it('puts the documents table in an rt-viewport wrapper named by its section heading', () => {
+    const fixture = render(buildCrmFake(buildOverview()));
+    const el = fixture.nativeElement as HTMLElement;
+    const wrapper = (el.querySelector('table') as HTMLTableElement).parentElement as HTMLElement;
+    expect(wrapper.classList.contains('rt-viewport')).toBe(true);
+
+    const directive = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    const heading = el.querySelector<HTMLElement>(`#${directive.rtLabelledBy()}`);
+    expect(heading?.tagName).toBe('H2');
+    expect(heading?.textContent?.trim()).toBe('เอกสารล่าสุดที่ถูกดันเข้าหาผู้ที่สนใจ');
+    expect(directive.rtResetKey()).toBeUndefined();
+    expect(el.querySelector('app-pagination')).toBeNull();
+  });
+
+  it('a new day range shows the loading state first, so the table comes back as a new wrapper at its top', async () => {
+    const loading = signal(false);
+    let gate: Promise<void> = Promise.resolve();
+    const crmFake = {
+      ...buildCrmFake(buildOverview()),
+      loadingDocumentAlerts: loading,
+      loadDocumentAlerts: vi.fn(async () => {
+        loading.set(true);
+        await gate;
+        loading.set(false);
+      }),
+    };
+    TestBed.configureTestingModule({
+      imports: [CrmDocumentAlertsAdminPage],
+      providers: [provideRouter([]), { provide: CrmService, useValue: crmFake }],
+    });
+    const fixture = TestBed.createComponent(CrmDocumentAlertsAdminPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const before = (el.querySelector('table') as HTMLTableElement).parentElement as HTMLElement;
+    before.scrollTop = 300;
+    expect(before.scrollTop).toBe(300);
+
+    let release: () => void = () => undefined;
+    gate = new Promise<void>((resolve) => (release = resolve));
+    const pending = fixture.componentInstance.onDaysChange(14);
+    fixture.detectChanges();
+    expect(el.querySelector('table')).toBeNull();
+
+    release();
+    await pending;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const after = (el.querySelector('table') as HTMLTableElement).parentElement as HTMLElement;
+    expect(after).not.toBe(before);
+    expect(after.classList.contains('rt-viewport')).toBe(true);
+    expect(after.scrollTop).toBe(0);
   });
 });

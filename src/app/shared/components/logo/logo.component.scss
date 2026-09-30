@@ -1,0 +1,8 @@
+/* Compact variant for the buyer phone top bar: below 360px the ☰ + logo + bell + cart row cannot
+   fit the 127px wordmark (the cart was pushed off-screen and every page scrolled sideways at
+   320/344), so only the icon tile is kept. Opt-in per usage (`class="logo--compact-xs"`). */
+@media (max-width: 359.98px) {
+  :host(.logo--compact-xs) .logo__wordmark {
+    display: none;
+  }
+}

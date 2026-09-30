@@ -1,0 +1,44 @@
+@if (!chrome.actionBarActive()) {
+  <nav class="tab-bar" [attr.aria-label]="'responsive.nav.primary' | trans">
+    <ul class="tab-bar__list">
+      @for (item of items(); track $index) {
+        <li class="tab-bar__slot">
+          @if (item.href) {
+            <a
+              class="tab-bar__item"
+              [class.tab-bar__item--raised]="item.raised"
+              [routerLink]="item.href"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              ariaCurrentWhenActive="page"
+            >
+              <span class="tab-bar__icon">
+                <app-icon [name]="item.icon" [size]="22" />
+                @if (badgeText(item.badge); as badge) {
+                  <span class="tab-bar__badge" data-testid="tab-badge">{{ badge }}</span>
+                }
+              </span>
+              <span class="tab-bar__label">{{ item.label | trans }}</span>
+            </a>
+          } @else {
+            <button
+              type="button"
+              class="tab-bar__item"
+              [class.tab-bar__item--raised]="item.raised"
+              aria-haspopup="dialog"
+              (click)="onMenu()"
+            >
+              <span class="tab-bar__icon">
+                <app-icon [name]="item.icon" [size]="22" />
+                @if (badgeText(item.badge); as badge) {
+                  <span class="tab-bar__badge" data-testid="tab-badge">{{ badge }}</span>
+                }
+              </span>
+              <span class="tab-bar__label">{{ item.label | trans }}</span>
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  </nav>
+}

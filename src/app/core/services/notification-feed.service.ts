@@ -260,6 +260,12 @@ export class NotificationFeedService {
    */
   readonly hasAudienceBreakdown = this._hasAudienceBreakdown.asReadonly();
   readonly loading = this._loading.asReadonly();
+  /**
+   * responsive-ui v1.4 R-17 (F88): the last `loadFeed()` failed. The history page renders an error
+   * with a retry instead of "ยังไม่มีการแจ้งเตือน" when it has nothing to show.
+   */
+  private readonly _feedError = signal<boolean>(false);
+  readonly feedError = this._feedError.asReadonly();
   /** Total row count from the server — used to decide whether "โหลดเพิ่มเติม" has more to fetch. */
   readonly totalCount = this._totalCount.asReadonly();
 
@@ -359,6 +365,7 @@ export class NotificationFeedService {
   /** Replaces `items` on page 1, appends on page > 1 — matches the history page's "โหลดเพิ่มเติม" flow. */
   loadFeed(page: number, audience?: NotificationAudience): void {
     this._loading.set(true);
+    this._feedError.set(false);
     void (async () => {
       try {
         const data = await this.fetchFeedPage(page, PAGE_SIZE, audience);
@@ -366,6 +373,7 @@ export class NotificationFeedService {
         this._totalCount.set(data.totalCount);
       } catch (e) {
         this.apiFail.report('errors.context.loadNotifications', e);
+        this._feedError.set(true);
       } finally {
         this._loading.set(false);
       }

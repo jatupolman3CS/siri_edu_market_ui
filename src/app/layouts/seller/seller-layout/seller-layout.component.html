@@ -1,8 +1,10 @@
-<div class="min-h-screen bg-canvas flex flex-col lg:flex-row">
+<div class="min-h-[100dvh] bg-canvas flex flex-col md:flex-row">
       <app-global-loader />
-      <!-- Sidebar -->
+
+      <!-- Desktop sidebar (>=1280) -->
       <aside
-        class="hidden lg:flex flex-col w-72 bg-white border-r border-line p-5 sticky top-0 h-screen overflow-hidden shrink-0 z-30"
+        class="hidden xl:flex flex-col w-72 bg-white border-r border-line p-5 sticky top-0 h-[100dvh] overflow-hidden shrink-0 z-30"
+        data-testid="seller-sidebar"
       >
         <div class="shrink-0 mb-4">
           <div class="flex items-center justify-between">
@@ -20,12 +22,13 @@
           </div>
         </div>
 
-        <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
+        <nav class="seller-scroll flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
           @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-pink-50 !text-pink-600 !border-pink-200"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              ariaCurrentWhenActive="page"
               class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors"
             >
               <app-icon [name]="item.icon" [size]="18" />
@@ -72,83 +75,135 @@
         </div>
       </aside>
 
-      <!-- Mobile top bar -->
-      <header
-        class="lg:hidden sticky top-0 z-20 bg-white border-b border-line w-full"
+      <!-- Tablet / laptop rail (744–1279) -->
+      <aside
+        class="seller-rail hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-white border-r border-line sticky top-0 h-[100dvh] z-30 safe-top"
+        data-testid="seller-rail"
       >
-        <div class="flex flex-wrap items-center justify-between px-4 py-2.5 min-h-[4rem] gap-2">
-          <div class="flex items-center gap-2">
-            <!-- Hamburger to open sidebar drawer -->
-            <button
-              type="button"
-              (click)="toggleSidebar()"
-              class="btn-icon !w-9 !h-9"
-              [attr.aria-label]="sidebarOpen() ? ('header.closeMenu' | trans) : ('header.openMenu' | trans)"
-              [attr.aria-expanded]="sidebarOpen()"
-            >
-              <app-icon [name]="sidebarOpen() ? 'close' : 'menu'" [size]="20" />
-            </button>
-            <app-logo link="/seller" />
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <app-notification-bell variant="icon" />
-            <a routerLink="/" class="btn-ghost !py-1.5 !px-2.5 text-xs whitespace-nowrap">
-              {{ 'nav.backToMarket' | trans }}
-            </a>
-            <button
-              type="button"
-              (click)="signOut()"
-              class="flex items-center gap-1 !py-1.5 !px-2.5 text-xs text-rose-500 whitespace-nowrap"
-            >
-              <app-icon name="logout" [size]="14" />
-              {{ 'nav.signOut' | trans }}
-            </button>
-          </div>
+        <div class="shrink-0 flex justify-center py-3 border-b border-line">
+          <a routerLink="/seller" class="tap-target rounded-2xl text-pink-600" [attr.aria-label]="'seller.dashboard' | trans">
+            <app-icon name="dashboard" [size]="24" />
+          </a>
         </div>
-        <!-- Trailing fade so a scrollable tab bar with more tabs off-screen is noticeable. -->
-        <div class="relative">
-          <nav class="flex overflow-x-auto px-4 pb-3 gap-2">
-            @for (item of navItems(); track item.href) {
-              <a
-                [routerLink]="item.href"
-                routerLinkActive="!bg-pink-500 !text-white"
-                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-                class="px-3 py-1.5 rounded-full bg-pink-50 text-ink-soft text-xs font-medium whitespace-nowrap"
-              >
-                {{ item.label }}
-              </a>
-            }
-          </nav>
-          <div
-            class="pointer-events-none absolute right-0 top-0 bottom-3 w-10 bg-gradient-to-l from-white to-transparent"
-          ></div>
-        </div>
-      </header>
 
-      <!-- Mobile sidebar drawer overlay -->
+        <nav
+          class="seller-scroll flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 p-1.5"
+          [attr.aria-label]="'responsive.nav.primary' | trans"
+        >
+          @for (item of navItems(); track item.href) {
+            <a
+              [routerLink]="item.href"
+              routerLinkActive="!bg-pink-50 !text-pink-700"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              ariaCurrentWhenActive="page"
+              class="seller-rail__item flex shrink-0 flex-col items-center justify-center gap-1 min-h-[64px] px-1 py-2 rounded-2xl text-ink-soft hover:bg-pink-50 hover:text-pink-600 transition-colors"
+              data-testid="seller-rail-item"
+            >
+              <app-icon [name]="item.icon" [size]="22" />
+              <span class="text-[11px] leading-tight font-medium text-center line-clamp-2 break-words w-full">{{ item.label }}</span>
+            </a>
+          }
+        </nav>
+
+        <div class="shrink-0 border-t border-line flex flex-col items-center gap-1 pt-2 pb-[calc(8px+var(--safe-bottom))]">
+          <a
+            routerLink="/"
+            class="tap-target rounded-2xl text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
+            [attr.aria-label]="'nav.backToMarket' | trans"
+            [attr.title]="'nav.backToMarket' | trans"
+          >
+            <app-icon name="arrow-left" [size]="20" />
+          </a>
+          <button
+            type="button"
+            (click)="signOut()"
+            class="tap-target rounded-2xl text-rose-500 hover:bg-rose-50 transition-colors"
+            [attr.aria-label]="'nav.signOut' | trans"
+            [attr.title]="'nav.signOut' | trans"
+          >
+            <app-icon name="logout" [size]="20" />
+          </button>
+        </div>
+      </aside>
+
+      <!-- Content column -->
+      <div class="flex-1 min-w-0 flex flex-col">
+        <!-- Phone top bar (<744): logo · bell · avatar menu -->
+        <header
+          class="md:hidden sticky top-0 z-30 bg-white border-b border-line w-full safe-top"
+          data-testid="seller-phone-topbar"
+        >
+          <div class="flex items-center justify-between gap-2 h-14 pl-[max(16px,var(--safe-left))] pr-[max(16px,var(--safe-right))]">
+            <!-- min-w-0: at 200% text the logo (automatic min-width) + the shrink-0 bell/avatar
+                 cluster were wider than the phone and pushed the tab bar off-screen. -->
+            <app-logo class="min-w-0 overflow-hidden" link="/seller" />
+            <div class="flex items-center gap-1 shrink-0">
+              <app-notification-bell variant="icon" />
+              <ng-container [ngTemplateOutlet]="avatarButton" />
+            </div>
+          </div>
+        </header>
+
+        <!-- Tablet / laptop slim top bar (744–1279): bell · language · avatar -->
+        <header
+          class="hidden md:flex xl:hidden sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-line w-full items-center justify-between gap-3 min-h-[calc(56px+var(--safe-top))] pl-6 pr-[max(24px,var(--safe-right))] safe-top"
+          data-testid="seller-slim-topbar"
+        >
+          <app-logo link="/seller" />
+          <div class="flex items-center gap-2 shrink-0">
+            <app-notification-bell variant="icon" />
+            <app-language-switcher variant="dropdown" placement="bottomRight" />
+            <ng-container [ngTemplateOutlet]="avatarButton" />
+          </div>
+        </header>
+
+        <!-- Main -->
+        <main class="flex-1 min-w-0" [class.pb-bottom-nav]="!chrome.actionBarActive()">
+          <div class="py-4 md:py-6 lg:py-8 xl:py-10 pl-[max(16px,var(--safe-left))] pr-[max(16px,var(--safe-right))] md:pl-6 md:pr-[max(24px,var(--safe-right))] lg:pl-8 lg:pr-[max(32px,var(--safe-right))] xl:px-10">
+            <!-- responsive-ui v1.5 R-26: the only width cap on seller pages. Pages fill the padded
+                 area up to 1920px (flush left) and the frame centres above that. -->
+            <div data-testid="seller-page-frame" class="mx-auto w-full min-w-0 max-w-[1920px]">
+              <router-outlet />
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- Phone bottom tab bar (<744; hides itself >=744 and while a sticky action bar is alive) -->
+      <app-bottom-tab-bar [items]="tabItems" (menu)="openSidebar()" />
+
+      <!-- Phone menu drawer (opened by the เมนู tab) -->
       @if (sidebarOpen()) {
-        <div class="lg:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
+        <div
+          class="md:hidden fixed inset-0 z-[900] h-[100dvh]"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-label]="'responsive.tab.menu' | trans"
+          data-testid="seller-drawer"
+          (keydown.escape)="closeSidebar()"
+        >
           <!-- Backdrop -->
           <div
-            class="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+            class="absolute inset-0 bg-ink/40 backdrop-blur-sm touch-none"
             (click)="closeSidebar()"
           ></div>
           <!-- Sidebar panel -->
-          <aside class="relative flex flex-col w-72 max-w-[85vw] h-full bg-white shadow-pop overflow-hidden">
-            <div class="shrink-0 p-5 border-b border-line">
+          <aside
+            class="drawer-panel relative flex flex-col w-[min(320px,85vw)] h-full bg-white shadow-pop overflow-hidden safe-top forced-colors:border-r-2"
+            cdkTrapFocus
+            [cdkTrapFocusAutoCapture]="true"
+          >
+            <div class="shrink-0 p-5 border-b border-line" [style.padding-left]="'max(20px, var(--safe-left))'">
               <div class="flex items-center justify-between">
                 <app-logo link="/seller" />
-                <div class="flex items-center gap-1.5">
-                  <app-notification-bell variant="icon" />
-                  <button
-                    type="button"
-                    (click)="closeSidebar()"
-                    class="btn-icon !w-8 !h-8"
-                    [attr.aria-label]="'header.closeMenu' | trans"
-                  >
-                    <app-icon name="close" [size]="18" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  (click)="closeSidebar()"
+                  class="btn-icon"
+                  [attr.aria-label]="'responsive.nav.closeMenu' | trans"
+                >
+                  <app-icon name="close" [size]="18" />
+                </button>
               </div>
               <div class="mt-2.5 pl-1">
                 <span class="pill-pink !text-[10px]">
@@ -158,14 +213,16 @@
               </div>
             </div>
 
-            <nav class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto p-4 pr-5">
+            <nav class="seller-scroll flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 pr-5" [style.padding-left]="'max(16px, var(--safe-left))'">
               @for (item of navItems(); track item.href) {
                 <a
                   [routerLink]="item.href"
                   routerLinkActive="!bg-pink-50 !text-pink-600 !border-pink-200"
                   [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-                  class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                  ariaCurrentWhenActive="page"
+                  class="flex items-center gap-3 px-3.5 min-h-[44px] rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors"
                   (click)="closeSidebar()"
+                  data-testid="seller-drawer-item"
                 >
                   <app-icon [name]="item.icon" [size]="18" />
                   <span class="flex-1 truncate">{{ item.label }}</span>
@@ -173,25 +230,25 @@
               }
             </nav>
 
-            <div class="shrink-0 p-4 pt-3 border-t border-line flex flex-col gap-1">
+            <div class="shrink-0 p-4 pt-3 border-t border-line flex flex-col gap-1 pb-[calc(16px+var(--safe-bottom))]" [style.padding-left]="'max(16px, var(--safe-left))'">
               <a
                 routerLink="/"
-                class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
                 (click)="closeSidebar()"
               >
                 <app-icon name="arrow-left" [size]="16" />
-                {{ 'nav.backToMarket' | trans }}
+                {{ 'responsive.backToStore' | trans }}
               </a>
               <button
                 type="button"
                 (click)="signOut(); closeSidebar()"
-                class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-rose-500 hover:bg-rose-50 transition-colors"
+                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-rose-500 hover:bg-rose-50 transition-colors"
               >
                 <app-icon name="logout" [size]="16" />
                 {{ 'nav.signOut' | trans }}
               </button>
-              @if (auth.user(); as u) {
-                <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-pink-50 border border-line">
+              <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-pink-50 border border-line">
+                @if (auth.user(); as u) {
                   <img
                     appImgFallback
                     [src]="avatarSrc()"
@@ -202,18 +259,75 @@
                     <div class="text-sm font-bold text-ink truncate">{{ u.name }}</div>
                     <div class="text-xs text-ink-muted truncate">Siri Studio</div>
                   </div>
-                  <app-language-switcher variant="dropdown" placement="topRight" />
-                </div>
-              }
+                } @else {
+                  <div class="flex-1"></div>
+                }
+                <app-language-switcher variant="dropdown" placement="topRight" />
+              </div>
             </div>
           </aside>
         </div>
       }
-
-      <!-- Main -->
-      <main class="flex-1 min-w-0">
-        <div class="p-4 sm:p-6 lg:p-10">
-          <router-outlet />
-        </div>
-      </main>
     </div>
+
+<!-- Avatar → small menu (กลับหน้าร้าน / ออกจากระบบ). Used by the phone and tablet top bars. -->
+<ng-template #avatarButton>
+  <button
+    type="button"
+    nz-dropdown
+    [nzDropdownMenu]="avatarMenu"
+    nzTrigger="click"
+    nzPlacement="bottomRight"
+    (nzVisibleChange)="onAvatarMenuVisible($event)"
+    class="tap-target rounded-full"
+    [attr.aria-label]="auth.user()?.name ?? ('nav.signOut' | trans)"
+    data-testid="seller-avatar-button"
+  >
+    <img
+      appImgFallback
+      [src]="avatarSrc()"
+      class="w-8 h-8 rounded-full object-cover ring-2 ring-pink-100"
+      alt=""
+    />
+  </button>
+</ng-template>
+
+<nz-dropdown-menu #avatarMenu="nzDropdownMenu">
+  <ul nz-menu data-testid="seller-avatar-menu" class="!rounded-2xl !p-1.5 !shadow-popover !border !border-line min-w-[180px]">
+    @if (auth.user(); as u) {
+      <li nz-menu-item nzDisabled class="!px-3 !py-2 !cursor-default">
+        <div class="text-sm font-bold text-ink truncate max-w-[200px]">{{ u.name }}</div>
+      </li>
+    }
+    <li nz-menu-item class="!p-0 !rounded-xl">
+      <a routerLink="/" class="!flex items-center gap-2 !m-0 !px-3 !py-0 min-h-[44px] rounded-xl text-sm">
+        <app-icon name="arrow-left" [size]="16" />
+        {{ 'responsive.backToStore' | trans }}
+      </a>
+    </li>
+    <!-- Language: on /seller/upload the sticky bar hides the tab bar's เมนู (the only other way to
+         the switcher on phones), so the avatar menu carries it too — as the admin menu does. -->
+    <li nz-menu-item class="!p-0 !rounded-xl">
+      <button
+        type="button"
+        data-testid="seller-avatar-language"
+        (click)="translation.toggleLanguage()"
+        class="w-full flex items-center gap-2 px-3 min-h-[44px] rounded-xl text-sm text-left"
+      >
+        <app-icon name="globe" [size]="16" />
+        <span class="flex-1">{{ 'header.switchLanguage' | trans }}</span>
+        <span class="text-xs font-bold text-ink-muted">{{ translation.currentLang() === 'th' ? 'EN' : 'TH' }}</span>
+      </button>
+    </li>
+    <li nz-menu-item class="!p-0 !rounded-xl">
+      <button
+        type="button"
+        (click)="signOut()"
+        class="w-full flex items-center gap-2 px-3 min-h-[44px] rounded-xl text-sm text-left text-rose-500"
+      >
+        <app-icon name="logout" [size]="16" />
+        {{ 'nav.signOut' | trans }}
+      </button>
+    </li>
+  </ul>
+</nz-dropdown-menu>

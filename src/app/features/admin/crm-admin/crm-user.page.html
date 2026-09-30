@@ -1,6 +1,6 @@
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="min-w-0 space-y-6">
   <header>
-    <a routerLink="/admin/crm" class="text-sm text-pink-600 hover:underline">‹ {{ 'admin.backToCrmOverview' | trans }}</a>
+    <a routerLink="/admin/crm" class="inline-flex items-center text-sm text-pink-600 hover:underline [@media(pointer:coarse)]:min-h-11">‹ {{ 'admin.backToCrmOverview' | trans }}</a>
   </header>
 
   <app-crm-user-panel [userId]="userId()" />

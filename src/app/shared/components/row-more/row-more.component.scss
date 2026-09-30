@@ -1,0 +1,65 @@
+:host {
+  display: inline-flex;
+}
+
+/* >=1280 the full table shows every column. */
+@media (min-width: 1280px) {
+  :host {
+    display: none;
+  }
+}
+
+.row-more__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.row-more__button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .row-more__button:hover {
+    border-color: var(--pink-300);
+    background: var(--pink-50);
+    color: var(--primary);
+  }
+}
+
+/* Popover content (rendered in the CDK overlay, still inside this component's view → encapsulated). */
+.row-more__list {
+  margin: 0;
+  min-width: 200px;
+  /* + the popover's 16px inner padding each side → the pushed panel keeps ~16px screen margins. */
+  max-width: min(320px, calc(100vw - 64px));
+  display: grid;
+  gap: 8px;
+}
+
+.row-more__row {
+  display: grid;
+  gap: 2px;
+}
+
+.row-more__label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.row-more__value {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}

@@ -1,8 +1,13 @@
-<a [routerLink]="link()" class="inline-flex items-center gap-2.5 group">
+<!-- G-12 / R-2: the 40px tile made the link 40 tall (and 40 wide when the wordmark is hidden below
+     360); touch devices get a 44x44 minimum, fine pointers keep the 40px density. -->
+<a
+  [routerLink]="link()"
+  class="inline-flex items-center gap-2.5 group min-w-0 max-w-full [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
+>
       <span
-        class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 shadow-soft transition-transform group-hover:rotate-[-6deg]"
+        class="relative flex shrink-0 items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-300 to-pink-500 text-white shadow-soft transition-transform group-hover:rotate-[-6deg]"
       >
-        <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-white">
+        <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6">
           <path
             d="M6 4.5C6 3.67 6.67 3 7.5 3h7.18a2 2 0 0 1 1.42.59l3.31 3.32a2 2 0 0 1 .59 1.41V19.5c0 .83-.67 1.5-1.5 1.5h-11A1.5 1.5 0 0 1 6 19.5v-15Z"
             stroke="currentColor"
@@ -27,11 +32,11 @@
         ></span>
       </span>
       @if (showText()) {
-        <span class="flex flex-col leading-none">
-          <span class="text-[15px] font-extrabold tracking-tight text-ink">
+        <span class="logo__wordmark flex flex-col min-w-0 leading-none">
+          <span class="truncate text-[15px] font-extrabold tracking-tight text-ink">
             SIRIEDUMARKET
           </span>
-          <span class="text-[10px] uppercase tracking-[0.2em] text-pink-500 mt-1">
+          <span class="truncate text-[10px] uppercase tracking-[0.2em] text-pink-500 mt-1">
             Document Studio
           </span>
         </span>

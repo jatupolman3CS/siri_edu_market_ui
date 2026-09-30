@@ -567,6 +567,7 @@ import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { TranslationService } from '../i18n/translation.service';
 import { createInfinitePager, type PagedResult } from './infinite-pager';
+import { errorActionState, idleActionState, loadingActionState, successActionState, type ActionState } from './action-state';
 import { getApiAdminDocumentById, type AdminDocumentDetail } from '../api/admin-documents.api';
 
 @Injectable({ providedIn: 'root' })
@@ -588,6 +589,12 @@ export class AdminService {
   private readonly _jobToggles = signal<SystemConfigJobToggle[]>([]);
 
   readonly dashboard = this._dashboard.asReadonly();
+  /**
+   * responsive-ui v1.4 R-17 (G-27, F88): load state of `GET /api/admin/dashboard`, so the page can
+   * show loading / error + retry instead of zeroed stats and an "API ok" health line.
+   */
+  private readonly _dashboardState = signal<ActionState>(idleActionState());
+  readonly dashboardState = this._dashboardState.asReadonly();
   readonly adminCategories = this._adminCategories.asReadonly();
   readonly settings = this._settings.asReadonly();
   readonly storageUsage = this._storageUsage.asReadonly();
@@ -656,6 +663,20 @@ export class AdminService {
   readonly pendingDocuments = this.pendingPager.items;
   readonly pendingState = this.pendingPager.state;
   readonly pendingHasMore = this.pendingPager.hasMore;
+  /**
+   * Server total of the CURRENT (possibly filtered) approval-queue query — `pendingDocuments()` is
+   * only the loaded pages (50 per page), so its length can never show the real queue size.
+   * `null` until the first page has loaded.
+   */
+  readonly pendingTotal = this.pendingPager.totalCount;
+
+  /**
+   * Unfiltered approval-queue size for the admin chrome badge (tab bar / rail / sidebar). Kept
+   * apart from the pager so the approval page's title/seller filters don't change the badge, and
+   * loaded on its own so the badge shows on any admin page, not only after the queue was fetched.
+   */
+  private readonly _pendingBadgeCount = signal<number | null>(null);
+  readonly pendingBadgeCount = this._pendingBadgeCount.asReadonly();
 
   readonly totalRevenue = computed(() =>
     this.transactions()
@@ -713,13 +734,16 @@ export class AdminService {
   }
 
   async refreshDashboard(): Promise<void> {
+    this._dashboardState.set(loadingActionState());
     try {
       const result = await getApiAdminDashboard();
       const data = unwrapSdkResult(result);
       this._dashboard.set(data ?? null);
+      this._dashboardState.set(successActionState());
     } catch (e) {
       this.apiFail.report('errors.context.loadAdminDashboard', e);
       this._dashboard.set(null);
+      this._dashboardState.set(errorActionState(this.translation.t('common.loadFailed')));
     }
   }
 
@@ -741,10 +765,26 @@ export class AdminService {
     return this.pendingPager.loadMore();
   }
 
+  /**
+   * Refreshes {@link pendingBadgeCount}: the read-only pending search with no filters and a page
+   * size of 1 — only `totalCount` is used (same pattern as `countNewFeedback`). Silent on failure:
+   * a badge is not worth an error toast, it just keeps its last value.
+   */
+  async refreshPendingBadgeCount(): Promise<void> {
+    try {
+      const result = await postApiAdminDocumentsPendingSearch({ body: { page: 1, pageSize: 1 } });
+      const data = unwrapSdkResult(result);
+      this._pendingBadgeCount.set(data.totalCount ?? 0);
+    } catch {
+      /* keep the last known count */
+    }
+  }
+
   async approveDocument(id: string): Promise<void> {
     try {
       const result = await postApiAdminDocumentsByIdApprove({ path: { id } });
       unwrapSdkResult(result);
+      void this.refreshPendingBadgeCount();
       await this.refreshPendingDocuments();
     } catch (e) {
       this.apiFail.report('errors.context.approveDocument', e);
@@ -759,6 +799,7 @@ export class AdminService {
         body: { reason },
       });
       unwrapSdkResult(result);
+      void this.refreshPendingBadgeCount();
       await this.refreshPendingDocuments();
     } catch (e) {
       this.apiFail.report('errors.context.rejectDocument', e);

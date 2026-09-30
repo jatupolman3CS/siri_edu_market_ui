@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { RecommendationTracePanelComponent } from './recommendation-trace-panel.component';
 import { CrmService } from '../../../core/services';
 import type { AdminRecommendationTrace } from '../../../core/models';
+import { TableViewportDirective } from '../../directives/table-viewport.directive';
 
 /**
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.5/§4.3/§1.4 — "render gate
@@ -128,5 +130,44 @@ describe('RecommendationTracePanelComponent', () => {
     const fixture = render(buildCrmFake(null));
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ยังไม่พบข้อมูลการวิเคราะห์คำแนะนำของผู้ใช้รายนี้');
+  });
+});
+
+/**
+ * responsive-ui v1.6 R-27 (§4.5 v1.6 inventory row 18): the candidates table lists every candidate,
+ * so its viewport has a name but no reset key and no pagination. Expansion rows count as rows.
+ */
+describe('RecommendationTracePanelComponent — table viewport (responsive-ui v1.6 R-27)', () => {
+  it('puts the candidates table in an rt-viewport wrapper named by its section heading', () => {
+    const fixture = render(buildCrmFake(buildTrace()));
+    const el = fixture.nativeElement as HTMLElement;
+    const table = el.querySelector('table') as HTMLTableElement;
+    const wrapper = table.parentElement as HTMLElement;
+    expect(wrapper.classList.contains('rt-viewport')).toBe(true);
+
+    const directive = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    const heading = wrapper.closest('section')?.querySelector('h3');
+    expect(directive.rtLabel()).toBe('เอกสารที่พิจารณา');
+    expect(directive.rtLabel()).toBe(heading?.textContent?.trim());
+    expect(directive.rtLabelledBy()).toBeNull();
+    expect(directive.rtResetKey()).toBeUndefined();
+    expect(el.querySelector('app-pagination')).toBeNull();
+  });
+
+  it('expanding a candidate row keeps the table\'s scroll position (no reset key)', async () => {
+    const fixture = render(buildCrmFake(buildTrace()));
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const wrapper = (el.querySelector('table') as HTMLTableElement).parentElement as HTMLElement;
+    wrapper.scrollTop = 300;
+    expect(wrapper.scrollTop).toBe(300);
+
+    (el.querySelector('tbody tr') as HTMLTableRowElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(el.querySelectorAll('tbody tr').length).toBe(3);
+    expect((el.querySelector('table') as HTMLTableElement).parentElement).toBe(wrapper);
+    expect(wrapper.scrollTop).toBe(300);
   });
 });

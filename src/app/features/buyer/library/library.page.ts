@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { A11yModule } from '@angular/cdk/a11y';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
@@ -15,6 +17,7 @@ import {
   SubmitReviewRequest,
 } from '../../../core/services';
 import { downloadFileFromUrl } from '../../../core/file-download';
+import { acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -31,6 +34,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
   selector: 'app-buyer-library',
   standalone: true,
   imports: [
+    A11yModule,
     RouterLink,
     FormsModule,
     NzDrawerModule,
@@ -47,6 +51,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.escape)': 'onEscape($event)' },
   templateUrl: './library.page.html',
   styleUrl: './library.page.scss',
 })
@@ -130,7 +135,15 @@ export class BuyerLibraryPage {
   /** loyalty-points v1 §4: "ดูประวัติคะแนน" opens this drawer, listing `loyalty.ledger()`. */
   readonly ledgerDrawerOpen = signal(false);
 
+  private readonly document = inject(DOCUMENT);
+  private scrollLocked = false;
+
   constructor() {
+    // §4.7 / R-10: the page behind the review modal must not scroll (wheel and touch on the
+    // backdrop used to move it). One counted lock, released on close and on destroy.
+    effect(() => this.setScrollLock(!!this.reviewModal()));
+    inject(DestroyRef).onDestroy(() => this.setScrollLock(false));
+
     if (!this.auth.isAuthenticated()) {
       this.router.navigate(['/auth/login'], { queryParams: { returnUrl: '/library' } });
       return;
@@ -164,6 +177,24 @@ export class BuyerLibraryPage {
 
   closeReviewModal(): void {
     this.reviewModal.set(null);
+  }
+
+  /**
+   * Escape closes the review modal (R-11). An Escape an inner layer already handled
+   * (`defaultPrevented`) is ignored; the nz-drawer / nz-modal on this page close themselves.
+   */
+  onEscape(event: Event): void {
+    if (event.defaultPrevented || !this.reviewModal()) return;
+    this.closeReviewModal();
+    event.preventDefault();
+  }
+
+  /** R-10: body `visible` first, then html `hidden`; balanced so it never double-releases. */
+  private setScrollLock(on: boolean): void {
+    if (on === this.scrollLocked) return;
+    this.scrollLocked = on;
+    if (on) acquirePageScrollLock(this.document);
+    else releasePageScrollLock(this.document);
   }
 
   setRating(rating: number): void {

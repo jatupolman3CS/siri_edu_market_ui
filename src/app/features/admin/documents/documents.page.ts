@@ -16,7 +16,7 @@ import {
   postApiAdminDocumentsBulk,
   type AdminDocumentListItem,
 } from '../../../core/api/admin-documents.api';
-import type { AdminDocumentsSort } from '../../../core/api/types.gen';
+import type { AdminDocumentsSort, GetApiAdminDocumentsData } from '../../../core/api/types.gen';
 
 /** Row shape for admin list UI — required fields normalized from API. */
 type AdminDocumentRow = AdminDocumentListItem & {
@@ -34,6 +34,9 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
+import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
 @Component({
   selector: 'app-admin-documents',
@@ -48,6 +51,9 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     PaginationComponent,
     ThbPipe,
     TimeAgoPipe,
+    RowMoreComponent,
+    TableViewportDirective,
+    AdminFilterPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './documents.page.html',
@@ -59,7 +65,16 @@ export class AdminDocumentsPage {
   private readonly message = inject(NzMessageService);
 
   readonly page = signal(1);
-  readonly pageSize = signal(20);
+  /** R-27 item 10: every paginated table starts at 10 rows per page. */
+  readonly pageSize = signal(10);
+
+  /**
+   * R-27 (`rtResetKey`): the query the table's rows were requested with. The filter signals below are
+   * bound to the form, so they change while the admin types; this one changes only when a request
+   * goes out with a different page, page size, filter, search or sort, which scrolls the table back
+   * to its top. A reload of the same query (after a bulk action) leaves the scroll position alone.
+   */
+  readonly listQueryKey = signal('');
 
   readonly status = signal<string>('all');
   readonly format = signal<string>('');
@@ -110,6 +125,21 @@ export class AdminDocumentsPage {
     PriceDesc: 3,
   };
 
+  /** Non-default filters inside the phone filter sheet (sort stays outside). */
+  readonly activeFilterCount = computed(
+    () =>
+      [
+        this.status() !== 'all',
+        !!this.format(),
+        !!this.categoryId().trim(),
+        !!this.sellerName().trim(),
+        !!this.postedFrom(),
+        !!this.postedTo(),
+        this.featuredOnly(),
+        this.hasOpenReportsOnly(),
+      ].filter(Boolean).length,
+  );
+
   readonly totalPagesSafe = computed(() => Math.max(1, this.totalPages() || 1));
 
   readonly bulkReason = signal('');
@@ -121,22 +151,22 @@ export class AdminDocumentsPage {
   private async fetchList(): Promise<void> {
     this.loading.set(true);
     try {
-      const result = await getApiAdminDocumentsList({
-        query: {
-          Page: this.page(),
-          PageSize: this.pageSize(),
-          Status: this.status() === 'all' ? undefined : this.status(),
-          Format: this.format() || undefined,
-          CategoryId: this.categoryId().trim() || undefined,
-          SellerName: this.sellerName().trim() || undefined,
-          Q: this.q().trim() || undefined,
-          FeaturedOnly: this.featuredOnly() ? true : undefined,
-          HasOpenReportsOnly: this.hasOpenReportsOnly() ? true : undefined,
-          PostedFrom: this.postedFrom().trim() || undefined,
-          PostedTo: this.postedTo().trim() || undefined,
-          Sort: this.sortKeyToApi[this.sort()] ?? 0,
-        },
-      });
+      const query: NonNullable<GetApiAdminDocumentsData['query']> = {
+        Page: this.page(),
+        PageSize: this.pageSize(),
+        Status: this.status() === 'all' ? undefined : this.status(),
+        Format: this.format() || undefined,
+        CategoryId: this.categoryId().trim() || undefined,
+        SellerName: this.sellerName().trim() || undefined,
+        Q: this.q().trim() || undefined,
+        FeaturedOnly: this.featuredOnly() ? true : undefined,
+        HasOpenReportsOnly: this.hasOpenReportsOnly() ? true : undefined,
+        PostedFrom: this.postedFrom().trim() || undefined,
+        PostedTo: this.postedTo().trim() || undefined,
+        Sort: this.sortKeyToApi[this.sort()] ?? 0,
+      };
+      this.listQueryKey.set(JSON.stringify(query));
+      const result = await getApiAdminDocumentsList({ query });
       const data = unwrapSdkResult(result);
       this.items.set(
         (data.items ?? []).map(
@@ -159,6 +189,23 @@ export class AdminDocumentsPage {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Filter sheet "ล้างทั้งหมด": resets the sheet's filters; results refresh on ดูผลลัพธ์. */
+  clearFilters(): void {
+    this.status.set('all');
+    this.format.set('');
+    this.categoryId.set('');
+    this.sellerName.set('');
+    this.postedFrom.set('');
+    this.postedTo.set('');
+    this.featuredOnly.set(false);
+    this.hasOpenReportsOnly.set(false);
+  }
+
+  /** "4.5 (12)" for the row ⋯ popover, "-" when unrated. */
+  ratingText(d: AdminDocumentRow): string {
+    return d.reviewCount > 0 ? `${d.rating.toFixed(1)} (${d.reviewCount})` : '-';
   }
 
   applyFilters(): void {

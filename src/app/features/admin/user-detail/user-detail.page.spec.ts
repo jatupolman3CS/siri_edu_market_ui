@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
@@ -6,6 +7,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminUserDetailPage } from './user-detail.page';
 import { AdminService, AuthService, ApiFailureReporter } from '../../../core/services';
 import type { AdminUserDetail, User } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 function userDetail(overrides: Partial<AdminUserDetail> = {}): AdminUserDetail {
   return {
@@ -157,6 +159,57 @@ describe('AdminUserDetailPage', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+  });
+
+  it('an unknown user id (404) renders the not-found state, reports nothing itself and skips the wallet (F116)', async () => {
+    mockAdmin.getUser.mockRejectedValue({ status: 404, title: 'Not Found' });
+    const reporter = TestBed.inject(ApiFailureReporter) as unknown as { report: ReturnType<typeof vi.fn> };
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const nf = el.querySelector('[data-testid="not-found"]');
+    expect(nf).not.toBeNull();
+    expect(nf?.textContent).toContain('ไม่พบผู้ใช้');
+    const cta = nf?.querySelector('a[href="/admin/users"]') as HTMLElement;
+    expect(cta).not.toBeNull();
+    expect(cta.className).toContain('min-h-11');
+    expect(reporter.report).not.toHaveBeenCalled();
+    expect(mockAdmin.getUserWallet).not.toHaveBeenCalled();
+    expect(mockAdmin.getUserWalletEntries).not.toHaveBeenCalled();
+  });
+
+  it('any other load failure shows an error with a retry that re-issues the GET', async () => {
+    mockAdmin.getUser.mockRejectedValueOnce({ status: 500, title: 'boom' });
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="not-found"]')).toBeNull();
+    const retry = el.querySelector('[data-testid="load-retry"]') as HTMLButtonElement;
+    expect(retry).not.toBeNull();
+    expect(mockAdmin.getUser).toHaveBeenCalledTimes(1);
+
+    retry.click();
+    await settle();
+    fixture.detectChanges();
+    expect(mockAdmin.getUser).toHaveBeenCalledTimes(2);
+    expect(el.textContent).toContain('สมศรี มีทรัพย์');
+    expect(el.querySelector('[data-testid="load-error"]')).toBeNull();
+  });
+
+  it('lets a long display name wrap inside the card (F112)', async () => {
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+    const h2 = (fixture.nativeElement as HTMLElement).querySelector('h2') as HTMLElement;
+    expect(h2.className).toContain('[overflow-wrap:anywhere]');
+    expect(h2.className).toContain('min-w-0');
   });
 
   it('renders buyer-only details without seller stats card', async () => {
@@ -313,6 +366,62 @@ describe('AdminUserDetailPage', () => {
     expect(comp.reinstateModalVisible()).toBe(false);
   });
 
+  // responsive-ui v1.3 §4.6 B / G-11: the admin layout reserves nothing for the phone action bar, so the
+  // bar's in-flow spacer only protects content that comes BEFORE it — the bar must be the page's last child.
+  it('renders the phone sticky action bar as the last child of the page, after moderation history', async () => {
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const page = el.querySelector(':scope > div') as HTMLElement;
+    const last = page.lastElementChild as HTMLElement;
+    expect(last.tagName.toLowerCase()).toBe('app-sticky-action-bar');
+    expect(last.querySelector('[data-testid="user-actions-sticky"]')).not.toBeNull();
+
+    const previous = last.previousElementSibling as HTMLElement;
+    expect(previous.textContent).toContain('ประวัติการถูกระงับการใช้งาน');
+    expect(page.querySelectorAll(':scope > app-sticky-action-bar').length).toBe(1);
+  });
+
+  it('suspended target: the reinstate button uses the real primary button class (inline and in the phone bar)', async () => {
+    mockAdmin.getUser.mockResolvedValue(
+      userDetail({ accountStatus: 'suspended', suspendedUntil: '2026-09-20T00:00:00Z' }),
+    );
+
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const page = el.querySelector(':scope > div') as HTMLElement;
+    expect(page.lastElementChild?.tagName.toLowerCase()).toBe('app-sticky-action-bar');
+
+    const inline = el.querySelector('[data-testid="user-actions-inline"] [data-testid="user-reinstate"]') as HTMLElement;
+    const sticky = el.querySelector('[data-testid="user-actions-sticky"] [data-testid="user-reinstate"]') as HTMLElement;
+    for (const button of [inline, sticky]) {
+      expect(button).not.toBeNull();
+      expect(button.textContent?.trim()).toBe('ปลดระงับ');
+      // `.btn-primary` is defined nowhere (only `.ant-btn-primary`) and rendered as bare text.
+      expect(button.classList.contains('btn-pink')).toBe(true);
+      expect(button.classList.contains('min-h-11')).toBe(true);
+      expect(button.classList.contains('btn-primary')).toBe(false);
+    }
+  });
+
+  it('no sticky action bar when the target is an admin (nothing to act on)', async () => {
+    mockAdmin.getUser.mockResolvedValue(userDetail({ id: 'other-admin-id', roles: ['admin'] }));
+
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-sticky-action-bar')).toBeNull();
+  });
+
   // buyer-wallet v1 §4.6 — AC-29: read-only wallet summary + ledger, no edit action anywhere.
   it('renders read-only wallet summary + ledger with no edit action', async () => {
     const fixture = TestBed.createComponent(AdminUserDetailPage);
@@ -388,5 +497,49 @@ describe('AdminUserDetailPage', () => {
     expect(mockAdmin.getUserWalletEntries).toHaveBeenLastCalledWith('target-user-1', 2, 10);
     expect(comp.walletEntries().length).toBe(2);
     expect(comp.walletEntriesHasMore()).toBe(false);
+  });
+
+  // responsive-ui v1.6 R-27: both tables scroll inside their own named wrapper at >=744. Neither is
+  // paginated, so neither has a reset key: "load more" appends ledger rows and keeps the position.
+  it('R-27: the wallet ledger and the moderation history each sit in their own named table viewport', async () => {
+    mockAdmin.getUserWalletEntries.mockImplementation(async (_userId: string, page: number) => ({
+      items: [
+        {
+          id: `entry-${page}`,
+          kind: 'topup',
+          amount: 100,
+          reason: 'wallet_topup',
+          orderNumber: undefined,
+          occurredAt: '2026-09-10T10:00:00Z',
+        },
+      ],
+      page,
+      pageSize: 1,
+      totalCount: 2,
+      totalPages: 2,
+    }));
+    const fixture = TestBed.createComponent(AdminUserDetailPage);
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const wrappers = Array.from(el.querySelectorAll('table.rtable')).map((t) => t.parentElement as HTMLElement);
+    expect(wrappers.length).toBe(2);
+    wrappers.forEach((w) => expect(w.classList).toContain('rt-viewport'));
+    const viewports = fixture.debugElement
+      .queryAll(By.directive(TableViewportDirective))
+      .map((d) => d.injector.get(TableViewportDirective));
+    expect(viewports.map((v) => v.rtLabel())).toEqual(['กระเป๋าเงินของผู้ใช้', 'ประวัติการถูกระงับการใช้งาน']);
+    expect(viewports.map((v) => v.rtResetKey())).toEqual([undefined, undefined]);
+
+    const ledger = wrappers[0];
+    ledger.scrollTop = 200;
+    await fixture.componentInstance.loadMoreWalletEntries();
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+    expect(ledger.querySelectorAll('tbody > tr').length).toBe(2);
+    expect(ledger.scrollTop).toBe(200);
   });
 });

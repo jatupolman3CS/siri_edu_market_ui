@@ -307,3 +307,73 @@ describe('NotificationConfigAdminPage (notification-master-config v1 §3.7)', ()
     expect(page.savingKey()).toBeNull();
   });
 });
+
+/**
+ * responsive-ui v1.4 gate fix (G2-6) F148: every switch of a row is `nzControl`led, so it shows
+ * only the server-confirmed value — a failed PUT leaves it where it was, a successful one shows
+ * what the server answered with.
+ */
+describe('NotificationConfigAdminPage — save-on-change (responsive v1.4 F148)', () => {
+  /** `[ngModel]` writes into the switch on a microtask, so settle → render twice. */
+  async function flush(fixture: { detectChanges: () => void }): Promise<void> {
+    for (let i = 0; i < 2; i++) {
+      await settle();
+      fixture.detectChanges();
+    }
+  }
+
+  it('a failed save shows the error and the switch keeps its saved value', async () => {
+    const { fixture, page, config } = renderPage([configItem({ eventKey: 'review', isEnabled: true })]);
+    vi.mocked(config.update).mockRejectedValue(new Error('500'));
+    await flush(fixture);
+    const button = switchButton(fixture, 'notif-config-enabled-review');
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+
+    button.click();
+    await flush(fixture);
+
+    expect(config.update).toHaveBeenCalledWith('review', expect.objectContaining({ isEnabled: false }));
+    expect(messages.error[0]).toContain('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+    expect(messages.success).toEqual([]);
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+    expect(page.savingKey()).toBeNull();
+    expect(page.savingSwitch()).toBeNull();
+  });
+
+  it('a successful save shows the value the server answered with', async () => {
+    const { fixture, config } = renderPage([configItem({ eventKey: 'review', isEnabled: true })]);
+    vi.mocked(config.update).mockImplementation(async (eventKey, request) => {
+      // mirrors NotificationConfigService.replaceItem: the row is replaced from the PUT response
+      const saved = configItem({ eventKey, ...request, isCustomized: true });
+      config.setItemsForTest([saved]);
+      return saved;
+    });
+    await flush(fixture);
+
+    switchButton(fixture, 'notif-config-enabled-review').click();
+    await flush(fixture);
+
+    expect(switchButton(fixture, 'notif-config-enabled-review').classList.contains('ant-switch-checked')).toBe(false);
+    expect(messages.success).toContain('บันทึกการตั้งค่าแล้ว');
+  });
+
+  it('only the flipped switch spins, and a second flip while saving sends nothing', async () => {
+    const { fixture, page, config } = renderPage([
+      configItem({ eventKey: 'review' }),
+      configItem({ eventKey: 'sale', group: 'payout' }),
+    ]);
+    vi.mocked(config.update).mockImplementation(() => new Promise<NotificationEventConfigItem>(() => undefined));
+    await flush(fixture);
+
+    switchButton(fixture, 'notif-config-email-review').click();
+    await flush(fixture);
+
+    expect(switchButton(fixture, 'notif-config-email-review').classList.contains('ant-switch-loading')).toBe(true);
+    expect(switchButton(fixture, 'notif-config-line-review').classList.contains('ant-switch-loading')).toBe(false);
+    expect(switchButton(fixture, 'notif-config-email-review').classList.contains('ant-switch-checked')).toBe(true);
+
+    page.toggle(page.items()[1], 'emailEnabled', false);
+
+    expect(config.update).toHaveBeenCalledTimes(1);
+  });
+});

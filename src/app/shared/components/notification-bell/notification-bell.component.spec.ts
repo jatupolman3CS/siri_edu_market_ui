@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { NzDropdownDirective } from 'ng-zorro-antd/dropdown';
 import { NotificationBellComponent } from './notification-bell.component';
 import {
   NotificationContextService,
@@ -60,7 +62,7 @@ describe('NotificationBellComponent', () => {
       'button[nz-dropdown]',
     ) as HTMLElement;
     expect(trigger).toBeTruthy();
-    expect(trigger.querySelector('span.bg-pink-500')).toBeNull();
+    expect(trigger.querySelector('span.bg-primary')).toBeNull();
   });
 
   it('shows the badge with the unread count when > 0', () => {
@@ -71,7 +73,7 @@ describe('NotificationBellComponent', () => {
     const trigger = (fixture.nativeElement as HTMLElement).querySelector(
       'button[nz-dropdown]',
     ) as HTMLElement;
-    const badge = trigger.querySelector('span.bg-pink-500');
+    const badge = trigger.querySelector('span.bg-primary');
     expect(badge?.textContent?.trim()).toBe('4');
     expect(trigger.getAttribute('aria-label')).toBe('การแจ้งเตือน 4 รายการที่ยังไม่อ่าน');
   });
@@ -127,7 +129,7 @@ describe('NotificationBellComponent', () => {
     const trigger = (fixture.nativeElement as HTMLElement).querySelector(
       'button[nz-dropdown]',
     ) as HTMLElement;
-    expect(trigger.querySelector('span.bg-pink-500')).toBeNull();
+    expect(trigger.querySelector('span.bg-primary')).toBeNull();
   });
 
   it('opening the dropdown treats visible notifications as read for the current layout', () => {
@@ -175,7 +177,7 @@ describe('NotificationBellComponent', () => {
     ) as HTMLElement;
     expect(trigger).toBeTruthy();
     expect(trigger.textContent).toContain('การแจ้งเตือน');
-    const badge = trigger.querySelector('span.bg-pink-500');
+    const badge = trigger.querySelector('span.bg-primary');
     expect(badge?.textContent?.trim()).toBe('3');
   });
 
@@ -217,7 +219,7 @@ describe('NotificationBellComponent', () => {
     const trigger = (fixture.nativeElement as HTMLElement).querySelector(
       'button[nz-dropdown]',
     ) as HTMLElement;
-    expect(trigger.querySelector('span.bg-pink-500')?.textContent?.trim()).toBe('2');
+    expect(trigger.querySelector('span.bg-primary')?.textContent?.trim()).toBe('2');
   });
 
   it('AC-6: a row whose linkUrl points at another layout never leaves the current one', () => {
@@ -300,6 +302,28 @@ describe('NotificationBellComponent', () => {
     expect(markAllReadSpy).toHaveBeenCalledWith('seller');
     expect(feed.unreadByAudience()).toEqual({ buyer: 5, seller: 0, admin: 0 });
     expect(feed.unreadCount()).toBe(5);
+  });
+
+  it('a notification click closes the dropdown (F135)', () => {
+    const { fixture, feed } = buildFixture();
+    feed.setItemsForTest([item({ id: 'a' })]);
+    fixture.detectChanges();
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.componentInstance.menuOpen.set(true);
+    fixture.componentInstance.onItemClick(feed.items()[0]);
+    expect(fixture.componentInstance.menuOpen()).toBe(false);
+  });
+
+  it('binds the trigger to menuOpen so the View-all / cross-role links can close it (F135)', () => {
+    const { fixture } = buildFixture();
+    fixture.detectChanges();
+    fixture.componentInstance.menuOpen.set(true);
+    fixture.detectChanges();
+    const dropdown = fixture.debugElement.query(By.directive(NzDropdownDirective)).injector.get(NzDropdownDirective);
+    expect(dropdown.nzVisible).toBe(true);
+    fixture.componentInstance.menuOpen.set(false);
+    fixture.detectChanges();
+    expect(dropdown.nzVisible).toBe(false);
   });
 
   it('runs no poll timer of its own (kafka-redis-notifications v1 §4 — one timer in the feed service)', () => {

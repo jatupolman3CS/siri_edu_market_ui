@@ -1,16 +1,16 @@
-<div class="min-h-screen flex flex-col items-center justify-center px-6 bg-canvas text-center">
+<div class="min-h-dvh flex flex-col items-center justify-center bg-canvas text-center pt-[calc(2rem+var(--safe-top))] pb-[calc(2rem+var(--safe-bottom))] pl-[max(1rem,var(--safe-left))] pr-[max(1rem,var(--safe-right))] sm:pl-[max(1.5rem,var(--safe-left))] sm:pr-[max(1.5rem,var(--safe-right))]">
       <app-logo />
-      <div class="mt-12">
+      <div class="mt-8 sm:mt-12 w-full max-w-md">
         <div class="text-[120px] md:text-[200px] font-extrabold text-pink-200 leading-none select-none">
           404
         </div>
-        <h1 class="text-3xl font-extrabold text-ink -mt-8 mb-3">{{ 'notFound.title' | trans }}</h1>
-        <p class="text-base text-ink-soft mb-8 max-w-md">
+        <h1 class="heading-1 font-extrabold text-ink -mt-6 md:-mt-8 mb-3">{{ 'notFound.title' | trans }}</h1>
+        <p class="text-base text-ink-soft mb-8 max-w-md mx-auto">
           {{ 'notFound.desc' | trans }}
         </p>
-        <div class="flex flex-wrap items-center justify-center gap-3">
-          <a routerLink="/" class="btn-pink">{{ 'notFound.backHome' | trans }}</a>
-          <a routerLink="/marketplace" class="btn-ghost">{{ 'notFound.exploreMarket' | trans }}</a>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+          <a routerLink="/" class="btn-pink min-h-11">{{ 'notFound.backHome' | trans }}</a>
+          <a routerLink="/marketplace" class="btn-ghost min-h-11">{{ 'notFound.exploreMarket' | trans }}</a>
         </div>
       </div>
     </div>

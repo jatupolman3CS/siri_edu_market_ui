@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { signal } from '@angular/core';
 import { WalletPage } from './wallet.page';
 import { AuthService, OrderService, WalletService } from '../../../core/services';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import {
   idleActionState,
   type ActionState,
@@ -198,6 +200,152 @@ describe('WalletPage', () => {
       await component.startTopUp();
       expect(mockMessage.warning).toHaveBeenCalledWith('กรุณาระบุจำนวนเงินที่ต้องการเติม');
       expect(mockWalletService.createTopUp).not.toHaveBeenCalled();
+    });
+  });
+  describe('responsive-ui F152 / F156: Payment Element mount failure and readiness', () => {
+    const TOPUP: WalletTopUp = {
+      id: 'top-f152',
+      amount: 500,
+      status: 'pending',
+      stripePaymentIntentId: 'pi_test_f152',
+      clientSecret: 'pi_test_f152_secret_abc',
+      createdAt: '2026-09-30T00:00:00.000Z',
+      succeededAt: null,
+    };
+    const stripeTag = () =>
+      document.querySelector<HTMLScriptElement>('script[src="https://js.stripe.com/v3/"]');
+    const confirmButton = () =>
+      Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>).find(
+        (b) => b.textContent?.trim() === 'ยืนยันชำระเงิน',
+      );
+
+    afterEach(() => {
+      document.querySelectorAll('script[src="https://js.stripe.com/v3/"]').forEach((s) => s.remove());
+      delete window.Stripe;
+    });
+
+    it('a Stripe.js load failure shows the translated message and returns to the amount form (amount kept)', async () => {
+      component.amount.set(500);
+      mockWalletService.createTopUp.mockResolvedValueOnce(TOPUP);
+
+      await component.startTopUp();
+      fixture.detectChanges();
+      expect(component.mountingPayment()).toBe(true);
+      expect(confirmButton()?.disabled).toBe(true);
+
+      // jsdom never fetches the CDN script — fail it by hand once the 50ms mount timer added it.
+      await vi.waitFor(() => expect(stripeTag()).toBeTruthy());
+      stripeTag()!.dispatchEvent(new Event('error'));
+      await vi.waitFor(() => expect(component.mountingPayment()).toBe(false));
+      fixture.detectChanges();
+
+      expect(mockMessage.error).toHaveBeenCalledWith('ไม่สามารถโหลดระบบชำระเงิน Stripe ได้');
+      expect(mockMessage.error).not.toHaveBeenCalledWith('Failed to load Stripe.js');
+      expect(component.currentTopUp()).toBeNull();
+      expect(component.paymentReady()).toBe(false);
+      expect(component.amount()).toBe(500);
+      expect(fixture.nativeElement.querySelector('#topup-amount-input')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('#wallet-stripe-payment-element')).toBeNull();
+      expect(confirmButton()).toBeUndefined();
+      // The failed tag is gone, so the next attempt really reloads Stripe.js.
+      expect(stripeTag()).toBeNull();
+    });
+
+    it('keeps "ยืนยันชำระเงิน" disabled until the Payment Element is mounted', async () => {
+      const mount = vi.fn();
+      window.Stripe = vi.fn(() => ({
+        elements: vi.fn(() => ({ create: vi.fn(() => ({ mount })) })),
+        confirmPayment: vi.fn(),
+      })) as unknown as Window['Stripe'];
+      component.amount.set(500);
+      mockWalletService.createTopUp.mockResolvedValueOnce(TOPUP);
+
+      await component.startTopUp();
+      fixture.detectChanges();
+      expect(confirmButton()?.disabled).toBe(true);
+
+      await vi.waitFor(() => expect(component.paymentReady()).toBe(true));
+      fixture.detectChanges();
+      expect(mount).toHaveBeenCalledWith('#wallet-stripe-payment-element');
+      expect(confirmButton()?.disabled).toBe(false);
+      expect(mockMessage.error).not.toHaveBeenCalled();
+    });
+
+    it('confirmPayment() with no mounted Payment Element tells the buyer instead of silently doing nothing', async () => {
+      component.currentTopUp.set(TOPUP);
+
+      await component.confirmPayment();
+
+      expect(mockMessage.error).toHaveBeenCalledWith('โหลดระบบชำระเงินไม่สำเร็จ กรุณาลองใหม่');
+      expect(component.busy()).toBe(false);
+    });
+  });
+
+  describe('responsive-ui v1 U5-3: ledger table uses .rtable', () => {
+    it('renders the ledger as an .rtable with one title, one corner amount and two labelled keys per row', () => {
+      mockLedger.set([
+        { id: 'e1', kind: 'purchase', amount: -120, reason: '', orderNumber: 'ORD-1', occurredAt: '2026-09-20T10:00:00.000Z' },
+      ]);
+      fixture.detectChanges();
+
+      const table = fixture.nativeElement.querySelector('table') as HTMLTableElement;
+      expect(table.classList.contains('rtable')).toBe(true);
+      const row = table.querySelector('tbody tr') as HTMLTableRowElement;
+      expect(row.querySelectorAll('td.rt-title').length).toBe(1);
+      expect(row.querySelectorAll('td.rt-status').length).toBe(1);
+      const keys = Array.from(row.querySelectorAll('td.rt-key'));
+      expect(keys.length).toBe(2);
+      keys.forEach((k) => expect(k.getAttribute('data-label')).toBeTruthy());
+      expect(row.querySelector('td.rt-status')?.textContent).toContain('120');
+    });
+  });
+
+  describe('responsive-ui v1.6 R-27 / U5-7: ledger table viewport', () => {
+    const entries = (n: number): WalletEntry[] =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `e${i + 1}`,
+        kind: 'topup' as const,
+        amount: 100,
+        reason: 'wallet_topup',
+        occurredAt: '2026-09-15T10:00:00.000Z',
+      }));
+
+    it('sits in a table viewport named after its section, with "load more" after it', () => {
+      mockLedger.set(entries(20));
+      mockLedgerHasMore.set(true);
+      fixture.detectChanges();
+
+      const wrapper = (fixture.nativeElement.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+      expect(wrapper.classList.contains('rt-viewport')).toBe(true);
+      expect(wrapper.classList.contains('table-scroll')).toBe(true);
+
+      const viewport = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+      expect(viewport.rtLabel()).toBe('ประวัติยอดเงิน');
+      // U5-7: no reset key at all — appended rows must never scroll the table back up.
+      expect(viewport.rtResetKey()).toBeUndefined();
+
+      const loadMore = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>).find((b) =>
+        b.textContent?.includes('โหลดเพิ่ม'),
+      ) as HTMLButtonElement;
+      expect(loadMore).toBeTruthy();
+      expect(wrapper.contains(loadMore)).toBe(false);
+    });
+
+    it('"load more" appends rows and keeps the scroll position', async () => {
+      mockLedger.set(entries(20));
+      mockLedgerHasMore.set(true);
+      fixture.detectChanges();
+      const wrapper = (fixture.nativeElement.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+
+      wrapper.scrollTop = 200;
+      mockLedger.set(entries(40));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const after = (fixture.nativeElement.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+      expect(after).toBe(wrapper);
+      expect(after.querySelectorAll('tbody tr').length).toBe(40);
+      expect(after.scrollTop).toBe(200);
     });
   });
 });

@@ -12,6 +12,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
@@ -36,6 +37,7 @@ function formatBaht(v: number): string {
     EmptyStateComponent,
     IconComponent,
     PaginationComponent,
+    TableViewportDirective,
     ThbPipe,
     CommonModule,
     DatePipe,
@@ -66,6 +68,22 @@ export class SellerEarningsPage {
   readonly ledgerTotal = signal(0);
   readonly balanceEntries = signal<SellerBalanceEntry[]>([]);
   readonly loadingLedger = signal(false);
+
+  /**
+   * responsive-ui v1.4 R-17 (G-27, F88): the stat cards and the withdraw card come from
+   * `GET /api/seller/earnings`. Before the first answer they are skeletons (not ฿0 figures), and a
+   * failure shows a message with a retry. Loaded data wins over a background refresh.
+   */
+  readonly earningsView = computed<'loading' | 'error' | 'data'>(() => {
+    if (this.seller.earnings() !== null) return 'data';
+    const status = this.seller.earningsState().status;
+    if (status === 'error') return 'error';
+    return status === 'success' ? 'data' : 'loading';
+  });
+
+  retryEarnings(): void {
+    void this.seller.loadEarnings();
+  }
 
   /** GAP-02: figures now come from the earnings endpoint rather than dashboard stats. */
   readonly totalEarnings = computed(() => this.seller.earnings()?.totalEarnings ?? 0);

@@ -20,6 +20,16 @@
 
   @if (feed.loading() && feed.items().length === 0) {
     <app-empty-state emoji="⏳" [title]="'common.loading' | trans" [description]="'common.pleaseWait' | trans" />
+  } @else if (feed.feedError() && feed.items().length === 0) {
+    <!-- responsive-ui v1.4 R-17 (F88): a failed load is an error with a retry, not "no notifications". -->
+    <div class="card-soft p-6 sm:p-10 text-center" role="alert" data-testid="notifications-error">
+      <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+      <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+      <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+      <button type="button" class="btn-pink mt-5" data-testid="notifications-retry" (click)="retry()">
+        {{ 'common.retry' | trans }}
+      </button>
+    </div>
   } @else if (feed.items().length === 0) {
     <app-empty-state
       emoji="🔔"
@@ -52,23 +62,29 @@
             </div>
 
             <div class="min-w-0 flex-1">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-xs font-bold px-2 py-0.5 rounded leading-none shrink-0" [class]="style.badgeClass">
-                    {{ style.label | trans }}
-                  </span>
-                  <p class="text-sm md:text-base text-ink leading-snug truncate" [class.font-bold]="!item.isRead" [class.font-semibold]="item.isRead">
-                    {{ item.title }}
-                  </p>
-                </div>
+              <!-- responsive-ui v1.4 R-4 (G-14d): the title wraps instead of truncating. Next to the type
+                   pill it was squeezed to 17–94px at 320/360 ('ส…'). Phones (<744) give it a full-width
+                   row under [type pill · ใหม่]; from 744 it sits inline between them and still wraps. -->
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1.5" data-testid="notification-head">
+                <span class="text-xs font-bold px-2 py-0.5 rounded leading-none max-w-full" [class]="style.badgeClass">
+                  {{ style.label | trans }}
+                </span>
                 @if (!item.isRead) {
-                  <span class="pill-pink text-[10px] !py-0.5 !px-2 flex-shrink-0">
+                  <span class="pill-pink text-[10px] !py-0.5 !px-2 flex-shrink-0 ml-auto md:order-last" data-testid="notification-new">
                     {{ 'shared.notifications.newLabel' | trans }}
                   </span>
                 }
+                <p
+                  class="basis-full md:basis-48 grow min-w-0 text-sm md:text-base text-ink leading-snug [overflow-wrap:anywhere]"
+                  data-testid="notification-title"
+                  [class.font-bold]="!item.isRead"
+                  [class.font-semibold]="item.isRead"
+                >
+                  {{ item.title }}
+                </p>
               </div>
 
-              <p class="text-xs md:text-sm text-ink-soft mt-1.5 leading-relaxed whitespace-pre-wrap">{{ item.body }}</p>
+              <p class="text-xs md:text-sm text-ink-soft mt-1.5 leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">{{ item.body }}</p>
 
               <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-line/50">
                 <span class="text-xs text-ink-muted flex items-center gap-1">

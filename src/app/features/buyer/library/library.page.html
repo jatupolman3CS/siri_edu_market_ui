@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-5 md:py-8">
       <app-page-hero
         [eyebrow]="'library.eyebrow' | trans"
         [title]="'library.heroTitle' | trans"
@@ -15,7 +15,7 @@
         </app-empty-state>
       } @else {
       <!-- Stats -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8 md:mb-10">
         <app-stat-card
           [label]="'library.statPurchased' | trans"
           [value]="library.totalDocuments() + ' ' + ('library.booksUnit' | trans)"
@@ -34,8 +34,9 @@
         <!-- loyalty-points v1 §4: custom card (not app-stat-card) — needs the loading dash,
              error copy, and "ดูประวัติคะแนน" button that the generic stat card doesn't support. -->
         <div class="card-soft p-5 flex flex-col gap-2">
-          <div class="flex items-center justify-between text-ink-muted">
-            <span class="text-xs font-semibold uppercase tracking-wider inline-flex items-center gap-1">
+          <!-- R-4: the uppercase label wraps instead of pushing the 🌸 out of the card at 320 (en). -->
+          <div class="flex items-start justify-between gap-1 text-ink-muted">
+            <span class="min-w-0 text-xs font-semibold uppercase tracking-wider inline-flex flex-wrap items-center gap-1 [overflow-wrap:anywhere]">
               {{ 'library.pointsTitle' | trans }}
               <span
                 nz-tooltip
@@ -45,7 +46,7 @@
                 ?
               </span>
             </span>
-            <span class="text-2xl">🌸</span>
+            <span class="text-2xl shrink-0">🌸</span>
           </div>
 
           @if (loyalty.state().status === 'error') {
@@ -78,7 +79,7 @@
 
           <button
             type="button"
-            class="text-xs font-semibold text-pink-600 text-left mt-1"
+            class="self-start inline-flex items-center min-h-11 text-xs font-semibold text-pink-600 text-left"
             (click)="openLedgerDrawer()"
           >
             {{ 'library.viewPointsHistory' | trans }}
@@ -87,23 +88,32 @@
       </section>
 
       <!-- Tabs + search -->
-      <div class="flex items-center gap-2 mb-6 flex-wrap">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div class="chip-row min-w-0 flex-1" data-testid="library-tabs">
+        <!-- R-16 (G-26b): the selected tab is exposed as aria-pressed (forced colors then fill it
+             with Highlight), and every tab keeps the same 1px border so the selected one is not
+             the only borderless chip, which read as reversed under forced colors. -->
         @for (t of tabs; track t.value) {
           <button
-            class="px-4 py-2.5 rounded-full text-sm font-medium transition-colors"
-            [class.bg-pink-500]="library.libraryFilter() === t.value"
+            type="button"
+            class="px-4 min-h-11 rounded-full border text-sm font-medium whitespace-nowrap transition-colors"
+            [attr.aria-pressed]="library.libraryFilter() === t.value"
+            [class.bg-primary]="library.libraryFilter() === t.value"
             [class.text-white]="library.libraryFilter() === t.value"
+            [class.border-primary]="library.libraryFilter() === t.value"
             [class.bg-white]="library.libraryFilter() !== t.value"
             [class.text-ink-soft]="library.libraryFilter() !== t.value"
-            [class.border]="library.libraryFilter() !== t.value"
             [class.border-line]="library.libraryFilter() !== t.value"
             (click)="library.setLibraryFilter(t.value)"
           >
             {{ t.labelKey | trans }}
           </button>
         }
+        </div>
         <input
           type="search"
+          inputmode="search"
+          [attr.aria-label]="'library.searchPlaceholder' | trans"
           class="input-soft w-full sm:w-auto sm:min-w-[220px] sm:ml-auto text-sm"
           [placeholder]="'library.searchPlaceholder' | trans"
           [ngModel]="searchQuery()"
@@ -144,13 +154,20 @@
                 <div class="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-rose-200/30 blur-lg pointer-events-none"></div>
 
                 <!-- Top Header Badges -->
-                <div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10 pointer-events-none">
-                  <span class="px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur text-[10px] font-extrabold uppercase tracking-wider text-pink-600 shadow-sm border border-pink-100">
+                <!-- responsive-ui v1.4 R-4 (F4): the badges sit above the cover (z-20 over its z-10) and
+                     never wrap; below 744 (2-column cards, 114–150px covers) "เป็นเจ้าของแล้ว" is the
+                     check icon with the label kept as its accessible name. It used to wrap to 3–4
+                     lines and slide under the cover. -->
+                <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-1 z-20 pointer-events-none">
+                  <span class="shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur text-[10px] font-extrabold uppercase tracking-wider text-pink-600 shadow-sm border border-pink-100">
                     {{ item.document.format }}
                   </span>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold shadow-soft inline-flex items-center gap-1">
+                  <span
+                    class="shrink-0 whitespace-nowrap px-1.5 md:px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold shadow-soft inline-flex items-center gap-1"
+                    data-testid="library-owned-badge"
+                  >
                     <app-icon name="check" [size]="11" />
-                    {{ 'documentCard.owned' | trans }}
+                    <span class="sr-only md:not-sr-only">{{ 'documentCard.owned' | trans }}</span>
                   </span>
                 </div>
 
@@ -168,7 +185,7 @@
                     </div>
                   } @else {
                     <div class="relative w-20 h-24 rounded-2xl bg-white border border-pink-100 shadow-soft flex flex-col items-center justify-center gap-1.5 group-hover:scale-110 group-hover:-translate-y-1.5 group-hover:shadow-pop group-hover:border-pink-300 group-hover:rotate-[-2deg] transition-all duration-300 ease-out">
-                      <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center group-hover:bg-pink-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                      <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
                         <app-icon name="doc" [size]="20" />
                       </div>
                       <span class="text-[10px] font-extrabold uppercase tracking-wider text-ink-muted group-hover:text-pink-600 transition-colors">
@@ -181,7 +198,7 @@
               </div>
 
               <!-- Card Body Content -->
-              <div class="p-5 flex flex-col gap-2.5 flex-1">
+              <div class="p-3.5 sm:p-5 flex flex-col gap-2.5 flex-1">
                 <!-- Title -->
                 <h3 class="text-base font-bold text-ink leading-snug line-clamp-2 min-h-[3rem] group-hover:text-pink-600 transition-colors">
                   {{ item.document.title }}
@@ -244,19 +261,23 @@
                 </div>
                 }
 
-                <!-- The collapsed card keeps only download and expand visible. -->
-                <div class="order-1 flex gap-2 mt-auto pt-3">
+                <!-- The collapsed card keeps only download and expand visible.
+                     responsive-ui v1.4 R-1/R-4 (F2, F98): two flex-1 buttons don't fit a 110–180px card
+                     (the coarse min-width let the labels spill out; with a mouse the row overflowed and
+                     the card cut "Expand" in half). They are flex-auto in a wrapping row, so each takes
+                     a full-width row when both don't fit, and the label wraps inside its button. -->
+                <div class="order-1 flex flex-wrap gap-2 mt-auto pt-3" data-testid="library-card-actions">
                   <button
                     type="button"
-                    class="btn-pink flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
+                    class="btn-pink flex-auto min-w-0 !px-3 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
                     (click)="download(item.document.id)"
                   >
                     <app-icon name="download" [size]="14" />
-                    {{ 'library.downloadBtn' | trans }}
+                    <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ 'library.downloadBtn' | trans }}</span>
                   </button>
                   <button
                     type="button"
-                    class="btn-ghost flex-1 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
+                    class="btn-ghost flex-auto min-w-0 !px-3 !py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
                     [attr.aria-expanded]="isExpanded(item.document.id)"
                     [attr.aria-controls]="'library-details-' + item.document.id"
                     (click)="toggleExpanded(item.document.id)"
@@ -267,7 +288,7 @@
                       class="transition-transform duration-200"
                       [class.rotate-180]="isExpanded(item.document.id)"
                     />
-                    {{ (isExpanded(item.document.id) ? 'library.collapseBtn' : 'library.expandBtn') | trans }}
+                    <span class="min-w-0 leading-tight [overflow-wrap:anywhere]">{{ (isExpanded(item.document.id) ? 'library.collapseBtn' : 'library.expandBtn') | trans }}</span>
                   </button>
                 </div>
 
@@ -347,16 +368,22 @@
 
 <!-- Review Modal (Standardized System Popup) -->
 @if (reviewModal(); as modal) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(42,27,34,0.45)] backdrop-blur-md" (click)="closeReviewModal()">
-    <div class="card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line overflow-hidden animate-in fade-in zoom-in-95 duration-150" (click)="$event.stopPropagation()">
-      <div class="flex items-center justify-between pb-3.5 border-b border-line mb-4">
-        <div class="flex items-center gap-2.5">
+  <!-- §4.7 custom-overlay contract (F47 / F74 / F103): the overlay is the 100dvh scroller with
+       safe-area padding and the card centres with m-auto, so a card taller than a landscape phone
+       scrolls instead of being cut off at both ends. The card is a named modal dialog with a focus
+       trap (auto-capture: focus in on open, back to the trigger on close); cdkTrapFocus puts its
+       tab anchors next to the card, inside this fixed box. Escape and the page lock (R-10) live in
+       the component. -->
+  <div class="fixed inset-0 z-50 flex h-dvh overflow-y-auto overscroll-contain bg-[rgba(42,27,34,0.45)] backdrop-blur-md pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="closeReviewModal()">
+    <div class="m-auto card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line animate-in fade-in zoom-in-95 duration-150" role="dialog" aria-modal="true" aria-labelledby="library-review-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between gap-3 pb-3.5 border-b border-line mb-4">
+        <div class="flex min-w-0 items-center gap-2.5">
           <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0">
             <app-icon name="star" [size]="16" />
           </span>
-          <h3 class="text-base md:text-lg font-bold text-ink">{{ 'library.reviewModalTitle' | trans }}</h3>
+          <h3 id="library-review-title" class="min-w-0 text-base md:text-lg font-bold text-ink">{{ 'library.reviewModalTitle' | trans }}</h3>
         </div>
-        <button class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft hover:text-pink-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" [attr.aria-label]="'common.close' | trans">
+        <button type="button" class="w-11 h-11 shrink-0 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft hover:text-pink-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" [attr.aria-label]="'common.close' | trans">
           <app-icon name="close" [size]="14" />
         </button>
       </div>
@@ -383,16 +410,20 @@
           <!-- Rating -->
           <div class="mb-4">
             <label class="block text-xs font-semibold text-ink-soft mb-2">{{ 'library.ratingSatisfaction' | trans }}</label>
-            <div class="flex items-center justify-between p-3 bg-pink-50/50 rounded-2xl border border-line">
-              <div class="flex gap-1.5">
+            <!-- R-2 / E-8: 44x44 star buttons with no gap; below 344px five of them no longer fit
+                 the card (5x44 > 214px at 320), so they drop to 40x44. The score pill wraps under
+                 the stars when the row is too narrow for both. -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-pink-50/50 rounded-2xl border border-line">
+              <div class="flex">
                 @for (star of [1, 2, 3, 4, 5]; track star) {
                   <button
                     type="button"
-                    class="text-2xl transition-transform hover:scale-125 focus:outline-none select-none"
+                    class="w-10 min-[344px]:w-11 h-11 inline-flex items-center justify-center text-2xl leading-none transition-transform hover:scale-125 select-none"
                     [class.text-amber-400]="star <= reviewForm().rating"
                     [class.text-stone-300]="star > reviewForm().rating"
                     (click)="setRating(star)"
                     [title]="'library.stars' | trans: { count: star }"
+                    [attr.aria-label]="'library.stars' | trans: { count: star }"
                   >
                     ★
                   </button>
@@ -450,7 +481,7 @@
 <nz-drawer
   [nzVisible]="ledgerDrawerOpen()"
   nzPlacement="right"
-  [nzWidth]="420"
+  nzWidth="min(420px, 90vw)"
   [nzClosable]="false"
   [nzBodyStyle]="{ padding: '0' }"
   (nzOnClose)="closeLedgerDrawer()"

@@ -1,0 +1,20 @@
+/* F9: footer links are 32px rows (min-h-8) and the mailto link a bare text line (20px) — below the
+   44px touch target. On coarse pointers every list link gets a 44x44 target; the 8px list rhythm
+   is dropped there so the footer does not grow by ~100px (the 44px rows carry their own spacing).
+   Mouse users keep the compact desktop density. */
+@media (pointer: coarse) {
+  :host ul a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  :host ul > li {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  :host ul > li + li {
+    margin-top: 0;
+  }
+}

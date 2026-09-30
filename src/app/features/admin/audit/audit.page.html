@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <header>
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.auditAdmin.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.auditAdmin.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">
       {{ 'admin.auditAdmin.desc' | trans }}
     </p>
@@ -47,11 +47,12 @@
               {{ entry.createdAt | date: 'dd MMM yyyy HH:mm' }}
             </span>
           </div>
+          <!-- R-5 (F94): actor names and entity titles break anywhere instead of widening the page. -->
           <div class="text-sm text-ink mt-1.5 flex items-center gap-2 flex-wrap">
-            <span class="font-semibold">{{ entry.actorName || ('admin.auditAdmin.systemActor' | trans) }}</span>
+            <span class="font-semibold min-w-0 [overflow-wrap:anywhere]">{{ entry.actorName || ('admin.auditAdmin.systemActor' | trans) }}</span>
             <span class="text-ink-muted">·</span>
             @if (entry.entityTitle) {
-              <span class="font-medium text-pink-600 bg-pink-50/70 px-2.5 py-0.5 rounded-lg border border-pink-100">
+              <span class="font-medium text-pink-600 bg-pink-50/70 px-2.5 py-0.5 rounded-lg border border-pink-100 min-w-0 max-w-full [overflow-wrap:anywhere]">
                 {{ entry.entityTitle }}
               </span>
               <span class="text-xs text-ink-muted">({{ entityTypeLabel(entry.entityType) }})</span>
@@ -80,7 +81,7 @@
           </div>
           @if (parseDetails(entry.detailsJson); as items) {
             @if (items.length > 0) {
-              <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+              <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 @for (item of items; track item.label) {
                   <div class="flex items-baseline gap-2 bg-white/70 p-2 rounded-xl border border-amber-100">
                     <dt class="text-ink-muted font-medium shrink-0">{{ item.label }}:</dt>

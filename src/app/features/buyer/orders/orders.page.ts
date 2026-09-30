@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NzTabChangeEvent, NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService, LibraryService, OrderService, WalletService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -16,7 +15,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 
 /**
  * order-status-tabs v1 §4: order of the tabs on screen, matching the Thai copy table exactly.
- * Index into this array is what `nz-tabs` reports on `(nzSelectChange)`.
+ * Index into this array is the index of the chip in the tab row (responsive-ui v1 U5-3).
  */
 const TAB_ORDER: readonly OrderTabFilter[] = [
   'all',
@@ -30,7 +29,6 @@ const TAB_ORDER: readonly OrderTabFilter[] = [
   standalone: true,
   imports: [
     RouterLink,
-    NzTabsModule,
     PageHeroComponent,
     IconComponent,
     EmptyStateComponent,
@@ -55,11 +53,35 @@ export class BuyerOrdersPage {
 
   readonly showSuccess = signal<boolean>(false);
 
+  /** Tab chips in on-screen order (label keys unchanged from order-status-tabs v1 §4). */
+  readonly tabs: readonly { value: OrderTabFilter; labelKey: string }[] = [
+    { value: 'all', labelKey: 'orders.tabAll' },
+    { value: 'awaiting_payment', labelKey: 'orders.tabAwaitingPayment' },
+    { value: 'successful', labelKey: 'orders.tabSuccessful' },
+    { value: 'cancelled_refunded', labelKey: 'orders.tabCancelledRefunded' },
+  ];
+
   /** order-status-tabs v1 §4: which tab is highlighted, kept in sync with `library.ordersTab()`. */
   readonly selectedTabIndex = computed(() => {
     const index = TAB_ORDER.indexOf(this.library.ordersTab());
     return index === -1 ? 0 : index;
   });
+
+  /**
+   * responsive-ui v1.4 R-17 (F88): four distinct states. "ยังไม่มีคำสั่งซื้อ" is only for a list that
+   * really loaded empty — never while the GET is pending, and never after it failed.
+   */
+  readonly listState = computed<'loading' | 'error' | 'empty' | 'data'>(() => {
+    if (this.library.orders().length > 0) return 'data';
+    const status = this.library.ordersState().status;
+    if (status === 'error') return 'error';
+    if (status === 'loading') return 'loading';
+    return this.library.ordersLoaded() ? 'empty' : 'loading';
+  });
+
+  retryOrders(): void {
+    void this.library.refreshOrders();
+  }
 
   /** order-status-tabs v1 §4: guards against firing a second cancel while one is in flight. */
   readonly cancellingId = signal<string | null>(null);
@@ -84,13 +106,13 @@ export class BuyerOrdersPage {
   }
 
   /**
-   * order-status-tabs v1 §4/AC-11: 1 tab switch = 1 `setOrdersTab` call. `nz-tabs` does not fire
-   * `nzSelectChange` on the initial render (only on an actual change of the selected index), so
-   * this never runs before the user interacts with the tab strip.
+   * order-status-tabs v1 §4/AC-11: 1 tab switch = 1 `setOrdersTab` call. Only runs on a user
+   * click, and clicking the already-selected chip is a no-op (same semantics nz-tabs had:
+   * no fetch on initial render, none when the selected index does not change).
    */
-  onTabChange(event: NzTabChangeEvent): void {
-    if (event.index == null) return;
-    const tab = TAB_ORDER[event.index];
+  selectTab(index: number): void {
+    if (index === this.selectedTabIndex()) return;
+    const tab = TAB_ORDER[index];
     if (!tab) return;
     void this.library.setOrdersTab(tab);
   }

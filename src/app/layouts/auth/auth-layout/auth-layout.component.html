@@ -1,16 +1,26 @@
-<div class="min-h-screen flex items-stretch bg-canvas">
+<div class="auth-shell min-h-dvh flex items-stretch bg-canvas safe-top safe-bottom safe-x">
       <app-global-loader />
       <!-- Left: form area (content slot) -->
       <div
-        class="auth-form-pane flex-1 flex flex-col px-6 lg:px-12 py-8 max-w-xl mx-auto w-full"
+        class="auth-form-pane flex-1 min-w-0 flex flex-col px-4 sm:px-6 lg:px-12 py-8 max-w-xl mx-auto w-full"
         [class.auth-form-pane--compact]="compact()"
       >
-        <header class="flex items-center justify-between">
-          <app-logo />
-          <div class="flex items-center gap-2">
+        <header class="flex items-center justify-between gap-2 min-w-0">
+          <!-- logo--compact-xs: icon only below 360. responsive-ui v1.4 §4.6 F (F1): below 640 the
+               back link shows only the arrow; the label stays in the accessible name (sr-only) and
+               shows from 640. A visible label that wraps inside the 44px target still overflowed
+               the page under text scaling (360 en 20px → 363, 24px → 406; th 24px → 373). -->
+          <!-- R-6: the logo is the only item that shrinks (wordmark ellipsis) — the language switcher
+               and the 44px back link keep their size, so the row fits at 150% text on 360. -->
+          <app-logo class="logo--compact-xs min-w-0 overflow-hidden" />
+          <div class="flex items-center gap-1 sm:gap-2 shrink-0">
             <app-language-switcher variant="dropdown" />
-            <a routerLink="/" class="text-xs text-ink-muted hover:text-pink-600">
-              ← {{ 'nav.backToMarket' | trans }}
+            <a
+              routerLink="/"
+              class="tap-target px-2 text-xs leading-tight whitespace-nowrap text-ink-muted hover:text-pink-600"
+              data-testid="auth-back-link"
+            >
+              <span aria-hidden="true">←</span><span class="sr-only sm:not-sr-only sm:ml-1">{{ 'nav.backToMarket' | trans }}</span>
             </a>
           </div>
         </header>
@@ -33,11 +43,11 @@
 
         <div class="relative max-w-md text-white">
           <span
-            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] uppercase tracking-[0.2em] mb-5"
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-hover/80 ring-1 ring-inset ring-white/30 backdrop-blur text-[11px] uppercase tracking-[0.2em] mb-5"
           >
             🌸 Welcome
           </span>
-          <h2 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4 whitespace-pre-line">
+          <h2 class="text-3xl md:text-4xl text-white font-extrabold leading-tight mb-4 whitespace-pre-line">
             {{ artTitle() }}
           </h2>
           <p class="text-pink-50 mb-10 leading-relaxed">{{ artDescription() }}</p>

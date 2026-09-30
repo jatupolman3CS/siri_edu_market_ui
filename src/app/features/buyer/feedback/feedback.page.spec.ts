@@ -113,10 +113,24 @@ describe('BuyerFeedbackPage', () => {
     const modal = modalDebug.componentInstance as FeedbackModalComponent;
     const showSpy = vi.spyOn(modal, 'show');
 
-    const button = (fixture.nativeElement as HTMLElement).querySelector('button.btn-primary') as HTMLButtonElement;
+    const button = (fixture.nativeElement as HTMLElement).querySelector('header button.btn-pink') as HTMLButtonElement;
     button.click();
 
     expect(showSpy).toHaveBeenCalledWith('buyer');
+  });
+
+  it('keeps the "ส่งเรื่องใหม่" label inside its button in the >=640 header row (R-1, G2-8)', async () => {
+    const fixture = TestBed.createComponent(BuyerFeedbackPage);
+    fixture.detectChanges();
+    await settle();
+
+    // `.btn-pink`'s coarse-pointer min-width replaces min-width:auto, so without shrink-0 the row
+    // squeezed the button below its label (744 en: 28px of label outside the content box).
+    const button = (fixture.nativeElement as HTMLElement).querySelector('header button.btn-pink') as HTMLButtonElement;
+    expect(button.classList).toContain('shrink-0');
+    expect(button.classList).toContain('max-w-full');
+    expect(button.classList).toContain('min-h-11');
+    expect(button.parentElement?.querySelector(':scope > div')?.classList).toContain('min-w-0');
   });
 
   it('displays replyToUser in highlighted box when item is expanded', async () => {

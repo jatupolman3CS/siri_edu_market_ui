@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import {
@@ -40,22 +40,11 @@ export class QuickViewModalComponent {
   readonly translation = inject(TranslationService);
 
   /**
-   * Responsive modal width: full-width on mobile (< 640px), 900px on larger screens.
-   * NG-ZORRO nzWidth accepts a number (px) so we compute it from a window-resize signal.
+   * responsive-ui v1 §4.7: >=744 the 2-column layout opts into `modal-wide`
+   * (max min(960px, 100vw - 48px)); <744 the global sheet CSS makes it a full-width bottom
+   * sheet, so no private window-width tracking is needed any more.
    */
-  private readonly _windowWidth = signal(typeof window !== 'undefined' ? window.innerWidth : 1024);
-
-  readonly modalWidth = computed(() => {
-    const w = this._windowWidth();
-    return w < 640 ? Math.max(w - 16, 280) : 900;
-  });
-
-  constructor() {
-    if (typeof window !== 'undefined') {
-      const onResize = () => this._windowWidth.set(window.innerWidth);
-      window.addEventListener('resize', onResize);
-    }
-  }
+  readonly modalWidth = 900;
 
   resourceLabel(t: string): string {
     const key = `resourceTypes.${t}`;

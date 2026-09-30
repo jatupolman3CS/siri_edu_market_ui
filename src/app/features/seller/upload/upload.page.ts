@@ -1,5 +1,15 @@
 import { DatePipe, SlicePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -26,6 +36,7 @@ import type {
   SellerWatermarkConfigRequest,
 } from '../../../core/api/types.gen';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { FileNamePipe } from '../../../shared/pipes/file-name.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -72,6 +83,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
   imports: [
     FormsModule,
     IconComponent,
+    StickyActionBarComponent,
     ThbPipe,
     FileNamePipe,
     CdkDropList,
@@ -121,6 +133,16 @@ export class SellerUploadPage {
   readonly file = signal<File | null>(null);
   readonly upload = signal<{ key: string; publicUrl: string } | null>(null);
   readonly uploading = signal<boolean>(false);
+  /**
+   * responsive-ui v1.4 R-17 (F149): the last main-file upload failed (e.g. 413 / rejected type, or
+   * the edit-mode main-file registration). The file card shows a failure line instead of the old
+   * unconditional full bar + "upload complete".
+   */
+  readonly uploadFailed = signal<boolean>(false);
+
+  /** responsive-ui v1.4 R-25 (F139): the step list, scrolled back into view on a step change. */
+  private readonly stepperRef = viewChild<ElementRef<HTMLElement>>('stepper');
+  private readonly injector = inject(Injector);
 
   readonly mainFiles = signal<MainFileRow[]>([]);
   readonly mainFilesLoading = signal(false);
@@ -387,6 +409,7 @@ export class SellerUploadPage {
     const f = input.files[0];
     this.file.set(f);
     this.upload.set(null);
+    this.uploadFailed.set(false);
     this.fileSizeLabel.set(SellerUploadPage.formatFileSize(f.size));
 
     if (f.name.toLowerCase().endsWith('.pdf')) {
@@ -408,11 +431,15 @@ export class SellerUploadPage {
             originalFileName: f.name,
           });
           await this.refreshMainFiles(this.editId());
-          if (!ok) return;
+          if (!ok) {
+            this.uploadFailed.set(true);
+            return;
+          }
         }
         this.message.success(this.translation.t('seller.serverUploadSuccess'));
       } catch {
-        // SellerService already toasted
+        // SellerService already toasted; the file card shows the failure line (F149).
+        this.uploadFailed.set(true);
       } finally {
         this.uploading.set(false);
       }
@@ -656,6 +683,7 @@ export class SellerUploadPage {
   resetFile(): void {
     this.file.set(null);
     this.upload.set(null);
+    this.uploadFailed.set(false);
     this.fileSizeLabel.set('');
   }
 
@@ -725,6 +753,7 @@ export class SellerUploadPage {
     if (this.step() === 3 && enteringStep3) {
       void this.loadPricingHint();
     }
+    this.revealStepperAfterRender();
   }
 
   goToStep(targetStep: number): void {
@@ -737,10 +766,38 @@ export class SellerUploadPage {
     if (enteringStep3) {
       void this.loadPricingHint();
     }
+    this.revealStepperAfterRender();
   }
 
   prev(): void {
     this.step.update((s) => Math.max(1, s - 1));
+    this.revealStepperAfterRender();
+  }
+
+  /**
+   * responsive-ui v1.4 R-25 / G-33e (F139): the phone "next" lives in the sticky action bar at the
+   * bottom, so after a tap from deep in a long step the new step's heading and the stepper were
+   * left far above the viewport. Once the new step has rendered, scroll the stepper back to just
+   * below the top bar (its `scroll-margin-top`) unless its top already sits between the top bar and
+   * 25% of the viewport height — and without smooth scrolling under `prefers-reduced-motion`.
+   * (Chrome's scroll anchoring can also drop a >=744 page to y=0 when the old step is replaced;
+   * the 25% bound puts the stepper back at the same spot there too.)
+   */
+  private revealStepperAfterRender(): void {
+    afterNextRender(() => this.revealStepper(), { injector: this.injector });
+  }
+
+  private revealStepper(): void {
+    if (typeof window === 'undefined') return;
+    const el = this.stepperRef()?.nativeElement;
+    if (!el || typeof el.scrollIntoView !== 'function') return;
+    const marginTop = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    const top = el.getBoundingClientRect().top;
+    if (top >= marginTop - 1 && top <= Math.max(marginTop, window.innerHeight * 0.25)) return;
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
   }
 
   /** seller-pricing-and-storefront-stats v1 §4: one-shot fetch triggered from `next()` above. */

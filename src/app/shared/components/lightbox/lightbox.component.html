@@ -1,25 +1,33 @@
 @if (lightbox.current(); as item) {
-  <div
-    class="fixed inset-0 z-[999] bg-black/80 flex items-center justify-center p-6"
-    role="dialog"
-    aria-modal="true"
-    tabindex="-1"
-    (click)="close()"
-    (keydown)="onBackdropKeydown($event)"
-  >
-    <img
-      [src]="item.src"
-      [alt]="item.alt"
-      class="max-w-full max-h-full rounded-2xl shadow-pop object-contain"
-      (click)="$event.stopPropagation()"
-    />
-    <button
-      type="button"
-      class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center text-ink text-lg font-bold"
-      aria-label="ปิด"
+  <!-- Fixed root: cdkTrapFocus inserts its two tabbable anchors as siblings of the dialog, so they
+       must land inside a fixed box. Next to a fixed dialog they sat at the end of <app-root>, and a
+       Tab onto one scrolled the locked page behind to the bottom (G-21). -->
+  <div class="lightbox-root fixed inset-0 z-[999]">
+    <div
+      class="lightbox-overlay relative w-full h-full bg-black/80 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="item.alt || ('common.preview' | trans)"
+      tabindex="-1"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="close()"
+      (keydown)="onBackdropKeydown($event)"
     >
-      &times;
-    </button>
+      <img
+        [src]="item.src"
+        [alt]="item.alt"
+        class="max-w-full max-h-full rounded-2xl shadow-pop object-contain"
+        (click)="$event.stopPropagation()"
+      />
+      <button
+        type="button"
+        class="lightbox-close absolute w-11 h-11 rounded-full bg-white/90 flex items-center justify-center text-ink text-lg font-bold"
+        [attr.aria-label]="'common.close' | trans"
+        (click)="close()"
+      >
+        &times;
+      </button>
+    </div>
   </div>
 }

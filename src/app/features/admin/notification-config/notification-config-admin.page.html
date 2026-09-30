@@ -1,6 +1,6 @@
-<div class="max-w-7xl">
+<div class="min-w-0">
   <header class="mb-6">
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.notifConfig.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.notifConfig.title' | trans }}</h1>
     <p class="text-sm text-ink-soft">
       {{ 'admin.notifConfig.desc' | trans }}
     </p>
@@ -37,7 +37,10 @@
           <span class="text-center">{{ 'admin.notifConfig.headManage' | trans }}</span>
         </div>
 
-        <ul class="card-tile-body space-y-3">
+        <!-- responsive-ui v1.5 R-26 item 3: at xl (1280–1535) the stacked event cards flow into 2 columns
+             (a group with a single event keeps one full-width card rather than half a card beside a hole);
+             from 2xl each event is one aligned row under the header strip again (a table, so full width). -->
+        <ul class="card-tile-body grid grid-cols-1 xl:grid-cols-2 xl:has-[>li:only-child]:grid-cols-1 2xl:grid-cols-1 gap-3">
           @for (item of group.items; track item.eventKey) {
             <li class="rounded-2xl border border-line p-4 2xl:px-3 2xl:py-2.5">
               <div class="config-row">
@@ -67,14 +70,19 @@
                   <span class="pill-soft text-[11px]">{{ audienceLabel(item.audience) }}</span>
                 </div>
 
+                <!-- responsive-ui v1.4 R-17 (F148): every switch of the row is nzControl'led — it
+                     shows only the server-confirmed item.* (the service replaces the row from the
+                     PUT response), so a failed save no longer leaves it showing the new value. -->
                 <!-- เปิดใช้งาน -->
                 <div class="cell">
                   <span class="text-xs font-semibold text-ink-muted 2xl:hidden">{{ 'admin.notifConfig.headEnabled' | trans }}</span>
                   <nz-switch
                     [attr.name]="'notif-config-enabled-' + item.eventKey"
                     [ngModel]="item.isEnabled"
+                    [nzControl]="true"
+                    [nzLoading]="isSwitchSaving(item, 'isEnabled')"
                     [nzDisabled]="switchDisabled(item, 'isEnabled')"
-                    (ngModelChange)="toggle(item, 'isEnabled', $event)"
+                    (click)="toggle(item, 'isEnabled', !item.isEnabled)"
                   />
                 </div>
 
@@ -88,8 +96,10 @@
                     <nz-switch
                       [attr.name]="'notif-config-email-' + item.eventKey"
                       [ngModel]="item.emailEnabled"
+                      [nzControl]="true"
+                      [nzLoading]="isSwitchSaving(item, 'emailEnabled')"
                       [nzDisabled]="switchDisabled(item, 'emailEnabled')"
-                      (ngModelChange)="toggle(item, 'emailEnabled', $event)"
+                      (click)="toggle(item, 'emailEnabled', !item.emailEnabled)"
                     />
                   </span>
                 </div>
@@ -104,8 +114,10 @@
                     <nz-switch
                       [attr.name]="'notif-config-line-' + item.eventKey"
                       [ngModel]="item.lineEnabled"
+                      [nzControl]="true"
+                      [nzLoading]="isSwitchSaving(item, 'lineEnabled')"
                       [nzDisabled]="switchDisabled(item, 'lineEnabled')"
-                      (ngModelChange)="toggle(item, 'lineEnabled', $event)"
+                      (click)="toggle(item, 'lineEnabled', !item.lineEnabled)"
                     />
                   </span>
                 </div>
@@ -120,8 +132,10 @@
                     <nz-switch
                       [attr.name]="'notif-config-inapp-' + item.eventKey"
                       [ngModel]="item.inAppEnabled"
+                      [nzControl]="true"
+                      [nzLoading]="isSwitchSaving(item, 'inAppEnabled')"
                       [nzDisabled]="switchDisabled(item, 'inAppEnabled')"
-                      (ngModelChange)="toggle(item, 'inAppEnabled', $event)"
+                      (click)="toggle(item, 'inAppEnabled', !item.inAppEnabled)"
                     />
                   </span>
                 </div>
@@ -132,8 +146,10 @@
                   <nz-switch
                     [attr.name]="'notif-config-overridable-' + item.eventKey"
                     [ngModel]="item.userOverridable"
+                    [nzControl]="true"
+                    [nzLoading]="isSwitchSaving(item, 'userOverridable')"
                     [nzDisabled]="switchDisabled(item, 'userOverridable')"
-                    (ngModelChange)="toggle(item, 'userOverridable', $event)"
+                    (click)="toggle(item, 'userOverridable', !item.userOverridable)"
                   />
                 </div>
 

@@ -1,0 +1,8 @@
+/*
+ * responsive-ui v1 §4.7 — the modal renders in the CDK overlay, so this is un-encapsulated and
+ * scoped by nzClassName="quick-view-modal". The global <744 sheet CSS pads `.ant-modal-body`;
+ * the quick view is full-bleed (cover to the edges) so the padding is removed here.
+ */
+::ng-deep .quick-view-modal .ant-modal-body {
+  padding: 0 !important;
+}

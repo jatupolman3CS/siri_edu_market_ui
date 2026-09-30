@@ -1,4 +1,4 @@
-<section class="card-soft p-6" id="exam-countdown">
+<section class="card-soft p-4 sm:p-6" id="exam-countdown">
   <div class="flex items-start gap-3 mb-5">
     <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
       <app-icon name="flag" [size]="18" />
@@ -10,7 +10,7 @@
   </div>
 
   @if (showForm()) {
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-2 block">{{ 'shared.examCountdown.examType' | trans }}</label>
         <select
@@ -58,7 +58,7 @@
       </button>
     </div>
   } @else {
-    <div class="grid gap-3 sm:grid-cols-2 text-sm">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
       <div>
         <p class="text-xs text-ink-muted mb-1">{{ 'shared.examCountdown.examType' | trans }}</p>
         <p class="font-semibold text-ink">{{ examCountdown.setting()?.examType }}</p>

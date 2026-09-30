@@ -69,6 +69,7 @@ import { getApiSellerDocumentsByIdVersions } from '../api';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 import { TranslationService } from '../i18n';
 import { createInfinitePager, type PagedResult } from './infinite-pager';
+import { errorActionState, idleActionState, loadingActionState, successActionState, type ActionState } from './action-state';
 
 export interface SellerPayoutRow {
   id: string;
@@ -153,6 +154,20 @@ export class SellerService {
   readonly earnings = this._earnings.asReadonly();
 
   /**
+   * responsive-ui v1.4 R-17 (G-27, F88): load state of `GET /api/seller/dashboard` and
+   * `GET /api/seller/earnings`. `stats()` starts as a zeroed default, so without these the studio
+   * pages could not tell "still loading" or "failed" from "a new store with no sales" — they showed
+   * the empty-state copy in all three cases and had nothing to retry with.
+   * `dashboardLoaded` stays true once any dashboard load succeeded (a later refresh keeps the data).
+   */
+  private readonly _dashboardState = signal<ActionState>(idleActionState());
+  readonly dashboardState = this._dashboardState.asReadonly();
+  private readonly _dashboardLoaded = signal(false);
+  readonly dashboardLoaded = this._dashboardLoaded.asReadonly();
+  private readonly _earningsState = signal<ActionState>(idleActionState());
+  readonly earningsState = this._earningsState.asReadonly();
+
+  /**
    * QA fix: `RequireSellerProfileFilter` now answers a clean `403` (ProblemDetails code
    * `seller_profile_required`) from the dashboard/documents/bundles endpoints for a caller
    * (typically an Admin) with no `SELLER_PROFILE` row, instead of a demo-looking identity or a
@@ -216,6 +231,7 @@ export class SellerService {
   );
 
   async refreshDashboard(): Promise<void> {
+    this._dashboardState.set(loadingActionState());
     try {
       const result = await getApiSellerDashboard();
       const data = unwrapSdkResult(result);
@@ -225,18 +241,24 @@ export class SellerService {
       // `d.insights` field via `mapSellerInsights` (post-regen) — no more override at the call site.
       if (data) this._stats.set(mapSellerStats(data));
       this._sellerProfileRequired.set(false);
+      this._dashboardLoaded.set(true);
+      this._dashboardState.set(successActionState());
     } catch (e) {
+      this._dashboardState.set(errorActionState(this.translation.t('common.loadFailed')));
       this.handleSellerScopedError('errors.context.loadSellerDashboard', e);
     }
   }
 
   async loadEarnings(): Promise<void> {
+    this._earningsState.set(loadingActionState());
     try {
       const result = await getApiSellerEarnings();
       const data = unwrapSdkResult(result);
       if (data) this._earnings.set(data);
       this._sellerProfileRequired.set(false);
+      this._earningsState.set(successActionState());
     } catch (e) {
+      this._earningsState.set(errorActionState(this.translation.t('common.loadFailed')));
       this.handleSellerScopedError('errors.context.loadEarnings', e);
     }
   }
@@ -329,12 +351,17 @@ export class SellerService {
     return this.docsPager.loadMore();
   }
 
+  /**
+   * On failure this still answers an empty page (callers such as the ads picker rely on that), but
+   * flags it with `failed: true` so a list page can show its error + retry state instead of the
+   * "no documents" empty state (responsive-ui v1.4 R-17 / G-27).
+   */
   async listDocumentsPaged(query: {
     status?: string;
     search?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<PagedResult<DocumentItem>> {
+  }): Promise<PagedResult<DocumentItem> & { failed?: boolean }> {
     try {
       const result = await getApiSellerDocuments({
         query: {
@@ -361,6 +388,7 @@ export class SellerService {
         pageSize: query.pageSize ?? 10,
         totalCount: 0,
         totalPages: 1,
+        failed: true,
       };
     }
   }

@@ -1,3 +1,5 @@
+/* responsive-ui v1 §4.6 (F auth/status): single card, 100dvh, safe-area (via .safe-* on .auth-shell). */
+
 .auth-form-pane--compact {
   padding-block: 1.25rem;
 }
@@ -10,9 +12,19 @@
   margin-top: 1rem;
 }
 
+/* Short viewports (e.g. iPhone SE 375x667): login must fit without vertical scroll —
+   tighten spacing and drop the decorative footer; form + social buttons stay visible. */
 @media (max-height: 720px) {
+  .auth-form-pane {
+    padding-block: 1rem;
+  }
+
+  .auth-main {
+    margin-top: 1rem;
+  }
+
   .auth-form-pane--compact {
-    padding-block: 0.75rem;
+    padding-block: 0.5rem;
   }
 
   .auth-form-pane--compact .auth-main {
@@ -20,6 +32,6 @@
   }
 
   .auth-form-pane--compact .auth-footer {
-    margin-top: 0.5rem;
+    display: none;
   }
 }

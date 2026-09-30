@@ -1,17 +1,38 @@
-nav::-webkit-scrollbar {
+.seller-scroll::-webkit-scrollbar {
   width: 5px;
 }
-nav::-webkit-scrollbar-track {
+.seller-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
-nav::-webkit-scrollbar-thumb {
+.seller-scroll::-webkit-scrollbar-thumb {
   background: var(--pink-200);
   border-radius: 999px;
 }
-nav::-webkit-scrollbar-thumb:hover {
-  background: var(--pink-300);
+@media (hover: hover) {
+  .seller-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--pink-300);
+  }
 }
-nav {
+.seller-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--pink-200) transparent;
+}
+
+/* Rail items: icon over a max-2-line label (docs/contracts/responsive-ui.md §4.4). */
+.seller-rail__item {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Phone menu drawer on short (landscape) phones: the pinned header (~120px) and footer (~190px)
+   left the 12-item nav 32-64px — no usable item. There the whole panel scrolls as one list. */
+@media (max-height: 500px) {
+  .drawer-panel {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .drawer-panel > nav {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+  }
 }

@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminAffiliatesPage } from './affiliates.page';
 import { AdminService } from '../../../core/services/admin.service';
 import type { AdminAffiliateSummary } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 describe('AdminAffiliatesPage', () => {
   let component: AdminAffiliatesPage;
@@ -163,5 +165,38 @@ describe('AdminAffiliatesPage', () => {
       commissionRatePercentOverride: null,
     });
     expect(messageSuccessSpy).toHaveBeenCalledWith('บันทึกการตั้งค่าสำเร็จ');
+  });
+
+  // responsive-ui v1.6 R-27: at >=744 the table shows at most 10 rows and scrolls the rest inside
+  // its wrapper; the pagination stays outside it, and a new page or page size starts at the top.
+  it('R-27: the table sits in a named table viewport that a new page or page size scrolls back to the top', async () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const wrapper = (el.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+    const pagination = el.querySelector('app-pagination') as HTMLElement;
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const viewport = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    expect(viewport.rtLabel()).toBe('จัดการลิงก์พันธมิตร');
+
+    getAffiliatesSpy.mockImplementation(async (p: number, size: number) => ({
+      items: mockAffiliates,
+      totalCount: 40,
+      page: p,
+      pageSize: size,
+    }));
+    const scrollTopAfter = async (act: () => unknown): Promise<number> => {
+      wrapper.scrollTop = 300;
+      await act();
+      fixture.detectChanges();
+      for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+      return wrapper.scrollTop;
+    };
+
+    expect(await scrollTopAfter(() => component.onPageChange(2))).toBe(0);
+    expect(await scrollTopAfter(() => component.onPageSizeChange(20))).toBe(0);
+    // A row action updates the row in place: same query, same place.
+    expect(await scrollTopAfter(() => component.toggleActive(component.items()[0]))).toBe(300);
   });
 });

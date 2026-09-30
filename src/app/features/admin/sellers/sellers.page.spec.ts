@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AdminSellersPage } from './sellers.page';
 import { AdminService } from '../../../core/services';
 import type { AdminSellerRow } from '../../../core/models';
 import type { PagedResult } from '../../../core/services/infinite-pager';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * backend-wide-pagination-and-seller-directory v1 §1 — AC-11..AC-14. Drives the page against a
@@ -127,5 +130,63 @@ describe('AdminSellersPage (backend-wide-pagination-and-seller-directory v1)', (
     expect(text).not.toContain('★');
     expect(text).not.toContain('คะแนน');
     expect(text).not.toContain('ติดต่อ:');
+  });
+});
+
+describe('AdminSellersPage — table viewport (responsive-ui v1.6 R-27)', () => {
+  const rows = (n: number) => Array.from({ length: n }, (_, i) => seller({ id: `seller-${i + 1}` }));
+
+  it('starts at 10 rows per page: the first list request carries pageSize 10 and the selector shows 10', async () => {
+    const { fixture, searchSpy } = renderPage({ items: rows(12), totalCount: 40, totalPages: 4 });
+    await settle();
+    fixture.detectChanges();
+
+    expect(searchSpy).toHaveBeenCalled();
+    expect(searchSpy.mock.calls[0][0]).toEqual(expect.objectContaining({ page: 1, pageSize: 10 }));
+    const pagination = fixture.debugElement.query(By.directive(PaginationComponent)).componentInstance as PaginationComponent;
+    expect(pagination.pageSize()).toBe(10);
+    const select = (fixture.nativeElement as HTMLElement).querySelector('app-pagination select') as HTMLSelectElement;
+    expect(select.value).toBe('10');
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['10', '20', '50', '100']);
+  });
+
+  it('puts the table in a named table viewport with the pagination after it, outside', async () => {
+    const { fixture } = renderPage({ items: rows(12) });
+    await settle();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapper = (root.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const viewport = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    expect(viewport.rtLabel()).toBe('ผู้ขายในระบบ');
+  });
+
+  it('a new page, page size or applied filter scrolls the table to its top; a draft or the same query does not', async () => {
+    const { fixture } = renderPage({ items: rows(12), totalCount: 40, totalPages: 4 });
+    await settle();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const wrapper = ((fixture.nativeElement as HTMLElement).querySelector('table.rtable') as HTMLTableElement)
+      .parentElement as HTMLElement;
+    const scrollTopAfter = async (act: () => void): Promise<number> => {
+      wrapper.scrollTop = 300;
+      act();
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      return wrapper.scrollTop;
+    };
+
+    expect(await scrollTopAfter(() => page.onPageChange(2))).toBe(0);
+    expect(await scrollTopAfter(() => page.onPageSizeChange(50))).toBe(0);
+    expect(await scrollTopAfter(() => page.q.set('ครูใจดี'))).toBe(300);
+    expect(await scrollTopAfter(() => page.applyFilters())).toBe(0);
+    expect(await scrollTopAfter(() => page.applyFilters())).toBe(300);
+    expect(await scrollTopAfter(() => page.verifiedOnly.set(true))).toBe(300);
+    expect(await scrollTopAfter(() => page.applyFilters())).toBe(0);
   });
 });

@@ -6,6 +6,9 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * crm-core v1 §3.5, §4.1, §4.4 (`docs/contracts/crm-core.md`) — "สมาชิกของกลุ่ม {code}":
@@ -18,7 +21,17 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-crm-segment-users',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink, EmptyStateComponent, PaginationComponent, TranslatePipe],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    RouterLink,
+    EmptyStateComponent,
+    PaginationComponent,
+    TranslatePipe,
+    RowMoreComponent,
+    IconComponent,
+    TableViewportDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-segment-users.page.html',
 })

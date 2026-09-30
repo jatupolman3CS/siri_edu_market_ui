@@ -1,7 +1,7 @@
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -14,6 +14,9 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import { extractErrorStatus } from '../../../core/services/api-result';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { BottomSheetComponent } from '../../../shared/components/bottom-sheet/bottom-sheet.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { ViewportService } from '../../../core/layout';
 
 /** system-config-job-toggle v1 §2.4 — the 5th catalog entry this page's toggle status reads. */
 const DOCUMENT_GENERATION_JOB_KEY = 'job.document-generation.enabled';
@@ -33,7 +36,10 @@ const RUN_PAGE_SIZE = 20;
   standalone: true,
   imports: [
     TranslatePipe,
-    DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent
+    DatePipe, FormsModule, RouterLink, EmptyStateComponent, PaginationComponent,
+    BottomSheetComponent,
+    NgTemplateOutlet,
+    IconComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-generation.page.html',
@@ -44,6 +50,11 @@ export class AdminDocumentGenerationPage {
   private readonly admin = inject(AdminService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly message = inject(NzMessageService);
+
+  /** responsive-ui §4.6 G: run-settings sheet / slide-over below 1280px. */
+  readonly settingsOpen = signal(false);
+
+  private readonly viewport = inject(ViewportService);
 
   readonly pageSize = signal(RUN_PAGE_SIZE);
 
@@ -78,6 +89,11 @@ export class AdminDocumentGenerationPage {
   readonly expandedRunId = signal<string | null>(null);
 
   constructor() {
+    // R-9 (F42): the ตั้งค่า button is `xl:hidden`; a sheet left open while the viewport crossed
+    // 1280 (iPad rotation) came back open and scroll-locked. Reads only the viewport signal.
+    effect(() => {
+      if (this.viewport.isDesktop()) this.settingsOpen.set(false);
+    });
     void this.admin.loadJobToggles();
     void this.loadCategories();
     void this.loadRuns();

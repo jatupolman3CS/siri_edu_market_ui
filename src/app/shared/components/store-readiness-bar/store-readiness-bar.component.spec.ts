@@ -122,6 +122,37 @@ describe('StoreReadinessBarComponent — full bar state (AC-10)', () => {
     expect(links.length).toBe(2); // profile_picture + listings only, not payout_account
   });
 
+  // responsive-ui F157: with every item not done, the action link used to squeeze a `truncate`
+  // label down to 57-144px on phones, cutting off the "(n/target)" count. jsdom has no layout, so
+  // this pins the classes that let the label wrap and the link drop under it instead.
+  it('lets the label wrap (never truncates) and keeps the "(n/target)" count on one piece', () => {
+    const fixture = render({
+      percentComplete: 0,
+      isComplete: false,
+      items: items(),
+      nextActionItemKey: 'payout_account',
+    });
+    const el = fixture.nativeElement as HTMLElement;
+    const rows = Array.from(el.querySelectorAll('li'));
+    expect(rows.length).toBe(3);
+
+    for (const li of rows) {
+      expect(li.classList).toContain('flex-wrap');
+      const labelBlock = li.firstElementChild as HTMLElement;
+      expect(labelBlock.classList).toContain('flex-1');
+      expect(labelBlock.classList).toContain('basis-48');
+      const label = labelBlock.querySelector(':scope > span:last-child') as HTMLElement;
+      expect(label.classList).not.toContain('truncate');
+      expect(label.classList).toContain('break-words');
+      expect(label.classList).toContain('min-w-0');
+    }
+
+    const listingsLabel = rows[2].firstElementChild!.querySelector(':scope > span:last-child') as HTMLElement;
+    const count = listingsLabel.querySelector('span') as HTMLElement;
+    expect(count.textContent?.trim()).toBe('(0/3)');
+    expect(count.classList).toContain('whitespace-nowrap');
+  });
+
   it('renders a progress bar reflecting percentComplete()', () => {
     const fixture = render({
       percentComplete: 67,

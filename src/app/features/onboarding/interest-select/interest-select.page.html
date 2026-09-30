@@ -1,7 +1,7 @@
-<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+<div class="page-container min-h-[80dvh] flex items-center justify-center py-8 sm:py-12">
   <div class="max-w-2xl w-full">
     <!-- Header with skip link -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between gap-3 mb-6 sm:mb-8">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold">
         <span>✨</span>
         <span>{{ 'onboarding.customizeInterests' | trans }}</span>
@@ -10,14 +10,14 @@
         type="button"
         (click)="onSkip()"
         [disabled]="submitting()"
-        class="text-sm font-medium text-ink-muted hover:text-ink transition-colors disabled:opacity-50"
+        class="tap-target px-2 shrink-0 text-sm font-medium text-ink-muted hover:text-ink transition-colors disabled:opacity-50"
       >
         {{ 'onboarding.skipForNow' | trans }}
       </button>
     </div>
 
-    <div class="text-center mb-10">
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-ink mb-3">
+    <div class="text-center mb-6 sm:mb-10">
+      <h1 class="heading-1 font-extrabold text-ink mb-3">
         {{ 'onboarding.interestTitle' | trans }}
       </h1>
       <p class="text-base text-ink-soft max-w-lg mx-auto">
@@ -31,12 +31,12 @@
         {{ 'onboarding.loadingCategories' | trans }}
       </div>
     } @else {
-      <div class="flex flex-wrap justify-center gap-3 mb-10">
+      <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 sm:mb-10">
         @for (c of categories(); track c.id) {
           <button
             type="button"
             (click)="toggleCategory(c.id)"
-            class="category-pill inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-pink-200"
+            class="category-pill inline-flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-pink-200"
             [class.bg-pink-600]="isSelected(c.id)"
             [class.text-white]="isSelected(c.id)"
             [class.border-pink-600]="isSelected(c.id)"
@@ -62,7 +62,7 @@
         type="button"
         (click)="onSave()"
         [disabled]="submitting()"
-        class="w-full sm:w-auto px-8 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-semibold text-sm shadow-sm hover:shadow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full sm:w-auto px-8 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm hover:shadow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         @if (submitting()) {
           {{ 'onboarding.saving' | trans }}

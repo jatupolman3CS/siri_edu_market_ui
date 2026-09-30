@@ -8,6 +8,13 @@ const STRIPE_SCRIPT_SRC = 'https://js.stripe.com/v3/';
  *
  * Safe to call repeatedly: a second call while the first is in flight attaches to the same tag
  * instead of adding another.
+ *
+ * Never rejects on a load failure (ad blocker, offline, CSP): the promise settles either way and
+ * every caller checks `window.Stripe` right after, so each page shows its own translated message
+ * (`wallet.stripeScriptFailed`, `checkout.stripeLoadFailed`) instead of a hard-coded English one
+ * (responsive-ui F156). The failed tag is removed so the next call really retries — an errored
+ * `<script>` never fires `load`/`error` again, so reusing it would leave the caller waiting
+ * forever (F152).
  */
 export function loadStripeScript(): Promise<void> {
   if (typeof window === 'undefined') {
@@ -16,18 +23,37 @@ export function loadStripeScript(): Promise<void> {
   if (window.Stripe) {
     return Promise.resolve();
   }
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${STRIPE_SCRIPT_SRC}"]`);
     if (existing) {
+      // Already loaded but no `window.Stripe` (the script ran and failed): nothing will fire again,
+      // so settle now and let the caller's `!window.Stripe` branch report it.
+      if (existing.dataset['state'] === 'loaded') {
+        resolve();
+        return;
+      }
       existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('Failed to load Stripe.js')), { once: true });
+      existing.addEventListener(
+        'error',
+        () => {
+          existing.remove();
+          resolve();
+        },
+        { once: true },
+      );
       return;
     }
     const s = document.createElement('script');
     s.src = STRIPE_SCRIPT_SRC;
     s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Failed to load Stripe.js'));
+    s.onload = () => {
+      s.dataset['state'] = 'loaded';
+      resolve();
+    };
+    s.onerror = () => {
+      s.remove();
+      resolve();
+    };
     document.head.appendChild(s);
   });
 }

@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { PayoutAccountService, PlatformStatsService, SellerService } from '../../../core/services';
 import { AuthService } from '../../../core/services/auth.service';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { SellerEarningsPage } from './earnings.page';
 import { DEFAULT_SELLER_INSIGHTS, DEFAULT_STORE_READINESS } from '../../../core/models';
 import type { PayoutAccount, PlatformStats, SellerStats } from '../../../core/models';
@@ -65,6 +67,12 @@ function render(opts: {
   payoutAccount?: PayoutAccount | null;
   requestPayout?: ReturnType<typeof vi.fn>;
   cancelPayout?: ReturnType<typeof vi.fn>;
+  /** R-17: `earnings()` still null (GET /api/seller/earnings has not answered successfully). */
+  earningsMissing?: boolean;
+  earningsStatus?: 'idle' | 'loading' | 'success' | 'error';
+  loadEarnings?: ReturnType<typeof vi.fn>;
+  /** R-17: payout / ledger requests that never answer (their tables are still loading). */
+  historyPending?: boolean;
 }) {
   const earnings = {
     totalEarnings: 5000,
@@ -80,21 +88,25 @@ function render(opts: {
 
   const fakeSeller = {
     stats: () => buildStats(opts.stats),
-    earnings: () => earnings,
+    earnings: () => (opts.earningsMissing ? null : earnings),
+    earningsState: () =>
+      opts.earningsStatus === 'error'
+        ? { status: 'error' as const, message: 'x' }
+        : { status: opts.earningsStatus ?? ('success' as const) },
     nextPayoutDate: () => opts.nextPayoutDate ?? null,
     sellerProfileRequired: () => opts.sellerProfileRequired ?? false,
-    loadEarnings: vi.fn(async () => {}),
+    loadEarnings: opts.loadEarnings ?? vi.fn(async () => {}),
     refreshDashboard: vi.fn(async () => {}),
     requestPayout: opts.requestPayout ?? vi.fn(async () => ({ ok: true })),
     cancelPayout: opts.cancelPayout ?? vi.fn(async () => ({ ok: true })),
-    loadPayoutsPaged: vi.fn(async () => ({
+    loadPayoutsPaged: opts.historyPending ? vi.fn(() => new Promise(() => {})) : vi.fn(async () => ({
       items: opts.payouts ?? [],
       totalCount: (opts.payouts ?? []).length,
       page: 1,
       pageSize: 10,
       totalPages: 1,
     })),
-    loadBalanceEntriesPaged: vi.fn(async () => ({
+    loadBalanceEntriesPaged: opts.historyPending ? vi.fn(() => new Promise(() => {})) : vi.fn(async () => ({
       items: [],
       totalCount: 0,
       page: 1,
@@ -481,5 +493,119 @@ describe('SellerEarningsPage — ประวัติยอดเงิน / le
     expect(text).toContain('รายได้จากการขาย');
     expect(text).toContain('กันยอดเพื่อถอนเงิน');
     expect(text).toContain('+฿450');
+  });
+});
+
+describe('SellerEarningsPage — data states (responsive-ui v1.4 R-17, G-27)', () => {
+  const q = (fixture: { nativeElement: unknown }, testId: string) =>
+    (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
+
+  it('shows skeletons — not ฿0 figures — while GET /api/seller/earnings is pending', () => {
+    const { fixture } = render({ earningsMissing: true, earningsStatus: 'loading' });
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(fixture.componentInstance.earningsView()).toBe('loading');
+    expect(q(fixture, 'seller-earnings-loading')?.getAttribute('aria-busy')).toBe('true');
+    expect(root.querySelectorAll('app-stat-card').length).toBe(0);
+    expect(root.textContent).not.toContain('ยอดที่ถอนได้');
+    expect(q(fixture, 'seller-earnings-error')).toBeNull();
+  });
+
+  it('treats the idle state before the first request as loading', () => {
+    const { fixture } = render({ earningsMissing: true, earningsStatus: 'idle' });
+    expect(fixture.componentInstance.earningsView()).toBe('loading');
+  });
+
+  it('shows a message and a common.retry that re-issues the earnings GET when it fails', () => {
+    const loadEarnings = vi.fn(async () => {});
+    const { fixture } = render({ earningsMissing: true, earningsStatus: 'error', loadEarnings });
+
+    expect(fixture.componentInstance.earningsView()).toBe('error');
+    expect(q(fixture, 'seller-earnings-error')?.getAttribute('role')).toBe('alert');
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('app-stat-card').length).toBe(0);
+    expect(loadEarnings).toHaveBeenCalledTimes(1);
+
+    const retry = q(fixture, 'seller-earnings-retry') as HTMLButtonElement;
+    expect(retry.textContent?.trim()).toBe('ลองใหม่อีกครั้ง');
+    expect(retry.classList).toContain('btn-pink');
+    retry.click();
+    expect(loadEarnings).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the loaded figures while a later refresh is in flight', () => {
+    const { fixture } = render({ earningsStatus: 'loading' });
+    expect(fixture.componentInstance.earningsView()).toBe('data');
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('app-stat-card').length).toBe(4);
+  });
+
+  it('says "loading" (not "no history yet") in the payout and ledger tables while their GETs are pending', () => {
+    const { fixture } = render({ historyPending: true });
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('ยังไม่มีประวัติการถอนเงิน');
+    expect(text).not.toContain('ยังไม่มีประวัติ');
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('tr[aria-busy="true"]').length).toBe(2);
+  });
+});
+
+describe('SellerEarningsPage — table viewports (responsive-ui v1.6 R-27, U3-8)', () => {
+  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<unknown> }): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+  const wrappers = (fixture: { nativeElement: unknown }) =>
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('table.rtable')).map((t) => t.parentElement as HTMLElement);
+
+  it('both tables sit in their own table viewport, named after their section, with each pagination after it', async () => {
+    const { fixture } = render({});
+    await settle(fixture);
+    const [payouts, ledger] = wrappers(fixture);
+
+    expect(wrappers(fixture)).toHaveLength(2);
+    for (const wrapper of [payouts, ledger]) {
+      expect(wrapper.classList.contains('rt-viewport')).toBe(true);
+      expect(wrapper.querySelector('app-pagination')).toBeNull();
+      const section = wrapper.closest('section') as HTMLElement;
+      const pagination = section.querySelector('app-pagination') as HTMLElement;
+      expect(pagination).not.toBeNull();
+      expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+
+    // Two regions on one page need two different names: their section headings.
+    const names = fixture.debugElement
+      .queryAll(By.directive(TableViewportDirective))
+      .map((de) => de.injector.get(TableViewportDirective).rtLabel());
+    expect(names).toEqual(['ประวัติการถอนเงิน', 'บัญชีรายรับ-รายจ่าย']);
+    expect(names.map((n, i) => wrappers(fixture)[i].closest('section')?.querySelector('h2')?.textContent?.trim())).toEqual(names);
+  });
+
+  it('G-35(l): both first list requests ask for 10 rows', async () => {
+    const { fixture, fakeSeller } = render({});
+    await settle(fixture);
+    expect(fakeSeller.loadPayoutsPaged).toHaveBeenCalledWith(1, 10);
+    expect(fakeSeller.loadBalanceEntriesPaged).toHaveBeenCalledWith(1, 10);
+  });
+
+  it('a new page or page size scrolls only that table back to the top', async () => {
+    const { fixture } = render({});
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    const [payouts, ledger] = wrappers(fixture);
+
+    const step = async (action: () => void): Promise<[number, number]> => {
+      payouts.scrollTop = 300;
+      ledger.scrollTop = 300;
+      action();
+      await settle(fixture);
+      expect(wrappers(fixture)).toEqual([payouts, ledger]);
+      return [payouts.scrollTop, ledger.scrollTop];
+    };
+
+    expect(await step(() => page.onPageChange(2))).toEqual([0, 300]);
+    expect(await step(() => page.onPageSizeChange(50))).toEqual([0, 300]);
+    expect(await step(() => page.onLedgerPageChange(2))).toEqual([300, 0]);
+    expect(await step(() => page.onLedgerPageSizeChange(50))).toEqual([300, 0]);
+    // A reload of the same query (e.g. after cancelling a request) keeps both positions.
+    expect(await step(() => void Promise.all([page.loadPayouts(), page.loadLedger()]))).toEqual([300, 300]);
   });
 });

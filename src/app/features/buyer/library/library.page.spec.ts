@@ -688,3 +688,93 @@ describe('BuyerLibraryPage — document versioning (document-versioning v1 §4/�
 });
 
 
+
+/** responsive-ui v1.4 R-16 (G-26b): the selected filter tab is exposed to AT and to forced colors. */
+describe('BuyerLibraryPage — tab selection state (R-16)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('marks only the selected tab aria-pressed="true", and every tab keeps a border', () => {
+    const fixture = renderWithItems([buildItem('doc-1')], 'unreviewed');
+    const tabs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[data-testid="library-tabs"] button'),
+    );
+    expect(tabs.map((t) => t.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+    expect(tabs.every((t) => t.classList.contains('border'))).toBe(true);
+    expect(tabs[1].classList.contains('border-primary')).toBe(true);
+  });
+});
+
+/**
+ * responsive-ui v1.4 §4.7 custom-overlay contract (F47, F74, F103): the review modal is a named
+ * modal dialog with a focus trap, closes on Escape (but not on one an inner layer already handled),
+ * locks page scroll per R-10 while open, and has 44px close / star targets (E-8).
+ */
+describe('BuyerLibraryPage — review modal dialog contract (§4.7)', () => {
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  });
+
+  function openModal() {
+    const item = buildItem('doc-1');
+    const fixture = renderWithItems([item]);
+    fixture.componentInstance.openReviewModal(item.document.id, item.document.title);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    return { fixture, host, dialog: () => host.querySelector<HTMLElement>('[role="dialog"]') };
+  }
+
+  const escape = () => new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+  it('renders a modal dialog named by its heading, with a focus trap next to the card', () => {
+    const { dialog } = openModal();
+    const d = dialog()!;
+    expect(d).not.toBeNull();
+    expect(d.getAttribute('aria-modal')).toBe('true');
+    const title = document.getElementById(d.getAttribute('aria-labelledby') ?? '');
+    expect(title?.textContent?.trim()).toBe('เขียนรีวิวเอกสาร');
+    expect(d.previousElementSibling?.classList.contains('cdk-focus-trap-anchor')).toBe(true);
+    expect(d.classList.contains('m-auto')).toBe(true);
+    expect(d.parentElement!.className).toContain('overflow-y-auto');
+  });
+
+  it('has a 44x44 close button and 44px-tall star buttons', () => {
+    const { dialog } = openModal();
+    const close = dialog()!.querySelector('button[aria-label]')!;
+    expect(close.className).toContain('w-11');
+    expect(close.className).toContain('h-11');
+    const stars = Array.from(dialog()!.querySelectorAll('button')).filter((b) => b.textContent?.trim() === '★');
+    expect(stars).toHaveLength(5);
+    expect(stars.every((s) => s.classList.contains('h-11') && s.getAttribute('aria-label'))).toBe(true);
+  });
+
+  it('closes on Escape, but not on an Escape an inner layer already handled', () => {
+    const { fixture, dialog } = openModal();
+
+    const handled = escape();
+    handled.preventDefault();
+    document.dispatchEvent(handled);
+    fixture.detectChanges();
+    expect(dialog()).not.toBeNull();
+
+    document.dispatchEvent(escape());
+    fixture.detectChanges();
+    expect(fixture.componentInstance.reviewModal()).toBeNull();
+    expect(dialog()).toBeNull();
+  });
+
+  it('locks page scroll while open (body visible, html hidden) and restores both on close', async () => {
+    document.body.style.overflow = 'clip';
+    const { fixture } = openModal();
+    await fixture.whenStable();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.overflow).toBe('visible');
+
+    fixture.componentInstance.closeReviewModal();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('clip');
+  });
+});

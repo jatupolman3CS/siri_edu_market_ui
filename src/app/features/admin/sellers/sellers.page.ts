@@ -11,6 +11,9 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
+import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
 /**
  * backend-wide-pagination-and-seller-directory v1 §4.1: table-result + filter, replacing the old
@@ -32,6 +35,9 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     DatePipe,
     ImgFallbackDirective,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
+    AdminFilterPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sellers.page.html',
@@ -41,13 +47,27 @@ export class AdminSellersPage {
   private readonly admin = inject(AdminService);
 
   readonly page = signal(1);
-  readonly pageSize = signal(20);
+  /** R-27 item 10: every paginated table starts at 10 rows per page. */
+  readonly pageSize = signal(10);
+
+  /**
+   * R-27 (`rtResetKey`): the query the table's rows were requested with. The filter signals below are
+   * bound to the form, so they change while the admin types; this one changes only when a request
+   * goes out with a different page, page size, filter, search or sort, which scrolls the table back
+   * to its top. Re-running the same search leaves the scroll position alone.
+   */
+  readonly listQueryKey = signal('');
 
   readonly q = signal<string>('');
   readonly verifiedOnly = signal(false);
   readonly joinedFrom = signal<string>('');
   readonly joinedTo = signal<string>('');
   readonly sort = signal<string>('Newest');
+
+  /** Non-default filters inside the phone filter sheet (sort stays outside). */
+  readonly activeFilterCount = computed(
+    () => [!!this.joinedFrom(), !!this.joinedTo(), this.verifiedOnly()].filter(Boolean).length,
+  );
 
   readonly items = signal<AdminSellerRow[]>([]);
   readonly totalCount = signal(0);
@@ -79,7 +99,7 @@ export class AdminSellersPage {
   private async fetchList(): Promise<void> {
     this.loading.set(true);
     try {
-      const result = await this.admin.searchSellers({
+      const query: Parameters<AdminService['searchSellers']>[0] = {
         page: this.page(),
         pageSize: this.pageSize(),
         q: this.q().trim() || undefined,
@@ -87,13 +107,22 @@ export class AdminSellersPage {
         joinedFrom: this.joinedFrom().trim() || undefined,
         joinedTo: this.joinedTo().trim() || undefined,
         sort: this.sortKeyToApi[this.sort()] ?? 0,
-      });
+      };
+      this.listQueryKey.set(JSON.stringify(query));
+      const result = await this.admin.searchSellers(query);
       this.items.set(result.items ?? []);
       this.totalCount.set(result.totalCount ?? 0);
       this.totalPages.set(result.totalPages ?? 0);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Filter sheet "ล้างทั้งหมด": resets the sheet's filters; results refresh on ดูผลลัพธ์. */
+  clearFilters(): void {
+    this.joinedFrom.set('');
+    this.joinedTo.set('');
+    this.verifiedOnly.set(false);
   }
 
   applyFilters(): void {

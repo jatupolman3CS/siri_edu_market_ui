@@ -1,4 +1,4 @@
-<div class="max-w-6xl">
+<div class="w-full min-w-0">
       @if (seller.sellerProfileRequired()) {
         <div class="card-soft">
           <app-empty-state
@@ -17,7 +17,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
             {{ 'seller.greeting' | trans }}
           </span>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1">{{ 'seller.overviewTitle' | trans }}</h1>
+          <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'seller.overviewTitle' | trans }}</h1>
           <p class="text-sm text-ink-soft">{{ 'seller.overviewSubtitle' | trans }}</p>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -33,6 +33,32 @@
         </div>
       </header>
 
+      <!-- R-17 (G-27): skeleton while GET /api/seller/dashboard is pending, message + retry on
+           failure; the store sections (and their empty states) only render from loaded data. -->
+      @if (dashboardView() === 'loading') {
+        <div aria-busy="true" data-testid="seller-dashboard-loading">
+          <div class="card-soft h-24 mb-6 animate-pulse" aria-hidden="true"></div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+            @for (i of [1, 2, 3, 4]; track i) {
+              <div class="card-tile h-28 md:h-40 animate-pulse" aria-hidden="true"></div>
+            }
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 card-tile h-72 animate-pulse" aria-hidden="true"></div>
+            <div class="card-tile h-72 animate-pulse" aria-hidden="true"></div>
+          </div>
+          <p class="sr-only">{{ 'common.loading' | trans }}</p>
+        </div>
+      } @else if (dashboardView() === 'error') {
+        <div class="card-soft p-6 sm:p-10 text-center" role="alert" data-testid="seller-dashboard-error">
+          <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+          <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+          <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+          <button type="button" class="btn-pink mt-5" data-testid="seller-dashboard-retry" (click)="retryDashboard()">
+            {{ 'common.retry' | trans }}
+          </button>
+        </div>
+      } @else {
       <!-- Store readiness (store-readiness-score v1 §4) -->
       <app-store-readiness-bar
         [percentComplete]="storeReadiness().percentComplete"
@@ -42,7 +68,7 @@
       />
 
       <!-- Stats -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 mb-8">
+      <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr gap-3 sm:gap-4 mb-8">
         <app-stat-card
           [label]="'seller.monthlyRevenue' | trans"
           [value]="seller.stats().monthlyRevenue | thb"
@@ -70,10 +96,10 @@
         />
       </section>
 
-      <div class="grid lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Revenue chart -->
         <section class="lg:col-span-2 min-w-0 card-tile">
-          <header class="flex items-end justify-between mb-6">
+          <header class="flex flex-wrap items-end justify-between gap-3 mb-6">
             <div>
               <h2 class="text-lg font-bold text-ink">{{ 'seller.recent6MonthsRevenue' | trans }}</h2>
               <p class="text-xs text-ink-muted mt-1">{{ 'seller.monthlyRevenueSummary' | trans }}</p>
@@ -84,18 +110,18 @@
             </div>
           </header>
 
-          <div class="overflow-x-auto -mx-2">
-            <div class="grid grid-cols-6 gap-3 items-end h-48 min-w-[320px] px-2">
+          <div class="w-full">
+            <div class="grid grid-cols-6 gap-1.5 sm:gap-3 items-end w-full aspect-[16/10] sm:aspect-[5/2] max-h-72" data-testid="revenue-chart">
             @for (m of seller.stats().revenueByMonth; track m.month) {
               <div class="flex flex-col items-center gap-2 h-full justify-end">
-                <span class="text-xs font-bold text-ink">{{ 'common.baht' | trans }}{{ (m.amount / 1000).toFixed(1) }}k</span>
+                <span class="text-[10px] sm:text-xs font-bold text-ink whitespace-nowrap">{{ 'common.baht' | trans }}{{ (m.amount / 1000).toFixed(1) }}k</span>
                 <div
                   class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
                   [style.height.%]="(m.amount / maxMonth()) * 100"
                 >
                   <div class="absolute inset-x-0 top-0 h-1 bg-pink-500 rounded-t-2xl"></div>
                 </div>
-                <span class="text-xs text-ink-muted">{{ m.month }}</span>
+                <span class="text-[10px] sm:text-xs text-ink-muted whitespace-nowrap">{{ m.month }}</span>
               </div>
             }
             </div>
@@ -121,7 +147,7 @@
                       <span
                         class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0"
                         [class]="
-                          i === 0 ? 'bg-pink-500 text-white' :
+                          i === 0 ? 'bg-primary text-white' :
                           i === 1 ? 'bg-pink-300 text-pink-700' :
                           'bg-pink-100 text-pink-600'
                         "
@@ -158,25 +184,32 @@
               [description]="'seller.noViewDataDesc' | trans"
             />
           } @else {
-            <div class="card-tile-body overflow-x-auto -mx-2">
-              <table class="w-full text-sm min-w-[380px]">
+            <!-- G-14e: no negative-margin bleed — the table/cards stay inside the card's content box.
+                 R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper (all rows,
+                 no pager, so no reset key). -->
+            <div class="card-tile-body table-scroll" appTableViewport [rtLabel]="'seller.conversionRate' | trans">
+              <table class="rtable w-full text-sm">
                 <thead>
                   <tr class="text-left text-xs text-ink-muted border-b border-line">
                     <th class="py-2 px-2 font-semibold">{{ 'seller.documentCol' | trans }}</th>
-                    <th class="py-2 px-2 font-semibold text-right">{{ 'seller.viewsCol' | trans }}</th>
-                    <th class="py-2 px-2 font-semibold text-right">{{ 'seller.salesCol' | trans }}</th>
                     <th class="py-2 px-2 font-semibold text-right">{{ 'seller.conversionCol' | trans }}</th>
+                    <th class="py-2 px-2 font-semibold text-right">{{ 'seller.salesCol' | trans }}</th>
+                    <th class="rt-secondary py-2 px-2 font-semibold text-right">{{ 'seller.viewsCol' | trans }}</th>
+                    <th class="rt-more py-2 px-1"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-line">
                   @for (row of seller.stats().insights.documentConversions; track row.documentId) {
                     <tr>
-                      <td class="py-2.5 px-2 font-medium text-ink">
-                        <span class="block line-clamp-1">{{ row.title }}</span>
+                      <td class="rt-title py-2.5 px-2 font-medium text-ink">
+                        <span class="block line-clamp-2 md:line-clamp-1">{{ row.title }}</span>
                       </td>
-                      <td class="py-2.5 px-2 text-right text-ink-soft">{{ row.viewCount | compact }}</td>
-                      <td class="py-2.5 px-2 text-right text-ink-soft">{{ row.salesCount | compact }}</td>
-                      <td class="py-2.5 px-2 text-right font-bold text-pink-600">{{ row.conversionRatePercent.toFixed(1) }}%</td>
+                      <td class="rt-key py-2.5 px-2 md:text-right font-bold text-pink-600" [attr.data-label]="'seller.conversionCol' | trans">{{ row.conversionRatePercent.toFixed(1) }}%</td>
+                      <td class="rt-key py-2.5 px-2 md:text-right text-ink-soft" [attr.data-label]="'seller.salesCol' | trans">{{ row.salesCount | compact }}</td>
+                      <td class="rt-secondary py-2.5 px-2 text-right text-ink-soft">{{ row.viewCount | compact }}</td>
+                      <td class="rt-more py-1 px-1">
+                        <app-row-more [items]="[{ label: 'seller.viewsCol' | trans, value: row.viewCount | compact }]" />
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -259,14 +292,46 @@
       </div>
 
       <!-- Earnings Calculator + Recent docs + Payout -->
-      <div class="grid lg:grid-cols-3 gap-6 mt-6">
-        <!-- Recent docs -->
-        <section class="lg:col-span-2 min-w-0 card-tile">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <!-- Recent docs — responsive-ui v1.6.1 GR3-d (§4.6 E): the page loads this card itself
+             (GET /api/seller/documents?Page=1&PageSize=5, newest update first). It used to read
+             SellerService.myDocuments(), which /seller never loads, so it always showed its empty
+             state. R-17: skeleton while loading, message + retry on failure, the empty state only
+             for an answer with no documents. -->
+        <section class="lg:col-span-2 min-w-0 card-tile" data-testid="seller-recent-docs">
           <header class="flex items-end justify-between mb-5">
             <h2 class="text-lg font-bold text-ink">{{ 'seller.recentDocuments' | trans }}</h2>
-            <a routerLink="/seller/documents" class="text-sm text-pink-600 hover:underline font-semibold">{{ 'common.viewAll' | trans }} →</a>
+            <!-- R-2 (F33): a standalone text link is a 44px target on touch screens. -->
+            <a routerLink="/seller/documents" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-pink-600 hover:underline font-semibold">{{ 'common.viewAll' | trans }} →</a>
           </header>
-          @if (seller.myDocuments().length === 0) {
+          @if (recentDocsView() === 'loading') {
+            <!-- R-18: rows of the list row's height (40×56 cover + py-3). -->
+            <div class="card-tile-body" aria-busy="true" data-testid="seller-recent-docs-loading">
+              <ul class="divide-y divide-line" aria-hidden="true">
+                @for (i of [1, 2, 3, 4, 5]; track i) {
+                  <li class="py-3 flex items-center gap-3 sm:gap-4">
+                    <div class="w-10 h-14 rounded-xl bg-pink-50 animate-pulse shrink-0"></div>
+                    <div class="flex-1 min-w-0 space-y-2">
+                      <div class="h-4 w-3/4 max-w-[16rem] rounded-full bg-pink-50 animate-pulse"></div>
+                      <div class="h-3 w-1/2 max-w-[10rem] rounded-full bg-pink-50 animate-pulse"></div>
+                    </div>
+                    <div class="shrink-0 flex flex-col items-end gap-1.5">
+                      <div class="h-4 w-14 rounded-full bg-pink-50 animate-pulse"></div>
+                      <div class="h-4 w-16 rounded-full bg-pink-50 animate-pulse"></div>
+                    </div>
+                  </li>
+                }
+              </ul>
+              <p class="sr-only">{{ 'common.loading' | trans }}</p>
+            </div>
+          } @else if (recentDocsView() === 'error') {
+            <div class="card-tile-body py-6 text-center" role="alert" data-testid="seller-recent-docs-error">
+              <p class="text-sm font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+              <button type="button" class="btn-ghost mt-4 text-sm" data-testid="seller-recent-docs-retry" (click)="retryRecentDocs()">
+                {{ 'common.retry' | trans }}
+              </button>
+            </div>
+          } @else if (recentDocs().length === 0) {
             <app-empty-state
               emoji="📄"
               [title]="'seller.noDocumentsYet' | trans"
@@ -274,12 +339,12 @@
             />
           } @else {
             <ul class="card-tile-body divide-y divide-line">
-              @for (d of seller.myDocuments().slice(0, 5); track d.id) {
-                <li class="py-3 flex items-center gap-4">
+              @for (d of recentDocs(); track d.id) {
+                <li class="py-3 flex items-center gap-3 sm:gap-4" data-testid="seller-recent-doc">
                   <img appImgFallback [src]="d.cover" [alt]="d.title" class="w-10 h-14 rounded-xl object-cover flex-shrink-0" />
                   <div class="flex-1 min-w-0">
                     <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
-                    <div class="text-xs text-ink-muted flex items-center gap-2 mt-0.5">
+                    <div class="text-xs text-ink-muted flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                       <span class="uppercase">{{ d.format }}</span>
                       <span>·</span>
                       <span>{{ d.downloads }} {{ 'common.downloads' | trans }}</span>
@@ -287,9 +352,10 @@
                       <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <div class="text-sm font-bold text-ink">{{ d.price | thb }}</div>
-                    <span class="pill-pink !py-0 !text-[10px]">{{ d.status === 'approved' ? ('seller.statusApproved' | trans) : ('seller.statusPending' | trans) }}</span>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-bold text-ink whitespace-nowrap">{{ d.price | thb }}</div>
+                    <!-- GR3-d: the document's own status, with the pill classes of /seller/documents. -->
+                    <span class="!py-0 !text-[10px] whitespace-nowrap" [class]="statusPillClass(d.status)" data-testid="seller-recent-doc-status">{{ statusLabel(d.status) }}</span>
                   </div>
                 </li>
               }
@@ -333,7 +399,9 @@
         </section>
       </div>
 
-      <!-- Earnings Calculator -->
+      }
+
+      <!-- Earnings Calculator (static — shown in every state) -->
       <section class="card-tile mt-6 bg-gradient-to-br from-emerald-50 to-pink-50">
         <header class="flex items-start justify-between gap-4 mb-6">
           <div>
@@ -358,7 +426,7 @@
                 type="range" min="50" max="990" step="10"
                 [ngModel]="pricePerItem()"
                 (ngModelChange)="pricePerItem.set($event)"
-                class="w-full accent-pink-500"
+                class="w-full accent-pink-500 [@media(pointer:coarse)]:h-11"
               />
             </div>
             <div>
@@ -370,7 +438,7 @@
                 type="range" min="5" max="500" step="5"
                 [ngModel]="salesPerMonth()"
                 (ngModelChange)="salesPerMonth.set($event)"
-                class="w-full accent-pink-500"
+                class="w-full accent-pink-500 [@media(pointer:coarse)]:h-11"
               />
             </div>
             <div>
@@ -382,7 +450,7 @@
                 type="range" min="1" max="100" step="1"
                 [ngModel]="activeDocs()"
                 (ngModelChange)="activeDocs.set($event)"
-                class="w-full accent-pink-500"
+                class="w-full accent-pink-500 [@media(pointer:coarse)]:h-11"
               />
             </div>
           </div>

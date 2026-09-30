@@ -1,19 +1,19 @@
-<div class="max-w-4xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container max-w-4xl py-6 sm:py-8">
   <!-- Header -->
-  <header class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line">
+  <header class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line">
     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
       <span>{{ 'wallet.badge' | trans }}</span>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'wallet.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'wallet.title' | trans }}</h1>
     <p class="text-sm sm:text-base text-ink-soft">
       {{ 'wallet.subtitle' | trans }}
     </p>
   </header>
 
-  <div class="grid md:grid-cols-[1fr_1.2fr] gap-6 items-start mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-4 sm:gap-6 items-start mb-6 sm:mb-8">
     <!-- Balance card -->
-    <div class="card-soft p-6 border border-line flex flex-col justify-between h-full">
+    <div class="card-soft p-4 sm:p-6 border border-line flex flex-col justify-between h-full min-w-0">
       <div>
         <div class="flex items-center gap-2 text-ink-muted text-sm font-medium mb-2">
           <app-icon name="wallet" [size]="18" />
@@ -32,12 +32,12 @@
       </div>
 
       @if (wallet.state().status === 'error') {
-        <div class="mt-4 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs flex items-center justify-between">
+        <div class="mt-4 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs flex items-center justify-between gap-2">
           <span>{{ stateErrorMessage() || ('wallet.loadFailed' | trans) }}</span>
           <button
             type="button"
             (click)="wallet.refreshSummary()"
-            class="text-xs font-semibold underline hover:text-rose-700"
+            class="tap-target shrink-0 px-2 text-xs font-semibold underline hover:text-rose-700"
           >
             {{ 'wallet.retry' | trans }}
           </button>
@@ -46,7 +46,7 @@
     </div>
 
     <!-- Top-up Form -->
-    <div class="card-soft p-6 border border-line">
+    <div class="card-soft p-4 sm:p-6 border border-line min-w-0">
       <h2 class="text-lg font-bold text-ink mb-4 flex items-center gap-2">
         <app-icon name="plus" [size]="18" />
         <span>{{ 'wallet.topUpTitle' | trans }}</span>
@@ -63,13 +63,13 @@
                 <button
                   type="button"
                   (click)="selectPreset(preset)"
-                  [class.bg-pink-600]="amount() === preset"
+                  [class.bg-primary]="amount() === preset"
                   [class.text-white]="amount() === preset"
-                  [class.border-pink-600]="amount() === preset"
+                  [class.border-primary]="amount() === preset"
                   [class.bg-white]="amount() !== preset"
                   [class.text-ink]="amount() !== preset"
                   [class.border-line]="amount() !== preset"
-                  class="py-2 px-3 rounded-xl border text-sm font-semibold hover:border-pink-400 transition-colors"
+                  class="min-h-11 py-2 px-3 rounded-xl border text-sm font-semibold hover:border-pink-400 transition-colors"
                 >
                   {{ preset }}
                 </button>
@@ -83,12 +83,14 @@
               <input
                 id="topup-amount-input"
                 type="number"
+                inputmode="decimal"
+                autocomplete="off"
                 step="1"
                 min="1"
                 [placeholder]="'wallet.amountPlaceholder' | trans"
                 [value]="amount() ?? ''"
                 (input)="setAmountFromInput($any($event.target).value)"
-                class="w-full px-4 py-2.5 rounded-xl border border-line focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 text-ink font-semibold"
+                class="w-full pl-4 pr-12 py-2.5 rounded-xl border border-line-strong focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 text-ink font-semibold"
               />
               <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-ink-muted">
                 {{ 'wallet.bahtUnit' | trans }}
@@ -99,7 +101,7 @@
           <button
             type="submit"
             [disabled]="busy() || !amount() || amount()! <= 0"
-            class="w-full py-2.5 px-4 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="w-full min-h-11 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             @if (busy()) {
               <span>{{ 'wallet.processing' | trans }}</span>
@@ -111,7 +113,7 @@
       } @else {
         <!-- Stripe Payment Element Mount -->
         <div class="space-y-4">
-          <div class="p-3 bg-neutral-50 rounded-xl border border-line flex items-center justify-between text-xs">
+          <div class="p-3 bg-neutral-50 rounded-xl border border-line flex items-center justify-between gap-2 text-xs">
             <span class="text-ink-muted">{{ 'wallet.topUpAmountLabel' | trans }}</span>
             <span class="font-bold text-ink text-sm">{{ currentTopUp()!.amount | thb }}</span>
           </div>
@@ -129,15 +131,15 @@
               type="button"
               (click)="cancelTopUp()"
               [disabled]="busy()"
-              class="btn-ghost flex-1 !py-2.5 text-xs"
+              class="btn-ghost flex-1 !py-2.5 min-h-11 text-xs"
             >
               {{ 'wallet.cancel' | trans }}
             </button>
             <button
               type="button"
               (click)="confirmPayment()"
-              [disabled]="busy() || mountingPayment()"
-              class="flex-2 py-2.5 px-4 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-semibold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              [disabled]="busy() || mountingPayment() || !paymentReady()"
+              class="flex-[2] min-h-11 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               @if (busy()) {
                 <span>{{ 'wallet.confirming' | trans }}</span>
@@ -152,8 +154,8 @@
   </div>
 
   <!-- Ledger History -->
-  <section class="card-soft p-6 border border-line">
-    <div class="flex items-center justify-between mb-4">
+  <section class="card-soft p-4 sm:p-6 border border-line">
+    <div class="flex items-center justify-between gap-2 mb-4">
       <h2 class="text-lg font-bold text-ink flex items-center gap-2">
         <app-icon name="doc" [size]="18" />
         <span>{{ 'wallet.ledgerTitle' | trans }}</span>
@@ -161,7 +163,7 @@
       <button
         type="button"
         (click)="wallet.loadLedgerFirst()"
-        class="text-xs text-pink-600 hover:underline"
+        class="tap-target shrink-0 px-2 text-xs text-pink-600 hover:underline"
       >
         <span>{{ 'wallet.refresh' | trans }}</span>
       </button>
@@ -182,8 +184,11 @@
         </div>
       }
     } @else {
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs sm:text-sm">
+      <!-- responsive-ui v1 §4.5: phone = card per row (type = title, amount = corner, detail/date = keys).
+           R-27 (U5-7): at >=744 at most 10 rows show, the rest scroll inside the wrapper. No reset
+           key: "load more" appends rows and must keep the scroll position. -->
+      <div class="table-scroll" appTableViewport [rtLabel]="'wallet.ledgerTitle' | trans">
+        <table class="rtable w-full text-left text-xs sm:text-sm">
           <thead>
             <tr class="border-b border-line text-ink-muted">
               <th class="pb-3 font-semibold">{{ 'wallet.thType' | trans }}</th>
@@ -195,7 +200,7 @@
           <tbody class="divide-y divide-line">
             @for (item of wallet.ledger(); track item.id) {
               <tr class="hover:bg-neutral-50/60 transition-colors">
-                <td class="py-3.5 pr-2">
+                <td class="rt-title py-3.5 pr-2">
                   <span
                     [class.bg-emerald-50]="item.kind === 'topup' || item.kind === 'refund'"
                     [class.text-emerald-700]="item.kind === 'topup' || item.kind === 'refund'"
@@ -208,17 +213,17 @@
                     {{ getKindLabel(item.kind) }}
                   </span>
                 </td>
-                <td class="py-3.5 px-2 text-ink">
+                <td class="rt-key py-3.5 px-2 text-ink" [attr.data-label]="'wallet.thDetail' | trans">
                   @if (item.orderNumber) {
-                    <span class="font-mono text-xs">#{{ item.orderNumber }}</span>
+                    <span class="font-mono text-xs break-all">#{{ item.orderNumber }}</span>
                   } @else {
                     <span class="text-ink-muted">—</span>
                   }
                 </td>
-                <td class="py-3.5 px-2 text-ink-muted text-xs">
+                <td class="rt-key py-3.5 px-2 text-ink-muted text-xs" [attr.data-label]="'wallet.thDate' | trans">
                   {{ item.occurredAt | date:'d MMM yyyy, HH:mm' }}
                 </td>
-                <td class="py-3.5 pl-2 text-right font-semibold">
+                <td class="rt-status py-3.5 pl-2 text-right font-semibold whitespace-nowrap">
                   @if (item.amount > 0) {
                     <span class="text-emerald-600">+{{ item.amount | thb }}</span>
                   } @else {
@@ -237,7 +242,7 @@
             type="button"
             (click)="wallet.loadMoreLedger()"
             [disabled]="wallet.ledgerState().status === 'loading'"
-            class="px-5 py-2 rounded-xl border border-line bg-white hover:bg-neutral-50 text-xs font-semibold text-ink transition-colors disabled:opacity-50"
+            class="min-h-11 px-5 py-2 rounded-xl border border-line bg-white hover:bg-neutral-50 text-xs font-semibold text-ink transition-colors disabled:opacity-50"
           >
             @if (wallet.ledgerState().status === 'loading') {
               {{ 'wallet.loadingMore' | trans }}

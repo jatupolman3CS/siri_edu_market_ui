@@ -7,6 +7,16 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
+
+const STATUS_LABEL_KEYS: Readonly<Record<string, string>> = {
+  fulfilled: 'admin.transactions.statusLabelFulfilled',
+  paid: 'admin.transactions.statusLabelPaid',
+  awaiting_payment: 'admin.transactions.statusLabelAwaiting',
+  refunded: 'admin.transactions.statusLabelRefunded',
+  cancelled: 'admin.transactions.statusLabelCancelled',
+};
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -18,6 +28,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
     ThbPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
+    RowMoreComponent,
+    TableViewportDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',
@@ -50,6 +62,28 @@ export class AdminDashboardPage {
     this.formatTrendPercent(this.admin.dashboardTrends().refundTrendPercent),
   );
 
+  /**
+   * responsive-ui v1.4 R-17 (G-27, F88): the stat cards and the system-health card come from
+   * `GET /api/admin/dashboard`. Loaded data wins (a background refresh keeps it on screen); before
+   * the first answer they are skeletons, and a failure shows a message with a retry — never zeroed
+   * stats or an "API: ok" line that nothing confirmed.
+   */
+  readonly dashboardView = computed<'loading' | 'error' | 'data'>(() => {
+    if (this.admin.dashboard() !== null) return 'data';
+    const status = this.admin.dashboardState().status;
+    if (status === 'error') return 'error';
+    return status === 'success' ? 'data' : 'loading';
+  });
+
+  retryDashboard(): void {
+    void this.admin.refreshDashboard();
+  }
+
+  /** Pending-approval count in the card subtitle: the server total when known (F87), else the loaded rows. */
+  readonly pendingCount = computed(
+    () => this.admin.pendingBadgeCount() ?? this.admin.pendingDocuments().length,
+  );
+
   constructor() {
     void this.admin.refreshDashboard();
     void this.admin.refreshTransactions();
@@ -66,13 +100,13 @@ export class AdminDashboardPage {
     }[s] ?? 'bg-pink-100 text-pink-700';
   }
 
+  /**
+   * F20: translated status text. The old map pointed at `admin.txStatus*` keys that exist in
+   * neither translation file, so the raw key path reached the pill. It reuses the transactions
+   * page's `admin.transactions.statusLabel*` keys; an unknown status shows as-is.
+   */
   statusLabel(s: string): string {
-    return {
-      fulfilled: 'admin.txStatusFulfilled',
-      paid: 'admin.txStatusPaid',
-      awaiting_payment: 'admin.txStatusAwaitingPayment',
-      refunded: 'admin.txStatusRefunded',
-      cancelled: 'admin.txStatusCancelled',
-    }[s] ?? s;
+    const key = STATUS_LABEL_KEYS[s];
+    return key ? this.translation.t(key) : s;
   }
 }

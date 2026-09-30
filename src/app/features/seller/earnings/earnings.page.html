@@ -1,4 +1,4 @@
-<div class="max-w-6xl">
+<div class="w-full min-w-0">
   @if (seller.sellerProfileRequired()) {
   <div class="card-soft">
     <app-empty-state emoji="🏪" [title]="'seller.noShopTitleEarnings' | trans"
@@ -8,13 +8,34 @@
   </div>
   } @else {
   <header class="mb-8">
-    <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'seller.earningsTitle' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'seller.earningsTitle' | trans }}</h1>
     <p class="text-sm text-ink-soft">
       {{ 'seller.earningsSubtitle' | trans }}
     </p>
   </header>
 
-  <section class="grid grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-4 mb-8">
+  <!-- R-17 (G-27): skeleton while GET /api/seller/earnings is pending, message + retry on failure. -->
+  @if (earningsView() === 'loading') {
+  <div aria-busy="true" data-testid="seller-earnings-loading">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+      @for (i of [1, 2, 3, 4]; track i) {
+      <div class="card-tile h-28 md:h-[8.5rem] animate-pulse" aria-hidden="true"></div>
+      }
+    </div>
+    <div class="card-tile h-40 mb-6 animate-pulse" aria-hidden="true"></div>
+    <p class="sr-only">{{ 'common.loading' | trans }}</p>
+  </div>
+  } @else if (earningsView() === 'error') {
+  <div class="card-soft p-6 sm:p-10 mb-6 text-center" role="alert" data-testid="seller-earnings-error">
+    <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+    <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+    <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+    <button type="button" class="btn-pink mt-5" data-testid="seller-earnings-retry" (click)="retryEarnings()">
+      {{ 'common.retry' | trans }}
+    </button>
+  </div>
+  } @else {
+  <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr gap-3 sm:gap-4 mb-8">
     <app-stat-card [label]="'seller.totalAccumulated' | trans" [value]="totalEarnings() | thb" icon="💰" />
     <app-stat-card [label]="'seller.withdrawable' | trans" [value]="availableBalance() | thb" icon="⏳" />
     <app-stat-card [label]="'seller.inProgressWithdraw' | trans" [value]="onHoldAmount() | thb" icon="🔒" />
@@ -31,7 +52,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
       <div>
         <div class="text-xs text-ink-muted mb-1">{{ 'seller.withdrawable' | trans }}</div>
-        <div class="text-4xl md:text-5xl font-extrabold text-pink-700">
+        <div class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-pink-700 break-words">
           {{ availableBalance() | thb }}
         </div>
         <div class="text-sm text-ink-soft mt-2">
@@ -41,7 +62,7 @@
 
       @if (!requestOpen()) {
       <div class="md:text-right">
-        <button class="btn-pink !px-7 !py-3.5" [disabled]="!canOpenRequest()" (click)="openRequest()">
+        <button class="btn-pink w-full md:w-auto !px-7 !py-3.5" [disabled]="!canOpenRequest()" (click)="openRequest()">
           <app-icon name="wallet" [size]="18" />
           {{ 'seller.requestWithdraw' | trans }}
         </button>
@@ -62,8 +83,8 @@
         {{ 'seller.withdrawAmount' | trans }}
       </label>
       <div class="flex gap-2">
-        <input type="number" [ngModel]="amount()" (ngModelChange)="amount.set($event === '' ? null : +$event)"
-          name="amount" class="input-soft" [placeholder]="'seller.minWithdrawPlaceholder' | trans: { amount: minPayoutAmount() }" min="0"
+        <input type="number" inputmode="decimal" [ngModel]="amount()" (ngModelChange)="amount.set($event === '' ? null : +$event)"
+          name="amount" class="input-soft flex-1 min-w-0" [placeholder]="'seller.minWithdrawPlaceholder' | trans: { amount: minPayoutAmount() }" min="0"
           step="0.01" />
         <button type="button" class="btn-ghost !px-4 text-sm whitespace-nowrap" (click)="fillMaxAmount()">
           {{ 'seller.withdrawAll' | trans }}
@@ -77,7 +98,7 @@
       <input type="text" [ngModel]="note()" (ngModelChange)="note.set($event)" name="note" class="input-soft"
         maxlength="500" [placeholder]="'seller.notePlaceholder' | trans" />
 
-      <div class="flex gap-2">
+      <div class="flex flex-col-reverse sm:flex-row gap-2">
         <button class="btn-pink !py-2 !px-5 text-sm" [disabled]="submitting()" (click)="submitRequest()">
           {{ submitting() ? ('seller.sendingRequest' | trans) : ('seller.sendWithdrawRequest' | trans) }}
         </button>
@@ -86,29 +107,36 @@
     </div>
     }
   </div>
+  }
 
   <!-- Recent payout history -->
   <section class="card-tile mb-6">
     <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.payoutHistoryTitle' | trans }}</h2>
     <p class="text-xs text-ink-muted mb-5">{{ 'seller.payoutHistorySubtitle' | trans }}</p>
-    <div class="card-tile-body table-scroll overflow-x-auto -mx-5 px-5 md:-mx-6 md:px-6 pb-2">
-      <table class="w-full min-w-[640px]">
+    <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper; a new page or page
+         size scrolls it back to the top. Named after its section (the ledger below has its own). -->
+    <div class="card-tile-body table-scroll overflow-x-auto pb-2" appTableViewport
+      [rtLabel]="'seller.payoutHistoryTitle' | trans"
+      [rtResetKey]="page() + '|' + pageSize()">
+      <table class="rtable w-full">
         <thead class="bg-pink-50">
+          <!-- R-27 item 11 / §4.5 table mode: px-2 (px-3 from 1024, px-5 >=1280), and the account may
+               wrap below 1280, so the 744 table, capped or not, fits its card without sideways scroll
+               in th and en (a paid row's "ดูสลิปการโอนเงิน" link is the widest action). -->
           <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-            <th class="px-5 py-3 font-semibold">{{ 'seller.colRequestedDate' | trans }}</th>
-            <th class="px-5 py-3 font-semibold">{{ 'seller.colAmount' | trans }}</th>
-            <th class="px-5 py-3 font-semibold">{{ 'seller.colStatus' | trans }}</th>
-            <th class="px-5 py-3 font-semibold">{{ 'seller.colAccount' | trans }}</th>
-            <th class="px-5 py-3 font-semibold"></th>
+            <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'seller.colRequestedDate' | trans }}</th>
+            <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'seller.colStatus' | trans }}</th>
+            <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'seller.colAmount' | trans }}</th>
+            <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold">{{ 'seller.colAccount' | trans }}</th>
+            <th class="px-2 lg:px-3 xl:px-5 py-3 font-semibold"></th>
           </tr>
         </thead>
         <tbody>
           @if (payouts().length > 0) {
           @for (p of payouts(); track p.id) {
           <tr class="border-t border-line">
-            <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ p.requestedAt | date: 'dd MMM yyyy' }}</td>
-            <td class="px-5 py-3 text-sm text-ink font-bold whitespace-nowrap">{{ p.netAmount | thb }}</td>
-            <td class="px-5 py-3 whitespace-nowrap">
+            <td class="rt-title px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink whitespace-nowrap">{{ p.requestedAt | date: 'dd MMM yyyy' }}</td>
+            <td class="rt-status px-2 lg:px-3 xl:px-5 py-3 whitespace-nowrap">
               @if (p.status === 'paid') {
               <span class="pill bg-emerald-100 text-emerald-700">{{ statusLabel(p.status) }}</span>
               } @else if (p.status === 'pending') {
@@ -121,8 +149,9 @@
               <span class="pill bg-red-100 text-red-700">{{ statusLabel(p.status) }}</span>
               }
             </td>
-            <td class="px-5 py-3 text-sm text-ink-soft whitespace-nowrap">{{ p.bankAccount }}</td>
-            <td class="px-5 py-3 text-sm whitespace-nowrap text-right">
+            <td class="rt-key px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink font-bold whitespace-nowrap" [attr.data-label]="'seller.colAmount' | trans">{{ p.netAmount | thb }}</td>
+            <td class="rt-key px-2 lg:px-3 xl:px-5 py-3 text-sm text-ink-soft break-all md:break-normal xl:whitespace-nowrap" [attr.data-label]="'seller.colAccount' | trans">{{ p.bankAccount }}</td>
+            <td class="rt-action px-2 lg:px-3 xl:px-5 py-3 text-sm whitespace-nowrap text-right">
               @if (p.status === 'pending') {
               <button class="btn-ghost !py-1.5 !px-3 text-xs" [disabled]="cancellingId() === p.id"
                 (click)="confirmCancel(p)">
@@ -136,9 +165,13 @@
             </td>
           </tr>
           }
+          } @else if (loadingPayouts()) {
+          <tr aria-busy="true">
+            <td colspan="5" class="col-span-full px-5 py-3 text-center text-sm text-ink-muted">{{ 'common.loading' | trans }}</td>
+          </tr>
           } @else {
           <tr>
-            <td colspan="5" class="px-5 py-3 text-center text-sm text-ink-muted">{{ 'seller.noPayoutHistory' | trans }}</td>
+            <td colspan="5" class="col-span-full px-5 py-3 text-center text-sm text-ink-muted">{{ 'seller.noPayoutHistory' | trans }}</td>
           </tr>
           }
         </tbody>
@@ -155,12 +188,15 @@
   <section class="card-tile">
     <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.ledgerTitle' | trans }}</h2>
     <p class="text-xs text-ink-muted mb-5">{{ 'seller.ledgerSubtitle' | trans }}</p>
-    <div class="card-tile-body table-scroll overflow-x-auto -mx-5 px-5 md:-mx-6 md:px-6 pb-2">
-      <table class="w-full min-w-[520px]">
+    <!-- R-27: same as the payout table, with the ledger's own pager. -->
+    <div class="card-tile-body table-scroll overflow-x-auto pb-2" appTableViewport
+      [rtLabel]="'seller.ledgerTitle' | trans"
+      [rtResetKey]="ledgerPage() + '|' + ledgerPageSize()">
+      <table class="rtable w-full">
         <thead class="bg-pink-50">
           <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-            <th class="px-5 py-3 font-semibold">{{ 'seller.colDate' | trans }}</th>
             <th class="px-5 py-3 font-semibold">{{ 'seller.colItem' | trans }}</th>
+            <th class="px-5 py-3 font-semibold">{{ 'seller.colDate' | trans }}</th>
             <th class="px-5 py-3 font-semibold text-right">{{ 'seller.colAmount' | trans }}</th>
           </tr>
         </thead>
@@ -168,17 +204,21 @@
           @if (balanceEntries().length > 0) {
           @for (e of balanceEntries(); track e.id) {
           <tr class="border-t border-line">
-            <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ e.occurredAt | date: 'dd MMM yyyy HH:mm' }}</td>
-            <td class="px-5 py-3 text-sm text-ink whitespace-nowrap">{{ ledgerLabel(e.kind) }}</td>
-            <td class="px-5 py-3 text-sm font-bold whitespace-nowrap text-right"
+            <td class="rt-title px-5 py-3 text-sm text-ink md:whitespace-nowrap">{{ ledgerLabel(e.kind) }}</td>
+            <td class="rt-key px-5 py-3 text-sm text-ink whitespace-nowrap" [attr.data-label]="'seller.colDate' | trans">{{ e.occurredAt | date: 'dd MMM yyyy HH:mm' }}</td>
+            <td class="rt-key px-5 py-3 text-sm font-bold whitespace-nowrap md:text-right" [attr.data-label]="'seller.colAmount' | trans"
               [class]="e.amount >= 0 ? 'text-emerald-600' : 'text-rose-600'">
               {{ e.amount >= 0 ? '+' : '' }}{{ e.amount | thb }}
             </td>
           </tr>
           }
+          } @else if (loadingLedger()) {
+          <tr aria-busy="true">
+            <td colspan="3" class="col-span-full px-5 py-3 text-center text-sm text-ink-muted">{{ 'common.loading' | trans }}</td>
+          </tr>
           } @else {
           <tr>
-            <td colspan="3" class="px-5 py-3 text-center text-sm text-ink-muted">{{ 'seller.noLedgerHistory' | trans }}</td>
+            <td colspan="3" class="col-span-full px-5 py-3 text-center text-sm text-ink-muted">{{ 'seller.noLedgerHistory' | trans }}</td>
           </tr>
           }
         </tbody>

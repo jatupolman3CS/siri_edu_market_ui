@@ -1,68 +1,98 @@
-<div class="max-w-6xl">
+<div class="min-w-0">
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.dashboardTitle' | trans }}</h1>
+        <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.dashboardTitle' | trans }}</h1>
         <p class="text-sm text-ink-soft">
           {{ 'admin.dashboardSubtitle' | trans }}
         </p>
       </header>
 
-      <!-- Stats -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <!-- Stats — R-17: skeleton while GET /api/admin/dashboard is pending, message + retry on failure. -->
+      @if (dashboardView() === 'loading') {
+        <section
+          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8"
+          aria-busy="true"
+          data-testid="admin-dashboard-loading"
+        >
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="card-tile h-32 md:h-40 animate-pulse" aria-hidden="true"></div>
+          }
+          <p class="sr-only">{{ 'common.loading' | trans }}</p>
+        </section>
+      } @else if (dashboardView() === 'error') {
+        <div class="card-soft p-6 sm:p-10 mb-8 text-center" role="alert" data-testid="admin-dashboard-error">
+          <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+          <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+          <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+          <button type="button" class="btn-pink mt-5" data-testid="admin-dashboard-retry" (click)="retryDashboard()">
+            {{ 'common.retry' | trans }}
+          </button>
+        </div>
+      } @else {
+      <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <!-- F28: counts carry their unit through the stat-card `unit` input (common.items), not the
+             "selected" text of seller.itemsCount. Money is compact from 1M, full amount as the title. -->
         <app-stat-card
           [label]="'admin.statGmvMonth' | trans"
-          [value]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb"
+          [value]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb: true : 'compact'"
+          [valueTitle]="(admin.dashboard()?.totalRevenue ?? admin.totalRevenue()) | thb"
           icon="💎"
           [trend]="revenueTrendDisplay()"
         />
         <app-stat-card
           [label]="'admin.statPlatformFee' | trans"
-          [value]="(admin.dashboard()?.totalFees ?? admin.totalFees()) | thb"
+          [value]="(admin.dashboard()?.totalFees ?? admin.totalFees()) | thb: true : 'compact'"
+          [valueTitle]="(admin.dashboard()?.totalFees ?? admin.totalFees()) | thb"
           icon="💰"
           [trend]="feesTrendDisplay()"
         />
         <app-stat-card
           [label]="'admin.statSuccessfulTx' | trans"
-          [value]="(admin.dashboard()?.successCount ?? admin.successCount()) + ('seller.itemsCount' | trans: { count: '' }).replace('()', '')"
+          [value]="'' + (admin.dashboard()?.successCount ?? admin.successCount())"
+          [unit]="'common.items' | trans"
           icon="✅"
         />
         <app-stat-card
           [label]="'admin.statRefunds' | trans"
-          [value]="(admin.dashboard()?.refundCount ?? admin.refundCount()) + ('seller.itemsCount' | trans: { count: '' }).replace('()', '')"
+          [value]="'' + (admin.dashboard()?.refundCount ?? admin.refundCount())"
+          [unit]="'common.items' | trans"
           icon="↩️"
           [trend]="refundTrendDisplay()"
         />
       </section>
+      }
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Pending approvals -->
-        <section class="lg:col-span-2 card-soft p-6">
-          <header class="flex items-center justify-between mb-5">
-            <div>
+        <section class="lg:col-span-2 card-soft p-4 md:p-6 min-w-0">
+          <header class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-5">
+            <div class="min-w-0">
               <h2 class="text-lg font-bold text-ink">{{ 'admin.pendingDocsCardTitle' | trans }}</h2>
               <p class="text-xs text-ink-muted mt-1">
-                {{ 'seller.itemsCount' | trans: { count: admin.pendingDocuments().length } }}
+                {{ 'admin.pendingQueue' | trans: { count: pendingCount() } }}
               </p>
             </div>
-            <a routerLink="/admin/approval" class="text-sm text-pink-600 hover:underline font-semibold">
+            <a routerLink="/admin/approval" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-pink-600 hover:underline font-semibold">
               {{ 'admin.viewAllArrow' | trans }}
             </a>
           </header>
 
           <ul class="divide-y divide-line">
             @for (d of admin.pendingDocuments().slice(0, 5); track d.id) {
-              <li class="py-3 flex items-center gap-4">
+              <!-- R-5 / R-6: the row wraps (the approve link drops below the text at large text sizes)
+                   and seller names break anywhere instead of widening the page. -->
+              <li class="py-3 flex flex-wrap items-center gap-3 sm:gap-4">
                 <img appImgFallback [src]="d.cover" class="w-12 h-14 rounded-xl object-cover flex-shrink-0" alt="" />
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm font-bold text-ink line-clamp-1">{{ d.title }}</div>
-                  <div class="text-xs text-ink-muted mt-0.5 flex items-center gap-2">
-                    <span>{{ d.seller.studioName }}</span>
+                <div class="flex-1 min-w-[7rem]">
+                  <div class="text-sm font-bold text-ink line-clamp-1 [overflow-wrap:anywhere]">{{ d.title }}</div>
+                  <div class="text-xs text-ink-muted mt-0.5 flex flex-wrap items-center gap-x-2">
+                    <span class="min-w-0 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
                     <span>·</span>
                     <span>{{ d.createdAt | timeAgo }}</span>
                     <span>·</span>
                     <span class="uppercase">{{ d.format }}</span>
                   </div>
                 </div>
-                <a [routerLink]="['/admin/approval']" class="btn-pink !py-2 !px-4 text-xs">
+                <a [routerLink]="['/admin/approval']" class="btn-pink !py-2 !px-4 text-xs shrink-0 ml-auto">
                   {{ 'admin.approval' | trans }}
                 </a>
               </li>
@@ -71,19 +101,28 @@
         </section>
 
         <!-- System health -->
-        <section class="card-soft p-6">
+        <section class="card-soft p-4 md:p-6 min-w-0">
           <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.systemStatusTitle' | trans }}</h2>
+          @if (dashboardView() === 'loading') {
+            <div class="space-y-3 mt-5" aria-busy="true" data-testid="admin-health-loading">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="h-9 rounded-xl bg-pink-50 animate-pulse" aria-hidden="true"></div>
+              }
+            </div>
+          } @else if (dashboardView() === 'error') {
+            <p class="text-sm text-ink-muted mt-2">{{ 'common.loadFailed' | trans }}</p>
+          } @else {
           <p class="text-xs text-ink-muted mb-5">{{ 'admin.allServicesHealthy' | trans }}</p>
           <ul class="space-y-3">
             @for (s of services(); track s.name) {
               <li class="flex items-center gap-3">
                 <span
-                  class="w-2.5 h-2.5 rounded-full"
+                  class="w-2.5 h-2.5 rounded-full shrink-0"
                   [class.bg-emerald-500]="s.status === 'ok'"
                   [class.bg-amber-500]="s.status === 'degraded' || s.status === 'warn'"
                   [class.bg-rose-500]="s.status === 'down'"
                 ></span>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0 [overflow-wrap:anywhere]">
                   <div class="text-sm font-medium text-ink">{{ s.name }}</div>
                   <div class="text-xs text-ink-muted">
                     {{ s.message || (s.status === 'ok' ? ('admin.statusOperational' | trans) : s.status) }}
@@ -92,38 +131,48 @@
               </li>
             }
           </ul>
+          }
         </section>
       </div>
 
       <!-- Recent transactions -->
-      <section class="card-soft p-6 mt-6">
-        <header class="flex items-center justify-between mb-5">
-          <h2 class="text-lg font-bold text-ink">{{ 'admin.recentTransactionsTitle' | trans }}</h2>
-          <a routerLink="/admin/transactions" class="text-sm text-pink-600 hover:underline font-semibold">
+      <section class="card-soft p-4 md:p-6 mt-6">
+        <header class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-5">
+          <h2 class="text-lg font-bold text-ink min-w-0">{{ 'admin.recentTransactionsTitle' | trans }}</h2>
+          <a routerLink="/admin/transactions" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-pink-600 hover:underline font-semibold">
             {{ 'admin.viewAllArrow' | trans }}
           </a>
         </header>
 
-        <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
-        <table class="w-full min-w-[560px]">
+        <!-- R-27: a table viewport like every other table; at most 5 rows here, so it never caps. -->
+        <div
+          class="table-scroll overflow-x-auto md:-mx-6 md:px-6 pb-2"
+          appTableViewport
+          [rtLabel]="'admin.recentTransactionsTitle' | trans"
+        >
+        <table class="rtable w-full">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
-              <th class="px-5 py-3 font-semibold">{{ 'admin.colOrderNumber' | trans }}</th>
-              <th class="px-5 py-3 font-semibold">{{ 'admin.colBuyer' | trans }}</th>
               <th class="px-5 py-3 font-semibold">{{ 'admin.colDoc' | trans }}</th>
-              <th class="px-5 py-3 font-semibold">{{ 'admin.colAmount' | trans }}</th>
               <th class="px-5 py-3 font-semibold">{{ 'admin.colStatus' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.colAmount' | trans }}</th>
+              <th class="px-5 py-3 font-semibold">{{ 'admin.transactions.colBuyer' | trans }}</th>
+              <th class="rt-secondary px-5 py-3 font-semibold">{{ 'admin.colOrderNumber' | trans }}</th>
+              <th class="rt-more"></th>
             </tr>
           </thead>
           <tbody>
             @for (t of admin.transactions().slice(0, 5); track t.id) {
               <tr class="border-t border-line">
-                <td class="px-5 py-3 text-sm text-ink font-mono">{{ t.orderNumber }}</td>
-                <td class="px-5 py-3 text-sm text-ink">{{ t.buyerName }}</td>
-                <td class="px-5 py-3 text-sm text-ink line-clamp-1 max-w-xs">{{ t.documentTitle }}</td>
-                <td class="px-5 py-3 text-sm font-bold text-ink whitespace-nowrap">{{ t.amount | thb }}</td>
-                <td class="px-5 py-3">
+                <td class="rt-title px-5 py-3 text-sm text-ink max-w-xs"><span class="line-clamp-1 [overflow-wrap:anywhere]">{{ t.documentTitle }}</span></td>
+                <td class="rt-status px-5 py-3">
                   <span class="pill" [class]="badgeClass(t.status)">{{ statusLabel(t.status) }}</span>
+                </td>
+                <td class="rt-key px-5 py-3 text-sm font-bold text-ink whitespace-nowrap" [attr.data-label]="'admin.colAmount' | trans">{{ t.amount | thb }}</td>
+                <td class="rt-key px-5 py-3 text-sm text-ink [overflow-wrap:anywhere]" [attr.data-label]="'admin.transactions.colBuyer' | trans">{{ t.buyerName }}</td>
+                <td class="rt-secondary px-5 py-3 text-sm text-ink font-mono">{{ t.orderNumber }}</td>
+                <td class="rt-more px-1 py-3">
+                  <app-row-more [items]="[{ label: ('admin.colOrderNumber' | trans), value: t.orderNumber }]" />
                 </td>
               </tr>
             }

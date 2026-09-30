@@ -29,6 +29,8 @@ export class BecomeSellerPage {
   readonly bio = signal<string>('');
   readonly specialtiesText = signal<string>('');
   readonly submitting = signal<boolean>(false);
+  /** responsive-ui v1.4 R-17 (F88): the application lookup failed (network / 5xx), not "none". */
+  readonly loadFailed = signal<boolean>(false);
 
   readonly application = this.applications.mine;
   readonly loading = this.applications.loading;
@@ -47,8 +49,24 @@ export class BecomeSellerPage {
     void this.load();
   }
 
+  /** R-17: the error state's retry re-issues the same GET. */
+  retry(): void {
+    void this.load();
+  }
+
+  /**
+   * `resolveAccessStatus({ force: true })` makes the same single `GET /api/me/seller-application`
+   * as `loadMine()` did, but tells a failed lookup (`'unavailable'`) apart from "never applied" —
+   * `loadMine()` resolves `null` for both, which is how an outage used to show a fresh form.
+   */
   private async load(): Promise<void> {
-    const existing = await this.applications.loadMine();
+    this.loadFailed.set(false);
+    const status = await this.applications.resolveAccessStatus({ force: true });
+    if (status === 'unavailable') {
+      this.loadFailed.set(true);
+      return;
+    }
+    const existing = this.applications.mine();
     if (existing) {
       this.studioName.set(existing.studioName ?? '');
       this.bio.set(existing.bio ?? '');

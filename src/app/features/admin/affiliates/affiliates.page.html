@@ -1,7 +1,7 @@
 <div class="space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-ink tracking-tight">{{ 'admin.affiliatesAdmin.title' | trans }}</h1>
+      <h1 class="heading-1 text-ink tracking-tight">{{ 'admin.affiliatesAdmin.title' | trans }}</h1>
       <p class="text-sm text-ink-muted mt-1">
         {{ 'admin.affiliatesAdmin.desc' | trans }}
       </p>
@@ -21,59 +21,74 @@
       />
     </div>
   } @else {
-    <div class="card-soft p-6 overflow-hidden">
-      <div class="table-responsive">
-        <table class="w-full text-left text-sm">
+    <div class="card-soft p-4 md:p-6 overflow-hidden max-md:!bg-transparent max-md:!border-0 max-md:!shadow-none max-md:!p-0">
+      <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper; a new page or page
+           size scrolls back to the top. -->
+      <div
+        class="table-responsive overflow-x-auto"
+        appTableViewport
+        [rtLabel]="'admin.affiliatesAdmin.title' | trans"
+        [rtResetKey]="page() + '|' + pageSize()"
+      >
+        <table class="rtable w-full text-left text-sm">
           <thead>
             <tr class="border-b border-line text-xs font-semibold text-ink-muted">
               <th class="pb-3 pr-4">{{ 'admin.affiliatesAdmin.colUser' | trans }}</th>
-              <th class="pb-3 px-4">{{ 'admin.affiliatesAdmin.colCode' | trans }}</th>
-              <th class="pb-3 px-4 text-center">{{ 'admin.affiliatesAdmin.colCommissionRate' | trans }}</th>
               <th class="pb-3 px-4 text-center">{{ 'admin.affiliatesAdmin.colStatus' | trans }}</th>
-              <th class="pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colClicks' | trans }}</th>
-              <th class="pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colSales' | trans }}</th>
+              <th class="pb-3 px-4">{{ 'admin.affiliatesAdmin.colCode' | trans }}</th>
               <th class="pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colCommissionEarned' | trans }}</th>
+              <th class="rt-secondary pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colClicks' | trans }}</th>
+              <th class="rt-secondary pb-3 px-4 text-right">{{ 'admin.affiliatesAdmin.colSales' | trans }}</th>
+              <th class="rt-more"></th>
               <th class="pb-3 pl-4 text-right">{{ 'admin.affiliatesAdmin.colActions' | trans }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
             @for (item of items(); track item.userId) {
               <tr class="hover:bg-pink-50/40 transition-colors">
-                <td class="py-3.5 pr-4">
+                <td class="rt-title py-3.5 pr-4">
                   <div class="font-semibold text-ink">{{ item.displayName || '—' }}</div>
-                  <div class="text-xs text-ink-muted">{{ item.email }}</div>
+                  <div class="text-xs font-normal text-ink-muted break-all">{{ item.email }}</div>
                 </td>
-                <td class="py-3.5 px-4 font-mono font-bold text-emerald-600">
-                  {{ item.code }}
-                </td>
-                <td class="py-3.5 px-4 text-center">
-                  <button
-                    type="button"
-                    class="pill pill-soft hover:border-pink-400 cursor-pointer transition-all"
-                    (click)="openSettingsModal(item)"
-                  >
-                    {{ item.commissionRatePercent }}%
-                    <app-icon name="gear" [size]="12" />
-                  </button>
-                </td>
-                <td class="py-3.5 px-4 text-center">
+                <td class="rt-status py-3.5 px-4 text-center">
                   @if (item.isActive) {
                     <span class="pill pill-green">{{ 'admin.affiliatesAdmin.enabled' | trans }}</span>
                   } @else {
                     <span class="pill pill-rose">{{ 'admin.affiliatesAdmin.disabled' | trans }}</span>
                   }
                 </td>
-                <td class="py-3.5 px-4 text-right font-medium text-ink">
-                  {{ item.totalClicks }}
+                <td class="rt-key py-3.5 px-4 font-mono font-bold text-emerald-600" [attr.data-label]="'admin.affiliatesAdmin.colCode' | trans">
+                  {{ item.code }}
                 </td>
-                <td class="py-3.5 px-4 text-right font-medium text-ink">
-                  {{ item.totalConversions }}
-                </td>
-                <td class="py-3.5 px-4 text-right font-semibold text-emerald-600">
+                <td class="rt-key py-3.5 px-4 text-right font-semibold text-emerald-600" [attr.data-label]="'admin.affiliatesAdmin.colCommissionEarned' | trans">
                   {{ item.commissionEarnedTotal | thb }}
                 </td>
-                <td class="py-3.5 pl-4 text-right">
-                  <div class="inline-flex items-center gap-2">
+                <td class="rt-secondary py-3.5 px-4 text-right font-medium text-ink">
+                  {{ item.totalClicks }}
+                </td>
+                <td class="rt-secondary py-3.5 px-4 text-right font-medium text-ink">
+                  {{ item.totalConversions }}
+                </td>
+                <td class="rt-more py-3.5 px-1">
+                  <app-row-more
+                    [items]="[
+                      { label: ('admin.affiliatesAdmin.colClicks' | trans), value: item.totalClicks },
+                      { label: ('admin.affiliatesAdmin.colSales' | trans), value: item.totalConversions }
+                    ]"
+                  />
+                </td>
+                <td class="rt-action py-3.5 pl-4 text-right">
+                  <div class="inline-flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      class="pill pill-soft hover:border-pink-400 cursor-pointer transition-all [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
+                      [attr.aria-label]="'admin.affiliatesAdmin.colCommissionRate' | trans"
+                      [title]="'admin.affiliatesAdmin.colCommissionRate' | trans"
+                      (click)="openSettingsModal(item)"
+                    >
+                      {{ item.commissionRatePercent }}%
+                      <app-icon name="gear" [size]="12" />
+                    </button>
                     <button
                       type="button"
                       class="btn-ghost !py-1 !px-3 text-xs"
@@ -120,10 +135,11 @@
           </label>
           <input
             type="number"
+            inputmode="decimal"
             min="0"
             max="100"
             step="0.5"
-            class="input-soft !rounded-xl text-sm"
+            class="input-soft w-full !rounded-xl text-sm"
             [ngModel]="rateOverrideInput()"
             (ngModelChange)="rateOverrideInput.set($event)"
             [placeholder]="'admin.affiliatesAdmin.commissionPlaceholder' | trans"

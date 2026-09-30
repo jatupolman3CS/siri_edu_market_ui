@@ -59,6 +59,15 @@ Thumbs.db
 .env.*
 !.env.example
 appsettings.Local.json
+
+# Playwright — e2e/ specs + helpers are tracked (playwright.config.ts points at them); their
+# generated output is not. e2e/.auth/ holds storageState files with LIVE access + refresh tokens
+# (written by auth.setup.ts / responsive.spec.ts). Sign-in accounts come from E2E_* env vars
+# (e2e/auth-accounts.ts) — never put credentials or real account emails in e2e/ files.
 /playwright-report
 /test-results
-/e2e
+/blob-report
+/playwright/.cache
+e2e/.auth/
+e2e/**/test-results/
+e2e/**/playwright-report/

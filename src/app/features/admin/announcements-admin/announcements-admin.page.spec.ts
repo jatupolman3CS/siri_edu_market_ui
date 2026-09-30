@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { AnnouncementsAdminPage, announcementStatus } from './announcements-admin.page';
@@ -7,6 +8,7 @@ import { SellerService } from '../../../core/services/seller.service';
 import { downloadUrlForStorageKey } from '../../../core/api-runtime';
 import type { UploadResponse } from '../../../core/api/types.gen';
 import type { AnnouncementAdmin } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * announcement-popup v1 §4 (`docs/contracts/announcement-popup.md`) — AC-26.
@@ -448,5 +450,61 @@ describe('announcementStatus() (announcement-popup v1 §4)', () => {
         now,
       ),
     ).toBe('active');
+  });
+});
+
+describe('AnnouncementsAdminPage — form inputs on phones (responsive-ui v1.4 F159)', () => {
+  it('the sort-order number field has inputmode=numeric', async () => {
+    const { fixture, page } = renderPage();
+    page.openCreate();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const input = document.body.querySelector('.ant-modal-body input[type="number"]');
+    expect(input?.getAttribute('inputmode')).toBe('numeric');
+  });
+});
+
+describe('AnnouncementsAdminPage — table viewport (responsive-ui v1.6 R-27)', () => {
+  async function renderMany(n: number) {
+    const rendered = renderPage();
+    vi.mocked(rendered.admin.listAnnouncements).mockResolvedValue(
+      Array.from({ length: n }, (_, i) => announcement(`ann-${i + 1}`)),
+    );
+    await rendered.page.refresh();
+    rendered.fixture.detectChanges();
+    await settle();
+    rendered.fixture.detectChanges();
+    const root = rendered.fixture.nativeElement as HTMLElement;
+    const wrapper = (root.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+    return { ...rendered, root, wrapper };
+  }
+
+  it('puts the table in a named table viewport with the pagination after it, outside', async () => {
+    const { fixture, root, wrapper } = await renderMany(12);
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(wrapper.querySelectorAll('tbody > tr').length).toBe(10);
+    const viewport = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    expect(viewport.rtLabel()).toBe('จัดการประกาศข่าวสาร');
+  });
+
+  it('a new page or page size scrolls the table to its top; a reload of the same list does not', async () => {
+    const { fixture, page, wrapper } = await renderMany(12);
+    const scrollTopAfter = async (act: () => unknown): Promise<number> => {
+      wrapper.scrollTop = 300;
+      await act();
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      return wrapper.scrollTop;
+    };
+
+    expect(await scrollTopAfter(() => page.onPageChange(2))).toBe(0);
+    expect(await scrollTopAfter(() => page.onPageSizeChange(20))).toBe(0);
+    expect(await scrollTopAfter(() => page.refresh())).toBe(300);
   });
 });

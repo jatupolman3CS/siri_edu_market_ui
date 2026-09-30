@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+/* Phone only — >=744 consumers show their sticky side card instead. */
+@media (min-width: 744px) {
+  :host {
+    display: none;
+  }
+}
+
+/* Keeps the end of the page scrollable above the fixed bar. This height is only the fallback:
+   once a ResizeObserver has measured the bar, an inline `height` equal to the bar's real
+   border-box height (safe-area padding included) overrides it — the bar grows past
+   --action-bar-h when a label wraps (G-11). */
+.sticky-action-bar__spacer {
+  height: calc(var(--action-bar-h) + var(--safe-bottom));
+}
+
+.sticky-action-bar {
+  position: fixed;
+  bottom: 0;
+  inset-inline: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: calc(var(--action-bar-h) + var(--safe-bottom));
+  padding: 12px max(16px, var(--safe-right)) calc(12px + var(--safe-bottom)) max(16px, var(--safe-left));
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 24px -12px rgba(42, 27, 34, 0.18);
+}
+
+/* Consumers wrap their row in one element. As a flex item it would shrink-wrap to its content,
+   so a `max-w-[60%]` CTA truncated its label with ~100px of bar still empty — the single wrapper
+   spans the bar instead. (Projected nodes carry the consumer's scope attribute, hence ::ng-deep;
+   it is anchored under this component's own `.sticky-action-bar`, so nothing leaks out.) */
+.sticky-action-bar > ::ng-deep :only-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}

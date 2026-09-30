@@ -17,7 +17,7 @@ import type {
   SellerBundleItemResponse,
   SellerBundleResponse,
 } from '../api/types.gen';
-import { unwrapSdkResult } from './api-result';
+import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import {
   errorActionState,
   idleActionState,
@@ -178,7 +178,8 @@ export class BundleService {
         this._bundleDocuments.update((map) => new Map(map).set(id, documents));
         this._bundleDetailState.set(idleActionState());
       } catch (e) {
-        this.apiFail.report('errors.context.loadBundleDetail', e);
+        // responsive-ui v1.4 R-17 (F116): a 404 is the page's own not-found state — no toast.
+        if (extractErrorStatus(e) !== 404) this.apiFail.report('errors.context.loadBundleDetail', e);
         this._bundleDetailState.set(errorActionState(this.translation.t('errors.loadBundleDetailFailed')));
       }
     })();
@@ -251,7 +252,9 @@ export class BundleService {
       const data = unwrapSdkResult(result);
       return (data.items ?? []).map(mapBundle);
     } catch (e) {
-      this.apiFail.report('errors.context.loadBundlesForDocument', e);
+      // responsive-ui v1.4 R-17 (F116): a 404 (the document itself doesn't exist) hides this
+      // section silently — the page already shows its own not-found state, so no second toast.
+      if (extractErrorStatus(e) !== 404) this.apiFail.report('errors.context.loadBundlesForDocument', e);
       return [];
     }
   }

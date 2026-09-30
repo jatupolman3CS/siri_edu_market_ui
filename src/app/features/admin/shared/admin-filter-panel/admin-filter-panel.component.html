@@ -1,0 +1,40 @@
+<div class="md:hidden">
+  <button
+    type="button"
+    class="btn-ghost tap-target w-full !justify-center"
+    data-testid="filter-sheet-button"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="sheetOpen()"
+    (click)="openSheet()"
+  >
+    <app-icon name="filter" [size]="16" />
+    @if (activeCount() > 0) {
+      {{ 'responsive.filters.button' | trans: { count: activeCount() } }}
+    } @else {
+      {{ 'responsive.filters.buttonNoCount' | trans }}
+    }
+  </button>
+</div>
+
+<div class="hidden md:block" data-testid="filter-inline">
+  <ng-container [ngTemplateOutlet]="fields()" />
+</div>
+
+<app-bottom-sheet
+  [open]="sheetOpen()"
+  [title]="'responsive.filters.title' | trans"
+  tabletMode="slide-over"
+  (closed)="closeSheet()"
+>
+  <div class="space-y-3" data-testid="filter-sheet-body">
+    <ng-container [ngTemplateOutlet]="fields()" />
+  </div>
+  <div sheetFooter class="flex w-full gap-2">
+    <button type="button" class="btn-ghost flex-1 !justify-center" data-testid="filter-clear-all" (click)="onClearAll()">
+      {{ 'responsive.filters.clearAll' | trans }}
+    </button>
+    <button type="button" class="btn-pink flex-1 !justify-center" data-testid="filter-show-results" (click)="onShowResults()">
+      {{ 'responsive.filters.showResults' | trans }}
+    </button>
+  </div>
+</app-bottom-sheet>

@@ -141,3 +141,72 @@ describe('AccountPrivacyPage', () => {
     expect(crmFake.deleteMyData).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * responsive-ui v1.4 gate fix (G2-6) F148: the tracking switch is `nzControl`led — it shows only
+ * the server-confirmed `trackingEnabled`, so a failed PUT no longer leaves it showing "off".
+ */
+describe('AccountPrivacyPage — tracking switch shows the saved value (responsive v1.4 F148)', () => {
+  function trackingSwitch(fixture: { nativeElement: HTMLElement }): HTMLButtonElement {
+    const button = fixture.nativeElement.querySelector<HTMLButtonElement>('nz-switch[name="crm-tracking-switch"] button');
+    if (!button) throw new Error('tracking switch not rendered');
+    return button;
+  }
+
+  /** `[ngModel]` writes into the switch on a microtask, so settle → render twice. */
+  async function flush(fixture: { detectChanges: () => void }): Promise<void> {
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < 4; j++) await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+    }
+  }
+
+  it('a failed save reports the error and the switch stays on', async () => {
+    const crmFake = buildCrmFake(buildProfile({ trackingEnabled: true }));
+    crmFake.setTracking.mockRejectedValue(new Error('500'));
+    const fixture = render(crmFake);
+    const error = TestBed.inject(NzMessageService).error as ReturnType<typeof vi.fn>;
+    await flush(fixture);
+    const button = trackingSwitch(fixture);
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+
+    button.click();
+    await flush(fixture);
+
+    expect(crmFake.setTracking).toHaveBeenCalledWith(false);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('เปลี่ยนการตั้งค่าการติดตาม'));
+    expect(button.classList.contains('ant-switch-checked')).toBe(true);
+    expect(fixture.componentInstance.togglingTracking()).toBe(false);
+  });
+
+  it('a successful save shows the value the server answered with', async () => {
+    const crmFake = buildCrmFake(buildProfile({ trackingEnabled: true }));
+    const fixture = render(crmFake);
+    await flush(fixture);
+
+    trackingSwitch(fixture).click();
+    await flush(fixture);
+
+    expect(crmFake.setTracking).toHaveBeenCalledTimes(1);
+    expect(trackingSwitch(fixture).classList.contains('ant-switch-checked')).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'ปิดอยู่ — ระบบจะไม่เก็บพฤติกรรมของคุณอีก และข้อมูลเดิมถูกลบไปแล้ว',
+    );
+  });
+
+  it('the switch spins, stays put, and a second tap mid-save sends nothing', async () => {
+    const crmFake = buildCrmFake(buildProfile({ trackingEnabled: true }));
+    crmFake.setTracking.mockImplementation(() => new Promise<void>(() => undefined));
+    const fixture = render(crmFake);
+    await flush(fixture);
+
+    trackingSwitch(fixture).click();
+    await flush(fixture);
+    trackingSwitch(fixture).click();
+    await flush(fixture);
+
+    expect(crmFake.setTracking).toHaveBeenCalledTimes(1);
+    expect(trackingSwitch(fixture).classList.contains('ant-switch-loading')).toBe(true);
+    expect(trackingSwitch(fixture).classList.contains('ant-switch-checked')).toBe(true);
+  });
+});

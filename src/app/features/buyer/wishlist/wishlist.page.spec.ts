@@ -83,7 +83,7 @@ describe('BuyerWishlistPage — wishlist-price-drop-alerts v1 §4 (AC-20)', () =
       buildDoc('doc-2', { hasPriceDropped: false }),
     ]);
 
-    const badges = (fixture.nativeElement as HTMLElement).querySelectorAll('.pill.bg-pink-500');
+    const badges = (fixture.nativeElement as HTMLElement).querySelectorAll('.pill.bg-primary');
     const badgeTexts = Array.from(badges).map((el) => el.textContent?.trim());
     expect(badgeTexts.some((t) => t?.includes('ราคาลดแล้ว!'))).toBe(true);
     expect(badges.length).toBe(1);

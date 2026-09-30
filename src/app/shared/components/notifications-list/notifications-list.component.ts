@@ -51,6 +51,12 @@ export class NotificationsListComponent {
     return getNotificationStyle(key, title);
   }
 
+  /** R-17: re-issues the page-1 GET after a failed load. */
+  retry(): void {
+    this.currentPage.set(1);
+    this.feed.loadFeed(1, this.audience());
+  }
+
   loadMore(): void {
     if (this.feed.loading() || !this.hasMore()) return;
     const next = this.currentPage() + 1;

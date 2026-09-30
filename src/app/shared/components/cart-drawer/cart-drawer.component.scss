@@ -1,0 +1,55 @@
+/*
+ * responsive-ui v1 §4.7 — the drawer renders in the CDK overlay (outside this host), so these
+ * rules are un-encapsulated and scoped by nzWrapClassName="cart-drawer-wrap".
+ * The global <744 `.ant-drawer-body` padding would frame the full-bleed layout; undo it here.
+ */
+::ng-deep .cart-drawer-wrap .ant-drawer-body {
+  padding: 0 !important;
+}
+
+/* Summary footer: safe-area padded (home indicator). */
+.cart-drawer__footer {
+  padding-bottom: calc(1rem + var(--safe-bottom));
+}
+
+@media (min-width: 744px) {
+  .cart-drawer__footer {
+    padding-bottom: calc(1.25rem + var(--safe-bottom));
+  }
+}
+
+/* Short (landscape phone) viewports: the fixed header (~71px) and summary footer (~216px) left the
+   item list 0-26px tall, so the buyer could not see what was in the cart, and at 568x320 the
+   footer ran off the screen. There the whole sheet scrolls (the .ant-drawer-body is already
+   overflow-y:auto), the items take their natural height, and a slimmer footer — total + both
+   buttons — sticks to the bottom. Portrait phones, tablets and desktop are unchanged. */
+@media (max-height: 520px) {
+  .cart-drawer__root {
+    height: auto;
+    min-height: 100%;
+  }
+  .cart-drawer__list {
+    flex: 1 0 auto;
+    overflow: visible;
+    padding-block: 0.75rem;
+  }
+  .cart-drawer__header {
+    padding-block: 0.5rem;
+  }
+  .cart-drawer__footer {
+    position: sticky;
+    bottom: 0;
+    padding-top: 0.75rem;
+  }
+  .cart-drawer__footer dl {
+    margin-bottom: 0.75rem;
+  }
+  .cart-drawer__breakdown,
+  .cart-drawer__note {
+    display: none;
+  }
+  .cart-drawer__total {
+    padding-top: 0;
+    border-top: 0;
+  }
+}

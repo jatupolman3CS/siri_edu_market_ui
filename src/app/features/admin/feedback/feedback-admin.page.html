@@ -1,62 +1,71 @@
 <div class="space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.feedbackAdmin.title' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.feedbackAdmin.title' | trans }}</h1>
       <p class="text-sm text-ink-soft">
         {{ 'admin.feedbackAdmin.desc' | trans }}
       </p>
     </div>
   </header>
 
-  <!-- 3 Rows of Filters -->
-  <div class="card-soft p-4 space-y-3">
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-xs font-bold text-ink-soft w-16 shrink-0">{{ 'admin.feedbackAdmin.filterStatus' | trans }}</span>
-      <div class="flex gap-1.5 flex-wrap">
-        @for (opt of statusOptions; track opt.value) {
-          <button
-            type="button"
-            class="pill"
-            [class]="statusFilter() === opt.value ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
-            (click)="setStatusFilter(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
+  <!-- 3 Rows of Filters (phone: inside the ตัวกรอง sheet — responsive-ui U4-5) -->
+  <ng-template #feedbackFilters>
+    <div class="space-y-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-ink-soft w-16 shrink-0">{{ 'admin.feedbackAdmin.filterStatus' | trans }}</span>
+        <div class="chip-row !gap-1.5 min-w-0 flex-1">
+          @for (opt of statusOptions; track opt.value) {
+            <button
+              type="button"
+              class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11 whitespace-nowrap"
+              [class]="statusFilter() === opt.value ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
+              (click)="setStatusFilter(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
       </div>
-    </div>
 
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-xs font-bold text-ink-soft w-16 shrink-0">{{ 'admin.feedbackAdmin.filterType' | trans }}</span>
-      <div class="flex gap-1.5 flex-wrap">
-        @for (opt of typeOptions; track opt.value) {
-          <button
-            type="button"
-            class="pill"
-            [class]="typeFilter() === opt.value ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
-            (click)="setTypeFilter(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-ink-soft w-16 shrink-0">{{ 'admin.feedbackAdmin.filterType' | trans }}</span>
+        <div class="chip-row !gap-1.5 min-w-0 flex-1">
+          @for (opt of typeOptions; track opt.value) {
+            <button
+              type="button"
+              class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11 whitespace-nowrap"
+              [class]="typeFilter() === opt.value ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
+              (click)="setTypeFilter(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
       </div>
-    </div>
 
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-xs font-bold text-ink-soft w-16 shrink-0">{{ 'admin.feedbackAdmin.filterRole' | trans }}</span>
-      <div class="flex gap-1.5 flex-wrap">
-        @for (opt of roleOptions; track opt.value) {
-          <button
-            type="button"
-            class="pill"
-            [class]="roleFilter() === opt.value ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
-            (click)="setRoleFilter(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-ink-soft w-16 shrink-0">{{ 'admin.feedbackAdmin.filterRole' | trans }}</span>
+        <div class="chip-row !gap-1.5 min-w-0 flex-1">
+          @for (opt of roleOptions; track opt.value) {
+            <button
+              type="button"
+              class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11 whitespace-nowrap"
+              [class]="roleFilter() === opt.value ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
+              (click)="setRoleFilter(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
       </div>
     </div>
+  </ng-template>
+  <div class="card-soft p-4">
+    <app-admin-filter-panel
+      [fields]="feedbackFilters"
+      [activeCount]="activeFilterCount()"
+      (clearAll)="clearFilters()"
+    />
   </div>
 
   @if (loading()) {
@@ -118,7 +127,7 @@
             <div class="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                class="btn-primary !py-1.5 !px-4 text-xs"
+                class="btn-pink !py-1.5 !px-4 text-xs"
                 (click)="openDetail(item)"
               >
                 {{ 'admin.feedbackAdmin.viewDetail' | trans }}
@@ -153,6 +162,7 @@
     [nzVisible]="detailModalOpen()"
     [nzTitle]="'admin.feedbackAdmin.detailTitle' | trans"
     [nzWidth]="720"
+    nzClassName="modal-wide"
     (nzOnCancel)="closeDetail()"
     [nzFooter]="modalFooter"
   >
@@ -289,7 +299,7 @@
           </button>
           <button
             type="button"
-            class="btn-primary !py-2 !px-5 text-xs"
+            class="btn-pink !py-2 !px-5 text-xs"
             [disabled]="savingDetail()"
             (click)="saveDetail()"
           >

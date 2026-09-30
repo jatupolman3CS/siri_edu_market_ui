@@ -1,10 +1,10 @@
 <div class="space-y-6">
   <header class="flex items-center gap-3">
-    <a routerLink="/admin/crm" class="text-sm text-pink-600 hover:underline">{{ 'admin.crmSegment.back' | trans }}</a>
+    <a routerLink="/admin/crm" class="inline-flex items-center min-h-[44px] text-sm text-pink-600 hover:underline">{{ 'admin.crmSegment.back' | trans }}</a>
   </header>
 
   <div>
-    <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.crmSegment.title' | trans }} {{ code() }}</h1>
+    <h1 id="crm-segment-users-heading" class="heading-1 font-extrabold text-ink break-words">{{ 'admin.crmSegment.title' | trans }} {{ code() }}</h1>
     <p class="text-sm text-ink-soft">{{ 'admin.crmSegment.desc' | trans }}</p>
   </div>
 
@@ -13,16 +13,24 @@
   } @else if (crm.segmentUsers().length === 0) {
     <app-empty-state emoji="👥" [title]="'admin.crmSegment.empty' | trans" [description]="'admin.crmSegment.emptyDesc' | trans" />
   } @else {
-    <div class="card-soft p-6">
-      <div class="table-scroll overflow-x-auto -mx-6 px-6 pb-2">
-        <table class="w-full min-w-[720px]">
+    <div class="card-soft p-4 md:p-6 max-md:!bg-transparent max-md:!border-0 max-md:!shadow-none max-md:!p-0">
+      <!-- R-27: capped at 10 rows at >=744; a new segment, page or page size scrolls back to the top. -->
+      <div
+        class="table-scroll overflow-x-auto md:-mx-6 md:px-6 pb-2"
+        appTableViewport
+        rtLabelledBy="crm-segment-users-heading"
+        [rtResetKey]="code() + '|' + crm.segmentUsersPage() + '|' + crm.segmentUsersPageSize()"
+      >
+        <table class="rtable w-full">
           <thead class="bg-pink-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colUser' | trans }}</th>
               <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colConfidence' | trans }}</th>
               <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colTopCategory' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colLastActivity' | trans }}</th>
-              <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colJoinedAt' | trans }}</th>
+              <th class="rt-secondary px-4 py-3 font-semibold">{{ 'admin.crmSegment.colLastActivity' | trans }}</th>
+              <th class="rt-secondary px-4 py-3 font-semibold">{{ 'admin.crmSegment.colJoinedAt' | trans }}</th>
+              <th class="rt-more"></th>
+              <th class="px-2 py-3 w-12"></th>
             </tr>
           </thead>
           <tbody>
@@ -31,16 +39,34 @@
                 class="border-t border-line cursor-pointer hover:bg-pink-50/60"
                 (click)="openUser(u.userId)"
               >
-                <td class="px-4 py-3 text-sm">
+                <td class="rt-title px-4 py-3 text-sm">
                   <div class="font-semibold text-ink">{{ u.displayName }}</div>
-                  <div class="text-xs text-ink-muted">{{ u.email }}</div>
+                  <div class="text-xs font-normal text-ink-muted break-all">{{ u.email }}</div>
                 </td>
-                <td class="px-4 py-3 text-sm text-ink-soft">{{ u.interestConfidence * 100 | number: '1.0-0' }}%</td>
-                <td class="px-4 py-3 text-sm text-ink-soft">{{ u.topCategoryLabel ?? '—' }}</td>
-                <td class="px-4 py-3 text-xs text-ink-soft whitespace-nowrap">
+                <td class="rt-key px-4 py-3 text-sm text-ink-soft" [attr.data-label]="'admin.crmSegment.colConfidence' | trans">{{ u.interestConfidence * 100 | number: '1.0-0' }}%</td>
+                <td class="rt-key px-4 py-3 text-sm text-ink-soft" [attr.data-label]="'admin.crmSegment.colTopCategory' | trans">{{ u.topCategoryLabel ?? '—' }}</td>
+                <td class="rt-secondary px-4 py-3 text-xs text-ink-soft whitespace-nowrap">
                   {{ u.lastActivityAt ? (u.lastActivityAt | date: 'd MMM yyyy') : '—' }}
                 </td>
-                <td class="px-4 py-3 text-xs text-ink-soft whitespace-nowrap">{{ u.assignedAt | date: 'd MMM yyyy' }}</td>
+                <td class="rt-secondary px-4 py-3 text-xs text-ink-soft whitespace-nowrap">{{ u.assignedAt | date: 'd MMM yyyy' }}</td>
+                <td class="rt-more px-1 py-3" (click)="$event.stopPropagation()">
+                  <app-row-more
+                    [items]="[
+                      { label: ('admin.crmSegment.colLastActivity' | trans), value: u.lastActivityAt ? (u.lastActivityAt | date: 'd MMM yyyy') : '—' },
+                      { label: ('admin.crmSegment.colJoinedAt' | trans), value: (u.assignedAt | date: 'd MMM yyyy') }
+                    ]"
+                  />
+                </td>
+                <td class="rt-action px-2 py-3 text-right">
+                  <button
+                    type="button"
+                    class="btn-icon !w-8 !h-8 inline-flex"
+                    [attr.aria-label]="u.displayName"
+                    (click)="$event.stopPropagation(); openUser(u.userId)"
+                  >
+                    <app-icon name="chevron-right" [size]="14" />
+                  </button>
+                </td>
               </tr>
             }
           </tbody>

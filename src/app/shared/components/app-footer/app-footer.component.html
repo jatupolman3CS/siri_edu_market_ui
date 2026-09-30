@@ -1,7 +1,8 @@
-<footer class="mt-20 bg-white border-t border-line">
-      <div class="max-w-7xl mx-auto px-4 lg:px-6 py-14">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div class="md:col-span-1">
+<footer class="mt-12 md:mt-20 bg-white border-t border-line">
+      <div class="page-container py-10 md:py-14">
+        <!-- responsive-ui v1 §4.4: 1 column <640, 2 columns 640–1023, 4 columns >=1024 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10" data-testid="footer-columns">
+          <div class="sm:col-span-2 lg:col-span-1">
             <app-logo />
             <p class="text-sm text-ink-muted mt-4 leading-relaxed">
               {{ 'footer.tagline' | trans }}
@@ -10,39 +11,39 @@
 
           <div>
             <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.quickLinks' | trans }}</h4>
-            <ul class="space-y-3 text-sm text-ink-soft">
-              <li><a routerLink="/marketplace" class="hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a></li>
-              <li><a routerLink="/categories" class="hover:text-pink-600">{{ 'nav.categories' | trans }}</a></li>
-              <li><a routerLink="/bundles" class="hover:text-pink-600">{{ 'nav.bundles' | trans }}</a></li>
-              <li><a routerLink="/free" class="hover:text-pink-600">{{ 'nav.free' | trans }}</a></li>
+            <ul class="space-y-2 text-sm text-ink-soft">
+              <li><a routerLink="/marketplace" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a></li>
+              <li><a routerLink="/categories" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'nav.categories' | trans }}</a></li>
+              <li><a routerLink="/bundles" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'nav.bundles' | trans }}</a></li>
+              <li><a routerLink="/free" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'nav.free' | trans }}</a></li>
             </ul>
           </div>
 
           <div>
             <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.categories' | trans }}</h4>
-            <ul class="space-y-3 text-sm text-ink-soft">
-              <li><a routerLink="/seller" class="hover:text-pink-600">{{ 'seller.studioTitle' | trans }}</a></li>
-              <li><a routerLink="/seller/upload" class="hover:text-pink-600">{{ 'seller.upload' | trans }}</a></li>
-              <li><a routerLink="/library" class="hover:text-pink-600">{{ 'library.title' | trans }}</a></li>
-              <li><a routerLink="/become-seller" class="hover:text-pink-600">{{ 'home.becomeSeller' | trans }}</a></li>
+            <ul class="space-y-2 text-sm text-ink-soft">
+              <li><a routerLink="/seller" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'seller.studioTitle' | trans }}</a></li>
+              <li><a routerLink="/seller/upload" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'seller.upload' | trans }}</a></li>
+              <li><a routerLink="/library" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'library.title' | trans }}</a></li>
+              <li><a routerLink="/become-seller" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'home.becomeSeller' | trans }}</a></li>
             </ul>
           </div>
 
           <div>
             <h4 class="text-sm font-bold text-ink mb-4">{{ 'footer.support' | trans }}</h4>
-            <ul class="space-y-3 text-sm text-ink-soft">
+            <ul class="space-y-2 text-sm text-ink-soft">
               <li class="text-ink-muted">{{ 'footer.helpCenter' | trans }}</li>
               <li>
                 @if (auth.isAuthenticated()) {
-                  <a routerLink="/account/feedback" class="hover:text-pink-600">{{ 'footer.feedback' | trans }}</a>
+                  <a routerLink="/account/feedback" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'footer.feedback' | trans }}</a>
                 } @else {
-                  <a routerLink="/auth/login" [queryParams]="{ returnUrl: '/account/feedback' }" class="hover:text-pink-600">{{ 'footer.feedback' | trans }}</a>
+                  <a routerLink="/auth/login" [queryParams]="{ returnUrl: '/account/feedback' }" class="inline-flex items-center min-h-8 hover:text-pink-600">{{ 'footer.feedback' | trans }}</a>
                 }
               </li>
               <li class="text-ink-muted">{{ 'footer.privacy' | trans }}</li>
               <li class="text-ink-muted">{{ 'footer.terms' | trans }}</li>
               <li>
-                <a class="inline-flex items-center gap-1 hover:text-pink-600" href="mailto:hello@siriedumarket.co">
+                <a class="inline-flex items-center gap-1 max-w-full [overflow-wrap:anywhere] hover:text-pink-600" href="mailto:hello@siriedumarket.co">
                   <app-icon name="mail" [size]="14" />
                   hello&#64;siriedumarket.co
                 </a>
@@ -52,7 +53,7 @@
         </div>
 
         <div
-          class="mt-12 pt-6 border-t border-line flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
+          class="mt-10 md:mt-12 pt-6 border-t border-line flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
         >
           <div class="flex items-center gap-4 flex-wrap">
             <p class="text-xs text-ink-muted">
@@ -60,7 +61,7 @@
             </p>
             <app-language-switcher variant="dropdown" placement="topRight" />
           </div>
-          <div class="flex items-center gap-3 text-xs text-ink-muted">
+          <div class="flex flex-wrap items-center gap-3 text-xs text-ink-muted">
             <span class="inline-flex items-center gap-1">
               <app-icon name="shield" [size]="12" />
               Watermark Protection

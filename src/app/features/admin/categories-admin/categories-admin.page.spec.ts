@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { AdminCategoriesPage } from './categories-admin.page';
 import { AdminService } from '../../../core/services/admin.service';
 import type { Category, SubcategoryAdmin } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * subcategory-admin-crud v1 (docs/contracts/subcategory-admin-crud.md §4).
@@ -658,5 +660,96 @@ describe('AdminCategoriesPage — category create/edit modal (F-01)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('฿199');
     expect(text).toContain('ยังไม่เปิด');
+  });
+});
+
+describe('AdminCategoriesPage — subcategory form on phones (responsive-ui v1.4 F159)', () => {
+  it('the sort-order number field has inputmode=numeric', async () => {
+    const fixture = renderPage();
+    fixture.componentInstance.openCreateSubcategory(categoryModel('cat-1', 'คณิตศาสตร์'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const input = document.body.querySelector('input[name="subSortOrder"]');
+    expect(input?.getAttribute('inputmode')).toBe('numeric');
+  });
+});
+
+describe('AdminCategoriesPage — name box width in table mode (responsive-ui v1.4 G-14(d))', () => {
+  const classesOf = (el: Element | null | undefined): string[] => (el?.getAttribute('class') ?? '').split(/\s+/);
+
+  async function renderRow(): Promise<HTMLElement> {
+    stubRoute('GET', '/api/admin/categories', [category('cat-1', 'คณิตศาสตร์')]);
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('puts the 110px floor on the name text box, not on the cell that also holds the expand button and icon', async () => {
+    const el = await renderRow();
+    const name = el.querySelector('[data-testid="category-name"]');
+
+    expect(name?.textContent?.trim()).toBe('คณิตศาสตร์');
+    expect(classesOf(name)).toEqual(expect.arrayContaining(['min-w-0', 'md:min-w-[110px]', 'line-clamp-2']));
+    expect(classesOf(name?.closest('td'))).not.toContain('md:min-w-[110px]');
+  });
+
+  it('at 744-1023 hides the category icon and stacks edit/delete; from 1024 the row is unchanged', async () => {
+    const el = await renderRow();
+    const actions = el.querySelector('[data-testid="category-actions"]');
+
+    expect(classesOf(el.querySelector('[data-testid="category-icon"]'))).toContain('md:max-lg:hidden');
+    expect(classesOf(actions)).toEqual(expect.arrayContaining(['flex', 'md:max-lg:flex-col', 'md:max-lg:items-end']));
+    expect(actions?.querySelectorAll('button').length).toBe(2);
+    // The action column's 96px width hint only applies from 1024; at 744-1023 it would take the
+    // room the stacked buttons free up back from the name.
+    const actionHeader = el.querySelectorAll('thead th')[6];
+    expect(classesOf(actionHeader)).toContain('lg:w-24');
+    expect(classesOf(actionHeader)).not.toContain('w-24');
+  });
+});
+
+describe('AdminCategoriesPage — table viewport (responsive-ui v1.6 R-27)', () => {
+  async function renderMany(n: number) {
+    stubRoute('GET', '/api/admin/categories', Array.from({ length: n }, (_, i) => category(`cat-${i + 1}`)));
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapper = (root.querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+    return { fixture, root, wrapper };
+  }
+
+  it('puts the table in a named table viewport with the pagination after it, outside', async () => {
+    const { fixture, root, wrapper } = await renderMany(12);
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fixture.componentInstance.pageSize()).toBe(10);
+    expect(wrapper.querySelectorAll('tbody > tr').length).toBe(10);
+    const viewport = fixture.debugElement.query(By.directive(TableViewportDirective)).injector.get(TableViewportDirective);
+    expect(viewport.rtLabel()).toBe('หมวดหมู่');
+  });
+
+  it('a new page or page size scrolls the table to its top; opening a category row does not', async () => {
+    const { fixture, wrapper } = await renderMany(12);
+    const page = fixture.componentInstance;
+    const scrollTopAfter = async (act: () => void): Promise<number> => {
+      wrapper.scrollTop = 300;
+      act();
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      return wrapper.scrollTop;
+    };
+
+    expect(await scrollTopAfter(() => page.onPageChange(2))).toBe(0);
+    expect(await scrollTopAfter(() => page.onPageSizeChange(20))).toBe(0);
+    // An expansion row counts as a row for the cap, but it is not a new query.
+    expect(await scrollTopAfter(() => page.toggleExpand(categoryModel('cat-1', 'หมวด cat-1')))).toBe(300);
+    expect(wrapper.querySelectorAll('tbody > tr').length).toBe(13);
   });
 });

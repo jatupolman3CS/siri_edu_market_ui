@@ -485,3 +485,36 @@ describe('SellerBundlesPage', () => {
     expect(becomeSellerLink).toBeTruthy();
   });
 });
+
+/** responsive-ui v1.4 gate fixes (G1-5): F158 picker titles and G-14d bundle titles. */
+describe('SellerBundlesPage — long titles (responsive v1.4)', () => {
+  it('F158: picker titles wrap instead of truncating (no other place shows them)', async () => {
+    const long = 'เอกสารสรุปเนื้อหาคณิตศาสตร์ ม.6 เตรียมสอบ A-Level ฉบับสมบูรณ์ ปี 2569';
+    stubEmptyList([candidate('doc-1', 120, long)]);
+    const fixture = renderPage();
+    await settle();
+    fixture.componentInstance.startCreate();
+    fixture.detectChanges();
+    await settle();
+    fixture.detectChanges();
+
+    const span = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ul.max-h-72 li button > span')).find(
+      (s) => s.textContent?.includes(long),
+    ) as HTMLElement;
+    expect(span).toBeTruthy();
+    expect(span.classList.contains('truncate')).toBe(false);
+    expect(span.classList.contains('[overflow-wrap:anywhere]')).toBe(true);
+    expect(span.classList.contains('min-w-0')).toBe(true);
+  });
+
+  it('G-14d: bundle titles wrap long tokens inside their 2-line clamp', async () => {
+    stubBundlesList([{ id: 'b1', title: 'แพ็กเกจ QDefaultParitye7aa0b3c4d5e6f', price: 100, originalPrice: 200, items: [], canDelete: true }]);
+    const fixture = renderPage();
+    await settle();
+    fixture.detectChanges();
+
+    const h3 = (fixture.nativeElement as HTMLElement).querySelector('li.card-tile h3') as HTMLElement;
+    expect(h3.classList.contains('line-clamp-2')).toBe(true);
+    expect(h3.classList.contains('[overflow-wrap:anywhere]')).toBe(true);
+  });
+});

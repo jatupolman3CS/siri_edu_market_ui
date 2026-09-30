@@ -1,6 +1,54 @@
 import { TranslationKeys } from './th';
 
 export const en: TranslationKeys = {
+  "responsive": {
+    "nav": {
+      "primary": "Main navigation",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu"
+    },
+    "tab": {
+      "home": "Home",
+      "marketplace": "Market",
+      "library": "My library",
+      "orders": "Orders",
+      "account": "Account",
+      "menu": "Menu"
+    },
+    "seller": {
+      "tab": {
+        "overview": "Overview",
+        "documents": "Documents",
+        "upload": "Upload",
+        "earnings": "Earnings"
+      }
+    },
+    "admin": {
+      "tab": {
+        "overview": "Overview",
+        "approval": "Approval",
+        "users": "Users",
+        "transactions": "Transactions"
+      }
+    },
+    "filters": {
+      "title": "Filters",
+      "button": "Filters ({count})",
+      "buttonNoCount": "Filters",
+      "clearAll": "Clear all",
+      "showResults": "Show results"
+    },
+    "sheet": {
+      "close": "Close"
+    },
+    "table": {
+      "more": "More details"
+    },
+    "editor": {
+      "settings": "Settings"
+    },
+    "backToStore": "Back to store"
+  },
   "nav": {
     "home": "Home",
     "marketplace": "Marketplace",
@@ -110,7 +158,9 @@ export const en: TranslationKeys = {
     "marketplace": "Marketplace — SIRIEDUMARKET",
     "categories": "Categories — SIRIEDUMARKET",
     "bundles": "Bundles — SIRIEDUMARKET",
+    "bundleDetail": "Bundle details — SIRIEDUMARKET",
     "free": "Free Documents — SIRIEDUMARKET",
+    "store": "Store — SIRIEDUMARKET",
     "wishlist": "Wishlist — SIRIEDUMARKET",
     "tcas": "TCAS — University Admission — SIRIEDUMARKET",
     "tgatTpat": "TGAT/TPAT — SIRIEDUMARKET",
@@ -136,6 +186,14 @@ export const en: TranslationKeys = {
     "sellerWatermarkDoc": "Document Watermark — Siri Studio",
     "sellerAds": "Promote Documents — Siri Studio",
     "sellerNotifications": "Shop Notifications — Siri Studio",
+    "sellerDocuments": "Manage Documents — Siri Studio",
+    "sellerUpload": "Upload New Document — Siri Studio",
+    "sellerQna": "Buyer Questions — Siri Studio",
+    "sellerStoreSections": "Store Sections — Siri Studio",
+    "sellerBundles": "Bundles — Siri Studio",
+    "sellerEarnings": "Earnings & Payouts — Siri Studio",
+    "sellerReviews": "Reviews — Siri Studio",
+    "sellerSettings": "Store Settings — Siri Studio",
     "adminOverview": "Admin Overview — SIRIEDUMARKET",
     "adminDocuments": "Document Management — Admin",
     "adminDocumentDetail": "Document Details — Admin",
@@ -155,6 +213,15 @@ export const en: TranslationKeys = {
     "adminNotifications": "Admin Notifications — Admin",
     "adminNotificationConfig": "Notification Settings — Admin",
     "adminMlRecommendations": "ML Recommendations Status — Admin",
+    "adminApproval": "Document Approval — Admin",
+    "adminTransactions": "Transactions — Admin",
+    "adminSellers": "Sellers — Admin",
+    "adminAudit": "Audit Logs — Admin",
+    "adminReports": "Document Reports — Admin",
+    "adminPayouts": "Seller Payouts — Admin",
+    "adminSellerApplications": "Seller Applications — Admin",
+    "adminCategories": "Categories — Admin",
+    "adminSettings": "Platform Settings — Admin",
     "signIn": "Sign In — SIRIEDUMARKET",
     "register": "Register — SIRIEDUMARKET",
     "forgotPassword": "Forgot Password — SIRIEDUMARKET",
@@ -243,7 +310,11 @@ export const en: TranslationKeys = {
     "recommendedStrategyInterest": "From your selected categories",
     "recommendedStrategyPopular": "Popular right now",
     "step1Title": "Find the right document",
+    "step1Desc": "Filter by category, grade level and review score to find the document that fits your needs, and preview it before you buy.",
     "step2Title": "Pay securely",
+    "step2Desc": "Pay with PromptPay or credit card. Your file carries a watermark made for you and is ready to download right after payment.",
+    "step3Title": "Keep it in your library",
+    "step3Desc": "Download it anytime from your personal library, and leave a rating and review to help other buyers.",
     "bundlesEyebrow": "Bundles",
     "bundlesHeaderTitle": "Value bundles — save more than buying separately",
     "bundlesSubtitleBase": "Creator-curated document sets that go together",
@@ -907,6 +978,9 @@ export const en: TranslationKeys = {
   },
   "subscribe": {
     "badge": "Membership plan",
+    "alreadySubscribedTitle": "You're already a member",
+    "alreadySubscribedDesc": "See your categories and billing period, and manage your membership, on the membership page.",
+    "manageLink": "Manage membership",
     "title": "Monthly membership",
     "desc": "Choose your categories and download documents from them without limits throughout the billing period.",
     "selectCategoriesTitle": "Choose categories",
@@ -1357,8 +1431,8 @@ export const en: TranslationKeys = {
     "trafficSourceSubtitle": "Where your document viewers come from",
     "noTrafficData": "No traffic data yet",
     "recentDocuments": "Recent documents",
-    "downloadCount": "Downloads",
-    "soldCount": "Sales",
+    "downloadCount": "{count} downloads",
+    "soldCount": "{count} sold",
     "avgPrice": "Avg price",
     "avgReplyTime": "Avg reply time",
     "repliedPct": "{pct}% replied",
@@ -1730,6 +1804,7 @@ export const en: TranslationKeys = {
       "reports": "Reports",
       "feedback": "User Feedback",
       "payouts": "Seller Payouts",
+      "subscriptions": "Subscriptions",
       "affiliates": "Affiliates",
       "ads": "Ads",
       "sellerApplications": "Seller Applications",
@@ -2520,6 +2595,8 @@ export const en: TranslationKeys = {
     },
     "userDetailAdmin": {
       "title": "User Details",
+      "notFoundTitle": "User not found",
+      "notFoundDesc": "This user may have been removed, or the link is wrong.",
       "loading": "Loading user data…",
       "joinedAt": "Joined:",
       "cantSuspendAdmin": "Cannot suspend an admin account.",
@@ -2616,9 +2693,35 @@ export const en: TranslationKeys = {
       "actionPayoutApprove": "Approve payout",
       "actionPayoutReject": "Reject payout",
       "actionOrderRefund": "Refund order",
+      "actionUserSuspend": "Suspend user",
+      "actionUserBan": "Ban user permanently",
+      "actionUserReinstate": "Reinstate user",
+      "actionPayoutRequested": "Request payout",
+      "actionPayoutCancelled": "Cancel payout request",
+      "actionPayoutStatusChanged": "Update payout status",
+      "actionPayoutSlipUploaded": "Upload payout slip",
+      "actionPayoutCompleteManual": "Complete payout manually",
+      "actionPayoutCompletedAuto": "Auto-complete payout",
+      "actionSellerPayoutAccountCreate": "Add seller payout account",
+      "actionSellerPayoutAccountUpdate": "Update seller payout account",
+      "actionSellerPayoutAccountReveal": "Reveal payout account number",
+      "actionAdsCampaignCreated": "Create ad campaign",
+      "actionAdsCampaignCancelled": "Cancel ad campaign",
+      "actionAdsCampaignStopped": "Stop ad campaign",
+      "actionAdsCampaignAutoRefunded": "Auto-refund ad campaign",
+      "actionAdsPlacementUpdated": "Update ad placement",
+      "actionAffiliateSettingsUpdated": "Update affiliate link settings",
+      "actionFeedbackStatusChange": "Change feedback status",
+      "actionFeedbackDelete": "Delete feedback",
       "entityDocument": "Document",
       "entityPayout": "Payout",
       "entityOrder": "Order",
+      "entityUser": "User",
+      "entityAdsCampaign": "Ad campaign",
+      "entityAdsPlacement": "Ad placement",
+      "entityAffiliateLink": "Affiliate link",
+      "entitySellerPayoutAccount": "Seller payout account",
+      "entityFeedback": "Feedback",
       "detailLabel": "Details",
       "boolTrue": "Yes",
       "boolFalse": "No",
@@ -3102,7 +3205,7 @@ export const en: TranslationKeys = {
       "pageTotal": "Page {page} / {total}",
       "totalZero": "Total 0 items",
       "perPage": "Per page:",
-      "itemsUnit": "items",
+      "itemsUnit": "{count} items",
       "prev": "Previous",
       "next": "Next",
       "selectPerPageAria": "Select items per page",
@@ -3298,7 +3401,9 @@ export const en: TranslationKeys = {
       "uploading": "Uploading…",
       "accountHolderNameRequired": "Account holder name is required",
       "bankRequired": "Please select a bank",
-      "accountNumberInvalid": "Invalid account number"
+      "accountNumberInvalid": "Invalid account number",
+      "phonePlaceholder": "e.g. 0812345678",
+      "nationalIdPlaceholder": "13-digit national ID number"
     },
     "affiliate": {
       "heading": "Affiliate link — earn {percent}% commission",

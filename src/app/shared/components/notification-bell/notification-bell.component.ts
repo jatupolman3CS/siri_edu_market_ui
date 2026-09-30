@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import {
@@ -14,6 +15,7 @@ import {
 } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
+import { DropdownBackResetDirective } from '../../directives/dropdown-back-reset.directive';
 
 /** Spec §4: dropdown shows a small slice ("page แรก, pageSize เล็ก เช่น 10") of the feed. */
 const DROPDOWN_PREVIEW_SIZE = 10;
@@ -44,7 +46,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [RouterLink, NzDropDownModule, IconComponent, TimeAgoPipe, TranslatePipe],
+  imports: [RouterLink, NzDropDownModule, IconComponent, TimeAgoPipe, TranslatePipe, DropdownBackResetDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-bell.component.html',
   styleUrl: './notification-bell.component.scss',
@@ -54,6 +56,14 @@ export class NotificationBellComponent {
   private readonly context = inject(NotificationContextService);
   private readonly router = inject(Router);
   readonly translation = inject(TranslationService);
+  private readonly document = inject(DOCUMENT);
+
+  /**
+   * Dropdown visibility, bound two-way to the trigger's `nzVisible`. The 'View all' and
+   * cross-role links are plain router links (not nz-menu-item), so nothing closed the menu when
+   * they navigated and it stayed open over the new page; they now set this to false.
+   */
+  readonly menuOpen = signal(false);
 
   /** Presentation variant: 'icon' (default standalone bell button) or 'topbar' (inline text link with badge) */
   readonly variant = input<'icon' | 'topbar'>('icon');
@@ -119,10 +129,24 @@ export class NotificationBellComponent {
       if (this.unreadCount() > 0) {
         this.feed.markAllRead(this.audience()).subscribe({ error: () => { /* reported via ApiFailureReporter */ } });
       }
+      // The panel renders at the end of <body> (CDK overlay), so the Tab order used to continue
+      // through the page. Move focus into it once attached (the dropdown emits before attaching).
+      setTimeout(() => this.focusFirstInMenu());
     }
   }
 
+  private focusFirstInMenu(): void {
+    const menus = this.document.querySelectorAll<HTMLElement>('[data-testid="notification-menu"]');
+    const menu = menus[menus.length - 1];
+    if (!menu) return;
+    const target =
+      menu.querySelector<HTMLElement>('[data-testid="notification-menu-item"]') ??
+      menu.querySelector<HTMLElement>('a[href], button:not([disabled])');
+    target?.focus();
+  }
+
   onItemClick(item: NotificationFeedItemResponse): void {
+    this.menuOpen.set(false);
     // Fire-and-forget — navigate immediately, don't wait for the mark-read response.
     this.feed.markRead(item.id).subscribe({ error: () => { /* reported via ApiFailureReporter */ } });
     // AC-8: `navigateByUrl` (not `navigate([...])`) so a linkUrl carrying a query string such

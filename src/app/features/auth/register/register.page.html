@@ -7,15 +7,15 @@
       <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
       {{ 'auth.newMember' | trans }}
     </span>
-    <h1 class="text-3xl font-extrabold text-ink mb-2 leading-tight">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-2 leading-tight">
       {{ 'auth.registerTitle' | trans }}
     </h1>
-    <p class="text-sm text-ink-soft mb-8">
+    <p class="text-sm text-ink-soft mb-6 sm:mb-8">
       {{ 'auth.alreadyHaveAccount' | trans }}
       <a
         [routerLink]="['/auth/login']"
         [queryParams]="{ returnUrl: returnUrl() }"
-        class="text-pink-600 font-bold hover:underline"
+        class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-pink-600 font-bold hover:underline"
       >
         {{ 'auth.signInHere' | trans }}
       </a>
@@ -50,6 +50,7 @@
             type="email"
             [(ngModel)]="email"
             name="email"
+            inputmode="email"
             class="input-soft !pl-12"
             placeholder="you@example.com"
             autocomplete="email"
@@ -77,7 +78,7 @@
           />
           <button
             type="button"
-            class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-pink-600"
+            class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-ink-muted hover:text-pink-600"
             (click)="showPassword.set(!showPassword())"
           >
             <app-icon [name]="showPassword() ? 'eye' : 'lock'" [size]="16" />
@@ -119,13 +120,14 @@
         </div>
       </div>
 
-      <label class="flex items-start gap-2 text-sm text-ink-soft cursor-pointer">
+      <!-- F12: the whole row is the 44px target (R-2 checkbox rows). -->
+      <label class="flex items-center gap-2 min-h-11 text-sm text-ink-soft cursor-pointer">
         <input
           type="checkbox"
           [(ngModel)]="acceptTerms"
           name="acceptTerms"
           required
-          class="w-4 h-4 accent-pink-500 mt-0.5"
+          class="w-4 h-4 shrink-0 accent-pink-500"
         />
         <span>
           {{ 'auth.termsAccept' | trans }}

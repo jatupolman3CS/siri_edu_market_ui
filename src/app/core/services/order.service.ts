@@ -17,7 +17,7 @@ import {
   postApiOrdersByIdPayWallet,
   type CreateOrderRequest,
 } from '../api';
-import { unwrapSdkResult } from './api-result';
+import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { mapOrder, mapOrderSimilarDocument } from '../api-mappers/mappers';
 import type { Order, OrderSimilarDocument } from '../models';
 
@@ -75,6 +75,14 @@ export class OrderService {
 
   private readonly _detail = signal<Order | null>(null);
   readonly detail = this._detail.asReadonly();
+
+  /**
+   * responsive-ui v1.4 R-17 (F88): why the last `loadDetail()` came back empty — `'not_found'` for a
+   * 404 (its own state on `/orders/:id`, no toast), `'failed'` for anything else (error + retry).
+   * `null` after a successful load. `/orders/:id` used to show every failure as "ไม่พบคำสั่งซื้อ".
+   */
+  private readonly _detailError = signal<'not_found' | 'failed' | null>(null);
+  readonly detailError = this._detailError.asReadonly();
 
   // order-similar-documents v1 §4: "เอกสารที่คล้ายกับคำสั่งซื้อนี้" block on `/orders/:id`.
   private readonly _similar = signal<OrderSimilarDocument[]>([]);
@@ -150,10 +158,13 @@ export class OrderService {
       const data = unwrapSdkResult(result);
       const order = mapOrder(data);
       this._detail.set(order);
+      this._detailError.set(null);
       return order;
     } catch (e) {
-      this.apiFail.report('errors.context.loadOrderDetail', e);
+      const notFound = extractErrorStatus(e) === 404;
+      if (!notFound) this.apiFail.report('errors.context.loadOrderDetail', e);
       this._detail.set(null);
+      this._detailError.set(notFound ? 'not_found' : 'failed');
       return null;
     }
   }

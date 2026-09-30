@@ -14,6 +14,9 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
+import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
 /** §4.4: campaign status → translation key. */
 const STATUS_KEYS: Record<string, string> = {
@@ -65,6 +68,9 @@ interface PlacementFormValues {
     PaginationComponent,
     ThbPipe,
     TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
+    AdminFilterPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ads-admin.page.html',
@@ -98,6 +104,21 @@ export class AdsAdminPage {
   readonly placementFilter = signal<string>('all');
   readonly sellerIdFilter = signal<string>('');
 
+  /**
+   * R-27 (`rtResetKey`): the campaign query last sent. `sellerIdFilter` follows the text box as the
+   * admin types; this changes only when a request goes out with a different page, page size, status,
+   * placement or applied seller id, which scrolls the table back to its top. A reload of the same
+   * query (after stopping a campaign) leaves the scroll position alone.
+   */
+  readonly campaignQueryKey = signal('');
+
+  /** Non-default campaign filters (drives the phone ตัวกรอง (n) button). */
+  readonly activeFilterCount = computed(
+    () =>
+      [this.statusFilter() !== 'all', this.placementFilter() !== 'all', !!this.sellerIdFilter().trim()].filter(Boolean)
+        .length,
+  );
+
   get statusFilterOptions(): { value: string; label: string }[] {
     return [
       { value: 'all', label: this.translation.t('admin.subscriptionsAdmin.statusAll') },
@@ -116,13 +137,15 @@ export class AdsAdminPage {
   async refreshCampaigns(): Promise<void> {
     this.loadingList.set(true);
     try {
-      const result = await this.ads.adminListCampaigns({
+      const query: Parameters<AdsService['adminListCampaigns']>[0] = {
         status: this.statusFilter(),
         placement: this.placementFilter(),
         sellerId: this.sellerIdFilter().trim() || undefined,
         page: this.page(),
         pageSize: this.pageSize(),
-      });
+      };
+      this.campaignQueryKey.set(JSON.stringify(query));
+      const result = await this.ads.adminListCampaigns(query);
       this.campaigns.set(result.items ?? []);
       this.total.set(result.totalCount ?? 0);
     } finally {
@@ -144,6 +167,15 @@ export class AdsAdminPage {
 
   onSellerIdFilterChange(next: string): void {
     this.sellerIdFilter.set(next);
+  }
+
+  /** Filter sheet "ล้างทั้งหมด": back to the defaults and reload once. */
+  clearFilters(): void {
+    this.statusFilter.set('all');
+    this.placementFilter.set('all');
+    this.sellerIdFilter.set('');
+    this.page.set(1);
+    void this.refreshCampaigns();
   }
 
   applySellerIdFilter(): void {

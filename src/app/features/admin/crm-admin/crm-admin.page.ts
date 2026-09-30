@@ -9,6 +9,8 @@ import type { CrmSegmentKind } from '../../../core/models';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * crm-core v1 §3.4, §4.1, §4.3 (`docs/contracts/crm-core.md`) — "CRM — ภาพรวมลูกค้า":
@@ -26,7 +28,17 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-crm-admin',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, EmptyStateComponent, StatCardComponent, PaginationComponent, TranslatePipe],
+  imports: [
+    RouterLink,
+    DatePipe,
+    DecimalPipe,
+    EmptyStateComponent,
+    StatCardComponent,
+    PaginationComponent,
+    TranslatePipe,
+    RowMoreComponent,
+    TableViewportDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-admin.page.html',
 })

@@ -6,60 +6,68 @@
   <article
     class="group bg-white rounded-2xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-[box-shadow,border-color] duration-[250ms] ease-out h-full"
   >
-    <a
-      [routerLink]="['/document', doc().id]"
-      (click)="onSponsoredNavigate()"
+    <div
+      class="relative aspect-[4/5] bg-gradient-pink overflow-hidden"
+      data-testid="compact-cover"
       (mouseenter)="startCycle()"
       (mouseleave)="stopCycle()"
-      class="relative block aspect-[4/5] bg-gradient-pink overflow-hidden"
     >
-      <img
-        appImgFallback
-        [src]="displayedCoverUrl()"
-        [alt]="doc().title"
-        class="absolute inset-0 w-full h-full object-cover"
-        loading="lazy"
-      />
+      <a
+        [routerLink]="['/document', doc().id]"
+        (click)="onSponsoredNavigate()"
+        class="absolute inset-0 block"
+      >
+        <img
+          appImgFallback
+          [src]="displayedCoverUrl()"
+          [alt]="doc().title"
+          class="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
 
-      @if (doc().gallery.length > 1) {
-        <div class="absolute bottom-1.5 inset-x-0 flex justify-center gap-1 z-10">
-          @for (img of doc().gallery; track $index; let idx = $index) {
-            <span
-              class="w-1.5 h-1.5 rounded-full transition-colors"
-              [class.bg-white]="idx === activeGalleryIndex()"
-              [class.bg-white/50]="idx !== activeGalleryIndex()"
-            ></span>
-          }
-        </div>
-      }
+        @if (doc().gallery.length > 1) {
+          <div class="absolute bottom-1.5 inset-x-0 flex justify-center gap-1 z-10">
+            @for (img of doc().gallery; track $index; let idx = $index) {
+              <span
+                class="w-1.5 h-1.5 rounded-full transition-colors"
+                [class.bg-white]="idx === activeGalleryIndex()"
+                [class.bg-white/50]="idx !== activeGalleryIndex()"
+              ></span>
+            }
+          </div>
+        }
 
-      @if (doc().isSponsored) {
-        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-ink text-white text-[11px] font-semibold shadow-soft z-10" [title]="'documentCard.sponsoredTooltip' | trans">
-          📢 {{ 'documentCard.sponsored' | trans }}
-        </span>
-      } @else if (doc().isFree) {
-        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold">
-          {{ 'documentCard.free' | trans }}
-        </span>
-      } @else if (doc().discountPercent) {
-        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-pink-500 text-white text-[11px] font-semibold">
-          {{ 'documentCard.discount' | trans: { d: doc().discountPercent! } }}
-        </span>
-      }
+        @if (doc().isSponsored) {
+          <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-ink text-white text-[11px] font-semibold shadow-soft z-10" [title]="'documentCard.sponsoredTooltip' | trans">
+            📢 {{ 'documentCard.sponsored' | trans }}<span class="sr-only"> — {{ 'documentCard.sponsoredTooltip' | trans }}</span>
+          </span>
+        } @else if (doc().isFree) {
+          <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold">
+            {{ 'documentCard.free' | trans }}
+          </span>
+        } @else if (doc().discountPercent) {
+          <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-primary text-white text-[11px] font-semibold">
+            {{ 'documentCard.discount' | trans: { d: doc().discountPercent! } }}
+          </span>
+        }
 
-      <span class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-white/90 text-[9px] font-bold uppercase tracking-wide text-ink">
-        {{ doc().format }}
-      </span>
-
-      @if (isOwned()) {
-        <span class="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold inline-flex items-center gap-1">
-          <app-icon name="check" [size]="11" />
-          {{ 'documentCard.owned' | trans }}
+        <span class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-white/90 text-[9px] font-bold uppercase tracking-wide text-ink">
+          {{ doc().format }}
         </span>
-      } @else {
+
+        @if (isOwned()) {
+          <span class="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[11px] font-semibold inline-flex items-center gap-1">
+            <app-icon name="check" [size]="11" />
+            {{ 'documentCard.owned' | trans }}
+          </span>
+        }
+      </a>
+      @if (!isOwned()) {
+        <!-- F5: 32px visual circle, 44x44 hit area on touch (.hit-44), sibling of the cover link. -->
         <button
           type="button"
-          class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-colors duration-200"
+          data-testid="compact-wishlist"
+          class="hit-44 absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-colors duration-200"
           [class.text-pink-500]="wishlist.has(doc().id)"
           [class.text-ink-soft]="!wishlist.has(doc().id)"
           [attr.aria-label]="'documentCard.wishlistAria' | trans"
@@ -72,23 +80,33 @@
           }
         </button>
       }
-    </a>
+    </div>
 
     <div class="p-3.5 pt-3 flex flex-col gap-1.5 flex-1">
-      <div class="flex items-center justify-between gap-2">
+      <!-- G-14d / R-4: on 2-column phone cards the studio name next to the type pill was cut to
+           31-60px. The row now wraps: a name that doesn't fit beside the pill takes its own line
+           (the full card width, >= 110px at 320), and only then truncates with an ellipsis. -->
+      <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
         <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 text-[10px] font-semibold">
           {{ resourceTypeLabel() }}
         </span>
-        <span class="text-[11px] text-ink-muted truncate">{{ doc().seller.studioName }}</span>
+        <span data-testid="compact-studio" class="text-[11px] text-ink-muted truncate max-w-full">{{ doc().seller.studioName }}</span>
       </div>
 
-      <a [routerLink]="['/document', doc().id]" (click)="onSponsoredNavigate()">
-        <h3 class="text-[13px] font-semibold leading-[1.45] text-ink line-clamp-2 min-h-[38px] group-hover:text-pink-600 transition-colors">
+      <!-- G-12: 44px tall link on touch (the 2-line title box is 38px). G-14d: long unbroken tokens
+           wrap instead of being clipped sideways, so line-clamp's ellipsis is the only truncation. -->
+      <a
+        [routerLink]="['/document', doc().id]"
+        (click)="onSponsoredNavigate()"
+        data-testid="compact-title-link"
+        class="block [@media(pointer:coarse)]:min-h-11"
+      >
+        <h3 class="text-[13px] font-semibold leading-[1.45] text-ink line-clamp-2 text-ellipsis [overflow-wrap:anywhere] min-h-[38px] group-hover:text-pink-600 transition-colors">
           {{ doc().title }}
         </h3>
       </a>
 
-      <div class="flex items-center gap-1 text-[11px]">
+      <div class="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px]">
         <span class="font-bold text-pink-500">★ {{ doc().rating }}</span>
         <span class="text-ink-muted">{{ 'documentCard.reviewsCount' | trans: { n: doc().reviewCount } }}</span>
         @if (doc().previewPages > 0) {
@@ -97,8 +115,8 @@
       </div>
 
       @if (!isOwned()) {
-        <div class="mt-auto pt-1 flex items-center justify-between">
-          <div class="flex items-baseline gap-1.5">
+        <div class="mt-auto pt-1 flex items-center justify-between gap-1">
+          <div class="flex flex-wrap items-baseline gap-x-1.5 min-w-0">
             @if (doc().isFree) {
               <span class="text-[15px] font-extrabold text-ink">{{ 'documentCard.free' | trans }}</span>
             } @else {
@@ -110,7 +128,8 @@
           </div>
           <button
             type="button"
-            class="w-9 h-9 rounded-full border border-line bg-white text-ink-soft hover:border-pink-500 flex items-center justify-center transition-colors duration-200"
+            data-testid="compact-add-to-cart"
+            class="relative hit-44 shrink-0 w-9 h-9 rounded-full border border-line bg-white text-ink-soft hover:border-pink-500 flex items-center justify-center transition-colors duration-200"
             [class.!bg-pink-500]="inCart()"
             [class.!border-pink-500]="inCart()"
             [class.!text-white]="inCart()"
@@ -184,7 +203,7 @@
               🆓 {{ 'common.free' | trans }}
             </span>
           } @else if (doc().discountPercent) {
-            <span class="pill bg-pink-500 text-white shadow-soft">
+            <span class="pill bg-primary text-white shadow-soft">
               -{{ doc().discountPercent }}%
             </span>
           }

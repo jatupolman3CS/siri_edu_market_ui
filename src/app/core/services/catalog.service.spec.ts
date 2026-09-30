@@ -1377,6 +1377,18 @@ describe('CatalogService — loadBoughtTogether (ml-embedding-recommendations v1
     await expect(catalog.loadBoughtTogether('doc-1')).resolves.toEqual([]);
     expect(report).toHaveBeenCalledTimes(1);
   });
+
+  it('responsive-ui v1.4 R-17 (F116): a 404 resolves [] without a toast (the page shows not-found)', async () => {
+    stubRoute('GET', '/api/marketplace/documents/doc-gone/bought-together', { title: 'Not Found', status: 404 }, 404);
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [CatalogService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const catalog = TestBed.inject(CatalogService);
+
+    await expect(catalog.loadBoughtTogether('doc-gone')).resolves.toEqual([]);
+    expect(report).not.toHaveBeenCalled();
+  });
 });
 
 

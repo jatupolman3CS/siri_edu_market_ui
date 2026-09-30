@@ -1,33 +1,57 @@
-<div class="max-w-5xl space-y-6">
+<div class="min-w-0 space-y-6">
   <!-- Back Button & Header -->
   <div class="flex items-center gap-3">
-    <a routerLink="/admin/users" class="btn-ghost !p-2 inline-flex items-center justify-center">
+    <a routerLink="/admin/users" class="btn-ghost tap-target !p-2 inline-flex items-center justify-center shrink-0" [attr.aria-label]="'admin.nav.users' | trans">
       <app-icon name="arrow-left" [size]="18" />
     </a>
-    <h1 class="text-2xl font-extrabold text-ink">{{ 'admin.userDetailAdmin.title' | trans }}</h1>
+    <h1 class="heading-1 font-extrabold text-ink min-w-0">{{ 'admin.userDetailAdmin.title' | trans }}</h1>
   </div>
 
   @if (loading()) {
     <div class="card-soft p-8 text-center text-sm text-ink-muted">{{ 'admin.userDetailAdmin.loading' | trans }}</div>
+  } @else if (notFound()) {
+    <!-- R-17 / F116: an unknown user id is its own state with a way back, not an empty page. -->
+    <div class="card-soft p-8 text-center space-y-3" data-testid="not-found" role="status">
+      <div class="text-4xl" aria-hidden="true">🔍</div>
+      <h2 class="text-lg font-bold text-ink">{{ 'admin.userDetailAdmin.notFoundTitle' | trans }}</h2>
+      <p class="text-sm text-ink-soft">{{ 'admin.userDetailAdmin.notFoundDesc' | trans }}</p>
+      <a routerLink="/admin/users" class="btn-pink min-h-11 inline-flex !justify-center" data-testid="not-found-cta">
+        <app-icon name="arrow-left" [size]="16" />
+        {{ 'admin.nav.users' | trans }}
+      </a>
+    </div>
+  } @else if (loadError()) {
+    <div class="card-soft p-8 text-center space-y-3" data-testid="load-error" role="alert">
+      <p class="text-sm text-ink-soft">{{ 'common.loadFailed' | trans }}</p>
+      <button type="button" class="btn-ghost min-h-11 !justify-center" data-testid="load-retry" (click)="retry()">
+        {{ 'common.retry' | trans }}
+      </button>
+    </div>
   } @else if (user(); as u) {
+    <!-- responsive-ui v1.5 R-26 item 3: from xl a main column (profile, wallet ledger, moderation history)
+         plus a side column (restriction status + stat cards). The side group spans all three rows and the
+         last row is 1fr, so its height lands in that row and the main cards stay tight. Below xl this is
+         one minmax(0,1fr) track in DOM order with gap-6 = the old space-y-6, i.e. unchanged. The side
+         column stays 360px at 2xl: at 1920 a 420px column is 27% of the page, over G-34(e)'s 25%. -->
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:grid-rows-[auto_auto_1fr]">
     <!-- Main User Profile Card -->
-    <div class="card-soft p-6 space-y-4">
+    <div class="card-soft p-4 md:p-6 space-y-4 min-w-0 xl:col-start-1 xl:row-start-1">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 min-w-0">
           <img
             appImgFallback
             [src]="u.avatarUrl"
             class="w-16 h-16 rounded-full object-cover ring-2 ring-pink-100 shrink-0"
             [alt]="u.displayName"
           />
-          <div>
+          <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-xl font-bold text-ink">{{ u.displayName }}</h2>
+              <h2 class="text-xl font-bold text-ink min-w-0 [overflow-wrap:anywhere]">{{ u.displayName }}</h2>
               <span class="text-xs font-bold" [class]="getStatusClass(u.accountStatus)">
                 {{ getStatusLabel(u.accountStatus) }}
               </span>
             </div>
-            <div class="text-sm text-ink-soft">{{ u.email }}</div>
+            <div class="text-sm text-ink-soft [overflow-wrap:anywhere]">{{ u.email }}</div>
             <div class="text-xs text-ink-muted mt-1">{{ 'admin.userDetailAdmin.joinedAt' | trans }} {{ u.joinedAt | date: 'dd MMM yyyy HH:mm' }}</div>
           </div>
         </div>
@@ -40,8 +64,8 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="pt-4 border-t border-line flex flex-wrap items-center gap-3">
+      <!-- Action Buttons (also reused by the phone sticky action bar — responsive-ui §4.6 B) -->
+      <ng-template #moderationActions>
         @if (isTargetAdmin()) {
           <span class="text-sm text-ink-muted italic">{{ 'admin.userDetailAdmin.cantSuspendAdmin' | trans }}</span>
         } @else if (isTargetSelf()) {
@@ -58,14 +82,18 @@
             </button>
           }
           @if (canReinstate()) {
-            <button type="button" class="btn-primary" (click)="openReinstateModal()">
+            <button type="button" class="btn-pink min-h-11" data-testid="user-reinstate" (click)="openReinstateModal()">
               {{ 'admin.userDetailAdmin.reinstate' | trans }}
             </button>
           }
         }
+      </ng-template>
+      <div class="pt-4 border-t border-line flex flex-wrap items-center gap-3" data-testid="user-actions-inline">
+        <ng-container [ngTemplateOutlet]="moderationActions" />
       </div>
     </div>
 
+    <div class="min-w-0 space-y-6 xl:col-start-2 xl:row-start-1 xl:row-span-3" data-testid="user-detail-side">
     <!-- Active Restriction Box -->
     @if (u.accountStatus !== 'active') {
       <div class="card-soft p-5 border-l-4 border-amber-500 bg-amber-50/50 space-y-2">
@@ -76,11 +104,11 @@
         <div class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
           <div>
             <span class="text-ink-muted">{{ 'admin.userDetailAdmin.reasonLabel' | trans }}</span>
-            <span class="font-medium text-ink ml-1">{{ u.accountStatusReason || '-' }}</span>
+            <span class="font-medium text-ink ml-1 [overflow-wrap:anywhere]">{{ u.accountStatusReason || '-' }}</span>
           </div>
           <div>
             <span class="text-ink-muted">{{ 'admin.userDetailAdmin.messageLabel' | trans }}</span>
-            <span class="font-medium text-ink ml-1">{{ u.accountStatusMessage || '-' }}</span>
+            <span class="font-medium text-ink ml-1 [overflow-wrap:anywhere]">{{ u.accountStatusMessage || '-' }}</span>
           </div>
           @if (u.suspendedUntil) {
             <div>
@@ -105,7 +133,7 @@
     }
 
     <!-- Stat Cards Grid -->
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-1">
       <!-- Buyer Purchase Stats -->
       <div class="card-soft p-5 space-y-3">
         <h3 class="text-base font-bold text-ink flex items-center gap-2">
@@ -179,9 +207,10 @@
         </div>
       }
     </div>
+    </div>
 
     <!-- buyer-wallet v1 §4.6: read-only wallet summary + short ledger — DEC-5: no "แก้ยอด" action anywhere -->
-    <div class="card-soft p-5 space-y-3">
+    <div class="card-soft p-5 space-y-3 min-w-0 xl:col-start-1 xl:row-start-2">
       <h3 class="text-base font-bold text-ink flex items-center gap-2">
         <app-icon name="wallet" [size]="18" />
         {{ 'admin.userDetailAdmin.walletTitle' | trans }}
@@ -207,34 +236,46 @@
       }
 
       @if (walletEntries().length > 0) {
-        <div class="table-scroll overflow-x-auto pt-2">
-          <table class="w-full text-left text-sm">
+        <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper. No reset key:
+             "load more" appends rows and keeps the table's scroll position. -->
+        <div
+          class="table-scroll overflow-x-auto pt-2"
+          appTableViewport
+          [rtLabel]="'admin.userDetailAdmin.walletTitle' | trans"
+        >
+          <table class="rtable w-full text-left text-sm">
             <thead class="bg-pink-50 text-xs text-ink-muted uppercase">
               <tr>
                 <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColType' | trans }}</th>
-                <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColItem' | trans }}</th>
-                <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColDate' | trans }}</th>
                 <th class="px-3 py-2 font-semibold text-right">{{ 'admin.userDetailAdmin.walletColAmount' | trans }}</th>
+                <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColDate' | trans }}</th>
+                <th class="rt-secondary px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.walletColItem' | trans }}</th>
+                <th class="rt-more"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line">
               @for (entry of walletEntries(); track entry.id) {
                 <tr>
-                  <td class="px-3 py-2">{{ getWalletKindLabel(entry.kind) }}</td>
-                  <td class="px-3 py-2 text-ink-muted">
+                  <td class="rt-title px-3 py-2">{{ getWalletKindLabel(entry.kind) }}</td>
+                  <td class="rt-key px-3 py-2 text-right font-semibold" [attr.data-label]="'admin.userDetailAdmin.walletColAmount' | trans">
+                    @if (entry.amount > 0) {
+                      <span class="text-emerald-600">+{{ entry.amount | thb }}</span>
+                    } @else {
+                      <span class="text-rose-600">-{{ -entry.amount | thb }}</span>
+                    }
+                  </td>
+                  <td class="rt-key px-3 py-2 text-ink-muted text-xs" [attr.data-label]="'admin.userDetailAdmin.walletColDate' | trans">{{ entry.occurredAt | date: 'dd MMM yyyy HH:mm' }}</td>
+                  <td class="rt-secondary px-3 py-2 text-ink-muted">
                     @if (entry.orderNumber) {
                       <span class="font-mono text-xs">#{{ entry.orderNumber }}</span>
                     } @else {
                       —
                     }
                   </td>
-                  <td class="px-3 py-2 text-ink-muted text-xs">{{ entry.occurredAt | date: 'dd MMM yyyy HH:mm' }}</td>
-                  <td class="px-3 py-2 text-right font-semibold">
-                    @if (entry.amount > 0) {
-                      <span class="text-emerald-600">+{{ entry.amount | thb }}</span>
-                    } @else {
-                      <span class="text-rose-600">-{{ -entry.amount | thb }}</span>
-                    }
+                  <td class="rt-more px-1 py-2">
+                    <app-row-more
+                      [items]="[{ label: ('admin.userDetailAdmin.walletColItem' | trans), value: entry.orderNumber ? '#' + entry.orderNumber : '—' }]"
+                    />
                   </td>
                 </tr>
               }
@@ -264,39 +305,54 @@
     </div>
 
     <!-- Moderation History -->
-    <div class="card-soft p-5 space-y-3">
+    <div class="card-soft p-5 space-y-3 min-w-0 xl:col-start-1 xl:row-start-3">
       <h3 class="text-base font-bold text-ink">{{ 'admin.userDetailAdmin.moderationTitle' | trans }}</h3>
-      <div class="table-scroll overflow-x-auto">
-        <table class="w-full text-left text-sm">
+      <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper. -->
+      <div
+        class="table-scroll overflow-x-auto"
+        appTableViewport
+        [rtLabel]="'admin.userDetailAdmin.moderationTitle' | trans"
+      >
+        <table class="rtable w-full text-left text-sm">
           <thead class="bg-pink-50 text-xs text-ink-muted uppercase">
             <tr>
               <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colAction' | trans }}</th>
               <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colReason' | trans }}</th>
-              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colMessage' | trans }}</th>
-              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colUntil' | trans }}</th>
-              <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colBy' | trans }}</th>
               <th class="px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colWhen' | trans }}</th>
+              <th class="rt-secondary px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colMessage' | trans }}</th>
+              <th class="rt-secondary px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colUntil' | trans }}</th>
+              <th class="rt-secondary px-3 py-2 font-semibold">{{ 'admin.userDetailAdmin.colBy' | trans }}</th>
+              <th class="rt-more"></th>
             </tr>
           </thead>
           <tbody>
             @for (h of u.moderationHistory; track h.id) {
               <tr class="border-t border-line hover:bg-slate-50">
-                <td class="px-3 py-2 font-bold">{{ getActionLabel(h.action) }}</td>
-                <td class="px-3 py-2">{{ h.reason }}</td>
-                <td class="px-3 py-2 text-ink-muted">{{ h.messageToUser || '-' }}</td>
-                <td class="px-3 py-2 whitespace-nowrap">
+                <td class="rt-title px-3 py-2 font-bold">{{ getActionLabel(h.action) }}</td>
+                <td class="rt-key px-3 py-2" [attr.data-label]="'admin.userDetailAdmin.colReason' | trans">{{ h.reason }}</td>
+                <td class="rt-key px-3 py-2 text-xs text-ink-muted lg:whitespace-nowrap" [attr.data-label]="'admin.userDetailAdmin.colWhen' | trans">{{ h.createdAt | date: 'dd MMM yyyy HH:mm' }}</td>
+                <td class="rt-secondary px-3 py-2 text-ink-muted">{{ h.messageToUser || '-' }}</td>
+                <td class="rt-secondary px-3 py-2 whitespace-nowrap">
                   @if (h.suspendedUntil) {
                     {{ h.suspendedUntil | date: 'dd MMM yyyy HH:mm' }}
                   } @else {
                     -
                   }
                 </td>
-                <td class="px-3 py-2">{{ h.performedByName || h.performedByUserId || '-' }}</td>
-                <td class="px-3 py-2 text-xs text-ink-muted whitespace-nowrap">{{ h.createdAt | date: 'dd MMM yyyy HH:mm' }}</td>
+                <td class="rt-secondary px-3 py-2">{{ h.performedByName || h.performedByUserId || '-' }}</td>
+                <td class="rt-more px-1 py-2">
+                  <app-row-more
+                    [items]="[
+                      { label: ('admin.userDetailAdmin.colMessage' | trans), value: h.messageToUser || '-' },
+                      { label: ('admin.userDetailAdmin.colUntil' | trans), value: h.suspendedUntil ? (h.suspendedUntil | date: 'dd MMM yyyy HH:mm') : '-' },
+                      { label: ('admin.userDetailAdmin.colBy' | trans), value: h.performedByName || h.performedByUserId || '-' }
+                    ]"
+                  />
+                </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="px-3 py-6 text-center text-sm text-ink-muted">
+                <td colspan="7" class="px-3 py-6 text-center text-sm text-ink-muted">
                   {{ 'admin.userDetailAdmin.neverSuspended' | trans }}
                 </td>
               </tr>
@@ -305,6 +361,20 @@
         </table>
       </div>
     </div>
+    </div>
+
+    <!--
+      Phone sticky action bar (responsive-ui §4.6 B). Keep it the LAST child of this branch: its in-flow
+      spacer reserves the bar's height and the admin layout reserves nothing for the bar (§4.4), so placed
+      any earlier the spacer lands mid-page and the last card stays hidden behind the bar (G-11).
+    -->
+    @if (!isTargetAdmin() && !isTargetSelf() && (canRestrict() || canReinstate())) {
+      <app-sticky-action-bar>
+        <div class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2" data-testid="user-actions-sticky">
+          <ng-container [ngTemplateOutlet]="moderationActions" />
+        </div>
+      </app-sticky-action-bar>
+    }
   }
 </div>
 

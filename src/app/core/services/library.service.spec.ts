@@ -393,3 +393,35 @@ describe('LibraryService — getDocumentVersions (document-versioning v1 §3.5/�
     expect(versions).toEqual([]);
   });
 });
+
+/**
+ * responsive-ui v1.4 R-17 (F88): `/orders` renders loading / error / empty / data from the orders
+ * pager's state plus "has page 1 arrived".
+ */
+describe('LibraryService — orders load state (F88)', () => {
+  it('is loading until page 1 arrives, then loaded and idle', async () => {
+    stubRoute('GET', '/api/orders', { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 });
+    const library = buildService();
+    expect(library.ordersLoaded()).toBe(false);
+
+    const pending = library.refreshOrders();
+    expect(library.ordersState().status).toBe('loading');
+    await pending;
+    await settle();
+
+    expect(library.ordersState().status).toBe('idle');
+    expect(library.ordersLoaded()).toBe(true);
+    expect(library.orders()).toEqual([]);
+  });
+
+  it('ends in the error state (not "loaded, empty") when the GET fails', async () => {
+    stubRoute('GET', '/api/orders', { title: 'Server error', status: 500 }, 500);
+    const library = buildService();
+
+    await library.refreshOrders();
+    await settle();
+
+    expect(library.ordersState().status).toBe('error');
+    expect(library.ordersLoaded()).toBe(false);
+  });
+});

@@ -1,10 +1,14 @@
-<div class="max-w-3xl">
+<div class="min-w-0">
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.settingsAdmin.title' | trans }}</h1>
+        <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.settingsAdmin.title' | trans }}</h1>
         <p class="text-sm text-ink-soft">{{ 'admin.settingsAdmin.desc' | trans }}</p>
       </header>
 
-      <section class="card-soft p-6 mb-6">
+      <!-- responsive-ui v1.5 R-26 item 3: from xl the sections flow into 2 columns (tables, the save row and
+           the job list span both). Below xl this is a single minmax(0,1fr) track, and the sections keep their
+           own mb-6 spacing, so phone/tablet render exactly as before. -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-6">
+      <section class="card-soft p-4 md:p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.feeTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.feeDesc' | trans }}</p>
 
@@ -14,6 +18,7 @@
             <input
               class="input-soft"
               type="number"
+              inputmode="decimal"
               min="0"
               max="100"
               step="0.5"
@@ -26,6 +31,7 @@
             <input
               class="input-soft"
               type="number"
+              inputmode="decimal"
               min="0"
               max="100"
               step="0.5"
@@ -38,6 +44,7 @@
             <input
               class="input-soft"
               type="number"
+              inputmode="decimal"
               min="0"
               step="50"
               [ngModel]="form().payoutMinTHB"
@@ -59,7 +66,8 @@
         </div>
       </section>
 
-      <section class="card-soft p-6 mb-6">
+      <div class="min-w-0">
+      <section class="card-soft p-4 md:p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.loyaltyTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.loyaltyDesc' | trans }}</p>
         <div class="max-w-xs">
@@ -67,6 +75,7 @@
           <input
             class="input-soft"
             type="number"
+              inputmode="decimal"
             min="1"
             max="100000"
             step="1"
@@ -79,7 +88,7 @@
         </div>
       </section>
 
-      <section class="card-soft p-6 mb-6">
+      <section class="card-soft p-4 md:p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.referralTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.referralDesc' | trans }}</p>
 
@@ -89,6 +98,7 @@
             <input
               class="input-soft"
               type="number"
+              inputmode="decimal"
               min="0"
               step="5"
               [ngModel]="form().referralDiscountAmount"
@@ -100,6 +110,7 @@
             <input
               class="input-soft"
               type="number"
+              inputmode="decimal"
               min="0"
               max="100"
               step="0.5"
@@ -109,12 +120,13 @@
           </div>
         </div>
       </section>
+      </div>
 
       <!-- seller-ads-promotion: ตำแหน่งโฆษณาและราคาโปรโมต (Ad Placements & Pricing) -->
-      <section class="card-soft p-6 mb-6">
-        <div class="flex items-center justify-between mb-1">
+      <section class="card-soft p-4 md:p-6 mb-6 xl:col-span-2">
+        <div class="flex flex-wrap items-center justify-between gap-x-3 mb-1">
           <h2 class="text-lg font-bold text-ink">{{ 'admin.settingsAdmin.adsPlacementsTitle' | trans }}</h2>
-          <a routerLink="/admin/ads" class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline">
+          <a routerLink="/admin/ads" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline">
             {{ 'admin.settingsAdmin.manageAdsLink' | trans }} &rarr;
           </a>
         </div>
@@ -123,42 +135,51 @@
         @if (loadingAds() && adPlacements().length === 0) {
           <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">กำลังโหลด…</div>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm min-w-[620px]">
+          <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper. Not paginated. -->
+          <div
+            class="table-scroll overflow-x-auto"
+            appTableViewport
+            [rtLabel]="'admin.settingsAdmin.adsPlacementsTitle' | trans"
+          >
+            <table class="rtable w-full text-left text-sm">
               <thead>
                 <tr class="border-b border-line text-xs font-semibold text-ink-muted">
                   <th class="pb-3 pr-4">{{ 'admin.settingsAdmin.colPlacementName' | trans }}</th>
+                  <th class="pb-3 px-4 text-center">{{ 'common.status' | trans }}</th>
                   <th class="pb-3 px-4 text-right">{{ 'admin.settingsAdmin.colDailyPrice' | trans }}</th>
                   <th class="pb-3 px-4 text-right">{{ 'admin.settingsAdmin.colWeeklyPrice' | trans }}</th>
-                  <th class="pb-3 px-4 text-center">{{ 'admin.settingsAdmin.colSlotCapacity' | trans }}</th>
-                  <th class="pb-3 px-4 text-center">{{ 'common.status' | trans }}</th>
+                  <th class="rt-secondary pb-3 px-4 text-center">{{ 'admin.settingsAdmin.colSlotCapacity' | trans }}</th>
+                  <th class="rt-more"></th>
                   <th class="pb-3 pl-4 text-right"></th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-line">
                 @for (p of adPlacements(); track p.placementKey) {
                   <tr class="hover:bg-pink-50/30 transition-colors">
-                    <td class="py-3 pr-4">
+                    <td class="rt-title py-3 pr-4">
                       <div class="font-semibold text-ink">{{ p.displayName }}</div>
-                      <div class="text-xs font-mono text-ink-muted">{{ p.placementKey }}</div>
+                      <div class="text-xs font-mono font-normal text-ink-muted break-all">{{ p.placementKey }}</div>
                     </td>
-                    <td class="py-3 px-4 text-right font-medium text-ink">
-                      {{ p.pricePerDay | thb }}
-                    </td>
-                    <td class="py-3 px-4 text-right font-medium text-ink">
-                      {{ p.weeklyPrice != null ? (p.weeklyPrice | thb) : '—' }}
-                    </td>
-                    <td class="py-3 px-4 text-center text-ink">
-                      {{ p.dailySlotCapacity }}
-                    </td>
-                    <td class="py-3 px-4 text-center">
+                    <td class="rt-status py-3 px-4 text-center">
                       @if (p.isEnabled) {
                         <span class="pill bg-emerald-100 text-emerald-700">{{ 'admin.ads.enabled' | trans }}</span>
                       } @else {
                         <span class="pill bg-rose-100 text-rose-700">{{ 'admin.ads.disabled' | trans }}</span>
                       }
                     </td>
-                    <td class="py-3 pl-4 text-right">
+                    <td class="rt-key py-3 px-4 text-right font-medium text-ink" [attr.data-label]="'admin.settingsAdmin.colDailyPrice' | trans">
+                      {{ p.pricePerDay | thb }}
+                    </td>
+                    <td class="rt-key py-3 px-4 text-right font-medium text-ink" [attr.data-label]="'admin.settingsAdmin.colWeeklyPrice' | trans">
+                      {{ p.weeklyPrice != null ? (p.weeklyPrice | thb) : '—' }}
+                    </td>
+                    <td class="rt-secondary py-3 px-4 text-center text-ink">
+                      {{ p.dailySlotCapacity }}
+                    </td>
+                    <td class="rt-more py-3 px-1">
+                      <app-row-more [items]="[{ label: ('admin.settingsAdmin.colSlotCapacity' | trans), value: p.dailySlotCapacity }]" />
+                    </td>
+                    <td class="rt-action py-3 pl-4 text-right">
                       <button
                         type="button"
                         class="btn-ghost !py-1 !px-3 text-xs"
@@ -175,14 +196,16 @@
         }
       </section>
 
-      <section class="card-soft p-6 mb-6">
+      <div class="min-w-0">
+      <section class="card-soft p-4 md:p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.paymentTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.paymentDesc' | trans }}</p>
         <ul class="space-y-3">
           @for (g of gateways; track g.name) {
-            <li class="flex items-center gap-4 p-4 rounded-2xl border border-line">
+            <!-- R-6 (F124): wraps under large text instead of pushing the status pill off-screen. -->
+            <li class="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 rounded-2xl border border-line">
               <span class="text-2xl">{{ g.icon }}</span>
-              <div class="flex-1">
+              <div class="flex-1 min-w-[7rem]">
                 <div class="text-sm font-bold text-ink">{{ g.name }}</div>
                 <div class="text-xs text-ink-muted">{{ g.note }}</div>
               </div>
@@ -247,8 +270,10 @@
           </div>
         </div>
       </section>
+      </div>
 
-      <section class="card-soft p-6 mb-6">
+      <div class="min-w-0">
+      <section class="card-soft p-4 md:p-6 mb-6">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.storageTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.storageDesc' | trans }}</p>
 
@@ -336,6 +361,7 @@
               name="watermark-retention-days"
               class="input-soft"
               type="number"
+              inputmode="decimal"
               [min]="retentionDaysMin"
               [max]="retentionDaysMax"
               step="1"
@@ -361,12 +387,13 @@
           </div>
         </div>
       </section>
+      </div>
 
-      <div class="flex justify-end gap-3">
-        <button class="btn-ghost" type="button" (click)="reload()" [disabled]="saving()">
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 xl:col-span-2">
+        <button class="btn-ghost w-full sm:w-auto !justify-center" type="button" (click)="reload()" [disabled]="saving()">
           {{ 'common.cancel' | trans }}
         </button>
-        <button class="btn-pink" type="button" (click)="save()" [disabled]="saving()">
+        <button class="btn-pink w-full sm:w-auto !justify-center" type="button" (click)="save()" [disabled]="saving()">
           <app-icon name="check" [size]="16" />
           @if (saving()) {
             {{ 'admin.settingsAdmin.saving' | trans }}
@@ -378,7 +405,7 @@
 
       <!-- system-config-job-toggle v1 §4: not part of the fee/VAT form above — each row saves
            on flip, no batched "บันทึกการเปลี่ยนแปลง" for this section. -->
-      <section class="card-soft p-6 mb-6 mt-6">
+      <section class="card-soft p-4 md:p-6 mb-6 mt-6 xl:col-span-2">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.jobsTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">
           {{ 'admin.settingsAdmin.jobsDesc' | trans }}
@@ -387,14 +414,18 @@
         @if (jobToggles().length === 0) {
           <div class="rounded-3xl bg-pink-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.jobsLoading' | trans }}</div>
         } @else {
-          <ul class="space-y-3">
+          <ul class="grid grid-cols-1 xl:grid-cols-2 gap-3">
             @for (job of jobToggles(); track job.jobKey) {
               <li class="flex items-start gap-4 p-4 rounded-2xl border border-line">
+                <!-- responsive-ui v1.4 R-17 (F148): nzControl — the switch shows only the
+                     server-confirmed job.enabled, so a failed PUT no longer leaves it flipped. -->
                 <nz-switch
                   [attr.name]="'job-switch-' + job.jobKey"
                   [ngModel]="job.enabled"
+                  [nzControl]="true"
+                  [nzLoading]="savingJobKey() === job.jobKey"
                   [nzDisabled]="savingJobKey() === job.jobKey"
-                  (ngModelChange)="toggleJob(job, $event)"
+                  (click)="toggleJob(job, !job.enabled)"
                 />
                 <div class="flex-1 min-w-0">
                   <div class="text-sm font-bold text-ink">{{ job.displayName || job.jobKey }}</div>
@@ -417,7 +448,7 @@
 
       <!-- watermark-completion v1 §4.2: forensic lookup of a WMK code found in a leaked file.
            This card is the only place `GET /api/admin/watermark-copies` is called. -->
-      <section class="card-tile mb-6">
+      <section class="card-tile mb-6 xl:col-span-2">
         <h2 class="text-lg font-bold text-ink mb-1">{{ 'admin.settingsAdmin.watermarkCopyTitle' | trans }}</h2>
         <p class="text-xs text-ink-muted mb-5">
           {{ 'admin.settingsAdmin.watermarkCopyDesc' | trans }}
@@ -427,7 +458,7 @@
           <div class="flex flex-wrap gap-3">
             <input
               name="watermark-copy-token"
-              class="input-soft flex-1 min-w-[12rem] font-mono"
+              class="input-soft w-full sm:w-auto sm:flex-1 sm:min-w-[12rem] xl:max-w-xl font-mono"
               type="text"
               maxlength="16"
               placeholder="WMK-XXXXXXXX"
@@ -456,35 +487,33 @@
                 {{ 'admin.settingsAdmin.watermarkCopyNotFound' | trans }}
               </div>
             } @else {
-              <div class="overflow-x-auto mt-4">
-                <table class="w-full text-sm">
+              <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper. Not paginated. -->
+              <div
+                class="table-scroll overflow-x-auto mt-4"
+                appTableViewport
+                [rtLabel]="'admin.settingsAdmin.watermarkCopyTitle' | trans"
+              >
+                <table class="rtable w-full text-sm">
                   <thead>
                     <tr class="text-left text-xs text-ink-muted">
-                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColToken' | trans }}</th>
                       <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColDoc' | trans }}</th>
-                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColRecipient' | trans }}</th>
-                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColSource' | trans }}</th>
                       <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColStatus' | trans }}</th>
-                      <th class="py-2 font-semibold">{{ 'admin.settingsAdmin.watermarkColLastAccess' | trans }}</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColToken' | trans }}</th>
+                      <th class="py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColRecipient' | trans }}</th>
+                      <th class="rt-secondary py-2 pr-4 font-semibold">{{ 'admin.settingsAdmin.watermarkColSource' | trans }}</th>
+                      <th class="rt-secondary py-2 font-semibold">{{ 'admin.settingsAdmin.watermarkColLastAccess' | trans }}</th>
+                      <th class="rt-more"></th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (row of copyResults(); track row.id) {
                       <tr class="border-t border-line align-top">
-                        <td class="py-3 pr-4 font-mono font-bold text-ink whitespace-nowrap">
-                          {{ row.watermarkToken }}
-                        </td>
-                        <td class="py-3 pr-4">
+                        <td class="rt-title py-3 pr-4">
                           <div class="font-semibold text-ink">{{ row.documentTitle }}</div>
-                          <div class="text-xs text-ink-muted uppercase">{{ row.documentFormat }}</div>
-                          <div class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.watermarkColSeller' | trans }} {{ row.sellerName }}</div>
+                          <div class="text-xs font-normal text-ink-muted uppercase">{{ row.documentFormat }}</div>
+                          <div class="text-xs font-normal text-ink-muted">{{ 'admin.settingsAdmin.watermarkColSeller' | trans }} {{ row.sellerName }}</div>
                         </td>
-                        <td class="py-3 pr-4">
-                          <div class="font-semibold text-ink">{{ row.recipientName }}</div>
-                          <div class="text-xs text-ink-muted">{{ row.recipientEmail }}</div>
-                        </td>
-                        <td class="py-3 pr-4 whitespace-nowrap">{{ accessSourceLabel(row.accessSource) }}</td>
-                        <td class="py-3 pr-4">
+                        <td class="rt-status py-3 pr-4 max-md:text-right">
                           @if (row.watermarkApplied) {
                             <span class="pill bg-emerald-100 text-emerald-700">
                               {{ watermarkModeLabel(row.watermarkMode) }}
@@ -498,13 +527,30 @@
                             }
                           }
                         </td>
-                        <td class="py-3 whitespace-nowrap">
+                        <td class="rt-key py-3 pr-4 font-mono font-bold text-ink md:whitespace-nowrap break-all" [attr.data-label]="'admin.settingsAdmin.watermarkColToken' | trans">
+                          {{ row.watermarkToken }}
+                        </td>
+                        <td class="rt-key py-3 pr-4" [attr.data-label]="'admin.settingsAdmin.watermarkColRecipient' | trans">
+                          <span class="font-semibold text-ink">{{ row.recipientName }}</span>
+                          <div class="text-xs text-ink-muted break-all">{{ row.recipientEmail }}</div>
+                        </td>
+                        <td class="rt-secondary py-3 pr-4 whitespace-nowrap">{{ accessSourceLabel(row.accessSource) }}</td>
+                        <td class="rt-secondary py-3 whitespace-nowrap">
                           {{ row.lastAccessedAt | date: 'dd MMM yyyy HH:mm' }}
                           @if (row.purgedAt) {
                             <div class="text-xs text-ink-muted mt-1">
                               {{ 'admin.settingsAdmin.watermarkPurged' | trans }} {{ row.purgedAt | date: 'dd MMM yyyy' }}
                             </div>
                           }
+                        </td>
+                        <td class="rt-more py-3 px-1">
+                          <app-row-more
+                            [items]="[
+                              { label: ('admin.settingsAdmin.watermarkColSource' | trans), value: accessSourceLabel(row.accessSource) },
+                              { label: ('admin.settingsAdmin.watermarkColLastAccess' | trans), value: (row.lastAccessedAt | date: 'dd MMM yyyy HH:mm') },
+                              { label: ('admin.settingsAdmin.watermarkPurged' | trans), value: (row.purgedAt | date: 'dd MMM yyyy') }
+                            ]"
+                          />
                         </td>
                       </tr>
                     }
@@ -515,6 +561,7 @@
           }
         </div>
       </section>
+      </div>
     </div>
 
 <!-- Modal: Edit Placement Pricing & Capacity -->
@@ -541,6 +588,7 @@
           </label>
           <input
             type="number"
+              inputmode="decimal"
             class="input-soft"
             min="1"
             step="1"
@@ -555,6 +603,7 @@
           </label>
           <input
             type="number"
+              inputmode="decimal"
             class="input-soft"
             min="0"
             step="1"
@@ -570,6 +619,7 @@
           </label>
           <input
             type="number"
+              inputmode="decimal"
             class="input-soft"
             min="1"
             max="50"

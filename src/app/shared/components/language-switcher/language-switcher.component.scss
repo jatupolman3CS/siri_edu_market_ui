@@ -1,3 +1,39 @@
 :host {
   display: inline-block;
 }
+
+// responsive-ui §2 / §4.4 touch minimum (44px). On phones this switcher is the only language
+// control (☰ drawer, footer, auth header, seller/admin drawers). Coarse pointer only, so the
+// desktop micro-bar keeps its compact 30px pill for mouse users. Kept in this file (no template
+// classes) so the sizing survives any change to the markup.
+@media (pointer: coarse) {
+  :host > button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  // The options render inside the CDK overlay but are declared in this template, so emulated
+  // encapsulation still reaches them. When an option wraps its own <button>, that button is the
+  // tap target and sets the row height; otherwise the li does.
+  li.ant-dropdown-menu-item,
+  li.ant-dropdown-menu-item > button {
+    min-height: 44px;
+  }
+
+  // The >=1280 header micro-bar is a fixed 32px strip (h-8): on a touch screen that wide
+  // (iPad Pro 13" landscape) grow the hit area instead of the pill, like styles.scss `.hit-44`.
+  :host-context([data-testid='header-utility-bar']) > button {
+    position: relative;
+    min-height: 0;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 44px);
+      height: 44px;
+      transform: translate(-50%, -50%);
+    }
+  }
+}

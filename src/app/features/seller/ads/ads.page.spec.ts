@@ -387,3 +387,48 @@ describe('SellerAdsPage — cancel campaign (AC-36)', () => {
     expect(ads.listCampaigns).toHaveBeenCalled();
   });
 });
+
+describe('SellerAdsPage — table viewport (responsive-ui v1.6 R-27, U3-8)', () => {
+  const wrapperOf = (fixture: { nativeElement: unknown }) =>
+    ((fixture.nativeElement as HTMLElement).querySelector('table.rtable') as HTMLTableElement).parentElement as HTMLElement;
+
+  it('the campaign table sits in a table viewport, with the pagination after it and never inside it', async () => {
+    const fixture = render();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapper = wrapperOf(fixture);
+
+    expect(wrapper.classList.contains('rt-viewport')).toBe(true);
+    expect(wrapper.classList.contains('table-scroll')).toBe(true);
+    expect(wrapper.querySelector('app-pagination')).toBeNull();
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+    expect(pagination).not.toBeNull();
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('a new page, page size or status filter scrolls the table back to the top; a reload of the same query does not', async () => {
+    const ads = buildAdsFake();
+    ads.listCampaigns.mockResolvedValue({ items: [buildCampaign()], page: 1, pageSize: 10, totalCount: 250, totalPages: 25 });
+    const fixture = render(ads);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const wrapper = wrapperOf(fixture);
+
+    const step = async (action: () => void): Promise<number> => {
+      wrapper.scrollTop = 300;
+      action();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(wrapperOf(fixture)).toBe(wrapper);
+      return wrapper.scrollTop;
+    };
+
+    expect(await step(() => page.onPageChange(2))).toBe(0);
+    expect(await step(() => page.onPageSizeChange(50))).toBe(0);
+    expect(await step(() => page.onStatusFilterChange('active'))).toBe(0);
+    expect(await step(() => void page.refresh())).toBe(300);
+  });
+});

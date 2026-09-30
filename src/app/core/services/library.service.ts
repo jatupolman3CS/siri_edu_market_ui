@@ -151,6 +151,14 @@ export class LibraryService {
   readonly libraryHasMore = this.libraryPager.hasMore;
   readonly ordersHasMore = this.ordersPager.hasMore;
 
+  /**
+   * responsive-ui v1.4 R-17 (F88): the orders pager's own state plus "has page 1 ever arrived",
+   * so `/orders` renders loading / error / empty / data instead of "ยังไม่มีคำสั่งซื้อ" while the GET
+   * is pending or after it failed.
+   */
+  readonly ordersState = this.ordersPager.state;
+  readonly ordersLoaded = computed(() => this.ordersPager.page() > 0);
+
   readonly totalDocuments = computed(() => this.library().length);
 
   readonly totalDownloads = computed(() =>

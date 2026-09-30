@@ -1,6 +1,6 @@
-<div class="max-w-7xl">
-      <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.approvalTitle' | trans }}</h1>
+<div class="min-w-0">
+      <header class="mb-6 lg:mb-8" [class]="detailOpen() ? 'max-lg:hidden' : ''">
+        <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.approvalTitle' | trans }}</h1>
         <p class="text-sm text-ink-soft">
           {{ 'admin.approvalSubtitle' | trans }}
         </p>
@@ -8,58 +8,63 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <!-- List -->
-        <div class="lg:col-span-5 space-y-3 min-h-0">
+        <div class="lg:col-span-5 space-y-3 min-h-0 min-w-0" data-testid="approval-list" [class]="detailOpen() ? 'max-lg:hidden' : ''">
           <div class="text-sm text-ink-muted mb-2">
-            <b class="text-ink">{{ pending().length }}</b> {{ 'admin.pendingQueue' | trans: { count: '' } }}
+            <b class="text-ink" data-testid="approval-total">{{ listState() === 'loading' || listState() === 'error' ? '—' : pendingTotal() }}</b> {{ 'admin.pendingQueue' | trans: { count: '' } }}
           </div>
 
-          <div class="card-soft p-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="relative">
-                <input
-                  class="input-soft !py-2 !pl-10"
-                  [value]="titleQuery()"
-                  (input)="titleQuery.set(($any($event.target).value ?? ''))"
-                  [placeholder]="'admin.docTitleSearch' | trans"
-                />
-                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
-                  <app-icon name="search" [size]="16" />
-                </div>
-              </div>
-              <div>
-                <input
-                  class="input-soft !py-2"
-                  [value]="sellerNameQuery()"
-                  (input)="sellerNameQuery.set(($any($event.target).value ?? ''))"
-                  [placeholder]="'admin.sellerNameSearch' | trans"
-                />
-              </div>
-
-              <div class="sm:col-span-2">
-                <div class="flex items-end justify-between gap-3">
-                  <div class="flex-1 min-w-0">
-                    <label class="block text-[11px] text-ink-muted mb-1">{{ 'admin.postedDate' | trans }}</label>
-                    <div class="flex items-center gap-2">
-                      <input
-                        class="input-soft !py-2 flex-1 min-w-0"
-                        type="date"
-                        [value]="postedFrom()"
-                        (input)="postedFrom.set(($any($event.target).value ?? ''))"
-                      />
-                      <span class="text-ink-muted text-xs select-none shrink-0">{{ 'admin.to' | trans }}</span>
-                      <input
-                        class="input-soft !py-2 flex-1 min-w-0"
-                        type="date"
-                        [value]="postedTo()"
-                        (input)="postedTo.set(($any($event.target).value ?? ''))"
-                      />
-                    </div>
-                  </div>
-                </div>
+          <div class="card-soft p-4 space-y-3">
+            <div class="relative">
+              <input
+                class="input-soft !py-2 !pl-10"
+                type="search"
+                [value]="titleQuery()"
+                (input)="titleQuery.set(($any($event.target).value ?? ''))"
+                [placeholder]="'admin.docTitleSearch' | trans"
+              />
+              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
+                <app-icon name="search" [size]="16" />
               </div>
             </div>
 
-            <div class="flex items-center justify-end gap-2 mt-3">
+            <ng-template #approvalFilters>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="sm:col-span-2">
+                  <input
+                    class="input-soft !py-2"
+                    [value]="sellerNameQuery()"
+                    (input)="sellerNameQuery.set(($any($event.target).value ?? ''))"
+                    [placeholder]="'admin.sellerNameSearch' | trans"
+                  />
+                </div>
+
+                <div class="sm:col-span-2">
+                  <label class="block text-[11px] text-ink-muted mb-1">{{ 'admin.postedDate' | trans }}</label>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <input
+                      class="input-soft !py-2 flex-1 min-w-0"
+                      type="date"
+                      [value]="postedFrom()"
+                      (input)="postedFrom.set(($any($event.target).value ?? ''))"
+                    />
+                    <span class="text-ink-muted text-xs select-none shrink-0">{{ 'admin.to' | trans }}</span>
+                    <input
+                      class="input-soft !py-2 flex-1 min-w-0"
+                      type="date"
+                      [value]="postedTo()"
+                      (input)="postedTo.set(($any($event.target).value ?? ''))"
+                    />
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+            <app-admin-filter-panel
+              [fields]="approvalFilters"
+              [activeCount]="activeFilterCount()"
+              (clearAll)="clearFilters()"
+            />
+
+            <div class="flex items-center justify-end gap-2">
               <button type="button" class="btn-ghost" (click)="resetSearch()">
                 {{ 'admin.resetFilters' | trans }}
               </button>
@@ -69,8 +74,24 @@
             </div>
           </div>
 
-          <div class="max-h-[calc(100vh-260px)] overflow-auto pr-1 space-y-3">
-          @if (pending().length === 0) {
+          <div class="lg:max-h-[calc(100dvh-260px)] lg:overflow-auto lg:pr-1 space-y-3">
+          @if (listState() === 'loading') {
+            <div class="space-y-3" aria-busy="true" data-testid="approval-loading">
+              @for (row of [1, 2, 3]; track row) {
+                <div class="card-soft h-24 animate-pulse" aria-hidden="true"></div>
+              }
+              <p class="sr-only">{{ 'common.loading' | trans }}</p>
+            </div>
+          } @else if (listState() === 'error') {
+            <div class="card-soft p-6 sm:p-10 text-center" role="alert" data-testid="approval-error">
+              <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
+              <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
+              <p class="text-sm text-ink-muted mt-1">{{ 'common.error' | trans }}</p>
+              <button type="button" class="btn-pink mt-5" data-testid="approval-retry" (click)="retryList()">
+                {{ 'common.retry' | trans }}
+              </button>
+            </div>
+          } @else if (listState() === 'empty') {
             <app-empty-state emoji="🌿" [title]="'admin.noPending' | trans" [description]="'admin.allClear' | trans" />
           } @else {
             @for (d of pending(); track d.id) {
@@ -79,7 +100,7 @@
                 [class.!border-pink-500]="selected()?.id === d.id"
                 [class.shadow-pop]="selected()?.id === d.id"
                 [disabled]="isPreviewLocked()"
-                (click)="select(d.id)"
+                (click)="openDetail(d.id)"
               >
                 <img appImgFallback [src]="d.cover" class="w-14 h-16 rounded-xl object-cover flex-shrink-0" alt="" />
                 <div class="flex-1 min-w-0">
@@ -108,10 +129,10 @@
                     }
                     <span class="text-[11px] text-ink-muted">{{ d.createdAt | timeAgo }}</span>
                   </div>
-                  <div class="text-sm font-bold text-ink line-clamp-2 leading-snug">
+                  <div class="text-sm font-bold text-ink line-clamp-2 leading-snug [overflow-wrap:anywhere]">
                     {{ d.title }}
                   </div>
-                  <div class="text-xs text-ink-muted mt-1">{{ d.seller.studioName }}</div>
+                  <div class="text-xs text-ink-muted mt-1 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</div>
                 </div>
               </button>
             }
@@ -132,11 +153,20 @@
           </div>
         </div>
 
-        <!-- Preview -->
-        <div class="lg:col-span-7">
+        <!-- Preview (<1024: its own full-width view, reached from the list) -->
+        <div class="lg:col-span-7 min-w-0" data-testid="approval-detail" [class]="detailOpen() ? '' : 'max-lg:hidden'">
+          <button
+            type="button"
+            class="lg:hidden btn-ghost tap-target mb-3"
+            data-testid="approval-back"
+            (click)="closeDetail()"
+          >
+            <app-icon name="arrow-left" [size]="16" />
+            {{ 'admin.pendingDocsCardTitle' | trans }}
+          </button>
           @if (selected(); as d) {
-            <div class="card-soft overflow-hidden sticky top-6">
-              <div class="p-4 border-b border-line bg-white flex items-center justify-between gap-3">
+            <div class="card-soft overflow-hidden lg:sticky lg:top-6">
+              <div class="p-4 border-b border-line bg-white flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                   <div class="text-xs text-ink-muted">{{ 'common.preview' | trans }}</div>
                   <div class="text-sm font-bold text-ink truncate">
@@ -145,7 +175,7 @@
                 </div>
                 <button
                   type="button"
-                  class="pill-soft !py-2 !px-3"
+                  class="pill-soft !py-2 !px-3 [@media(pointer:coarse)]:min-h-11"
                   [class.!bg-pink-100]="isPreviewLocked()"
                   [class.!text-pink-700]="isPreviewLocked()"
                   (click)="toggleLock()"
@@ -168,7 +198,7 @@
                 />
               </div>
 
-              <div class="p-6">
+              <div class="p-4 md:p-6">
                 @if (previewDetail(); as pd) {
                   <div class="flex items-center gap-2 mb-3 flex-wrap">
                     @for (tag of pd.tags; track tag) {
@@ -183,8 +213,8 @@
                   </div>
                 }
 
-                <h2 class="text-2xl font-extrabold text-ink leading-tight mb-2">{{ d.title }}</h2>
-                <p class="text-sm text-ink-soft leading-relaxed">{{ d.shortDescription }}</p>
+                <h2 class="heading-2 font-extrabold text-ink mb-2 min-w-0 [overflow-wrap:anywhere]">{{ d.title }}</h2>
+                <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ d.shortDescription }}</p>
 
                 @if (previewDetail(); as pd2) {
                   @if (pd2.description?.trim()) {
@@ -192,7 +222,7 @@
                       <h3 class="text-xs font-bold text-ink-muted uppercase tracking-wide mb-2">
                         {{ 'admin.detailsToPublish' | trans }}
                       </h3>
-                      <p class="text-sm text-ink leading-relaxed whitespace-pre-wrap">{{ pd2.description }}</p>
+                      <p class="text-sm text-ink leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">{{ pd2.description }}</p>
                     </div>
                   }
 
@@ -290,7 +320,7 @@
                                 <button
                                   type="button"
                                   (click)="openMainFile(m.storageKey)"
-                                  class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                  class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline inline-flex items-center gap-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
                                 >
                                   <app-icon name="eye" [size]="13" />
                                   {{ 'admin.openView' | trans }}
@@ -298,7 +328,7 @@
                                 <button
                                   type="button"
                                   (click)="downloadMainFile(m.storageKey)"
-                                  class="text-xs font-semibold text-ink-muted hover:text-ink hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                  class="text-xs font-semibold text-ink-muted hover:text-ink hover:underline inline-flex items-center gap-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
                                 >
                                   <app-icon name="download" [size]="13" />
                                   {{ 'seller.download' | trans }}
@@ -329,7 +359,7 @@
                   }
                 }
 
-                <dl class="mt-5 grid sm:grid-cols-3 gap-4 p-5 rounded-3xl bg-pink-50 border border-line">
+                <dl class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 md:p-5 rounded-3xl bg-pink-50 border border-line">
                   <div>
                     <dt class="text-xs text-ink-muted">{{ 'admin.colPrice' | trans }}</dt>
                     <dd class="text-base font-bold text-ink mt-1">{{ d.price | thb }}</dd>
@@ -340,13 +370,13 @@
                       @if (previewDetail(); as pfmt) {
                         {{ pfmt.format }} · {{ 'admin.pagesUnit' | trans: { pages: pfmt.pages ?? 0 } }}
                       } @else {
-                        {{ d.format }} · {{ 'admin.pagesUnit' | trans: { pages: d.pages ?? 0 } }}
+                        {{ d.format }} · {{ 'admin.pagesUnit' | trans: { pages: d.pages } }}
                       }
                     </dd>
                   </div>
                   <div>
                     <dt class="text-xs text-ink-muted">{{ 'admin.colBuyer' | trans }}</dt>
-                    <dd class="text-base font-bold text-ink mt-1">{{ d.seller.studioName }}</dd>
+                    <dd class="text-base font-bold text-ink mt-1 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</dd>
                   </div>
                 </dl>
 
@@ -370,7 +400,7 @@
                       }
                       <button
                         type="button"
-                        class="text-xs text-pink-600 hover:text-pink-700 font-semibold underline ml-1 cursor-pointer"
+                        class="inline-flex items-center text-xs text-pink-600 hover:text-pink-700 font-semibold underline ml-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
                         [disabled]="prescreening()"
                         (click)="runPrescreen(d.id)"
                       >
@@ -391,7 +421,7 @@
                       <div class="text-[11px] font-bold text-ink-muted mb-1">{{ 'admin.detectedRiskFlags' | trans }}</div>
                       <div class="flex flex-wrap gap-1.5">
                         @for (flag of d.aiPrescreenFlags; track flag) {
-                          <span class="text-[11px] px-2 py-0.5 rounded-md bg-white border border-rose-300 font-medium text-rose-700">
+                          <span class="max-w-full text-[11px] px-2 py-0.5 rounded-md bg-white border border-rose-300 font-medium text-rose-700 [overflow-wrap:anywhere]">
                             🚩 {{ flag }}
                           </span>
                         }
@@ -432,9 +462,9 @@
                   <p class="text-xs text-amber-600 mt-2 font-medium">{{ 'admin.checkAllWarning' | trans }}</p>
                 }
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                <div class="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6" data-testid="approval-actions-inline">
                   <button
-                    class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white font-bold transition-colors"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold transition-colors"
                     (click)="reject(d.id, d.title)"
                   >
                     <app-icon name="x" [size]="16" />
@@ -448,9 +478,31 @@
                     {{ 'admin.approvePublish' | trans }}
                   </button>
                 </div>
+                @if (detailOpen()) {
+                  <app-sticky-action-bar>
+                    <div class="grid w-full min-w-0 grid-cols-2 gap-2" data-testid="approval-actions-sticky">
+                      <button
+                        type="button"
+                        class="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold transition-colors"
+                        (click)="reject(d.id, d.title)"
+                      >
+                        <app-icon name="x" [size]="16" />
+                        {{ 'admin.rejectWithReason' | trans }}
+                      </button>
+                      <button type="button" class="btn-pink !justify-center text-sm" (click)="approve(d.id, d.title)">
+                        <app-icon name="check" [size]="16" />
+                        {{ 'admin.approvePublish' | trans }}
+                      </button>
+                    </div>
+                  </app-sticky-action-bar>
+                }
               </div>
             </div>
-          } @else {
+          } @else if (listState() === 'loading') {
+            <!-- R-17: the preview column (>=1024) is a skeleton while the queue loads, not the
+                 "select a document" prompt. -->
+            <div class="card-soft h-96 animate-pulse" aria-hidden="true" data-testid="approval-detail-loading"></div>
+          } @else if (listState() === 'empty') {
             <app-empty-state
               emoji="👈"
               [title]="'admin.selectDocToReviewTitle' | trans"
@@ -492,7 +544,9 @@
             ></textarea>
           </div>
 
-          <div class="flex items-center justify-end gap-2.5 pt-2">
+          <!-- R-2 (G2-8): phones (<744) stack the two actions full width, confirm last (nearest the
+               thumb); the confirm button is 44px tall on coarse pointers like every other target. -->
+          <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-2.5 pt-2" data-testid="reject-modal-actions">
             <button
               type="button"
               class="btn-ghost !py-2 !px-4 text-sm"
@@ -503,7 +557,8 @@
             </button>
             <button
               type="button"
-              class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-soft flex items-center gap-1.5 disabled:opacity-50"
+              class="px-5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-soft flex items-center justify-center gap-1.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="reject-modal-confirm"
               (click)="confirmReject()"
               [disabled]="rejectSubmitting() || !rejectReason().trim()"
             >

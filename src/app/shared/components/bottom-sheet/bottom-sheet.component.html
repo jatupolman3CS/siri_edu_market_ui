@@ -1,0 +1,34 @@
+@if (open()) {
+  <div class="bottom-sheet__backdrop" data-testid="sheet-backdrop" (click)="close()"></div>
+  <div
+    class="bottom-sheet"
+    [class.bottom-sheet--slide-over]="tabletMode() === 'slide-over'"
+    [style.--sheet-max-h]="maxHeight()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="title() ? titleId : null"
+    [attr.aria-label]="title() ? null : ('responsive.filters.title' | trans)"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <div class="bottom-sheet__handle" aria-hidden="true"></div>
+    <header class="bottom-sheet__header">
+      <h2 class="bottom-sheet__title" [id]="titleId">{{ title() }}</h2>
+      <button
+        type="button"
+        class="bottom-sheet__close"
+        data-testid="sheet-close"
+        [attr.aria-label]="'responsive.sheet.close' | trans"
+        (click)="close()"
+      >
+        <app-icon name="close" [size]="20" />
+      </button>
+    </header>
+    <div class="bottom-sheet__body">
+      <ng-content />
+    </div>
+    <div class="bottom-sheet__footer" data-testid="sheet-footer">
+      <ng-content select="[sheetFooter]" />
+    </div>
+  </div>
+}

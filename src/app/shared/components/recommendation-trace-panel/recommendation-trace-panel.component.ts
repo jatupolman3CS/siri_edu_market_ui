@@ -5,6 +5,7 @@ import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
+import { TableViewportDirective } from '../../directives/table-viewport.directive';
 
 /**
  * crm-driven-discovery v1 (docs/contracts/crm-driven-discovery.md) §3.5/§4.3 — "ทำไมระบบถึง
@@ -20,7 +21,7 @@ import { EmptyStateComponent } from '../empty-state/empty-state.component';
 @Component({
   selector: 'app-recommendation-trace-panel',
   standalone: true,
-  imports: [DecimalPipe, EmptyStateComponent, TranslatePipe],
+  imports: [DecimalPipe, EmptyStateComponent, TranslatePipe, TableViewportDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './recommendation-trace-panel.component.html',
 })

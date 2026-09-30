@@ -1388,3 +1388,29 @@ describe('AdminService — admin document review PDF (document-preview-access-fi
     });
   });
 });
+
+/** responsive-ui v1.4 R-17 (G-27, F88): the admin dashboard renders loading / error + retry from this. */
+describe('AdminService — dashboardState (R-17)', () => {
+  it('goes idle → loading → success around GET /api/admin/dashboard', async () => {
+    stubRoute('GET', '/api/admin/dashboard', { body: { totalRevenue: 1 } });
+    const admin = buildService();
+    expect(admin.dashboardState().status).toBe('idle');
+
+    const pending = admin.refreshDashboard();
+    expect(admin.dashboardState().status).toBe('loading');
+    await pending;
+
+    expect(admin.dashboardState().status).toBe('success');
+    expect(admin.dashboard()).not.toBeNull();
+  });
+
+  it('ends in the error state (and no dashboard) when the GET fails', async () => {
+    stubRoute('GET', '/api/admin/dashboard', { status: 500, body: { title: 'boom', status: 500 } });
+    const admin = buildService();
+
+    await admin.refreshDashboard();
+
+    expect(admin.dashboardState().status).toBe('error');
+    expect(admin.dashboard()).toBeNull();
+  });
+});

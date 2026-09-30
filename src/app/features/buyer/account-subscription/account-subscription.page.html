@@ -1,16 +1,16 @@
-<div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+<div class="page-container py-6 sm:py-8">
   <header
-    class="card-soft p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
   >
-    <div>
+    <div class="min-w-0">
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
         <span>{{ 'accountSubscription.badge' | trans }}</span>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-1.5">{{ 'accountSubscription.title' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'accountSubscription.title' | trans }}</h1>
       <p class="text-sm sm:text-base text-ink-soft">{{ 'accountSubscription.desc' | trans }}</p>
     </div>
-    <a routerLink="/account/subscription/access-history" class="btn-ghost !py-2.5 whitespace-nowrap self-start sm:self-auto">
+    <a routerLink="/account/subscription/access-history" class="btn-ghost !py-2.5 min-h-11 whitespace-nowrap self-start sm:self-auto">
       {{ 'accountSubscription.accessHistoryLink' | trans }}
     </a>
   </header>
@@ -18,8 +18,8 @@
   @if (!loaded()) {
     <div class="card-soft p-8 text-center text-sm text-ink-soft">{{ 'common.loading' | trans }}</div>
   } @else if (subscription.current(); as sub) {
-    <section class="card-soft p-6">
-      <div class="flex items-center justify-between mb-4">
+    <section class="card-soft p-4 sm:p-6">
+      <div class="flex items-center justify-between gap-3 mb-4">
         <h2 class="text-lg font-bold text-ink">{{ 'accountSubscription.packageTitle' | trans }}</h2>
         <span class="pill-pink text-xs">{{ statusLabel(sub.status) }}</span>
       </div>
@@ -50,7 +50,7 @@
           <p class="mb-2">
             {{ 'accountSubscription.incompleteDesc' | trans }}
           </p>
-          <button type="button" class="btn-ghost !py-2 !px-4 text-xs" (click)="refreshStatus()">
+          <button type="button" class="btn-ghost !py-2 !px-4 min-h-11 text-xs" (click)="refreshStatus()">
             {{ 'accountSubscription.refreshStatus' | trans }}
           </button>
         </div>

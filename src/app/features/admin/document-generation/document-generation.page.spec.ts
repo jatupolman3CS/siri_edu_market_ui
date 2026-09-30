@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { WritableSignal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
+import { ViewportService } from '../../../core/layout';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdminDocumentGenerationPage } from './document-generation.page';
@@ -62,6 +63,7 @@ function renderPage(opts: {
   categories?: DocumentGenerationEligibleCategory[];
   runs?: DocumentGenerationRun[];
   jobToggleEnabled?: boolean | 'missing';
+  viewport?: unknown;
 } = {}) {
   messages = { success: [], warning: [], error: [] };
 
@@ -77,6 +79,7 @@ function renderPage(opts: {
           error: (m: string) => messages.error.push(m),
         },
       },
+      ...(opts.viewport ? [{ provide: ViewportService, useValue: opts.viewport }] : []),
     ],
   });
 
@@ -273,5 +276,78 @@ describe('AdminDocumentGenerationPage (category-content-auto-generation v1)', ()
     expect(links).toContain('/admin/documents/doc-1');
     expect(links).toContain('/admin/documents/doc-2');
     expect(links).toContain('/admin/approval');
+  });
+});
+
+describe('AdminDocumentGenerationPage — G editor layout (responsive-ui v1 U4-4)', () => {
+  it('renders the run settings in a >=1280 right panel (360px column)', async () => {
+    const { fixture } = renderPage({ categories: [category()] });
+    await settle();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const panel = root.querySelector('[data-testid="docgen-settings-panel"]') as HTMLElement;
+    expect(panel.className).toContain('xl:block');
+    expect(panel.className).toContain('hidden');
+    expect(panel.querySelector('select')).not.toBeNull();
+    expect(panel.parentElement?.className).toContain('xl:grid-cols-[minmax(0,1fr)_360px]');
+  });
+
+  it('"ตั้งค่า" opens a sheet with the same settings form and the run buttons in its footer', async () => {
+    const { fixture } = renderPage({ categories: [category()] });
+    await settle();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+
+    const button = root.querySelector('[data-testid="docgen-settings-button"]') as HTMLButtonElement;
+    expect(button.parentElement?.className).toContain('xl:hidden');
+    button.click();
+    fixture.detectChanges();
+
+    const dialog = root.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    expect(dialog.querySelector('select')).not.toBeNull();
+    const footerButtons = dialog.querySelectorAll('[data-testid="sheet-footer"] button');
+    expect(footerButtons.length).toBe(2);
+
+    // Two long labels side by side wrapped to 3-4 lines on phones (F27): the sheet footer stacks
+    // them full width, primary last visually (column-reverse, runSelected is first in the DOM).
+    const footerRow = dialog.querySelector('[data-testid="sheet-footer"] [sheetFooter]') as HTMLElement;
+    expect(footerRow.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(['flex', 'w-full', 'flex-col-reverse', '[&>button]:w-full']),
+    );
+    expect(footerRow.className).not.toContain('[&>button]:flex-1');
+    expect(footerRow.className).not.toContain('flex-wrap');
+    expect(footerButtons[0].className).toContain('btn-pink');
+
+    (dialog.querySelector('[data-testid="sheet-close"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
+describe('AdminDocumentGenerationPage — overlay lifecycle (responsive-ui v1.4 R-9 / F42)', () => {
+  it('closes the settings sheet (and releases the scroll lock) once the viewport reaches 1280', async () => {
+    const isDesktop = signal(false);
+    const viewport = { isDesktop, isLaptopUp: signal(true), isTabletUp: signal(true), isPhone: signal(false), tier: signal('laptop') };
+    const { fixture } = renderPage({ categories: [category()], viewport });
+    await settle();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    (root.querySelector('[data-testid="docgen-settings-button"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(root.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    isDesktop.set(true); // 1024x1366 -> 1366x1024
+    fixture.detectChanges();
+    isDesktop.set(false); // and back
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.settingsOpen()).toBe(false);
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.documentElement.style.overflow).toBe('');
   });
 });

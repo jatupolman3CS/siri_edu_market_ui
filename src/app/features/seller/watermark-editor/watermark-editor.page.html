@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="w-full min-w-0">
   @if (loading()) {
     <div class="flex flex-col items-center justify-center py-24 text-ink-muted">
       <div class="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent mb-3"></div>
@@ -23,7 +23,7 @@
             </span>
           }
         </div>
-        <h1 class="text-2xl font-black text-ink tracking-tight mt-1">
+        <h1 class="heading-2 font-black text-ink tracking-tight mt-1">
           @if (documentId()) {
             {{ 'seller.manageThisDocWatermark' | trans }}
           } @else {
@@ -43,7 +43,7 @@
       <div class="flex items-center gap-2">
         <a
           routerLink="/seller/upload"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-ink text-xs font-bold transition-colors"
+          class="inline-flex items-center gap-2 px-4 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-ink text-xs font-bold transition-colors"
         >
           <app-icon name="upload" [size]="14" />
           <span>{{ 'seller.goToUploadNewDoc' | trans }}</span>
@@ -53,14 +53,14 @@
   </div>
 
   <!-- Tab Switcher -->
-  <div class="flex border-b border-line mb-8">
+  <div class="chip-row !gap-0 border-b border-line mb-6 md:mb-8" role="tablist">
     <button
       type="button"
       (click)="activeTab.set('web-preview')"
       [class]="activeTab() === 'web-preview'
         ? 'border-pink-600 text-pink-600 font-bold'
         : 'border-transparent text-ink-muted hover:text-ink font-medium'"
-      class="pb-4 px-6 border-b-2 text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      class="min-h-[44px] pb-3 md:pb-4 px-4 md:px-6 border-b-2 text-sm whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer"
     >
       <app-icon name="eye" [size]="16" />
       {{ 'seller.tabWebPreviewWatermark' | trans }}
@@ -71,210 +71,36 @@
       [class]="activeTab() === 'personalized'
         ? 'border-pink-600 text-pink-600 font-bold'
         : 'border-transparent text-ink-muted hover:text-ink font-medium'"
-      class="pb-4 px-6 border-b-2 text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      class="min-h-[44px] pb-3 md:pb-4 px-4 md:px-6 border-b-2 text-sm whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer"
     >
       <app-icon name="shield" [size]="16" />
       {{ 'seller.tabPersonalizedWatermark' | trans }}
     </button>
   </div>
 
+
+    <!-- responsive-ui v1 §4.6 G: <1280 the canvas is full width and the settings form opens in a
+         bottom sheet (phone) / slide-over (744–1279); >=1280 the settings sit in a 360px right panel. -->
+    @if (!viewport.isDesktop()) {
+      <div class="mb-4 flex justify-end">
+        <button
+          type="button"
+          class="btn-pink w-full sm:w-auto justify-center"
+          (click)="openSettings()"
+          aria-haspopup="dialog"
+          data-testid="editor-settings-button"
+        >
+          <app-icon name="gear" [size]="16" />
+          {{ 'responsive.editor.settings' | trans }}
+        </button>
+      </div>
+    }
+
     <!-- TAB 1: WEB PREVIEW WATERMARK -->
     @if (activeTab() === 'web-preview') {
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- Controls Column (5 cols) -->
-        <div class="lg:col-span-5 space-y-6">
-          <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
-            <div class="border-b border-line pb-4">
-              <h2 class="text-base font-black text-ink">{{ 'seller.webWatermarkSettings' | trans }}</h2>
-              <p class="text-xs text-ink-muted mt-0.5">
-                {{ 'seller.webWatermarkBackendDesc' | trans }}
-              </p>
-            </div>
-
-            <!-- Watermark Text -->
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkText' | trans }}</label>
-              <input
-                type="text"
-                [(ngModel)]="watermarkText"
-                [placeholder]="'seller.watermarkTextPlaceholder' | trans"
-                class="w-full px-4 py-2.5 rounded-xl border border-line text-sm text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
-              />
-            </div>
-
-            <!-- Position Matrix (9-Grid + Specials) -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkPosition' | trans }}</label>
-                <span class="text-xs font-semibold text-pink-600">{{ watermarkPosition() }}</span>
-              </div>
-
-              <!-- 9-Grid selector -->
-              <div class="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                @for (pos of gridPositions; track pos.value) {
-                  <button
-                    type="button"
-                    (click)="setPosition(pos.value)"
-                    [class]="watermarkPosition() === pos.value
-                      ? 'bg-pink-600 text-white shadow-xs font-bold'
-                      : 'bg-white text-ink-muted hover:text-ink hover:bg-slate-100 border border-line/60 font-medium'"
-                    class="py-2.5 px-2 rounded-xl text-xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <div
-                      class="w-2 h-2 rounded-full"
-                      [class]="watermarkPosition() === pos.value ? 'bg-white' : 'bg-slate-300'"
-                    ></div>
-                    <span>{{ pos.labelKey | trans }}</span>
-                  </button>
-                }
-              </div>
-
-              <!-- Special Options: Center-Diagonal & Tile -->
-              <div class="grid grid-cols-2 gap-2 mt-2">
-                <button
-                  type="button"
-                  (click)="setPosition('center-diagonal')"
-                  [class]="watermarkPosition() === 'center-diagonal'
-                    ? 'bg-pink-600 text-white shadow-xs font-bold'
-                    : 'bg-white text-ink hover:bg-slate-50 border border-line font-medium'"
-                  class="py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <app-icon name="sparkle" [size]="14" />
-                  <span>{{ 'seller.posDiagonal' | trans }}</span>
-                </button>
-
-                <button
-                  type="button"
-                  (click)="setPosition('tile')"
-                  [class]="watermarkPosition() === 'tile'
-                    ? 'bg-pink-600 text-white shadow-xs font-bold'
-                    : 'bg-white text-ink hover:bg-slate-50 border border-line font-medium'"
-                  class="py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <app-icon name="dashboard" [size]="14" />
-                  <span>{{ 'seller.posTileLabel' | trans }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Opacity Slider -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkOpacity' | trans }}</span>
-                <span class="font-bold text-pink-600">{{ watermarkOpacity() }}%</span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="90"
-                step="5"
-                [(ngModel)]="watermarkOpacity"
-                class="w-full accent-pink-600 cursor-pointer"
-              />
-              <div class="flex justify-between text-[10px] text-ink-muted">
-                <span>{{ 'seller.opacityVeryLight' | trans }}</span>
-                <span>{{ 'seller.opacityMedium' | trans }}</span>
-                <span>{{ 'seller.opacityDark' | trans }}</span>
-              </div>
-            </div>
-
-            <!-- Font Size & Rotation Sliders -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.fontSize' | trans }}</span>
-                  <span class="font-bold text-pink-600">{{ watermarkFontSize() }}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="72"
-                  step="1"
-                  [(ngModel)]="watermarkFontSize"
-                  class="w-full accent-pink-600 cursor-pointer"
-                />
-              </div>
-
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.rotationDeg' | trans }}</span>
-                  <span class="font-bold text-pink-600">{{ watermarkRotation() }}°</span>
-                </div>
-                <input
-                  type="range"
-                  min="-90"
-                  max="90"
-                  step="5"
-                  [(ngModel)]="watermarkRotation"
-                  class="w-full accent-pink-600 cursor-pointer"
-                />
-              </div>
-            </div>
-
-            <!-- Color Picker -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkColor' | trans }}</label>
-              <div class="flex items-center gap-2">
-                @for (c of colorPresets; track c.hex) {
-                  <button
-                    type="button"
-                    (click)="setColor(c.hex)"
-                    [style.background-color]="c.hex"
-                    [class.ring-2]="watermarkColor() === c.hex"
-                    [class.ring-offset-2]="watermarkColor() === c.hex"
-                    class="w-7 h-7 rounded-full transition-transform hover:scale-110 cursor-pointer ring-pink-500"
-                    [title]="c.name"
-                  ></button>
-                }
-                <div class="flex items-center gap-1.5 ml-auto">
-                  <input
-                    type="color"
-                    [(ngModel)]="watermarkColor"
-                    class="w-7 h-7 rounded-lg border border-line cursor-pointer p-0 bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    [(ngModel)]="watermarkColor"
-                    class="w-20 px-2 py-1 text-xs uppercase font-mono border border-line rounded-lg text-center"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="pt-4 border-t border-line">
-              <button
-                type="button"
-                (click)="saveConfig()"
-                [disabled]="saving()"
-                class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                @if (saving()) {
-                  <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>{{ 'seller.savingTemplate' | trans }}</span>
-                } @else {
-                  <app-icon name="check" [size]="16" />
-                  @if (documentId()) {
-                    <span>{{ 'seller.saveDocWatermark' | trans }}</span>
-                  } @else {
-                    <span>{{ 'seller.saveWatermarkTemplate' | trans }}</span>
-                  }
-                }
-              </button>
-              <p class="text-[11px] text-ink-muted text-center mt-2">
-                @if (documentId()) {
-                  {{ 'seller.docWatermarkNotice' | trans }}
-                } @else {
-                  {{ 'seller.templateWatermarkNotice' | trans }}
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Preview Column (7 cols) -->
-        <div class="lg:col-span-7 space-y-4">
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 xl:gap-8">
+        <!-- Preview / canvas column -->
+        <div class="min-w-0 space-y-4">
           <!-- REAL PREVIEW (document mode only) — the actual watermarked JPEG pages already
                generated server-side, as opposed to the CSS mockup below which only simulates
                what the NEXT save will look like. -->
@@ -332,10 +158,15 @@
           }
 
           <!-- SIMULATOR VIEW (live CSS mockup — reflects unsaved slider changes) -->
-            <div class="bg-slate-100/80 rounded-3xl p-6 border border-line flex flex-col items-center justify-center min-h-[620px]">
+          <!-- responsive-ui v1.4 R-1/§4.6 G (F26): the frame is a size container and every watermark
+               size below is in cqw relative to the 420px desktop frame, so a phone shows the same
+               proportions instead of fixed-px text spilling past both edges. The desktop min-height
+               applies from md: only (it left ~280px of dead space under the frame on phones). -->
+            <div class="bg-slate-100/80 rounded-3xl p-3 sm:p-6 border border-line flex flex-col items-center justify-center md:min-h-[620px]">
               <!-- A4 Simulated Paper Frame -->
               <div
-                class="relative w-full max-w-[420px] aspect-[1/1.414] bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 flex flex-col select-none"
+                class="relative w-full max-w-[420px] aspect-[1/1.414] bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 flex flex-col select-none [container-type:inline-size]"
+                data-testid="watermark-preview-frame"
               >
                 <!-- Simulated Document Header & Skeleton Content -->
                 <div class="p-6 space-y-4 opacity-30 pointer-events-none">
@@ -368,14 +199,14 @@
                 <!-- WATERMARK OVERLAY -->
                 <!-- Case A: Tile Pattern -->
                 @if (watermarkPosition() === 'tile') {
-                  <div class="absolute inset-0 grid grid-cols-3 grid-rows-4 p-4 pointer-events-none">
+                  <div class="absolute inset-0 grid grid-cols-3 grid-rows-4 p-[3.8cqw] pointer-events-none">
                     @for (item of [1,2,3,4,5,6,7,8,9,10,11,12]; track item) {
                       <div class="flex items-center justify-center overflow-hidden">
                         <span
                           [style.color]="watermarkColor()"
                           [style.opacity]="watermarkOpacity() / 100"
                           [style.transform]="'rotate(' + watermarkRotation() + 'deg)'"
-                          [style.font-size.px]="watermarkFontSize() * 0.4"
+                          [style.font-size]="previewFontSize(0.4)"
                           class="font-black whitespace-nowrap select-none"
                         >
                           {{ watermarkText() || 'SIRI EDUMARKET' }}
@@ -392,7 +223,7 @@
                       [style.color]="watermarkColor()"
                       [style.opacity]="watermarkOpacity() / 100"
                       [style.transform]="'rotate(' + watermarkRotation() + 'deg)'"
-                      [style.font-size.px]="watermarkFontSize() * 0.65"
+                      [style.font-size]="previewFontSize(0.65)"
                       class="font-black whitespace-nowrap select-none tracking-wider text-center"
                     >
                       {{ watermarkText() || 'SIRI EDUMARKET PREVIEW' }}
@@ -403,7 +234,7 @@
                 <!-- Case C: 9-Grid Position -->
                 @else {
                   <div
-                    class="absolute inset-0 p-8 flex pointer-events-none"
+                    class="absolute inset-0 p-[7.6cqw] flex pointer-events-none"
                     [class.items-start]="watermarkPosition().includes('top')"
                     [class.items-center]="watermarkPosition().includes('middle') || watermarkPosition() === 'center'"
                     [class.items-end]="watermarkPosition().includes('bottom')"
@@ -415,7 +246,7 @@
                       [style.color]="watermarkColor()"
                       [style.opacity]="watermarkOpacity() / 100"
                       [style.transform]="'rotate(' + watermarkRotation() + 'deg)'"
-                      [style.font-size.px]="watermarkFontSize() * 0.5"
+                      [style.font-size]="previewFontSize(0.5)"
                       class="font-black whitespace-nowrap select-none"
                     >
                       {{ watermarkText() || 'SIRI EDUMARKET' }}
@@ -432,248 +263,26 @@
             </div>
 
         </div>
+
+        <!-- Controls column (>=1280 only; the sheet renders the same template below) -->
+        @if (viewport.isDesktop()) {
+          <div class="min-w-0 space-y-6" data-testid="editor-settings-panel">
+            <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
+              <ng-container [ngTemplateOutlet]="webFields" />
+              <div class="pt-4 border-t border-line">
+                <ng-container [ngTemplateOutlet]="webSave" />
+              </div>
+            </div>
+          </div>
+        }
       </div>
     }
 
     <!-- TAB 2: PERSONALIZED WATERMARK FOR DOWNLOAD -->
     @if (activeTab() === 'personalized') {
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- Settings Column (6 cols) -->
-        <div class="lg:col-span-6 space-y-6">
-          <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
-            <div class="border-b border-line pb-4">
-              <div class="flex items-center gap-2">
-                <span class="p-2 rounded-xl bg-pink-50 text-pink-600">
-                  <app-icon name="shield" [size]="18" />
-                </span>
-                <div>
-                  <h2 class="text-base font-black text-ink">{{ 'seller.tabPersonalizedWatermark' | trans }}</h2>
-                  <p class="text-xs text-ink-muted mt-0.5">
-                    {{ 'seller.personalizedSubtitle' | trans }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Download Position Options -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.downloadPosition' | trans }}</label>
-              <div class="grid grid-cols-1 gap-2.5">
-                @for (pos of downloadPositions; track pos.value) {
-                  <label
-                    (click)="downloadWatermarkPosition.set(pos.value)"
-                    [class]="downloadWatermarkPosition() === pos.value
-                      ? 'border-pink-600 bg-pink-50/50 ring-1 ring-pink-500'
-                      : 'border-line hover:border-slate-300 bg-white'"
-                    class="p-3.5 rounded-2xl border transition-all flex items-start gap-3 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="downloadPos"
-                      [checked]="downloadWatermarkPosition() === pos.value"
-                      class="mt-0.5 text-pink-600 focus:ring-pink-500"
-                    />
-                    <div>
-                      <div class="text-xs font-bold text-ink">{{ pos.labelKey | trans }}</div>
-                      <div class="text-[11px] text-ink-muted mt-0.5">{{ pos.descKey | trans }}</div>
-                    </div>
-                  </label>
-                }
-              </div>
-            </div>
-
-            <!-- Watermark Template Input -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.stampTemplate' | trans }}</label>
-                <span class="text-[11px] text-pink-600 font-semibold">{{ 'seller.clickToInsertVar' | trans }}</span>
-              </div>
-
-              <!-- Variable Tag Chips -->
-              <div class="flex flex-wrap gap-1.5 mb-2">
-                <button
-                  type="button"
-                  (click)="insertTag('{email}')"
-                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
-                >
-                  {{ 'seller.varBuyerEmail' | trans }}
-                </button>
-                <button
-                  type="button"
-                  (click)="insertTag('{token}')"
-                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
-                >
-                  {{ 'seller.varForensicToken' | trans }}
-                </button>
-                <button
-                  type="button"
-                  (click)="insertTag('{date}')"
-                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
-                >
-                  {{ 'seller.varDownloadDate' | trans }}
-                </button>
-                <button
-                  type="button"
-                  (click)="insertTag('{platform}')"
-                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
-                >
-                  {{ 'seller.varPlatform' | trans }}
-                </button>
-              </div>
-
-              <!-- preview-pdf-error-shape-and-watermark-template-length v1 §4.4: maxlength must
-                   stay equal to the DTO's [MaxLength(512)] and the PERSONALIZED_WATERMARK_TEMPLATE
-                   column (also 512). Without it a longer template used to pass model validation
-                   and then die at the DB layer as a 500. -->
-              <textarea
-                rows="4"
-                maxlength="512"
-                data-testid="watermark-template-input"
-                [(ngModel)]="downloadWatermarkTemplate"
-                class="w-full px-4 py-3 rounded-2xl border border-line text-xs font-medium text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
-                [placeholder]="'seller.downloadTextPlaceholder' | trans"
-              ></textarea>
-              <div class="flex items-center justify-between text-[11px] text-slate-400">
-                <span>{{ 'seller.watermarkTemplateLengthHint' | trans }}</span>
-                <span
-                  class="tabular-nums font-medium"
-                  [class.text-pink-600]="downloadWatermarkTemplate().length >= 512"
-                  data-testid="watermark-template-counter"
-                  >{{ downloadWatermarkTemplate().length }}/512</span
-                >
-              </div>
-            </div>
-
-            <!-- watermark-completion v5 §4.9: style controls making this tab a first-class peer
-                 of "Web Preview" — font family / opacity / font size & rotation / color. -->
-
-            <!-- Font Family -->
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkFont' | trans }}</label>
-              <select
-                [(ngModel)]="downloadWatermarkFontFamily"
-                class="w-full px-4 py-2.5 rounded-xl border border-line text-sm text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors bg-white cursor-pointer"
-              >
-                @for (font of previewWatermarkFontOptions; track font) {
-                  <option [value]="font">{{ font }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Opacity Slider -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkOpacity' | trans }}</span>
-                <span class="font-bold text-pink-600">{{ downloadWatermarkOpacity() }}%</span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="90"
-                step="5"
-                [(ngModel)]="downloadWatermarkOpacity"
-                class="w-full accent-pink-600 cursor-pointer"
-              />
-              <div class="flex justify-between text-[10px] text-ink-muted">
-                <span>{{ 'seller.opacityVeryLight' | trans }}</span>
-                <span>{{ 'seller.opacityMedium' | trans }}</span>
-                <span>{{ 'seller.opacityDark' | trans }}</span>
-              </div>
-            </div>
-
-            <!-- Font Size & Rotation Sliders -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.fontSize' | trans }}</span>
-                  <span class="font-bold text-pink-600">{{ downloadWatermarkFontSize() }}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="72"
-                  step="1"
-                  [(ngModel)]="downloadWatermarkFontSize"
-                  class="w-full accent-pink-600 cursor-pointer"
-                />
-              </div>
-
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.rotationDeg' | trans }}</span>
-                  <span class="font-bold text-pink-600">{{ downloadWatermarkRotation() }}°</span>
-                </div>
-                <input
-                  type="range"
-                  min="-90"
-                  max="90"
-                  step="5"
-                  [(ngModel)]="downloadWatermarkRotation"
-                  class="w-full accent-pink-600 cursor-pointer"
-                />
-                @if (downloadWatermarkPosition() !== 'diagonal') {
-                  <p class="text-[10px] text-ink-muted">{{ 'seller.diagonalOnlyNotice' | trans }}</p>
-                }
-              </div>
-            </div>
-
-            <!-- Color Picker -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkColor' | trans }}</label>
-              <div class="flex items-center gap-2">
-                @for (c of colorPresets; track c.hex) {
-                  <button
-                    type="button"
-                    (click)="setDownloadColor(c.hex)"
-                    [style.background-color]="c.hex"
-                    [class.ring-2]="downloadWatermarkColor() === c.hex"
-                    [class.ring-offset-2]="downloadWatermarkColor() === c.hex"
-                    class="w-7 h-7 rounded-full transition-transform hover:scale-110 cursor-pointer ring-pink-500"
-                    [title]="c.name"
-                  ></button>
-                }
-                <div class="flex items-center gap-1.5 ml-auto">
-                  <input
-                    type="color"
-                    [(ngModel)]="downloadWatermarkColor"
-                    class="w-7 h-7 rounded-lg border border-line cursor-pointer p-0 bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    [(ngModel)]="downloadWatermarkColor"
-                    class="w-20 px-2 py-1 text-xs uppercase font-mono border border-line rounded-lg text-center"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Save Action Button -->
-            <div class="pt-4 border-t border-line">
-              <button
-                type="button"
-                (click)="saveConfig()"
-                [disabled]="saving()"
-                class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                @if (saving()) {
-                  <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>{{ 'seller.savingWatermark' | trans }}</span>
-                } @else {
-                  <app-icon name="check" [size]="16" />
-                  @if (documentId()) {
-                    <span>{{ 'seller.saveDocWatermark' | trans }}</span>
-                  } @else {
-                    <span>{{ 'seller.savePersonalizedSettings' | trans }}</span>
-                  }
-                }
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Simulator Column (6 cols) -->
-        <div class="lg:col-span-6 space-y-6">
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 xl:gap-8">
+        <!-- Simulator / canvas column -->
+        <div class="min-w-0 space-y-6">
           <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
             <div class="border-b border-line pb-4">
               <h2 class="text-base font-black text-ink">{{ 'seller.buyerSimulator' | trans }}</h2>
@@ -688,8 +297,10 @@
                 <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.simBuyerEmail' | trans }}</label>
                 <input
                   type="email"
+                  inputmode="email"
+                  autocomplete="off"
                   [(ngModel)]="simBuyerEmail"
-                  class="w-full px-3.5 py-2 rounded-xl border border-line text-xs text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                  class="w-full px-3.5 py-2 rounded-xl border border-line-strong text-xs text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
                 />
               </div>
 
@@ -698,7 +309,7 @@
                 <input
                   type="text"
                   [(ngModel)]="simToken"
-                  class="w-full px-3.5 py-2 rounded-xl border border-line text-xs font-mono text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                  class="w-full px-3.5 py-2 rounded-xl border border-line-strong text-xs font-mono text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
                 />
               </div>
             </div>
@@ -778,7 +389,34 @@
           </div>
         </div>
 
+        <!-- Settings column (>=1280 only; the sheet renders the same template below) -->
+        @if (viewport.isDesktop()) {
+          <div class="min-w-0 space-y-6" data-testid="editor-settings-panel">
+            <div class="bg-white rounded-3xl p-6 border border-line shadow-xs space-y-6">
+              <ng-container [ngTemplateOutlet]="downloadFields" />
+              <div class="pt-4 border-t border-line">
+                <ng-container [ngTemplateOutlet]="downloadSave" />
+              </div>
+            </div>
+          </div>
+        }
       </div>
+    }
+
+    @if (!viewport.isDesktop()) {
+      <app-bottom-sheet
+        [open]="settingsOpen()"
+        [title]="'responsive.editor.settings' | trans"
+        tabletMode="slide-over"
+        (closed)="closeSettings()"
+      >
+        <div class="space-y-6" data-testid="editor-settings-sheet-body">
+          <ng-container [ngTemplateOutlet]="activeTab() === 'web-preview' ? webFields : downloadFields" />
+        </div>
+        <div sheetFooter class="w-full">
+          <ng-container [ngTemplateOutlet]="activeTab() === 'web-preview' ? webSave : downloadSave" />
+        </div>
+      </app-bottom-sheet>
     }
   }
 
@@ -818,3 +456,429 @@
   }
 
 </div>
+
+<!-- Settings form templates: rendered once, either in the >=1280 right panel or inside the sheet. -->
+<ng-template #webFields>
+            <div class="border-b border-line pb-4">
+              <h2 class="text-base font-black text-ink">{{ 'seller.webWatermarkSettings' | trans }}</h2>
+              <p class="text-xs text-ink-muted mt-0.5">
+                {{ 'seller.webWatermarkBackendDesc' | trans }}
+              </p>
+            </div>
+
+            <!-- Watermark Text -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkText' | trans }}</label>
+              <input
+                type="text"
+                [(ngModel)]="watermarkText"
+                [placeholder]="'seller.watermarkTextPlaceholder' | trans"
+                class="w-full px-4 py-2.5 rounded-xl border border-line-strong text-sm text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
+              />
+            </div>
+
+            <!-- Position Matrix (9-Grid + Specials) -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkPosition' | trans }}</label>
+                <span class="text-xs font-semibold text-pink-600">{{ watermarkPosition() }}</span>
+              </div>
+
+              <!-- 9-Grid selector -->
+              <div class="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                @for (pos of gridPositions; track pos.value) {
+                  <button
+                    type="button"
+                    (click)="setPosition(pos.value)"
+                    [attr.aria-pressed]="watermarkPosition() === pos.value"
+                    [class]="watermarkPosition() === pos.value
+                      ? 'bg-primary text-white shadow-xs font-bold'
+                      : 'bg-white text-ink-muted hover:text-ink hover:bg-slate-100 border border-line/60 font-medium'"
+                    class="py-2.5 px-2 rounded-xl text-xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <div
+                      class="w-2 h-2 rounded-full"
+                      [class]="watermarkPosition() === pos.value ? 'bg-white' : 'bg-slate-300'"
+                    ></div>
+                    <span>{{ pos.labelKey | trans }}</span>
+                  </button>
+                }
+              </div>
+
+              <!-- Special Options: Center-Diagonal & Tile -->
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <button
+                  type="button"
+                  (click)="setPosition('center-diagonal')"
+                  [attr.aria-pressed]="watermarkPosition() === 'center-diagonal'"
+                  [class]="watermarkPosition() === 'center-diagonal'
+                    ? 'bg-primary text-white shadow-xs font-bold'
+                    : 'bg-white text-ink hover:bg-slate-50 border border-line font-medium'"
+                  class="py-2.5 px-3 [@media(pointer:coarse)]:min-h-11 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <app-icon name="sparkle" [size]="14" />
+                  <span>{{ 'seller.posDiagonal' | trans }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="setPosition('tile')"
+                  [attr.aria-pressed]="watermarkPosition() === 'tile'"
+                  [class]="watermarkPosition() === 'tile'
+                    ? 'bg-primary text-white shadow-xs font-bold'
+                    : 'bg-white text-ink hover:bg-slate-50 border border-line font-medium'"
+                  class="py-2.5 px-3 [@media(pointer:coarse)]:min-h-11 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <app-icon name="dashboard" [size]="14" />
+                  <span>{{ 'seller.posTileLabel' | trans }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Opacity Slider -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkOpacity' | trans }}</span>
+                <span class="font-bold text-pink-600">{{ watermarkOpacity() }}%</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="90"
+                step="5"
+                [(ngModel)]="watermarkOpacity"
+                class="w-full accent-pink-600 cursor-pointer"
+              />
+              <div class="flex justify-between text-[10px] text-ink-muted">
+                <span>{{ 'seller.opacityVeryLight' | trans }}</span>
+                <span>{{ 'seller.opacityMedium' | trans }}</span>
+                <span>{{ 'seller.opacityDark' | trans }}</span>
+              </div>
+            </div>
+
+            <!-- Font Size & Rotation Sliders -->
+            <div class="grid grid-cols-1 gap-4">
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.fontSize' | trans }}</span>
+                  <span class="font-bold text-pink-600">{{ watermarkFontSize() }}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="72"
+                  step="1"
+                  [(ngModel)]="watermarkFontSize"
+                  class="w-full accent-pink-600 cursor-pointer"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.rotationDeg' | trans }}</span>
+                  <span class="font-bold text-pink-600">{{ watermarkRotation() }}°</span>
+                </div>
+                <input
+                  type="range"
+                  min="-90"
+                  max="90"
+                  step="5"
+                  [(ngModel)]="watermarkRotation"
+                  class="w-full accent-pink-600 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <!-- Color Picker -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkColor' | trans }}</label>
+              <!-- F25: wrap instead of squeezing the swatches into ovals; 44px on touch (R-2). -->
+              <div class="flex flex-wrap items-center gap-2">
+                @for (c of colorPresets; track c.hex) {
+                  <button
+                    type="button"
+                    (click)="setColor(c.hex)"
+                    [style.background-color]="c.hex"
+                    [class.ring-2]="watermarkColor() === c.hex"
+                    [class.ring-offset-2]="watermarkColor() === c.hex"
+                    [attr.aria-pressed]="watermarkColor() === c.hex"
+                    [attr.aria-label]="c.name"
+                    class="w-7 h-7 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 shrink-0 rounded-full transition-transform hover:scale-110 cursor-pointer ring-pink-500"
+                    [title]="c.name"
+                  ></button>
+                }
+                <div class="flex items-center gap-1.5 ml-auto shrink-0">
+                  <input
+                    type="color"
+                    [(ngModel)]="watermarkColor"
+                    class="w-7 h-7 rounded-lg border border-line cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    [(ngModel)]="watermarkColor"
+                    class="w-20 px-2 py-1 text-xs uppercase font-mono border border-line-strong rounded-lg text-center"
+                  />
+                </div>
+              </div>
+            </div>
+</ng-template>
+
+<ng-template #webSave>
+              <button
+                type="button"
+                (click)="saveConfig()"
+                [disabled]="saving()"
+                class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                @if (saving()) {
+                  <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>{{ 'seller.savingTemplate' | trans }}</span>
+                } @else {
+                  <app-icon name="check" [size]="16" />
+                  @if (documentId()) {
+                    <span>{{ 'seller.saveDocWatermark' | trans }}</span>
+                  } @else {
+                    <span>{{ 'seller.saveWatermarkTemplate' | trans }}</span>
+                  }
+                }
+              </button>
+              <p class="text-[11px] text-ink-muted text-center mt-2">
+                @if (documentId()) {
+                  {{ 'seller.docWatermarkNotice' | trans }}
+                } @else {
+                  {{ 'seller.templateWatermarkNotice' | trans }}
+                }
+              </p>
+</ng-template>
+
+<ng-template #downloadFields>
+            <div class="border-b border-line pb-4">
+              <div class="flex items-center gap-2">
+                <span class="p-2 rounded-xl bg-pink-50 text-pink-600">
+                  <app-icon name="shield" [size]="18" />
+                </span>
+                <div>
+                  <h2 class="text-base font-black text-ink">{{ 'seller.tabPersonalizedWatermark' | trans }}</h2>
+                  <p class="text-xs text-ink-muted mt-0.5">
+                    {{ 'seller.personalizedSubtitle' | trans }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Download Position Options -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.downloadPosition' | trans }}</label>
+              <div class="grid grid-cols-1 gap-2.5">
+                @for (pos of downloadPositions; track pos.value) {
+                  <label
+                    (click)="downloadWatermarkPosition.set(pos.value)"
+                    [class]="downloadWatermarkPosition() === pos.value
+                      ? 'border-pink-600 bg-pink-50/50 ring-1 ring-pink-500'
+                      : 'border-line hover:border-slate-300 bg-white'"
+                    class="p-3.5 rounded-2xl border transition-all flex items-start gap-3 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="downloadPos"
+                      [checked]="downloadWatermarkPosition() === pos.value"
+                      class="mt-0.5 text-pink-600 focus:ring-pink-500"
+                    />
+                    <div>
+                      <div class="text-xs font-bold text-ink">{{ pos.labelKey | trans }}</div>
+                      <div class="text-[11px] text-ink-muted mt-0.5">{{ pos.descKey | trans }}</div>
+                    </div>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Watermark Template Input -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.stampTemplate' | trans }}</label>
+                <span class="text-[11px] text-pink-600 font-semibold">{{ 'seller.clickToInsertVar' | trans }}</span>
+              </div>
+
+              <!-- Variable Tag Chips -->
+              <div class="flex flex-wrap gap-1.5 mb-2">
+                <button
+                  type="button"
+                  (click)="insertTag('{email}')"
+                  class="px-2.5 py-1 [@media(pointer:coarse)]:min-h-11 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+                >
+                  {{ 'seller.varBuyerEmail' | trans }}
+                </button>
+                <button
+                  type="button"
+                  (click)="insertTag('{token}')"
+                  class="px-2.5 py-1 [@media(pointer:coarse)]:min-h-11 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+                >
+                  {{ 'seller.varForensicToken' | trans }}
+                </button>
+                <button
+                  type="button"
+                  (click)="insertTag('{date}')"
+                  class="px-2.5 py-1 [@media(pointer:coarse)]:min-h-11 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+                >
+                  {{ 'seller.varDownloadDate' | trans }}
+                </button>
+                <button
+                  type="button"
+                  (click)="insertTag('{platform}')"
+                  class="px-2.5 py-1 [@media(pointer:coarse)]:min-h-11 rounded-lg bg-slate-100 hover:bg-pink-100 text-ink hover:text-pink-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+                >
+                  {{ 'seller.varPlatform' | trans }}
+                </button>
+              </div>
+
+              <!-- preview-pdf-error-shape-and-watermark-template-length v1 §4.4: maxlength must
+                   stay equal to the DTO's [MaxLength(512)] and the PERSONALIZED_WATERMARK_TEMPLATE
+                   column (also 512). Without it a longer template used to pass model validation
+                   and then die at the DB layer as a 500. -->
+              <textarea
+                rows="4"
+                maxlength="512"
+                data-testid="watermark-template-input"
+                [(ngModel)]="downloadWatermarkTemplate"
+                class="w-full px-4 py-3 rounded-2xl border border-line-strong text-xs font-medium text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
+                [placeholder]="'seller.downloadTextPlaceholder' | trans"
+              ></textarea>
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span>{{ 'seller.watermarkTemplateLengthHint' | trans }}</span>
+                <span
+                  class="tabular-nums font-medium"
+                  [class.text-pink-600]="downloadWatermarkTemplate().length >= 512"
+                  data-testid="watermark-template-counter"
+                  >{{ downloadWatermarkTemplate().length }}/512</span
+                >
+              </div>
+            </div>
+
+            <!-- watermark-completion v5 §4.9: style controls making this tab a first-class peer
+                 of "Web Preview" — font family / opacity / font size & rotation / color. -->
+
+            <!-- Font Family -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkFont' | trans }}</label>
+              <select
+                [(ngModel)]="downloadWatermarkFontFamily"
+                class="w-full px-4 py-2.5 rounded-xl border border-line-strong text-sm text-ink focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors bg-white cursor-pointer"
+              >
+                @for (font of previewWatermarkFontOptions; track font) {
+                  <option [value]="font">{{ font }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Opacity Slider -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkOpacity' | trans }}</span>
+                <span class="font-bold text-pink-600">{{ downloadWatermarkOpacity() }}%</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="90"
+                step="5"
+                [(ngModel)]="downloadWatermarkOpacity"
+                class="w-full accent-pink-600 cursor-pointer"
+              />
+              <div class="flex justify-between text-[10px] text-ink-muted">
+                <span>{{ 'seller.opacityVeryLight' | trans }}</span>
+                <span>{{ 'seller.opacityMedium' | trans }}</span>
+                <span>{{ 'seller.opacityDark' | trans }}</span>
+              </div>
+            </div>
+
+            <!-- Font Size & Rotation Sliders -->
+            <div class="grid grid-cols-1 gap-4">
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.fontSize' | trans }}</span>
+                  <span class="font-bold text-pink-600">{{ downloadWatermarkFontSize() }}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="72"
+                  step="1"
+                  [(ngModel)]="downloadWatermarkFontSize"
+                  class="w-full accent-pink-600 cursor-pointer"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-ink uppercase tracking-wider">{{ 'seller.rotationDeg' | trans }}</span>
+                  <span class="font-bold text-pink-600">{{ downloadWatermarkRotation() }}°</span>
+                </div>
+                <input
+                  type="range"
+                  min="-90"
+                  max="90"
+                  step="5"
+                  [(ngModel)]="downloadWatermarkRotation"
+                  class="w-full accent-pink-600 cursor-pointer"
+                />
+                @if (downloadWatermarkPosition() !== 'diagonal') {
+                  <p class="text-[10px] text-ink-muted">{{ 'seller.diagonalOnlyNotice' | trans }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Color Picker -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-ink uppercase tracking-wider">{{ 'seller.watermarkColor' | trans }}</label>
+              <!-- F25: wrap instead of squeezing the swatches into ovals; 44px on touch (R-2). -->
+              <div class="flex flex-wrap items-center gap-2">
+                @for (c of colorPresets; track c.hex) {
+                  <button
+                    type="button"
+                    (click)="setDownloadColor(c.hex)"
+                    [style.background-color]="c.hex"
+                    [class.ring-2]="downloadWatermarkColor() === c.hex"
+                    [class.ring-offset-2]="downloadWatermarkColor() === c.hex"
+                    [attr.aria-pressed]="downloadWatermarkColor() === c.hex"
+                    [attr.aria-label]="c.name"
+                    class="w-7 h-7 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 shrink-0 rounded-full transition-transform hover:scale-110 cursor-pointer ring-pink-500"
+                    [title]="c.name"
+                  ></button>
+                }
+                <div class="flex items-center gap-1.5 ml-auto shrink-0">
+                  <input
+                    type="color"
+                    [(ngModel)]="downloadWatermarkColor"
+                    class="w-7 h-7 rounded-lg border border-line cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    [(ngModel)]="downloadWatermarkColor"
+                    class="w-20 px-2 py-1 text-xs uppercase font-mono border border-line-strong rounded-lg text-center"
+                  />
+                </div>
+              </div>
+            </div>
+</ng-template>
+
+<ng-template #downloadSave>
+              <button
+                type="button"
+                (click)="saveConfig()"
+                [disabled]="saving()"
+                class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                @if (saving()) {
+                  <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>{{ 'seller.savingWatermark' | trans }}</span>
+                } @else {
+                  <app-icon name="check" [size]="16" />
+                  @if (documentId()) {
+                    <span>{{ 'seller.saveDocWatermark' | trans }}</span>
+                  } @else {
+                    <span>{{ 'seller.savePersonalizedSettings' | trans }}</span>
+                  }
+                }
+              </button>
+</ng-template>

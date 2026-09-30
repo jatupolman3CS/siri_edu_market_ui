@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { CrmService } from '../../../core/services';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import type { CrmFacetType } from '../../../core/models';
@@ -13,7 +14,7 @@ import { EmptyStateComponent } from '../empty-state/empty-state.component';
 @Component({
   selector: 'app-crm-user-panel',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, EmptyStateComponent, TranslatePipe],
+  imports: [DatePipe, DecimalPipe, NzTooltipModule, EmptyStateComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-user-panel.component.html',
 })

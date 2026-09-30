@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AdsAdminPage } from './ads-admin.page';
 import { AdsService } from '../../../core/services';
 import type { AdminAdsCampaign, AdminAdsPlacement } from '../../../core/models';
+import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
 /**
  * seller-ads-promotion v1 (docs/contracts/seller-ads-promotion.md §1.4 "frontend spec", §3.11,
@@ -302,5 +304,148 @@ describe('AdsAdminPage — placements tab (AC-37, §3.11.4)', () => {
     await page.savePlacement();
 
     expect(ads.adminUpdatePlacement).not.toHaveBeenCalled();
+  });
+});
+
+describe('AdsAdminPage — edit-placement form on phones (responsive-ui v1.4 R-22 / F159)', () => {
+  it('number fields carry inputmode and the capacity pair only sits side by side from 640', async () => {
+    const fixture = render();
+    fixture.componentInstance.openEditPlacement(buildPlacement());
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const inputs = Array.from(document.body.querySelectorAll('.ant-modal-body input[type="number"]'));
+    expect(inputs.length).toBe(4);
+    expect(inputs.map((i) => i.getAttribute('inputmode'))).toEqual(['decimal', 'decimal', 'numeric', 'numeric']);
+    const pair = inputs[2].closest('.grid') as HTMLElement;
+    expect(pair.className.split(/\s+/)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-2']));
+  });
+});
+
+describe('AdsAdminPage — campaign table text boxes (responsive-ui v1.4 G-15(b) / G-14(d))', () => {
+  const classesOf = (el: Element | null | undefined): string[] => (el?.getAttribute('class') ?? '').split(/\s+/);
+
+  async function renderCampaignRow() {
+    const fixture = render();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('puts the 110px table-mode floor on the title and seller text boxes, not on their cells', async () => {
+    const el = await renderCampaignRow();
+    const title = el.querySelector('[data-testid="ad-title"]');
+    const seller = el.querySelector('[data-testid="ad-seller"]');
+
+    expect(title?.textContent?.trim()).toBe('สรุปเคมี ม.6');
+    expect(seller?.textContent?.trim()).toBe('ครูพิม');
+    expect(classesOf(title)).toEqual(expect.arrayContaining(['min-w-0', 'md:min-w-[110px]', 'md:line-clamp-3']));
+    expect(classesOf(seller)).toEqual(expect.arrayContaining(['md:block', 'md:min-w-[110px]']));
+    // A floor on the cell also counted the cover, the gap and the padding (the text got 67-93px).
+    expect(classesOf(title?.closest('td'))).not.toContain('md:min-w-[110px]');
+    expect(classesOf(seller?.closest('td'))).not.toContain('md:min-w-[110px]');
+  });
+
+  it('hides the cover at 744-1023 and keeps px-3 cells only from 1280 (K2: the table fits its card)', async () => {
+    const el = await renderCampaignRow();
+    const titleCell = el.querySelector('[data-testid="ad-title"]')?.closest('td');
+
+    expect(classesOf(titleCell?.querySelector('img'))).toContain('md:max-lg:hidden');
+    expect(classesOf(titleCell)).toEqual(expect.arrayContaining(['pr-2', 'xl:pr-3']));
+    expect(classesOf(el.querySelector('[data-testid="ad-seller"]')?.closest('td'))).toEqual(
+      expect.arrayContaining(['px-2', 'xl:px-3']),
+    );
+  });
+
+  // responsive-ui v1.6 R-27 item 11: a capped table's vertical scrollbar takes its width from the
+  // table. In en the campaigns table was 2px too wide at 744 and 3px at 1280 once capped, so the
+  // status and total cells (header and body) give up 2px a side below 1280 and 4px a side from 1280.
+  it('trims the status and total cells so a capped table still fits at 744 and 1280 (R-27 item 11)', async () => {
+    const el = await renderCampaignRow();
+    const headers = Array.from(el.querySelectorAll('table.ads-campaigns > thead > tr > th'));
+    const row = el.querySelector('table.ads-campaigns > tbody > tr') as HTMLTableRowElement;
+
+    for (const cell of [headers[1], headers[3], row.querySelector('td.rt-status'), row.querySelectorAll('td.rt-key')[1]]) {
+      expect(classesOf(cell)).toEqual(expect.arrayContaining(['px-1.5', 'xl:px-2']));
+      expect(classesOf(cell)).not.toContain('px-2');
+    }
+  });
+
+  it('tags the campaigns table so its phone cards move the status under the title below 375', async () => {
+    const el = await renderCampaignRow();
+    const table = el.querySelector('table.ads-campaigns');
+
+    expect(table).not.toBeNull();
+    expect(table?.classList.contains('rtable')).toBe(true);
+    expect(table?.querySelector('td.rt-status')).not.toBeNull();
+
+    // Component styles land in the document as <style> sheets; the rule is scoped to this table.
+    const css = Array.from(document.styleSheets)
+      .flatMap((sheet) => {
+        try {
+          return Array.from(sheet.cssRules).map((rule) => rule.cssText);
+        } catch {
+          return [];
+        }
+      })
+      .join('\n')
+      .replace(/\s+/g, ' ');
+    const media = /@media \(max-width: 374\.98px\) \{(.*?)\} \}/.exec(css)?.[1] ?? '';
+    expect(media).toMatch(/\.rtable\.ads-campaigns[^{]*td\.rt-title[^{]*\{ grid-column: 1 ?\/ ?-1; \}/);
+    expect(media).toMatch(/\.rtable\.ads-campaigns[^{]*td\.rt-status[^{]*\{ grid-column: 1 ?\/ ?-1; grid-row: 2; justify-self: start;/);
+  });
+});
+
+describe('AdsAdminPage — table viewports (responsive-ui v1.6 R-27)', () => {
+  async function ticks(fixture: ReturnType<typeof render>): Promise<void> {
+    fixture.detectChanges();
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+
+  it('the campaigns table sits in a named viewport that a new query scrolls to the top; a draft or the same query does not', async () => {
+    const fixture = render();
+    await ticks(fixture);
+    const root = fixture.nativeElement as HTMLElement;
+    const wrapper = (root.querySelector('table.ads-campaigns') as HTMLTableElement).parentElement as HTMLElement;
+    const pagination = root.querySelector('app-pagination') as HTMLElement;
+
+    expect(wrapper.classList).toContain('rt-viewport');
+    expect(wrapper.contains(pagination)).toBe(false);
+    expect(wrapper.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const viewport = fixture.debugElement.query(By.css('table.ads-campaigns')).parent!.injector.get(TableViewportDirective);
+    expect(viewport.rtLabel()).toBe('แคมเปญทั้งหมด');
+
+    const page = fixture.componentInstance;
+    const scrollTopAfter = async (act: () => unknown): Promise<number> => {
+      wrapper.scrollTop = 300;
+      await act();
+      await ticks(fixture);
+      return wrapper.scrollTop;
+    };
+    expect(await scrollTopAfter(() => page.onStatusFilterChange('active'))).toBe(0);
+    expect(await scrollTopAfter(() => page.onPlacementFilterChange('search_top'))).toBe(0);
+    // The Seller ID box is a draft until it is applied.
+    expect(await scrollTopAfter(() => page.onSellerIdFilterChange('seller-9'))).toBe(300);
+    expect(await scrollTopAfter(() => page.applySellerIdFilter())).toBe(0);
+    expect(await scrollTopAfter(() => page.onPageChange(2))).toBe(0);
+    expect(await scrollTopAfter(() => page.onPageSizeChange(20))).toBe(0);
+    // A reload of the same query (as after stopping a campaign) keeps the admin's place.
+    expect(await scrollTopAfter(() => page.refreshCampaigns())).toBe(300);
+  });
+
+  it('the placements table sits in its own viewport, named differently, with no reset key', async () => {
+    const fixture = render();
+    await ticks(fixture);
+    const tabs = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ant-tabs-tab-btn, [role="tab"]');
+    tabs[tabs.length - 1]?.click();
+    await ticks(fixture);
+
+    const placementsTable = fixture.debugElement.query(By.css('table.rtable:not(.ads-campaigns)'));
+    expect(placementsTable).not.toBeNull();
+    expect((placementsTable.nativeElement as HTMLElement).parentElement?.classList).toContain('rt-viewport');
+    const placements = placementsTable.parent!.injector.get(TableViewportDirective);
+    expect(placements.rtLabel()).toBe('ตำแหน่งโฆษณา');
+    expect(placements.rtResetKey()).toBeUndefined();
   });
 });

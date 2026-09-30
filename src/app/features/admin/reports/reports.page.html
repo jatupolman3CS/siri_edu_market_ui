@@ -1,22 +1,24 @@
 <div class="space-y-6">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-extrabold text-ink mb-1">{{ 'admin.reportsAdmin.title' | trans }}</h1>
+      <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'admin.reportsAdmin.title' | trans }}</h1>
       <p class="text-sm text-ink-soft">
         {{ 'admin.reportsAdmin.desc' | trans }}
       </p>
     </div>
     <div class="flex gap-2">
       <button
-        class="pill"
-        [class]="openOnly() ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
+        type="button"
+        class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11"
+        [class]="openOnly() ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
         (click)="setOpenOnly(true)"
       >
         {{ 'admin.reportsAdmin.filterOpen' | trans }}
       </button>
       <button
-        class="pill"
-        [class]="!openOnly() ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-700'"
+        type="button"
+        class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11"
+        [class]="!openOnly() ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
         (click)="setOpenOnly(false)"
       >
         {{ 'admin.reportsAdmin.filterAll' | trans }}

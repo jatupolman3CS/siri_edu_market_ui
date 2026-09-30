@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
@@ -15,6 +15,8 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
+import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
 @Component({
   selector: 'app-admin-approval',
@@ -29,6 +31,8 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     FileNamePipe,
     ImgFallbackDirective,
     TranslatePipe,
+    StickyActionBarComponent,
+    AdminFilterPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './approval.page.html',
@@ -39,6 +43,10 @@ export class AdminApprovalPage {
   private readonly message = inject(NzMessageService);
   private readonly auth = inject(AuthService);
   private readonly translation = inject(TranslationService);
+  private readonly injector = inject(Injector);
+
+  /** Page offset of the list when a row opened the <1024 detail view (R-25 / F138). */
+  private listScrollY = 0;
 
   private suppressAutoSearch = false;
   private readonly autoSearchDebounceMs = 400;
@@ -51,10 +59,45 @@ export class AdminApprovalPage {
   readonly postedFrom = signal<string>(''); // yyyy-mm-dd
   readonly postedTo = signal<string>(''); // yyyy-mm-dd
 
+  /**
+   * responsive-ui §U4-3: below 1024px the list and the preview are two separate views — this is
+   * true while the preview view is showing. Pure presentation state; >=1024 shows both columns.
+   */
+  readonly detailOpen = signal(false);
+
+  /** Non-default filters inside the phone filter sheet (title search stays outside). */
+  readonly activeFilterCount = computed(
+    () => [this.sellerNameQuery().trim(), this.postedFrom(), this.postedTo()].filter((v) => !!v).length,
+  );
+
   readonly previewDetail = signal<AdminDocumentDetail | null>(null);
   readonly previewDetailLoading = signal(false);
 
   readonly pending = computed(() => this.admin.pendingDocuments());
+
+  /**
+   * Header count (F87): the server total of the current queue query, not the loaded rows (the pager
+   * holds 50 per page). Falls back to the loaded rows until the first page answers.
+   */
+  readonly pendingTotal = computed(() => this.admin.pendingTotal() ?? this.pending().length);
+
+  /**
+   * responsive-ui v1.4 R-17 (G-27, F88): four distinct list states. "ไม่มีเอกสารรออนุมัติ" is only
+   * for a queue that really answered empty — never while the search is pending (the queue total is
+   * still unknown), and never after it failed (that shows a message and a retry instead).
+   */
+  readonly listState = computed<'loading' | 'error' | 'empty' | 'data'>(() => {
+    if (this.pending().length > 0) return 'data';
+    const status = this.admin.pendingState().status;
+    if (status === 'error') return 'error';
+    if (status === 'loading' || this.admin.pendingTotal() === null) return 'loading';
+    return 'empty';
+  });
+
+  /** Error-state retry: re-issues the same pending search with the current filters. */
+  retryList(): void {
+    void this.runSearch();
+  }
 
   readonly selected = computed(() => {
     const list = this.pending();
@@ -127,10 +170,13 @@ export class AdminApprovalPage {
 
       if (this.suppressAutoSearch) return;
 
-      // First run: load immediately so entering page shows data.
+      // First run: load immediately so entering page shows data. `untracked`: the pager reads its
+      // own state/total signals synchronously before its first await, and tracking them here made
+      // the queue's own loading → done/error flip re-run this effect — a second (debounced) search
+      // on every page load, and a second error toast when it failed (R-17 / G-27).
       if (!initialized) {
         initialized = true;
-        void this.admin.refreshPendingDocuments({ title, sellerName, postedFrom, postedTo });
+        untracked(() => void this.admin.refreshPendingDocuments({ title, sellerName, postedFrom, postedTo }));
         return;
       }
 
@@ -155,6 +201,44 @@ export class AdminApprovalPage {
   select(id: string): void {
     if (this.isPreviewLocked()) return;
     this.selectedId.set(id);
+  }
+
+  /** List row tap: select it and (below 1024px) switch to the preview view. */
+  openDetail(id: string): void {
+    if (this.isPreviewLocked()) return;
+    this.select(id);
+    // Only the <1024 two-view layout swaps the list out; remember where the list was so the back
+    // button can return there (F138). At >=1024 both columns stay and the page does not move.
+    const twoView = !this.detailOpen() && typeof window !== 'undefined' && window.innerWidth < 1024;
+    if (twoView) this.listScrollY = window.scrollY;
+    this.detailOpen.set(true);
+    if (twoView) this.scrollPageTo(0);
+  }
+
+  /** Preview view back button (below 1024px): back to the list, at the offset it was left at. */
+  closeDetail(): void {
+    this.detailOpen.set(false);
+    const y = this.listScrollY;
+    this.listScrollY = 0;
+    // The list is display:none while the detail shows, so the page is too short to hold the old
+    // offset until the list has rendered again.
+    afterNextRender(() => this.scrollPageTo(y), { injector: this.injector });
+  }
+
+  private scrollPageTo(top: number): void {
+    if (typeof window === 'undefined' || typeof window.scrollTo !== 'function') return;
+    try {
+      window.scrollTo({ top, behavior: 'instant' });
+    } catch {
+      /* jsdom */
+    }
+  }
+
+  /** Filter sheet "ล้างทั้งหมด" — filters are live, so the list refreshes on its own. */
+  clearFilters(): void {
+    this.sellerNameQuery.set('');
+    this.postedFrom.set('');
+    this.postedTo.set('');
   }
 
   toggleLock(): void {
@@ -293,6 +377,7 @@ export class AdminApprovalPage {
     try {
       await this.admin.approveDocument(id);
       this.message.success(this.translation.t('admin.approveDocSuccess', { title }));
+      this.detailOpen.set(false);
       this.previewDetail.set(null);
       this.selectedId.set('');
       if (this.lockedId() === id) this.lockedId.set('');
@@ -325,6 +410,7 @@ export class AdminApprovalPage {
     try {
       await this.admin.rejectDocument(target.id, reason);
       this.message.warning(this.translation.t('admin.rejectDocSuccess', { title: target.title }));
+      this.detailOpen.set(false);
       this.previewDetail.set(null);
       this.selectedId.set('');
       if (this.lockedId() === target.id) this.lockedId.set('');
