@@ -1,11 +1,13 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { NzDropdownDirective } from 'ng-zorro-antd/dropdown';
 import { NotificationBellComponent } from './notification-bell.component';
 import {
+  NOTIFICATION_SOUND_AUDIO_CONTEXT_FACTORY,
   NotificationContextService,
   NotificationFeedService,
+  NotificationSoundService,
   type NotificationAudience,
   type NotificationFeedItemResponse,
 } from '../../../core/services';
@@ -41,7 +43,12 @@ function item(overrides: Partial<NotificationFeedItemResponse> = {}): Notificati
 function buildFixture(audience: NotificationAudience = 'buyer') {
   TestBed.configureTestingModule({
     imports: [NotificationBellComponent],
-    providers: [provideRouter([]), { provide: ApiFailureReporter, useValue: { report: vi.fn() } }],
+    providers: [
+      provideRouter([]),
+      { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
+      // The bell now injects the sound service; "no Web Audio" keeps every spec here silent.
+      { provide: NOTIFICATION_SOUND_AUDIO_CONTEXT_FACTORY, useValue: () => null },
+    ],
   });
   const context = TestBed.inject(NotificationContextService);
   context.setContextForTest(audience);
@@ -50,7 +57,51 @@ function buildFixture(audience: NotificationAudience = 'buyer') {
   return { fixture, feed, context };
 }
 
-afterEach(() => TestBed.resetTestingModule());
+const SOUND_STORAGE_KEY = 'siriedu.notificationSoundEnabled';
+
+/**
+ * The runner's Node exposes a `localStorage` global that is `undefined` without a backing file
+ * (see `auth.service.spec.ts`), and the sound toggle persists its choice there — so every test
+ * gets its own in-memory one.
+ */
+function memoryStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: (key: string) => (store.has(key) ? (store.get(key) as string) : null),
+    setItem: (key: string, value: string) => void store.set(key, String(value)),
+    removeItem: (key: string) => void store.delete(key),
+    clear: () => store.clear(),
+    key: (index: number) => [...store.keys()][index] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+}
+
+beforeEach(() => vi.stubGlobal('localStorage', memoryStorage()));
+afterEach(() => {
+  TestBed.resetTestingModule();
+  vi.unstubAllGlobals();
+});
+
+/**
+ * Opens the real dropdown overlay (rendered into the CDK container on `<body>`, not under the
+ * fixture) so the header controls can be clicked like a reader would. ng-zorro attaches the panel
+ * behind a 150ms `auditTime` whose first timer is armed on the initial change-detection pass —
+ * before any fake clock could be installed — so this waits in real time until the panel shows up.
+ */
+async function openDropdown(fixture: ComponentFixture<NotificationBellComponent>): Promise<void> {
+  fixture.componentInstance.menuOpen.set(true);
+  for (let attempt = 0; attempt < 50 && !soundToggle(); attempt++) {
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 20));
+  }
+  fixture.detectChanges();
+}
+
+function soundToggle(): HTMLButtonElement | null {
+  return document.querySelector<HTMLButtonElement>('[data-testid="notification-sound-toggle"]');
+}
 
 describe('NotificationBellComponent', () => {
   it('hides the badge when unreadCount is 0', () => {
@@ -349,5 +400,116 @@ describe('NotificationBellComponent', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // ---- notification sound toggle ----
+
+  describe('sound toggle in the dropdown header', () => {
+    function stubFeed(feed: NotificationFeedService): void {
+      vi.spyOn(feed, 'loadPreview').mockImplementation(() => { /* no network in specs */ });
+      vi.spyOn(feed, 'refreshUnreadCount').mockImplementation(() => { /* no network in specs */ });
+    }
+
+    it('renders an icon button reflecting the current setting (default on)', async () => {
+      const { fixture, feed } = buildFixture();
+      stubFeed(feed);
+      fixture.detectChanges();
+      await openDropdown(fixture);
+
+      const button = soundToggle();
+      expect(button).toBeTruthy();
+      expect(button?.getAttribute('type')).toBe('button');
+      expect(button?.getAttribute('aria-pressed')).toBe('true');
+      expect(button?.getAttribute('aria-label')).toBe('เสียงแจ้งเตือน: เปิด');
+    });
+
+    it('clicking flips the setting, aria-pressed, label and icon — and persists it', async () => {
+      const { fixture, feed } = buildFixture();
+      stubFeed(feed);
+      fixture.detectChanges();
+      await openDropdown(fixture);
+      const sound = TestBed.inject(NotificationSoundService);
+      const onIcon = soundToggle()?.querySelector('svg')?.innerHTML;
+
+      soundToggle()?.click();
+      fixture.detectChanges();
+
+      expect(sound.enabled()).toBe(false);
+      expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('0');
+      expect(soundToggle()?.getAttribute('aria-pressed')).toBe('false');
+      expect(soundToggle()?.getAttribute('aria-label')).toBe('เสียงแจ้งเตือน: ปิด');
+      expect(soundToggle()?.querySelector('svg')?.innerHTML).not.toBe(onIcon);
+
+      soundToggle()?.click();
+      fixture.detectChanges();
+
+      expect(sound.enabled()).toBe(true);
+      expect(soundToggle()?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('plays one sample chime when turning the sound on, none when turning it off', async () => {
+      const { fixture, feed } = buildFixture();
+      stubFeed(feed);
+      const sound = TestBed.inject(NotificationSoundService);
+      const preview = vi.spyOn(sound, 'preview');
+      fixture.detectChanges();
+      await openDropdown(fixture);
+
+      soundToggle()?.click(); // on → off
+      fixture.detectChanges();
+      expect(preview).not.toHaveBeenCalled();
+
+      soundToggle()?.click(); // off → on
+      fixture.detectChanges();
+      expect(preview).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not close the dropdown and the click never bubbles past the button', async () => {
+      const { fixture, feed } = buildFixture();
+      stubFeed(feed);
+      fixture.detectChanges();
+      await openDropdown(fixture);
+      const documentClick = vi.fn();
+      document.addEventListener('click', documentClick);
+      try {
+        soundToggle()?.click();
+        fixture.detectChanges();
+      } finally {
+        document.removeEventListener('click', documentClick);
+      }
+
+      expect(fixture.componentInstance.menuOpen()).toBe(true);
+      expect(documentClick).not.toHaveBeenCalled();
+      expect(soundToggle()).toBeTruthy(); // panel still attached
+    });
+
+    it('onToggleSound stops propagation and toggles through the service', () => {
+      const { fixture } = buildFixture();
+      const sound = TestBed.inject(NotificationSoundService);
+      const toggle = vi.spyOn(sound, 'toggle');
+      const event = new MouseEvent('click', { bubbles: true });
+      const stop = vi.spyOn(event, 'stopPropagation');
+
+      fixture.componentInstance.onToggleSound(event);
+
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(toggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('sits next to "อ่านทั้งหมด" without replacing it', async () => {
+      const { fixture, feed } = buildFixture();
+      stubFeed(feed);
+      feed.setUnreadCountForTest(2);
+      fixture.detectChanges();
+      await openDropdown(fixture);
+
+      const toggle = soundToggle();
+      const markAll = Array.from(
+        document.querySelectorAll<HTMLButtonElement>('[data-testid="notification-menu"] button'),
+      ).find((b) => b.textContent?.includes('อ่านทั้งหมด'));
+      expect(toggle).toBeTruthy();
+      expect(markAll).toBeTruthy();
+      expect(markAll?.parentElement).toBe(toggle?.parentElement);
+    });
   });
 });

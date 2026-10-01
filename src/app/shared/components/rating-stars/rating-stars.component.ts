@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { SmartDecimalPipe } from '../../pipes/smart-decimal.pipe';
 
 @Component({
   selector: 'app-rating-stars',
   standalone: true,
+  imports: [SmartDecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './rating-stars.component.html',
   styleUrl: './rating-stars.component.scss',

@@ -89,7 +89,7 @@
         />
         <app-stat-card
           [label]="'seller.averageRating' | trans"
-          [value]="seller.stats().averageRating + ' ★'"
+          [value]="(seller.stats().averageRating | smartDecimal) + ' ★'"
           icon="⭐"
           [trend]="ratingTrendDisplay()"
           [trendLabel]="'seller.vsLastMonth' | trans"
@@ -114,7 +114,7 @@
             <div class="grid grid-cols-6 gap-1.5 sm:gap-3 items-end w-full aspect-[16/10] sm:aspect-[5/2] max-h-72" data-testid="revenue-chart">
             @for (m of seller.stats().revenueByMonth; track m.month) {
               <div class="flex flex-col items-center gap-2 h-full justify-end">
-                <span class="text-[10px] sm:text-xs font-bold text-ink whitespace-nowrap">{{ 'common.baht' | trans }}{{ (m.amount / 1000).toFixed(1) }}k</span>
+                <span class="text-[10px] sm:text-xs font-bold text-ink whitespace-nowrap">{{ 'common.baht' | trans }}{{ (m.amount / 1000) | smartDecimal }}k</span>
                 <div
                   class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
                   [style.height.%]="(m.amount / maxMonth()) * 100"
@@ -204,7 +204,7 @@
                       <td class="rt-title py-2.5 px-2 font-medium text-ink">
                         <span class="block line-clamp-2 md:line-clamp-1">{{ row.title }}</span>
                       </td>
-                      <td class="rt-key py-2.5 px-2 md:text-right font-bold text-pink-600" [attr.data-label]="'seller.conversionCol' | trans">{{ row.conversionRatePercent.toFixed(1) }}%</td>
+                      <td class="rt-key py-2.5 px-2 md:text-right font-bold text-pink-600" [attr.data-label]="'seller.conversionCol' | trans">{{ row.conversionRatePercent | smartDecimal }}%</td>
                       <td class="rt-key py-2.5 px-2 md:text-right text-ink-soft" [attr.data-label]="'seller.salesCol' | trans">{{ row.salesCount | compact }}</td>
                       <td class="rt-secondary py-2.5 px-2 text-right text-ink-soft">{{ row.viewCount | compact }}</td>
                       <td class="rt-more py-1 px-1">
@@ -252,7 +252,7 @@
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
                     <span class="font-medium text-ink">{{ 'seller.trafficSearch' | trans }}</span>
-                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.searchPercent.toFixed(1) }}%</span>
+                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.searchPercent | smartDecimal }}%</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
                     <div
@@ -264,7 +264,7 @@
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
                     <span class="font-medium text-ink">{{ 'seller.trafficCategory' | trans }}</span>
-                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.categoryPercent.toFixed(1) }}%</span>
+                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.categoryPercent | smartDecimal }}%</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
                     <div
@@ -276,7 +276,7 @@
                 <li>
                   <div class="flex items-center justify-between text-sm mb-1.5">
                     <span class="font-medium text-ink">{{ 'seller.trafficDirect' | trans }}</span>
-                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.directPercent.toFixed(1) }}%</span>
+                    <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.directPercent | smartDecimal }}%</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
                     <div
@@ -349,7 +349,7 @@
                       <span>·</span>
                       <span>{{ d.downloads }} {{ 'common.downloads' | trans }}</span>
                       <span>·</span>
-                      <span class="text-pink-600 font-bold">★ {{ d.rating }}</span>
+                      <span class="text-pink-600 font-bold">★ {{ d.rating | smartDecimal }}</span>
                     </div>
                   </div>
                   <div class="text-right shrink-0">

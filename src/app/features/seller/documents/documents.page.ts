@@ -16,6 +16,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { SmartDecimalPipe, formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
@@ -35,6 +36,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     NzModalModule,
     ThbPipe,
     CompactPipe,
+    SmartDecimalPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
     TableViewportDirective,
@@ -245,5 +247,8 @@ export class SellerDocumentsPage {
         this.message.success(this.translation.t('seller.deleteSuccess', { title }));
       },
     });
+  }
+  ratingText(d: DocumentItem): string {
+    return `★ ${formatSmartDecimal(d.rating)} (${d.reviewCount})`;
   }
 }

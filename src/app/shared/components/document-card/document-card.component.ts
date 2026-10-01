@@ -9,6 +9,7 @@ import {
 } from '../../../core/services';
 import { ThbPipe } from '../../pipes/thb.pipe';
 import { CompactPipe } from '../../pipes/compact.pipe';
+import { SmartDecimalPipe } from '../../pipes/smart-decimal.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
@@ -22,6 +23,7 @@ import { OptimizedImageComponent } from '../optimized-image/optimized-image.comp
     RouterLink,
     ThbPipe,
     CompactPipe,
+    SmartDecimalPipe,
     IconComponent,
     RatingStarsComponent,
     ImgFallbackDirective,

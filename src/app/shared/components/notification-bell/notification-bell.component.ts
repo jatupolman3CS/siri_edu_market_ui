@@ -6,6 +6,7 @@ import {
   NOTIFICATION_AUDIENCES,
   NotificationContextService,
   NotificationFeedService,
+  NotificationSoundService,
   getNotificationStyle,
   notificationsRouteFor,
   resolveSafeLinkUrl,
@@ -53,6 +54,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 })
 export class NotificationBellComponent {
   readonly feed = inject(NotificationFeedService);
+  readonly sound = inject(NotificationSoundService);
   private readonly context = inject(NotificationContextService);
   private readonly router = inject(Router);
   readonly translation = inject(TranslationService);
@@ -153,6 +155,16 @@ export class NotificationBellComponent {
     // as `/orders?tab=paid` survives instead of being encoded into a single path segment.
     // AC-6: `resolveSafeLinkUrl` keeps the destination inside the reader's current layout.
     void this.router.navigateByUrl(resolveSafeLinkUrl(item.linkUrl, this.audience()));
+  }
+
+  /**
+   * Sound on/off. Turning it on plays one sample chime so the reader hears the volume — and,
+   * being a real click, that same gesture is what unlocks the browser's autoplay block. The
+   * click never reaches the dropdown's own handlers, so the panel stays open.
+   */
+  onToggleSound(event: Event): void {
+    event.stopPropagation();
+    if (this.sound.toggle()) this.sound.preview();
   }
 
   onMarkAllRead(): void {

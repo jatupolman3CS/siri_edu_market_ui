@@ -428,6 +428,10 @@ export class BuyerMarketplacePage {
         if (q !== this.catalog.filters().search) {
           this.catalog.setFilters({ search: q });
         }
+        if (q) {
+          this.packageTabActivated.set(true);
+          void this.bundles.loadBundleResultsPage(1, q);
+        }
         if (cat) {
           const c = this.catalog.getCategoryBySlug(cat);
           // Lazy-load subcategories for selected category only.
@@ -445,10 +449,15 @@ export class BuyerMarketplacePage {
             });
           }
         }
+        const isPackageIntent = ['แพ็กเกจ', 'แพ็กเก็จ', 'แพคเกจ', 'แพคเก็จ', 'bundle', 'package'].some((k) =>
+          q.toLowerCase().includes(k),
+        );
         if (tabParam === 'all' || tabParam === 'free' || tabParam === 'package') {
           this.applyUiTab(tabParam);
         } else if (tabParam === 'new' || tabParam === 'popular') {
           this.applyUiTab('all');
+        } else if (!tabParam && isPackageIntent) {
+          this.applyUiTab('package');
         }
       });
   }
@@ -491,6 +500,9 @@ export class BuyerMarketplacePage {
     this.searchTerm.set('');
     this.catalog.setFilters({ search: '' });
     this.updateQueryParams({ q: null });
+    if (this.activeUiTab() === 'package') {
+      void this.bundles.loadBundleResultsPage(1, '');
+    }
   }
 
   /** multi-value-filters v1 (AC-21): the server rejects >20 values per dimension (400). */

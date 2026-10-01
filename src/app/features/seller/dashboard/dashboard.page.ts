@@ -19,6 +19,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { StoreReadinessBarComponent } from '../../../shared/components/store-readiness-bar/store-readiness-bar.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { SmartDecimalPipe, formatSignedSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { FeedbackModalComponent } from '../../../shared/components/feedback-modal/feedback-modal.component';
@@ -45,6 +46,7 @@ const RECENT_DOCS_QUERY = { page: 1, pageSize: 5 } as const;
     StoreReadinessBarComponent,
     ThbPipe,
     CompactPipe,
+    SmartDecimalPipe,
     DatePipe,
     ImgFallbackDirective,
     TableViewportDirective,
@@ -164,12 +166,12 @@ export class SellerDashboardPage {
   readonly revenueTrendDisplay = computed(() => {
     const v = this.seller.stats().revenueTrendPercent;
     if (v == null) return null;
-    return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+    return formatSignedSmartDecimal(v, '%');
   });
   readonly ratingTrendDisplay = computed(() => {
     const v = this.seller.stats().ratingTrendDelta;
     if (v == null) return null;
-    return `${v > 0 ? '+' : ''}${v.toFixed(2)}`;
+    return formatSignedSmartDecimal(v);
   });
 
   // Earnings calculator

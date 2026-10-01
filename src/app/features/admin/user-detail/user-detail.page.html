@@ -177,7 +177,7 @@
               <app-icon name="doc" [size]="18" />
               {{ 'admin.userDetailAdmin.sellerStats' | trans: { name: s.studioName } }}
             </h3>
-            <span class="text-xs font-bold text-amber-600">★ {{ s.rating.toFixed(1) }}</span>
+            <span class="text-xs font-bold text-amber-600">★ {{ s.rating | smartDecimal }}</span>
           </div>
           <div class="grid grid-cols-2 gap-3 pt-2 text-sm">
             <div>

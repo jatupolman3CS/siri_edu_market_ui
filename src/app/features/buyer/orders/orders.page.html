@@ -150,6 +150,16 @@
                      order that has not been paid yet. -->
                 @if (o.status === 'awaiting_payment') {
                   <span>·</span>
+                  <a
+                    [routerLink]="['/checkout']"
+                    [queryParams]="{ orderId: o.id }"
+                    data-testid="order-pay-now-link"
+                    class="btn-pink !py-1 !px-2.5 min-h-11 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm"
+                  >
+                    <app-icon name="qr" [size]="12" />
+                    {{ 'orders.payNow' | trans }}
+                  </a>
+                  <span>·</span>
                   <button
                     type="button"
                     class="btn-pink !bg-emerald-700 hover:!bg-emerald-800 text-white !py-1 !px-2.5 min-h-11 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm disabled:opacity-50"

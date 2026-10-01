@@ -33,6 +33,7 @@ import { DecimalPipe } from '@angular/common';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
@@ -205,7 +206,7 @@ export class AdminDocumentsPage {
 
   /** "4.5 (12)" for the row ⋯ popover, "-" when unrated. */
   ratingText(d: AdminDocumentRow): string {
-    return d.reviewCount > 0 ? `${d.rating.toFixed(1)} (${d.reviewCount})` : '-';
+    return d.reviewCount > 0 ? `${formatSmartDecimal(d.rating)} (${d.reviewCount})` : '-';
   }
 
   applyFilters(): void {

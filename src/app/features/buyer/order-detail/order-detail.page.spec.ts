@@ -499,3 +499,40 @@ describe('BuyerOrderDetailPage — receipt loyalty discount row', () => {
     expect(text).not.toContain('ส่วนลดจากคะแนนสะสม');
   });
 });
+
+describe('BuyerOrderDetailPage — awaiting payment QR checkout link', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('shows pay now link to checkout with orderId when order is awaiting_payment', async () => {
+    const order = buildOrder('awaiting_payment', { id: 'order-xyz' });
+    const fake = buildFakeOrderService(order, { items: [] });
+    const fixture = render(fake);
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const bannerLink = el.querySelector('[data-testid="order-detail-pay-now-link"]') as HTMLAnchorElement;
+    const actionLink = el.querySelector('[data-testid="order-detail-pay-now-action"]') as HTMLAnchorElement;
+
+    expect(bannerLink).not.toBeNull();
+    expect(bannerLink.getAttribute('href')).toContain('/checkout');
+    expect(bannerLink.getAttribute('href')).toContain('orderId=order-xyz');
+
+    expect(actionLink).not.toBeNull();
+    expect(actionLink.getAttribute('href')).toContain('/checkout');
+    expect(actionLink.getAttribute('href')).toContain('orderId=order-xyz');
+  });
+
+  it('hides pay now links when order is paid', async () => {
+    const order = buildOrder('paid');
+    const fake = buildFakeOrderService(order, { items: [] });
+    const fixture = render(fake);
+    await settle();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="order-detail-pay-now-link"]')).toBeNull();
+    expect(el.querySelector('[data-testid="order-detail-pay-now-action"]')).toBeNull();
+  });
+});
+

@@ -126,7 +126,7 @@
                     <div class="flex-1 min-w-0">
                       <div class="text-sm font-bold text-ink truncate">{{ file()!.name }}</div>
                       <div class="text-xs text-ink-muted">
-                        {{ (file()!.size / 1024 / 1024).toFixed(2) }} MB
+                        {{ (file()!.size / 1024 / 1024) | smartDecimal }} MB
                       </div>
                       <!-- responsive-ui v1.4 R-17 (F149): bound to the real upload state. It used to
                            show a full bar and "upload complete" even while uploading or after a

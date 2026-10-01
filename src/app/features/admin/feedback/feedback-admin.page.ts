@@ -242,6 +242,7 @@ export class AdminFeedbackPage {
       this.selectedDetail.set(updated);
       this.message.success(this.translation.t('admin.feedback.saveSuccess'));
       await this.reload();
+      this.closeDetail();
     } catch (e) {
       this.apiFail.report('errors.context.saveFeedbackStatus', e);
     } finally {

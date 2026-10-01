@@ -7,6 +7,7 @@ import { NotificationToastService, severityForNotificationKey } from './notifica
 import { AuthService } from './auth.service';
 import { NotificationContextService, type NotificationAudience } from './notification-context.service';
 import { NotificationFeedService, type NotificationFeedItemResponse } from './notification-feed.service';
+import { NotificationSoundService } from './notification-sound.service';
 
 /**
  * Feature request: "เมื่อมีการแจ้งเตือนเข้ามาอยากให้มี popup ... เด้งขึ้นด้านขวามือ".
@@ -49,6 +50,7 @@ function build(opts: { authed?: boolean; userId?: string | null } = {}) {
     (title: string, content: string) => { onClick: Subject<MouseEvent> }
   >(() => ({ onClick: new Subject<MouseEvent>() }));
   const navigateByUrl = vi.fn();
+  const soundPlay = vi.fn();
   const contextSignal = signal<NotificationAudience>('buyer');
 
   TestBed.configureTestingModule({
@@ -64,11 +66,23 @@ function build(opts: { authed?: boolean; userId?: string | null } = {}) {
       { provide: NotificationFeedService, useValue: { fetchRecentForToast, markRead, addPollListener } },
       { provide: Router, useValue: { navigateByUrl } },
       { provide: NzNotificationService, useValue: { create, info } },
+      // Stubbed so no spec here ever builds a real AudioContext — the sound service has its own spec.
+      { provide: NotificationSoundService, useValue: { play: soundPlay } },
     ],
   });
 
   const service = TestBed.inject(NotificationToastService);
-  return { service, fetchRecentForToast, markRead, create, info, navigateByUrl, contextSignal, pollListeners };
+  return {
+    service,
+    fetchRecentForToast,
+    markRead,
+    create,
+    info,
+    navigateByUrl,
+    contextSignal,
+    pollListeners,
+    soundPlay,
+  };
 }
 
 afterEach(() => TestBed.resetTestingModule());
@@ -217,6 +231,98 @@ describe('NotificationToastService', () => {
     const { pollListeners } = build();
     TestBed.resetTestingModule();
     expect(pollListeners).toHaveLength(0);
+  });
+
+  describe('notification sound', () => {
+    it('stays silent on the baseline poll', async () => {
+      const { service, fetchRecentForToast, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([feedItem({ id: 'a' }), feedItem({ id: 'b' })]);
+
+      await service.checkForNewNotifications();
+
+      expect(soundPlay).not.toHaveBeenCalled();
+    });
+
+    it('plays once when one new notification arrives', async () => {
+      const { service, fetchRecentForToast, create, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([feedItem({ id: 'a' })]);
+      await service.checkForNewNotifications();
+
+      fetchRecentForToast.mockResolvedValue([feedItem({ id: 'a' }), feedItem({ id: 'b' })]);
+      await service.checkForNewNotifications();
+
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(soundPlay).toHaveBeenCalledTimes(1);
+    });
+
+    it('plays once per batch — not once per toast — when many arrive together', async () => {
+      const { service, fetchRecentForToast, create, info, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([]);
+      await service.checkForNewNotifications();
+
+      // 5 arrivals > MAX_INDIVIDUAL_TOASTS (3): three individual toasts + one grouped toast.
+      fetchRecentForToast.mockResolvedValue(['a', 'b', 'c', 'd', 'e'].map((id) => feedItem({ id })));
+      await service.checkForNewNotifications();
+
+      expect(create).toHaveBeenCalledTimes(3);
+      expect(info).toHaveBeenCalledTimes(1);
+      expect(soundPlay).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not play when a later poll brings nothing new', async () => {
+      const { service, fetchRecentForToast, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([feedItem({ id: 'a' })]);
+      await service.checkForNewNotifications(); // baseline
+
+      await service.checkForNewNotifications(); // same ids again
+      fetchRecentForToast.mockResolvedValue([]);
+      await service.checkForNewNotifications();
+
+      expect(soundPlay).not.toHaveBeenCalled();
+    });
+
+    it('does not play the same arrival twice across polls', async () => {
+      const { service, fetchRecentForToast, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([]);
+      await service.checkForNewNotifications();
+
+      fetchRecentForToast.mockResolvedValue([feedItem({ id: 'a' })]);
+      await service.checkForNewNotifications();
+      await service.checkForNewNotifications();
+
+      expect(soundPlay).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not play when the fetch fails', async () => {
+      const { service, fetchRecentForToast, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([]);
+      await service.checkForNewNotifications(); // baseline
+
+      fetchRecentForToast.mockRejectedValue(new Error('network down'));
+      await service.checkForNewNotifications();
+
+      expect(soundPlay).not.toHaveBeenCalled();
+    });
+
+    it('does not play while signed out', async () => {
+      const { service, soundPlay } = build({ authed: false });
+
+      await service.checkForNewNotifications();
+
+      expect(soundPlay).not.toHaveBeenCalled();
+    });
+
+    it('is silent when switching into a layout it has not baselined yet', async () => {
+      const { service, fetchRecentForToast, contextSignal, soundPlay } = build();
+      fetchRecentForToast.mockResolvedValue([]);
+      await service.checkForNewNotifications();
+
+      contextSignal.set('seller');
+      fetchRecentForToast.mockResolvedValue([feedItem({ id: 's1', audience: 'seller' })]);
+      await service.checkForNewNotifications();
+
+      expect(soundPlay).not.toHaveBeenCalled();
+    });
   });
 
   describe('severityForNotificationKey', () => {

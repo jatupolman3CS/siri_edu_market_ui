@@ -15,6 +15,7 @@ import {
   postApiOrders,
   postApiOrdersByIdCancel,
   postApiOrdersByIdPayWallet,
+  postApiOrdersByIdPay,
   type CreateOrderRequest,
 } from '../api';
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
@@ -218,6 +219,21 @@ export class OrderService {
       return order;
     } catch (e) {
       this.apiFail.report('errors.context.payWithWallet', e);
+      return null;
+    }
+  }
+
+  /**
+   * Prepares/opens payment session for an existing awaiting-payment order.
+   */
+  async preparePayment(id: string): Promise<Order | null> {
+    try {
+      const result = await postApiOrdersByIdPay({ path: { id } });
+      const order = mapOrder(unwrapSdkResult(result));
+      this._detail.set(order);
+      return order;
+    } catch (e) {
+      this.apiFail.report('errors.context.preparePayment', e);
       return null;
     }
   }

@@ -157,6 +157,7 @@ describe('AdminFeedbackPage', () => {
       replyToUser: 'รับเรื่องแล้ว อยู่ระหว่างตรวจสอบ',
     });
     expect(messageService.success).toHaveBeenCalledWith('บันทึกเรียบร้อย');
+    expect(fixture.componentInstance.detailModalOpen()).toBe(false);
   });
 
   it('deleting opens NzModalService.confirm before deleting', () => {

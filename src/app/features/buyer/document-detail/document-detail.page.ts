@@ -55,6 +55,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { SmartDecimalPipe } from '../../../shared/pipes/smart-decimal.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
@@ -78,6 +79,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     StickyActionBarComponent,
     ThbPipe,
     CompactPipe,
+    SmartDecimalPipe,
     TimeAgoPipe,
     ImgFallbackDirective,
     TranslatePipe,

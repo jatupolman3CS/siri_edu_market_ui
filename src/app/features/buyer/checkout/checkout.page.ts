@@ -8,7 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AuthService,
   CartService,
@@ -19,7 +19,7 @@ import {
   WalletService,
 } from '../../../core/services';
 import type { CreateOrderInput } from '../../../core/services/order.service';
-import type { ReferralCodeValidation } from '../../../core/models';
+import type { Order, ReferralCodeValidation } from '../../../core/models';
 import { getReferralCodeHint } from '../../../core/util/referral-capture';
 import { getAffiliateClickToken } from '../../../core/util/affiliate-capture';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -73,6 +73,8 @@ export class BuyerCheckoutPage implements OnDestroy {
   readonly translation = inject(TranslationService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  readonly pendingOrder = signal<Order | null>(null);
   private readonly orders = inject(OrderService);
   readonly paymentMethods = inject(PaymentMethodService);
   readonly referral = inject(ReferralService);
@@ -138,6 +140,8 @@ export class BuyerCheckoutPage implements OnDestroy {
   });
 
   readonly payableTotal = computed(() => {
+    const po = this.pendingOrder();
+    if (po) return po.total;
     const rawTotal = this.cart.total();
     return Math.max(0, rawTotal - this.referralDiscount() - this.loyaltyDiscount());
   });
@@ -189,6 +193,12 @@ export class BuyerCheckoutPage implements OnDestroy {
     await this.loyalty.refreshSummary();
     this.initReferralHint();
 
+    const orderId = this.route.snapshot.queryParamMap.get('orderId');
+    if (orderId) {
+      await this.loadPendingOrder(orderId);
+      return;
+    }
+
     const isTest = typeof (globalThis as any).vi !== 'undefined';
     if (!isTest && !this.paymentsUnavailable() && this.cart.count() > 0 && this.auth.isAuthenticated()) {
       if (this.selectedSavedCardId() === 'new' && !this.payWithWallet()) {
@@ -205,7 +215,12 @@ export class BuyerCheckoutPage implements OnDestroy {
   selectCard(): void {
     this.payWithWallet.set(false);
     if (this.selectedSavedCardId() === 'new' && !this.paymentReady() && !this.busy()) {
-      void this.startPayment();
+      const po = this.pendingOrder();
+      if (po) {
+        void this.startPaymentForPendingOrder(po);
+      } else {
+        void this.startPayment();
+      }
     }
   }
 
@@ -213,11 +228,32 @@ export class BuyerCheckoutPage implements OnDestroy {
     this.payWithWallet.set(false);
     this.selectedSavedCardId.set(cardId);
     if (cardId === 'new' && !this.paymentReady() && !this.busy()) {
-      void this.startPayment();
+      const po = this.pendingOrder();
+      if (po) {
+        void this.startPaymentForPendingOrder(po);
+      } else {
+        void this.startPayment();
+      }
     }
   }
 
   async submitPayment(): Promise<void> {
+    const po = this.pendingOrder();
+    if (po) {
+      if (this.payWithWallet()) {
+        await this.startPaymentForPendingOrder(po);
+      } else if (this.selectedSavedCardId() !== 'new') {
+        await this.startPaymentForPendingOrder(po);
+      } else {
+        if (this.paymentReady()) {
+          await this.confirmPayment();
+        } else {
+          await this.startPaymentForPendingOrder(po);
+        }
+      }
+      return;
+    }
+
     if (this.payWithWallet()) {
       await this.startPayment();
     } else if (this.selectedSavedCardId() !== 'new') {
@@ -228,6 +264,119 @@ export class BuyerCheckoutPage implements OnDestroy {
       } else {
         await this.startPayment();
       }
+    }
+  }
+
+  async loadPendingOrder(orderId: string): Promise<void> {
+    this.busy.set(true);
+    try {
+      const order = await this.orders.loadDetail(orderId);
+      if (!order) {
+        this.message.error(this.translation.t('checkout.orderNotFound'));
+        await this.ngZone.run(() => this.router.navigateByUrl('/orders'));
+        return;
+      }
+      if (order.status === 'paid' || order.status === 'fulfilled') {
+        this.message.info(this.translation.t('checkout.orderAlreadyPaid'));
+        await this.ngZone.run(() => this.router.navigate(['/orders', order.id]));
+        return;
+      }
+      if (order.status === 'cancelled' || order.status === 'refunded') {
+        this.message.warning(this.translation.t('checkout.orderCancelled'));
+        await this.ngZone.run(() => this.router.navigateByUrl('/orders'));
+        return;
+      }
+
+      this.pendingOrder.set(order);
+      this.orderId = order.id;
+
+      const isTest = typeof (globalThis as any).vi !== 'undefined';
+      if (!isTest && !this.paymentsUnavailable() && this.auth.isAuthenticated()) {
+        if (this.selectedSavedCardId() === 'new' && !this.payWithWallet()) {
+          void this.startPaymentForPendingOrder(order);
+        }
+      }
+    } finally {
+      this.busy.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
+  async startPaymentForPendingOrder(order: Order): Promise<void> {
+    if (this.busy() || this.paymentUnderReview() || this.paymentsUnavailable()) return;
+
+    if (!this.auth.isAuthenticated()) {
+      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: `/checkout?orderId=${order.id}` } });
+      return;
+    }
+
+    if (this.payWithWallet()) {
+      this.busy.set(true);
+      try {
+        const updated = await this.orders.payWithWallet(order.id);
+        if (updated && (updated.status === 'paid' || updated.status === 'fulfilled')) {
+          this.cart.clear();
+          await this.wallet.refreshSummary();
+          this.message.success(this.translation.t('checkout.paymentSuccess'));
+          await this.ngZone.run(() =>
+            this.router.navigateByUrl(this.router.createUrlTree(['/orders', order.id], { queryParams: { success: 1 } })),
+          );
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : this.translation.t('checkout.paymentConfirmFailed');
+        this.message.error(msg);
+      } finally {
+        this.busy.set(false);
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+
+    const savedCardId = this.selectedSavedCardId();
+    const payingWithSavedCard = savedCardId !== 'new';
+
+    this.busy.set(true);
+    try {
+      const prepared = await this.orders.preparePayment(order.id);
+      this.cdr.markForCheck();
+
+      if (!prepared) {
+        this.message.error(this.translation.t('checkout.paymentOpenFailed'));
+        return;
+      }
+
+      if (prepared.status === 'paid' || prepared.status === 'fulfilled') {
+        this.cart.clear();
+        await this.wallet.refreshSummary();
+        this.message.success(this.translation.t('checkout.paymentSuccess'));
+        await this.ngZone.run(() =>
+          this.router.navigateByUrl(this.router.createUrlTree(['/orders', order.id], { queryParams: { success: 1 } })),
+        );
+        return;
+      }
+
+      const clientSecret = prepared.paymentHints?.clientSecret;
+      if (!clientSecret) {
+        this.message.error(this.translation.t('checkout.paymentOpenFailedWithOrder'));
+        return;
+      }
+
+      this.orderId = order.id;
+
+      if (payingWithSavedCard) {
+        await this.payWithSavedCard(clientSecret, savedCardId);
+        return;
+      }
+
+      this.newCardClientSecret = clientSecret;
+      await this.mountPaymentElement(clientSecret);
+      this.paymentReady.set(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : this.translation.t('checkout.paymentOpenFailed');
+      this.message.error(msg);
+    } finally {
+      this.busy.set(false);
+      this.cdr.markForCheck();
     }
   }
 

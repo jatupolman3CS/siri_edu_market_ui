@@ -33,6 +33,8 @@ export type IconName =
   | 'lock'
   | 'globe'
   | 'bell'
+  | 'volume-2'
+  | 'volume-x'
   | 'home'
   | 'dashboard'
   | 'package'

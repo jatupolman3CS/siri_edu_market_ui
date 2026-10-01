@@ -12,8 +12,8 @@ import { mapDocument } from '../../../core/api-mappers/mappers';
  * §4.4) — AC-34 (list + balance + create-campaign form fields), AC-35 (the 4 documented submit
  * -disable conditions), AC-36 (cancel uses `NzModalService.confirm`, never native `confirm()`).
  */
-function buildDoc(id: string, title: string): DocumentItem {
-  return mapDocument({ id, slug: id, title, shortDescription: '', price: 100 });
+function buildDoc(id: string, title: string, categoryIds: string[] = ['cat-chem']): DocumentItem {
+  return mapDocument({ id, slug: id, title, shortDescription: '', price: 100, categoryIds });
 }
 
 function buildCampaign(over: Partial<AdsCampaign> = {}): AdsCampaign {
@@ -69,6 +69,15 @@ function buildAdsFake() {
         dailySlotCapacity: 2,
         requiresTarget: false,
       } satisfies AdsPlacement,
+      {
+        placementKey: 'category_top',
+        displayName: 'บนสุดของหมวดหมู่',
+        description: 'd',
+        pricePerDay: 99,
+        weeklyPrice: 499,
+        dailySlotCapacity: 2,
+        requiresTarget: true,
+      } satisfies AdsPlacement,
     ]),
     loadAvailability: vi.fn().mockResolvedValue({
       placementKey: 'search_top',
@@ -102,7 +111,10 @@ function buildSellerFake() {
 function buildCatalogFake() {
   return {
     ensureCategories: vi.fn(),
-    categories: () => [],
+    categories: () => [
+      { id: 'cat-chem', name: 'เคมี', slug: 'chem', icon: '' },
+      { id: 'cat-math', name: 'คณิตศาสตร์', slug: 'math', icon: '' },
+    ],
   };
 }
 
@@ -182,7 +194,7 @@ describe('SellerAdsPage — create-campaign form (AC-34, §4.2)', () => {
 
     expect(ads.loadPlacements).toHaveBeenCalled();
     expect(seller.listDocumentsPaged).toHaveBeenCalledWith({ status: 'approved', pageSize: 100 });
-    expect(fixture.componentInstance.placements()).toHaveLength(1);
+    expect(fixture.componentInstance.placements()).toHaveLength(2);
     expect(fixture.componentInstance.myDocuments()).toHaveLength(1);
     expect(fixture.componentInstance.formOpen()).toBe(true);
   });
@@ -198,6 +210,70 @@ describe('SellerAdsPage — create-campaign form (AC-34, §4.2)', () => {
 
     expect(ads.loadAvailability).toHaveBeenCalledWith(
       expect.objectContaining({ placement: 'search_top' }),
+    );
+  });
+
+  it('automatically resolves targetKey from document category when placement requires target', async () => {
+    const ads = buildAdsFake();
+    const seller = buildSellerFake();
+    seller.listDocumentsPaged.mockResolvedValue({
+      items: [buildDoc('doc-1', 'สรุปเคมี ม.6', ['cat-chem'])],
+      page: 1,
+      pageSize: 100,
+      totalCount: 1,
+      totalPages: 1,
+    });
+    const fixture = render(ads, seller);
+    const page = fixture.componentInstance;
+    await page.openCreate();
+
+    page.onDocumentChange('doc-1');
+    expect(page.selectedTargetKey()).toBe('cat-chem');
+    expect(page.targetCategory()?.name).toBe('เคมี');
+
+    ads.loadAvailability.mockClear();
+    page.onPlacementChange('category_top');
+    await fixture.whenStable();
+
+    expect(ads.loadAvailability).toHaveBeenCalledWith(
+      expect.objectContaining({ placement: 'category_top', targetKey: 'cat-chem' }),
+    );
+
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // Category select dropdown was removed
+    expect(el.querySelector('nz-select[ngmodel="selectedTargetKey()"]')).toBeNull();
+  });
+
+  it('switching document re-fetches availability with new category for targeted placement', async () => {
+    const ads = buildAdsFake();
+    const seller = buildSellerFake();
+    seller.listDocumentsPaged.mockResolvedValue({
+      items: [
+        buildDoc('doc-1', 'สรุปเคมี ม.6', ['cat-chem']),
+        buildDoc('doc-2', 'สรุปคณิต ม.6', ['cat-math']),
+      ],
+      page: 1,
+      pageSize: 100,
+      totalCount: 2,
+      totalPages: 1,
+    });
+    const fixture = render(ads, seller);
+    const page = fixture.componentInstance;
+    await page.openCreate();
+
+    page.onPlacementChange('category_top');
+    page.onDocumentChange('doc-1');
+    await fixture.whenStable();
+    expect(ads.loadAvailability).toHaveBeenLastCalledWith(
+      expect.objectContaining({ placement: 'category_top', targetKey: 'cat-chem' }),
+    );
+
+    page.onDocumentChange('doc-2');
+    await fixture.whenStable();
+    expect(page.selectedTargetKey()).toBe('cat-math');
+    expect(ads.loadAvailability).toHaveBeenLastCalledWith(
+      expect.objectContaining({ placement: 'category_top', targetKey: 'cat-math' }),
     );
   });
 

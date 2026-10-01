@@ -230,7 +230,7 @@
                     <div class="flex flex-col sm:flex-row gap-6 p-6 card-cream mb-6">
                       <div class="flex flex-col items-center sm:items-start">
                         <div class="text-4xl sm:text-5xl font-extrabold text-ink leading-none">
-                          {{ d.rating.toFixed(1) }}
+                          {{ d.rating | smartDecimal }}
                         </div>
                         <app-rating-stars [value]="d.rating" [size]="18" [showValue]="false" />
                         <div class="text-xs text-ink-muted mt-2">
@@ -465,7 +465,7 @@
                       {{ 'product.reviewsLabel' | trans }}
                     </dt>
                     <dd class="text-2xl font-extrabold text-ink mt-1 leading-none flex items-baseline justify-center gap-1">
-                      {{ d.rating }}
+                      {{ d.rating | smartDecimal }}
                       <span class="text-sm text-amber-500">★</span>
                     </dd>
                     <dd class="text-[11px] text-ink-muted mt-1">{{ 'product.reviewsCount' | trans: { count: (d.reviewCount | compact) } }}</dd>
@@ -588,7 +588,7 @@
                     </div>
                     <div class="text-xs text-ink-muted mb-2 [overflow-wrap:anywhere]">{{ 'product.byAuthor' | trans: { name: d.seller.ownerName } }}</div>
                     <div class="flex items-center gap-3 text-xs flex-wrap mb-3">
-                      <span class="font-bold text-pink-600">★ {{ d.seller.rating }}</span>
+                      <span class="font-bold text-pink-600">★ {{ d.seller.rating | smartDecimal }}</span>
                       <span>·</span>
                       <span>{{ 'product.docCount' | trans: { count: d.seller.totalDocuments } }}</span>
                       <span>·</span>
@@ -754,7 +754,7 @@
                         </p>
 
                         <div class="flex items-center gap-3 text-xs text-ink-muted">
-                          <span class="text-pink-600 font-bold">★ {{ card.bundle.rating }}</span>
+                          <span class="text-pink-600 font-bold">★ {{ card.bundle.rating | smartDecimal }}</span>
                           <span>({{ card.bundle.reviewCount }})</span>
                           <span class="inline-flex items-center gap-1">
                             <app-icon name="download" [size]="12" />

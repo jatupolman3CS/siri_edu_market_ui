@@ -621,6 +621,9 @@ import type {
   PostApiOrdersByIdPayWalletData,
   PostApiOrdersByIdPayWalletErrors,
   PostApiOrdersByIdPayWalletResponses,
+  PostApiOrdersByIdPayData,
+  PostApiOrdersByIdPayErrors,
+  PostApiOrdersByIdPayResponses,
   PostApiOrdersData,
   PostApiOrdersErrors,
   PostApiOrdersResponses,
@@ -3274,6 +3277,19 @@ export const postApiOrdersByIdPayWallet = <ThrowOnError extends boolean = false>
     PostApiOrdersByIdPayWalletErrors,
     ThrowOnError
   >({ url: '/api/orders/{id}/pay-wallet', ...options });
+
+export const postApiOrdersByIdPay = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiOrdersByIdPayData, ThrowOnError>,
+): RequestResult<
+  PostApiOrdersByIdPayResponses,
+  PostApiOrdersByIdPayErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiOrdersByIdPayResponses,
+    PostApiOrdersByIdPayErrors,
+    ThrowOnError
+  >({ url: '/api/orders/{id}/pay', ...options });
 
 export const getApiOrdersById = <ThrowOnError extends boolean = false>(
   options: Options<GetApiOrdersByIdData, ThrowOnError>,

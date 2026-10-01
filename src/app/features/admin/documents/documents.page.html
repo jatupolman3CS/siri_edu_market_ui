@@ -192,7 +192,7 @@
               @if (d.reviewCount > 0) {
                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                   <app-icon name="star" [size]="12" class="text-amber-500" />
-                  {{ d.rating | number:'1.1-1' }}
+                  {{ d.rating | number:'1.0-1' }}
                   <span class="text-[10px] text-ink-muted font-normal">({{ d.reviewCount }})</span>
                 </span>
               } @else {

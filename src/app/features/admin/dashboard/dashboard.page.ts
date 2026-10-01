@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../core/services';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { formatSignedSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
@@ -50,7 +51,7 @@ export class AdminDashboardPage {
   // Successful transactions intentionally get no trend badge — no field exists for it (§4.7).
   private formatTrendPercent(v: number | null): string | null {
     if (v == null) return null;
-    return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+    return formatSignedSmartDecimal(v, '%');
   }
   readonly revenueTrendDisplay = computed(() =>
     this.formatTrendPercent(this.admin.dashboardTrends().revenueTrendPercent),

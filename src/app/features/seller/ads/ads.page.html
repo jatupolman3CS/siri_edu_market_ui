@@ -186,26 +186,15 @@
             }
           </nz-select>
           @if (selectedPlacement(); as p) {
-            <p class="text-[11px] text-ink-muted mt-1">{{ p.description }}</p>
+            <p class="text-[11px] text-ink-muted mt-1">
+              @if (p.requiresTarget && targetCategory(); as cat) {
+                {{ 'sellerAds.categoryPlacementHint' | trans: { category: cat.name } }}
+              } @else {
+                {{ p.description }}
+              }
+            </p>
           }
         </div>
-
-        @if (selectedPlacement()?.requiresTarget) {
-          <div>
-            <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'sellerAds.categoryFieldLabel' | trans }}</label>
-            <nz-select
-              [ngModel]="selectedTargetKey()"
-              (ngModelChange)="onTargetChange($event)"
-              [nzPlaceHolder]="'sellerAds.categoryFieldPlaceholder' | trans"
-              nzShowSearch
-              style="width: 100%"
-            >
-              @for (cat of categories(); track cat.id) {
-                <nz-option [nzValue]="cat.id" [nzLabel]="cat.name" />
-              }
-            </nz-select>
-          </div>
-        }
 
         <div>
           <label class="text-xs font-semibold text-ink-soft mb-1 block">{{ 'sellerAds.dateRangeFieldLabel' | trans }}</label>

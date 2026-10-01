@@ -38,6 +38,7 @@ import type {
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { SmartDecimalPipe, formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 const MAX_GALLERY_IMAGES = 10;
@@ -84,6 +85,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
     IconComponent,
     StickyActionBarComponent,
     ThbPipe,
+    SmartDecimalPipe,
     CdkDropList,
     CdkDrag,
     SlicePipe,
@@ -720,7 +722,7 @@ export class SellerUploadPage {
       n /= 1024;
       i++;
     }
-    return `${i === 0 ? n : n.toFixed(1)} ${u[i]}`;
+    return `${i === 0 ? n : formatSmartDecimal(n)} ${u[i]}`;
   }
 
   resetGallery(): void {

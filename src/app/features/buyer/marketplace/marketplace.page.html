@@ -255,6 +255,41 @@
         } @else {
           <!-- Result panel -->
           <div class="relative min-h-[420px] lg:pr-1">
+            @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
+              <!-- Matching Packages rail for search queries -->
+              <section class="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-50/90 via-rose-50/60 to-amber-50/50 border border-pink-200/80 shadow-xs">
+                <div class="flex items-center justify-between gap-3 mb-3.5">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-pink-500 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                      <app-icon name="package" [size]="18" />
+                    </div>
+                    <div>
+                      <h3 class="text-sm sm:text-base font-bold text-ink flex items-center gap-2">
+                        {{ 'marketplace.matchingPackages' | trans }}
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700">
+                          {{ bundles.bundleResultsTotalCount() }}
+                        </span>
+                      </h3>
+                      <p class="text-[11px] sm:text-xs text-ink-muted">{{ 'marketplace.packageSavingsNotice' | trans }}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="text-xs font-bold text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                    (click)="selectTab('package')"
+                  >
+                    {{ 'marketplace.viewAllPackages' | trans: { n: bundles.bundleResultsTotalCount() } }}
+                    <app-icon name="chevron-right" [size]="14" />
+                  </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  @for (b of displayedBundles().slice(0, 3); track b.id) {
+                    <app-bundle-card [bundle]="b" />
+                  }
+                </div>
+              </section>
+            }
+
             @if (catalog.marketplaceResultsState().status === 'error' && displayedDocs().length === 0) {
               <app-empty-state emoji="⚠️" [title]="'common.error' | trans" [description]="'common.retry' | trans">
                 <button class="btn-pink mt-4" type="button" (click)="catalog.retryMarketplaceResults()">
@@ -262,15 +297,40 @@
                 </button>
               </app-empty-state>
             } @else if (catalog.marketplaceResultsState().status !== 'loading' && displayedDocs().length === 0) {
-              <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
-                <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
-                  <app-icon name="search" [size]="30" className="text-pink-500" />
+              @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
+                <div class="flex flex-col items-center justify-center text-center py-10 px-6 bg-white rounded-2xl border border-line">
+                  <div class="w-14 h-14 rounded-full bg-pink-50 flex items-center justify-center mb-3">
+                    <app-icon name="search" [size]="24" className="text-pink-400" />
+                  </div>
+                  <h4 class="text-base font-bold text-ink">{{ 'marketplace.emptyDocWithPackages' | trans }}</h4>
+                  <p class="text-xs text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
+                  <div class="flex items-center gap-3 mt-4">
+                    <button class="btn-pink text-xs" type="button" (click)="selectTab('package')">
+                      {{ 'marketplace.viewAllPackages' | trans: { n: bundles.bundleResultsTotalCount() } }}
+                    </button>
+                    <button class="btn-soft text-xs" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
+                  </div>
                 </div>
-                <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyTitle' | trans }}</h3>
-                <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
-                <button class="btn-pink mt-4" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
-              </div>
+              } @else {
+                <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
+                  <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
+                    <app-icon name="search" [size]="30" className="text-pink-500" />
+                  </div>
+                  <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyTitle' | trans }}</h3>
+                  <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
+                  <button class="btn-pink mt-4" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
+                </div>
+              }
             } @else {
+              @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
+                <div class="flex items-center gap-2 mb-3.5 pt-1">
+                  <h3 class="text-sm font-bold text-ink flex items-center gap-1.5">
+                    <app-icon name="doc" [size]="15" className="text-pink-500" />
+                    {{ 'marketplace.standaloneDocuments' | trans }}
+                  </h3>
+                  <span class="text-xs text-ink-muted">({{ catalog.marketplaceResultsTotalCount() }})</span>
+                </div>
+              }
               <div class="document-card-grid document-card-grid--with-filters">
                 @for (doc of displayedDocs(); track doc.id) {
                   <app-document-card [doc]="doc" density="compact" />

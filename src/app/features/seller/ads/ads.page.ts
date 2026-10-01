@@ -21,6 +21,7 @@ import { RowMoreComponent } from '../../../shared/components/row-more/row-more.c
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** §4.4: campaign status → translation key. */
@@ -66,7 +67,7 @@ function startOfToday(): Date {
 }
 
 function formatBaht(v: number): string {
-  return v.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  return formatSmartDecimal(v);
 }
 
 /**
@@ -154,7 +155,19 @@ export class SellerAdsPage {
 
   readonly selectedDocumentId = signal<string | null>(null);
   readonly selectedPlacementKey = signal<string | null>(null);
-  readonly selectedTargetKey = signal<string | null>(null);
+
+  readonly selectedDocument = computed<DocumentItem | null>(
+    () => this.myDocuments().find((d) => d.id === this.selectedDocumentId()) ?? null,
+  );
+
+  readonly selectedTargetKey = computed<string | null>(
+    () => this.selectedDocument()?.categoryIds?.[0] ?? null,
+  );
+
+  readonly targetCategory = computed(
+    () => this.categories().find((c) => c.id === this.selectedTargetKey()) ?? null,
+  );
+
   readonly dateRange = signal<Date[] | null>(null);
   readonly availability = signal<AdsAvailability | null>(null);
   readonly quote = signal<AdsCampaignQuote | null>(null);
@@ -184,12 +197,17 @@ export class SellerAdsPage {
   /** §4.2 rule 4: the 4 documented conditions. */
   readonly submitDisabled = computed(() => {
     const q = this.quote();
-    return !q || q.canAfford === false || q.fullDates.length > 0 || this.submitting();
+    const placement = this.selectedPlacement();
+    const missingTarget = placement?.requiresTarget ? !this.selectedTargetKey() : false;
+    return !q || q.canAfford === false || q.fullDates.length > 0 || this.submitting() || missingTarget;
   });
 
   readonly submitDisabledReason = computed<string | null>(() => {
     if (this.submitting()) return this.translation.t('sellerAds.submitting');
     if (!this.selectedDocumentId()) return this.translation.t('sellerAds.selectDocument');
+    if (this.selectedPlacement()?.requiresTarget && !this.selectedTargetKey()) {
+      return this.translation.t('sellerAds.docHasNoCategory');
+    }
     const q = this.quote();
     if (!q) return null;
     if (q.fullDates.length > 0) return this.translation.t('sellerAds.datesFullyBooked');
@@ -296,7 +314,6 @@ export class SellerAdsPage {
   async openCreate(): Promise<void> {
     this.selectedDocumentId.set(null);
     this.selectedPlacementKey.set(null);
-    this.selectedTargetKey.set(null);
     this.dateRange.set(null);
     this.availability.set(null);
     this.quote.set(null);
@@ -323,21 +340,13 @@ export class SellerAdsPage {
 
   onDocumentChange(id: string | null): void {
     this.selectedDocumentId.set(id);
+    void this.refreshAvailability();
     this.scheduleQuote();
   }
 
   /** §4.2 rule 2: placement change re-fetches availability. */
   onPlacementChange(key: string | null): void {
     this.selectedPlacementKey.set(key);
-    this.selectedTargetKey.set(null);
-    this.dateRange.set(null);
-    this.quote.set(null);
-    void this.refreshAvailability();
-  }
-
-  /** §4.2 rule 2: category (target) change re-fetches availability. */
-  onTargetChange(key: string | null): void {
-    this.selectedTargetKey.set(key);
     this.dateRange.set(null);
     this.quote.set(null);
     void this.refreshAvailability();

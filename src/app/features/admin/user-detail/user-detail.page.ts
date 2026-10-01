@@ -16,6 +16,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { SmartDecimalPipe } from '../../../shared/pipes/smart-decimal.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
@@ -32,6 +33,7 @@ import { TableViewportDirective } from '../../../shared/directives/table-viewpor
     NzModalModule,
     IconComponent,
     ThbPipe,
+    SmartDecimalPipe,
     ImgFallbackDirective,
     TranslatePipe,
     RowMoreComponent,

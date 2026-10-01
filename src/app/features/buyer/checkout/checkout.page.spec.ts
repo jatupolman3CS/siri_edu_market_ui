@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerCheckoutPage } from './checkout.page';
 import {
@@ -17,6 +18,7 @@ import type {
   CartItem,
   DocumentItem,
   LoyaltySummary,
+  Order,
   ReferralCodeValidation,
   ReferralSummary,
   SavedPaymentMethod,
@@ -210,27 +212,49 @@ function render(
   wallet: ReturnType<typeof fakeWalletService> = fakeWalletService(),
   loyalty: ReturnType<typeof fakeLoyaltyService> = fakeLoyaltyService(),
   cart: ReturnType<typeof fakeCart> = fakeCart(),
+  routeParams: { orderId?: string } = {},
+  orderOverrides: Partial<{
+    loadDetail: (id: string) => Promise<any>;
+    preparePayment: (id: string) => Promise<any>;
+  }> = {},
 ) {
   const orders = {
     checkoutState: signal(idleActionState()).asReadonly(),
     getStripePublishableKey: vi.fn(async () => 'pk_test_123'),
     create: vi.fn(),
     resetCheckout: vi.fn(),
+    loadDetail: vi.fn(async (_id: string) => null),
+    preparePayment: vi.fn(async (_id: string) => null),
+    ...orderOverrides,
   };
+
+  const providers: any[] = [
+    provideRouter([]),
+    { provide: CartService, useValue: cart },
+    { provide: AuthService, useValue: { isAuthenticated: () => true, accessToken: () => 'fake-token' } },
+    { provide: OrderService, useValue: orders },
+    { provide: PaymentMethodService, useValue: paymentMethods },
+    { provide: ReferralService, useValue: referral },
+    { provide: WalletService, useValue: wallet },
+    { provide: LoyaltyService, useValue: loyalty },
+    { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
+  ];
+
+  if (routeParams.orderId) {
+    providers.push({
+      provide: ActivatedRoute,
+      useValue: {
+        snapshot: {
+          queryParamMap: convertToParamMap(routeParams),
+        },
+        queryParams: of(routeParams),
+      },
+    });
+  }
 
   TestBed.configureTestingModule({
     imports: [BuyerCheckoutPage],
-    providers: [
-      provideRouter([]),
-      { provide: CartService, useValue: cart },
-      { provide: AuthService, useValue: { isAuthenticated: () => true, accessToken: () => 'fake-token' } },
-      { provide: OrderService, useValue: orders },
-      { provide: PaymentMethodService, useValue: paymentMethods },
-      { provide: ReferralService, useValue: referral },
-      { provide: WalletService, useValue: wallet },
-      { provide: LoyaltyService, useValue: loyalty },
-      { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
-    ],
+    providers,
   });
 
   const fixture = TestBed.createComponent(BuyerCheckoutPage);
@@ -769,5 +793,56 @@ describe('BuyerCheckoutPage — wallet option markup (G-13, F164, F140)', () => 
     await settle();
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('a[href="#"]').length).toBe(0);
+  });
+});
+
+describe('BuyerCheckoutPage — pending order checkout flow', () => {
+  it('loads pending order and displays pending order banner and items', async () => {
+    const item = cartItem();
+    const mockOrder: Order = {
+      id: 'ord-pending-999',
+      orderNumber: 'ORD-2026-999',
+      buyerId: 'buyer-1',
+      status: 'awaiting_payment',
+      subtotal: 150,
+      vatAmount: 10,
+      total: 150,
+      discountAmount: 0,
+      createdAt: '2026-10-01T00:00:00Z',
+      paymentMethod: 'promptpay',
+      items: [item],
+    };
+
+    const { fixture, orders } = render(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      fakeCart([]),
+      { orderId: 'ord-pending-999' },
+      {
+        loadDetail: vi.fn(async () => mockOrder),
+        preparePayment: vi.fn(async () => ({
+          ...mockOrder,
+          payment: {
+            clientSecret: 'pi_test_secret_123',
+            publishableKey: 'pk_test_123',
+            paymentIntentId: 'pi_123',
+          },
+        })),
+      },
+    );
+
+    await settle();
+    fixture.detectChanges();
+
+    expect(orders.loadDetail).toHaveBeenCalledWith('ord-pending-999');
+    expect(fixture.componentInstance.pendingOrder()).toEqual(mockOrder);
+    expect(fixture.componentInstance.payableTotal()).toBe(150);
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('ORD-2026-999');
+    expect(el.textContent).toContain('ชำระเงินสำหรับคำสั่งซื้อ');
+    expect(el.textContent).toContain('สรุปคณิตศาสตร์ ม.6');
   });
 });

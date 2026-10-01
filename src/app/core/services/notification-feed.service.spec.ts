@@ -469,10 +469,10 @@ describe('NotificationFeedService', () => {
         'sale', 'review', 'qna_question', 'seller_follow', 'store_visit_digest',
         'cart_add_digest', 'wishlist_add_digest', 'review_reply', 'qna_answer',
         'document_submitted', 'document_approved', 'document_rejected',
-        'admin_document_submitted', 'admin_seller_application_submitted', 'admin_payout_requested', 'payout',
+        'admin_document_submitted', 'admin_seller_application_submitted', 'admin_feedback_submitted', 'admin_payout_requested', 'payout',
         'new_document_from_followed_seller', 'new_document_for_interest', 'announcement', 'tips',
       ];
-      expect(keys.length).toBe(20);
+      expect(keys.length).toBe(21);
       for (const key of keys) {
         expect(getNotificationStyle(key).label).not.toBe('shared.notifications.types.unknown');
       }

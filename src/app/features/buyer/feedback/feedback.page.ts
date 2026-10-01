@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FeedbackService } from '../../../core/services/feedback.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
@@ -37,6 +38,7 @@ export class BuyerFeedbackPage {
   private readonly auth = inject(AuthService);
   private readonly apiFail = inject(ApiFailureReporter);
   private readonly i18n = inject(TranslationService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
 
   readonly items = signal<MyFeedbackListItemResponse[]>([]);
   readonly loading = signal(false);
@@ -107,6 +109,11 @@ export class BuyerFeedbackPage {
       const res = await this.feedbackService.listMine(statusParam, this.page(), this.pageSize());
       this.items.set(res.items ?? []);
       this.total.set(res.totalCount ?? 0);
+
+      const targetId = this.route?.snapshot?.queryParams?.['id'];
+      if (targetId && !this.isExpanded(targetId)) {
+        void this.toggleExpand(targetId);
+      }
     } catch (e) {
       this.apiFail.report(this.i18n.t('systemContent.loadFeedbackList'), e);
       this.items.set([]);

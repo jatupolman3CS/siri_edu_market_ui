@@ -34,6 +34,6 @@ function compactAmount(value: number, locale: string): string {
   const abs = Math.abs(value);
   if (abs < 1_000_000) return fullAmount(value, locale);
   const [divisor, suffix] = abs >= 1_000_000_000 ? [1_000_000_000, 'B'] : [1_000_000, 'M'];
-  const scaled = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value / divisor);
+  const scaled = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value / divisor);
   return `${scaled}${suffix}`;
 }

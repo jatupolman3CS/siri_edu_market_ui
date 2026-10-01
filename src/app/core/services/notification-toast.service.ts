@@ -10,6 +10,7 @@ import {
   type NotificationAudience,
 } from './notification-context.service';
 import { NotificationFeedService, type NotificationFeedItemResponse } from './notification-feed.service';
+import { NotificationSoundService } from './notification-sound.service';
 import { TranslationService } from '../i18n/translation.service';
 
 /** Page size for the arrival poll — this is "what's new", not a page of history. */
@@ -76,6 +77,7 @@ export class NotificationToastService {
   private readonly nzNotification = inject(NzNotificationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translation = inject(TranslationService);
+  private readonly sound = inject(NotificationSoundService);
 
   /** Audiences that have had at least one poll — see the §2 baseline note above. */
   private readonly baselinedAudiences = new Set<NotificationAudience>();
@@ -139,6 +141,9 @@ export class NotificationToastService {
     if (freshItems.length === 0) return;
     for (const item of freshItems) this.toastedIds.add(item.id);
     this.presentToasts(freshItems, audience);
+    // One chime per arrival batch — never per toast, and never on the baseline / empty / failed
+    // polls above (they all return before reaching here). `play()` swallows its own failures.
+    this.sound.play();
   }
 
   private presentToasts(items: NotificationFeedItemResponse[], audience: NotificationAudience): void {

@@ -18,3 +18,24 @@ describe('IconComponent heart icons', () => {
     expect(path.getAttribute('fill')).toBe(fill);
   });
 });
+
+describe('IconComponent speaker icons', () => {
+  function render(name: 'volume-2' | 'volume-x'): SVGElement {
+    const fixture = TestBed.createComponent(IconComponent);
+    fixture.componentRef.setInput('name', name);
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector('svg') as SVGElement;
+  }
+
+  it('renders the speaker with sound waves for volume-2 (sound on)', () => {
+    const svg = render('volume-2');
+    expect(svg.querySelectorAll('path')).toHaveLength(3);
+  });
+
+  it('renders the speaker with a cross for volume-x (sound off) — different from volume-2', () => {
+    const on = render('volume-2');
+    const off = render('volume-x');
+    expect(off.querySelectorAll('path').length).toBeGreaterThan(0);
+    expect(off.innerHTML).not.toBe(on.innerHTML);
+  });
+});

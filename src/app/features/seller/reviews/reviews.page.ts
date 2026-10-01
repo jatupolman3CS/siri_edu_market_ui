@@ -8,6 +8,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { SmartDecimalPipe } from '../../../shared/pipes/smart-decimal.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -37,6 +38,7 @@ type ReviewRow = {
     RatingStarsComponent,
     PaginationComponent,
     TimeAgoPipe,
+    SmartDecimalPipe,
     ImgFallbackDirective,
     TranslatePipe,
   ],

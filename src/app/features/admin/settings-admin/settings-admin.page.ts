@@ -19,6 +19,7 @@ import type { AdminAdsPlacement } from '../../../core/models';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
@@ -143,7 +144,7 @@ export class AdminSettingsPage {
   readonly storageGB = computed(() => {
     const u = this.storage();
     if (!u) return null;
-    return (u.totalBytes / (1024 * 1024 * 1024)).toFixed(2);
+    return formatSmartDecimal(u.totalBytes / (1024 * 1024 * 1024));
   });
 
   /** system-config-job-toggle v1 §4: list is server-confirmed state only — no local optimistic copy. */

@@ -24,7 +24,7 @@
         }
       </span>
       @if (showValue()) {
-        <span class="text-sm font-semibold text-ink">{{ value().toFixed(1) }}</span>
+        <span class="text-sm font-semibold text-ink">{{ value() | smartDecimal }}</span>
       }
       @if (count() != null) {
         <span class="text-xs text-ink-muted">({{ count() }})</span>

@@ -20,6 +20,7 @@ import { BundleCardComponent } from '../../../shared/components/bundle-card/bund
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { SmartDecimalPipe } from '../../../shared/pipes/smart-decimal.pipe';
 import { resolvePublicUrl } from '../../../core/api-runtime';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -35,6 +36,7 @@ import { TranslatePipe, TranslationService } from '../../../core/i18n';
     IconComponent,
     EmptyStateComponent,
     CompactPipe,
+    SmartDecimalPipe,
     ImgFallbackDirective,
     TranslatePipe,
   ],

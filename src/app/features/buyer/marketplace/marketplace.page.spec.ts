@@ -1003,3 +1003,57 @@ describe('BuyerMarketplacePage — filter sheet below 1024 (responsive-ui v1 §4
     expect(el.querySelector('.document-card-grid')?.classList).toContain('document-card-grid--with-filters');
   });
 });
+
+describe('Marketplace search for free and package documents', () => {
+  it('triggers bundle search in parallel when q is present and activates package tab badge', () => {
+    const catalog = buildCatalogFake();
+    const bundles = buildBundleFake([buildBundle('b-1')]);
+    const fixture = render(catalog, { q: 'คณิตศาสตร์' }, bundles);
+    const page = fixture.componentInstance;
+
+    expect(bundles.loadBundleResultsPage).toHaveBeenCalledWith(1, 'คณิตศาสตร์');
+    expect(page.packageTabActivated()).toBe(true);
+
+    const packageTab = page.tabs().find((t) => t.value === 'package');
+    expect(packageTab?.count).toBe(1);
+  });
+
+  it('switches directly to package tab when search query contains package keyword', () => {
+    const catalog = buildCatalogFake();
+    const bundles = buildBundleFake([buildBundle('b-math')]);
+    const fixture = render(catalog, { q: 'แพ็กเกจคณิตศาสตร์' }, bundles);
+    const page = fixture.componentInstance;
+
+    expect(page.activeUiTab()).toBe('package');
+    expect(catalog.setTab).toHaveBeenCalledWith('bundles');
+    expect(bundles.loadBundleResultsPage).toHaveBeenCalledWith(1, 'แพ็กเกจคณิตศาสตร์');
+  });
+
+  it('renders matching packages section on all tab when query matches bundles', () => {
+    const catalog = buildCatalogFake();
+    catalog.filters = () => ({ ...DEFAULT_FILTERS, search: 'ข้อสอบ' });
+    const bundleItem = buildBundle('b-1', { title: 'แพ็กเกจข้อสอบ ม.1' });
+    const bundles = buildBundleFake([bundleItem]);
+    const fixture = render(catalog, { q: 'ข้อสอบ' }, bundles);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('แพ็กเกจที่เกี่ยวข้อง');
+    expect(el.textContent).toContain('แพ็กเกจข้อสอบ ม.1');
+  });
+
+  it('renders empty doc notice with packages when 0 docs match but bundles match', () => {
+    const catalog = buildCatalogFake();
+    catalog.filters = () => ({ ...DEFAULT_FILTERS, search: 'มัดรวม' });
+    catalog.marketplaceResults = () => [];
+    const bundleItem = buildBundle('b-pack', { title: 'มัดรวมสุดคุ้ม' });
+    const bundles = buildBundleFake([bundleItem]);
+    const fixture = render(catalog, { q: 'มัดรวม' }, bundles);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('แพ็กเกจที่เกี่ยวข้อง');
+    expect(el.textContent).toContain('ไม่พบเอกสารเดี่ยวสำหรับคำค้นหานี้ แต่พบแพ็กเกจที่ตรงกับสิ่งที่คุณกำลังหาด้านบน');
+  });
+});
+

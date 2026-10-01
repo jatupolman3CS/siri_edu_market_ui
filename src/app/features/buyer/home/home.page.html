@@ -87,7 +87,7 @@
                 </div>
                 @if (platformStats.stats()?.averageRating; as avgRating) {
                   <div>
-                    <div class="text-sm font-bold text-ink">{{ avgRating | number:'1.1-1' }} ★</div>
+                    <div class="text-sm font-bold text-ink">{{ avgRating | number:'1.0-1' }} ★</div>
                     <div class="text-[11px] text-ink-muted">{{ 'home.fromReviews' | trans:{ count: (platformStats.stats()!.reviewCount | compact) } }}</div>
                   </div>
                 }
@@ -111,7 +111,7 @@
               <div class="absolute top-24 right-0 w-32 rotate-[8deg] card-soft p-2.5 animate-slide-up" style="animation-delay: 100ms">
                 <img appImgFallback [src]="catalog.featured()[1]?.cover" class="w-full h-36 object-cover rounded-xl" alt="" />
                 <div class="px-1 pt-1.5 pb-0.5 flex items-center gap-1">
-                  <span class="pill-pink !py-0 !text-[10px]">★ {{ catalog.featured()[1]?.rating }}</span>
+                  <span class="pill-pink !py-0 !text-[10px]">★ {{ catalog.featured()[1]?.rating | smartDecimal }}</span>
                 </div>
               </div>
               <div class="absolute bottom-4 left-4 w-36 rotate-[3deg] card-soft p-2.5 animate-slide-up" style="animation-delay: 200ms">
@@ -477,7 +477,7 @@
               </div>
               <p class="text-xs text-ink-muted line-clamp-2 mb-2">{{ s.bio }}</p>
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0 text-xs text-ink-soft">
-                <span class="font-semibold text-pink-600">★ {{ s.rating }}</span>
+                <span class="font-semibold text-pink-600">★ {{ s.rating | smartDecimal }}</span>
                 <span>•</span>
                 <span>{{ 'home.docCount' | trans:{ count: s.totalDocuments } }}</span>
                 <span>•</span>

@@ -436,3 +436,31 @@ describe('BuyerOrdersPage — order item row at narrow widths (R-1, G2-8)', () =
     expect(link.classList).toContain('min-h-11');
   });
 });
+
+describe('BuyerOrdersPage — awaiting payment QR checkout link', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('renders pay now link linking to checkout with orderId for awaiting_payment orders', () => {
+    const order = buildOrder('ord-awaiting-123', 'awaiting_payment', {
+      total: 150,
+    });
+    const { fixture } = renderWithOrders([order]);
+    const el = fixture.nativeElement as HTMLElement;
+    const payLink = el.querySelector('[data-testid="order-pay-now-link"]') as HTMLAnchorElement;
+
+    expect(payLink).not.toBeNull();
+    expect(payLink.textContent).toContain('ชำระเงิน');
+    expect(payLink.getAttribute('href')).toContain('/checkout');
+    expect(payLink.getAttribute('href')).toContain('orderId=ord-awaiting-123');
+  });
+
+  it('does not render pay now link for paid or cancelled orders', () => {
+    const paidOrder = buildOrder('ord-paid-1', 'paid');
+    const cancelledOrder = buildOrder('ord-cancelled-2', 'cancelled');
+    const { fixture } = renderWithOrders([paidOrder, cancelledOrder]);
+    const el = fixture.nativeElement as HTMLElement;
+    const payLinks = el.querySelectorAll('[data-testid="order-pay-now-link"]');
+
+    expect(payLinks.length).toBe(0);
+  });
+});

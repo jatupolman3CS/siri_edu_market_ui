@@ -81,6 +81,15 @@
                 <app-icon name="arrow-right" [size]="14" />
                 {{ refreshing() ? ('orderDetail.checkingStatus' | trans) : ('orderDetail.recheckStatus' | trans) }}
               </button>
+              <a
+                [routerLink]="['/checkout']"
+                [queryParams]="{ orderId: o.id }"
+                data-testid="order-detail-pay-now-link"
+                class="btn-pink !py-2 !px-4 min-h-11 text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-sm"
+              >
+                <app-icon name="qr" [size]="14" />
+                {{ 'orderDetail.payNow' | trans }}
+              </a>
               <span class="text-[11px] text-ink-muted">
                 {{ 'orderDetail.supportHint' | trans:{ orderNumber: o.orderNumber } }}
               </span>
@@ -208,6 +217,15 @@
         <!-- BUG-09: an unpaid order blocks a fresh checkout for the same documents,
              so the buyer needs a way to release it. -->
         @if (o.status === 'awaiting_payment') {
+          <a
+            [routerLink]="['/checkout']"
+            [queryParams]="{ orderId: o.id }"
+            data-testid="order-detail-pay-now-action"
+            class="btn-pink font-semibold flex items-center gap-1.5 shadow-sm"
+          >
+            <app-icon name="qr" [size]="14" />
+            {{ 'orderDetail.payNow' | trans }}
+          </a>
           <!-- R-17 (F91): a disabled pay button looks disabled, and the reason plus the way forward
                (top up the wallet) sit right next to it. -->
           <button

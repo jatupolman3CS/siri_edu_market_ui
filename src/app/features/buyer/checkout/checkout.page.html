@@ -14,7 +14,7 @@
 
       <!-- responsive-ui v1.4 R-17 (F88): loading / error / empty / data are four states. The empty
            cart copy used to show while the cart GET was still pending and after it failed. -->
-      @if (cart.count() === 0 && cart.loadStatus() === 'loading') {
+      @if (!pendingOrder() && cart.count() === 0 && cart.loadStatus() === 'loading') {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-busy="true" data-testid="checkout-loading">
           <div class="lg:col-span-2 space-y-6">
             <div class="card-soft p-4 sm:p-6 h-56 animate-pulse" aria-hidden="true"></div>
@@ -23,7 +23,7 @@
           <div class="card-soft p-4 sm:p-6 h-96 animate-pulse" aria-hidden="true"></div>
           <p class="sr-only">{{ 'common.loading' | trans }}</p>
         </div>
-      } @else if (cart.count() === 0 && cart.loadStatus() === 'error') {
+      } @else if (!pendingOrder() && cart.count() === 0 && cart.loadStatus() === 'error') {
         <div class="card-soft p-6 sm:p-10 text-center" role="alert" data-testid="checkout-error">
           <div class="text-4xl mb-3" aria-hidden="true">⚠️</div>
           <p class="text-base font-bold text-ink">{{ 'common.loadFailed' | trans }}</p>
@@ -32,7 +32,7 @@
             {{ 'common.retry' | trans }}
           </button>
         </div>
-      } @else if (cart.count() === 0) {
+      } @else if (!pendingOrder() && cart.count() === 0) {
         <app-empty-state
           emoji="🛍️"
           [title]="'checkout.emptyTitle' | trans"
@@ -41,6 +41,26 @@
           <a routerLink="/marketplace" class="btn-pink mt-4">{{ 'checkout.browseDocs' | trans }}</a>
         </app-empty-state>
       } @else {
+        @if (pendingOrder(); as po) {
+          <div class="card-soft p-4 sm:p-5 mb-6 border border-pink-200 bg-pink-50/60 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+                <app-icon name="qr" [size]="20" />
+              </span>
+              <div>
+                <h2 class="text-sm sm:text-base font-bold text-ink">
+                  {{ 'checkout.payingForOrder' | trans:{ orderNumber: po.orderNumber } }}
+                </h2>
+                <p class="text-xs text-ink-muted">
+                  {{ 'checkout.pendingOrderBanner' | trans }}
+                </p>
+              </div>
+            </div>
+            <a routerLink="/orders" class="btn-ghost !py-1.5 !px-3 text-xs shrink-0">
+              {{ 'orderDetail.backToOrders' | trans }}
+            </a>
+          </div>
+        }
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Left: Items + payment -->
           <div class="lg:col-span-2 space-y-6">
@@ -50,8 +70,30 @@
                 <span class="w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-xs font-bold flex items-center justify-center">1</span>
                 {{ 'checkout.step1Title' | trans }}
               </h2>
-              <ul class="flex flex-col gap-3">
-                @for (item of cart.items(); track item.document.id) {
+              @if (pendingOrder(); as po) {
+                <ul class="flex flex-col gap-3">
+                  @for (item of po.items; track item.document.id) {
+                    <li class="flex gap-3 sm:gap-4 items-center">
+                      <img
+                        appImgFallback
+                        [src]="item.document.cover"
+                        [alt]="item.document.title"
+                        class="w-16 h-20 rounded-xl object-cover flex-shrink-0"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <div class="text-xs text-ink-muted">{{ item.document.seller.studioName }}</div>
+                        <div class="text-sm font-bold text-ink line-clamp-1">{{ item.document.title }}</div>
+                        <div class="text-xs text-ink-muted mt-0.5 uppercase">{{ item.document.format }} · {{ item.document.pages }} {{ 'common.pages' | trans }}</div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <div class="text-base font-bold text-pink-600">{{ item.document.price | thb }}</div>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <ul class="flex flex-col gap-3">
+                  @for (item of cart.items(); track item.document.id) {
                   <li class="flex gap-3 sm:gap-4 items-center">
                     <img
                       appImgFallback
@@ -77,6 +119,7 @@
                   </li>
                 }
               </ul>
+              }
             </section>
 
             <!-- Payment: Stripe owns every field the buyer types. S-04 removed the card form
@@ -200,6 +243,26 @@
             <div class="card-soft p-4 sm:p-6 md:sticky md:top-[130px] xl:top-[187px]">
               <h2 class="text-base font-bold text-ink mb-4">{{ 'checkout.summaryTitle' | trans }}</h2>
               <dl class="space-y-2 text-sm">
+                @if (pendingOrder(); as po) {
+                  <div class="flex justify-between text-ink-soft">
+                    <dt>{{ 'checkout.subtotalItems' | trans: { count: po.items.length } }}</dt>
+                    <dd>{{ po.subtotal | thb }}</dd>
+                  </div>
+                  @if (po.discountAmount > 0) {
+                    <div class="flex justify-between text-emerald-600">
+                      <dt>{{ 'checkout.savings' | trans }}</dt>
+                      <dd>- {{ po.discountAmount | thb }}</dd>
+                    </div>
+                  }
+                  <div class="flex justify-between text-ink-soft">
+                    <dt>{{ 'checkout.vatIncluded' | trans }}</dt>
+                    <dd>{{ po.vatAmount | thb }}</dd>
+                  </div>
+                  <div class="border-t border-line pt-3 flex justify-between text-base font-bold text-ink">
+                    <dt>{{ 'checkout.totalDue' | trans }}</dt>
+                    <dd class="text-pink-600">{{ po.total | thb }}</dd>
+                  </div>
+                } @else {
                 <div class="flex justify-between text-ink-soft">
                   <dt>{{ 'checkout.subtotalItems' | trans: { count: cart.count() } }}</dt>
                   <dd>{{ cart.subtotal() | thb }}</dd>
@@ -230,9 +293,10 @@
                   <dt>{{ 'checkout.totalDue' | trans }}</dt>
                   <dd class="text-pink-600">{{ payableTotal() | thb }}</dd>
                 </div>
+                }
               </dl>
 
-              @if (loyalty.summary(); as loyaltySummary) {
+              @if (!pendingOrder() && loyalty.summary(); as loyaltySummary) {
                 <div class="mt-4 pt-4 border-t border-line">
                   <label class="flex items-start gap-3 min-h-11 py-1 cursor-pointer">
                     <input
@@ -259,6 +323,7 @@
               }
 
               <!-- Referral program (referral-program.md §4) -->
+              @if (!pendingOrder()) {
               <div class="mt-4 pt-4 border-t border-line space-y-3">
                 @if (!showReferralInput()) {
                   <button
@@ -309,6 +374,7 @@
                   </label>
                 }
               </div>
+              }
 
               <button
                 class="btn-pink w-full !py-3.5 mt-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"

@@ -41,6 +41,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { downloadUrlForStorageKey, resolvePublicUrl, resolveDownloadUrl } from '../../../core/api-runtime';
 import { downloadFileFromUrl } from '../../../core/file-download';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
+import { formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 
 const GRADE_PRESET_KEYS = Object.keys(GRADE_LEVEL_LABELS) as GradeLevel[];
 
@@ -658,6 +659,6 @@ export class AdminDocumentDetailPage {
       n /= 1024;
       i++;
     }
-    return `${i === 0 ? n : n.toFixed(1)} ${u[i]}`;
+    return `${i === 0 ? n : formatSmartDecimal(n)} ${u[i]}`;
   }
 }

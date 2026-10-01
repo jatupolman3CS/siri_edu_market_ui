@@ -16,6 +16,7 @@ import { TableViewportDirective } from '../../../shared/directives/table-viewpor
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
+import { formatSignedSmartDecimal, formatSmartDecimal } from '../../../shared/pipes/smart-decimal.pipe';
 
 /**
  * payout-request-slip-verification v1 §4.4 / seller-ads-promotion v1 §4.4: ledger `kind` → Thai
@@ -24,7 +25,7 @@ import { ThbPipe } from '../../../shared/pipes/thb.pipe';
  */
 
 function formatBaht(v: number): string {
-  return v.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  return formatSmartDecimal(v);
 }
 
 @Component({
@@ -106,7 +107,7 @@ export class SellerEarningsPage {
   readonly revenueTrendDisplay = computed(() => {
     const v = this.seller.stats().revenueTrendPercent;
     if (v == null) return null;
-    return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+    return formatSignedSmartDecimal(v, '%');
   });
 
   /** True while a payout request is already awaiting processing. */

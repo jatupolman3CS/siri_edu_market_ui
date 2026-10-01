@@ -2320,6 +2320,7 @@ export type SellerDocumentSummaryResponse = {
   updatedAt?: string;
   rejectionReason?: string | null;
   rejectedAt?: string | null;
+  categoryIds?: Array<string> | null;
 };
 
 export type SellerDocumentVersionResponse = {
@@ -8438,6 +8439,39 @@ export type PostApiOrdersByIdPayWalletResponses = {
 
 export type PostApiOrdersByIdPayWalletResponse =
   PostApiOrdersByIdPayWalletResponses[keyof PostApiOrdersByIdPayWalletResponses];
+
+export type PostApiOrdersByIdPayData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/orders/{id}/pay';
+};
+
+export type PostApiOrdersByIdPayErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+  /**
+   * Not Found
+   */
+  404: ProblemDetails;
+};
+
+export type PostApiOrdersByIdPayError =
+  PostApiOrdersByIdPayErrors[keyof PostApiOrdersByIdPayErrors];
+
+export type PostApiOrdersByIdPayResponses = {
+  /**
+   * OK
+   */
+  200: OrderResponse;
+};
+
+export type PostApiOrdersByIdPayResponse =
+  PostApiOrdersByIdPayResponses[keyof PostApiOrdersByIdPayResponses];
 
 export type GetApiOrdersByIdData = {
   body?: never;

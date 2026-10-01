@@ -18,7 +18,7 @@
         <div class="flex flex-col md:flex-row gap-8 items-start">
           <div class="text-center md:text-left">
             <div class="text-4xl sm:text-5xl font-extrabold text-ink leading-none mb-2">
-              {{ seller.stats().averageRating }}
+              {{ seller.stats().averageRating | smartDecimal }}
             </div>
             <app-rating-stars
               [value]="seller.stats().averageRating"
@@ -38,7 +38,7 @@
             <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-pink-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-pink-600">
                 @if (reviewStats().avgHours != null) {
-                  {{ reviewStats().avgHours!.toFixed(1) }} {{ 'seller.hoursUnit' | trans }}
+                  {{ reviewStats().avgHours! | smartDecimal }} {{ 'seller.hoursUnit' | trans }}
                 } @else {
                   —
                 }

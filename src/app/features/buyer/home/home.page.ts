@@ -18,6 +18,7 @@ import { BundleCardComponent } from '../../../shared/components/bundle-card/bund
 import { SectionHeaderComponent } from '../../../shared/components/section-header/section-header.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
+import { SmartDecimalPipe } from '../../../shared/pipes/smart-decimal.pipe';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
@@ -48,6 +49,7 @@ const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
     SectionHeaderComponent,
     IconComponent,
     CompactPipe,
+    SmartDecimalPipe,
     DecimalPipe,
     EmptyStateComponent,
     ImgFallbackDirective,

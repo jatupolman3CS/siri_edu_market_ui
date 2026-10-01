@@ -33,7 +33,7 @@
             <span class="pill-soft text-xs">📄 {{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
             <span class="pill-soft text-xs">🗂️ {{ 'categoryDetail.subcategoriesCount' | trans:{ count: (cat.subcategories?.length ?? 0) } }}</span>
             @if (cat.averageRating; as avgRating) {
-              <span class="pill-soft text-xs">⭐ {{ 'categoryDetail.avgRating' | trans:{ rating: ((avgRating | number:'1.1-1') ?? '') } }}</span>
+              <span class="pill-soft text-xs">⭐ {{ 'categoryDetail.avgRating' | trans:{ rating: ((avgRating | number:'1.0-1') ?? '') } }}</span>
             }
           </div>
         </div>
