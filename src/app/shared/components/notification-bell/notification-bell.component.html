@@ -84,7 +84,7 @@
         <button
           type="button"
           data-testid="notification-sound-toggle"
-          class="hit-44 w-7 h-7 rounded-full inline-flex items-center justify-center transition-colors hover:bg-brand-100/70"
+          class="hit-44 w-7 h-7 rounded-full inline-flex items-center justify-center transition-colors hover:bg-slate-200/70"
           [class.text-brand-600]="sound.enabled()"
           [class.text-ink-muted]="!sound.enabled()"
           [attr.aria-pressed]="sound.enabled()"
@@ -173,7 +173,7 @@
     }
 
     <!-- Footer -->
-    <div class="shrink-0 border-t border-line px-4 py-2.5 bg-brand-50/30 text-center">
+    <div class="shrink-0 border-t border-line px-4 py-2.5 bg-slate-50/30 text-center">
       <a
         [routerLink]="allNotificationsRoute()"
         (click)="menuOpen.set(false)"

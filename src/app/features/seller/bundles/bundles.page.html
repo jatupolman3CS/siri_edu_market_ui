@@ -65,7 +65,7 @@
               <li>
                 <button
                   type="button"
-                  class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-brand-50/60 transition-colors"
+                  class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-100/60 transition-colors"
                   (click)="toggleDocument(doc.documentId!)"
                 >
                   <span
@@ -143,7 +143,7 @@
 
       <!-- The same arithmetic the server does, shown while the seller types so the rule is
            visible rather than something they hit as a rejection. -->
-      <div class="rounded-2xl bg-brand-50/60 px-4 py-3 text-sm space-y-1">
+      <div class="rounded-2xl bg-slate-50/60 px-4 py-3 text-sm space-y-1">
         <p class="text-ink-soft">
           {{ 'seller.totalOriginalPrice' | trans }}
           <span class="font-bold text-ink">{{ originalPrice() | thb }}</span>

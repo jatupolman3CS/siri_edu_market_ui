@@ -338,10 +338,16 @@ brand-600: #db2777  - PRIMARY (`bg-primary`: buttons, links, active; white text 
 brand-700: #be185d  - hover (`bg-primary-hover`), text on brand-100
 brand-800: #9d174d  - gradient end, pressed
 brand-900: #831843  - admin chrome
-ink:      #2A1B22  - primary text
-ink-soft: #5A4751  - secondary text
-ink-muted:#76646D  - tertiary text, hints
-line:     #f6e0ec  - borders, dividers
+Pink is an ACCENT, not the surface (tone-down 2026-10-12, modelled on the reference page siri_edumarket.html):
+buttons, badges, prices, icons, links and the page backdrop's blurred blobs are pink; surfaces, borders, shadows
+and text are neutral slate.
+ink:      #0f172a  - primary text   (dark: #f8fafc)
+ink-soft: #475569  - secondary text  (dark: #cbd5e1)
+ink-muted:#5f6f86  - tertiary text, hints (dark: #94a3b8)
+line:     #e2e8f0  - borders, dividers (dark: #1e293b)
+canvas:   #f8fafc  - page background (dark: #050b14); surface: #fff (dark: #0f172a)
+A tinted PANEL / skeleton / progress track uses `bg-slate-50|100`; `bg-brand-50|100` is only for an element that is
+itself a pink accent (pill, icon chip — it also carries `text-brand-*` / `border-brand-*`).
 
 Font: Prompt (Thai + Latin). Glass: `.glass-card` (content card, translucent, NO backdrop-filter),
 `.glass-panel` (frosted chrome that content scrolls under, blur), `shadow-glass`, `shadow-glow`,
@@ -357,7 +363,7 @@ Rules for templates:
 - A FILL that carries white text and is shade 600+ uses the static scale: `bg-solid-rose-600`, `from-solid-emerald-700`
   (the themed 600+ shades mirror lighter in dark mode, which is right for text but washes a fill out). Primary pink
   fill = `bg-primary` / `hover:bg-primary-hover`.
-- A fill that must stay dark in both themes: `bg-ink-deep`, `bg-brand-deep` (never `bg-ink` / `bg-brand-900`).
+- A fill that must stay dark in both themes: `bg-ink-deep`, `bg-chrome-deep` (never `bg-ink` / `bg-slate-900`).
 - A subtree that must stay light-on-dark whatever the page theme (admin chrome, auth aside, seller CTA): add
   `tokens-light` — it restores the light values of every token for that subtree.
 - In scss use `var(--ink)`, `var(--surface)`, `var(--brand-N)`, `var(--glass-bg-strong)` — not hex.

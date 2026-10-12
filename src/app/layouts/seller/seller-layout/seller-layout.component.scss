@@ -5,17 +5,17 @@
   background: transparent;
 }
 .seller-scroll::-webkit-scrollbar-thumb {
-  background: var(--pink-200);
+  background: rgb(var(--slate-300-rgb));
   border-radius: 999px;
 }
 @media (hover: hover) {
   .seller-scroll::-webkit-scrollbar-thumb:hover {
-    background: var(--pink-300);
+    background: rgb(var(--slate-400-rgb));
   }
 }
 .seller-scroll {
   scrollbar-width: thin;
-  scrollbar-color: var(--pink-200) transparent;
+  scrollbar-color: rgb(var(--slate-300-rgb)) transparent;
 }
 
 /* Rail items: icon over a max-2-line label (docs/contracts/responsive-ui.md §4.4). */

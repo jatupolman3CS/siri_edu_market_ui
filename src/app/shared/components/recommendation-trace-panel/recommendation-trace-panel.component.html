@@ -59,7 +59,7 @@
           [rtLabel]="'shared.recommendationTrace.consideredDocuments' | trans"
         >
           <table class="rtable w-full">
-            <thead class="bg-brand-50">
+            <thead class="bg-slate-50">
               <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
                 <th class="px-4 py-3 font-semibold">{{ 'shared.recommendationTrace.documentHeader' | trans }}</th>
                 <th class="px-4 py-3 font-semibold">{{ 'shared.recommendationTrace.relevanceHeader' | trans }}</th>
@@ -70,7 +70,7 @@
             <tbody>
               @for (c of trace.candidates; track c.documentId) {
                 <tr
-                  class="border-t border-line cursor-pointer hover:bg-brand-50/60"
+                  class="border-t border-line cursor-pointer hover:bg-slate-100/60"
                   (click)="toggleCandidate(c.documentId)"
                 >
                   <td class="rt-title px-4 py-3 text-sm font-semibold text-ink">{{ c.title }}</td>
@@ -85,7 +85,7 @@
                   <td class="rt-more"></td>
                 </tr>
                 @if (expandedCandidateId() === c.documentId) {
-                  <tr class="border-t border-line bg-brand-50/40">
+                  <tr class="border-t border-line bg-slate-50/40">
                     <td colspan="4" class="col-span-full px-4 py-3">
                       @if (c.matchedFacets.length === 0) {
                         <span class="text-xs text-ink-muted">{{ 'shared.recommendationTrace.noScoreDetails' | trans }}</span>

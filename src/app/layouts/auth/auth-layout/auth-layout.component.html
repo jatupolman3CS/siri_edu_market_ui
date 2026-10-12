@@ -51,7 +51,7 @@
           <h2 class="text-3xl md:text-4xl text-white font-extrabold leading-tight mb-4 whitespace-pre-line">
             {{ artTitle() }}
           </h2>
-          <p class="text-brand-50 mb-10 leading-relaxed">{{ artDescription() }}</p>
+          <p class="text-slate-100 mb-10 leading-relaxed">{{ artDescription() }}</p>
 
           <ul class="space-y-3 mb-10">
             @for (b of artBullets(); track b.label) {
@@ -72,7 +72,7 @@
               } @else {
                 <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
               }
-              <div class="text-xs text-brand-100">{{ 'auth.docsCount' | trans }}</div>
+              <div class="text-xs text-slate-200">{{ 'auth.docsCount' | trans }}</div>
             </div>
             <div>
               @if (platformStats.stats(); as ps) {
@@ -80,12 +80,12 @@
               } @else {
                 <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
               }
-              <div class="text-xs text-brand-100">{{ 'auth.creatorsCount' | trans }}</div>
+              <div class="text-xs text-slate-200">{{ 'auth.creatorsCount' | trans }}</div>
             </div>
             @if (platformStats.stats()?.positiveReviewPercent; as positivePercent) {
               <div>
                 <div class="text-3xl font-extrabold">{{ positivePercent | number:'1.0-0' }}%</div>
-                <div class="text-xs text-brand-100">{{ 'auth.positiveReviews' | trans }}</div>
+                <div class="text-xs text-slate-200">{{ 'auth.positiveReviews' | trans }}</div>
               </div>
             }
           </div>

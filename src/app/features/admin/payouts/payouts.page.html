@@ -185,7 +185,7 @@
   <div class="m-auto card-soft w-full max-w-lg p-6 bg-surface shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-slip-title" (click)="$event.stopPropagation()">
     <div class="flex items-center justify-between gap-3 pb-3.5 border-b border-line mb-4">
       <h3 id="payout-slip-title" class="min-w-0 text-base md:text-lg font-bold text-ink [overflow-wrap:anywhere]">{{ 'admin.payouts.slipHistoryTitle' | trans }} — {{ payout.sellerName }}</h3>
-      <button class="tap-target w-8 h-8 rounded-full bg-brand-50 hover:bg-brand-100 text-ink-soft flex items-center justify-center" (click)="closeSlipModal()" [attr.aria-label]="'common.close' | trans">
+      <button class="tap-target w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-200 text-ink-soft flex items-center justify-center" (click)="closeSlipModal()" [attr.aria-label]="'common.close' | trans">
         <app-icon name="close" [size]="14" />
       </button>
     </div>
@@ -340,7 +340,7 @@
   <div class="m-auto card-soft w-full max-w-2xl p-6 bg-surface shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-batch-title" (click)="$event.stopPropagation()">
     <div class="flex items-center justify-between gap-3 pb-3.5 border-b border-line mb-4">
       <h3 id="payout-batch-title" class="min-w-0 text-base md:text-lg font-bold text-ink">{{ 'admin.payouts.batchModalTitle' | trans }}</h3>
-      <button class="tap-target w-8 h-8 rounded-full bg-brand-50 hover:bg-brand-100 text-ink-soft flex items-center justify-center" [disabled]="batchUploading()" (click)="closeBatchModal()" [attr.aria-label]="'common.close' | trans">
+      <button class="tap-target w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-200 text-ink-soft flex items-center justify-center" [disabled]="batchUploading()" (click)="closeBatchModal()" [attr.aria-label]="'common.close' | trans">
         <app-icon name="close" [size]="14" />
       </button>
     </div>
@@ -366,7 +366,7 @@
     @if (batchFiles().length > 0) {
     <ul class="mt-3 space-y-1.5">
       @for (f of batchFiles(); track f.name + f.size; let i = $index) {
-      <li class="flex items-center justify-between text-sm bg-brand-50 rounded-xl px-3 py-2">
+      <li class="flex items-center justify-between text-sm bg-slate-50 rounded-xl px-3 py-2">
         <span class="min-w-0 truncate">{{ f.name }}</span>
         <!-- R-2 (F160): was a 12x20 target. -->
         <button type="button" class="shrink-0 inline-flex items-center justify-center rounded-full text-ink-muted hover:text-rose-600 ml-2 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11" (click)="removeBatchFile(i)" [attr.aria-label]="'admin.payouts.removeFileAria' | trans">
@@ -386,7 +386,7 @@
     @if (batchResult(); as result) {
     <div class="mt-5 pt-5 border-t border-line">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-center">
-        <div class="rounded-xl bg-brand-50 p-2">
+        <div class="rounded-xl bg-slate-50 p-2">
           <div class="text-lg font-bold text-ink">{{ result.totalFiles }}</div>
           <div class="text-xs text-ink-muted">{{ 'admin.payouts.batchStatTotal' | trans }}</div>
         </div>
@@ -408,7 +408,7 @@
            heading, so it differs from the payout list's region on the page. -->
       <div class="table-scroll overflow-x-auto" appTableViewport rtLabelledBy="payout-batch-title">
         <table class="rtable w-full text-sm">
-          <thead class="bg-brand-50">
+          <thead class="bg-slate-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-3 py-2 font-semibold">{{ 'admin.payouts.batchColFile' | trans }}</th>
               <th class="px-3 py-2 font-semibold">{{ 'admin.payouts.batchColSeller' | trans }}</th>

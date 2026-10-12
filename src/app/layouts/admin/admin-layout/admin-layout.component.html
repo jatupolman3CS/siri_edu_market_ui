@@ -4,7 +4,7 @@
       <!-- Desktop (>=1280): full sidebar -->
       <aside
         data-testid="admin-sidebar"
-        class="hidden xl:flex flex-col w-72 bg-gradient-to-b from-brand-deep to-ink-deep tokens-light text-brand-50 p-5 sticky top-0 h-dvh overflow-hidden shrink-0 z-30"
+        class="hidden xl:flex flex-col w-72 bg-gradient-to-b from-chrome-deep to-ink-deep tokens-light text-slate-100 p-5 sticky top-0 h-dvh overflow-hidden shrink-0 z-30"
       >
         <div class="shrink-0 mb-4">
           <div class="flex items-center justify-between">
@@ -17,7 +17,7 @@
               </span>
               <div class="leading-none">
                 <div class="text-sm font-extrabold">ADMIN PANEL</div>
-                <div class="text-[10px] uppercase tracking-[0.2em] text-brand-300 mt-1">SIRIEDUMARKET</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 mt-1">SIRIEDUMARKET</div>
               </div>
             </div>
             <div class="flex items-center gap-1.5">
@@ -40,7 +40,7 @@
               routerLinkActive="!bg-white/10 !text-white"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
               ariaCurrentWhenActive="page"
-              class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-brand-100/70 hover:bg-white/5 hover:text-white transition-colors"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
             >
               <app-icon [name]="item.icon" [size]="18" />
               <span class="flex-1 truncate">{{ item.label }}</span>
@@ -52,7 +52,7 @@
         </nav>
 
         <div class="shrink-0 pt-3 border-t border-white/10 mt-2 flex flex-col gap-1">
-          <a routerLink="/" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-brand-100/70 hover:bg-white/5 hover:text-white transition-colors">
+          <a routerLink="/" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
             <app-icon name="arrow-left" [size]="16" />
             {{ 'nav.backToMarket' | trans }}
           </a>
@@ -76,7 +76,7 @@
               />
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-bold text-white truncate">{{ u.name }}</div>
-                <div class="text-[10px] text-brand-300 truncate uppercase tracking-wider">Admin</div>
+                <div class="text-[10px] text-slate-400 truncate uppercase tracking-wider">Admin</div>
               </div>
               <app-theme-toggle tone="on-dark" />
               <app-language-switcher variant="dropdown" placement="topRight" theme="dark" />
@@ -88,7 +88,7 @@
       <!-- Tablet / laptop (744–1279): 88px icon rail -->
       <aside
         data-testid="admin-rail"
-        class="hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-gradient-to-b from-brand-deep to-ink-deep tokens-light text-brand-50 sticky top-0 h-dvh z-30 safe-top"
+        class="hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-gradient-to-b from-chrome-deep to-ink-deep tokens-light text-slate-100 sticky top-0 h-dvh z-30 safe-top"
       >
         <a routerLink="/admin" class="shrink-0 flex items-center justify-center py-3" aria-label="ADMIN PANEL">
           <span class="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-300 to-brand-500 text-white shadow-soft">
@@ -107,7 +107,7 @@
               ariaCurrentWhenActive="page"
               data-testid="admin-rail-item"
               [attr.title]="item.label"
-              class="relative flex shrink-0 flex-col items-center justify-center gap-1 min-h-[64px] px-1 py-2 rounded-2xl text-brand-100/70 hover:bg-white/5 hover:text-white transition-colors"
+              class="relative flex shrink-0 flex-col items-center justify-center gap-1 min-h-[64px] px-1 py-2 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
             >
               <app-icon [name]="item.icon" [size]="22" />
               <span class="text-[11px] leading-tight text-center line-clamp-2 break-words w-full">{{ item.label }}</span>
@@ -120,7 +120,7 @@
         <div class="shrink-0 border-t border-white/10 flex flex-col items-center gap-1 pt-2 pb-[calc(0.5rem+var(--safe-bottom))]">
           <a
             routerLink="/"
-            class="tap-target rounded-2xl text-brand-100/70 hover:bg-white/5 hover:text-white"
+            class="tap-target rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white"
             [attr.aria-label]="'responsive.backToStore' | trans"
             [attr.title]="'responsive.backToStore' | trans"
           >
@@ -141,7 +141,7 @@
       <!-- Phone (<744): sticky top bar -->
       <header
         data-testid="admin-phone-topbar"
-        class="md:hidden sticky top-0 bg-brand-deep text-white w-full safe-top safe-x"
+        class="md:hidden sticky top-0 bg-chrome-deep text-white w-full safe-top safe-x"
         [class.z-30]="!accountMenuOpen()"
         [class.z-50]="accountMenuOpen()"
       >
@@ -181,7 +181,7 @@
                     role="menuitem"
                     routerLink="/"
                     (click)="closeAccountMenu()"
-                    class="flex items-center gap-2 px-3 min-h-[44px] rounded-xl text-sm hover:bg-brand-50"
+                    class="flex items-center gap-2 px-3 min-h-[44px] rounded-xl text-sm hover:bg-slate-100"
                   >
                     <app-icon name="arrow-left" [size]="16" />
                     {{ 'responsive.backToStore' | trans }}
@@ -223,7 +223,7 @@
           ></div>
           <!-- Sidebar panel -->
           <aside
-            class="drawer-panel relative flex flex-col w-[min(320px,85vw)] h-dvh bg-gradient-to-b from-brand-deep to-ink-deep tokens-light text-brand-50 shadow-pop overflow-hidden safe-top forced-colors:border-r-2"
+            class="drawer-panel relative flex flex-col w-[min(320px,85vw)] h-dvh bg-gradient-to-b from-chrome-deep to-ink-deep tokens-light text-slate-100 shadow-pop overflow-hidden safe-top forced-colors:border-r-2"
             cdkTrapFocus
             [cdkTrapFocusAutoCapture]="true"
           >
@@ -238,7 +238,7 @@
                   </span>
                   <div class="leading-none">
                     <div class="text-sm font-extrabold">ADMIN PANEL</div>
-                    <div class="text-[10px] uppercase tracking-[0.2em] text-brand-300 mt-1">SIRIEDUMARKET</div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 mt-1">SIRIEDUMARKET</div>
                   </div>
                 </div>
                 <button
@@ -265,7 +265,7 @@
                   routerLinkActive="!bg-white/10 !text-white"
                   [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
                   ariaCurrentWhenActive="page"
-                  class="flex items-center gap-3 px-3.5 min-h-[44px] rounded-2xl text-sm font-medium text-brand-100/70 hover:bg-white/5 hover:text-white transition-colors"
+                  class="flex items-center gap-3 px-3.5 min-h-[44px] rounded-2xl text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
                   data-testid="admin-drawer-item"
                   (click)="closeSidebar()"
                 >
@@ -281,7 +281,7 @@
             <div class="shrink-0 p-4 pt-3 border-t border-white/10 flex flex-col gap-1 pb-[calc(16px+var(--safe-bottom))]" [style.padding-left]="'max(16px, var(--safe-left))'">
               <a
                 routerLink="/"
-                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-brand-100/70 hover:bg-white/5 hover:text-white transition-colors"
+                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
                 (click)="closeSidebar()"
               >
                 <app-icon name="arrow-left" [size]="16" />
@@ -305,7 +305,7 @@
                   />
                   <div class="flex-1 min-w-0">
                     <div class="text-sm font-bold text-white truncate">{{ u.name }}</div>
-                    <div class="text-[10px] text-brand-300 truncate uppercase tracking-wider">Admin</div>
+                    <div class="text-[10px] text-slate-400 truncate uppercase tracking-wider">Admin</div>
                   </div>
                   <app-theme-toggle tone="on-dark" />
               <app-language-switcher variant="dropdown" placement="topRight" theme="dark" />

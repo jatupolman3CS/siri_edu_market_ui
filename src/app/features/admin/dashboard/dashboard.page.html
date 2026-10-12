@@ -106,7 +106,7 @@
           @if (dashboardView() === 'loading') {
             <div class="space-y-3 mt-5" aria-busy="true" data-testid="admin-health-loading">
               @for (i of [1, 2, 3]; track i) {
-                <div class="h-9 rounded-xl bg-brand-50 animate-pulse" aria-hidden="true"></div>
+                <div class="h-9 rounded-xl bg-slate-50 animate-pulse" aria-hidden="true"></div>
               }
             </div>
           } @else if (dashboardView() === 'error') {
@@ -151,7 +151,7 @@
           [rtLabel]="'admin.recentTransactionsTitle' | trans"
         >
         <table class="rtable w-full">
-          <thead class="bg-brand-50">
+          <thead class="bg-slate-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-5 py-3 font-semibold">{{ 'admin.colDoc' | trans }}</th>
               <th class="px-5 py-3 font-semibold">{{ 'admin.colStatus' | trans }}</th>

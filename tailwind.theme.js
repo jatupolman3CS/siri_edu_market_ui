@@ -27,7 +27,7 @@ const channels = (hex) => toRgb(hex).join(' ');
 const mix = (fg, bg, t) => fg.map((v, i) => Math.round(v * t + bg[i] * (1 - t)));
 
 /** Dark card surface — the base the coloured tints are blended into. */
-const DARK_SURFACE = [36, 21, 31];
+const DARK_SURFACE = [15, 23, 42];
 
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 const MIRROR = { 50: 950, 100: 900, 200: 800, 300: 700, 400: 600, 500: 500, 600: 400, 700: 300, 800: 200, 900: 100, 950: 50 };
@@ -42,20 +42,21 @@ const BRAND_LIGHT = {
   50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6',
   500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843',
 };
+// 50–300 are pink blended into the dark slate surface at 8 / 13 / 21 / 34 % — a faint violet-pink tint, never a plum slab.
 const BRAND_DARK = {
-  50: '#210e19', 100: '#341426', 200: '#501d3a', 300: '#7e2858', 400: '#f472b6',
+  50: '#211b33', 100: '#2c1d38', 200: '#3d2141', 300: '#5a2850', 400: '#f472b6',
   500: '#ec4899', 600: '#f472b6', 700: '#f9a8d4', 800: '#fbcfe8', 900: '#fce7f3',
 };
 
 const SEMANTIC_LIGHT = {
-  ink: '#2a1b22', 'ink-soft': '#5a4751', 'ink-muted': '#76646d',
-  line: '#f6e0ec', 'line-strong': '#a07f90',
-  surface: '#ffffff', canvas: '#fdf2f8', cream: '#fffafc',
+  ink: '#0f172a', 'ink-soft': '#475569', 'ink-muted': '#5f6f86',
+  line: '#e2e8f0', 'line-strong': '#8692a6',
+  surface: '#ffffff', canvas: '#f8fafc', cream: '#f1f5f9',
 };
 const SEMANTIC_DARK = {
-  ink: '#faf0f5', 'ink-soft': '#dcc8d3', 'ink-muted': '#b098a6',
-  line: '#422135', 'line-strong': '#826073',
-  surface: '#24151f', canvas: '#160b12', cream: '#1e1019',
+  ink: '#f8fafc', 'ink-soft': '#cbd5e1', 'ink-muted': '#94a3b8',
+  line: '#1e293b', 'line-strong': '#64748b',
+  surface: '#0f172a', canvas: '#050b14', cream: '#0a1120',
 };
 
 function build(mode) {

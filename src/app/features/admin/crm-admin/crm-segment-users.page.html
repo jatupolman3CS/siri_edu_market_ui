@@ -22,7 +22,7 @@
         [rtResetKey]="code() + '|' + crm.segmentUsersPage() + '|' + crm.segmentUsersPageSize()"
       >
         <table class="rtable w-full">
-          <thead class="bg-brand-50">
+          <thead class="bg-slate-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colUser' | trans }}</th>
               <th class="px-4 py-3 font-semibold">{{ 'admin.crmSegment.colConfidence' | trans }}</th>
@@ -36,7 +36,7 @@
           <tbody>
             @for (u of crm.segmentUsers(); track u.userId) {
               <tr
-                class="border-t border-line cursor-pointer hover:bg-brand-50/60"
+                class="border-t border-line cursor-pointer hover:bg-slate-100/60"
                 (click)="openUser(u.userId)"
               >
                 <td class="rt-title px-4 py-3 text-sm">

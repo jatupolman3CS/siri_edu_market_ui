@@ -6,7 +6,7 @@
   position: fixed;
   inset: 0;
   z-index: 900;
-  background: rgba(131, 24, 67, 0.4);
+  background: rgba(15, 23, 42, 0.4);
   animation: bottom-sheet-fade 0.2s ease-out;
 }
 
@@ -26,7 +26,7 @@
   backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -16px 48px -12px rgba(131, 24, 67, 0.30);
+  box-shadow: 0 -16px 48px -12px rgba(15, 23, 42, 0.30);
   animation: bottom-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   outline: none;
 }
@@ -138,7 +138,7 @@
     padding-left: 0;
     padding-right: var(--safe-right);
     border-radius: 24px 0 0 24px;
-    box-shadow: -16px 0 48px -12px rgba(131, 24, 67, 0.30);
+    box-shadow: -16px 0 48px -12px rgba(15, 23, 42, 0.30);
     animation-name: bottom-sheet-in-right;
   }
 

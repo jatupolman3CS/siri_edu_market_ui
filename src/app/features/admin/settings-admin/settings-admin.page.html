@@ -133,7 +133,7 @@
         <p class="text-xs text-ink-muted mb-5">{{ 'admin.settingsAdmin.adsPlacementsDesc' | trans }}</p>
 
         @if (loadingAds() && adPlacements().length === 0) {
-          <div class="rounded-3xl bg-brand-50/60 p-5 text-sm text-ink-muted">กำลังโหลด…</div>
+          <div class="rounded-3xl bg-slate-50/60 p-5 text-sm text-ink-muted">กำลังโหลด…</div>
         } @else {
           <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper. Not paginated. -->
           <div
@@ -155,7 +155,7 @@
               </thead>
               <tbody class="divide-y divide-line">
                 @for (p of adPlacements(); track p.placementKey) {
-                  <tr class="hover:bg-brand-50/30 transition-colors">
+                  <tr class="hover:bg-slate-100/30 transition-colors">
                     <td class="rt-title py-3 pr-4">
                       <div class="font-semibold text-ink">{{ p.displayName }}</div>
                       <div class="text-xs font-mono font-normal text-ink-muted break-all">{{ p.placementKey }}</div>
@@ -279,7 +279,7 @@
 
         @if (storage(); as s) {
           @if (s.isConfigured) {
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-3xl bg-brand-50">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-3xl bg-slate-50">
               <div>
                 <dt class="text-xs text-ink-muted">{{ 'admin.settingsAdmin.storageBucket' | trans }}</dt>
                 <dd class="text-sm font-bold text-ink mt-1 font-mono">{{ s.bucketName || '-' }}</dd>
@@ -303,7 +303,7 @@
             </div>
           }
         } @else {
-          <div class="rounded-3xl bg-brand-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.storageLoading' | trans }}</div>
+          <div class="rounded-3xl bg-slate-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.storageLoading' | trans }}</div>
         }
       </section>
 
@@ -412,7 +412,7 @@
         </p>
 
         @if (jobToggles().length === 0) {
-          <div class="rounded-3xl bg-brand-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.jobsLoading' | trans }}</div>
+          <div class="rounded-3xl bg-slate-50/60 p-5 text-sm text-ink-muted">{{ 'admin.settingsAdmin.jobsLoading' | trans }}</div>
         } @else {
           <ul class="grid grid-cols-1 xl:grid-cols-2 gap-3">
             @for (job of jobToggles(); track job.jobKey) {

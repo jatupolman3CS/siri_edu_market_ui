@@ -158,7 +158,7 @@
                     </div>
                     <span class="font-bold text-ink">{{ c.sales | compact }}</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
                       class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="(c.sales / topCategoryMax()) * 100"
@@ -254,7 +254,7 @@
                     <span class="font-medium text-ink">{{ 'seller.trafficSearch' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.searchPercent | smartDecimal }}%</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
                       class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="seller.stats().insights.trafficBreakdown.searchPercent"
@@ -266,7 +266,7 @@
                     <span class="font-medium text-ink">{{ 'seller.trafficCategory' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.categoryPercent | smartDecimal }}%</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
                       class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="seller.stats().insights.trafficBreakdown.categoryPercent"
@@ -278,7 +278,7 @@
                     <span class="font-medium text-ink">{{ 'seller.trafficDirect' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.directPercent | smartDecimal }}%</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
                       class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="seller.stats().insights.trafficBreakdown.directPercent"
@@ -310,14 +310,14 @@
               <ul class="divide-y divide-line" aria-hidden="true">
                 @for (i of [1, 2, 3, 4, 5]; track i) {
                   <li class="py-3 flex items-center gap-3 sm:gap-4">
-                    <div class="w-10 h-14 rounded-xl bg-brand-50 animate-pulse shrink-0"></div>
+                    <div class="w-10 h-14 rounded-xl bg-slate-50 animate-pulse shrink-0"></div>
                     <div class="flex-1 min-w-0 space-y-2">
-                      <div class="h-4 w-3/4 max-w-[16rem] rounded-full bg-brand-50 animate-pulse"></div>
-                      <div class="h-3 w-1/2 max-w-[10rem] rounded-full bg-brand-50 animate-pulse"></div>
+                      <div class="h-4 w-3/4 max-w-[16rem] rounded-full bg-slate-50 animate-pulse"></div>
+                      <div class="h-3 w-1/2 max-w-[10rem] rounded-full bg-slate-50 animate-pulse"></div>
                     </div>
                     <div class="shrink-0 flex flex-col items-end gap-1.5">
-                      <div class="h-4 w-14 rounded-full bg-brand-50 animate-pulse"></div>
-                      <div class="h-4 w-16 rounded-full bg-brand-50 animate-pulse"></div>
+                      <div class="h-4 w-14 rounded-full bg-slate-50 animate-pulse"></div>
+                      <div class="h-4 w-16 rounded-full bg-slate-50 animate-pulse"></div>
                     </div>
                   </li>
                 }
@@ -382,7 +382,7 @@
             {{ 'seller.requestWithdrawNow' | trans }}
           </button>
 
-          <div class="mt-5 pt-5 border-t border-brand-200/60 space-y-3">
+          <div class="mt-5 pt-5 border-t border-line space-y-3">
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
               <span class="text-ink-soft">{{ 'seller.sellerShareFeature' | trans: { percent: sellerSharePercent() } }}</span>

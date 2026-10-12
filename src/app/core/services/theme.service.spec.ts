@@ -76,7 +76,7 @@ describe('ThemeService', () => {
     expect(service.theme()).toBe('dark');
     expect(service.isDark()).toBe(true);
     expect(htmlTheme()).toBe('dark');
-    expect(meta.getAttribute('content')).toBe('#160b12');
+    expect(meta.getAttribute('content')).toBe('#050b14');
   });
 
   it('follows the OS when nothing is saved: light', () => {
@@ -120,7 +120,7 @@ describe('ThemeService', () => {
     expect(service.theme()).toBe('dark');
     expect(htmlTheme()).toBe('dark');
     expect(document.documentElement.style.colorScheme).toBe('dark');
-    expect(meta.getAttribute('content')).toBe('#160b12');
+    expect(meta.getAttribute('content')).toBe('#050b14');
     expect(storage.getItem(THEME_STORAGE_KEY)).toBe('dark');
 
     service.toggle();

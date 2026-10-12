@@ -16,9 +16,9 @@ module.exports = {
         primary: { DEFAULT: '#db2777', hover: '#be185d' },
         // Fixed dark ink for fills that must NOT flip with the theme (image badges, scrims). `ink` itself is a
         // text colour that turns light in dark mode.
-        'ink-deep': '#2a1b22',
-        // Admin chrome base — stays dark plum in both themes (brand-900 itself turns light in dark mode).
-        'brand-deep': '#831843',
+        'ink-deep': '#050b14',
+        // Admin chrome base — stays dark navy in both themes (slate-900 itself turns light in dark mode).
+        'chrome-deep': '#0b1220',
         // Premium Cyber-Pink Glassmorphism, light + dark: ink / line / surface / canvas / cream / brand and the
         // slate-gray-neutral-stone + red-amber-emerald-… families are CSS-variable colours (tailwind.theme.js).
         ...themedColors(),
@@ -38,20 +38,21 @@ module.exports = {
         '4xl': '3rem',
       },
       boxShadow: {
-        'soft':  '0 4px 16px -4px rgba(236, 72, 153, 0.12)',
-        'pop':   '0 10px 30px -8px rgba(236, 72, 153, 0.20)',
-        'float': '0 20px 60px -20px rgba(219, 39, 119, 0.28)',
+        // Neutral slate shadows — pink is reserved for the primary actions (.btn-pink, logo), not every card.
+        'soft':  '0 4px 16px -4px rgba(15, 23, 42, 0.08)',
+        'pop':   '0 10px 30px -8px rgba(15, 23, 42, 0.14)',
+        'float': '0 20px 60px -20px rgba(15, 23, 42, 0.22)',
         // Glassmorphism: soft pink drop shadow + 1px inner white highlight on the top edge.
         'glass': 'var(--glass-shadow)',
         // Cyber-pink neon accent (focus rings / hero CTAs).
         'glow':  '0 0 0 1px rgba(236, 72, 153, 0.35), 0 0 24px rgba(236, 72, 153, 0.35)',
       },
       backgroundImage: {
-        'gradient-pink': 'linear-gradient(135deg, rgb(var(--brand-50-rgb)) 0%, rgb(var(--brand-200-rgb)) 100%)',
+        'gradient-pink': 'linear-gradient(135deg, rgb(var(--brand-50-rgb) / 0.55) 0%, rgb(var(--surface-rgb) / 0.85) 100%)',
         // Only used behind white text (home seller CTA, auth-layout aside). primary → primary-hover
         // so white text stays ≥ 4.6:1 at the lightest stop (brand-500 #ec4899 is only 3.5:1 — never put white text on it).
-        'gradient-pink-strong': 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)',
-        'gradient-cream': 'linear-gradient(180deg, rgb(var(--cream-rgb)) 0%, rgb(var(--brand-50-rgb)) 100%)',
+        'gradient-pink-strong': 'linear-gradient(135deg, #0f172a 0%, #831843 100%)',
+        'gradient-cream': 'linear-gradient(180deg, rgb(var(--cream-rgb)) 0%, rgb(var(--canvas-rgb)) 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',

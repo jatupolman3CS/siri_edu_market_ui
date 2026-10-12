@@ -36,7 +36,7 @@
         [rtResetKey]="page() + '|' + pageSize() + '|' + statusFilter()"
       >
         <table class="rtable w-full">
-          <thead class="bg-brand-50">
+          <thead class="bg-slate-50">
             <!-- R-27 item 11 / §4.5 table mode: px-2 (px-3 from 1024, px-5 >=1280) so the 744 table,
                  capped or not, fits its card without sideways scroll in th and en. -->
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
@@ -211,7 +211,7 @@
         @if (quoting()) {
           <p class="text-sm text-ink-muted">{{ 'sellerAds.quoting' | trans }}</p>
         } @else if (quote(); as q) {
-          <div class="card-soft p-4 space-y-1.5 bg-brand-50">
+          <div class="card-soft p-4 space-y-1.5 bg-slate-50">
             <div class="flex justify-between text-sm">
               <span class="text-ink-soft">{{ 'sellerAds.quoteDayCount' | trans }}</span>
               <span class="font-semibold text-ink">{{ q.dayCount }} {{ 'sellerAds.dayUnit' | trans }} ({{ (q.pricingMode === 'weekly' ? 'sellerAds.pricingModeWeekly' : 'sellerAds.pricingModeDaily') | trans }})</span>

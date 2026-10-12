@@ -72,7 +72,7 @@
               @for (c of admin.adminCategories(); track c.id) {
                 <label
                   nz-checkbox
-                  class="px-2 py-1 rounded-xl hover:bg-brand-50 [@media(pointer:coarse)]:min-h-11 !items-center"
+                  class="px-2 py-1 rounded-xl hover:bg-slate-100 [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="(doc()!.categoryIds ?? []).includes(c.id)"
                   (nzCheckedChange)="patchDoc({ categoryIds: ((doc()!.categoryIds ?? []).includes(c.id)
                     ? (doc()!.categoryIds ?? []).filter((id) => id !== c.id)
@@ -151,7 +151,7 @@
               @for (g of gradePresets; track g.value) {
                 <label
                   nz-checkbox
-                  class="text-xs bg-brand-50/80 px-2 py-1 rounded-lg [@media(pointer:coarse)]:min-h-11 !items-center"
+                  class="text-xs bg-slate-50/80 px-2 py-1 rounded-lg [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="gradeChecked(g.value)"
                   (nzCheckedChange)="toggleGrade(g.value, $event)"
                 >

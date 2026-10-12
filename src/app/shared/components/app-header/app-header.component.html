@@ -7,10 +7,10 @@
   · desktop (>=1280):  the original full header (utility bar, search + seller center, quick links, sub-nav).
 -->
 <header
-  class="app-header sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-brand-200/50 shadow-glass safe-top"
+  class="app-header sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-line shadow-glass safe-top"
 >
   <!-- Top Utility Micro-Bar (desktop only) -->
-  <div class="hidden xl:block border-b border-brand-100/70 bg-gradient-to-r from-brand-50/90 via-cream/40 to-brand-50/90 text-xs text-ink-muted" data-testid="header-utility-bar">
+  <div class="hidden xl:block border-b border-brand-100/70 bg-slate-100/60 text-xs text-ink-muted" data-testid="header-utility-bar">
     <div class="page-container h-8 flex items-center justify-between gap-2">
       <!-- Left side: Platform Tagline -->
       <div class="flex items-center gap-3 min-w-0 shrink">
@@ -67,7 +67,7 @@
           <!-- G-12 / R-2: the 2px border left a 40px inner box (input 40 tall, icon button 40x40, submit
                40x32). Touch devices get a 48px box so the input and every button are 44 tall;
                fine pointers keep the 44px desktop row. -->
-          <div class="search-container relative flex items-center h-11 [@media(pointer:coarse)]:h-12 rounded-2xl border-2 border-brand-300 bg-brand-50/30">
+          <div class="search-container relative flex items-center h-11 [@media(pointer:coarse)]:h-12 rounded-2xl border-2 border-line-strong bg-surface/60">
             <!-- Search icon button on left -->
             <button
               type="submit"
@@ -95,7 +95,7 @@
               <button
                 type="button"
                 (click)="clearQuery()"
-                class="p-1.5 mr-1 flex items-center justify-center [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-brand-100 cursor-pointer shrink-0"
+                class="p-1.5 mr-1 flex items-center justify-center [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-slate-200 cursor-pointer shrink-0"
                 [title]="'header.clearSearch' | trans"
                 [attr.aria-label]="'header.clearSearch' | trans"
               >
@@ -327,7 +327,7 @@
           <button
             type="button"
             (click)="searchTag(kw)"
-            class="chip-tag px-2 py-0.5 rounded-full text-ink-soft bg-brand-50/60 border border-brand-100/80 whitespace-nowrap text-[11px] font-medium cursor-pointer shrink-0"
+            class="chip-tag px-2 py-0.5 rounded-full text-ink-soft bg-slate-100/70 border border-line whitespace-nowrap text-[11px] font-medium cursor-pointer shrink-0"
           >
             {{ kw }}
           </button>
@@ -338,7 +338,7 @@
   </div>
 
   <!-- Tablet/laptop nav row (744–1279): single line, scrolls horizontally, constant height -->
-  <div class="hidden md:block xl:hidden bg-brand-50/40 border-t border-line/60" data-testid="header-tablet-nav">
+  <div class="hidden md:block xl:hidden bg-slate-50/40 border-t border-line/60" data-testid="header-tablet-nav">
     <div class="page-container">
       <nav class="chip-row items-center h-11" [attr.aria-label]="'responsive.nav.primary' | trans">
         @for (item of navItems(); track item.href) {
@@ -372,7 +372,7 @@
   </div>
 
   <!-- Sub-Navigation Category Row (desktop: หมวดหมู่, หน้าแรก, ตลาด) -->
-  <div class="hidden xl:block bg-brand-50/40 border-t border-line/60" data-testid="header-desktop-nav">
+  <div class="hidden xl:block bg-slate-50/40 border-t border-line/60" data-testid="header-desktop-nav">
     <div class="page-container">
       <div class="flex items-center justify-between h-10">
         <!-- Main Navigation Links -->
@@ -412,7 +412,7 @@
   <div class="md:hidden bg-surface border-b border-line" data-testid="header-phone-search">
     <div class="page-container pb-2 pt-0.5">
       <form class="relative w-full" (ngSubmit)="search()">
-        <div class="search-container relative flex items-center rounded-xl border border-brand-300 bg-brand-50/40 p-0.5">
+        <div class="search-container relative flex items-center rounded-xl border border-line-strong bg-surface/60 p-0.5">
           <div class="pl-2.5 pr-1.5 text-ink-muted flex items-center justify-center pointer-events-none">
             <app-icon name="search" [size]="16" />
           </div>
@@ -453,7 +453,7 @@
           <button
             type="button"
             (click)="searchTag(kw)"
-            class="inline-flex items-center min-h-11 px-3 rounded-full text-ink-soft bg-brand-50 border border-brand-100/70 whitespace-nowrap text-xs cursor-pointer"
+            class="inline-flex items-center min-h-11 px-3 rounded-full text-ink-soft bg-slate-100 border border-line whitespace-nowrap text-xs cursor-pointer"
           >
             {{ kw }}
           </button>

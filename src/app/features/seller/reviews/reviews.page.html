@@ -30,12 +30,12 @@
             </div>
           </div>
           <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-brand-50 border border-line text-center">
+            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-slate-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-emerald-600">{{ reviewStats().positivePct }}%</div>
               <!-- The key carries {count}; without the param the label rendered a raw "{count}%". -->
               <div class="text-xs text-ink-muted mt-1">{{ 'seller.positiveReviews' | trans: { count: reviewStats().positivePct } }}</div>
             </div>
-            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-brand-50 border border-line text-center">
+            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-slate-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-brand-600">
                 @if (reviewStats().avgHours != null) {
                   {{ reviewStats().avgHours! | smartDecimal }} {{ 'seller.hoursUnit' | trans }}
@@ -45,7 +45,7 @@
               </div>
               <div class="text-xs text-ink-muted mt-1">{{ 'seller.avgReplyTime' | trans }}</div>
             </div>
-            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-brand-50 border border-line text-center">
+            <div class="h-full flex flex-col justify-center p-4 rounded-2xl bg-slate-50 border border-line text-center">
               <div class="text-2xl font-extrabold text-ink">{{ reviewStats().replyPct }}%</div>
               <div class="text-xs text-ink-muted mt-1">{{ 'seller.repliedPct' | trans: { pct: reviewStats().replyPct } }}</div>
             </div>

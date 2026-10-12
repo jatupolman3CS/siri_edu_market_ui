@@ -143,14 +143,14 @@
 
                     <!-- Resource info grid (TpT-style) -->
                     <ul class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
                         <span class="text-2xl">{{ resourceIcon(d.resourceType) }}</span>
                         <div class="text-sm">
                           <div class="text-xs text-ink-muted">{{ 'product.typeLabel' | trans }}</div>
                           <div class="font-bold text-ink">{{ resourceLabel(d.resourceType) }}</div>
                         </div>
                       </li>
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
                         <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                           <app-icon name="user" [size]="16" />
                         </span>
@@ -161,7 +161,7 @@
                           </div>
                         </div>
                       </li>
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
                         <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                           <app-icon name="doc" [size]="16" />
                         </span>
@@ -170,7 +170,7 @@
                           <div class="font-bold text-ink uppercase">{{ d.format }} · {{ d.pages }} {{ 'common.pages' | trans }}</div>
                         </div>
                       </li>
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
                         <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                           <app-icon name="globe" [size]="16" />
                         </span>
@@ -180,7 +180,7 @@
                         </div>
                       </li>
                       @if (d.standards?.length) {
-                        <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50 sm:col-span-2">
+                        <li class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 sm:col-span-2">
                           <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                             <app-icon name="flag" [size]="16" />
                           </span>
@@ -241,7 +241,7 @@
                         @for (b of ratingBreakdown(); track b.score) {
                           <div class="flex items-center gap-3 text-sm">
                             <span class="text-ink-muted w-6">{{ b.score }}★</span>
-                            <div class="flex-1 h-2 rounded-full bg-brand-100 overflow-hidden">
+                            <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                               <div class="h-full bg-brand-500 rounded-full" [style.width.%]="b.percent"></div>
                             </div>
                             <span class="text-xs text-ink-muted w-10 text-right">{{ b.percent }}%</span>
@@ -707,7 +707,7 @@
                   <article class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1">
                     <a [routerLink]="['/bundle', card.bundle.id]" class="block">
                       <!-- Cover -->
-                      <div class="relative aspect-[16/10] bg-brand-50 overflow-hidden">
+                      <div class="relative aspect-[16/10] bg-slate-50 overflow-hidden">
                         <img
                           appImgFallback
                           [src]="card.bundle.cover"

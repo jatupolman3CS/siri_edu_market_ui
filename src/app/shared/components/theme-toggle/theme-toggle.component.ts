@@ -22,7 +22,7 @@ export class ThemeToggleComponent {
 
   readonly classes = computed(() =>
     this.tone() === 'on-dark'
-      ? 'bg-white/10 text-brand-100 border-white/10 hover:bg-white/20'
+      ? 'bg-white/10 text-slate-200 border-white/10 hover:bg-white/20'
       : 'bg-surface text-ink-soft border-line hover:border-brand-300 hover:text-brand-600',
   );
 }

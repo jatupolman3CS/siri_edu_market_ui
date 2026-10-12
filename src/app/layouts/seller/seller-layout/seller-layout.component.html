@@ -3,7 +3,7 @@
 
       <!-- Desktop sidebar (>=1280) -->
       <aside
-        class="hidden xl:flex flex-col w-72 bg-surface/75 backdrop-blur-xl border-r border-brand-200/50 shadow-glass p-5 sticky top-0 h-[100dvh] overflow-hidden shrink-0 z-30"
+        class="hidden xl:flex flex-col w-72 bg-surface/75 backdrop-blur-xl border-r border-line shadow-glass p-5 sticky top-0 h-[100dvh] overflow-hidden shrink-0 z-30"
         data-testid="seller-sidebar"
       >
         <div class="shrink-0 mb-4">
@@ -57,7 +57,7 @@
 
           @if (auth.user(); as u) {
             <div
-              class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-brand-50 border border-line"
+              class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-line"
             >
               <img
                 appImgFallback
@@ -78,7 +78,7 @@
 
       <!-- Tablet / laptop rail (744–1279) -->
       <aside
-        class="seller-rail hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-surface/75 backdrop-blur-xl border-r border-brand-200/50 shadow-glass sticky top-0 h-[100dvh] z-30 safe-top"
+        class="seller-rail hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-surface/75 backdrop-blur-xl border-r border-line shadow-glass sticky top-0 h-[100dvh] z-30 safe-top"
         data-testid="seller-rail"
       >
         <div class="shrink-0 flex justify-center py-3 border-b border-line">
@@ -131,7 +131,7 @@
       <div class="flex-1 min-w-0 flex flex-col">
         <!-- Phone top bar (<744): logo · bell · avatar menu -->
         <header
-          class="md:hidden sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-brand-200/50 w-full safe-top"
+          class="md:hidden sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-line w-full safe-top"
           data-testid="seller-phone-topbar"
         >
           <div class="flex items-center justify-between gap-2 h-14 pl-[max(16px,var(--safe-left))] pr-[max(16px,var(--safe-right))]">
@@ -147,7 +147,7 @@
 
         <!-- Tablet / laptop slim top bar (744–1279): bell · language · avatar -->
         <header
-          class="hidden md:flex xl:hidden sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-brand-200/50 w-full items-center justify-between gap-3 min-h-[calc(56px+var(--safe-top))] pl-6 pr-[max(24px,var(--safe-right))] safe-top"
+          class="hidden md:flex xl:hidden sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-line w-full items-center justify-between gap-3 min-h-[calc(56px+var(--safe-top))] pl-6 pr-[max(24px,var(--safe-right))] safe-top"
           data-testid="seller-slim-topbar"
         >
           <app-logo link="/seller" />
@@ -249,7 +249,7 @@
                 <app-icon name="logout" [size]="16" />
                 {{ 'nav.signOut' | trans }}
               </button>
-              <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-brand-50 border border-line">
+              <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-line">
                 @if (auth.user(); as u) {
                   <img
                     appImgFallback

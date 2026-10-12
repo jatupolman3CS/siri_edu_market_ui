@@ -203,7 +203,7 @@
               </app-empty-state>
             } @else if (bundles.bundleResultsState().status !== 'loading' && displayedBundles().length === 0) {
               <div class="flex flex-col items-center justify-center text-center py-16 px-6 rounded-2xl border glass-card">
-                <div class="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center mb-4">
+                <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                   <app-icon name="package" [size]="30" className="text-brand-500" />
                 </div>
                 <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyBundleTitle' | trans }}</h3>
@@ -299,7 +299,7 @@
             } @else if (catalog.marketplaceResultsState().status !== 'loading' && displayedDocs().length === 0) {
               @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
                 <div class="flex flex-col items-center justify-center text-center py-10 px-6 rounded-2xl border glass-card">
-                  <div class="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mb-3">
+                  <div class="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mb-3">
                     <app-icon name="search" [size]="24" className="text-brand-400" />
                   </div>
                   <h4 class="text-base font-bold text-ink">{{ 'marketplace.emptyDocWithPackages' | trans }}</h4>
@@ -313,7 +313,7 @@
                 </div>
               } @else {
                 <div class="flex flex-col items-center justify-center text-center py-16 px-6 rounded-2xl border glass-card">
-                  <div class="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center mb-4">
+                  <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                     <app-icon name="search" [size]="30" className="text-brand-500" />
                   </div>
                   <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyTitle' | trans }}</h3>
@@ -390,7 +390,7 @@
           <div data-filter-group="category" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('category')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'footer.categories' | trans }}</span>
@@ -412,7 +412,7 @@
                   <div>
                     <button
                       type="button"
-                      class="w-full flex items-center gap-2 px-2.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl hover:bg-brand-50 transition-colors duration-200 text-left"
+                      class="w-full flex items-center gap-2 px-2.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl hover:bg-slate-100 transition-colors duration-200 text-left"
                       [class.bg-brand-50]="catActive"
                       (click)="toggleCategory(cat.id)"
                     >
@@ -431,7 +431,7 @@
                       <div class="pl-7 py-1 flex flex-col gap-0.5">
                         @for (sub of cat.subcategories; track sub.id) {
                           @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
-                          <label class="flex items-center gap-2 px-2 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-lg hover:bg-brand-50/60 cursor-pointer">
+                          <label class="flex items-center gap-2 px-2 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-lg hover:bg-slate-100/60 cursor-pointer">
                             <input
                               type="checkbox"
                               class="w-3.5 h-3.5 shrink-0 accent-brand-500"
@@ -465,7 +465,7 @@
           <div class="border-t border-line" data-filter-group="grade" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('grade')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupGrade' | trans }}</span>
@@ -506,7 +506,7 @@
           <div class="border-t border-line" data-filter-group="resourceType" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('resourceType')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupResourceType' | trans }}</span>
@@ -547,7 +547,7 @@
           <div class="border-t border-line" data-filter-group="price">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('price')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupPrice' | trans }}</span>
@@ -586,7 +586,7 @@
           <div class="border-t border-line" data-filter-group="rating" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('rating')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupRating' | trans }}</span>
@@ -625,7 +625,7 @@
           <div class="border-t border-line" data-filter-group="format" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('format')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupFormat' | trans }}</span>
@@ -666,7 +666,7 @@
           <div class="border-t border-line" data-filter-group="standard" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-slate-100 transition-colors duration-200 text-left"
               (click)="toggleGroup('standard')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupStandard' | trans }}</span>

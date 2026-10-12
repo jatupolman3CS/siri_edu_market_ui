@@ -7,7 +7,7 @@ export type AppTheme = 'light' | 'dark';
 export const THEME_STORAGE_KEY = 'siriedu_theme';
 
 /** `<meta name="theme-color">` per theme — the browser UI (Android address bar, iOS status bar) follows the page. */
-const META_THEME_COLOR: Record<AppTheme, string> = { light: '#db2777', dark: '#160b12' };
+const META_THEME_COLOR: Record<AppTheme, string> = { light: '#db2777', dark: '#050b14' };
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 

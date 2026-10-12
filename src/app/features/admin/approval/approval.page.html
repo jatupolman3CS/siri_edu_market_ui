@@ -184,7 +184,7 @@
                   {{ isPreviewLocked() ? ('admin.locked' | trans) : ('admin.lockPreview' | trans) }}
                 </button>
               </div>
-              <div class="bg-brand-50/50 p-4 sm:p-5 flex items-center justify-center border-b border-line/60">
+              <div class="bg-slate-50/50 p-4 sm:p-5 flex items-center justify-center border-b border-line/60">
                 <div
                   class="relative aspect-[4/5] h-[280px] sm:h-[340px] md:h-[380px] max-w-full bg-surface rounded-2xl shadow-sm border border-line/60 flex items-center justify-center overflow-hidden"
                   data-testid="admin-marketplace-preview-hero"
@@ -356,7 +356,7 @@
                   }
                 }
 
-                <dl class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 md:p-5 rounded-3xl bg-brand-50 border border-line">
+                <dl class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 md:p-5 rounded-3xl bg-slate-50 border border-line">
                   <div>
                     <dt class="text-xs text-ink-muted">{{ 'admin.colPrice' | trans }}</dt>
                     <dd class="text-base font-bold text-ink mt-1">{{ d.price | thb }}</dd>
@@ -393,7 +393,7 @@
                       } @else if (d.aiPrescreenRiskLevel === 'HighRisk') {
                         <span class="pill bg-rose-100 text-rose-700 text-xs font-bold">{{ 'admin.prescreenHighRisk' | trans }}</span>
                       } @else {
-                        <span class="pill bg-slate-200 text-ink-muted text-xs font-medium">{{ 'admin.prescreenNotEvaluated' | trans }}</span>
+                        <span class="pill bg-slate-200 text-ink-soft text-xs font-medium">{{ 'admin.prescreenNotEvaluated' | trans }}</span>
                       }
                       <button
                         type="button"

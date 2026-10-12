@@ -70,7 +70,7 @@
         [rtResetKey]="page() + '|' + pageSize()"
       >
         <table class="rtable w-full">
-          <thead class="bg-brand-50">
+          <thead class="bg-slate-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-4 py-3 font-semibold">{{ 'admin.transactions.colDocument' | trans }}</th>
               <th class="px-4 py-3 font-semibold">{{ 'admin.transactions.colStatus' | trans }}</th>
@@ -87,7 +87,7 @@
           </thead>
           <tbody>
             @for (t of items(); track t.id) {
-              <tr class="border-t border-line hover:bg-brand-50/40">
+              <tr class="border-t border-line hover:bg-slate-100/40">
                 <td class="rt-title px-4 py-3 text-sm text-ink">
                   <span class="line-clamp-2">{{ t.documentTitle }}</span>
                 </td>
