@@ -22,14 +22,14 @@
               appImgFallback
               [src]="resolveAvatarUrl(s.avatarUrl)"
               [alt]="s.studioName"
-              class="w-28 h-28 rounded-3xl object-cover ring-4 ring-white shadow-pop -mt-16 md:-mt-24"
+              class="w-28 h-28 rounded-3xl object-cover ring-4 ring-surface shadow-pop -mt-16 md:-mt-24"
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-1">
                 <!-- responsive-ui v1.4 R-5 (F96): a long store name wraps (it widened the page to 1473px). -->
                 <h1 class="heading-1 font-extrabold text-ink min-w-0 max-w-full [overflow-wrap:anywhere]">{{ s.studioName }}</h1>
                 @if (s.isVerified) {
-                  <svg viewBox="0 0 16 16" class="w-6 h-6 text-pink-500" fill="currentColor">
+                  <svg viewBox="0 0 16 16" class="w-6 h-6 text-brand-500" fill="currentColor">
                     <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
                     <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
@@ -75,7 +75,7 @@
                 </button>
               }
               <p class="text-[11px] text-ink-muted leading-relaxed text-center px-1">
-                <app-icon name="lock" [size]="11" className="text-pink-500" />
+                <app-icon name="lock" [size]="11" className="text-brand-500" />
                 {{ 'storefront.safetyNotice' | trans }}
               </p>
             </div>
@@ -93,7 +93,7 @@
             </div>
             <div>
               <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statRating' | trans }}</dt>
-              <dd class="text-2xl font-extrabold text-pink-600 mt-1">{{ s.rating | smartDecimal }} ★</dd>
+              <dd class="text-2xl font-extrabold text-brand-600 mt-1">{{ s.rating | smartDecimal }} ★</dd>
             </div>
             <div>
               <dt class="text-[11px] text-ink-muted uppercase tracking-wider">{{ 'storefront.statFollowers' | trans }}</dt>
@@ -119,10 +119,10 @@
                   <div class="flex flex-col items-center gap-2 h-full justify-end min-w-0">
                     <span class="text-xs font-bold text-ink">{{ m.unitsSold }}</span>
                     <div
-                      class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
+                      class="w-full rounded-t-2xl bg-gradient-to-t from-brand-400 to-brand-200 relative overflow-hidden"
                       [style.height.%]="(m.unitsSold / maxUnitsSold()) * 100"
                     >
-                      <div class="absolute inset-x-0 top-0 h-1 bg-pink-500 rounded-t-2xl"></div>
+                      <div class="absolute inset-x-0 top-0 h-1 bg-brand-500 rounded-t-2xl"></div>
                     </div>
                     <span class="text-[11px] sm:text-xs text-ink-muted text-center leading-tight [overflow-wrap:anywhere]">{{ m.month }}</span>
                   </div>
@@ -141,7 +141,7 @@
               [class.bg-primary]="tab() === t.value"
               [class.text-white]="tab() === t.value"
               [class.border-primary]="tab() === t.value"
-              [class.bg-white]="tab() !== t.value"
+              [class.bg-surface]="tab() !== t.value"
               [class.text-ink-soft]="tab() !== t.value"
               [class.border-line]="tab() !== t.value"
               (click)="tab.set(t.value)"

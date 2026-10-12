@@ -84,7 +84,7 @@ describe('AdminTransactionsPage — responsive table (responsive-ui v1 U4-2)', (
     expect(row).not.toBeNull();
     const active = row.querySelector('button.bg-primary');
     expect(active).not.toBeNull();
-    expect(row.querySelector('button.bg-pink-500')).toBeNull();
+    expect(row.querySelector('button.bg-brand-500')).toBeNull();
   });
 
   it('R-27: the table sits in a table viewport that a new page or page size scrolls back to the top (v1.6)', async () => {

@@ -35,9 +35,9 @@
           <div class="text-sm font-semibold text-ink mb-1.5">
             {{ 'shared.crmPanel.confidence' | trans: { percent: (detail.interestConfidence * 100 | number: '1.0-0') ?? '0' } }}
           </div>
-          <div class="h-2 rounded-full bg-pink-50 overflow-hidden">
+          <div class="h-2 rounded-full bg-brand-50 overflow-hidden">
             <div
-              class="h-full bg-pink-500 rounded-full"
+              class="h-full bg-brand-500 rounded-full"
               [style.width.%]="detail.interestConfidence * 100"
             ></div>
           </div>
@@ -59,7 +59,7 @@
                         <span class="pill-pink !py-0 !px-2 !text-[10px] ml-1">{{ 'shared.crmPanel.selfSelected' | trans }}</span>
                       }
                     </span>
-                    <span class="text-xs font-bold text-pink-600">
+                    <span class="text-xs font-bold text-brand-600">
                       {{ facet.normalizedScore * 100 | number: '1.0-0' }}%
                     </span>
                   </div>
@@ -119,39 +119,39 @@
       <section>
         <h3 class="text-sm font-bold text-ink mb-3">{{ 'shared.crmPanel.dataAnalyzed' | trans }}</h3>
         <dl class="grid grid-cols-3 sm:grid-cols-5 xl:grid-cols-3 gap-2.5 text-center">
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.views' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.documentViews }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.searches' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.searches }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.purchases' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.purchases }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.subscription' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.subscriptionAccesses }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.wishlist' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.wishlistItems }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.cart' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.cartItems }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.follows' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.sellerFollows }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.reviews' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.reviews }}</dd>
           </div>
-          <div class="p-2.5 rounded-xl bg-pink-50/50">
+          <div class="p-2.5 rounded-xl bg-brand-50/50">
             <dt class="text-[10px] text-ink-muted">{{ 'shared.crmPanel.declared' | trans }}</dt>
             <dd class="text-sm font-bold text-ink">{{ detail.signalBreakdown.declaredInterests }}</dd>
           </div>

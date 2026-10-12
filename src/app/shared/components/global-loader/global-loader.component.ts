@@ -13,10 +13,10 @@ import { isLoading } from '../../../core/services/loading';
   template: `
     @if (visible()) {
       <div
-        class="fixed inset-0 z-[1000] flex items-center justify-center bg-white/40 backdrop-blur-[2px] pointer-events-none"
+        class="fixed inset-0 z-[1000] flex items-center justify-center bg-surface/40 backdrop-blur-[2px] pointer-events-none"
       >
         <div
-          class="w-12 h-12 rounded-full border-4 border-pink-200 border-t-pink-500 animate-spin"
+          class="w-12 h-12 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin"
         ></div>
       </div>
     }

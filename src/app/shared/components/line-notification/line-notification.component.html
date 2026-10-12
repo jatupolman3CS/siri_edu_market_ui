@@ -1,6 +1,6 @@
 <section class="card-tile" id="line-notification">
   <div class="flex items-start gap-3 mb-5">
-    <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+    <div class="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
       <app-icon name="globe" [size]="18" />
     </div>
     <div>
@@ -39,7 +39,7 @@
       }
       @case ('Connected') {
         <div class="flex items-center gap-3 p-3 rounded-2xl border border-line mb-5">
-          <div class="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
             <app-icon name="check" [size]="16" />
           </div>
           <div class="flex-1 min-w-0">
@@ -56,8 +56,8 @@
         } @else {
           <div class="space-y-2.5">
             @for (n of settings(); track n.key) {
-              <div class="flex items-start gap-3 p-3 rounded-2xl border border-line hover:border-pink-200 transition-colors">
-                <div class="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+              <div class="flex items-start gap-3 p-3 rounded-2xl border border-line hover:border-brand-200 transition-colors">
+                <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
                   @switch (n.key) {
                     @case ('sale') { <app-icon name="cart" [size]="16" /> }
                     @case ('review') { <app-icon name="star" [size]="16" /> }

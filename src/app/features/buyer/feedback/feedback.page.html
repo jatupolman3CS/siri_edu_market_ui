@@ -1,10 +1,10 @@
 <div class="page-container max-w-5xl py-6 sm:py-8">
   <header
-    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-brand-50/60 via-surface to-brand-50/30 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
   >
     <div class="min-w-0">
-      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
-        <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 border border-brand-200/60 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
         <span>{{ 'feedback.tag' | trans }}</span>
       </div>
       <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'feedback.title' | trans }}</h1>
@@ -30,7 +30,7 @@
       <button
         type="button"
         class="pill min-h-11 whitespace-nowrap"
-        [class]="status() === tab.value ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700'"
+        [class]="status() === tab.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
         (click)="setStatus(tab.value)"
       >
         {{ tab.labelKey | trans }}
@@ -52,7 +52,7 @@
     <ul class="flex flex-col gap-4">
       @for (item of items(); track item.id) {
         <li
-          class="card-soft p-4 sm:p-5 transition-all border border-line hover:border-pink-200"
+          class="card-soft p-4 sm:p-5 transition-all border border-line hover:border-brand-200"
         >
           <div
             class="flex flex-wrap items-start justify-between gap-3 cursor-pointer"
@@ -60,7 +60,7 @@
           >
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 flex-wrap mb-1.5">
-                <span class="pill bg-pink-50 text-pink-700 text-xs font-semibold">
+                <span class="pill bg-brand-50 text-brand-700 text-xs font-semibold">
                   {{ typeLabel(item.type) }}
                 </span>
                 <span
@@ -85,7 +85,7 @@
                   </span>
                 }
               </div>
-              <h3 class="text-base font-bold text-ink hover:text-pink-600 transition-colors break-words">
+              <h3 class="text-base font-bold text-ink hover:text-brand-600 transition-colors break-words">
                 {{ item.subject }}
               </h3>
               <p class="text-xs text-ink-muted mt-1">
@@ -127,7 +127,7 @@
                             [href]="resolveImageUrl(att.url)"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="block rounded-xl overflow-hidden border border-line hover:border-pink-400 transition-colors shadow-sm"
+                            class="block rounded-xl overflow-hidden border border-line hover:border-brand-400 transition-colors shadow-sm"
                           >
                             <img [src]="resolveImageUrl(att.url)" class="w-24 h-24 object-cover" [alt]="'attachment-' + att.id" />
                           </a>
@@ -137,8 +137,8 @@
                   }
 
                   @if (detail.replyToUser) {
-                    <div class="rounded-2xl border border-pink-200 bg-pink-50/70 p-4">
-                      <h4 class="text-sm font-bold text-pink-900 mb-1 flex items-center gap-1.5">
+                    <div class="rounded-2xl border border-brand-200 bg-brand-50/70 p-4">
+                      <h4 class="text-sm font-bold text-brand-900 mb-1 flex items-center gap-1.5">
                         <span>✉️</span> {{ 'feedback.staffReplyHeading' | trans }}
                       </h4>
                       <p class="text-sm text-ink whitespace-pre-line leading-relaxed">{{ detail.replyToUser }}</p>

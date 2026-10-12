@@ -797,7 +797,7 @@ describe('BuyerHomePage — seller CTA contrast', () => {
     const el = banner();
     const pill = el.querySelector('.pill') as HTMLElement;
     expect(pill.className).not.toMatch(/bg-white\//);
-    expect(el.querySelector('.text-pink-50, .text-pink-100')).toBeNull();
+    expect(el.querySelector('.text-brand-50, .text-brand-100')).toBeNull();
 
     // The two decorative circles overlap under the paragraph on phones; at white/10 each that
     // spot measured 4.47:1, so they stay at 7%.
@@ -809,7 +809,7 @@ describe('BuyerHomePage — seller CTA contrast', () => {
 
     const links = Array.from(el.querySelectorAll<HTMLElement>('a'));
     expect(links[0].classList).toContain('text-primary');
-    expect(links[0].className).not.toMatch(/text-pink-(500|600)/);
+    expect(links[0].className).not.toMatch(/text-brand-(500|600)/);
     expect(links[1].className).not.toMatch(/hover:bg-white\//);
   });
 });

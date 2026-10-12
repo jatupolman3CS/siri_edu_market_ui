@@ -7,7 +7,7 @@
         <div class="relative grid grid-cols-1 xl:grid-cols-12 gap-6 items-center">
           <div class="xl:col-span-7">
             <span class="pill-pink mb-4 animate-fade-in">
-              <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse-soft"></span>
               {{ 'home.newArrivalsTitle' | trans }} + {{ catalog.newArrivals().length || '' }}
             </span>
             <h1 class="heading-1 font-extrabold tracking-tight text-ink leading-tight mb-3">
@@ -22,7 +22,7 @@
               <button
                 type="submit"
                 [attr.aria-label]="'common.search' | trans"
-                class="absolute left-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full text-ink-muted hover:text-pink-600 focus:text-pink-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                class="absolute left-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full text-ink-muted hover:text-brand-600 focus:text-brand-600 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                 [attr.title]="'common.search' | trans"
               >
                 <app-icon name="search" [size]="20" />
@@ -34,7 +34,7 @@
                 enterkeyhint="search"
                 [attr.aria-label]="'common.search' | trans"
                 [placeholder]="'home.searchPlaceholder' | trans"
-                class="w-full pl-14 pr-24 sm:pr-32 py-4 rounded-full bg-white shadow-soft border border-line focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-base"
+                class="w-full pl-14 pr-24 sm:pr-32 py-4 rounded-full bg-surface shadow-soft border border-line focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100 text-base"
               />
               <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 btn-pink !px-5 !py-2.5">
                 {{ 'common.search' | trans }}
@@ -49,7 +49,7 @@
             />
 
             <!-- Trust stats (real-data-stats v1 §4.2) -->
-            <div class="flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-3 mt-5 pt-4 border-t border-pink-200/60">
+            <div class="flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-3 mt-5 pt-4 border-t border-brand-200/60">
               <div>
                 @if (platformStats.stats(); as ps) {
                   <div class="text-2xl font-extrabold text-ink">{{ ps.totalApprovedDocuments | compact }}+</div>
@@ -80,7 +80,7 @@
                     <img
                       appImgFallback
                       [src]="s.avatar"
-                      class="w-7 h-7 rounded-full -ml-2 first:ml-0 ring-2 ring-pink-50 object-cover"
+                      class="w-7 h-7 rounded-full -ml-2 first:ml-0 ring-2 ring-brand-50 object-cover"
                       [alt]="s.studioName"
                     />
                   }
@@ -116,12 +116,12 @@
               </div>
               <div class="absolute bottom-4 left-4 w-36 rotate-[3deg] card-soft p-2.5 animate-slide-up" style="animation-delay: 200ms">
                 <img appImgFallback [src]="catalog.featured()[2]?.cover" class="w-full h-40 object-cover rounded-xl" alt="" />
-                <div class="px-1 pt-1.5 pb-0.5 text-xs font-bold text-pink-600">
+                <div class="px-1 pt-1.5 pb-0.5 text-xs font-bold text-brand-600">
                   {{ catalog.featured()[2]?.price | thb }}
                 </div>
               </div>
               <div class="absolute top-2 left-0 card-soft px-3 py-2 flex items-center gap-2 animate-slide-up" style="animation-delay: 350ms">
-                <span class="w-7 h-7 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                <span class="w-7 h-7 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center">
                   <app-icon name="sparkle" [size]="14" />
                 </span>
                 <div class="text-[11px]">
@@ -130,7 +130,7 @@
                 </div>
               </div>
               <div class="absolute bottom-20 right-0 card-soft px-3 py-2 flex items-center gap-2 animate-slide-up" style="animation-delay: 450ms">
-                <span class="w-7 h-7 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                <span class="w-7 h-7 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center">
                   <app-icon name="package" [size]="14" />
                 </span>
                 <div class="text-[11px]">
@@ -149,7 +149,7 @@
     <!-- ===================== SPONSORED ADS (home_top) ===================== -->
     @if (homeSponsoredDocs().length > 0) {
       <section class="page-container mb-8">
-        <div class="rounded-3xl bg-gradient-to-r from-pink-50/80 via-white to-pink-50/50 border border-pink-200/80 p-5 md:p-6 shadow-soft">
+        <div class="rounded-3xl bg-gradient-to-r from-brand-50/80 via-surface to-brand-50/50 border border-brand-200/80 p-5 md:p-6 shadow-soft">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <span class="pill bg-primary text-white font-bold text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
@@ -204,7 +204,7 @@
               </div>
             }
             <div class="text-center mt-4">
-              <a routerLink="/marketplace" class="text-sm font-bold text-pink-600 hover:underline">{{ 'home.viewAllDocs' | trans }}</a>
+              <a routerLink="/marketplace" class="text-sm font-bold text-brand-600 hover:underline">{{ 'home.viewAllDocs' | trans }}</a>
             </div>
           </div>
         </section>
@@ -242,14 +242,14 @@
 
     <!-- ===================== FREE STRIP ===================== -->
     <section class="page-container mb-10 md:mb-16">
-      <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-pink-50 border-emerald-200">
+      <div class="card-soft p-6 md:p-8 bg-gradient-to-br from-emerald-50 to-brand-50 border-emerald-200">
         <div class="flex items-end justify-between mb-6">
           <div>
             <span class="text-xs font-semibold text-emerald-600 tracking-[0.18em] uppercase mb-2 block">{{ 'home.freeTag' | trans }}</span>
             <h2 class="section-title">{{ 'home.freeTitle' | trans }}</h2>
             <p class="section-subtitle">{{ 'home.freeSubtitle' | trans }}</p>
           </div>
-          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 min-h-11 text-sm font-bold text-pink-600 hover:text-pink-700 group">
+          <a routerLink="/free" class="hidden sm:inline-flex items-center gap-1 min-h-11 text-sm font-bold text-brand-600 hover:text-brand-700 group">
             {{ 'home.viewMore' | trans }}
             <app-icon name="arrow-right" [size]="14" className="transition-transform group-hover:translate-x-0.5" />
           </a>
@@ -292,18 +292,18 @@
       <section class="page-container mb-8 md:mb-12">
         <header class="flex items-center justify-between mb-5">
           <div>
-            <span class="text-xs font-semibold text-pink-500 tracking-[0.18em] uppercase">{{ 'home.recentlyViewedEyebrow' | trans }}</span>
+            <span class="text-xs font-semibold text-brand-500 tracking-[0.18em] uppercase">{{ 'home.recentlyViewedEyebrow' | trans }}</span>
             <h2 class="section-title">{{ 'home.recentlyViewedTitle' | trans }}</h2>
           </div>
-          <button class="text-xs text-pink-600 font-bold hover:underline" (click)="recent.clear()">{{ 'home.clearRecent' | trans }}</button>
+          <button class="text-xs text-brand-600 font-bold hover:underline" (click)="recent.clear()">{{ 'home.clearRecent' | trans }}</button>
         </header>
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           @for (d of recent.items().slice(0, 6); track d.id) {
             <a [routerLink]="['/document', d.id]" class="group">
-              <div class="aspect-[4/5] rounded-2xl overflow-hidden ring-2 ring-transparent group-hover:ring-pink-300 transition-all">
+              <div class="aspect-[4/5] rounded-2xl overflow-hidden ring-2 ring-transparent group-hover:ring-brand-300 transition-all">
                 <img appImgFallback [src]="d.cover" class="w-full h-full object-cover" [alt]="d.title" />
               </div>
-              <div class="text-xs text-ink line-clamp-2 mt-2 leading-tight group-hover:text-pink-600">
+              <div class="text-xs text-ink line-clamp-2 mt-2 leading-tight group-hover:text-brand-600">
                 {{ d.title }}
               </div>
             </a>
@@ -348,12 +348,12 @@
             [routerLink]="['/category', cat.slug]"
             class="group relative overflow-hidden card-soft p-5 flex-shrink-0 w-64 hover:-translate-y-1 transition-transform"
           >
-            <div class="absolute inset-0 bg-gradient-to-br from-pink-200 to-pink-50 opacity-50 transition-opacity group-hover:opacity-80"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-brand-200 to-brand-50 opacity-50 transition-opacity group-hover:opacity-80"></div>
             <div class="relative">
-              <div class="w-12 h-12 rounded-2xl bg-white shadow-soft flex items-center justify-center text-2xl mb-4">
+              <div class="w-12 h-12 rounded-2xl bg-surface shadow-soft flex items-center justify-center text-2xl mb-4">
                 {{ cat.icon }}
               </div>
-              <h3 class="text-base font-bold text-ink mb-1 group-hover:text-pink-700 transition-colors [overflow-wrap:anywhere]">
+              <h3 class="text-base font-bold text-ink mb-1 group-hover:text-brand-700 transition-colors [overflow-wrap:anywhere]">
                 {{ cat.name }}
               </h3>
               <p class="text-xs text-ink-soft line-clamp-2 mb-3 [overflow-wrap:anywhere]">{{ cat.description }}</p>
@@ -364,7 +364,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-ink-muted">{{ 'home.docCount' | trans:{ count: (cat.documentCount | compact) } }}</span>
-                <span class="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-primary group-hover:text-white transition-all">
+                <span class="w-7 h-7 rounded-full bg-surface shadow-soft flex items-center justify-center text-brand-500 group-hover:bg-primary group-hover:text-white transition-all">
                   <app-icon name="arrow-right" [size]="14" />
                 </span>
               </div>
@@ -378,7 +378,7 @@
          from marketplace.page.html by marketplace-home-redesign v2 §1 ข้อ 8/§4.3 ===================== -->
     @if (showDiscoverySkeleton()) {
       <section class="page-container mb-10 md:mb-16">
-        <div class="bg-white rounded-2xl border border-line h-40 animate-pulse" aria-hidden="true"></div>
+        <div class="bg-surface rounded-2xl border border-line h-40 animate-pulse" aria-hidden="true"></div>
       </section>
     } @else if (showDiscoveryBlock()) {
       @let d = discovery.discovery()!;
@@ -423,7 +423,7 @@
               <h3 class="text-lg font-bold text-ink mb-2">{{ step.titleKey | trans }}</h3>
               <p class="text-sm text-ink-soft leading-relaxed">{{ step.descKey | trans }}</p>
               @if (i < 2) {
-                <span class="hidden md:block absolute top-6 -right-4 text-pink-300">
+                <span class="hidden md:block absolute top-6 -right-4 text-brand-300">
                   <app-icon name="arrow-right" [size]="20" />
                 </span>
               }
@@ -463,13 +463,13 @@
               appImgFallback
               [src]="s.avatar"
               [alt]="s.studioName"
-              class="w-16 h-16 rounded-2xl object-cover ring-2 ring-pink-100"
+              class="w-16 h-16 rounded-2xl object-cover ring-2 ring-brand-100"
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <h4 class="text-base font-bold text-ink truncate">{{ s.studioName }}</h4>
                 @if (s.badges.includes('Verified')) {
-                  <svg viewBox="0 0 16 16" class="w-4 h-4 text-pink-500 flex-shrink-0" fill="currentColor">
+                  <svg viewBox="0 0 16 16" class="w-4 h-4 text-brand-500 flex-shrink-0" fill="currentColor">
                     <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
                     <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
@@ -477,7 +477,7 @@
               </div>
               <p class="text-xs text-ink-muted line-clamp-2 mb-2">{{ s.bio }}</p>
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0 text-xs text-ink-soft">
-                <span class="font-semibold text-pink-600">★ {{ s.rating | smartDecimal }}</span>
+                <span class="font-semibold text-brand-600">★ {{ s.rating | smartDecimal }}</span>
                 <span>•</span>
                 <span>{{ 'home.docCount' | trans:{ count: s.totalDocuments } }}</span>
                 <span>•</span>
@@ -511,7 +511,7 @@
            paragraph → 4.47:1), the pill is a translucent primary-hover (a white/20 pill over a
            circle drops to ~3.9:1), and the ghost button darkens on hover instead of lightening.
            Headings need their own text-white — ng-zorro colours h1–h6 near-black globally. -->
-      <div class="relative overflow-hidden rounded-3xl bg-gradient-pink-strong p-6 sm:p-8 md:p-14 text-white" data-testid="seller-cta">
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-pink-strong tokens-light p-6 sm:p-8 md:p-14 text-white" data-testid="seller-cta">
         <div class="absolute -top-20 -right-12 w-72 h-72 bg-white/[.07] rounded-full"></div>
         <div class="absolute -bottom-20 -left-12 w-72 h-72 bg-white/[.07] rounded-full"></div>
         <div class="relative grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -524,7 +524,7 @@
               {{ 'home.becomeSellerBannerDesc' | trans }}
             </p>
             <div class="flex flex-wrap gap-3">
-              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-primary font-bold hover:scale-105 transition-transform">
+              <a routerLink="/seller" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-surface text-primary font-bold hover:scale-105 transition-transform">
                 {{ 'home.openShopNow' | trans }}
                 <app-icon name="arrow-right" [size]="16" />
               </a>
@@ -539,9 +539,9 @@
           <div class="hidden md:flex justify-center">
             <div class="relative min-w-0 max-w-full">
               <div class="w-48 h-48 rounded-3xl bg-white/15 backdrop-blur rotate-6 absolute"></div>
-              <div class="relative bg-white rounded-3xl p-6 w-72 max-w-full shadow-pop">
+              <div class="relative bg-surface rounded-3xl p-6 w-72 max-w-full shadow-pop">
                 <div class="flex items-center gap-2 mb-3">
-                  <span class="text-pink-500">
+                  <span class="text-brand-500">
                     <app-icon name="chart" [size]="20" />
                   </span>
                   <span class="text-sm font-semibold text-ink">{{ 'home.monthlyRevenue' | trans }}</span>

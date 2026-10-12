@@ -26,7 +26,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div class="text-sm text-ink-soft min-w-0">
         <b class="text-ink">{{ wishlist.count() }}</b> {{ 'wishlist.itemsUnit' | trans }} —
-        {{ 'wishlist.totalValue' | trans }} <b class="text-pink-600">{{ totalValue() | thb }}</b>
+        {{ 'wishlist.totalValue' | trans }} <b class="text-brand-600">{{ totalValue() | thb }}</b>
       </div>
       <div class="flex gap-2 w-full sm:w-auto">
         <button type="button" class="btn-pink !py-2 text-sm flex-1 sm:flex-none" (click)="addAllToCart()">

@@ -1,6 +1,6 @@
 <div class="page-container min-h-[80dvh] flex items-center justify-center py-8 sm:py-12">
   <div class="max-w-2xl w-full text-center">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold mb-4">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-600 text-xs font-semibold mb-4">
       <span>🌸</span>
       <span>{{ 'onboarding.welcomeBadge' | trans }}</span>
     </div>
@@ -17,20 +17,20 @@
       <button
         type="button"
         (click)="onSelectBuyer()"
-        class="role-card group p-6 sm:p-8 rounded-2xl bg-white border-2 border-line hover:border-pink-500 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-100 flex flex-col justify-between"
+        class="role-card group p-6 sm:p-8 rounded-2xl bg-surface border-2 border-line hover:border-brand-500 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-brand-100 flex flex-col justify-between"
       >
         <div>
-          <div class="w-14 h-14 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+          <div class="w-14 h-14 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
             📚
           </div>
-          <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors">
+          <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-brand-600 transition-colors">
             {{ 'onboarding.buyerCardTitle' | trans }}
           </h2>
           <p class="text-sm text-ink-soft leading-relaxed">
             {{ 'onboarding.buyerCardDesc' | trans }}
           </p>
         </div>
-        <div class="mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform">
+        <div class="mt-6 flex items-center text-sm font-semibold text-brand-600 group-hover:translate-x-1 transition-transform">
           <span>{{ 'onboarding.buyerCardAction' | trans }}</span>
           <span class="ml-1">→</span>
         </div>
@@ -41,20 +41,20 @@
         type="button"
         (click)="onSelectSeller()"
         [disabled]="loading()"
-        class="role-card group p-6 sm:p-8 rounded-2xl bg-white border-2 border-line hover:border-pink-500 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-100 flex flex-col justify-between disabled:opacity-60 disabled:cursor-not-allowed"
+        class="role-card group p-6 sm:p-8 rounded-2xl bg-surface border-2 border-line hover:border-brand-500 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-brand-100 flex flex-col justify-between disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <div>
           <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
             💼
           </div>
-          <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-pink-600 transition-colors">
+          <h2 class="text-xl font-bold text-ink mb-2 group-hover:text-brand-600 transition-colors">
             {{ 'onboarding.sellerCardTitle' | trans }}
           </h2>
           <p class="text-sm text-ink-soft leading-relaxed">
             {{ 'onboarding.sellerCardDesc' | trans }}
           </p>
         </div>
-        <div class="mt-6 flex items-center text-sm font-semibold text-pink-600 group-hover:translate-x-1 transition-transform">
+        <div class="mt-6 flex items-center text-sm font-semibold text-brand-600 group-hover:translate-x-1 transition-transform">
           <span>{{ 'onboarding.sellerCardAction' | trans }}</span>
           <span class="ml-1">→</span>
         </div>

@@ -104,7 +104,7 @@
                 </thead>
                 <tbody class="divide-y divide-line">
                   @for (c of campaigns(); track c.id) {
-                    <tr class="hover:bg-pink-50/40 transition-colors align-top">
+                    <tr class="hover:bg-brand-50/40 transition-colors align-top">
                       <td class="rt-title py-3.5 pr-2 xl:pr-3">
                         <div class="flex items-center gap-2.5">
                           <img
@@ -222,7 +222,7 @@
                 </thead>
                 <tbody class="divide-y divide-line">
                   @for (p of placements(); track p.placementKey) {
-                    <tr class="hover:bg-pink-50/40 transition-colors">
+                    <tr class="hover:bg-brand-50/40 transition-colors">
                       <td class="rt-title py-3.5 pr-4">
                         <div class="font-semibold text-ink">{{ p.displayName }}</div>
                         <div class="text-xs font-mono font-normal text-ink-muted break-all">{{ p.placementKey }}</div>
@@ -313,7 +313,7 @@
           }
         </div>
 
-        <div class="flex items-center justify-between p-3 rounded-lg bg-pink-50/50 border border-line">
+        <div class="flex items-center justify-between p-3 rounded-lg bg-brand-50/50 border border-line">
           <div>
             <div class="text-sm font-semibold text-ink">{{ 'admin.ads.refundRemainingTitle' | trans }}</div>
             <div class="text-xs text-ink-muted">{{ 'admin.ads.refundRemainingDesc' | trans }}</div>
@@ -392,7 +392,7 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between p-3 rounded-lg bg-pink-50/50 border border-line">
+        <div class="flex items-center justify-between p-3 rounded-lg bg-brand-50/50 border border-line">
           <div>
             <div class="text-sm font-semibold text-ink">{{ 'admin.ads.enablePlacementTitle' | trans }}</div>
             <div class="text-xs text-ink-muted">{{ 'admin.ads.enablePlacementDesc' | trans }}</div>

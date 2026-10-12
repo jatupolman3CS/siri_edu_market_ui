@@ -27,9 +27,9 @@
     <form class="flex flex-1 min-w-0 md:min-w-[240px] items-center gap-2" (ngSubmit)="applySearch()">
       <input type="search" name="sellerDocSearch" enterkeyhint="search" [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)"
         [placeholder]="'seller.searchDocsPlaceholder' | trans" [attr.aria-label]="'common.search' | trans"
-        class="flex-1 min-w-0 min-h-11 px-4 py-2.5 rounded-2xl border border-line-strong bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm" />
+        class="flex-1 min-w-0 min-h-11 px-4 py-2.5 rounded-2xl border border-line-strong bg-surface focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100 text-sm" />
       <button type="submit" [attr.aria-label]="'common.search' | trans" [title]="'common.search' | trans"
-        class="btn-icon shrink-0 text-ink-muted hover:text-pink-600 focus:text-pink-600" data-testid="seller-doc-search-submit">
+        class="btn-icon shrink-0 text-ink-muted hover:text-brand-600 focus:text-brand-600" data-testid="seller-doc-search-submit">
         <app-icon name="search" [size]="18" />
       </button>
     </form>
@@ -38,7 +38,7 @@
       <button type="button" class="min-h-[44px] whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors"
         [attr.aria-pressed]="status() === s.value"
         [class.bg-primary]="status() === s.value" [class.text-white]="status() === s.value"
-        [class.border-primary]="status() === s.value" [class.bg-white]="status() !== s.value"
+        [class.border-primary]="status() === s.value" [class.bg-surface]="status() !== s.value"
         [class.text-ink-soft]="status() !== s.value" [class.border-line]="status() !== s.value"
         (click)="onStatusChange(s.value)">
         {{ s.label }}
@@ -77,7 +77,7 @@
     [rtLabel]="'seller.myDocsTitle' | trans"
     [rtResetKey]="page() + '|' + pageSize() + '|' + status() + '|' + search()">
     <table class="rtable w-full">
-      <thead class="bg-pink-50">
+      <thead class="bg-brand-50">
         <!-- responsive-ui v1.4 §4.5 table mode (744–1279): px-2 (px-3 from 1024, px-4 >=1280) and no
              cover thumbnail at 744–1023 leave room for a >=110px title box and a 3-per-row action
              group, so the 744 table still fits its card without sideways scroll (G-15b). -->
@@ -94,7 +94,7 @@
       </thead>
       <tbody>
         @for (d of items(); track d.id) {
-        <tr class="border-t border-line hover:bg-pink-50/40 transition-colors" data-testid="seller-doc-row">
+        <tr class="border-t border-line hover:bg-brand-50/40 transition-colors" data-testid="seller-doc-row">
           <td class="rt-title px-2 lg:px-3 xl:px-4 py-4">
             <div class="flex items-center gap-3">
               <img appImgFallback [src]="d.cover || coverFallback" (error)="onCoverError($event)"
@@ -131,7 +131,7 @@
             </span>
           </td>
           <td class="rt-secondary px-2 lg:px-3 xl:px-4 py-4 text-sm whitespace-nowrap">
-            <span class="text-pink-600 font-bold">★ {{ d.rating | smartDecimal }}</span>
+            <span class="text-brand-600 font-bold">★ {{ d.rating | smartDecimal }}</span>
             <span class="text-xs text-ink-muted ml-1">({{ d.reviewCount }})</span>
           </td>
           <td class="rt-secondary px-2 lg:px-3 xl:px-4 py-4 text-xs text-ink-muted whitespace-nowrap">
@@ -161,7 +161,7 @@
                 [disabled]="downloadingId() === d.id" (click)="download(d)">
                 <app-icon name="download" [size]="14" />
               </button>
-              <a [routerLink]="['/seller/documents', d.id, 'watermark']" class="btn-icon !w-8 !h-8 text-pink-600 hover:!bg-pink-50" [title]="'seller.watermarkAria' | trans" [attr.aria-label]="'seller.watermarkAria' | trans">
+              <a [routerLink]="['/seller/documents', d.id, 'watermark']" class="btn-icon !w-8 !h-8 text-brand-600 hover:!bg-brand-50" [title]="'seller.watermarkAria' | trans" [attr.aria-label]="'seller.watermarkAria' | trans">
                 <app-icon name="shield" [size]="14" />
               </a>
               <button type="button"

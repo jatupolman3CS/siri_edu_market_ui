@@ -27,7 +27,7 @@
 
       <div class="text-center mb-6">
         <span class="pill-pink mb-3 inline-flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse-soft"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse-soft"></span>
           {{ 'auth.verifyEmailTitle' | trans }}
         </span>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-2 leading-tight">
@@ -42,7 +42,7 @@
 
         @if (targetEmail) {
           <p class="text-base font-bold text-ink">
-            <app-icon name="mail" [size]="14" className="inline-block text-pink-500 align-middle mr-1" />
+            <app-icon name="mail" [size]="14" className="inline-block text-brand-500 align-middle mr-1" />
             {{ targetEmail }}
           </p>
         } @else {
@@ -64,7 +64,7 @@
       <!-- OTP 6-Digit Form -->
       <div class="card-cream p-4 sm:p-6 mb-6">
         <div class="text-center mb-4">
-          <span class="text-xs font-semibold uppercase tracking-wider text-pink-600">
+          <span class="text-xs font-semibold uppercase tracking-wider text-brand-600">
             {{ 'auth.otpDigitsLabel' | trans }}
           </span>
           <p class="text-[12px] text-ink-muted mt-0.5">{{ 'auth.otpExpiresIn15Min' | trans }}</p>
@@ -81,7 +81,7 @@
               [value]="digit"
               (input)="onDigitInput($event, $index)"
               (keydown)="onKeyDown($event, $index)"
-              class="flex-1 min-w-0 max-w-12 h-12 sm:h-14 text-center text-2xl font-black rounded-xl border-2 border-pink-200 bg-white text-ink focus:border-pink-500 focus:ring-2 focus:ring-pink-300 focus:outline-none shadow-sm transition-all"
+              class="flex-1 min-w-0 max-w-12 h-12 sm:h-14 text-center text-2xl font-black rounded-xl border-2 border-brand-200 bg-surface text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-300 focus:outline-none shadow-sm transition-all"
               autocomplete="one-time-code"
             />
           }
@@ -96,12 +96,12 @@
           {{ 'auth.submitOtp' | trans }}
         </button>
 
-        <div class="mt-4 pt-4 border-t border-pink-100/80 flex flex-wrap items-center justify-between gap-x-2 text-xs">
+        <div class="mt-4 pt-4 border-t border-brand-100/80 flex flex-wrap items-center justify-between gap-x-2 text-xs">
           <span class="text-ink-muted">{{ 'auth.didNotReceiveOtp' | trans }}</span>
           <button
             type="button"
             id="resend-otp-btn"
-            class="tap-target px-2 text-pink-600 font-bold hover:underline disabled:opacity-50 disabled:no-underline"
+            class="tap-target px-2 text-brand-600 font-bold hover:underline disabled:opacity-50 disabled:no-underline"
             [disabled]="cooldown() > 0"
             (click)="resend()"
           >
@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <div class="rounded-xl bg-pink-50/60 border border-pink-100 p-4 mb-6 text-xs text-ink-soft leading-relaxed space-y-1.5">
+      <div class="rounded-xl bg-brand-50/60 border border-brand-100 p-4 mb-6 text-xs text-ink-soft leading-relaxed space-y-1.5">
         <p>💡 <b class="text-ink">{{ 'auth.verifyHint1' | trans }}</b></p>
         <p>📬 {{ 'auth.verifyHint2' | trans }}</p>
       </div>
@@ -122,13 +122,13 @@
       <div class="text-center space-y-2">
         <p class="text-xs text-ink-muted">
           {{ 'auth.wrongEmail' | trans }}
-          <a [routerLink]="['/auth/register']" class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-pink-600 hover:underline font-bold">
+          <a [routerLink]="['/auth/register']" class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-brand-600 hover:underline font-bold">
             {{ 'auth.backToEditInfo' | trans }}
           </a>
         </p>
         <p class="text-xs text-ink-muted">
           {{ 'auth.alreadyHaveAccount' | trans }}
-          <a [routerLink]="['/auth/login']" class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-pink-600 hover:underline font-bold">
+          <a [routerLink]="['/auth/login']" class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-brand-600 hover:underline font-bold">
             {{ 'auth.signInTitle' | trans }}
           </a>
         </p>

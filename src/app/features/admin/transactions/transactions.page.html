@@ -39,7 +39,7 @@
             type="search"
             [(ngModel)]="search"
             [placeholder]="'admin.transactions.searchPlaceholder' | trans"
-            class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line-strong bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 text-sm"
+            class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line-strong bg-surface focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100 text-sm"
           />
         </div>
         <div class="chip-row min-w-0">
@@ -50,7 +50,7 @@
               [class.bg-primary]="status() === s.value"
               [class.text-white]="status() === s.value"
               [class.border-primary]="status() === s.value"
-              [class.bg-white]="status() !== s.value"
+              [class.bg-surface]="status() !== s.value"
               [class.text-ink-soft]="status() !== s.value"
               [class.border-line]="status() !== s.value"
               (click)="status.set(s.value)"
@@ -70,7 +70,7 @@
         [rtResetKey]="page() + '|' + pageSize()"
       >
         <table class="rtable w-full">
-          <thead class="bg-pink-50">
+          <thead class="bg-brand-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-4 py-3 font-semibold">{{ 'admin.transactions.colDocument' | trans }}</th>
               <th class="px-4 py-3 font-semibold">{{ 'admin.transactions.colStatus' | trans }}</th>
@@ -87,7 +87,7 @@
           </thead>
           <tbody>
             @for (t of items(); track t.id) {
-              <tr class="border-t border-line hover:bg-pink-50/40">
+              <tr class="border-t border-line hover:bg-brand-50/40">
                 <td class="rt-title px-4 py-3 text-sm text-ink">
                   <span class="line-clamp-2">{{ t.documentTitle }}</span>
                 </td>

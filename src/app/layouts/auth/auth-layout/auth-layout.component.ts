@@ -8,11 +8,12 @@ import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../../shared/components/language-switcher/language-switcher.component';
+import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: true,
-  imports: [RouterLink, LogoComponent, GlobalLoaderComponent, CompactPipe, DecimalPipe, TranslatePipe, LanguageSwitcherComponent],
+  imports: [RouterLink, LogoComponent, GlobalLoaderComponent, CompactPipe, DecimalPipe, TranslatePipe, LanguageSwitcherComponent, ThemeToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './auth-layout.component.html',
   styleUrl: './auth-layout.component.scss',

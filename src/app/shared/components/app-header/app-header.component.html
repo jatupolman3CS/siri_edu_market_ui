@@ -7,10 +7,10 @@
   · desktop (>=1280):  the original full header (utility bar, search + seller center, quick links, sub-nav).
 -->
 <header
-  class="app-header sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-line shadow-soft safe-top"
+  class="app-header sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-brand-200/50 shadow-glass safe-top"
 >
   <!-- Top Utility Micro-Bar (desktop only) -->
-  <div class="hidden xl:block border-b border-pink-100/70 bg-gradient-to-r from-pink-50/90 via-cream/40 to-pink-50/90 text-xs text-ink-muted" data-testid="header-utility-bar">
+  <div class="hidden xl:block border-b border-brand-100/70 bg-gradient-to-r from-brand-50/90 via-cream/40 to-brand-50/90 text-xs text-ink-muted" data-testid="header-utility-bar">
     <div class="page-container h-8 flex items-center justify-between gap-2">
       <!-- Left side: Platform Tagline -->
       <div class="flex items-center gap-3 min-w-0 shrink">
@@ -23,8 +23,9 @@
       <div class="flex items-center gap-3.5 shrink-0 whitespace-nowrap ml-auto">
         @if (auth.isAuthenticated()) {
           <app-notification-bell variant="topbar" />
-          <span class="text-pink-200">|</span>
+          <span class="text-brand-200">|</span>
         }
+        <app-theme-toggle />
         <app-language-switcher variant="dropdown" />
       </div>
     </div>
@@ -66,12 +67,12 @@
           <!-- G-12 / R-2: the 2px border left a 40px inner box (input 40 tall, icon button 40x40, submit
                40x32). Touch devices get a 48px box so the input and every button are 44 tall;
                fine pointers keep the 44px desktop row. -->
-          <div class="search-container relative flex items-center h-11 [@media(pointer:coarse)]:h-12 rounded-2xl border-2 border-pink-300 bg-pink-50/30">
+          <div class="search-container relative flex items-center h-11 [@media(pointer:coarse)]:h-12 rounded-2xl border-2 border-brand-300 bg-brand-50/30">
             <!-- Search icon button on left -->
             <button
               type="submit"
               [attr.aria-label]="'header.searchAria' | trans"
-              class="pl-3.5 pr-2 h-full [@media(pointer:coarse)]:min-w-11 text-ink-muted hover:text-pink-600 focus:text-pink-600 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+              class="pl-3.5 pr-2 h-full [@media(pointer:coarse)]:min-w-11 text-ink-muted hover:text-brand-600 focus:text-brand-600 transition-colors flex items-center justify-center cursor-pointer shrink-0"
               [title]="'header.searchAria' | trans"
             >
               <app-icon name="search" [size]="18" />
@@ -94,7 +95,7 @@
               <button
                 type="button"
                 (click)="clearQuery()"
-                class="p-1.5 mr-1 flex items-center justify-center [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-pink-100 cursor-pointer shrink-0"
+                class="p-1.5 mr-1 flex items-center justify-center [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11 text-ink-muted hover:text-ink transition-colors rounded-full hover:bg-brand-100 cursor-pointer shrink-0"
                 [title]="'header.clearSearch' | trans"
                 [attr.aria-label]="'header.clearSearch' | trans"
               >
@@ -119,7 +120,7 @@
         @if (auth.isSeller() || auth.isAdmin()) {
           <a
             routerLink="/seller"
-            class="hidden xl:flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white font-semibold text-sm shadow-sm hover:shadow-md hover:from-pink-600 hover:to-rose-600 active:scale-95 transition-all shrink-0 whitespace-nowrap"
+            class="hidden xl:flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-rose-500 text-white font-semibold text-sm shadow-sm hover:shadow-md hover:from-primary hover:to-solid-rose-600 active:scale-95 transition-all shrink-0 whitespace-nowrap"
             [title]="'nav.sellerCenter' | trans"
             [attr.aria-label]="'nav.sellerCenter' | trans"
           >
@@ -129,7 +130,7 @@
         } @else {
           <a
             routerLink="/become-seller"
-            class="hidden xl:flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white font-semibold text-sm shadow-sm hover:shadow-md hover:from-pink-600 hover:to-rose-600 active:scale-95 transition-all shrink-0 whitespace-nowrap"
+            class="hidden xl:flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-rose-500 text-white font-semibold text-sm shadow-sm hover:shadow-md hover:from-primary hover:to-solid-rose-600 active:scale-95 transition-all shrink-0 whitespace-nowrap"
             [title]="'nav.sellerCenter' | trans"
             [attr.aria-label]="'nav.sellerCenter' | trans"
           >
@@ -161,7 +162,7 @@
           <app-icon name="heart" [size]="18" />
           @if (wishlist.count() > 0) {
             <span
-              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs"
+              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center border-2 border-surface shadow-xs"
             >
               {{ wishlist.count() }}
             </span>
@@ -181,7 +182,7 @@
         <!-- Cart (Prominent e-commerce style with badge) -->
         <button
           type="button"
-          class="relative btn-icon hover:bg-pink-100 hover:border-pink-400 text-pink-600 shrink-0"
+          class="relative btn-icon hover:bg-brand-100 hover:border-brand-400 text-brand-600 shrink-0"
           data-testid="header-cart"
           (click)="cart.toggleDrawer()"
           [attr.aria-label]="'header.cartCount' | trans: { count: cart.count() }"
@@ -189,7 +190,7 @@
           <app-icon name="cart" [size]="19" />
           @if (cart.count() > 0) {
             <span
-              class="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-sm animate-pulse-soft"
+              class="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center border-2 border-surface shadow-sm animate-pulse-soft"
             >
               {{ cart.count() }}
             </span>
@@ -206,13 +207,13 @@
             (nzVisibleChange)="onAvatarMenuVisible($event)"
             data-testid="header-avatar"
             [attr.aria-label]="u.name"
-            class="hidden md:flex items-center gap-2 ml-1 h-11 min-w-11 pl-1 pr-1.5 lg:pr-2.5 rounded-full hover:bg-pink-50 border border-transparent hover:border-pink-200 transition-all cursor-pointer shrink-0"
+            class="hidden md:flex items-center gap-2 ml-1 h-11 min-w-11 pl-1 pr-1.5 lg:pr-2.5 rounded-full hover:bg-brand-50 border border-transparent hover:border-brand-200 transition-all cursor-pointer shrink-0"
           >
             <img
               appImgFallback
               [src]="avatarSrc()"
               [alt]="u.name"
-              class="w-8 h-8 rounded-full object-cover ring-2 ring-pink-100 shrink-0"
+              class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-100 shrink-0"
             />
             <span class="hidden lg:inline text-sm font-medium text-ink max-w-[120px] truncate">
               {{ firstName(u.name) }}
@@ -291,6 +292,10 @@
                 <span class="text-xs font-semibold text-ink-muted">{{ 'header.switchLanguage' | trans }}</span>
                 <app-language-switcher variant="dropdown" />
               </li>
+              <li class="xl:!hidden px-3 py-2 flex items-center justify-between gap-3" data-testid="avatar-menu-theme">
+                <span class="text-xs font-semibold text-ink-muted">{{ 'header.switchTheme' | trans }}</span>
+                <app-theme-toggle />
+              </li>
               <li nz-menu-divider></li>
               <li nz-menu-item class="!p-0 !rounded-xl">
                 <button type="button" class="avatar-menu__link w-full text-left !text-rose-500" (click)="signOut()">
@@ -304,7 +309,7 @@
           <div class="hidden md:flex items-center gap-1.5 ml-1 shrink-0 whitespace-nowrap">
             <a
               routerLink="/auth/login"
-              class="inline-flex items-center justify-center text-sm font-medium text-ink hover:text-pink-600 px-3 h-11 rounded-full hover:bg-pink-50 transition-colors whitespace-nowrap shrink-0"
+              class="inline-flex items-center justify-center text-sm font-medium text-ink hover:text-brand-600 px-3 h-11 rounded-full hover:bg-brand-50 transition-colors whitespace-nowrap shrink-0"
             >
               {{ 'nav.signIn' | trans }}
             </a>
@@ -322,7 +327,7 @@
           <button
             type="button"
             (click)="searchTag(kw)"
-            class="chip-tag px-2 py-0.5 rounded-full text-ink-soft bg-pink-50/60 border border-pink-100/80 whitespace-nowrap text-[11px] font-medium cursor-pointer shrink-0"
+            class="chip-tag px-2 py-0.5 rounded-full text-ink-soft bg-brand-50/60 border border-brand-100/80 whitespace-nowrap text-[11px] font-medium cursor-pointer shrink-0"
           >
             {{ kw }}
           </button>
@@ -333,7 +338,7 @@
   </div>
 
   <!-- Tablet/laptop nav row (744–1279): single line, scrolls horizontally, constant height -->
-  <div class="hidden md:block xl:hidden bg-pink-50/40 border-t border-line/60" data-testid="header-tablet-nav">
+  <div class="hidden md:block xl:hidden bg-brand-50/40 border-t border-line/60" data-testid="header-tablet-nav">
     <div class="page-container">
       <nav class="chip-row items-center h-11" [attr.aria-label]="'responsive.nav.primary' | trans">
         @for (item of navItems(); track item.href) {
@@ -341,22 +346,22 @@
             <!-- /categories and /category/:slug both belong to หมวดหมู่ (routerLinkActive only matches the former). -->
             <a
               routerLink="/categories"
-              [class.!bg-white]="categoriesActive()"
-              [class.!text-pink-700]="categoriesActive()"
+              [class.!bg-surface]="categoriesActive()"
+              [class.!text-brand-700]="categoriesActive()"
               [class.!font-semibold]="categoriesActive()"
               [class.shadow-xs]="categoriesActive()"
               [attr.aria-current]="categoriesActive() ? 'page' : null"
-              class="inline-flex items-center min-h-9 [@media(pointer:coarse)]:min-h-11 px-3 rounded-lg text-xs font-medium text-ink-soft hover:text-pink-600 hover:bg-white/80 whitespace-nowrap transition-all"
+              class="inline-flex items-center min-h-9 [@media(pointer:coarse)]:min-h-11 px-3 rounded-lg text-xs font-medium text-ink-soft hover:text-brand-600 hover:bg-surface/80 whitespace-nowrap transition-all"
             >
               {{ item.label }}
             </a>
           } @else {
             <a
               [routerLink]="item.href"
-              routerLinkActive="!bg-white !text-pink-700 !font-semibold shadow-xs"
+              routerLinkActive="!bg-surface !text-brand-700 !font-semibold shadow-xs"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
               ariaCurrentWhenActive="page"
-              class="inline-flex items-center min-h-9 [@media(pointer:coarse)]:min-h-11 px-3 rounded-lg text-xs font-medium text-ink-soft hover:text-pink-600 hover:bg-white/80 whitespace-nowrap transition-all"
+              class="inline-flex items-center min-h-9 [@media(pointer:coarse)]:min-h-11 px-3 rounded-lg text-xs font-medium text-ink-soft hover:text-brand-600 hover:bg-surface/80 whitespace-nowrap transition-all"
             >
               {{ item.label }}
             </a>
@@ -367,7 +372,7 @@
   </div>
 
   <!-- Sub-Navigation Category Row (desktop: หมวดหมู่, หน้าแรก, ตลาด) -->
-  <div class="hidden xl:block bg-pink-50/40 border-t border-line/60" data-testid="header-desktop-nav">
+  <div class="hidden xl:block bg-brand-50/40 border-t border-line/60" data-testid="header-desktop-nav">
     <div class="page-container">
       <div class="flex items-center justify-between h-10">
         <!-- Main Navigation Links -->
@@ -376,8 +381,8 @@
             routerLink="/categories"
             [attr.aria-current]="categoriesActive() ? 'page' : null"
             [class.ring-1]="categoriesActive()"
-            [class.ring-pink-300]="categoriesActive()"
-            class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-pink-600 bg-pink-100/70 hover:bg-pink-200/70 transition-colors mr-2"
+            [class.ring-brand-300]="categoriesActive()"
+            class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-brand-600 bg-brand-100/70 hover:bg-brand-200/70 transition-colors mr-2"
           >
             <app-icon name="tag" [size]="13" />
             <span>{{ 'nav.categories' | trans }}</span>
@@ -385,10 +390,10 @@
           @for (item of subnavItems(); track item.href) {
             <a
               [routerLink]="item.href"
-              routerLinkActive="!bg-white !text-pink-600 !font-semibold shadow-xs"
+              routerLinkActive="!bg-surface !text-brand-600 !font-semibold shadow-xs"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
               ariaCurrentWhenActive="page"
-              class="px-3 py-1 rounded-lg text-xs font-medium text-ink-soft hover:text-pink-600 hover:bg-white/80 transition-all"
+              class="px-3 py-1 rounded-lg text-xs font-medium text-ink-soft hover:text-brand-600 hover:bg-surface/80 transition-all"
             >
               {{ item.label }}
             </a>
@@ -404,10 +409,10 @@
   <header> (F41): only the 56px top bar sticks; this row scrolls away with the page.
 -->
 @if (showPhoneSearch()) {
-  <div class="md:hidden bg-white border-b border-line" data-testid="header-phone-search">
+  <div class="md:hidden bg-surface border-b border-line" data-testid="header-phone-search">
     <div class="page-container pb-2 pt-0.5">
       <form class="relative w-full" (ngSubmit)="search()">
-        <div class="search-container relative flex items-center rounded-xl border border-pink-300 bg-pink-50/40 p-0.5">
+        <div class="search-container relative flex items-center rounded-xl border border-brand-300 bg-brand-50/40 p-0.5">
           <div class="pl-2.5 pr-1.5 text-ink-muted flex items-center justify-center pointer-events-none">
             <app-icon name="search" [size]="16" />
           </div>
@@ -448,7 +453,7 @@
           <button
             type="button"
             (click)="searchTag(kw)"
-            class="inline-flex items-center min-h-11 px-3 rounded-full text-ink-soft bg-pink-50 border border-pink-100/70 whitespace-nowrap text-xs cursor-pointer"
+            class="inline-flex items-center min-h-11 px-3 rounded-full text-ink-soft bg-brand-50 border border-brand-100/70 whitespace-nowrap text-xs cursor-pointer"
           >
             {{ kw }}
           </button>
@@ -504,13 +509,17 @@
       <span class="text-xs font-semibold text-ink-muted">{{ 'header.switchLanguage' | trans }}</span>
       <app-language-switcher variant="dropdown" />
     </div>
+    <div class="px-3.5 py-2 flex items-center justify-between border-b border-line mb-1" data-testid="drawer-theme">
+      <span class="text-xs font-semibold text-ink-muted">{{ 'header.switchTheme' | trans }}</span>
+      <app-theme-toggle />
+    </div>
 
     @for (item of navItems(); track item.href) {
       @if (item.href === '/categories') {
         <a
           routerLink="/categories"
-          [class.!bg-pink-50]="categoriesActive()"
-          [class.!text-pink-600]="categoriesActive()"
+          [class.!bg-brand-50]="categoriesActive()"
+          [class.!text-brand-600]="categoriesActive()"
           [attr.aria-current]="categoriesActive() ? 'page' : null"
           class="header-drawer__link"
           (click)="closeMobileMenu()"
@@ -520,7 +529,7 @@
       } @else {
         <a
           [routerLink]="item.href"
-          routerLinkActive="!bg-pink-50 !text-pink-600"
+          routerLinkActive="!bg-brand-50 !text-brand-600"
           [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
           ariaCurrentWhenActive="page"
           class="header-drawer__link"
@@ -533,13 +542,13 @@
 
     @if (auth.user(); as u) {
       <div class="my-2 border-t border-line"></div>
-      <a routerLink="/account" routerLinkActive="!bg-pink-50 !text-pink-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
+      <a routerLink="/account" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'nav.myAccount' | trans }}
       </a>
-      <a routerLink="/library" routerLinkActive="!bg-pink-50 !text-pink-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
+      <a routerLink="/library" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'nav.library' | trans }}
       </a>
-      <a routerLink="/wishlist" routerLinkActive="!bg-pink-50 !text-pink-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
+      <a routerLink="/wishlist" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'header.wishlistTitle' | trans }}
         @if (wishlist.count() > 0) {
           <span
@@ -549,10 +558,10 @@
           </span>
         }
       </a>
-      <a routerLink="/orders" routerLinkActive="!bg-pink-50 !text-pink-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
+      <a routerLink="/orders" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'seller.orders' | trans }}
       </a>
-      <a routerLink="/notifications" routerLinkActive="!bg-pink-50 !text-pink-600" ariaCurrentWhenActive="page" class="header-drawer__link relative" (click)="closeMobileMenu()">
+      <a routerLink="/notifications" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link relative" (click)="closeMobileMenu()">
         {{ 'header.notifications' | trans }}
         @if (feed.unreadCount() > 0) {
           <span
@@ -562,7 +571,7 @@
           </span>
         }
       </a>
-      <a routerLink="/account/feedback" routerLinkActive="!bg-pink-50 !text-pink-600" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
+      <a routerLink="/account/feedback" routerLinkActive="!bg-brand-50 !text-brand-600" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'header.feedback' | trans }}
       </a>
       @if (auth.isSeller() || auth.isAdmin()) {

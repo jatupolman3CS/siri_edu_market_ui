@@ -24,11 +24,11 @@
         >
           <!-- Header -->
           <header
-            class="cart-drawer__header flex items-center justify-between px-4 md:px-6 py-3 md:py-5 border-b border-line bg-white"
+            class="cart-drawer__header flex items-center justify-between px-4 md:px-6 py-3 md:py-5 border-b border-line bg-surface"
           >
             <div class="flex items-center gap-2.5">
               <span
-                class="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center"
+                class="w-9 h-9 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center"
               >
                 <app-icon name="cart" [size]="18" />
               </span>
@@ -59,7 +59,7 @@
             } @else {
               <ul class="flex flex-col gap-3">
                 @for (item of cart.items(); track item.document.id) {
-                  <li class="flex gap-3 p-3 bg-white rounded-2xl border border-line">
+                  <li class="flex gap-3 p-3 rounded-2xl border glass-card">
                     <img
                       appImgFallback
                       [src]="item.document.cover"
@@ -74,7 +74,7 @@
                         {{ item.document.title }}
                       </h4>
                       <div class="flex items-center justify-between mt-auto">
-                        <span class="text-sm font-bold text-pink-600">
+                        <span class="text-sm font-bold text-brand-600">
                           {{ item.document.price | thb }}
                         </span>
                         <button
@@ -95,7 +95,7 @@
 
           <!-- Summary -->
           @if (cart.count() > 0) {
-            <footer class="cart-drawer__footer bg-white border-t border-line px-4 md:px-6 pt-4 md:pt-5" data-testid="cart-drawer-footer">
+            <footer class="cart-drawer__footer bg-surface border-t border-line px-4 md:px-6 pt-4 md:pt-5" data-testid="cart-drawer-footer">
               <dl class="space-y-2 text-sm mb-4">
                 <div class="cart-drawer__breakdown flex justify-between text-ink-soft">
                   <dt>{{ 'cartDrawer.subtotal' | trans }}</dt>

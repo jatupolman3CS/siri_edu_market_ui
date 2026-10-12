@@ -68,11 +68,11 @@
           </div>
           <div>
             <label class="block text-xs text-ink-muted mb-1">{{ 'admin.categoriesMultiple' | trans }}</label>
-            <div class="space-y-1 max-h-40 overflow-auto p-2 rounded-2xl border border-line bg-white/70">
+            <div class="space-y-1 max-h-40 overflow-auto p-2 rounded-2xl border border-line bg-surface/70">
               @for (c of admin.adminCategories(); track c.id) {
                 <label
                   nz-checkbox
-                  class="px-2 py-1 rounded-xl hover:bg-pink-50 [@media(pointer:coarse)]:min-h-11 !items-center"
+                  class="px-2 py-1 rounded-xl hover:bg-brand-50 [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="(doc()!.categoryIds ?? []).includes(c.id)"
                   (nzCheckedChange)="patchDoc({ categoryIds: ((doc()!.categoryIds ?? []).includes(c.id)
                     ? (doc()!.categoryIds ?? []).filter((id) => id !== c.id)
@@ -134,7 +134,7 @@
             <label class="block text-xs text-ink-muted mb-1">{{ 'admin.tagsLabel' | trans }}</label>
             <div class="flex flex-wrap gap-2 mb-2">
               @for (t of tags(); track t) {
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-100 text-pink-900 text-xs">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 text-brand-900 text-xs">
                   {{ t }}
                   <button type="button" class="text-rose-600 font-bold leading-none" (click)="removeTag(t)" [attr.aria-label]="'admin.removeTagAria' | trans">×</button>
                 </span>
@@ -151,7 +151,7 @@
               @for (g of gradePresets; track g.value) {
                 <label
                   nz-checkbox
-                  class="text-xs bg-pink-50/80 px-2 py-1 rounded-lg [@media(pointer:coarse)]:min-h-11 !items-center"
+                  class="text-xs bg-brand-50/80 px-2 py-1 rounded-lg [@media(pointer:coarse)]:min-h-11 !items-center"
                   [nzChecked]="gradeChecked(g.value)"
                   (nzCheckedChange)="toggleGrade(g.value, $event)"
                 >
@@ -210,7 +210,7 @@
             <p class="text-xs text-red-700">{{ 'admin.reviewViewerFailed' | trans }}</p>
             @if (reviewOriginalFileUrl()) {
               <a
-                class="btn-ghost text-xs inline-flex items-center gap-1 text-pink-600"
+                class="btn-ghost text-xs inline-flex items-center gap-1 text-brand-600"
                 [href]="reviewOriginalFileUrl()"
                 target="_blank"
                 rel="noopener"
@@ -245,7 +245,7 @@
             </div>
 
             @if (galleryItems().length) {
-              <div class="rounded-2xl border border-line overflow-hidden bg-white">
+              <div class="rounded-2xl border border-line overflow-hidden bg-surface">
                 <ul
                   cdkDropList
                   [cdkDropListData]="galleryItems()"
@@ -259,7 +259,7 @@
                       <img appImgFallback [src]="item.previewUrl" alt="" class="w-16 h-20 object-cover rounded-xl border border-line" />
                       <div class="flex-1 min-w-0">
                         @if (i === 0) {
-                          <div class="text-xs font-bold text-pink-600">{{ 'seller.mainCover' | trans }}</div>
+                          <div class="text-xs font-bold text-brand-600">{{ 'seller.mainCover' | trans }}</div>
                         } @else {
                           <div class="text-xs text-ink-muted">{{ 'seller.orderIndex' | trans: { index: i + 1 } }}</div>
                         }
@@ -286,7 +286,7 @@
             @if (hasMainFile()) {
               <a
                 (click)="downloadMainFile()"
-                class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1 text-pink-600"
+                class="btn-ghost text-xs cursor-pointer inline-flex items-center gap-1 text-brand-600"
               >
                 <app-icon name="doc" [size]="14" />
                 {{ 'admin.openDownloadFile' | trans }}
@@ -381,7 +381,7 @@
           @for (a of doc()!.recentAudit; track a.id) {
             <li class="border-b border-line/50 pb-1">
               <span class="text-ink-muted">{{ a.createdAt | date: 'dd MMM yyyy HH:mm' }}</span>
-              <span class="text-pink-700 ml-2">{{ a.action }}</span>
+              <span class="text-brand-700 ml-2">{{ a.action }}</span>
               @if (a.detailsJson) {
                 <pre class="mt-1 text-[10px] whitespace-pre-wrap text-ink-soft">{{ a.detailsJson }}</pre>
               }
@@ -418,7 +418,7 @@
                 <!-- R-24: saves the file in place (downloadMainFile) instead of a target=_blank popup. -->
                 <button
                   type="button"
-                  class="btn-ghost text-xs min-h-11 inline-flex items-center gap-1 text-pink-600"
+                  class="btn-ghost text-xs min-h-11 inline-flex items-center gap-1 text-brand-600"
                   data-testid="review-download-original"
                   (click)="downloadMainFile()"
                 >
@@ -447,7 +447,7 @@
             @if (pdfViewerEnabled) {
               <iframe
                 [src]="reviewViewerUrl()"
-                class="w-full h-[70dvh] rounded-xl border border-line bg-white"
+                class="w-full h-[70dvh] rounded-xl border border-line bg-surface"
                 [title]="'admin.reviewDocumentTitle' | trans"
                 frameborder="0"
               ></iframe>

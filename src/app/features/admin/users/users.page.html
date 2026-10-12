@@ -82,7 +82,7 @@
     [rtResetKey]="listQueryKey()"
   >
     <table class="rtable w-full">
-      <thead class="bg-pink-50">
+      <thead class="bg-brand-50">
         <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
           <th class="px-3 py-3 font-semibold">{{ 'admin.userCol' | trans }}</th>
           <th class="px-3 py-3 font-semibold">{{ 'admin.statusCol' | trans }}</th>
@@ -96,13 +96,13 @@
       </thead>
       <tbody>
         @for (u of items(); track u.id) {
-          <tr class="border-t border-line hover:bg-pink-50/40">
+          <tr class="border-t border-line hover:bg-brand-50/40">
             <td class="rt-title px-3 py-3">
               <div class="flex items-center gap-3">
                 <img
                   appImgFallback
                   [src]="u.avatarUrl"
-                  class="w-9 h-9 rounded-full object-cover ring-2 ring-pink-100 shrink-0"
+                  class="w-9 h-9 rounded-full object-cover ring-2 ring-brand-100 shrink-0"
                   [alt]="u.displayName"
                 />
                 <div class="min-w-0">

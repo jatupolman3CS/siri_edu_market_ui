@@ -2,7 +2,7 @@
   @case ('manage') {
     <section class="card-soft p-4 sm:p-6" id="cards">
       <div class="flex items-start gap-3 mb-5">
-        <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+        <div class="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
           <app-icon name="wallet" [size]="18" />
         </div>
         <div class="min-w-0">
@@ -90,14 +90,14 @@
         <div class="space-y-2">
           @for (card of paymentMethods.list(); track card.id) {
             <label
-              class="flex items-center gap-3 min-h-11 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300"
+              class="flex items-center gap-3 min-h-11 p-3 rounded-2xl border border-line cursor-pointer hover:border-brand-300"
               [class.opacity-50]="isExpired(card)"
               [class.cursor-not-allowed]="isExpired(card)"
             >
               <input
                 type="radio"
                 name="saved-card-select"
-                class="accent-pink-500"
+                class="accent-brand-500"
                 [checked]="selected() === card.id"
                 [disabled]="isExpired(card)"
                 (change)="selectCard(card.id)"
@@ -113,11 +113,11 @@
               </span>
             </label>
           }
-          <label class="flex items-center gap-3 min-h-11 p-3 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
+          <label class="flex items-center gap-3 min-h-11 p-3 rounded-2xl border border-line cursor-pointer hover:border-brand-300">
             <input
               type="radio"
               name="saved-card-select"
-              class="accent-pink-500"
+              class="accent-brand-500"
               [checked]="selected() === 'new'"
               (change)="selectCard('new')"
             />

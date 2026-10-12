@@ -35,6 +35,7 @@ import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { DropdownBackResetDirective } from '../../directives/dropdown-back-reset.directive';
 import { ViewportService, acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 
@@ -60,6 +61,7 @@ export function isBrowseRoute(url: string): boolean {
     NotificationBellComponent,
     ImgFallbackDirective,
     LanguageSwitcherComponent,
+    ThemeToggleComponent,
     TranslatePipe,
     A11yModule,
     DropdownBackResetDirective,

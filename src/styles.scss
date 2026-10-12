@@ -11,30 +11,17 @@
 @import 'ng-zorro-antd/ng-zorro-antd.min.css';
 
 /* ---------------- Fonts ---------------- */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap');
 
 /* ---------------- CSS Variables ---------------- */
 :root {
-  --pink-50: #FFF7FA;
-  --pink-100: #FFEAF1;
-  --pink-200: #FFD6E4;
-  --pink-300: #FFB8CE;
-  --pink-400: #FF8AAF;
-  --pink-500: #F2638E;
-  --pink-600: #D94B78;
-  --pink-700: #B83864;
 
-  --ink: #2A1B22;
-  --ink-soft: #5A4751;
-  --ink-muted: #76646D;
-  --line: #F3E6EC;
-  --surface: #FFFFFF;
-  --canvas: #FFF7FA;
+  /* Colour tokens (--ink*, --line*, --surface, --canvas, --cream, --brand-N, --pink-N) are NOT declared here: they
+     are emitted per theme by the plugin in tailwind.theme.js — :root (light), :root[data-theme="dark"], .tokens-light. */
 
   /* responsive-ui.md §4.1 — contrast fixes */
-  --primary: #B83864;         /* filled buttons/badges with white text */
-  --primary-hover: #8A2C4D;
-  --line-strong: #A07F90;     /* input/select/textarea borders */
+  --primary: #db2777;         /* filled buttons/badges with white text (brand-600 = 4.6:1) */
+  --primary-hover: #be185d;
 
   /* Signature card radius (tailwind `rounded-3xl` = this var): 24px phone / 32px >=744 / 40px >=1280 */
   --radius-card: 1.5rem;
@@ -48,8 +35,39 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
-  --shadow-soft: 0 4px 16px -4px rgba(242, 99, 142, 0.10);
-  --shadow-pop:  0 10px 30px -8px rgba(242, 99, 142, 0.18);
+  --shadow-soft: 0 4px 16px -4px rgba(236, 72, 153, 0.12);
+  --shadow-pop:  0 10px 30px -8px rgba(236, 72, 153, 0.20);
+
+  /* Glassmorphism. Blur (backdrop-filter) is for overlays + sticky chrome only: it makes the element a
+     containing block for position:fixed descendants and a stacking context, so content cards use the
+     translucent fill without it (see .glass-card). */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-edge: rgba(249, 168, 212, 0.45);   /* brand-300 @ .45 — keeps a card edge visible on the pink backdrop */
+  --glass-blur: 20px;
+  --glass-shadow: 0 8px 32px 0 rgba(190, 24, 93, 0.10), inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Dark theme (class-free: core/services/theme.service.ts sets data-theme on <html>). */
+:root[data-theme='dark'] {
+  --shadow-soft: 0 4px 16px -4px rgba(0, 0, 0, 0.45);
+  --shadow-pop:  0 10px 30px -8px rgba(0, 0, 0, 0.55);
+  --glass-bg: rgba(36, 21, 31, 0.72);
+  --glass-bg-strong: rgba(36, 21, 31, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-edge: rgba(244, 114, 182, 0.22);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+/* Dark pages that get printed use the light tokens (tailwind.theme.js) — keep the glass light too. */
+@media print {
+  :root[data-theme='dark'] {
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-strong: rgba(255, 255, 255, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --glass-edge: rgba(249, 168, 212, 0.45);
+    --glass-shadow: none;
+  }
 }
 
 /* Z-index scale (responsive-ui.md §4.1 — every unit uses these):
@@ -78,7 +96,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', system-ui, sans-serif;
+  font-family: 'Prompt', sans-serif;
   background: var(--canvas);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -89,6 +107,30 @@ body {
   min-height: 100dvh;
   line-height: 1.6;
   overflow-x: hidden;
+  background: transparent;   /* html paints --canvas; body::before paints the mesh above it */
+}
+
+/* Cyber-pink mesh backdrop. A fixed pseudo-element (not background-attachment: fixed — janky on
+   iOS Safari) behind everything; hidden for print and forced-colors below. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 8% 0%, rgba(244, 114, 182, 0.30) 0%, transparent 60%),
+    radial-gradient(50% 45% at 100% 8%, rgba(251, 207, 232, 0.70) 0%, transparent 60%),
+    radial-gradient(45% 40% at 55% 100%, rgba(236, 72, 153, 0.14) 0%, transparent 60%);
+}
+:root[data-theme='dark'] body::before {
+  background:
+    radial-gradient(60% 50% at 8% 0%, rgba(236, 72, 153, 0.20) 0%, transparent 60%),
+    radial-gradient(50% 45% at 100% 8%, rgba(190, 24, 93, 0.24) 0%, transparent 60%),
+    radial-gradient(45% 40% at 55% 100%, rgba(244, 114, 182, 0.09) 0%, transparent 60%);
+}
+@media print, (forced-colors: active) {
+  body::before { display: none; }
 }
 
 /* Thai glyphs (tone marks / vowels above & below) clip at tight leading. `leading-none` is
@@ -175,7 +217,7 @@ html {
 
 /* ---------------- NG-ZORRO theme overrides ---------------- */
 .ant-btn {
-  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', system-ui, sans-serif !important;
+  font-family: 'Prompt', sans-serif !important;
   border-radius: 9999px !important;
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -187,7 +229,7 @@ html {
   border-radius: 9999px !important;
   font-weight: 600;
   color: #ffffff !important;
-  box-shadow: 0 4px 16px -4px rgba(242, 99, 142, 0.4) !important;
+  box-shadow: 0 4px 16px -4px rgba(236, 72, 153, 0.4) !important;
 }
 .ant-btn-primary:focus {
   background: var(--primary-hover) !important;
@@ -208,7 +250,7 @@ html {
   border-radius: 9999px !important;
   border: 1px solid var(--line) !important;
   color: var(--ink) !important;
-  background: #ffffff !important;
+  background: var(--surface) !important;
   font-weight: 500 !important;
   box-shadow: none !important;
 }
@@ -229,7 +271,7 @@ html {
   border-color: var(--pink-400) !important;
   color: var(--pink-600) !important;
   background: var(--pink-50) !important;
-  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.35) !important;
+  box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.35) !important;
   outline: none !important;
 }
 
@@ -246,7 +288,7 @@ html {
 .ant-btn-default[disabled] {
   border-color: var(--line) !important;
   color: var(--ink-muted) !important;
-  background: #fdfafc !important;
+  background: var(--brand-50) !important;
   opacity: 0.55 !important;
   cursor: not-allowed !important;
 }
@@ -277,7 +319,7 @@ html {
 .ant-select-focused .ant-select-selector,
 .ant-input-number-focused {
   border-color: var(--pink-400) !important;
-  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.25) !important;
+  box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.25) !important;
 }
 
 .ant-tag {
@@ -322,30 +364,37 @@ html {
 
 .ant-drawer-content {
   border-radius: 2rem 0 0 2rem !important;
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  border-left: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
 }
 
 /* ---------------- Modals & Popups (Standardized System Popups) ---------------- */
 .ant-modal-mask {
-  background: rgba(42, 27, 34, 0.45) !important;
+  background: rgba(131, 24, 67, 0.32) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
 .ant-modal {
-  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', system-ui, sans-serif !important;
+  font-family: 'Prompt', sans-serif !important;
 }
 
 .ant-modal-content {
   border-radius: 1.75rem !important;
-  background: #ffffff !important;
-  border: 1px solid var(--line) !important;
-  box-shadow: 0 24px 60px -12px rgba(42, 27, 34, 0.22), 0 4px 16px -4px rgba(42, 27, 34, 0.08) !important;
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 24px 60px -12px rgba(131, 24, 67, 0.28), 0 4px 16px -4px rgba(131, 24, 67, 0.10), inset 0 1px 0 0 rgba(255, 255, 255, 0.7) !important;
   padding: 0 !important;
   overflow: hidden !important;
 }
 
 .ant-modal-header {
-  background: #ffffff !important;
+  background: transparent !important;
   padding: 1.25rem 1.5rem 1rem 1.5rem !important;
   border-bottom: 1px solid var(--line) !important;
   border-radius: 1.75rem 1.75rem 0 0 !important;
@@ -447,7 +496,7 @@ html {
 
 .ant-modal-footer .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous) {
   border: 1px solid var(--line) !important;
-  background: #ffffff !important;
+  background: var(--surface) !important;
   color: var(--ink) !important;
   font-weight: 500 !important;
   box-shadow: none !important;
@@ -466,7 +515,7 @@ html {
   border-color: var(--pink-400) !important;
   color: var(--pink-600) !important;
   background: var(--pink-50) !important;
-  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.35) !important;
+  box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.35) !important;
   outline: none !important;
 }
 
@@ -590,7 +639,7 @@ html {
 
 .ant-modal-confirm-btns .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous) {
   border: 1px solid var(--line) !important;
-  background: #ffffff !important;
+  background: var(--surface) !important;
   color: var(--ink) !important;
   font-weight: 500 !important;
   box-shadow: none !important;
@@ -609,7 +658,7 @@ html {
   border-color: var(--pink-400) !important;
   color: var(--pink-600) !important;
   background: var(--pink-50) !important;
-  box-shadow: 0 0 0 4px rgba(255, 184, 206, 0.35) !important;
+  box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.35) !important;
   outline: none !important;
 }
 
@@ -651,12 +700,12 @@ html {
   align-items: center !important;
   gap: 0.75rem !important;
   padding: 0.75rem 1.4rem !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
   border-radius: 9999px !important;
-  border: 1px solid var(--line) !important;
-  box-shadow: 0 16px 36px -6px rgba(42, 27, 34, 0.14), 0 4px 12px -2px rgba(42, 27, 34, 0.06) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 16px 36px -6px rgba(131, 24, 67, 0.20), 0 4px 12px -2px rgba(131, 24, 67, 0.08) !important;
   pointer-events: auto !important;
   font-size: 0.9rem !important;
   font-weight: 600 !important;
@@ -740,11 +789,11 @@ html {
 
 .ant-notification-notice {
   border-radius: 1.5rem !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid var(--line) !important;
-  box-shadow: 0 20px 48px -8px rgba(42, 27, 34, 0.16), 0 4px 14px -2px rgba(42, 27, 34, 0.06) !important;
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 20px 48px -8px rgba(131, 24, 67, 0.22), 0 4px 14px -2px rgba(131, 24, 67, 0.08) !important;
   padding: 1.25rem 1.5rem !important;
   margin-bottom: 1rem !important;
   overflow: hidden !important;
@@ -797,11 +846,13 @@ html {
 /* ---------------- Custom utility classes ---------------- */
 @layer components {
   .card-soft {
-    @apply bg-white rounded-3xl border border-line shadow-soft;
+    @apply rounded-3xl border border-brand-200/60 shadow-glass;
+    background: var(--glass-bg-strong);
   }
 
   .card-cream {
-    @apply bg-cream rounded-3xl border border-line;
+    @apply rounded-3xl border border-brand-200/60;
+    background: var(--glass-bg);
   }
 
   /* One card spec for every dashboard surface (F-02): same radius and padding on every
@@ -856,11 +907,11 @@ html {
   }
 
   .pill-pink {
-    @apply pill bg-pink-100 text-pink-700;
+    @apply pill bg-brand-100 text-brand-700;
   }
 
   .pill-soft {
-    @apply pill bg-pink-50 text-ink-soft border border-line;
+    @apply pill bg-brand-50 text-ink-soft border border-line;
   }
 
   .pill-green {
@@ -876,19 +927,19 @@ html {
   }
 
   .btn-pink {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold shadow-soft transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold shadow-soft hover:shadow-pop transition-all duration-200;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-line hover:border-pink-300 text-ink hover:text-pink-600 font-medium transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-brand-200/70 bg-surface/60 hover:border-brand-300 text-ink hover:text-brand-600 font-medium transition-all duration-200;
   }
 
   .btn-icon {
-    @apply inline-flex items-center justify-center w-11 h-11 rounded-full border border-line hover:border-pink-300 hover:bg-pink-50 text-ink-soft hover:text-pink-600 transition-all duration-200;
+    @apply inline-flex items-center justify-center w-11 h-11 rounded-full border border-brand-200/70 bg-surface/60 hover:border-brand-300 hover:bg-brand-50 text-ink-soft hover:text-brand-600 transition-all duration-200;
   }
 
   .input-soft {
-    @apply w-full px-4 py-3 rounded-2xl border border-line-strong bg-white focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-100 transition-all;
+    @apply w-full px-4 py-3 rounded-2xl border border-line-strong bg-surface/80 focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100 transition-all;
   }
 
   /* Fluid headings (responsive-ui.md §4.2) */
@@ -991,7 +1042,7 @@ html {
   }
 
   .glass-blob {
-    background: radial-gradient(60% 60% at 50% 40%, rgba(255, 184, 206, 0.45) 0%, rgba(255, 247, 250, 0) 70%);
+    background: radial-gradient(60% 60% at 50% 40%, rgba(244, 114, 182, 0.35) 0%, rgba(253, 242, 248, 0) 70%);
   }
 }
 
@@ -1171,7 +1222,7 @@ html {
     padding: 16px;
     border: 1px solid var(--line);
     border-radius: var(--radius-card);
-    background: #fff;
+    background: var(--surface);
     margin-bottom: 12px;
   }
 
@@ -1301,7 +1352,7 @@ html {
 .rtable-pinned > tfoot > tr > :first-child {
   position: sticky;
   left: 0;
-  background: #fff;
+  background: var(--surface);
   z-index: 1;
   box-shadow: 6px 0 8px -6px rgba(42, 27, 34, 0.18);
 }
@@ -1316,7 +1367,7 @@ html {
   --rt-viewport-floor: min(240px, 60dvh);  /* header + about 3 rows; at most 60% of a short window */
   --rt-viewport-chrome: 200px;             /* the tallest pinned header next to a table (buyer >=1280: 171px) + a free band */
 }
-:is(.rtable, .rtable-pinned) > thead.bg-pink-50 { --rt-head-bg: var(--pink-50); }
+:is(.rtable, .rtable-pinned) > thead.bg-brand-50 { --rt-head-bg: var(--pink-50); }
 
 @media screen and (min-width: 744px) {
   .rt-viewport[data-rt-capped] {
@@ -1345,7 +1396,7 @@ html {
     position: sticky;
     top: 0;
     z-index: 3;                                      /* above the body, including the pinned column (z 1) */
-    background-color: var(--rt-head-bg, #fff);       /* opaque */
+    background-color: var(--rt-head-bg, var(--surface));       /* opaque */
     box-shadow: inset 0 -1px 0 var(--line);          /* the header rule moves with the sticky cells */
   }
   .rt-viewport[data-rt-capped] > .rtable-pinned > thead > tr > th:first-child {
@@ -1758,4 +1809,79 @@ html {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+/* ---------------- Glassmorphism surfaces (docs/THEME_REFACTOR.md) ----------------
+   .glass-panel  frosted chrome that content scrolls under (headers, rails, sheets): blur + saturate.
+   .glass-card   content card: translucent fill + pink edge + glass shadow, NO backdrop-filter (many of
+                 them per page, and a backdrop-filter would trap position:fixed descendants).
+   Opaque fallback where backdrop-filter is unsupported keeps text readable. */
+.glass-panel {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+@supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+  .glass-panel {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  }
+}
+.glass-card {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+@media (forced-colors: active) {
+  .glass-panel,
+  .glass-card {
+    border-color: CanvasText;
+  }
+}
+
+/* ---------------- Dark theme: ng-zorro, headings, native controls ----------------
+   ng-zorro's compiled CSS hard-codes rgba(0,0,0,.88) text and #fff panels. The overrides below are scoped to
+   :root[data-theme='dark'] so light mode is untouched. */
+:root[data-theme='dark'] :is(.ant-modal-content, .ant-modal-title, .ant-modal-confirm-title, .ant-modal-confirm-content, .ant-select,
+  .ant-select-selection-item, .ant-select-dropdown, .ant-select-item, .ant-dropdown-menu, .ant-dropdown-menu-item, .ant-input,
+  .ant-input-affix-wrapper, .ant-input-number-input, .ant-picker, .ant-picker-input > input, .ant-picker-dropdown, .ant-picker-panel-container,
+  .ant-picker-cell-in-view, .ant-picker-header, .ant-picker-content th, .ant-tabs-tab, .ant-tabs-tab-btn, .ant-popover-inner, .ant-pagination-item a) {
+  color: var(--ink);
+}
+:root[data-theme='dark'] :is(.ant-select-dropdown, .ant-dropdown-menu, .ant-picker-panel-container, .ant-popover-inner) {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+:root[data-theme='dark'] :is(.ant-select-item-option-active:not(.ant-select-item-option-disabled), .ant-dropdown-menu-item:hover,
+  .ant-dropdown-menu-item-active) {
+  background: var(--brand-100) !important;
+}
+:root[data-theme='dark'] .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: var(--brand-200) !important;
+  color: var(--ink);
+}
+:root[data-theme='dark'] .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--pink-400) !important;
+}
+:root[data-theme='dark'] :is(.ant-picker-cell-disabled, .ant-select-item-option-disabled, .ant-select-selection-placeholder, .ant-input::placeholder) {
+  color: var(--ink-muted);
+}
+:root[data-theme='dark'] .ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-range-start):not(.ant-picker-cell-range-end) .ant-picker-cell-inner {
+  background: var(--brand-100);
+}
+/* ng-zorro's reset paints h1–h6 near-black; zero-specificity-above-element + html keeps Tailwind text-* utilities winning. */
+html:where([data-theme='dark']) :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--ink);
+}
+:root[data-theme='dark'] .ant-modal-confirm-confirm .ant-modal-confirm-body > .anticon-question-circle,
+:root[data-theme='dark'] .ant-modal-confirm-warning .ant-modal-confirm-body > .anticon-exclamation-circle {
+  background: rgba(217, 119, 6, 0.18) !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+:root[data-theme='dark'] ::selection {
+  background: var(--brand-300);
+  color: var(--ink);
 }

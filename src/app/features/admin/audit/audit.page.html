@@ -52,7 +52,7 @@
             <span class="font-semibold min-w-0 [overflow-wrap:anywhere]">{{ entry.actorName || ('admin.auditAdmin.systemActor' | trans) }}</span>
             <span class="text-ink-muted">·</span>
             @if (entry.entityTitle) {
-              <span class="font-medium text-pink-600 bg-pink-50/70 px-2.5 py-0.5 rounded-lg border border-pink-100 min-w-0 max-w-full [overflow-wrap:anywhere]">
+              <span class="font-medium text-brand-600 bg-brand-50/70 px-2.5 py-0.5 rounded-lg border border-brand-100 min-w-0 max-w-full [overflow-wrap:anywhere]">
                 {{ entry.entityTitle }}
               </span>
               <span class="text-xs text-ink-muted">({{ entityTypeLabel(entry.entityType) }})</span>
@@ -83,7 +83,7 @@
             @if (items.length > 0) {
               <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 @for (item of items; track item.label) {
-                  <div class="flex items-baseline gap-2 bg-white/70 p-2 rounded-xl border border-amber-100">
+                  <div class="flex items-baseline gap-2 bg-surface/70 p-2 rounded-xl border border-amber-100">
                     <dt class="text-ink-muted font-medium shrink-0">{{ item.label }}:</dt>
                     <dd class="text-ink font-semibold break-all">{{ item.value }}</dd>
                   </div>

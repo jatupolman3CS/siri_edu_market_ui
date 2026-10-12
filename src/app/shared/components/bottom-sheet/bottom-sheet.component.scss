@@ -6,7 +6,7 @@
   position: fixed;
   inset: 0;
   z-index: 900;
-  background: rgba(42, 27, 34, 0.45);
+  background: rgba(131, 24, 67, 0.4);
   animation: bottom-sheet-fade 0.2s ease-out;
 }
 
@@ -22,9 +22,11 @@
   max-height: var(--sheet-max-h, 85dvh);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
-  background: #ffffff;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -16px 48px -12px rgba(42, 27, 34, 0.28);
+  box-shadow: 0 -16px 48px -12px rgba(131, 24, 67, 0.30);
   animation: bottom-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   outline: none;
 }
@@ -83,7 +85,7 @@
 @media (hover: hover) {
   .bottom-sheet__close:hover {
     background: var(--pink-50);
-    color: var(--primary);
+    color: var(--brand-600);
   }
 }
 
@@ -102,7 +104,7 @@
   gap: 8px;
   padding: 12px 16px calc(12px + var(--safe-bottom));
   border-top: 1px solid var(--line);
-  background: #ffffff;
+  background: var(--surface);
 }
 
 /* No projected footer → no empty bar, but keep the body clear of the home indicator. */
@@ -136,7 +138,7 @@
     padding-left: 0;
     padding-right: var(--safe-right);
     border-radius: 24px 0 0 24px;
-    box-shadow: -16px 0 48px -12px rgba(42, 27, 34, 0.28);
+    box-shadow: -16px 0 48px -12px rgba(131, 24, 67, 0.30);
     animation-name: bottom-sheet-in-right;
   }
 

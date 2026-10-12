@@ -1,9 +1,9 @@
 <div class="page-container py-6 sm:py-8">
   <header
-    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-brand-50/60 via-surface to-brand-50/30 border border-line"
   >
-    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
-      <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 border border-brand-200/60 mb-3">
+      <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
       <span>{{ 'account.badge' | trans }}</span>
     </div>
     <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'account.title' | trans }}</h1>
@@ -21,7 +21,7 @@
           <img
             appImgFallback
             [src]="avatarSrc()"
-            class="w-12 h-12 rounded-2xl object-cover ring-2 ring-pink-100 flex-shrink-0"
+            class="w-12 h-12 rounded-2xl object-cover ring-2 ring-brand-100 flex-shrink-0"
             [alt]="u.name"
           />
           <div class="min-w-0">
@@ -36,7 +36,7 @@
           <a
             [routerLink]="['/account']"
             [fragment]="item.fragment"
-            class="flex items-center gap-3 min-h-11 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+            class="flex items-center gap-3 min-h-11 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-brand-50 hover:text-brand-600 transition-colors whitespace-nowrap"
           >
             <app-icon [name]="item.icon" [size]="18" />
             <span class="flex-1">{{ item.label }}</span>
@@ -99,7 +99,7 @@
             <li>
               <a
                 [routerLink]="shortcut.href"
-                class="block h-full p-4 rounded-2xl border border-line hover:border-pink-300 hover:shadow-soft transition-all"
+                class="block h-full p-4 rounded-2xl border border-line hover:border-brand-300 hover:shadow-soft transition-all"
               >
                 <span class="text-2xl">{{ shortcut.emoji }}</span>
                 <div class="text-sm font-semibold text-ink mt-2">{{ shortcut.label }}</div>

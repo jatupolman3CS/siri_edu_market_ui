@@ -125,8 +125,9 @@ npx ng test --watch=false
 ## Design System
 
 - Signature radius: `2.5rem` (`rounded-3xl`)
-- Palette: a 9-shade pink scale (`pink-50` → `pink-900`) plus ink/cream/canvas neutrals
-- Typeface: Plus Jakarta Sans + Noto Sans Thai
+- Theme: Premium Cyber-Pink Glassmorphism — a 10-shade `brand` scale (`brand-50` → `brand-900`) plus
+  ink/cream/canvas neutrals; glass surfaces (`.glass-card`, `.glass-panel`, `shadow-glass`)
+- Typeface: Prompt
 - Custom shadow tokens (`shadow-soft`, `shadow-pop`, `shadow-float`) and Tailwind keyframe
   animations (`fade-in`, `slide-up`, `pulse-soft`)
 

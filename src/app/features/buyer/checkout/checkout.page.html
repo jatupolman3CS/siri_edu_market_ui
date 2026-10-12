@@ -1,9 +1,9 @@
 <div class="page-container py-6 sm:py-8">
   <header
-    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-brand-50/60 via-surface to-brand-50/30 border border-line"
   >
-    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
-      <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 border border-brand-200/60 mb-3">
+      <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
       <span>{{ 'checkout.title' | trans }}</span>
     </div>
     <h1 class="heading-1 font-extrabold text-ink mb-1.5">{{ 'checkout.title' | trans }}</h1>
@@ -42,9 +42,9 @@
         </app-empty-state>
       } @else {
         @if (pendingOrder(); as po) {
-          <div class="card-soft p-4 sm:p-5 mb-6 border border-pink-200 bg-pink-50/60 flex flex-wrap items-center justify-between gap-4">
+          <div class="card-soft p-4 sm:p-5 mb-6 border border-brand-200 bg-brand-50/60 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-              <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+              <span class="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
                 <app-icon name="qr" [size]="20" />
               </span>
               <div>
@@ -67,7 +67,7 @@
             <!-- Items -->
             <section class="card-soft p-4 sm:p-6">
               <h2 class="text-lg font-bold text-ink mb-4 flex items-center gap-2">
-                <span class="w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-xs font-bold flex items-center justify-center">1</span>
+                <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 text-xs font-bold flex items-center justify-center">1</span>
                 {{ 'checkout.step1Title' | trans }}
               </h2>
               @if (pendingOrder(); as po) {
@@ -86,7 +86,7 @@
                         <div class="text-xs text-ink-muted mt-0.5 uppercase">{{ item.document.format }} · {{ item.document.pages }} {{ 'common.pages' | trans }}</div>
                       </div>
                       <div class="text-right shrink-0">
-                        <div class="text-base font-bold text-pink-600">{{ item.document.price | thb }}</div>
+                        <div class="text-base font-bold text-brand-600">{{ item.document.price | thb }}</div>
                       </div>
                     </li>
                   }
@@ -107,7 +107,7 @@
                       <div class="text-xs text-ink-muted mt-0.5 uppercase">{{ item.document.format }} · {{ item.document.pages }} {{ 'common.pages' | trans }}</div>
                     </div>
                     <div class="text-right shrink-0">
-                      <div class="text-base font-bold text-pink-600">{{ item.document.price | thb }}</div>
+                      <div class="text-base font-bold text-brand-600">{{ item.document.price | thb }}</div>
                       <button
                         type="button"
                         class="tap-target -mr-2 px-2 text-xs text-ink-muted hover:text-rose-500"
@@ -126,7 +126,7 @@
                  and the TrueMoney number box from this page entirely. -->
             <section class="card-soft p-4 sm:p-6">
               <h2 class="text-lg font-bold text-ink mb-4 flex items-center gap-2">
-                <span class="w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-xs font-bold flex items-center justify-center">2</span>
+                <span class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 text-xs font-bold flex items-center justify-center">2</span>
                 {{ 'checkout.step2Title' | trans }}
               </h2>
 
@@ -149,8 +149,8 @@
                   type="button"
                   class="w-full text-left p-4 rounded-xl border-2 transition-colors"
                   [class.mb-3]="!isWalletInsufficient()"
-                  [class.border-pink-500]="payWithWallet()"
-                  [class.bg-pink-50]="payWithWallet()"
+                  [class.border-brand-500]="payWithWallet()"
+                  [class.bg-brand-50]="payWithWallet()"
                   [class.border-line]="!payWithWallet()"
                   [class.opacity-60]="isWalletInsufficient()"
                   [class.cursor-not-allowed]="isWalletInsufficient()"
@@ -191,7 +191,7 @@
                   </p>
                   <button
                     type="button"
-                    class="min-h-11 text-xs text-pink-600 hover:underline mb-4"
+                    class="min-h-11 text-xs text-brand-600 hover:underline mb-4"
                     (click)="selectCard()"
                   >
                     {{ 'checkout.useCardInstead' | trans }}
@@ -208,7 +208,7 @@
                         type="checkbox"
                         [checked]="saveNewCard()"
                         (change)="saveNewCard.set($any($event.target).checked)"
-                        class="w-4 h-4 shrink-0 accent-pink-500"
+                        class="w-4 h-4 shrink-0 accent-brand-500"
                       />
                       {{ 'checkout.saveCardNextTime' | trans }}
                     </label>
@@ -223,7 +223,7 @@
 
                   @if (busy() && !paymentReady() && selectedSavedCardId() === 'new') {
                     <div class="py-10 flex flex-col items-center justify-center text-center gap-2 text-ink-muted">
-                      <div class="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div class="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                       <p class="text-sm font-medium text-ink">{{ 'checkout.openingGateway' | trans }}</p>
                     </div>
                   }
@@ -260,7 +260,7 @@
                   </div>
                   <div class="border-t border-line pt-3 flex justify-between text-base font-bold text-ink">
                     <dt>{{ 'checkout.totalDue' | trans }}</dt>
-                    <dd class="text-pink-600">{{ po.total | thb }}</dd>
+                    <dd class="text-brand-600">{{ po.total | thb }}</dd>
                   </div>
                 } @else {
                 <div class="flex justify-between text-ink-soft">
@@ -291,7 +291,7 @@
                 </div>
                 <div class="border-t border-line pt-3 flex justify-between text-base font-bold text-ink">
                   <dt>{{ 'checkout.totalDue' | trans }}</dt>
-                  <dd class="text-pink-600">{{ payableTotal() | thb }}</dd>
+                  <dd class="text-brand-600">{{ payableTotal() | thb }}</dd>
                 </div>
                 }
               </dl>
@@ -302,7 +302,7 @@
                     <input
                       id="use-loyalty-points"
                       type="checkbox"
-                      class="w-4 h-4 mt-0.5 shrink-0 accent-pink-500 rounded"
+                      class="w-4 h-4 mt-0.5 shrink-0 accent-brand-500 rounded"
                       [checked]="useLoyaltyPoints()"
                       (change)="useLoyaltyPoints.set($any($event.target).checked)"
                       [disabled]="busy() || paymentReady() || (loyaltySummary.availableBalance ?? loyaltySummary.balance) < (loyaltySummary.pointsPerTHB ?? 10)"
@@ -328,7 +328,7 @@
                 @if (!showReferralInput()) {
                   <button
                     type="button"
-                    class="min-h-11 text-xs text-pink-600 hover:text-pink-700 font-medium cursor-pointer"
+                    class="min-h-11 text-xs text-brand-600 hover:text-brand-700 font-medium cursor-pointer"
                     (click)="showReferralInput.set(true)"
                   >
                     {{ 'checkout.hasReferralCode' | trans }}
@@ -342,7 +342,7 @@
                       [placeholder]="'checkout.enterReferralCode' | trans"
                       autocomplete="off"
                       autocapitalize="characters"
-                      class="w-full text-xs px-3 py-2 border border-line-strong rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-pink-500"
+                      class="w-full text-xs px-3 py-2 border border-line-strong rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-500"
                       [disabled]="busy() || paymentReady()"
                     />
                     @if (validatingReferral()) {
@@ -368,7 +368,7 @@
                       [checked]="useReferralCredit()"
                       (change)="useReferralCredit.set($any($event.target).checked)"
                       [disabled]="busy() || paymentReady()"
-                      class="w-4 h-4 shrink-0 accent-pink-500 rounded"
+                      class="w-4 h-4 shrink-0 accent-brand-500 rounded"
                     />
                     <span>{{ 'checkout.useReferralCredit' | trans: { amount: referral.summary()?.unusedCreditTotal ?? 0 } }}</span>
                   </label>
@@ -405,19 +405,19 @@
 
               <div class="grid grid-cols-3 gap-2 mt-5 pt-5 border-t border-line text-center text-xs">
                 <div class="flex flex-col items-center gap-1">
-                  <span class="text-pink-500">
+                  <span class="text-brand-500">
                     <app-icon name="lock" [size]="16" />
                   </span>
                   <span class="text-ink-muted">{{ 'checkout.sslSecure' | trans }}</span>
                 </div>
                 <div class="flex flex-col items-center gap-1">
-                  <span class="text-pink-500">
+                  <span class="text-brand-500">
                     <app-icon name="shield" [size]="16" />
                   </span>
                   <span class="text-ink-muted">{{ 'checkout.watermarked' | trans }}</span>
                 </div>
                 <div class="flex flex-col items-center gap-1">
-                  <span class="text-pink-500">
+                  <span class="text-brand-500">
                     <app-icon name="download" [size]="16" />
                   </span>
                   <span class="text-ink-muted">{{ 'checkout.instantDl' | trans }}</span>
@@ -434,7 +434,7 @@
           <div class="flex w-full min-w-0 items-center gap-3" data-testid="checkout-action-bar">
             <div class="min-w-0 flex-1">
               <div class="text-[11px] text-ink-muted leading-tight">{{ 'checkout.totalDue' | trans }}</div>
-              <div class="text-lg font-bold text-pink-600 leading-tight truncate">{{ payableTotal() | thb }}</div>
+              <div class="text-lg font-bold text-brand-600 leading-tight truncate">{{ payableTotal() | thb }}</div>
             </div>
             <button
               type="button"

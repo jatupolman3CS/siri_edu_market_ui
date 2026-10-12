@@ -123,7 +123,7 @@ export class AdminSubscriptionsPage {
       case 'canceled':
         return 'bg-rose-50 text-rose-700';
       default:
-        return 'bg-pink-50 text-pink-700';
+        return 'bg-brand-50 text-brand-700';
     }
   }
 }

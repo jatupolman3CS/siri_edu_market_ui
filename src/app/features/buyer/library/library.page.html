@@ -79,7 +79,7 @@
 
           <button
             type="button"
-            class="self-start inline-flex items-center min-h-11 text-xs font-semibold text-pink-600 text-left"
+            class="self-start inline-flex items-center min-h-11 text-xs font-semibold text-brand-600 text-left"
             (click)="openLedgerDrawer()"
           >
             {{ 'library.viewPointsHistory' | trans }}
@@ -101,7 +101,7 @@
             [class.bg-primary]="library.libraryFilter() === t.value"
             [class.text-white]="library.libraryFilter() === t.value"
             [class.border-primary]="library.libraryFilter() === t.value"
-            [class.bg-white]="library.libraryFilter() !== t.value"
+            [class.bg-surface]="library.libraryFilter() !== t.value"
             [class.text-ink-soft]="library.libraryFilter() !== t.value"
             [class.border-line]="library.libraryFilter() !== t.value"
             (click)="library.setLibraryFilter(t.value)"
@@ -145,15 +145,15 @@
         <div class="document-card-grid items-start" data-testid="library-card-grid">
           @for (item of filteredLibrary(); track item.document.id) {
             <article
-              class="group bg-white rounded-3xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-shadow duration-300"
+              class="group bg-surface rounded-3xl border border-line shadow-soft hover:shadow-pop hover:border-brand-300 overflow-hidden flex flex-col transition-shadow duration-300"
             >
               <!-- Card Visual / full document cover, matching marketplace cards -->
               <div
-                class="relative aspect-[4/5] bg-pink-50 border-b border-pink-100/60 overflow-hidden"
+                class="relative aspect-[4/5] bg-brand-50 border-b border-brand-100/60 overflow-hidden"
                 data-testid="library-cover"
               >
                 <!-- Subtle decorative background blur circles -->
-                <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-pink-200/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500"></div>
+                <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-brand-200/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500"></div>
                 <div class="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-rose-200/30 blur-lg pointer-events-none"></div>
 
                 <!-- Top Header Badges -->
@@ -162,7 +162,7 @@
                      check icon with the label kept as its accessible name. It used to wrap to 3–4
                      lines and slide under the cover. -->
                 <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-1 z-20 pointer-events-none">
-                  <span class="shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur text-[10px] font-extrabold uppercase tracking-wider text-pink-600 shadow-sm border border-pink-100">
+                  <span class="shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-surface/95 backdrop-blur text-[10px] font-extrabold uppercase tracking-wider text-brand-600 shadow-sm border border-brand-100">
                     {{ item.document.format }}
                   </span>
                   <span
@@ -184,11 +184,11 @@
                     data-testid="library-cover-image"
                   />
                 } @else {
-                  <div class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-50/90 via-rose-50/40 to-pink-100/50">
-                    <div class="w-16 h-16 rounded-2xl bg-white border border-pink-100 shadow-soft flex items-center justify-center text-pink-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                  <div class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-brand-50/90 via-rose-50/40 to-brand-100/50">
+                    <div class="w-16 h-16 rounded-2xl bg-surface border border-brand-100 shadow-soft flex items-center justify-center text-brand-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                       <app-icon name="doc" [size]="28" />
                     </div>
-                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-ink-muted group-hover:text-pink-600 transition-colors">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-ink-muted group-hover:text-brand-600 transition-colors">
                       {{ item.document.format }}
                     </span>
                   </div>
@@ -199,7 +199,7 @@
               <!-- Card Body Content -->
               <div class="p-3.5 sm:p-5 flex flex-col gap-2.5 flex-1">
                 <!-- Title -->
-                <h3 class="text-base font-bold text-ink leading-snug line-clamp-2 min-h-[3rem] group-hover:text-pink-600 transition-colors">
+                <h3 class="text-base font-bold text-ink leading-snug line-clamp-2 min-h-[3rem] group-hover:text-brand-600 transition-colors">
                   {{ item.document.title }}
                 </h3>
 
@@ -231,7 +231,7 @@
 
                   <button
                     type="button"
-                    class="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1 hover:underline"
+                    class="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 hover:underline"
                     (click)="openVersionsModal(item.document.id, item.document.title); $event.stopPropagation()"
                   >
                     <app-icon name="doc" [size]="12" />
@@ -240,7 +240,7 @@
                 </div>
 
                 <!-- Purchase Info Grid -->
-                <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-ink-muted mt-1 p-3 bg-pink-50/40 rounded-2xl border border-pink-100/50">
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-ink-muted mt-1 p-3 bg-brand-50/40 rounded-2xl border border-brand-100/50">
                   <div>{{ 'library.orderNumber' | trans }}</div>
                   <div class="text-ink font-semibold truncate">{{ item.orderNumber }}</div>
                   <div>{{ 'library.purchasedAt' | trans }}</div>
@@ -308,7 +308,7 @@
                     } @else {
                       <button
                         type="button"
-                        class="pill bg-pink-50 text-ink-soft text-[10px] border border-pink-100"
+                        class="pill bg-brand-50 text-ink-soft text-[10px] border border-brand-100"
                         (click)="library.toggleRead(item.document.id, true)"
                       >
                         {{ 'library.markAsRead' | trans }}
@@ -316,7 +316,7 @@
                     }
                     <a
                       [routerLink]="['/document', item.document.id]"
-                      class="text-xs font-semibold text-pink-600 hover:underline inline-flex items-center gap-1"
+                      class="text-xs font-semibold text-brand-600 hover:underline inline-flex items-center gap-1"
                     >
                       <app-icon name="eye" [size]="13" />
                       {{ 'library.detailsBtn' | trans }}
@@ -374,20 +374,20 @@
        tab anchors next to the card, inside this fixed box. Escape and the page lock (R-10) live in
        the component. -->
   <div class="fixed inset-0 z-50 flex h-dvh overflow-y-auto overscroll-contain bg-[rgba(42,27,34,0.45)] backdrop-blur-md pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="closeReviewModal()">
-    <div class="m-auto card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line animate-in fade-in zoom-in-95 duration-150" role="dialog" aria-modal="true" aria-labelledby="library-review-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (click)="$event.stopPropagation()">
+    <div class="m-auto card-soft w-full max-w-md p-6 bg-surface shadow-2xl border border-line animate-in fade-in zoom-in-95 duration-150" role="dialog" aria-modal="true" aria-labelledby="library-review-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (click)="$event.stopPropagation()">
       <div class="flex items-center justify-between gap-3 pb-3.5 border-b border-line mb-4">
         <div class="flex min-w-0 items-center gap-2.5">
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex-shrink-0">
             <app-icon name="star" [size]="16" />
           </span>
           <h3 id="library-review-title" class="min-w-0 text-base md:text-lg font-bold text-ink">{{ 'library.reviewModalTitle' | trans }}</h3>
         </div>
-        <button type="button" class="w-11 h-11 shrink-0 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft hover:text-pink-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" [attr.aria-label]="'common.close' | trans">
+        <button type="button" class="w-11 h-11 shrink-0 rounded-full bg-brand-50 hover:bg-brand-100 text-ink-soft hover:text-brand-600 flex items-center justify-center transition-all" (click)="closeReviewModal()" [attr.aria-label]="'common.close' | trans">
           <app-icon name="close" [size]="14" />
         </button>
       </div>
 
-      <div class="p-3 bg-pink-50/70 rounded-2xl border border-pink-100 mb-4">
+      <div class="p-3 bg-brand-50/70 rounded-2xl border border-brand-100 mb-4">
         <p class="text-[11px] font-medium text-ink-muted mb-0.5">{{ 'library.reviewingDoc' | trans }}</p>
         <p class="text-sm font-semibold text-ink line-clamp-2">{{ modal.title }}</p>
       </div>
@@ -412,7 +412,7 @@
             <!-- R-2 / E-8: 44x44 star buttons with no gap; below 344px five of them no longer fit
                  the card (5x44 > 214px at 320), so they drop to 40x44. The score pill wraps under
                  the stars when the row is too narrow for both. -->
-            <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-pink-50/50 rounded-2xl border border-line">
+            <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-brand-50/50 rounded-2xl border border-line">
               <div class="flex">
                 @for (star of [1, 2, 3, 4, 5]; track star) {
                   <button
@@ -428,7 +428,7 @@
                   </button>
                 }
               </div>
-              <span class="text-xs font-bold text-pink-600 bg-pink-100 px-2.5 py-1 rounded-full">{{ 'library.starsScore' | trans: { score: reviewForm().rating } }}</span>
+              <span class="text-xs font-bold text-brand-600 bg-brand-100 px-2.5 py-1 rounded-full">{{ 'library.starsScore' | trans: { score: reviewForm().rating } }}</span>
             </div>
           </div>
 
@@ -487,7 +487,7 @@
 >
   <ng-container *nzDrawerContent>
     <div class="flex flex-col h-full bg-canvas">
-      <header class="flex items-center justify-between px-6 py-5 border-b border-line bg-white">
+      <header class="flex items-center justify-between px-6 py-5 border-b border-line bg-surface">
         <h3 class="text-base font-bold text-ink">{{ 'library.pointsHistoryTitle' | trans }}</h3>
         <button class="btn-icon" type="button" (click)="closeLedgerDrawer()">
           <app-icon name="close" [size]="18" />
@@ -503,7 +503,7 @@
         } @else {
           <ul class="flex flex-col gap-3">
             @for (entry of loyalty.ledger(); track entry.id) {
-              <li class="flex items-center justify-between gap-3 p-3 bg-white rounded-2xl border border-line">
+              <li class="flex items-center justify-between gap-3 p-3 rounded-2xl border glass-card">
                 <div class="min-w-0">
                   <p class="text-sm font-semibold text-ink truncate">
                     @if (entry.reason === 'order_paid' && entry.orderNumber) {
@@ -532,7 +532,7 @@
       </div>
 
       @if (loyalty.ledgerHasMore()) {
-        <footer class="bg-white border-t border-line px-6 py-5">
+        <footer class="bg-surface border-t border-line px-6 py-5">
           <button
             type="button"
             class="btn-pink w-full"

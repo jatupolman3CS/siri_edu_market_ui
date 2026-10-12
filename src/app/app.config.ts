@@ -10,6 +10,7 @@ import {
 import { provideRouter, withInMemoryScrolling, TitleStrategy } from '@angular/router';
 import { I18nTitleStrategy } from './core/i18n';
 import { ModalA11yService, ScrollRestorationService } from './core/layout';
+import { ThemeService } from './core/services/theme.service';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -93,6 +94,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(ScrollRestorationService);
       inject(ModalA11yService);
+      inject(ThemeService); // sets <html data-theme> before the first view (index.html already did it pre-paint)
     }),
   ],
 };

@@ -41,19 +41,19 @@
       <div class="page-container py-5 md:py-8">
         <!-- Breadcrumb -->
         <nav class="flex items-center gap-2 text-sm text-ink-muted mb-4 md:mb-6 flex-wrap min-w-0">
-          <a routerLink="/" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'nav.home' | trans }}</a>
+          <a routerLink="/" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-brand-600">{{ 'nav.home' | trans }}</a>
           <app-icon name="chevron-right" [size]="14" />
-          <a routerLink="/marketplace" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600">{{ 'nav.marketplace' | trans }}</a>
+          <a routerLink="/marketplace" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-brand-600">{{ 'nav.marketplace' | trans }}</a>
           <app-icon name="chevron-right" [size]="14" />
           @for (cid of d.categoryIds; track cid; let last = $last) {
             @if (catalog.getCategoryById(cid); as c) {
-              <a [routerLink]="['/category', c.slug]" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600 [overflow-wrap:anywhere]">{{ c.name }}</a>
+              <a [routerLink]="['/category', c.slug]" class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-brand-600 [overflow-wrap:anywhere]">{{ c.name }}</a>
               <app-icon name="chevron-right" [size]="14" />
               @if (last && d.subcategoryId && catalog.getSubcategoryById(d.subcategoryId); as sub) {
                 <a
                   [routerLink]="['/category', c.slug]"
                   [queryParams]="{ sub: sub.slug }"
-                  class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-pink-600 [overflow-wrap:anywhere]"
+                  class="inline-flex items-center justify-center min-h-11 min-w-11 hover:text-brand-600 [overflow-wrap:anywhere]"
                 >
                   {{ sub.name }}
                 </a>
@@ -79,7 +79,7 @@
                   draggable="false"
                   (contextmenu)="$event.preventDefault()"
                 />
-                <span class="absolute top-4 left-4 pill bg-white/90 backdrop-blur uppercase text-[11px] font-bold text-ink">
+                <span class="absolute top-4 left-4 pill bg-surface/90 backdrop-blur uppercase text-[11px] font-bold text-ink">
                   <app-icon name="doc" [size]="12" /> {{ d.format }}
                 </span>
                 @if (d.isFree) {
@@ -92,12 +92,12 @@
                   </span>
                 }
               </div>
-              <div class="flex gap-2 p-3 bg-white overflow-x-auto overflow-y-hidden no-scrollbar">
+              <div class="flex gap-2 p-3 bg-surface overflow-x-auto overflow-y-hidden no-scrollbar">
                 @for (img of d.gallery; track img; let i = $index) {
                   <button
                     type="button"
                     class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 transition-all"
-                    [class.border-pink-500]="selectedImage() === i"
+                    [class.border-brand-500]="selectedImage() === i"
                     [class.border-transparent]="selectedImage() !== i"
                     (click)="selectedImage.set(i)"
                   >
@@ -105,16 +105,16 @@
                   </button>
                 } @empty {
                   @if (d.cover) {
-                    <button type="button" class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-pink-500" aria-current="true">
+                    <button type="button" class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-brand-500" aria-current="true">
                       <img appImgFallback [src]="d.cover" class="w-full h-full object-cover" alt="" />
                     </button>
                   }
                 }
               </div>
               @if (d.previewPages > 0) {
-                <div class="px-3 pb-3 bg-white flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5">
+                <div class="px-3 pb-3 bg-surface flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5">
                   <div class="flex items-center gap-1.5 text-xs text-ink-muted">
-                    <app-icon name="eye" [size]="14" className="text-pink-500" />
+                    <app-icon name="eye" [size]="14" className="text-brand-500" />
                     <span>{{ 'product.hasPreviewPages' | trans: { count: d.previewPages } }}</span>
                   </div>
                   <button
@@ -143,15 +143,15 @@
 
                     <!-- Resource info grid (TpT-style) -->
                     <ul class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
                         <span class="text-2xl">{{ resourceIcon(d.resourceType) }}</span>
                         <div class="text-sm">
                           <div class="text-xs text-ink-muted">{{ 'product.typeLabel' | trans }}</div>
                           <div class="font-bold text-ink">{{ resourceLabel(d.resourceType) }}</div>
                         </div>
                       </li>
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
-                        <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                        <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                           <app-icon name="user" [size]="16" />
                         </span>
                         <div class="text-sm">
@@ -161,8 +161,8 @@
                           </div>
                         </div>
                       </li>
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
-                        <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                        <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                           <app-icon name="doc" [size]="16" />
                         </span>
                         <div class="text-sm">
@@ -170,8 +170,8 @@
                           <div class="font-bold text-ink uppercase">{{ d.format }} · {{ d.pages }} {{ 'common.pages' | trans }}</div>
                         </div>
                       </li>
-                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50">
-                        <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                      <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50">
+                        <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                           <app-icon name="globe" [size]="16" />
                         </span>
                         <div class="text-sm">
@@ -180,15 +180,15 @@
                         </div>
                       </li>
                       @if (d.standards?.length) {
-                        <li class="flex items-center gap-3 p-3 rounded-2xl bg-pink-50 sm:col-span-2">
-                          <span class="w-8 h-8 rounded-xl bg-white text-pink-600 flex items-center justify-center">
+                        <li class="flex items-center gap-3 p-3 rounded-2xl bg-brand-50 sm:col-span-2">
+                          <span class="w-8 h-8 rounded-xl bg-surface text-brand-600 flex items-center justify-center">
                             <app-icon name="flag" [size]="16" />
                           </span>
                           <div class="text-sm flex-1">
                             <div class="text-xs text-ink-muted">{{ 'product.standardsLabel' | trans }}</div>
                             <div class="flex gap-1.5 mt-1 flex-wrap">
                               @for (s of d.standards!; track s) {
-                                <span class="pill bg-white text-pink-600 !text-[11px]">{{ s }}</span>
+                                <span class="pill bg-surface text-brand-600 !text-[11px]">{{ s }}</span>
                               }
                             </div>
                           </div>
@@ -202,7 +202,7 @@
                   <nz-tab [nzTitle]="'product.aiSummaryTab' | trans">
                     <div class="mt-4 card-cream p-6">
                       <div class="flex items-center gap-2 mb-4">
-                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-300 to-pink-500 text-white flex items-center justify-center">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-300 to-brand-500 text-white flex items-center justify-center">
                           <app-icon name="sparkle" [size]="18" />
                         </span>
                         <div>
@@ -213,7 +213,7 @@
                       <ul class="space-y-3">
                         @for (s of d.aiSummary ?? []; track s; let i = $index) {
                           <li class="flex gap-3">
-                            <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-white text-pink-600 flex items-center justify-center text-xs font-bold mt-0.5">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-surface text-brand-600 flex items-center justify-center text-xs font-bold mt-0.5">
                               {{ i + 1 }}
                             </span>
                             <span class="text-sm text-ink leading-relaxed">{{ s }}</span>
@@ -241,8 +241,8 @@
                         @for (b of ratingBreakdown(); track b.score) {
                           <div class="flex items-center gap-3 text-sm">
                             <span class="text-ink-muted w-6">{{ b.score }}★</span>
-                            <div class="flex-1 h-2 rounded-full bg-pink-100 overflow-hidden">
-                              <div class="h-full bg-pink-500 rounded-full" [style.width.%]="b.percent"></div>
+                            <div class="flex-1 h-2 rounded-full bg-brand-100 overflow-hidden">
+                              <div class="h-full bg-brand-500 rounded-full" [style.width.%]="b.percent"></div>
                             </div>
                             <span class="text-xs text-ink-muted w-10 text-right">{{ b.percent }}%</span>
                           </div>
@@ -280,7 +280,7 @@
                                 </div>
                                 <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ rv.comment }}</p>
                                 <div class="flex items-center gap-4 mt-3">
-                                  <button class="text-xs text-ink-muted hover:text-pink-600 inline-flex items-center gap-1">
+                                  <button class="text-xs text-ink-muted hover:text-brand-600 inline-flex items-center gap-1">
                                     👍 {{ 'product.helpfulCount' | trans: { count: rv.helpful ?? 0 } }}
                                   </button>
                                 </div>
@@ -288,11 +288,11 @@
                             </div>
 
                             @if (rv.sellerReply; as reply) {
-                              <div class="mt-4 ml-15 pl-4 border-l-2 border-pink-300 flex gap-3">
+                              <div class="mt-4 ml-15 pl-4 border-l-2 border-brand-300 flex gap-3">
                                 <img appImgFallback [src]="d.seller.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
                                 <div class="flex-1 min-w-0">
                                   <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
-                                    <span class="min-w-0 text-xs font-bold text-pink-700 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
+                                    <span class="min-w-0 text-xs font-bold text-brand-700 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
                                     <span class="pill-pink !py-0 !text-[10px]">{{ 'product.sellerLabel' | trans }}</span>
                                     <span class="text-[11px] text-ink-muted">{{ reply.createdAt | timeAgo }}</span>
                                   </div>
@@ -322,8 +322,8 @@
                             <li class="card-soft p-5">
                               <p class="text-sm font-bold text-ink leading-relaxed mb-3 [overflow-wrap:anywhere]">{{ q.question }}</p>
                               @if (q.answer; as a) {
-                                <div class="pl-4 border-l-2 border-pink-300">
-                                  <div class="text-xs font-bold text-pink-700 mb-1">{{ 'product.sellerAnswer' | trans }}</div>
+                                <div class="pl-4 border-l-2 border-brand-300">
+                                  <div class="text-xs font-bold text-brand-700 mb-1">{{ 'product.sellerAnswer' | trans }}</div>
                                   <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ a.text }}</p>
                                 </div>
                               }
@@ -340,7 +340,7 @@
                     <!-- Policy notice -->
                     <div class="card-cream p-5 mb-6">
                       <h3 class="text-sm font-bold text-ink mb-2 flex items-center gap-2">
-                        <app-icon name="bell" [size]="16" className="text-pink-500" />
+                        <app-icon name="bell" [size]="16" className="text-brand-500" />
                         {{ 'product.qnaPublicNoticeTitle' | trans }}
                       </h3>
                       <p class="text-xs text-ink-muted leading-relaxed">
@@ -391,11 +391,11 @@
                                 <p class="text-sm text-ink leading-relaxed [overflow-wrap:anywhere]">{{ q.question }}</p>
 
                                 @if (q.answer; as a) {
-                                  <div class="mt-3 pl-4 border-l-2 border-pink-300 flex gap-3 items-start">
+                                  <div class="mt-3 pl-4 border-l-2 border-brand-300 flex gap-3 items-start">
                                     <img appImgFallback [src]="d.seller.avatar" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                                     <div class="flex-1 min-w-0">
                                       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
-                                        <span class="min-w-0 text-xs font-bold text-pink-700 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
+                                        <span class="min-w-0 text-xs font-bold text-brand-700 [overflow-wrap:anywhere]">{{ d.seller.studioName }}</span>
                                         <span class="pill-pink !py-0 !text-[10px]">{{ 'product.sellerLabel' | trans }}</span>
                                         <span class="text-[11px] text-ink-muted">{{ a.answeredAt | timeAgo }}</span>
                                       </div>
@@ -451,7 +451,7 @@
                 <dl class="grid grid-cols-2 gap-3">
                   <div class="card-cream p-4 text-center">
                     <dt class="text-[11px] uppercase tracking-wider text-ink-muted flex items-center justify-center gap-1">
-                      <app-icon name="download" [size]="12" className="text-pink-500" />
+                      <app-icon name="download" [size]="12" className="text-brand-500" />
                       {{ 'product.downloadsCount' | trans }}
                     </dt>
                     <dd class="text-2xl font-extrabold text-ink mt-1 leading-none">
@@ -543,7 +543,7 @@
                   <button
                     type="button"
                     class="flex items-center justify-center gap-2 min-h-11 py-2 text-sm font-medium transition-colors"
-                    [class.text-pink-600]="wishlist.has(d.id)"
+                    [class.text-brand-600]="wishlist.has(d.id)"
                     [class.text-ink-muted]="!wishlist.has(d.id)"
                     (click)="wishlist.toggle(d)"
                   >
@@ -572,15 +572,15 @@
                 <h3 class="text-sm font-bold text-ink mb-3">{{ 'product.sellerLabel' | trans }}</h3>
                 <div class="flex items-start gap-3">
                   <a [routerLink]="['/store', d.seller.id]">
-                    <img appImgFallback [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-pink-100" />
+                    <img appImgFallback [src]="d.seller.avatar" [alt]="d.seller.studioName" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-brand-100" />
                   </a>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <a [routerLink]="['/store', d.seller.id]" class="inline-flex items-center min-h-11 min-w-0 text-sm font-bold text-ink hover:text-pink-600 [overflow-wrap:anywhere]">
+                      <a [routerLink]="['/store', d.seller.id]" class="inline-flex items-center min-h-11 min-w-0 text-sm font-bold text-ink hover:text-brand-600 [overflow-wrap:anywhere]">
                         {{ d.seller.studioName }}
                       </a>
                       @if (d.seller.badges.includes('Verified')) {
-                        <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 text-pink-500" fill="currentColor">
+                        <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 text-brand-500" fill="currentColor">
                           <path d="M8 0 9.8 2 12.5 1.5 13 4.2 15.5 5.5 14 8l1.5 2.5L13 11.8l-.5 2.7L9.8 14 8 16l-1.8-2-2.7.5L3 11.8.5 10.5 2 8 .5 5.5 3 4.2l.5-2.7L6.2 2 8 0Z"/>
                           <path d="m5.5 8 2 2 3-4" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -588,7 +588,7 @@
                     </div>
                     <div class="text-xs text-ink-muted mb-2 [overflow-wrap:anywhere]">{{ 'product.byAuthor' | trans: { name: d.seller.ownerName } }}</div>
                     <div class="flex items-center gap-3 text-xs flex-wrap mb-3">
-                      <span class="font-bold text-pink-600">★ {{ d.seller.rating | smartDecimal }}</span>
+                      <span class="font-bold text-brand-600">★ {{ d.seller.rating | smartDecimal }}</span>
                       <span>·</span>
                       <span>{{ 'product.docCount' | trans: { count: d.seller.totalDocuments } }}</span>
                       <span>·</span>
@@ -618,7 +618,7 @@
                       </a>
                     </div>
                     <p class="text-[11px] text-ink-muted leading-relaxed mt-3 flex items-center gap-1">
-                      <app-icon name="lock" [size]="11" className="text-pink-500" />
+                      <app-icon name="lock" [size]="11" className="text-brand-500" />
                       {{ 'product.safeTradingNotice' | trans }}
                     </p>
                   </div>
@@ -707,7 +707,7 @@
                   <article class="group relative card-soft overflow-hidden hover:shadow-pop transition-all duration-300 hover:-translate-y-1">
                     <a [routerLink]="['/bundle', card.bundle.id]" class="block">
                       <!-- Cover -->
-                      <div class="relative aspect-[16/10] bg-pink-50 overflow-hidden">
+                      <div class="relative aspect-[16/10] bg-brand-50 overflow-hidden">
                         <img
                           appImgFallback
                           [src]="card.bundle.cover"
@@ -728,7 +728,7 @@
                         </div>
 
                         <!-- Document count pill -->
-                        <div class="absolute bottom-3 left-3 pill bg-white/90 backdrop-blur text-ink text-xs font-bold">
+                        <div class="absolute bottom-3 left-3 pill bg-surface/90 backdrop-blur text-ink text-xs font-bold">
                           {{ 'product.docCount' | trans: { count: card.bundle.documentCount } }}
                         </div>
                       </div>
@@ -745,7 +745,7 @@
                           <span class="truncate">{{ card.bundle.seller.studioName }}</span>
                         </div>
 
-                        <h3 class="text-base font-extrabold text-ink leading-snug line-clamp-2 group-hover:text-pink-600 transition-colors">
+                        <h3 class="text-base font-extrabold text-ink leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
                           {{ card.bundle.title }}
                         </h3>
 
@@ -754,7 +754,7 @@
                         </p>
 
                         <div class="flex items-center gap-3 text-xs text-ink-muted">
-                          <span class="text-pink-600 font-bold">★ {{ card.bundle.rating | smartDecimal }}</span>
+                          <span class="text-brand-600 font-bold">★ {{ card.bundle.rating | smartDecimal }}</span>
                           <span>({{ card.bundle.reviewCount }})</span>
                           <span class="inline-flex items-center gap-1">
                             <app-icon name="download" [size]="12" />
@@ -811,7 +811,7 @@
               } @else {
                 @for (item of boughtTogether(); track item.document.id) {
                   <div class="relative">
-                    <span class="absolute top-3 right-3 z-10 pill bg-pink-600 text-white shadow-soft text-[11px]">
+                    <span class="absolute top-3 right-3 z-10 pill bg-primary text-white shadow-soft text-[11px]">
                       {{ 'product.coPurchasedTimes' | trans: { count: item.coPurchaseCount } }}
                     </span>
                     <app-document-card [doc]="item.document" density="compact" />
@@ -830,7 +830,7 @@
                 <h2 class="section-title">{{ 'product.moreFromSeller' | trans: { name: d.seller.studioName } }}</h2>
                 <p class="section-subtitle">{{ 'product.moreFromSellerDesc' | trans }}</p>
               </div>
-              <a [routerLink]="['/store', d.seller.id]" class="text-sm text-pink-600 hover:underline font-bold">
+              <a [routerLink]="['/store', d.seller.id]" class="text-sm text-brand-600 hover:underline font-bold">
                 {{ 'product.viewAllStore' | trans }}
               </a>
             </header>
@@ -848,7 +848,7 @@
             <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
               <h2 class="section-title mb-0">{{ 'product.relatedDocsTitle' | trans }}</h2>
               @if (sponsoredDocs().length) {
-                <span class="pill bg-pink-100 text-pink-700 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span class="pill bg-brand-100 text-brand-700 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                   <app-icon name="sparkle" [size]="12" />
                   รวมเอกสารแนะนำ
                 </span>

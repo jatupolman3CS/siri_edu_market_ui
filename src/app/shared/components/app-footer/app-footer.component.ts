@@ -5,13 +5,14 @@ import { IconComponent } from '../icon/icon.component';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
 import { AuthService } from '../../../core/services';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink, LogoComponent, IconComponent, TranslatePipe, LanguageSwitcherComponent],
+  imports: [RouterLink, LogoComponent, IconComponent, TranslatePipe, LanguageSwitcherComponent, ThemeToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-footer.component.html',
   styleUrl: './app-footer.component.scss',

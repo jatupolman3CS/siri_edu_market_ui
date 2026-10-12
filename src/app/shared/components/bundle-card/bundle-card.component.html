@@ -3,7 +3,7 @@
     >
       <a [routerLink]="['/bundle', bundle().id]" class="flex flex-col flex-1">
         <!-- Cover -->
-        <div class="relative aspect-[16/10] bg-pink-50 overflow-hidden">
+        <div class="relative aspect-[16/10] bg-brand-50 overflow-hidden">
           <img
             appImgFallback
             [src]="bundle().cover"
@@ -27,7 +27,7 @@
           </div>
 
           <!-- Item count: one line, bounded by the cover (it used to wrap to 2 lines and meet the top row). -->
-          <div class="absolute bottom-2 left-2 right-2 max-w-max whitespace-nowrap sm:bottom-3 sm:left-3 sm:right-auto pill bg-white/90 backdrop-blur text-ink text-xs font-bold">
+          <div class="absolute bottom-2 left-2 right-2 max-w-max whitespace-nowrap sm:bottom-3 sm:left-3 sm:right-auto pill bg-surface/90 backdrop-blur text-ink text-xs font-bold">
             <span class="truncate">{{ 'bundleDetail.itemsInBundle' | trans:{ count: bundle().documentIds.length } }}</span>
           </div>
         </div>
@@ -47,7 +47,7 @@
 
           <!-- G-14d: long unbroken tokens wrap instead of being clipped sideways mid-glyph, so
                line-clamp's ellipsis is the only truncation. -->
-          <h3 class="text-base font-extrabold text-ink leading-snug line-clamp-2 text-ellipsis [overflow-wrap:anywhere] min-h-[2.75rem] group-hover:text-pink-600 transition-colors">
+          <h3 class="text-base font-extrabold text-ink leading-snug line-clamp-2 text-ellipsis [overflow-wrap:anywhere] min-h-[2.75rem] group-hover:text-brand-600 transition-colors">
             {{ bundle().title }}
           </h3>
 
@@ -56,7 +56,7 @@
           </p>
 
           <div class="flex items-center gap-3 text-xs text-ink-muted">
-            <span class="text-pink-600 font-bold">★ {{ bundle().rating | smartDecimal }}</span>
+            <span class="text-brand-600 font-bold">★ {{ bundle().rating | smartDecimal }}</span>
             <span>({{ bundle().reviewCount }})</span>
             <span class="inline-flex items-center gap-1">
               <app-icon name="download" [size]="12" />

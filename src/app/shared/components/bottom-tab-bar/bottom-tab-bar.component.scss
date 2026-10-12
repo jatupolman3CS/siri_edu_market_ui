@@ -1,6 +1,6 @@
 :host {
   display: block;
-  --tab-bg: #ffffff;
+  --tab-bg: var(--glass-bg-strong);
   --tab-border: var(--line);
   --tab-fg: var(--ink-muted);
   --tab-active-fg: var(--primary);
@@ -12,11 +12,11 @@
 }
 
 :host(.bottom-tab-bar--dark) {
-  --tab-bg: #0f172a;
-  --tab-border: #1e293b;
-  --tab-fg: #cbd5e1;
+  --tab-bg: rgba(42, 27, 34, 0.92);
+  --tab-border: rgba(249, 168, 212, 0.18);
+  --tab-fg: #fbcfe8;
   --tab-active-fg: #ffffff;
-  --tab-active-bg: #1e293b;
+  --tab-active-bg: #831843;
 }
 
 /* Phone only. */
@@ -37,7 +37,9 @@
   padding-right: var(--safe-right);
   background: var(--tab-bg);
   border-top: 1px solid var(--tab-border);
-  box-shadow: 0 -4px 16px -8px rgba(42, 27, 34, 0.12);
+  box-shadow: 0 -4px 24px -8px rgba(190, 24, 93, 0.16);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
 }
 
 .tab-bar__list {
@@ -137,7 +139,7 @@
   margin-top: -20px;
   background: var(--primary);
   color: #ffffff;
-  box-shadow: 0 8px 20px -6px rgba(184, 56, 100, 0.55);
+  box-shadow: 0 8px 20px -6px rgba(219, 39, 119, 0.55);
 }
 
 .tab-bar__item--raised.is-active .tab-bar__icon {

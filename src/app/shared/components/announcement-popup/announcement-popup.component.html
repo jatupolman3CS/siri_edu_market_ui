@@ -9,7 +9,7 @@
 >
   <ng-template #modalTitle>
     <div class="flex items-center gap-2.5">
-      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex-shrink-0">
         <app-icon name="sparkle" [size]="16" />
       </span>
       <span class="font-bold text-ink text-base md:text-lg truncate">
@@ -21,7 +21,7 @@
   <ng-container *nzModalContent>
     @if (popup.current(); as announcement) {
       <div class="flex flex-col gap-4">
-        <div class="relative overflow-hidden rounded-2xl bg-pink-50 border border-line">
+        <div class="relative overflow-hidden rounded-2xl bg-brand-50 border border-line">
           @for (image of announcement.images; track image.id; let i = $index) {
             @if (i === currentImageIndex()) {
               <img
@@ -44,7 +44,7 @@
             <!-- Navigation buttons -->
             <button
               type="button"
-              class="absolute top-1/2 left-3 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
+              class="absolute top-1/2 left-3 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-surface/85 hover:bg-surface backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-brand-600 transition-all hover:scale-105 active:scale-95"
               [attr.aria-label]="'shared.announcementPopup.prevImage' | trans"
               (click)="prevImage()"
             >
@@ -52,7 +52,7 @@
             </button>
             <button
               type="button"
-              class="absolute top-1/2 right-3 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/85 hover:bg-white backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-pink-600 transition-all hover:scale-105 active:scale-95"
+              class="absolute top-1/2 right-3 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-surface/85 hover:bg-surface backdrop-blur-md shadow-soft border border-white/60 flex items-center justify-center text-ink-soft hover:text-brand-600 transition-all hover:scale-105 active:scale-95"
               [attr.aria-label]="'shared.announcementPopup.nextImage' | trans"
               (click)="nextImage()"
             >
@@ -66,8 +66,8 @@
                   type="button"
                   [class]="
                     i === currentImageIndex()
-                      ? 'h-2 w-5 rounded-full bg-white transition-all duration-200'
-                      : 'h-2 w-2 rounded-full bg-white/50 hover:bg-white/80 transition-all duration-200'
+                      ? 'h-2 w-5 rounded-full bg-surface transition-all duration-200'
+                      : 'h-2 w-2 rounded-full bg-surface/50 hover:bg-surface/80 transition-all duration-200'
                   "
                   [attr.aria-label]="'shared.announcementPopup.goToImage' | trans: { number: i + 1 }"
                   [attr.aria-current]="i === currentImageIndex() ? 'true' : null"
@@ -89,7 +89,7 @@
             type="checkbox"
             [checked]="dontShowAgainChecked()"
             (change)="toggleDontShowAgain($any($event.target).checked)"
-            class="w-4 h-4 rounded border-line text-pink-500 focus:ring-pink-300 accent-pink-500 cursor-pointer"
+            class="w-4 h-4 rounded border-line text-brand-500 focus:ring-brand-300 accent-brand-500 cursor-pointer"
           />
           <span>{{ 'shared.announcementPopup.dontShowAgain' | trans }}</span>
         </label>

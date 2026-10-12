@@ -1,4 +1,4 @@
-<div class="auth-shell min-h-dvh flex items-stretch bg-canvas safe-top safe-bottom safe-x">
+<div class="auth-shell min-h-dvh flex items-stretch safe-top safe-bottom safe-x">
       <app-global-loader />
       <!-- Left: form area (content slot) -->
       <div
@@ -14,10 +14,11 @@
                and the 44px back link keep their size, so the row fits at 150% text on 360. -->
           <app-logo class="logo--compact-xs min-w-0 overflow-hidden" />
           <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+            <app-theme-toggle />
             <app-language-switcher variant="dropdown" />
             <a
               routerLink="/"
-              class="tap-target px-2 text-xs leading-tight whitespace-nowrap text-ink-muted hover:text-pink-600"
+              class="tap-target px-2 text-xs leading-tight whitespace-nowrap text-ink-muted hover:text-brand-600"
               data-testid="auth-back-link"
             >
               <span aria-hidden="true">←</span><span class="sr-only sm:not-sr-only sm:ml-1">{{ 'nav.backToMarket' | trans }}</span>
@@ -36,7 +37,7 @@
 
       <!-- Right: marketing art -->
       <aside
-        class="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-pink-strong items-center justify-center p-12"
+        class="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-pink-strong tokens-light items-center justify-center p-12"
       >
         <div class="absolute -top-32 -right-24 w-96 h-96 rounded-full bg-white/15"></div>
         <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-white/10"></div>
@@ -50,7 +51,7 @@
           <h2 class="text-3xl md:text-4xl text-white font-extrabold leading-tight mb-4 whitespace-pre-line">
             {{ artTitle() }}
           </h2>
-          <p class="text-pink-50 mb-10 leading-relaxed">{{ artDescription() }}</p>
+          <p class="text-brand-50 mb-10 leading-relaxed">{{ artDescription() }}</p>
 
           <ul class="space-y-3 mb-10">
             @for (b of artBullets(); track b.label) {
@@ -71,7 +72,7 @@
               } @else {
                 <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
               }
-              <div class="text-xs text-pink-100">{{ 'auth.docsCount' | trans }}</div>
+              <div class="text-xs text-brand-100">{{ 'auth.docsCount' | trans }}</div>
             </div>
             <div>
               @if (platformStats.stats(); as ps) {
@@ -79,12 +80,12 @@
               } @else {
                 <div class="h-8 w-12 rounded bg-white/20 animate-pulse" aria-hidden="true"></div>
               }
-              <div class="text-xs text-pink-100">{{ 'auth.creatorsCount' | trans }}</div>
+              <div class="text-xs text-brand-100">{{ 'auth.creatorsCount' | trans }}</div>
             </div>
             @if (platformStats.stats()?.positiveReviewPercent; as positivePercent) {
               <div>
                 <div class="text-3xl font-extrabold">{{ positivePercent | number:'1.0-0' }}%</div>
-                <div class="text-xs text-pink-100">{{ 'auth.positiveReviews' | trans }}</div>
+                <div class="text-xs text-brand-100">{{ 'auth.positiveReviews' | trans }}</div>
               </div>
             }
           </div>

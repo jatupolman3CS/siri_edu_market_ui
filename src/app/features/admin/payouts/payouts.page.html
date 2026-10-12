@@ -19,7 +19,7 @@
     <span>{{ 'admin.payouts.nextPayoutDateLabel' | trans }} <span class="font-bold text-ink">{{ d | date: 'd MMM yyyy' }}</span></span>
     } @else {
     <span class="text-ink-soft">
-      {{ 'admin.payouts.noPayoutDate' | trans }} <a routerLink="/admin/settings" class="text-pink-600 font-semibold">{{ 'admin.payouts.configurePayoutLink' | trans }}</a>
+      {{ 'admin.payouts.noPayoutDate' | trans }} <a routerLink="/admin/settings" class="text-brand-600 font-semibold">{{ 'admin.payouts.configurePayoutLink' | trans }}</a>
     </span>
     }
   </div>
@@ -29,7 +29,7 @@
       <button
         type="button"
         class="px-4 py-2 min-h-[44px] rounded-full text-sm font-semibold transition-colors whitespace-nowrap"
-        [class]="filter() === f.value ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+        [class]="filter() === f.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
         (click)="setFilter(f.value)"
       >
         {{ f.key | trans }}
@@ -46,7 +46,7 @@
       [description]="'admin.payouts.emptyDesc' | trans"
     />
   } @else {
-    <div class="overflow-hidden rounded-lg border border-line bg-white max-md:!overflow-visible max-md:!border-0 max-md:!bg-transparent">
+    <div class="overflow-hidden rounded-lg border border-line bg-surface max-md:!overflow-visible max-md:!border-0 max-md:!bg-transparent">
       <!-- R-27: at >=744 at most 10 rows show, the rest scroll inside the wrapper; a new page, page size
            or status filter scrolls back to the top. -->
       <div
@@ -78,7 +78,7 @@
                   <div class="md:whitespace-nowrap break-all">{{ p.payoutAccountMasked ?? p.bankAccount }}</div>
                   <div class="text-xs text-ink-muted">{{ p.payoutAccountHolderName }}</div>
                   @if (p.payoutAccountQrImageUrl) {
-                    <button type="button" class="text-pink-600 text-xs font-semibold mt-1 min-h-[32px]" (click)="qrModalPayout.set(p)">{{ 'admin.payouts.showQr' | trans }}</button>
+                    <button type="button" class="text-brand-600 text-xs font-semibold mt-1 min-h-[32px]" (click)="qrModalPayout.set(p)">{{ 'admin.payouts.showQr' | trans }}</button>
                   }
                   @if (destinationChanged(p)) {
                   <div class="mt-1 px-2 py-1 rounded-lg bg-orange-50 text-orange-700 text-xs">
@@ -159,15 +159,15 @@
   <!-- §4.7 custom-overlay contract (F52 / F102): the overlay scrolls, the card is a named modal
        dialog with a focus trap; Escape and the page scroll lock live in the component. -->
   <div class="fixed inset-0 z-50 bg-black/50 flex h-dvh overflow-y-auto overscroll-contain pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="qrModalPayout.set(null)">
-    <div class="m-auto bg-white rounded-2xl p-6 w-full max-w-lg text-center shadow-2xl" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-qr-title" data-testid="payout-qr-dialog" (click)="$event.stopPropagation()">
+    <div class="m-auto bg-surface rounded-2xl p-6 w-full max-w-lg text-center shadow-2xl" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-qr-title" data-testid="payout-qr-dialog" (click)="$event.stopPropagation()">
       <div class="flex justify-between items-center mb-4">
         <h2 id="payout-qr-title" class="font-semibold text-ink">{{ 'admin.payouts.qrModalTitle' | trans }}</h2>
         <button type="button" class="tap-target rounded-full text-ink-soft" [attr.aria-label]="'common.close' | trans" (click)="qrModalPayout.set(null)"><app-icon name="close" [size]="18" /></button>
       </div>
-      <div class="rounded-lg border border-pink-100 bg-pink-50 px-4 py-3 mb-4">
+      <div class="rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 mb-4">
         <p class="text-sm font-semibold text-ink">{{ payout.sellerName }}</p>
         <p class="text-xs text-ink-muted mt-1">{{ payout.payoutAccountHolderName || payout.sellerEmail }}</p>
-        <p class="text-2xl font-extrabold text-pink-700 mt-2">{{ payout.netAmount | thb }}</p>
+        <p class="text-2xl font-extrabold text-brand-700 mt-2">{{ payout.netAmount | thb }}</p>
       </div>
       <img
         [src]="qrImageUrl(payout)"
@@ -182,10 +182,10 @@
 <!-- §3.7/§4.5: slip upload + verification modal -->
 @if (slipModalPayout(); as payout) {
 <div class="fixed inset-0 z-50 bg-[rgba(42,27,34,0.45)] backdrop-blur-md flex h-dvh overflow-y-auto overscroll-contain pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="closeSlipModal()">
-  <div class="m-auto card-soft w-full max-w-lg p-6 bg-white shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-slip-title" (click)="$event.stopPropagation()">
+  <div class="m-auto card-soft w-full max-w-lg p-6 bg-surface shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-slip-title" (click)="$event.stopPropagation()">
     <div class="flex items-center justify-between gap-3 pb-3.5 border-b border-line mb-4">
       <h3 id="payout-slip-title" class="min-w-0 text-base md:text-lg font-bold text-ink [overflow-wrap:anywhere]">{{ 'admin.payouts.slipHistoryTitle' | trans }} — {{ payout.sellerName }}</h3>
-      <button class="tap-target w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft flex items-center justify-center" (click)="closeSlipModal()" [attr.aria-label]="'common.close' | trans">
+      <button class="tap-target w-8 h-8 rounded-full bg-brand-50 hover:bg-brand-100 text-ink-soft flex items-center justify-center" (click)="closeSlipModal()" [attr.aria-label]="'common.close' | trans">
         <app-icon name="close" [size]="14" />
       </button>
     </div>
@@ -193,7 +193,7 @@
     @if (payout.status === 'pending' || payout.status === 'processing') {
     <div
       class="rounded-2xl border-2 border-dashed p-5 text-center cursor-pointer transition-colors"
-      [class]="dragOver() ? 'border-pink-400 bg-pink-50' : 'border-line'"
+      [class]="dragOver() ? 'border-brand-400 bg-brand-50' : 'border-line'"
       (dragover)="onDragOver($event)"
       (dragleave)="onDragLeave()"
       (drop)="onDrop($event)"
@@ -262,7 +262,7 @@
       }
 
       <div class="text-xs text-ink-muted mt-3">
-        <a [href]="slipFileUrl(result)" target="_blank" rel="noopener" class="text-pink-600 font-semibold">{{ 'admin.payouts.viewSlipFile' | trans }}</a>
+        <a [href]="slipFileUrl(result)" target="_blank" rel="noopener" class="text-brand-600 font-semibold">{{ 'admin.payouts.viewSlipFile' | trans }}</a>
         · {{ 'admin.payouts.uploadedBy' | trans: { name: result.uploadedByName ?? '', date: (result.uploadedAt | date: 'd MMM yyyy HH:mm') ?? '' } }}
       </div>
     </div>
@@ -277,7 +277,7 @@
         @for (s of slips(); track s.id) {
         <li class="flex items-center justify-between text-xs text-ink-soft">
           <span>{{ s.uploadedAt | date: 'd MMM yyyy HH:mm' }} — {{ slipStatusLabel(s.verificationStatus) }}</span>
-          <a [href]="slipFileUrl(s)" target="_blank" rel="noopener" class="text-pink-600 font-semibold">{{ 'admin.payouts.viewSlipFile' | trans }}</a>
+          <a [href]="slipFileUrl(s)" target="_blank" rel="noopener" class="text-brand-600 font-semibold">{{ 'admin.payouts.viewSlipFile' | trans }}</a>
         </li>
         }
       </ul>
@@ -290,7 +290,7 @@
 <!-- §3.7.6: "ยืนยันด้วยตนเอง" sub-modal -->
 @if (manualModalOpen()) {
 <div class="fixed inset-0 z-[60] bg-[rgba(42,27,34,0.45)] backdrop-blur-md flex h-dvh overflow-y-auto overscroll-contain pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="closeManualModal()">
-  <div class="m-auto card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-manual-title" (click)="$event.stopPropagation()">
+  <div class="m-auto card-soft w-full max-w-md p-6 bg-surface shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-manual-title" (click)="$event.stopPropagation()">
     <h3 id="payout-manual-title" class="text-base md:text-lg font-bold text-ink mb-3">{{ 'admin.payouts.manualModalTitle' | trans }}</h3>
     <p class="text-xs text-ink-muted mb-3">{{ 'admin.payouts.manualModalHint' | trans }}</p>
     <textarea
@@ -314,7 +314,7 @@
 <!-- §3.12: "ไม่สำเร็จ" reason modal -->
 @if (failModalPayoutId()) {
 <div class="fixed inset-0 z-[60] bg-[rgba(42,27,34,0.45)] backdrop-blur-md flex h-dvh overflow-y-auto overscroll-contain pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="closeFailModal()">
-  <div class="m-auto card-soft w-full max-w-md p-6 bg-white shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-fail-title" (click)="$event.stopPropagation()">
+  <div class="m-auto card-soft w-full max-w-md p-6 bg-surface shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-fail-title" (click)="$event.stopPropagation()">
     <h3 id="payout-fail-title" class="text-base md:text-lg font-bold text-ink mb-3">{{ 'admin.payouts.failModalTitle' | trans }}</h3>
     <textarea
       class="input-soft w-full min-h-[80px]"
@@ -337,10 +337,10 @@
 <!-- withdrawal-management (round 2): "อัปโหลดสลิป (หลายไฟล์)" batch upload + auto-matching modal -->
 @if (batchModalOpen()) {
 <div class="fixed inset-0 z-[70] bg-[rgba(42,27,34,0.45)] backdrop-blur-md flex h-dvh overflow-y-auto overscroll-contain pt-[max(16px,var(--safe-top))] pr-[max(16px,var(--safe-right))] pb-[max(16px,var(--safe-bottom))] pl-[max(16px,var(--safe-left))]" (click)="closeBatchModal()">
-  <div class="m-auto card-soft w-full max-w-2xl p-6 bg-white shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-batch-title" (click)="$event.stopPropagation()">
+  <div class="m-auto card-soft w-full max-w-2xl p-6 bg-surface shadow-2xl border border-line" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" aria-labelledby="payout-batch-title" (click)="$event.stopPropagation()">
     <div class="flex items-center justify-between gap-3 pb-3.5 border-b border-line mb-4">
       <h3 id="payout-batch-title" class="min-w-0 text-base md:text-lg font-bold text-ink">{{ 'admin.payouts.batchModalTitle' | trans }}</h3>
-      <button class="tap-target w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-ink-soft flex items-center justify-center" [disabled]="batchUploading()" (click)="closeBatchModal()" [attr.aria-label]="'common.close' | trans">
+      <button class="tap-target w-8 h-8 rounded-full bg-brand-50 hover:bg-brand-100 text-ink-soft flex items-center justify-center" [disabled]="batchUploading()" (click)="closeBatchModal()" [attr.aria-label]="'common.close' | trans">
         <app-icon name="close" [size]="14" />
       </button>
     </div>
@@ -350,7 +350,7 @@
     </p>
 
     <div
-      class="rounded-2xl border-2 border-dashed border-line p-5 text-center cursor-pointer transition-colors hover:border-pink-300"
+      class="rounded-2xl border-2 border-dashed border-line p-5 text-center cursor-pointer transition-colors hover:border-brand-300"
       (click)="batchFileInput.click()"
     >
       <app-icon name="upload" [size]="24" />
@@ -366,7 +366,7 @@
     @if (batchFiles().length > 0) {
     <ul class="mt-3 space-y-1.5">
       @for (f of batchFiles(); track f.name + f.size; let i = $index) {
-      <li class="flex items-center justify-between text-sm bg-pink-50 rounded-xl px-3 py-2">
+      <li class="flex items-center justify-between text-sm bg-brand-50 rounded-xl px-3 py-2">
         <span class="min-w-0 truncate">{{ f.name }}</span>
         <!-- R-2 (F160): was a 12x20 target. -->
         <button type="button" class="shrink-0 inline-flex items-center justify-center rounded-full text-ink-muted hover:text-rose-600 ml-2 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11" (click)="removeBatchFile(i)" [attr.aria-label]="'admin.payouts.removeFileAria' | trans">
@@ -386,7 +386,7 @@
     @if (batchResult(); as result) {
     <div class="mt-5 pt-5 border-t border-line">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-center">
-        <div class="rounded-xl bg-pink-50 p-2">
+        <div class="rounded-xl bg-brand-50 p-2">
           <div class="text-lg font-bold text-ink">{{ result.totalFiles }}</div>
           <div class="text-xs text-ink-muted">{{ 'admin.payouts.batchStatTotal' | trans }}</div>
         </div>
@@ -408,7 +408,7 @@
            heading, so it differs from the payout list's region on the page. -->
       <div class="table-scroll overflow-x-auto" appTableViewport rtLabelledBy="payout-batch-title">
         <table class="rtable w-full text-sm">
-          <thead class="bg-pink-50">
+          <thead class="bg-brand-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-3 py-2 font-semibold">{{ 'admin.payouts.batchColFile' | trans }}</th>
               <th class="px-3 py-2 font-semibold">{{ 'admin.payouts.batchColSeller' | trans }}</th>
@@ -454,7 +454,7 @@
               </td>
               <td class="rt-action px-3 py-2 whitespace-nowrap">
                 @if (item.slipUrl) {
-                <a [href]="batchItemFileUrl(item.slipUrl)" target="_blank" rel="noopener" class="inline-flex items-center justify-center text-pink-600 font-semibold text-xs [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11">{{ 'admin.payouts.batchViewSlip' | trans }}</a>
+                <a [href]="batchItemFileUrl(item.slipUrl)" target="_blank" rel="noopener" class="inline-flex items-center justify-center text-brand-600 font-semibold text-xs [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:min-h-11">{{ 'admin.payouts.batchViewSlip' | trans }}</a>
                 }
               </td>
             </tr>

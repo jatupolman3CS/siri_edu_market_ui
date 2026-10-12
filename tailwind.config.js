@@ -1,3 +1,5 @@
+const { themeTokensPlugin, themedColors } = require('./tailwind.theme');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -9,35 +11,20 @@ module.exports = {
     screens: { sm: '640px', md: '744px', lg: '1024px', xl: '1280px', '2xl': '1536px' },
     extend: {
       colors: {
-        // Filled buttons/badges with white text (WCAG AA contrast — pink-500 + white fails).
-        primary: { DEFAULT: '#B83864', hover: '#8A2C4D' },
-        // Input/select/textarea borders.
-        'line-strong': '#A07F90',
-        // Minimal Light Pink palette
-        pink: {
-          50:  '#FFF7FA',
-          100: '#FFEAF1',
-          200: '#FFD6E4',
-          300: '#FFB8CE',
-          400: '#FF8AAF',
-          500: '#F2638E',
-          600: '#D94B78',
-          700: '#B83864',
-          800: '#8A2C4D',
-          900: '#5C1D33',
-        },
-        cream: '#FFFBF7',
-        ink: {
-          DEFAULT: '#2A1B22',
-          soft: '#5A4751',
-          muted: '#76646D',
-        },
-        line: '#F3E6EC',
-        surface: '#FFFFFF',
-        canvas: '#FFF7FA',
+        // Filled buttons/badges with white text (WCAG AA — brand-500 + white is only 3.5:1; brand-600 = 4.6:1).
+        // Same pink in light and dark — a filled button keeps its white label in both themes.
+        primary: { DEFAULT: '#db2777', hover: '#be185d' },
+        // Fixed dark ink for fills that must NOT flip with the theme (image badges, scrims). `ink` itself is a
+        // text colour that turns light in dark mode.
+        'ink-deep': '#2a1b22',
+        // Admin chrome base — stays dark plum in both themes (brand-900 itself turns light in dark mode).
+        'brand-deep': '#831843',
+        // Premium Cyber-Pink Glassmorphism, light + dark: ink / line / surface / canvas / cream / brand and the
+        // slate-gray-neutral-stone + red-amber-emerald-… families are CSS-variable colours (tailwind.theme.js).
+        ...themedColors(),
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'system-ui', 'sans-serif'],
+        sans: ['Prompt', 'sans-serif'],
         display: ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
@@ -51,16 +38,20 @@ module.exports = {
         '4xl': '3rem',
       },
       boxShadow: {
-        'soft':  '0 4px 16px -4px rgba(242, 99, 142, 0.10)',
-        'pop':   '0 10px 30px -8px rgba(242, 99, 142, 0.18)',
-        'float': '0 20px 60px -20px rgba(242, 99, 142, 0.25)',
+        'soft':  '0 4px 16px -4px rgba(236, 72, 153, 0.12)',
+        'pop':   '0 10px 30px -8px rgba(236, 72, 153, 0.20)',
+        'float': '0 20px 60px -20px rgba(219, 39, 119, 0.28)',
+        // Glassmorphism: soft pink drop shadow + 1px inner white highlight on the top edge.
+        'glass': 'var(--glass-shadow)',
+        // Cyber-pink neon accent (focus rings / hero CTAs).
+        'glow':  '0 0 0 1px rgba(236, 72, 153, 0.35), 0 0 24px rgba(236, 72, 153, 0.35)',
       },
       backgroundImage: {
-        'gradient-pink': 'linear-gradient(135deg, #FFF7FA 0%, #FFE2EC 100%)',
+        'gradient-pink': 'linear-gradient(135deg, rgb(var(--brand-50-rgb)) 0%, rgb(var(--brand-200-rgb)) 100%)',
         // Only used behind white text (home seller CTA, auth-layout aside). primary → primary-hover
-        // so white text stays ≥ 5.5:1 at the lightest stop (the old #FFB8CE → #F2638E was ≈ 1.6–3:1).
-        'gradient-pink-strong': 'linear-gradient(135deg, #B83864 0%, #8A2C4D 100%)',
-        'gradient-cream': 'linear-gradient(180deg, #FFFBF7 0%, #FFF7FA 100%)',
+        // so white text stays ≥ 4.6:1 at the lightest stop (brand-500 #ec4899 is only 3.5:1 — never put white text on it).
+        'gradient-pink-strong': 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)',
+        'gradient-cream': 'linear-gradient(180deg, rgb(var(--cream-rgb)) 0%, rgb(var(--brand-50-rgb)) 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',
@@ -87,7 +78,7 @@ module.exports = {
   future: {
     hoverOnlyWhenSupported: true,
   },
-  plugins: [],
+  plugins: [themeTokensPlugin],
   corePlugins: {
     preflight: true,
   },

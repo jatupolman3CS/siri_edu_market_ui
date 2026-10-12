@@ -1,8 +1,8 @@
 <div class="page-container max-w-4xl py-6 sm:py-8">
   <header
-    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-pink-50/60 via-white to-pink-50/30 border border-line"
+    class="card-soft p-4 sm:p-6 md:p-8 mb-6 bg-gradient-to-r from-brand-50/60 via-surface to-brand-50/30 border border-line"
   >
-    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200/60 mb-3">
+    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 border border-brand-200/60 mb-3">
       <app-icon name="shield" [size]="14" />
       <span>{{ 'accountPrivacy.badge' | trans }}</span>
     </div>
@@ -56,7 +56,7 @@
               <li class="p-3 rounded-2xl border border-line">
                 <div class="flex items-center justify-between gap-3">
                   <span class="text-sm font-semibold text-ink min-w-0 break-words">{{ interest.label }}</span>
-                  <span class="text-xs font-bold text-pink-600">{{ interest.score * 100 | number: '1.0-0' }}%</span>
+                  <span class="text-xs font-bold text-brand-600">{{ interest.score * 100 | number: '1.0-0' }}%</span>
                 </div>
                 <p class="text-xs text-ink-muted mt-1">{{ interest.reason }}</p>
               </li>

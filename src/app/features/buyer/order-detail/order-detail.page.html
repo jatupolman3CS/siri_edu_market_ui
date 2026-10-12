@@ -31,7 +31,7 @@
     </app-empty-state>
   } @else {
     @if (order(); as o) {
-      <a routerLink="/orders" class="inline-flex items-center gap-1 min-h-11 text-sm text-ink-muted hover:text-pink-600 mb-4 sm:mb-6">
+      <a routerLink="/orders" class="inline-flex items-center gap-1 min-h-11 text-sm text-ink-muted hover:text-brand-600 mb-4 sm:mb-6">
         <app-icon name="arrow-left" [size]="14" />
         {{ 'orderDetail.backToOrders' | trans }}
       </a>
@@ -132,7 +132,7 @@
 
       <!-- Items -->
       <div class="card-soft overflow-hidden">
-        <header class="px-4 sm:px-6 py-4 bg-pink-50 border-b border-pink-100">
+        <header class="px-4 sm:px-6 py-4 bg-brand-50 border-b border-brand-100">
           <h3 class="font-bold text-ink">{{ 'orderDetail.itemsHeader' | trans }}</h3>
         </header>
         <ul class="divide-y divide-line">
@@ -155,7 +155,7 @@
                 <div class="font-bold text-ink">{{ item.document.price | thb }}</div>
                 <a
                   [routerLink]="['/document', item.document.id]"
-                  class="text-xs text-pink-600 hover:underline inline-flex items-center justify-end min-h-11 min-w-11"
+                  class="text-xs text-brand-600 hover:underline inline-flex items-center justify-end min-h-11 min-w-11"
                 >
                   {{ 'orderDetail.viewProduct' | trans }}
                 </a>
@@ -230,7 +230,7 @@
                (top up the wallet) sit right next to it. -->
           <button
             type="button"
-            class="btn-pink !bg-emerald-700 hover:!bg-emerald-800 text-white font-semibold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn-pink !bg-solid-emerald-700 hover:!bg-solid-emerald-800 text-white font-semibold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="order-detail-pay-wallet"
             [disabled]="payingWithWallet() || (wallet.summary()?.balance ?? 0) < o.total"
             [attr.aria-describedby]="walletInsufficient() ? 'order-detail-wallet-insufficient' : null"
@@ -279,7 +279,7 @@
           } @else if (o.status === 'awaiting_payment') {
             <button
               type="button"
-              class="btn-pink !bg-emerald-700 hover:!bg-emerald-800 text-white !py-3 min-h-11 shrink-0 max-w-[65%] disabled:opacity-50 disabled:cursor-not-allowed"
+              class="btn-pink !bg-solid-emerald-700 hover:!bg-solid-emerald-800 text-white !py-3 min-h-11 shrink-0 max-w-[65%] disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="order-detail-bar-pay-wallet"
               [disabled]="payingWithWallet() || (wallet.summary()?.balance ?? 0) < o.total"
               (click)="payWithWallet(o.id)"

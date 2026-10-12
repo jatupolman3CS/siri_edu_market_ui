@@ -1,0 +1,4 @@
+/* The host sits inline next to the language switcher; the button carries every visual (see the template). */
+:host {
+  display: inline-flex;
+}

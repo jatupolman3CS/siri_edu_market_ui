@@ -6,12 +6,12 @@
   (nzVisibleChange)="onMenuVisible($event)"
   type="button"
   class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer"
-  [class.bg-white]="theme() === 'light'"
+  [class.bg-surface]="theme() === 'light'"
   [class.text-ink-soft]="theme() === 'light'"
   [class.border-line]="theme() === 'light'"
-  [class.hover:border-pink-300]="theme() === 'light'"
+  [class.hover:border-brand-300]="theme() === 'light'"
   [class.bg-white/10]="theme() === 'dark'"
-  [class.text-pink-100]="theme() === 'dark'"
+  [class.text-brand-100]="theme() === 'dark'"
   [class.border-white/10]="theme() === 'dark'"
   [class.hover:bg-white/20]="theme() === 'dark'"
   [attr.aria-label]="translation.t('header.switchLanguage')"
@@ -27,9 +27,9 @@
     <li
       nz-menu-item
       (click)="setLanguage('th')"
-      class="!p-0 !rounded-xl !text-xs !font-medium hover:!bg-pink-50 cursor-pointer"
-      [class.!bg-pink-50]="translation.currentLang() === 'th'"
-      [class.!text-pink-600]="translation.currentLang() === 'th'"
+      class="!p-0 !rounded-xl !text-xs !font-medium hover:!bg-brand-50 cursor-pointer"
+      [class.!bg-brand-50]="translation.currentLang() === 'th'"
+      [class.!text-brand-600]="translation.currentLang() === 'th'"
       [class.!font-bold]="translation.currentLang() === 'th'"
     >
       <!-- A real button so the option is reachable by keyboard (nz-menu-item li is tabindex -1). -->
@@ -40,16 +40,16 @@
       >
         <span>TH</span>
         @if (translation.currentLang() === 'th') {
-          <span class="ml-auto text-pink-600 font-bold">✓</span>
+          <span class="ml-auto text-brand-600 font-bold">✓</span>
         }
       </button>
     </li>
     <li
       nz-menu-item
       (click)="setLanguage('en')"
-      class="!p-0 !rounded-xl !text-xs !font-medium hover:!bg-pink-50 cursor-pointer"
-      [class.!bg-pink-50]="translation.currentLang() === 'en'"
-      [class.!text-pink-600]="translation.currentLang() === 'en'"
+      class="!p-0 !rounded-xl !text-xs !font-medium hover:!bg-brand-50 cursor-pointer"
+      [class.!bg-brand-50]="translation.currentLang() === 'en'"
+      [class.!text-brand-600]="translation.currentLang() === 'en'"
       [class.!font-bold]="translation.currentLang() === 'en'"
     >
       <!-- A real button so the option is reachable by keyboard (nz-menu-item li is tabindex -1). -->
@@ -60,7 +60,7 @@
       >
         <span>EN</span>
         @if (translation.currentLang() === 'en') {
-          <span class="ml-auto text-pink-600 font-bold">✓</span>
+          <span class="ml-auto text-brand-600 font-bold">✓</span>
         }
       </button>
     </li>

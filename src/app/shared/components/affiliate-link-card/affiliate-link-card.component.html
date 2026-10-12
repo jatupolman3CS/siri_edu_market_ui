@@ -1,4 +1,4 @@
-<section id="affiliate" class="card-tile rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+<section id="affiliate" class="card-tile rounded-2xl border border-neutral-200 p-6 shadow-sm glass-card">
   <div class="flex items-start justify-between gap-4">
     <div>
       <div class="flex items-center gap-2">
@@ -17,7 +17,7 @@
         {{ 'shared.affiliate.description' | trans }}
       </p>
       <div class="flex flex-wrap gap-2 mt-3">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200">
           {{ 'shared.affiliate.friendDiscount' | trans }}
         </span>
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -48,7 +48,7 @@
         type="button"
         (click)="copyShareUrl()"
         [disabled]="!affiliate.summary()?.code"
-        class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-solid-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-solid-emerald-700 disabled:opacity-50"
       >
         @if (copied()) {
           <app-icon name="check" [size]="16" />

@@ -13,7 +13,7 @@
         @if (quickView.doc(); as d) {
           <div class="grid grid-cols-1 md:grid-cols-2 overflow-hidden rounded-3xl">
             <!-- Left: cover -->
-            <div class="relative aspect-[4/3] md:aspect-auto md:min-h-[420px] bg-pink-50 overflow-hidden" data-testid="quick-view-cover">
+            <div class="relative aspect-[4/3] md:aspect-auto md:min-h-[420px] bg-brand-50 overflow-hidden" data-testid="quick-view-cover">
               <img
                 appImgFallback
                 [src]="d.cover"
@@ -35,7 +35,7 @@
             </div>
 
             <!-- Right: info -->
-            <div class="p-4 sm:p-6 md:p-8 flex flex-col bg-white min-w-0">
+            <div class="p-4 sm:p-6 md:p-8 flex flex-col bg-surface min-w-0">
               <header class="flex items-start justify-between mb-4">
                 <span class="pill-pink">
                   {{ resourceLabel(d.resourceType) }}
@@ -64,7 +64,7 @@
               <!-- AI Summary preview -->
               @if (d.aiSummary?.length) {
                 <div class="card-cream p-4 mb-4">
-                  <div class="flex items-center gap-1.5 text-xs font-bold text-pink-600 mb-2">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-brand-600 mb-2">
                     <app-icon name="sparkle" [size]="12" />
                     {{ 'shared.quickView.aiSummary' | trans }}
                   </div>
@@ -81,23 +81,23 @@
               <!-- Specs -->
               <dl class="grid grid-cols-2 gap-3 text-xs mb-5">
                 <div class="flex items-center gap-2">
-                  <app-icon name="doc" [size]="14" className="text-pink-500" />
+                  <app-icon name="doc" [size]="14" className="text-brand-500" />
                   <span class="text-ink-soft uppercase">{{ d.format }} · {{ d.pages }}p</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <app-icon name="globe" [size]="14" className="text-pink-500" />
+                  <app-icon name="globe" [size]="14" className="text-brand-500" />
                   <span class="text-ink-soft">
                     {{ d.language === 'th' ? ('header.langTh' | trans) : ('header.langEn' | trans) }}
                   </span>
                 </div>
                 @for (g of d.gradeLevels.slice(0, 2); track g) {
                   <div class="flex items-center gap-2">
-                    <app-icon name="user" [size]="14" className="text-pink-500" />
+                    <app-icon name="user" [size]="14" className="text-brand-500" />
                     <span class="text-ink-soft">{{ gradeLabel(g) }}</span>
                   </div>
                 }
                 <div class="flex items-center gap-2">
-                  <app-icon name="eye" [size]="14" className="text-pink-500" />
+                  <app-icon name="eye" [size]="14" className="text-brand-500" />
                   <span class="text-ink-soft">{{ 'shared.quickView.previewPages' | trans: { pages: d.previewPages } }}</span>
                 </div>
               </dl>
@@ -119,7 +119,7 @@
                 <button
                   type="button"
                   class="btn-icon"
-                  [class.!text-pink-500]="wishlist.has(d.id)"
+                  [class.!text-brand-500]="wishlist.has(d.id)"
                   (click)="wishlist.toggle(d)"
                   [title]="'nav.wishlist' | trans"
                   [attr.aria-label]="'nav.wishlist' | trans"

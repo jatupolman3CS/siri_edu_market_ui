@@ -4,7 +4,7 @@
 >
   <div class="max-w-md w-full mx-auto">
     <span class="pill-pink mb-4">
-      <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
       {{ 'auth.newMember' | trans }}
     </span>
     <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mb-2 leading-tight">
@@ -15,7 +15,7 @@
       <a
         [routerLink]="['/auth/login']"
         [queryParams]="{ returnUrl: returnUrl() }"
-        class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-pink-600 font-bold hover:underline"
+        class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-brand-600 font-bold hover:underline"
       >
         {{ 'auth.signInHere' | trans }}
       </a>
@@ -78,7 +78,7 @@
           />
           <button
             type="button"
-            class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-ink-muted hover:text-pink-600"
+            class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-ink-muted hover:text-brand-600"
             (click)="showPassword.set(!showPassword())"
           >
             <app-icon [name]="showPassword() ? 'eye' : 'lock'" [size]="16" />
@@ -91,8 +91,8 @@
             @for (i of [1, 2, 3, 4]; track i) {
               <div
                 class="flex-1 h-1 rounded-full transition-colors"
-                [class.bg-pink-500]="strengthLevel() >= i"
-                [class.bg-pink-100]="strengthLevel() < i"
+                [class.bg-brand-500]="strengthLevel() >= i"
+                [class.bg-brand-100]="strengthLevel() < i"
               ></div>
             }
           </div>
@@ -127,13 +127,13 @@
           [(ngModel)]="acceptTerms"
           name="acceptTerms"
           required
-          class="w-4 h-4 shrink-0 accent-pink-500"
+          class="w-4 h-4 shrink-0 accent-brand-500"
         />
         <span>
           {{ 'auth.termsAccept' | trans }}
-          <span class="text-pink-600 font-semibold">{{ 'footer.terms' | trans }}</span>
+          <span class="text-brand-600 font-semibold">{{ 'footer.terms' | trans }}</span>
           {{ 'auth.and' | trans }}
-          <span class="text-pink-600 font-semibold">{{ 'footer.privacy' | trans }}</span>
+          <span class="text-brand-600 font-semibold">{{ 'footer.privacy' | trans }}</span>
         </span>
       </label>
 

@@ -1,4 +1,4 @@
-<div class="page-container pt-5 md:pt-8 pb-12 md:pb-20 bg-canvas">
+<div class="page-container pt-5 md:pt-8 pb-12 md:pb-20">
   <!-- Page header -->
   <header class="mb-5 md:mb-8">
     <h1 class="heading-1 font-extrabold tracking-[-0.02em] text-ink">{{ 'marketplace.title' | trans }}</h1>
@@ -10,10 +10,10 @@
     <section class="card-soft p-4 md:p-5 mb-6 md:mb-9">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-bold text-ink flex items-center gap-2">
-          <app-icon name="eye" [size]="14" className="text-pink-500" />
+          <app-icon name="eye" [size]="14" className="text-brand-500" />
           {{ 'home.recentlyViewedTitle' | trans }}
         </h3>
-        <button type="button" class="min-h-11 px-1 text-xs text-pink-700 font-bold hover:underline" (click)="recent.clear()">
+        <button type="button" class="min-h-11 px-1 text-xs text-brand-700 font-bold hover:underline" (click)="recent.clear()">
           {{ 'home.clearRecent' | trans }}
         </button>
       </div>
@@ -26,10 +26,10 @@
             <img
               appImgFallback
               [src]="d.cover"
-              class="w-28 h-32 rounded-2xl object-cover ring-2 ring-transparent group-hover:ring-pink-300 transition-all"
+              class="w-28 h-32 rounded-2xl object-cover ring-2 ring-transparent group-hover:ring-brand-300 transition-all"
               [alt]="d.title"
             />
-            <div class="text-[11px] text-ink line-clamp-2 mt-1.5 leading-tight group-hover:text-pink-600">
+            <div class="text-[11px] text-ink line-clamp-2 mt-1.5 leading-tight group-hover:text-brand-600">
               {{ d.title }}
             </div>
           </a>
@@ -43,7 +43,7 @@
     <!-- Toolbar: tabs (own scrolling row) · [ตัวกรอง (n) <1024] · count · sort -->
     <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
       <div class="max-w-full overflow-x-auto no-scrollbar flex-shrink-0">
-        <div class="inline-flex p-1 rounded-full bg-white border border-line gap-0.5">
+        <div class="inline-flex p-1 rounded-full bg-surface border border-line gap-0.5">
           @for (t of tabs(); track t.value) {
             <button
               type="button"
@@ -70,7 +70,7 @@
         @if (!viewport.isLaptopUp()) {
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full bg-white border border-line-strong text-[13px] font-semibold text-ink whitespace-nowrap flex-shrink-0 cursor-pointer"
+            class="inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full bg-surface border border-line-strong text-[13px] font-semibold text-ink whitespace-nowrap flex-shrink-0 cursor-pointer"
             data-testid="filter-sheet-button"
             aria-haspopup="dialog"
             [attr.aria-expanded]="filterSheetOpen()"
@@ -110,14 +110,14 @@
       @if (viewport.isLaptopUp()) {
       <!-- responsive-ui v1.4 §4.4 (F41/G-29b): sticks 16px below the pinned header (114px at 1024–1279,
            171px at ≥1280) and caps its height to the space left under it, so it scrolls inside. -->
-      <aside data-testid="filter-aside" class="bg-white rounded-2xl border border-line shadow-soft flex flex-col overflow-hidden lg:sticky lg:top-[130px] lg:max-h-[calc(100dvh-146px)] xl:top-[187px] xl:max-h-[calc(100dvh-203px)] lg:overflow-y-auto lg:overscroll-contain filter-scrollbar">
+      <aside data-testid="filter-aside" class="bg-surface rounded-2xl border border-line shadow-soft flex flex-col overflow-hidden lg:sticky lg:top-[130px] lg:max-h-[calc(100dvh-146px)] xl:top-[187px] xl:max-h-[calc(100dvh-203px)] lg:overflow-y-auto lg:overscroll-contain filter-scrollbar">
         <!-- Header: Locked at top of card -->
-        <div class="shrink-0 lg:sticky lg:top-0 flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-line/60 bg-white rounded-t-2xl z-10">
+        <div class="shrink-0 lg:sticky lg:top-0 flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-line/60 bg-surface rounded-t-2xl z-10">
           <h3 class="text-[15px] font-bold text-ink flex items-center gap-1.5">
             <app-icon name="filter" [size]="16" />
             {{ 'marketplace.filters' | trans }}
           </h3>
-          <button type="button" class="text-xs font-semibold text-pink-600 hover:underline cursor-pointer" (click)="reset()">
+          <button type="button" class="text-xs font-semibold text-brand-600 hover:underline cursor-pointer" (click)="reset()">
             {{ 'marketplace.clearAll' | trans }}
           </button>
         </div>
@@ -202,9 +202,9 @@
                 </button>
               </app-empty-state>
             } @else if (bundles.bundleResultsState().status !== 'loading' && displayedBundles().length === 0) {
-              <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
-                <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
-                  <app-icon name="package" [size]="30" className="text-pink-500" />
+              <div class="flex flex-col items-center justify-center text-center py-16 px-6 rounded-2xl border glass-card">
+                <div class="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center mb-4">
+                  <app-icon name="package" [size]="30" className="text-brand-500" />
                 </div>
                 <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyBundleTitle' | trans }}</h3>
                 <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyBundleDesc' | trans }}</p>
@@ -243,11 +243,11 @@
 
             @if (bundles.bundleResultsState().status === 'loading' && displayedBundles().length === 0) {
               <div
-                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface/70 backdrop-blur-[1px] rounded-2xl"
                 role="status"
                 aria-live="polite"
               >
-                <span class="w-7 h-7 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+                <span class="w-7 h-7 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
                 <span class="text-xs font-semibold text-ink-soft">{{ 'common.loading' | trans }}</span>
               </div>
             }
@@ -257,16 +257,16 @@
           <div class="relative min-h-[420px] lg:pr-1">
             @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
               <!-- Matching Packages rail for search queries -->
-              <section class="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-50/90 via-rose-50/60 to-amber-50/50 border border-pink-200/80 shadow-xs">
+              <section class="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-brand-50/90 via-rose-50/60 to-amber-50/50 border border-brand-200/80 shadow-xs">
                 <div class="flex items-center justify-between gap-3 mb-3.5">
                   <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-pink-500 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                    <div class="w-8 h-8 rounded-xl bg-brand-500 text-white flex items-center justify-center shadow-xs flex-shrink-0">
                       <app-icon name="package" [size]="18" />
                     </div>
                     <div>
                       <h3 class="text-sm sm:text-base font-bold text-ink flex items-center gap-2">
                         {{ 'marketplace.matchingPackages' | trans }}
-                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700">
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-700">
                           {{ bundles.bundleResultsTotalCount() }}
                         </span>
                       </h3>
@@ -275,7 +275,7 @@
                   </div>
                   <button
                     type="button"
-                    class="text-xs font-bold text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                    class="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline flex items-center gap-1 cursor-pointer whitespace-nowrap"
                     (click)="selectTab('package')"
                   >
                     {{ 'marketplace.viewAllPackages' | trans: { n: bundles.bundleResultsTotalCount() } }}
@@ -298,9 +298,9 @@
               </app-empty-state>
             } @else if (catalog.marketplaceResultsState().status !== 'loading' && displayedDocs().length === 0) {
               @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
-                <div class="flex flex-col items-center justify-center text-center py-10 px-6 bg-white rounded-2xl border border-line">
-                  <div class="w-14 h-14 rounded-full bg-pink-50 flex items-center justify-center mb-3">
-                    <app-icon name="search" [size]="24" className="text-pink-400" />
+                <div class="flex flex-col items-center justify-center text-center py-10 px-6 rounded-2xl border glass-card">
+                  <div class="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mb-3">
+                    <app-icon name="search" [size]="24" className="text-brand-400" />
                   </div>
                   <h4 class="text-base font-bold text-ink">{{ 'marketplace.emptyDocWithPackages' | trans }}</h4>
                   <p class="text-xs text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
@@ -312,9 +312,9 @@
                   </div>
                 </div>
               } @else {
-                <div class="flex flex-col items-center justify-center text-center py-16 px-6 bg-white rounded-2xl border border-line">
-                  <div class="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mb-4">
-                    <app-icon name="search" [size]="30" className="text-pink-500" />
+                <div class="flex flex-col items-center justify-center text-center py-16 px-6 rounded-2xl border glass-card">
+                  <div class="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center mb-4">
+                    <app-icon name="search" [size]="30" className="text-brand-500" />
                   </div>
                   <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyTitle' | trans }}</h3>
                   <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
@@ -325,7 +325,7 @@
               @if (activeUiTab() === 'all' && catalog.filters().search && displayedBundles().length > 0) {
                 <div class="flex items-center gap-2 mb-3.5 pt-1">
                   <h3 class="text-sm font-bold text-ink flex items-center gap-1.5">
-                    <app-icon name="doc" [size]="15" className="text-pink-500" />
+                    <app-icon name="doc" [size]="15" className="text-brand-500" />
                     {{ 'marketplace.standaloneDocuments' | trans }}
                   </h3>
                   <span class="text-xs text-ink-muted">({{ catalog.marketplaceResultsTotalCount() }})</span>
@@ -361,11 +361,11 @@
 
             @if (catalog.marketplaceResultsState().status === 'loading' && displayedDocs().length === 0) {
               <div
-                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur-[1px] rounded-2xl"
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface/70 backdrop-blur-[1px] rounded-2xl"
                 role="status"
                 aria-live="polite"
               >
-                <span class="w-7 h-7 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+                <span class="w-7 h-7 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
                 <span class="text-xs font-semibold text-ink-soft">{{ 'common.loading' | trans }}</span>
               </div>
             }
@@ -390,7 +390,7 @@
           <div data-filter-group="category" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('category')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'footer.categories' | trans }}</span>
@@ -412,8 +412,8 @@
                   <div>
                     <button
                       type="button"
-                      class="w-full flex items-center gap-2 px-2.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl hover:bg-pink-50 transition-colors duration-200 text-left"
-                      [class.bg-pink-50]="catActive"
+                      class="w-full flex items-center gap-2 px-2.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl hover:bg-brand-50 transition-colors duration-200 text-left"
+                      [class.bg-brand-50]="catActive"
                       (click)="toggleCategory(cat.id)"
                     >
                       <span class="text-sm">{{ cat.icon }}</span>
@@ -423,7 +423,7 @@
                         <app-icon
                           name="chevron-down"
                           [size]="12"
-                          [className]="catActive ? 'text-pink-500 rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
+                          [className]="catActive ? 'text-brand-500 rotate-180 transition-transform duration-200' : 'text-ink-muted transition-transform duration-200'"
                         />
                       }
                     </button>
@@ -431,10 +431,10 @@
                       <div class="pl-7 py-1 flex flex-col gap-0.5">
                         @for (sub of cat.subcategories; track sub.id) {
                           @let subActive = catalog.filters().subcategoryIds.includes(sub.id);
-                          <label class="flex items-center gap-2 px-2 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-lg hover:bg-pink-50/60 cursor-pointer">
+                          <label class="flex items-center gap-2 px-2 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-lg hover:bg-brand-50/60 cursor-pointer">
                             <input
                               type="checkbox"
-                              class="w-3.5 h-3.5 shrink-0 accent-pink-500"
+                              class="w-3.5 h-3.5 shrink-0 accent-brand-500"
                               [checked]="subActive"
                               (change)="toggleSubcategory(sub.id)"
                             />
@@ -465,7 +465,7 @@
           <div class="border-t border-line" data-filter-group="grade" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('grade')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupGrade' | trans }}</span>
@@ -486,11 +486,11 @@
                   @let active = catalog.filters().gradeLevels.includes(g);
                   <button
                     type="button"
-                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-brand-300"
+                    [class.bg-brand-100]="active"
+                    [class.text-brand-700]="active"
+                    [class.border-brand-500]="active"
+                    [class.bg-surface]="!active"
                     [class.text-ink-soft]="!active"
                     [class.border-line]="!active"
                     (click)="toggleGrade(g)"
@@ -506,7 +506,7 @@
           <div class="border-t border-line" data-filter-group="resourceType" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('resourceType')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupResourceType' | trans }}</span>
@@ -527,11 +527,11 @@
                   @let active = catalog.filters().resourceTypes.includes(rt);
                   <button
                     type="button"
-                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-brand-300"
+                    [class.bg-brand-100]="active"
+                    [class.text-brand-700]="active"
+                    [class.border-brand-500]="active"
+                    [class.bg-surface]="!active"
                     [class.text-ink-soft]="!active"
                     [class.border-line]="!active"
                     (click)="toggleResourceType(rt)"
@@ -547,7 +547,7 @@
           <div class="border-t border-line" data-filter-group="price">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('price')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupPrice' | trans }}</span>
@@ -566,11 +566,11 @@
                   @let active = priceRange() === opt.value;
                   <button
                     type="button"
-                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300 cursor-pointer"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-brand-300 cursor-pointer"
+                    [class.bg-brand-100]="active"
+                    [class.text-brand-700]="active"
+                    [class.border-brand-500]="active"
+                    [class.bg-surface]="!active"
                     [class.text-ink-soft]="!active"
                     [class.border-line]="!active"
                     (click)="setPriceRangeOption(opt.value)"
@@ -586,7 +586,7 @@
           <div class="border-t border-line" data-filter-group="rating" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('rating')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupRating' | trans }}</span>
@@ -605,11 +605,11 @@
                   @let active = catalog.filters().minRating === r.value;
                   <button
                     type="button"
-                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-brand-300"
+                    [class.bg-brand-100]="active"
+                    [class.text-brand-700]="active"
+                    [class.border-brand-500]="active"
+                    [class.bg-surface]="!active"
                     [class.text-ink-soft]="!active"
                     [class.border-line]="!active"
                     (click)="catalog.setFilters({ minRating: r.value })"
@@ -625,7 +625,7 @@
           <div class="border-t border-line" data-filter-group="format" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('format')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupFormat' | trans }}</span>
@@ -646,11 +646,11 @@
                   @let active = catalog.filters().formats.includes(fmt);
                   <button
                     type="button"
-                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium uppercase border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium uppercase border transition-colors duration-200 hover:border-brand-300"
+                    [class.bg-brand-100]="active"
+                    [class.text-brand-700]="active"
+                    [class.border-brand-500]="active"
+                    [class.bg-surface]="!active"
                     [class.text-ink-soft]="!active"
                     [class.border-line]="!active"
                     (click)="toggleFormat(fmt)"
@@ -666,7 +666,7 @@
           <div class="border-t border-line" data-filter-group="standard" [class.opacity-40]="filtersUnsupported()" [attr.inert]="filtersUnsupported() ? '' : null" [attr.aria-disabled]="filtersUnsupported() ? 'true' : null">
             <button
               type="button"
-              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-pink-50 transition-colors duration-200 text-left"
+              class="w-full flex items-center gap-2 px-3.5 py-3 rounded-[20px] hover:bg-brand-50 transition-colors duration-200 text-left"
               (click)="toggleGroup('standard')"
             >
               <span class="text-[13px] font-semibold text-ink flex-1">{{ 'marketplace.groupStandard' | trans }}</span>
@@ -687,11 +687,11 @@
                   @let active = catalog.filters().standards.includes(s);
                   <button
                     type="button"
-                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-pink-300"
-                    [class.bg-pink-100]="active"
-                    [class.text-pink-700]="active"
-                    [class.border-pink-500]="active"
-                    [class.bg-white]="!active"
+                    class="px-3 py-[7px] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 rounded-full text-xs font-medium border transition-colors duration-200 hover:border-brand-300"
+                    [class.bg-brand-100]="active"
+                    [class.text-brand-700]="active"
+                    [class.border-brand-500]="active"
+                    [class.bg-surface]="!active"
                     [class.text-ink-soft]="!active"
                     [class.border-line]="!active"
                     (click)="toggleStandard(s)"

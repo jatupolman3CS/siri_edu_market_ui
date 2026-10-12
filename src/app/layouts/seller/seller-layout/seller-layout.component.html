@@ -1,9 +1,9 @@
-<div class="min-h-[100dvh] bg-canvas flex flex-col md:flex-row">
+<div class="min-h-[100dvh] flex flex-col md:flex-row">
       <app-global-loader />
 
       <!-- Desktop sidebar (>=1280) -->
       <aside
-        class="hidden xl:flex flex-col w-72 bg-white border-r border-line p-5 sticky top-0 h-[100dvh] overflow-hidden shrink-0 z-30"
+        class="hidden xl:flex flex-col w-72 bg-surface/75 backdrop-blur-xl border-r border-brand-200/50 shadow-glass p-5 sticky top-0 h-[100dvh] overflow-hidden shrink-0 z-30"
         data-testid="seller-sidebar"
       >
         <div class="shrink-0 mb-4">
@@ -26,10 +26,10 @@
           @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
-              routerLinkActive="!bg-pink-50 !text-pink-600 !border-pink-200"
+              routerLinkActive="!bg-brand-50 !text-brand-600 !border-brand-200"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
               ariaCurrentWhenActive="page"
-              class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-brand-50 hover:text-brand-600 transition-colors"
             >
               <app-icon [name]="item.icon" [size]="18" />
               <span class="flex-1 truncate">{{ item.label }}</span>
@@ -40,7 +40,7 @@
         <div class="shrink-0 pt-3 border-t border-line mt-2 flex flex-col gap-1">
           <a
             routerLink="/"
-            class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors"
           >
             <app-icon name="arrow-left" [size]="16" />
             {{ 'nav.backToMarket' | trans }}
@@ -57,18 +57,19 @@
 
           @if (auth.user(); as u) {
             <div
-              class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-pink-50 border border-line"
+              class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-brand-50 border border-line"
             >
               <img
                 appImgFallback
                 [src]="avatarSrc()"
-                class="w-8 h-8 rounded-full object-cover ring-2 ring-white shrink-0"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-surface shrink-0"
                 [alt]="u.name"
               />
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-bold text-ink truncate">{{ u.name }}</div>
                 <div class="text-xs text-ink-muted truncate">Siri Studio</div>
               </div>
+              <app-theme-toggle />
               <app-language-switcher variant="dropdown" placement="topRight" />
             </div>
           }
@@ -77,11 +78,11 @@
 
       <!-- Tablet / laptop rail (744–1279) -->
       <aside
-        class="seller-rail hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-white border-r border-line sticky top-0 h-[100dvh] z-30 safe-top"
+        class="seller-rail hidden md:flex xl:hidden flex-col w-[calc(88px+var(--safe-left))] pl-[var(--safe-left)] shrink-0 bg-surface/75 backdrop-blur-xl border-r border-brand-200/50 shadow-glass sticky top-0 h-[100dvh] z-30 safe-top"
         data-testid="seller-rail"
       >
         <div class="shrink-0 flex justify-center py-3 border-b border-line">
-          <a routerLink="/seller" class="tap-target rounded-2xl text-pink-600" [attr.aria-label]="'seller.dashboard' | trans">
+          <a routerLink="/seller" class="tap-target rounded-2xl text-brand-600" [attr.aria-label]="'seller.dashboard' | trans">
             <app-icon name="dashboard" [size]="24" />
           </a>
         </div>
@@ -93,10 +94,10 @@
           @for (item of navItems(); track item.href) {
             <a
               [routerLink]="item.href"
-              routerLinkActive="!bg-pink-50 !text-pink-700"
+              routerLinkActive="!bg-brand-50 !text-brand-700"
               [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
               ariaCurrentWhenActive="page"
-              class="seller-rail__item flex shrink-0 flex-col items-center justify-center gap-1 min-h-[64px] px-1 py-2 rounded-2xl text-ink-soft hover:bg-pink-50 hover:text-pink-600 transition-colors"
+              class="seller-rail__item flex shrink-0 flex-col items-center justify-center gap-1 min-h-[64px] px-1 py-2 rounded-2xl text-ink-soft hover:bg-brand-50 hover:text-brand-600 transition-colors"
               data-testid="seller-rail-item"
             >
               <app-icon [name]="item.icon" [size]="22" />
@@ -108,7 +109,7 @@
         <div class="shrink-0 border-t border-line flex flex-col items-center gap-1 pt-2 pb-[calc(8px+var(--safe-bottom))]">
           <a
             routerLink="/"
-            class="tap-target rounded-2xl text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
+            class="tap-target rounded-2xl text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors"
             [attr.aria-label]="'nav.backToMarket' | trans"
             [attr.title]="'nav.backToMarket' | trans"
           >
@@ -130,7 +131,7 @@
       <div class="flex-1 min-w-0 flex flex-col">
         <!-- Phone top bar (<744): logo · bell · avatar menu -->
         <header
-          class="md:hidden sticky top-0 z-30 bg-white border-b border-line w-full safe-top"
+          class="md:hidden sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-brand-200/50 w-full safe-top"
           data-testid="seller-phone-topbar"
         >
           <div class="flex items-center justify-between gap-2 h-14 pl-[max(16px,var(--safe-left))] pr-[max(16px,var(--safe-right))]">
@@ -146,12 +147,13 @@
 
         <!-- Tablet / laptop slim top bar (744–1279): bell · language · avatar -->
         <header
-          class="hidden md:flex xl:hidden sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-line w-full items-center justify-between gap-3 min-h-[calc(56px+var(--safe-top))] pl-6 pr-[max(24px,var(--safe-right))] safe-top"
+          class="hidden md:flex xl:hidden sticky top-0 z-30 bg-surface/75 backdrop-blur-xl border-b border-brand-200/50 w-full items-center justify-between gap-3 min-h-[calc(56px+var(--safe-top))] pl-6 pr-[max(24px,var(--safe-right))] safe-top"
           data-testid="seller-slim-topbar"
         >
           <app-logo link="/seller" />
           <div class="flex items-center gap-2 shrink-0">
             <app-notification-bell variant="icon" />
+            <app-theme-toggle />
             <app-language-switcher variant="dropdown" placement="bottomRight" />
             <ng-container [ngTemplateOutlet]="avatarButton" />
           </div>
@@ -184,12 +186,12 @@
         >
           <!-- Backdrop -->
           <div
-            class="absolute inset-0 bg-ink/40 backdrop-blur-sm touch-none"
+            class="absolute inset-0 bg-ink-deep/40 backdrop-blur-sm touch-none"
             (click)="closeSidebar()"
           ></div>
           <!-- Sidebar panel -->
           <aside
-            class="drawer-panel relative flex flex-col w-[min(320px,85vw)] h-full bg-white shadow-pop overflow-hidden safe-top forced-colors:border-r-2"
+            class="drawer-panel relative flex flex-col w-[min(320px,85vw)] h-full bg-surface/85 backdrop-blur-xl shadow-pop overflow-hidden safe-top forced-colors:border-r-2"
             cdkTrapFocus
             [cdkTrapFocusAutoCapture]="true"
           >
@@ -217,10 +219,10 @@
               @for (item of navItems(); track item.href) {
                 <a
                   [routerLink]="item.href"
-                  routerLinkActive="!bg-pink-50 !text-pink-600 !border-pink-200"
+                  routerLinkActive="!bg-brand-50 !text-brand-600 !border-brand-200"
                   [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
                   ariaCurrentWhenActive="page"
-                  class="flex items-center gap-3 px-3.5 min-h-[44px] rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                  class="flex items-center gap-3 px-3.5 min-h-[44px] rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-brand-50 hover:text-brand-600 transition-colors"
                   (click)="closeSidebar()"
                   data-testid="seller-drawer-item"
                 >
@@ -233,7 +235,7 @@
             <div class="shrink-0 p-4 pt-3 border-t border-line flex flex-col gap-1 pb-[calc(16px+var(--safe-bottom))]" [style.padding-left]="'max(16px, var(--safe-left))'">
               <a
                 routerLink="/"
-                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-ink-muted hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                class="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl text-sm text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors"
                 (click)="closeSidebar()"
               >
                 <app-icon name="arrow-left" [size]="16" />
@@ -247,12 +249,12 @@
                 <app-icon name="logout" [size]="16" />
                 {{ 'nav.signOut' | trans }}
               </button>
-              <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-pink-50 border border-line">
+              <div class="mt-2 flex items-center gap-3 p-2.5 rounded-2xl bg-brand-50 border border-line">
                 @if (auth.user(); as u) {
                   <img
                     appImgFallback
                     [src]="avatarSrc()"
-                    class="w-8 h-8 rounded-full object-cover ring-2 ring-white shrink-0"
+                    class="w-8 h-8 rounded-full object-cover ring-2 ring-surface shrink-0"
                     [alt]="u.name"
                   />
                   <div class="flex-1 min-w-0">
@@ -262,7 +264,8 @@
                 } @else {
                   <div class="flex-1"></div>
                 }
-                <app-language-switcher variant="dropdown" placement="topRight" />
+                <app-theme-toggle />
+              <app-language-switcher variant="dropdown" placement="topRight" />
               </div>
             </div>
           </aside>
@@ -286,7 +289,7 @@
     <img
       appImgFallback
       [src]="avatarSrc()"
-      class="w-8 h-8 rounded-full object-cover ring-2 ring-pink-100"
+      class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-100"
       alt=""
     />
   </button>

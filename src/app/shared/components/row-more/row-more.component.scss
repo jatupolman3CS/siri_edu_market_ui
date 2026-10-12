@@ -17,7 +17,7 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--glass-bg-strong);
   color: var(--ink-soft);
   cursor: pointer;
 }
@@ -31,7 +31,7 @@
   .row-more__button:hover {
     border-color: var(--pink-300);
     background: var(--pink-50);
-    color: var(--primary);
+    color: var(--brand-600);
   }
 }
 

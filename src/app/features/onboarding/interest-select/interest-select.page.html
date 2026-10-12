@@ -2,7 +2,7 @@
   <div class="max-w-2xl w-full">
     <!-- Header with skip link -->
     <div class="flex items-center justify-between gap-3 mb-6 sm:mb-8">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-semibold">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-600 text-xs font-semibold">
         <span>✨</span>
         <span>{{ 'onboarding.customizeInterests' | trans }}</span>
       </div>
@@ -36,15 +36,15 @@
           <button
             type="button"
             (click)="toggleCategory(c.id)"
-            class="category-pill inline-flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-pink-200"
-            [class.bg-pink-600]="isSelected(c.id)"
+            class="category-pill inline-flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-200"
+            [class.bg-primary]="isSelected(c.id)"
             [class.text-white]="isSelected(c.id)"
-            [class.border-pink-600]="isSelected(c.id)"
+            [class.border-brand-600]="isSelected(c.id)"
             [class.shadow-sm]="isSelected(c.id)"
-            [class.bg-white]="!isSelected(c.id)"
+            [class.bg-surface]="!isSelected(c.id)"
             [class.text-ink]="!isSelected(c.id)"
             [class.border-line]="!isSelected(c.id)"
-            [class.hover:border-pink-300]="!isSelected(c.id)"
+            [class.hover:border-brand-300]="!isSelected(c.id)"
           >
             <span class="text-base">{{ c.icon || '📄' }}</span>
             <span>{{ c.name }}</span>

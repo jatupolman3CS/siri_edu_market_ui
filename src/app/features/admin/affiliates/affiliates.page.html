@@ -45,7 +45,7 @@
           </thead>
           <tbody class="divide-y divide-line">
             @for (item of items(); track item.userId) {
-              <tr class="hover:bg-pink-50/40 transition-colors">
+              <tr class="hover:bg-brand-50/40 transition-colors">
                 <td class="rt-title py-3.5 pr-4">
                   <div class="font-semibold text-ink">{{ item.displayName || '—' }}</div>
                   <div class="text-xs font-normal text-ink-muted break-all">{{ item.email }}</div>
@@ -81,7 +81,7 @@
                   <div class="inline-flex flex-wrap items-center justify-end gap-2">
                     <button
                       type="button"
-                      class="pill pill-soft hover:border-pink-400 cursor-pointer transition-all [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
+                      class="pill pill-soft hover:border-brand-400 cursor-pointer transition-all [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                       [attr.aria-label]="'admin.affiliatesAdmin.colCommissionRate' | trans"
                       [title]="'admin.affiliatesAdmin.colCommissionRate' | trans"
                       (click)="openSettingsModal(item)"

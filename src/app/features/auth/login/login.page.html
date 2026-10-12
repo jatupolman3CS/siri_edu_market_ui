@@ -5,7 +5,7 @@
 >
   <div class="max-w-md w-full mx-auto">
     <span class="login-pill pill-pink mb-3">
-      <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
       {{ 'auth.welcomeBack' | trans }}
     </span>
     <h1 class="login-title text-2xl sm:text-3xl font-extrabold text-ink mb-2 leading-tight">
@@ -17,7 +17,7 @@
       <button
         type="button"
         (click)="goToRegister()"
-        class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-pink-600 font-bold hover:underline"
+        class="inline-flex items-center justify-center min-h-11 min-w-11 align-middle text-brand-600 font-bold hover:underline"
       >
         {{ 'auth.registerFree' | trans }}
       </button>
@@ -57,7 +57,7 @@
       <div>
         <label class="text-xs font-semibold text-ink-soft mb-1 flex items-center justify-between gap-2">
           <span>{{ 'auth.passwordLabel' | trans }}</span>
-          <a [routerLink]="['/auth/forgot-password']" class="inline-flex items-center justify-end min-h-11 min-w-11 text-pink-600 hover:underline">
+          <a [routerLink]="['/auth/forgot-password']" class="inline-flex items-center justify-end min-h-11 min-w-11 text-brand-600 hover:underline">
             {{ 'auth.forgotPassword' | trans }}
           </a>
         </label>
@@ -76,7 +76,7 @@
           />
           <button
             type="button"
-            class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-ink-muted hover:text-pink-600"
+            class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-ink-muted hover:text-brand-600"
             (click)="showPassword.set(!showPassword())"
           >
             <app-icon [name]="showPassword() ? 'eye' : 'lock'" [size]="16" />
@@ -90,7 +90,7 @@
           type="checkbox"
           [(ngModel)]="remember"
           name="remember"
-          class="w-4 h-4 shrink-0 accent-pink-500"
+          class="w-4 h-4 shrink-0 accent-brand-500"
         />
         {{ 'auth.rememberMe' | trans }}
       </label>
@@ -120,14 +120,14 @@
     @if (returnUrl() !== '/') {
       <p class="login-redirect-note text-[11px] text-ink-muted text-center mt-4 break-all">
         {{ 'auth.afterLoginRedirect' | trans }}
-        <code class="text-pink-600">{{ returnUrl() }}</code>
+        <code class="text-brand-600">{{ returnUrl() }}</code>
       </p>
     }
   </div>
 
   @if (lineModalVisible()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm pt-[max(1rem,var(--safe-top))] pb-[max(1rem,var(--safe-bottom))] pl-[max(1rem,var(--safe-left))] pr-[max(1rem,var(--safe-right))]">
-      <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-line space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="rounded-3xl p-6 max-w-sm w-full shadow-2xl border space-y-4 animate-in fade-in zoom-in-95 duration-150 glass-card">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl bg-[#06C755]/10 flex items-center justify-center text-[#06C755] font-bold text-lg">
             LINE

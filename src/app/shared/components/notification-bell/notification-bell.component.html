@@ -7,12 +7,12 @@
     nzTrigger="click"
     [nzVisible]="menuOpen()"
     (nzVisibleChange)="menuOpen.set($event); onVisibleChange($event)"
-    class="hover:text-pink-600 transition-colors inline-flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 text-xs text-ink-muted group"
+    class="hover:text-brand-600 transition-colors inline-flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 text-xs text-ink-muted group"
     [attr.aria-label]="'shared.notifications.unreadCountAria' | trans: { count: unreadCount() }"
     [title]="'shared.notifications.title' | trans"
   >
-    <app-icon name="bell" [size]="14" className="text-ink-muted group-hover:text-pink-600 transition-colors" />
-    <span class="group-hover:text-pink-600 transition-colors">{{ 'shared.notifications.title' | trans }}</span>
+    <app-icon name="bell" [size]="14" className="text-ink-muted group-hover:text-brand-600 transition-colors" />
+    <span class="group-hover:text-brand-600 transition-colors">{{ 'shared.notifications.title' | trans }}</span>
     @if (unreadCount() > 0) {
       <span
         class="px-1.5 py-0.2 rounded-full bg-primary text-white text-[10px] font-bold leading-tight"
@@ -31,7 +31,7 @@
     [nzVisible]="menuOpen()"
     (nzVisibleChange)="menuOpen.set($event); onVisibleChange($event)"
     [class]="theme() === 'dark'
-      ? 'relative inline-flex items-center justify-center w-11 h-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-pink-100 hover:text-white transition-all hover:scale-105 cursor-pointer'
+      ? 'relative inline-flex items-center justify-center w-11 h-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-brand-100 hover:text-white transition-all hover:scale-105 cursor-pointer'
       : 'relative btn-icon transition-transform hover:scale-105 cursor-pointer'"
     [attr.aria-label]="'shared.notifications.unreadCountAria' | trans: { count: unreadCount() }"
     [title]="'shared.notifications.title' | trans"
@@ -53,12 +53,12 @@
        taller than the screen and the fixed overlay cut off the footer with no scroll path. -->
   <div
     data-testid="notification-menu"
-    class="flex flex-col !rounded-2xl !shadow-2xl !w-[360px] max-w-[92vw] max-h-[calc(100dvh-var(--safe-top)-72px)] bg-white border border-line overflow-hidden"
+    class="flex flex-col !rounded-2xl !shadow-2xl !w-[360px] max-w-[92vw] max-h-[calc(100dvh-var(--safe-top)-72px)] bg-surface border border-line overflow-hidden"
   >
     <!-- Header -->
-    <div class="shrink-0 flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-pink-50/80 to-white border-b border-line">
+    <div class="shrink-0 flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-brand-50/80 to-surface border-b border-line">
       <div class="flex items-center gap-2 min-w-0">
-        <span class="w-6 h-6 shrink-0 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center">
+        <span class="w-6 h-6 shrink-0 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
           <app-icon name="bell" [size]="13" />
         </span>
         <span class="text-sm font-bold text-ink truncate">{{ 'shared.notifications.title' | trans }}</span>
@@ -72,7 +72,7 @@
         @if (unreadCount() > 0) {
           <button
             type="button"
-            class="text-xs font-semibold text-pink-600 hover:text-pink-700 transition-colors inline-flex items-center gap-1"
+            class="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors inline-flex items-center gap-1"
             (click)="onMarkAllRead()"
           >
             <app-icon name="check" [size]="12" />
@@ -84,8 +84,8 @@
         <button
           type="button"
           data-testid="notification-sound-toggle"
-          class="hit-44 w-7 h-7 rounded-full inline-flex items-center justify-center transition-colors hover:bg-pink-100/70"
-          [class.text-pink-600]="sound.enabled()"
+          class="hit-44 w-7 h-7 rounded-full inline-flex items-center justify-center transition-colors hover:bg-brand-100/70"
+          [class.text-brand-600]="sound.enabled()"
           [class.text-ink-muted]="!sound.enabled()"
           [attr.aria-pressed]="sound.enabled()"
           [attr.aria-label]="(sound.enabled() ? 'shared.notifications.soundOn' : 'shared.notifications.soundOff') | trans"
@@ -101,7 +101,7 @@
     <ul nz-menu class="!p-2 flex-1 min-h-0 max-h-[380px] overflow-y-auto divide-y divide-line/40">
       @if (previewItems().length === 0) {
         <li class="px-4 py-8 text-center">
-          <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center">
+          <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-brand-50 text-brand-400 flex items-center justify-center">
             <app-icon name="bell" [size]="20" />
           </div>
           <p class="text-sm font-medium text-ink-muted">{{ 'shared.notifications.noNotifs' | trans }}</p>
@@ -115,7 +115,7 @@
             tabindex="0"
             data-testid="notification-menu-item"
             class="!h-auto !leading-normal !whitespace-normal !p-3 !rounded-xl transition-colors"
-            [class.bg-pink-50/60]="!item.isRead"
+            [class.bg-brand-50/60]="!item.isRead"
             (click)="onItemClick(item)"
             (keydown.enter)="onItemClick(item)"
             (keydown.space)="$event.preventDefault(); onItemClick(item)"
@@ -141,7 +141,7 @@
                     </p>
                   </div>
                   @if (!item.isRead) {
-                    <span class="w-2 h-2 rounded-full bg-pink-500 flex-shrink-0"></span>
+                    <span class="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0"></span>
                   }
                 </div>
                 <p class="text-xs text-ink-soft line-clamp-2 leading-relaxed">{{ item.body }}</p>
@@ -173,11 +173,11 @@
     }
 
     <!-- Footer -->
-    <div class="shrink-0 border-t border-line px-4 py-2.5 bg-pink-50/30 text-center">
+    <div class="shrink-0 border-t border-line px-4 py-2.5 bg-brand-50/30 text-center">
       <a
         [routerLink]="allNotificationsRoute()"
         (click)="menuOpen.set(false)"
-        class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline transition-all"
+        class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 hover:underline transition-all"
       >
         <span>{{ 'shared.notifications.viewAll' | trans }}</span>
         <app-icon name="arrow-right" [size]="12" />

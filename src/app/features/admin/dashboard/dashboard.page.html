@@ -71,7 +71,7 @@
                 {{ 'admin.pendingQueue' | trans: { count: pendingCount() } }}
               </p>
             </div>
-            <a routerLink="/admin/approval" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-pink-600 hover:underline font-semibold">
+            <a routerLink="/admin/approval" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-brand-600 hover:underline font-semibold">
               {{ 'admin.viewAllArrow' | trans }}
             </a>
           </header>
@@ -106,7 +106,7 @@
           @if (dashboardView() === 'loading') {
             <div class="space-y-3 mt-5" aria-busy="true" data-testid="admin-health-loading">
               @for (i of [1, 2, 3]; track i) {
-                <div class="h-9 rounded-xl bg-pink-50 animate-pulse" aria-hidden="true"></div>
+                <div class="h-9 rounded-xl bg-brand-50 animate-pulse" aria-hidden="true"></div>
               }
             </div>
           } @else if (dashboardView() === 'error') {
@@ -139,7 +139,7 @@
       <section class="card-soft p-4 md:p-6 mt-6">
         <header class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-5">
           <h2 class="text-lg font-bold text-ink min-w-0">{{ 'admin.recentTransactionsTitle' | trans }}</h2>
-          <a routerLink="/admin/transactions" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-pink-600 hover:underline font-semibold">
+          <a routerLink="/admin/transactions" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-brand-600 hover:underline font-semibold">
             {{ 'admin.viewAllArrow' | trans }}
           </a>
         </header>
@@ -151,7 +151,7 @@
           [rtLabel]="'admin.recentTransactionsTitle' | trans"
         >
         <table class="rtable w-full">
-          <thead class="bg-pink-50">
+          <thead class="bg-brand-50">
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
               <th class="px-5 py-3 font-semibold">{{ 'admin.colDoc' | trans }}</th>
               <th class="px-5 py-3 font-semibold">{{ 'admin.colStatus' | trans }}</th>

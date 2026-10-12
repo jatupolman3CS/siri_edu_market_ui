@@ -117,7 +117,7 @@ describe('BuyerStorefrontPage — sales-by-month chart (seller-pricing-and-store
     expect(text).toContain('ยอดขายรายเดือน');
 
     const bars = (fixture.nativeElement as HTMLElement).querySelectorAll(
-      '.bg-gradient-to-t.from-pink-400.to-pink-200',
+      '.bg-gradient-to-t.from-brand-400.to-brand-200',
     );
     expect(bars.length).toBe(6);
     // Jul (10 units) is the max month → 100% height.

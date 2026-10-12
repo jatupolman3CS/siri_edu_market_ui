@@ -1,0 +1,11 @@
+<button
+  type="button"
+  class="theme-toggle inline-flex items-center justify-center w-8 h-8 rounded-full border transition-all cursor-pointer"
+  [class]="classes()"
+  [attr.aria-label]="labelKey() | trans"
+  [attr.title]="labelKey() | trans"
+  data-testid="theme-toggle"
+  (click)="theme.toggle()"
+>
+  <app-icon [name]="theme.isDark() ? 'sun' : 'moon'" [size]="16" />
+</button>

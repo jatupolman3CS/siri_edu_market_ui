@@ -12,7 +12,7 @@
 
   <div class="card-tile mb-6 bg-gradient-pink">
     <div class="text-xs text-ink-muted mb-1">{{ 'sellerAds.balanceLabel' | trans }}</div>
-    <div class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-pink-700 break-words">{{ availableBalance() | thb }}</div>
+    <div class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-700 break-words">{{ availableBalance() | thb }}</div>
     <p class="text-sm text-ink-soft mt-2">{{ 'sellerAds.balanceDesc' | trans }}</p>
   </div>
 
@@ -36,7 +36,7 @@
         [rtResetKey]="page() + '|' + pageSize() + '|' + statusFilter()"
       >
         <table class="rtable w-full">
-          <thead class="bg-pink-50">
+          <thead class="bg-brand-50">
             <!-- R-27 item 11 / §4.5 table mode: px-2 (px-3 from 1024, px-5 >=1280) so the 744 table,
                  capped or not, fits its card without sideways scroll in th and en. -->
             <tr class="text-left text-xs uppercase tracking-wider text-ink-muted">
@@ -211,7 +211,7 @@
         @if (quoting()) {
           <p class="text-sm text-ink-muted">{{ 'sellerAds.quoting' | trans }}</p>
         } @else if (quote(); as q) {
-          <div class="card-soft p-4 space-y-1.5 bg-pink-50">
+          <div class="card-soft p-4 space-y-1.5 bg-brand-50">
             <div class="flex justify-between text-sm">
               <span class="text-ink-soft">{{ 'sellerAds.quoteDayCount' | trans }}</span>
               <span class="font-semibold text-ink">{{ q.dayCount }} {{ 'sellerAds.dayUnit' | trans }} ({{ (q.pricingMode === 'weekly' ? 'sellerAds.pricingModeWeekly' : 'sellerAds.pricingModeDaily') | trans }})</span>
@@ -220,9 +220,9 @@
               <span class="text-ink-soft">{{ 'sellerAds.quotePricePerDay' | trans }}</span>
               <span class="font-semibold text-ink">{{ q.pricePerDay | thb }}</span>
             </div>
-            <div class="flex justify-between text-base pt-1.5 border-t border-pink-200">
+            <div class="flex justify-between text-base pt-1.5 border-t border-brand-200">
               <span class="font-bold text-ink">{{ 'sellerAds.quoteTotal' | trans }}</span>
-              <span class="font-extrabold text-pink-700">{{ q.totalAmount | thb }}</span>
+              <span class="font-extrabold text-brand-700">{{ q.totalAmount | thb }}</span>
             </div>
             <div class="flex justify-between text-xs text-ink-muted">
               <span>{{ 'sellerAds.quoteBalance' | trans }}</span>

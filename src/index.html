@@ -6,7 +6,25 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="แพลตฟอร์มฝากขายเอกสาร สรุปบทเรียน และเทมเพลตคุณภาพสูง">
-  <meta name="theme-color" content="#F2638E">
+  <meta name="theme-color" content="#db2777">
+  <meta name="color-scheme" content="light dark">
+  <!-- Resolve the theme before first paint (saved choice → OS preference → light) so a dark reader never sees a
+       white flash. Same rule as core/services/theme.service.ts, which takes over once Angular boots. -->
+  <script>
+    (function () {
+      var theme = 'light';
+      try {
+        var saved = localStorage.getItem('siriedu_theme');
+        theme = saved === 'dark' || saved === 'light'
+          ? saved
+          : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      } catch (e) { /* storage blocked — fall back to the OS preference below */
+        try { theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e2) {}
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    })();
+  </script>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>

@@ -170,7 +170,7 @@ export class BuyerOrdersPage {
       fulfilled: 'bg-emerald-100 text-emerald-700',
       refunded: 'bg-rose-100 text-rose-700',
       cancelled: 'bg-gray-100 text-gray-600',
-    }[s] ?? 'bg-pink-100 text-pink-700';
+    }[s] ?? 'bg-brand-100 text-brand-700';
   }
 
   paymentLabel(p: string): string {

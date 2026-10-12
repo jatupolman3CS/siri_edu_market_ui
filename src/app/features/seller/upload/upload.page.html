@@ -49,8 +49,8 @@
                   step() === s.no
                     ? 'bg-primary text-white shadow-soft scale-110'
                     : step() > s.no
-                      ? 'bg-pink-100 text-pink-600'
-                      : 'bg-white border border-line text-ink-muted'
+                      ? 'bg-brand-100 text-brand-600'
+                      : 'bg-surface border border-line text-ink-muted'
                 "
               >
                 @if (step() > s.no) {
@@ -61,7 +61,7 @@
               </span>
               <span
                 class="hidden sm:block text-xs font-semibold transition-colors"
-                [class.text-pink-600]="step() === s.no"
+                [class.text-brand-600]="step() === s.no"
                 [class.text-ink]="step() > s.no"
                 [class.text-ink-muted]="step() < s.no"
               >
@@ -69,7 +69,7 @@
               </span>
               <span
                 class="sm:hidden text-[10px] font-semibold transition-colors"
-                [class.text-pink-600]="step() === s.no"
+                [class.text-brand-600]="step() === s.no"
                 [class.text-ink-muted]="step() !== s.no"
               >
                 {{ s.label }}
@@ -78,7 +78,7 @@
             @if (i < 3) {
               <span
                 class="flex-1 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors mt-0 -translate-y-3"
-                [class.bg-pink-300]="step() > s.no"
+                [class.bg-brand-300]="step() > s.no"
                 [class.bg-line]="step() <= s.no"
               ></span>
             }
@@ -100,11 +100,11 @@
 
               @if (!file()) {
                 <label
-                  class="block border-2 border-dashed border-pink-200 rounded-3xl p-6 sm:p-10 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
+                  class="block border-2 border-dashed border-brand-200 rounded-3xl p-6 sm:p-10 text-center cursor-pointer hover:border-brand-300 hover:bg-brand-50/40 transition-all"
                 >
                   <input type="file" class="hidden" (change)="onFile($event)" />
                   <div
-                    class="w-16 h-16 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-4"
+                    class="w-16 h-16 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center mx-auto mb-4"
                   >
                     <app-icon name="upload" [size]="28" />
                   </div>
@@ -118,9 +118,9 @@
                   </div>
                 </label>
               } @else {
-                <div class="border border-pink-200 rounded-3xl p-6 bg-pink-50">
+                <div class="border border-brand-200 rounded-3xl p-6 bg-brand-50">
                   <div class="flex items-center gap-4">
-                    <div class="w-16 h-20 rounded-2xl bg-white flex items-center justify-center text-pink-500">
+                    <div class="w-16 h-20 rounded-2xl bg-surface flex items-center justify-center text-brand-500">
                       <app-icon name="doc" [size]="28" />
                     </div>
                     <div class="flex-1 min-w-0">
@@ -132,10 +132,10 @@
                            show a full bar and "upload complete" even while uploading or after a
                            413 / rejected file type. -->
                       @if (uploading()) {
-                        <div class="mt-3 h-1.5 rounded-full bg-pink-100 overflow-hidden" data-testid="upload-progress">
-                          <div class="h-full w-1/2 bg-pink-400 rounded-full motion-safe:animate-pulse"></div>
+                        <div class="mt-3 h-1.5 rounded-full bg-brand-100 overflow-hidden" data-testid="upload-progress">
+                          <div class="h-full w-1/2 bg-brand-400 rounded-full motion-safe:animate-pulse"></div>
                         </div>
-                        <div class="text-xs text-pink-700 font-bold mt-1.5" role="status" data-testid="upload-file-status">
+                        <div class="text-xs text-brand-700 font-bold mt-1.5" role="status" data-testid="upload-file-status">
                           {{ 'common.uploading' | trans }}
                         </div>
                       } @else if (uploadFailed()) {
@@ -144,8 +144,8 @@
                           {{ 'errors.uploadFailed' | trans }}
                         </div>
                       } @else if (upload()) {
-                        <div class="mt-3 h-1.5 rounded-full bg-pink-100 overflow-hidden" data-testid="upload-progress">
-                          <div class="h-full bg-pink-500 rounded-full" style="width: 100%"></div>
+                        <div class="mt-3 h-1.5 rounded-full bg-brand-100 overflow-hidden" data-testid="upload-progress">
+                          <div class="h-full bg-brand-500 rounded-full" style="width: 100%"></div>
                         </div>
                         <div class="text-xs text-emerald-600 font-bold mt-1.5" data-testid="upload-file-status">
                           <app-icon name="check" [size]="11" />
@@ -175,7 +175,7 @@
                     type="button"
                     class="px-4 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-xl text-xs font-semibold transition-all duration-150"
                     [attr.aria-pressed]="coverImageMode() === 'custom'"
-                    [class.bg-white]="coverImageMode() === 'custom'"
+                    [class.bg-surface]="coverImageMode() === 'custom'"
                     [class.shadow-xs]="coverImageMode() === 'custom'"
                     [class.text-ink]="coverImageMode() === 'custom'"
                     [class.text-ink-muted]="coverImageMode() !== 'custom'"
@@ -187,7 +187,7 @@
                     type="button"
                     class="px-4 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-xl text-xs font-semibold transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                     [attr.aria-pressed]="coverImageMode() === 'auto'"
-                    [class.bg-white]="coverImageMode() === 'auto'"
+                    [class.bg-surface]="coverImageMode() === 'auto'"
                     [class.shadow-xs]="coverImageMode() === 'auto'"
                     [class.text-ink]="coverImageMode() === 'auto'"
                     [class.text-ink-muted]="coverImageMode() !== 'auto'"
@@ -200,7 +200,7 @@
                 </div>
 
                 @if (coverImageMode() === 'auto') {
-                  <div class="rounded-2xl border border-pink-200 bg-pink-50/50 p-4 text-sm text-ink-muted mb-4">
+                  <div class="rounded-2xl border border-brand-200 bg-brand-50/50 p-4 text-sm text-ink-muted mb-4">
                     <p class="font-semibold text-ink mb-1">{{ 'seller.useFirstPageAutoCover' | trans }}</p>
                     <p>{{ 'seller.useFirstPageAutoCoverDesc' | trans }}</p>
                     @if (galleryItems().length === 0) {
@@ -218,13 +218,13 @@
                       <p class="text-[11px] text-ink-muted mb-3">{{ 'seller.autoCoverGeneratedDesc' | trans }}</p>
                       <ul class="space-y-3" data-testid="auto-cover-strip">
                         @for (item of galleryItems(); track $index; let i = $index) {
-                          <li class="flex items-center gap-3 p-3 rounded-2xl border border-pink-200 bg-pink-50/50">
-                            <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-white flex-shrink-0 border border-line">
+                          <li class="flex items-center gap-3 p-3 rounded-2xl border border-brand-200 bg-brand-50/50">
+                            <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-surface flex-shrink-0 border border-line">
                               <img appImgFallback [src]="item.previewUrl" alt="" class="w-full h-full object-cover" />
                             </div>
                             <div class="flex-1 min-w-0">
                               @if (i === 0) {
-                                <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">{{ 'seller.autoCoverLabel' | trans }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wide text-brand-600">{{ 'seller.autoCoverLabel' | trans }}</span>
                               } @else {
                                 <span class="text-[10px] text-ink-muted">{{ 'seller.autoCoverPreviewPage' | trans: { index: i } }}</span>
                               }
@@ -236,7 +236,7 @@
                   }
                 } @else {
                   @if (galleryUploading()) {
-                    <p class="text-sm text-pink-600 font-semibold mb-3">{{ 'seller.uploadingImages' | trans }}</p>
+                    <p class="text-sm text-brand-600 font-semibold mb-3">{{ 'seller.uploadingImages' | trans }}</p>
                   }
 
                   @if (galleryItems().length > 0) {
@@ -250,14 +250,14 @@
                         <li
                           cdkDrag
                           [cdkDragStartDelay]="{ touch: 300, mouse: 0 }"
-                          class="flex items-center gap-3 p-3 rounded-2xl border border-pink-200 bg-pink-50/50"
+                          class="flex items-center gap-3 p-3 rounded-2xl border border-brand-200 bg-brand-50/50"
                         >
-                          <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-white flex-shrink-0 border border-line">
+                          <div class="w-14 h-[4.375rem] rounded-xl overflow-hidden bg-surface flex-shrink-0 border border-line">
                             <img appImgFallback [src]="item.previewUrl" alt="" class="w-full h-full object-cover" />
                           </div>
                           <div class="flex-1 min-w-0">
                             @if (i === 0) {
-                              <span class="text-[10px] font-bold uppercase tracking-wide text-pink-600">{{ 'seller.mainCover' | trans }}</span>
+                              <span class="text-[10px] font-bold uppercase tracking-wide text-brand-600">{{ 'seller.mainCover' | trans }}</span>
                             } @else {
                               <span class="text-[10px] text-ink-muted">{{ 'seller.orderIndex' | trans: { index: i + 1 } }}</span>
                             }
@@ -273,7 +273,7 @@
 
                   @if (galleryItems().length < maxGalleryImages) {
                     <label
-                      class="block border-2 border-dashed border-pink-200 rounded-3xl p-5 text-center cursor-pointer hover:border-pink-300 hover:bg-pink-50/40 transition-all"
+                      class="block border-2 border-dashed border-brand-200 rounded-3xl p-5 text-center cursor-pointer hover:border-brand-300 hover:bg-brand-50/40 transition-all"
                       [class.pointer-events-none]="galleryUploading()"
                       [class.opacity-60]="galleryUploading()"
                     >
@@ -285,7 +285,7 @@
                         [disabled]="galleryUploading()"
                         (change)="onGalleryFiles($event)"
                       />
-                      <div class="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-3">
+                      <div class="w-12 h-12 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center mx-auto mb-3">
                         <app-icon name="upload" [size]="22" />
                       </div>
                       <div class="text-sm font-bold text-ink">
@@ -309,7 +309,7 @@
                      PUBLIC PREVIEW (preview pages, cover, gallery). Fully independent from the
                      download watermark next to it: all four on/off combinations are valid. -->
                 <label
-                  class="flex items-start gap-3 p-4 rounded-2xl border border-line hover:border-pink-300"
+                  class="flex items-start gap-3 p-4 rounded-2xl border border-line hover:border-brand-300"
                   [class.cursor-pointer]="!previewWatermarkPolicyLocked()"
                   [class.opacity-80]="previewWatermarkPolicyLocked()"
                 >
@@ -319,18 +319,18 @@
                     [ngModel]="previewWatermark()"
                     (ngModelChange)="previewWatermark.set($event)"
                     [disabled]="previewWatermarkPolicyLocked()"
-                    class="w-5 h-5 accent-pink-500 mt-0.5"
+                    class="w-5 h-5 accent-brand-500 mt-0.5"
                   />
                   <div>
                     <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
-                      <app-icon name="shield" [size]="14" className="text-pink-500" />
+                      <app-icon name="shield" [size]="14" className="text-brand-500" />
                       {{ 'seller.previewWatermarkTitle' | trans }}
                     </div>
                     <div class="text-xs text-ink-muted mt-1">
                       {{ 'seller.previewWatermarkDesc' | trans }}
                     </div>
                     @if (previewWatermarkPolicyLocked()) {
-                      <div class="text-xs font-semibold text-pink-600 mt-2">
+                      <div class="text-xs font-semibold text-brand-600 mt-2">
                         {{ 'seller.previewWatermarkMandatory' | trans }}
                       </div>
                     } @else if (!previewWatermark()) {
@@ -346,7 +346,7 @@
                      final say — when it is locked the checkbox is disabled and stays ticked, and
                      any warning shown here is the backend's text verbatim. -->
                 <label
-                  class="flex items-start gap-3 p-4 rounded-2xl border border-line hover:border-pink-300"
+                  class="flex items-start gap-3 p-4 rounded-2xl border border-line hover:border-brand-300"
                   [class.cursor-pointer]="!watermarkPolicyLocked()"
                   [class.opacity-80]="watermarkPolicyLocked()"
                 >
@@ -356,18 +356,18 @@
                     [ngModel]="watermark()"
                     (ngModelChange)="watermark.set($event)"
                     [disabled]="watermarkPolicyLocked()"
-                    class="w-5 h-5 accent-pink-500 mt-0.5"
+                    class="w-5 h-5 accent-brand-500 mt-0.5"
                   />
                   <div>
                     <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
-                      <app-icon name="shield" [size]="14" className="text-pink-500" />
+                      <app-icon name="shield" [size]="14" className="text-brand-500" />
                       {{ 'seller.downloadWatermarkTitle' | trans }}
                     </div>
                     <div class="text-xs text-ink-muted mt-1">
                       {{ 'seller.downloadWatermarkDesc' | trans }}
                     </div>
                     @if (watermarkPolicyLocked()) {
-                      <div class="text-xs font-semibold text-pink-600 mt-2">
+                      <div class="text-xs font-semibold text-brand-600 mt-2">
                         {{ 'seller.watermarkMandatory' | trans }}
                       </div>
                     }
@@ -380,7 +380,7 @@
                     }
                   </div>
                 </label>
-                <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-pink-300">
+                <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-brand-300">
                   <input
                     type="number"
                     inputmode="numeric"
@@ -399,12 +399,12 @@
               </div>
 
               <!-- Watermark Template Connection Card -->
-              <div class="mt-3 p-4 rounded-2xl border border-pink-100 bg-pink-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="mt-3 p-4 rounded-2xl border border-brand-100 bg-brand-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="space-y-1">
                   <div class="text-xs font-bold text-ink flex items-center gap-1.5">
-                    <app-icon name="shield" [size]="14" className="text-pink-600" />
+                    <app-icon name="shield" [size]="14" className="text-brand-600" />
                     <span>{{ 'seller.shopWatermarkTemplateLabel' | trans }}</span>
-                    <span class="text-pink-700 font-semibold">{{ watermarkTemplate().previewWatermarkSubtitle || 'SIRI EDUMARKET PREVIEW' }}</span>
+                    <span class="text-brand-700 font-semibold">{{ watermarkTemplate().previewWatermarkSubtitle || 'SIRI EDUMARKET PREVIEW' }}</span>
                   </div>
                   <p class="text-[11px] text-ink-muted leading-relaxed">
                     {{ 'seller.shopWatermarkTemplateDesc' | trans }}
@@ -413,7 +413,7 @@
                 <a
                   routerLink="/seller/watermark"
                   target="_blank"
-                  class="inline-flex items-center gap-1.5 px-3.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl bg-white border border-pink-200 text-pink-700 hover:bg-pink-100/70 text-xs font-bold transition-all shadow-2xs whitespace-nowrap self-start sm:self-center"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl bg-surface border border-brand-200 text-brand-700 hover:bg-brand-100/70 text-xs font-bold transition-all shadow-2xs whitespace-nowrap self-start sm:self-center"
                 >
                   <app-icon name="gear" [size]="14" />
                   <span>{{ 'seller.manageWatermarkBtn' | trans }}</span>
@@ -463,9 +463,9 @@
                 {{ 'seller.fillDetailsForSales' | trans }}
               </p>
 
-              <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50 border border-pink-200 flex flex-wrap items-center justify-between gap-3">
+              <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-50 via-purple-50 to-brand-50 border border-brand-200 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center text-brand-600 shrink-0">
                     <app-icon name="sparkle" [size]="20" />
                   </div>
                   <div>
@@ -491,7 +491,7 @@
               <div class="space-y-5">
                 <div>
                   <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                    <span>{{ 'seller.docTitleLabel' | trans }} <span class="text-pink-500">*</span></span>
+                    <span>{{ 'seller.docTitleLabel' | trans }} <span class="text-brand-500">*</span></span>
                     <span class="text-ink-muted">{{ title().length }}/80</span>
                   </label>
                   <input
@@ -508,7 +508,7 @@
                     <span>{{ 'seller.shortDescLabel' | trans }}</span>
                     <button
                       type="button"
-                      class="pill-pink !text-[10px] hover:!bg-pink-200"
+                      class="pill-pink !text-[10px] hover:!bg-brand-200"
                       (click)="aiSuggest('short')"
                     >
                       <app-icon name="sparkle" [size]="11" />
@@ -528,7 +528,7 @@
                     <span>{{ 'seller.fullDescLabel' | trans }}</span>
                     <button
                       type="button"
-                      class="pill-pink !text-[10px] hover:!bg-pink-200"
+                      class="pill-pink !text-[10px] hover:!bg-brand-200"
                       (click)="aiSuggest('long')"
                     >
                       <app-icon name="sparkle" [size]="11" />
@@ -547,7 +547,7 @@
                 <div class="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label class="text-xs font-semibold text-ink-soft mb-2 flex items-center justify-between">
-                      <span>{{ 'seller.categoryLabel' | trans }} <span class="text-pink-500">*</span></span>
+                      <span>{{ 'seller.categoryLabel' | trans }} <span class="text-brand-500">*</span></span>
                       <span class="text-ink-muted">{{ 'seller.selectMultipleCategories' | trans }}</span>
                     </label>
 
@@ -583,11 +583,11 @@
                         >
                           @for (c of catalog.categories(); track c.id) {
                             <label
-                              class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-pink-50 cursor-pointer"
+                              class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-50 cursor-pointer"
                             >
                               <input
                                 type="checkbox"
-                                class="w-4 h-4 accent-pink-500"
+                                class="w-4 h-4 accent-brand-500"
                                 [checked]="categoryIds().includes(c.id)"
                                 (change)="toggleCategory(c.id)"
                               />
@@ -619,7 +619,7 @@
                   <label class="text-xs font-semibold text-ink-soft mb-2 block">
                     {{ 'seller.tagsLabel' | trans }}
                   </label>
-                  <div class="flex flex-wrap gap-2 p-3 rounded-2xl border border-line bg-white">
+                  <div class="flex flex-wrap gap-2 p-3 rounded-2xl border glass-card">
                     @for (t of tags(); track t) {
                       <span class="pill-pink gap-1.5 cursor-pointer" (click)="removeTag(t)">
                         #{{ t }}
@@ -661,17 +661,17 @@
 
               <!-- Free toggle -->
               <label
-                class="flex items-start gap-3 p-4 rounded-2xl border border-line bg-white/70 cursor-pointer hover:border-pink-300 mb-6"
+                class="flex items-start gap-3 p-4 rounded-2xl border border-line bg-surface/70 cursor-pointer hover:border-brand-300 mb-6"
               >
                 <input
                   type="checkbox"
-                  class="w-5 h-5 accent-pink-500 mt-0.5"
+                  class="w-5 h-5 accent-brand-500 mt-0.5"
                   [checked]="isFree()"
                   (change)="setIsFree(!isFree())"
                 />
                 <div>
                   <div class="text-sm font-semibold text-ink flex items-center gap-1.5">
-                    <app-icon name="sparkle" [size]="14" className="text-pink-500" />
+                    <app-icon name="sparkle" [size]="14" className="text-brand-500" />
                     {{ 'seller.setAsFreeDoc' | trans }}
                   </div>
                   <p class="text-xs text-ink-muted mt-1 leading-relaxed">
@@ -683,7 +683,7 @@
               @if (isFree()) {
                 <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
                   <div class="text-xs text-ink-muted mb-1">{{ 'seller.freeDocLabel' | trans }}</div>
-                  <div class="text-3xl font-extrabold text-pink-700">{{ 0 | thb }}</div>
+                  <div class="text-3xl font-extrabold text-brand-700">{{ 0 | thb }}</div>
                   <div class="text-xs text-ink-muted mt-2">
                     {{ 'seller.zeroEarningsDesc' | trans }}
                   </div>
@@ -749,18 +749,18 @@
 
                 <!-- Competitor pricing hint (seller-pricing-and-storefront-stats v1 §4) -->
                 @if (pricingHintLoading()) {
-                  <div class="mb-6 p-4 rounded-2xl border border-line bg-white/70 text-xs text-ink-muted">
+                  <div class="mb-6 p-4 rounded-2xl border border-line bg-surface/70 text-xs text-ink-muted">
                     {{ 'seller.loadingCompetitorHint' | trans }}
                   </div>
                 } @else if (pricingHint(); as hint) {
                   @if (hint.sampleSize >= 3) {
-                    <div class="mb-6 p-4 rounded-2xl border border-pink-200 bg-pink-50/60">
+                    <div class="mb-6 p-4 rounded-2xl border border-brand-200 bg-brand-50/60">
                       <div class="text-xs font-semibold text-ink-soft mb-1.5 flex items-center gap-1.5">
-                        <app-icon name="chart" [size]="13" className="text-pink-500" />
+                        <app-icon name="chart" [size]="13" className="text-brand-500" />
                         {{ 'seller.competitorPriceTitle' | trans }}
                       </div>
                       <div class="text-sm text-ink">
-                        {{ 'seller.avgPrice' | trans }} <span class="font-bold text-pink-600">{{ hint.averagePrice | thb }}</span>
+                        {{ 'seller.avgPrice' | trans }} <span class="font-bold text-brand-600">{{ hint.averagePrice | thb }}</span>
                         <span class="text-ink-muted">
                           {{ 'seller.rangeCountFrom' | trans: { min: (hint.minPrice | thb), max: (hint.maxPrice | thb), count: hint.sampleSize } }}
                         </span>
@@ -774,7 +774,7 @@
                   <div class="text-xs text-ink-muted mb-2">{{ 'seller.popularPrices' | trans }}</div>
                   <div class="flex flex-wrap gap-2">
                     @for (p of [99, 199, 299, 399, 499, 690]; track p) {
-                      <button type="button" class="pill-soft hover:!border-pink-300 hover:!text-pink-600" (click)="price.set(p)">
+                      <button type="button" class="pill-soft hover:!border-brand-300 hover:!text-brand-600" (click)="price.set(p)">
                         {{ p | thb }}
                       </button>
                     }
@@ -784,7 +784,7 @@
                 <!-- Earnings card -->
                 <div class="p-5 rounded-3xl bg-gradient-pink border border-line">
                   <div class="text-xs text-ink-muted mb-1">{{ 'seller.youWillReceive' | trans }}</div>
-                  <div class="text-3xl font-extrabold text-pink-700">
+                  <div class="text-3xl font-extrabold text-brand-700">
                     {{ earnings() | thb }}
                   </div>
                   <div class="text-xs text-ink-muted mt-2">
@@ -839,7 +839,7 @@
                 </li>
                 <li class="py-3 flex justify-between text-sm">
                   <span class="text-ink-muted">{{ 'seller.colDocEarning' | trans }}</span>
-                  <span class="text-pink-600 font-bold">{{ earnings() | thb }}</span>
+                  <span class="text-brand-600 font-bold">{{ earnings() | thb }}</span>
                 </li>
                 @if (isFree()) {
                   <li class="py-3 flex justify-between text-sm">
@@ -869,7 +869,7 @@
                   <span class="text-ink-muted flex-shrink-0">{{ 'seller.colDocWatermarkTemplate' | trans }}</span>
                   <span class="text-ink font-semibold text-right text-xs leading-snug">
                     {{ watermarkTemplate().previewWatermarkSubtitle || 'SIRI EDUMARKET PREVIEW' }}
-                    <span class="block text-pink-600 font-normal mt-0.5">
+                    <span class="block text-brand-600 font-normal mt-0.5">
                       {{ 'seller.accordingToWatermarkSettings' | trans }}
                     </span>
                   </span>
@@ -904,24 +904,24 @@
         <aside class="lg:col-span-1">
           <div class="card-tile lg:sticky lg:top-20 xl:top-6">
             <h3 class="text-sm font-bold text-ink mb-3 flex items-center gap-2">
-              <app-icon name="sparkle" [size]="16" className="text-pink-500" />
+              <app-icon name="sparkle" [size]="16" className="text-brand-500" />
               {{ 'seller.sellingTips' | trans }}
             </h3>
             <ul class="space-y-3 text-sm">
               <li class="flex gap-3">
-                <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+                <span class="w-6 h-6 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
                 <span class="text-ink-soft">{{ 'seller.tip1' | trans }}</span>
               </li>
               <li class="flex gap-3">
-                <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                <span class="w-6 h-6 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
                 <span class="text-ink-soft">{{ 'seller.tip2' | trans }}</span>
               </li>
               <li class="flex gap-3">
-                <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+                <span class="w-6 h-6 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
                 <span class="text-ink-soft">{{ 'seller.tip3' | trans }}</span>
               </li>
               <li class="flex gap-3">
-                <span class="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+                <span class="w-6 h-6 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
                 <span class="text-ink-soft">{{ 'seller.tip4' | trans }}</span>
               </li>
             </ul>
@@ -975,16 +975,16 @@
         <div class="space-y-4">
           <div class="space-y-3">
             <label
-              class="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-pink-300 transition-all"
-              [class.border-pink-500]="!isNewVersionOption()"
-              [class.bg-pink-50]="!isNewVersionOption()"
+              class="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-brand-300 transition-all"
+              [class.border-brand-500]="!isNewVersionOption()"
+              [class.bg-brand-50]="!isNewVersionOption()"
             >
               <input
                 type="radio"
                 name="versionOption"
                 [checked]="!isNewVersionOption()"
                 (change)="isNewVersionOption.set(false)"
-                class="accent-pink-500 mt-1"
+                class="accent-brand-500 mt-1"
               />
               <div>
                 <div class="font-semibold text-sm text-ink">{{ 'seller.minorUpdateTitle' | trans }}</div>
@@ -995,16 +995,16 @@
             </label>
 
             <label
-              class="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-pink-300 transition-all"
-              [class.border-pink-500]="isNewVersionOption()"
-              [class.bg-pink-50]="isNewVersionOption()"
+              class="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-brand-300 transition-all"
+              [class.border-brand-500]="isNewVersionOption()"
+              [class.bg-brand-50]="isNewVersionOption()"
             >
               <input
                 type="radio"
                 name="versionOption"
                 [checked]="isNewVersionOption()"
                 (change)="isNewVersionOption.set(true)"
-                class="accent-pink-500 mt-1"
+                class="accent-brand-500 mt-1"
               />
               <div>
                 <div class="font-semibold text-sm text-ink">{{ 'seller.majorUpdateTitle' | trans }}</div>
@@ -1039,7 +1039,7 @@
                 name="version-watermark-override"
                 [ngModel]="versionWatermarkOverride()"
                 (ngModelChange)="versionWatermarkOverride.set($event)"
-                class="w-4 h-4 accent-pink-500"
+                class="w-4 h-4 accent-brand-500"
               />
               <span class="text-xs font-semibold text-ink">
                 {{ 'seller.versionWatermarkChangeLabel' | trans }}
@@ -1058,7 +1058,7 @@
                     [ngModel]="versionPreviewWatermark()"
                     (ngModelChange)="versionPreviewWatermark.set($event)"
                     [disabled]="previewWatermarkPolicyLocked()"
-                    class="w-4 h-4 accent-pink-500 mt-0.5"
+                    class="w-4 h-4 accent-brand-500 mt-0.5"
                   />
                   <span class="text-xs text-ink">
                     {{ 'seller.previewWatermarkTitle' | trans }}
@@ -1075,7 +1075,7 @@
                     [ngModel]="versionDownloadWatermark()"
                     (ngModelChange)="versionDownloadWatermark.set($event)"
                     [disabled]="watermarkPolicyLocked()"
-                    class="w-4 h-4 accent-pink-500 mt-0.5"
+                    class="w-4 h-4 accent-brand-500 mt-0.5"
                   />
                   <span class="text-xs text-ink">
                     {{ 'seller.downloadWatermarkTitle' | trans }}

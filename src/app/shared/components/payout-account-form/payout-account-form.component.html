@@ -1,7 +1,7 @@
 @if (!sellerProfileRequired()) {
   <section class="card-tile" id="payout-account">
     <div class="flex items-start gap-3 mb-5">
-      <div class="w-11 h-11 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+      <div class="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
         <app-icon name="wallet" [size]="18" />
       </div>
       <div>
@@ -23,7 +23,7 @@
           <!-- R-2 (F34): 44px on touch screens; R-16: the chosen method is exposed as aria-pressed. -->
           <button type="button" class="px-4 py-2 [@media(pointer:coarse)]:min-h-11 rounded-full text-sm font-semibold transition-colors"
             [attr.aria-pressed]="accountTypeSelection() === 'bank'"
-            [class]="accountTypeSelection() === 'bank' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+            [class]="accountTypeSelection() === 'bank' ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
             (click)="selectAccountType('bank')">
             {{ 'shared.payoutAccount.bankTransfer' | trans }}
           </button>
@@ -31,7 +31,7 @@
         @if (promptPayEnabled()) {
           <button type="button" class="px-4 py-2 [@media(pointer:coarse)]:min-h-11 rounded-full text-sm font-semibold transition-colors"
             [attr.aria-pressed]="accountTypeSelection() === 'promptpay'"
-            [class]="accountTypeSelection() === 'promptpay' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+            [class]="accountTypeSelection() === 'promptpay' ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
             (click)="selectAccountType('promptpay')">
             {{ 'shared.payoutAccount.promptPay' | trans }}
           </button>
@@ -95,7 +95,7 @@
               @if (promptPayPhoneEnabled()) {
                 <button type="button" class="px-3 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-full text-xs font-semibold transition-colors"
                   [attr.aria-pressed]="promptPayTypeSelection() === 'phone'"
-                  [class]="promptPayTypeSelection() === 'phone' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                  [class]="promptPayTypeSelection() === 'phone' ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
                   (click)="selectPromptPayType('phone')">
                   {{ 'shared.payoutAccount.phoneType' | trans }}
                 </button>
@@ -103,7 +103,7 @@
               @if (promptPayNationalIdEnabled()) {
                 <button type="button" class="px-3 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-full text-xs font-semibold transition-colors"
                   [attr.aria-pressed]="promptPayTypeSelection() === 'national_id'"
-                  [class]="promptPayTypeSelection() === 'national_id' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                  [class]="promptPayTypeSelection() === 'national_id' ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
                   (click)="selectPromptPayType('national_id')">
                   {{ 'shared.payoutAccount.nationalIdType' | trans }}
                 </button>
@@ -111,7 +111,7 @@
               @if (promptPayQrEnabled()) {
                 <button type="button" class="px-3 py-1.5 [@media(pointer:coarse)]:min-h-11 rounded-full text-xs font-semibold transition-colors"
                   [attr.aria-pressed]="promptPayTypeSelection() === 'qr_code'"
-                  [class]="promptPayTypeSelection() === 'qr_code' ? 'bg-primary text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                  [class]="promptPayTypeSelection() === 'qr_code' ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
                   (click)="selectPromptPayType('qr_code')">
                   {{ 'shared.payoutAccount.qrType' | trans }}
                 </button>
@@ -136,7 +136,7 @@
                 <img
                   [src]="resolveQrUrl(promptPayQrImageUrl())"
                   [alt]="'shared.payoutAccount.qrPreviewAlt' | trans"
-                  class="mt-3 w-40 h-40 object-contain rounded-xl border border-line bg-white"
+                  class="mt-3 w-40 h-40 object-contain rounded-xl border border-line bg-surface"
                 />
               }
               @if (fieldErrors().qrImage) {
@@ -210,7 +210,7 @@
               <img
                 [src]="resolveQrUrl(account()!.promptPayQrImageUrl)"
                 [alt]="'shared.payoutAccount.qrPreviewAlt' | trans"
-                class="w-40 h-40 object-contain rounded-xl border border-line bg-white"
+                class="w-40 h-40 object-contain rounded-xl border border-line bg-surface"
               />
             }
           } @else {

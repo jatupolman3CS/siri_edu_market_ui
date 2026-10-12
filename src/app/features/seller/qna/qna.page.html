@@ -49,8 +49,8 @@
           <p class="text-sm text-ink leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">{{ q.question }}</p>
 
           @if (q.answerText && answeringId() !== q.id) {
-            <div class="mt-4 pl-4 border-l-2 border-pink-300">
-              <div class="text-xs font-bold text-pink-700 mb-1">{{ 'seller.yourAnswer' | trans }}</div>
+            <div class="mt-4 pl-4 border-l-2 border-brand-300">
+              <div class="text-xs font-bold text-brand-700 mb-1">{{ 'seller.yourAnswer' | trans }}</div>
               <p class="text-sm text-ink-soft leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">{{ q.answerText }}</p>
             </div>
           }

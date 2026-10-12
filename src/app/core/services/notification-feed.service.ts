@@ -105,15 +105,15 @@ const TONES: Readonly<Record<StyleTone, Omit<NotificationStyleInfo, 'icon' | 'la
     borderClass: 'border-indigo-200',
   },
   pink: {
-    badgeClass: 'bg-pink-100 text-pink-800 border border-pink-200',
-    iconBgClass: 'bg-pink-100 text-pink-600',
-    iconUnreadBgClass: 'bg-pink-500 text-white shadow-soft',
-    borderClass: 'border-pink-200',
+    badgeClass: 'bg-brand-100 text-brand-800 border border-brand-200',
+    iconBgClass: 'bg-brand-100 text-brand-600',
+    iconUnreadBgClass: 'bg-brand-500 text-white shadow-soft',
+    borderClass: 'border-brand-200',
   },
   slate: {
     badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
     iconBgClass: 'bg-slate-100 text-slate-600',
-    iconUnreadBgClass: 'bg-slate-600 text-white shadow-soft',
+    iconUnreadBgClass: 'bg-solid-slate-600 text-white shadow-soft',
     borderClass: 'border-slate-200',
   },
 };

@@ -1,7 +1,7 @@
 <div class="page-container py-6 sm:py-8">
       @if (showSuccess()) {
         <div
-          class="card-soft p-4 sm:p-6 mb-6 flex items-start gap-3 sm:gap-4 bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200"
+          class="card-soft p-4 sm:p-6 mb-6 flex items-start gap-3 sm:gap-4 bg-gradient-to-br from-brand-100 to-brand-50 border-brand-200"
         >
           <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
             <app-icon name="check" [size]="22" />
@@ -41,7 +41,7 @@
             [class.bg-primary]="selectedTabIndex() === i"
             [class.text-white]="selectedTabIndex() === i"
             [class.border-transparent]="selectedTabIndex() === i"
-            [class.bg-white]="selectedTabIndex() !== i"
+            [class.bg-surface]="selectedTabIndex() !== i"
             [class.text-ink-soft]="selectedTabIndex() !== i"
             [class.border-line]="selectedTabIndex() !== i"
             (click)="selectTab(i)"
@@ -81,7 +81,7 @@
             <article class="card-soft p-4 sm:p-5">
               <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-line">
                 <div class="flex items-center gap-3 min-w-0">
-                  <span class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+                  <span class="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
                     <app-icon name="doc" [size]="18" />
                   </span>
                   <div class="min-w-0">
@@ -100,7 +100,7 @@
 
               @if ((o.loyaltyPointsRedeemed ?? 0) > 0 || (o.loyaltyDiscountAmount ?? 0) > 0) {
                 <div class="-mt-2 mb-3">
-                  <span class="pill bg-pink-50 text-pink-600 border border-pink-100 text-[11px] inline-flex items-center gap-1">
+                  <span class="pill bg-brand-50 text-brand-600 border border-brand-100 text-[11px] inline-flex items-center gap-1">
                     <app-icon name="tag" [size]="10" />
                     {{ 'orders.loyaltyRedeemedBadge' | trans:{ points: o.loyaltyPointsRedeemed ?? 0, discount: ((o.loyaltyDiscountAmount ?? 0) | thb) } }}
                   </span>
@@ -138,11 +138,11 @@
                   {{ 'orders.paidVia' | trans:{ method: paymentLabel(o.paymentMethod) } }}
                 </span>
                 <span>·</span>
-                <a [routerLink]="['/orders', o.id]" class="inline-flex items-center min-h-11 text-pink-600 hover:underline font-semibold">
+                <a [routerLink]="['/orders', o.id]" class="inline-flex items-center min-h-11 text-brand-600 hover:underline font-semibold">
                   {{ 'orders.details' | trans }}
                 </a>
                 <span>·</span>
-                <a routerLink="/library" class="inline-flex items-center min-h-11 text-pink-600 hover:underline font-semibold">
+                <a routerLink="/library" class="inline-flex items-center min-h-11 text-brand-600 hover:underline font-semibold">
                   {{ 'orders.download' | trans }}
                 </a>
                 <!-- order-status-tabs v1 §4/AC-12: same condition + copy/disabled state as
@@ -162,7 +162,7 @@
                   <span>·</span>
                   <button
                     type="button"
-                    class="btn-pink !bg-emerald-700 hover:!bg-emerald-800 text-white !py-1 !px-2.5 min-h-11 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm disabled:opacity-50"
+                    class="btn-pink !bg-solid-emerald-700 hover:!bg-solid-emerald-800 text-white !py-1 !px-2.5 min-h-11 text-xs font-semibold rounded-lg inline-flex items-center gap-1 shadow-sm disabled:opacity-50"
                     [disabled]="payingWalletId() !== null || (wallet.summary()?.balance ?? 0) < o.total"
                     (click)="payWithWallet(o.id)"
                   >

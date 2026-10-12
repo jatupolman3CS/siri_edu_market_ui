@@ -14,7 +14,7 @@
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <span class="pill-pink mb-3">
-            <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
             {{ 'seller.greeting' | trans }}
           </span>
           <h1 class="heading-1 font-extrabold text-ink mb-1">{{ 'seller.overviewTitle' | trans }}</h1>
@@ -116,10 +116,10 @@
               <div class="flex flex-col items-center gap-2 h-full justify-end">
                 <span class="text-[10px] sm:text-xs font-bold text-ink whitespace-nowrap">{{ 'common.baht' | trans }}{{ (m.amount / 1000) | smartDecimal }}k</span>
                 <div
-                  class="w-full rounded-t-2xl bg-gradient-to-t from-pink-400 to-pink-200 relative overflow-hidden"
+                  class="w-full rounded-t-2xl bg-gradient-to-t from-brand-400 to-brand-200 relative overflow-hidden"
                   [style.height.%]="(m.amount / maxMonth()) * 100"
                 >
-                  <div class="absolute inset-x-0 top-0 h-1 bg-pink-500 rounded-t-2xl"></div>
+                  <div class="absolute inset-x-0 top-0 h-1 bg-brand-500 rounded-t-2xl"></div>
                 </div>
                 <span class="text-[10px] sm:text-xs text-ink-muted whitespace-nowrap">{{ m.month }}</span>
               </div>
@@ -148,8 +148,8 @@
                         class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0"
                         [class]="
                           i === 0 ? 'bg-primary text-white' :
-                          i === 1 ? 'bg-pink-300 text-pink-700' :
-                          'bg-pink-100 text-pink-600'
+                          i === 1 ? 'bg-brand-300 text-brand-700' :
+                          'bg-brand-100 text-brand-600'
                         "
                       >
                         {{ i + 1 }}
@@ -158,9 +158,9 @@
                     </div>
                     <span class="font-bold text-ink">{{ c.sales | compact }}</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
                     <div
-                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="(c.sales / topCategoryMax()) * 100"
                     ></div>
                   </div>
@@ -204,7 +204,7 @@
                       <td class="rt-title py-2.5 px-2 font-medium text-ink">
                         <span class="block line-clamp-2 md:line-clamp-1">{{ row.title }}</span>
                       </td>
-                      <td class="rt-key py-2.5 px-2 md:text-right font-bold text-pink-600" [attr.data-label]="'seller.conversionCol' | trans">{{ row.conversionRatePercent | smartDecimal }}%</td>
+                      <td class="rt-key py-2.5 px-2 md:text-right font-bold text-brand-600" [attr.data-label]="'seller.conversionCol' | trans">{{ row.conversionRatePercent | smartDecimal }}%</td>
                       <td class="rt-key py-2.5 px-2 md:text-right text-ink-soft" [attr.data-label]="'seller.salesCol' | trans">{{ row.salesCount | compact }}</td>
                       <td class="rt-secondary py-2.5 px-2 text-right text-ink-soft">{{ row.viewCount | compact }}</td>
                       <td class="rt-more py-1 px-1">
@@ -254,9 +254,9 @@
                     <span class="font-medium text-ink">{{ 'seller.trafficSearch' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.searchPercent | smartDecimal }}%</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
                     <div
-                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="seller.stats().insights.trafficBreakdown.searchPercent"
                     ></div>
                   </div>
@@ -266,9 +266,9 @@
                     <span class="font-medium text-ink">{{ 'seller.trafficCategory' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.categoryPercent | smartDecimal }}%</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
                     <div
-                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="seller.stats().insights.trafficBreakdown.categoryPercent"
                     ></div>
                   </div>
@@ -278,9 +278,9 @@
                     <span class="font-medium text-ink">{{ 'seller.trafficDirect' | trans }}</span>
                     <span class="font-bold text-ink">{{ seller.stats().insights.trafficBreakdown.directPercent | smartDecimal }}%</span>
                   </div>
-                  <div class="h-1.5 rounded-full bg-pink-50 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-brand-50 overflow-hidden">
                     <div
-                      class="h-full bg-gradient-to-r from-pink-300 to-pink-500 rounded-full"
+                      class="h-full bg-gradient-to-r from-brand-300 to-brand-500 rounded-full"
                       [style.width.%]="seller.stats().insights.trafficBreakdown.directPercent"
                     ></div>
                   </div>
@@ -302,7 +302,7 @@
           <header class="flex items-end justify-between mb-5">
             <h2 class="text-lg font-bold text-ink">{{ 'seller.recentDocuments' | trans }}</h2>
             <!-- R-2 (F33): a standalone text link is a 44px target on touch screens. -->
-            <a routerLink="/seller/documents" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-pink-600 hover:underline font-semibold">{{ 'common.viewAll' | trans }} →</a>
+            <a routerLink="/seller/documents" class="inline-flex items-center [@media(pointer:coarse)]:min-h-11 text-sm text-brand-600 hover:underline font-semibold">{{ 'common.viewAll' | trans }} →</a>
           </header>
           @if (recentDocsView() === 'loading') {
             <!-- R-18: rows of the list row's height (40×56 cover + py-3). -->
@@ -310,14 +310,14 @@
               <ul class="divide-y divide-line" aria-hidden="true">
                 @for (i of [1, 2, 3, 4, 5]; track i) {
                   <li class="py-3 flex items-center gap-3 sm:gap-4">
-                    <div class="w-10 h-14 rounded-xl bg-pink-50 animate-pulse shrink-0"></div>
+                    <div class="w-10 h-14 rounded-xl bg-brand-50 animate-pulse shrink-0"></div>
                     <div class="flex-1 min-w-0 space-y-2">
-                      <div class="h-4 w-3/4 max-w-[16rem] rounded-full bg-pink-50 animate-pulse"></div>
-                      <div class="h-3 w-1/2 max-w-[10rem] rounded-full bg-pink-50 animate-pulse"></div>
+                      <div class="h-4 w-3/4 max-w-[16rem] rounded-full bg-brand-50 animate-pulse"></div>
+                      <div class="h-3 w-1/2 max-w-[10rem] rounded-full bg-brand-50 animate-pulse"></div>
                     </div>
                     <div class="shrink-0 flex flex-col items-end gap-1.5">
-                      <div class="h-4 w-14 rounded-full bg-pink-50 animate-pulse"></div>
-                      <div class="h-4 w-16 rounded-full bg-pink-50 animate-pulse"></div>
+                      <div class="h-4 w-14 rounded-full bg-brand-50 animate-pulse"></div>
+                      <div class="h-4 w-16 rounded-full bg-brand-50 animate-pulse"></div>
                     </div>
                   </li>
                 }
@@ -349,7 +349,7 @@
                       <span>·</span>
                       <span>{{ d.downloads }} {{ 'common.downloads' | trans }}</span>
                       <span>·</span>
-                      <span class="text-pink-600 font-bold">★ {{ d.rating | smartDecimal }}</span>
+                      <span class="text-brand-600 font-bold">★ {{ d.rating | smartDecimal }}</span>
                     </div>
                   </div>
                   <div class="text-right shrink-0">
@@ -364,10 +364,10 @@
         </section>
 
         <!-- Payout -->
-        <section class="card-tile bg-gradient-pink !border-pink-200">
+        <section class="card-tile bg-gradient-pink !border-brand-200">
           <h2 class="text-lg font-bold text-ink mb-1">{{ 'seller.pendingPayout' | trans }}</h2>
           <p class="text-xs text-ink-muted mb-4">{{ 'seller.pendingPayoutSubtitle' | trans }}</p>
-          <div class="text-3xl sm:text-4xl font-extrabold text-pink-700 leading-none">
+          <div class="text-3xl sm:text-4xl font-extrabold text-brand-700 leading-none">
             {{ seller.stats().pendingPayout | thb }}
           </div>
           @if (seller.nextPayoutDate(); as payoutDate) {
@@ -382,7 +382,7 @@
             {{ 'seller.requestWithdrawNow' | trans }}
           </button>
 
-          <div class="mt-5 pt-5 border-t border-pink-200/60 space-y-3">
+          <div class="mt-5 pt-5 border-t border-brand-200/60 space-y-3">
             <div class="flex items-center gap-2 text-xs">
               <app-icon name="check" [size]="12" className="text-emerald-500" />
               <span class="text-ink-soft">{{ 'seller.sellerShareFeature' | trans: { percent: sellerSharePercent() } }}</span>
@@ -402,7 +402,7 @@
       }
 
       <!-- Earnings Calculator (static — shown in every state) -->
-      <section class="card-tile mt-6 bg-gradient-to-br from-emerald-50 to-pink-50">
+      <section class="card-tile mt-6 bg-gradient-to-br from-emerald-50 to-brand-50">
         <header class="flex items-start justify-between gap-4 mb-6">
           <div>
             <span class="pill bg-emerald-100 text-emerald-700 mb-2">
@@ -426,7 +426,7 @@
                 type="range" min="50" max="990" step="10"
                 [ngModel]="pricePerItem()"
                 (ngModelChange)="pricePerItem.set($event)"
-                class="w-full accent-pink-500 [@media(pointer:coarse)]:h-11"
+                class="w-full accent-brand-500 [@media(pointer:coarse)]:h-11"
               />
             </div>
             <div>
@@ -438,7 +438,7 @@
                 type="range" min="5" max="500" step="5"
                 [ngModel]="salesPerMonth()"
                 (ngModelChange)="salesPerMonth.set($event)"
-                class="w-full accent-pink-500 [@media(pointer:coarse)]:h-11"
+                class="w-full accent-brand-500 [@media(pointer:coarse)]:h-11"
               />
             </div>
             <div>
@@ -450,15 +450,15 @@
                 type="range" min="1" max="100" step="1"
                 [ngModel]="activeDocs()"
                 (ngModelChange)="activeDocs.set($event)"
-                class="w-full accent-pink-500 [@media(pointer:coarse)]:h-11"
+                class="w-full accent-brand-500 [@media(pointer:coarse)]:h-11"
               />
             </div>
           </div>
 
           <!-- Output -->
-          <div class="card-tile bg-white">
+          <div class="card-tile bg-surface">
             <div class="text-xs text-ink-muted mb-2 uppercase tracking-wider">{{ 'seller.calcYourRevenue' | trans: { percent: sellerSharePercent() } }}</div>
-            <div class="text-3xl sm:text-4xl font-extrabold text-pink-600 mb-1">{{ monthlyEarnings() | thb }}</div>
+            <div class="text-3xl sm:text-4xl font-extrabold text-brand-600 mb-1">{{ monthlyEarnings() | thb }}</div>
             <div class="text-sm text-ink-muted mb-5">{{ 'seller.calcPerMonthNet' | trans }}</div>
 
             <ul class="space-y-3 text-sm border-t border-line pt-4">
@@ -472,7 +472,7 @@
               </li>
               <li class="flex justify-between border-t border-line pt-3 font-bold">
                 <span class="text-ink">{{ 'seller.calcNetRevenuePerMonth' | trans }}</span>
-                <span class="text-pink-600">{{ monthlyEarnings() | thb }}</span>
+                <span class="text-brand-600">{{ monthlyEarnings() | thb }}</span>
               </li>
               <li class="flex justify-between text-emerald-600 font-bold">
                 <span>{{ 'seller.calcYearlyRevenueEst' | trans }}</span>

@@ -4,7 +4,7 @@
        with `!` overrides) — the layout, badge rules, and copy are all different from the default
        card. -->
   <article
-    class="group bg-white rounded-2xl border border-line shadow-soft hover:shadow-pop hover:border-pink-300 overflow-hidden flex flex-col transition-[box-shadow,border-color] duration-[250ms] ease-out h-full"
+    class="group bg-surface rounded-2xl border border-line shadow-soft hover:shadow-pop hover:border-brand-300 overflow-hidden flex flex-col transition-[box-shadow,border-color] duration-[250ms] ease-out h-full"
   >
     <div
       class="relative aspect-[4/5] bg-gradient-pink overflow-hidden"
@@ -30,15 +30,15 @@
             @for (img of doc().gallery; track $index; let idx = $index) {
               <span
                 class="w-1.5 h-1.5 rounded-full transition-colors"
-                [class.bg-white]="idx === activeGalleryIndex()"
-                [class.bg-white/50]="idx !== activeGalleryIndex()"
+                [class.bg-surface]="idx === activeGalleryIndex()"
+                [class.bg-surface/50]="idx !== activeGalleryIndex()"
               ></span>
             }
           </div>
         }
 
         @if (doc().isSponsored) {
-          <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-ink text-white text-[11px] font-semibold shadow-soft z-10" [title]="'documentCard.sponsoredTooltip' | trans">
+          <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-ink-deep text-white text-[11px] font-semibold shadow-soft z-10" [title]="'documentCard.sponsoredTooltip' | trans">
             📢 {{ 'documentCard.sponsored' | trans }}<span class="sr-only"> — {{ 'documentCard.sponsoredTooltip' | trans }}</span>
           </span>
         } @else if (doc().isFree) {
@@ -51,7 +51,7 @@
           </span>
         }
 
-        <span class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-white/90 text-[9px] font-bold uppercase tracking-wide text-ink">
+        <span class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-surface/90 text-[9px] font-bold uppercase tracking-wide text-ink">
           {{ doc().format }}
         </span>
 
@@ -67,8 +67,8 @@
         <button
           type="button"
           data-testid="compact-wishlist"
-          class="hit-44 absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-colors duration-200"
-          [class.text-pink-500]="wishlist.has(doc().id)"
+          class="hit-44 absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-surface/90 flex items-center justify-center transition-colors duration-200"
+          [class.text-brand-500]="wishlist.has(doc().id)"
           [class.text-ink-soft]="!wishlist.has(doc().id)"
           [attr.aria-label]="'documentCard.wishlistAria' | trans"
           (click)="toggleWishlist($event)"
@@ -87,7 +87,7 @@
            31-60px. The row now wraps: a name that doesn't fit beside the pill takes its own line
            (the full card width, >= 110px at 320), and only then truncates with an ellipsis. -->
       <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 text-[10px] font-semibold">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 text-[10px] font-semibold">
           {{ resourceTypeLabel() }}
         </span>
         <span data-testid="compact-studio" class="text-[11px] text-ink-muted truncate max-w-full">{{ doc().seller.studioName }}</span>
@@ -101,13 +101,13 @@
         data-testid="compact-title-link"
         class="block [@media(pointer:coarse)]:min-h-11"
       >
-        <h3 class="text-[13px] font-semibold leading-[1.45] text-ink line-clamp-2 text-ellipsis [overflow-wrap:anywhere] min-h-[38px] group-hover:text-pink-600 transition-colors">
+        <h3 class="text-[13px] font-semibold leading-[1.45] text-ink line-clamp-2 text-ellipsis [overflow-wrap:anywhere] min-h-[38px] group-hover:text-brand-600 transition-colors">
           {{ doc().title }}
         </h3>
       </a>
 
       <div class="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px]">
-        <span class="font-bold text-pink-500">★ {{ doc().rating | smartDecimal }}</span>
+        <span class="font-bold text-brand-500">★ {{ doc().rating | smartDecimal }}</span>
         <span class="text-ink-muted">{{ 'documentCard.reviewsCount' | trans: { n: doc().reviewCount } }}</span>
         @if (doc().previewPages > 0) {
           <span class="ml-auto font-semibold text-emerald-600">{{ 'documentCard.tryFree' | trans }}</span>
@@ -129,9 +129,9 @@
           <button
             type="button"
             data-testid="compact-add-to-cart"
-            class="relative hit-44 shrink-0 w-9 h-9 rounded-full border border-line bg-white text-ink-soft hover:border-pink-500 flex items-center justify-center transition-colors duration-200"
-            [class.!bg-pink-500]="inCart()"
-            [class.!border-pink-500]="inCart()"
+            class="relative hit-44 shrink-0 w-9 h-9 rounded-full border border-line bg-surface text-ink-soft hover:border-brand-500 flex items-center justify-center transition-colors duration-200"
+            [class.!bg-brand-500]="inCart()"
+            [class.!border-brand-500]="inCart()"
             [class.!text-white]="inCart()"
             [attr.aria-label]="'documentCard.addToCartAria' | trans"
             (click)="addToCart($event)"
@@ -154,7 +154,7 @@
       <a
         [routerLink]="['/document', doc().id]"
         (click)="onSponsoredNavigate()"
-        class="block relative aspect-[4/5] bg-pink-50 overflow-hidden rounded-3xl"
+        class="block relative aspect-[4/5] bg-brand-50 overflow-hidden rounded-3xl"
       >
         <!-- image-upload-optimization v2: reusable renderer, ready for thumbSrc/fullSrc once the
              catalog API exposes them (see docs/contracts/image-upload-optimization.md v2 §5).
@@ -176,7 +176,7 @@
               }
             }
             @if ((doc().galleryCount ?? doc().gallery.length) > 3) {
-              <div class="ml-auto pill bg-white/90 backdrop-blur text-[10px] font-bold text-ink">
+              <div class="ml-auto pill bg-surface/90 backdrop-blur text-[10px] font-bold text-ink">
                 +{{ (doc().galleryCount ?? doc().gallery.length) - 3 }}
               </div>
             }
@@ -192,7 +192,7 @@
           @if (doc().isSponsored) {
             <!-- seller-ads-promotion v1 DEC-9: must be visible without hover — never hidden behind hover-only affordances. -->
             <span
-              class="pill bg-ink text-white shadow-soft"
+              class="pill bg-ink-deep text-white shadow-soft"
               [title]="'documentCard.sponsoredTooltip' | trans"
             >
               📢 {{ 'documentCard.sponsored' | trans }}
@@ -220,15 +220,15 @@
         </div>
 
         <!-- Format badge (top-right above wishlist) -->
-        <span class="absolute top-3 right-12 pill bg-white/90 backdrop-blur uppercase text-[10px] font-bold tracking-wider">
+        <span class="absolute top-3 right-12 pill bg-surface/90 backdrop-blur uppercase text-[10px] font-bold tracking-wider">
           {{ doc().format }}
         </span>
 
         <!-- Wishlist -->
         <button
           type="button"
-          class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur hover:bg-white shadow-soft flex items-center justify-center transition-colors"
-          [class.!text-pink-500]="wishlist.has(doc().id)"
+          class="absolute top-3 right-3 w-9 h-9 rounded-full bg-surface/90 backdrop-blur hover:bg-surface shadow-soft flex items-center justify-center transition-colors"
+          [class.!text-brand-500]="wishlist.has(doc().id)"
           [class.text-ink-soft]="!wishlist.has(doc().id)"
           (click)="toggleWishlist($event)"
           [attr.aria-label]="wishlist.has(doc().id) ? ('documentCard.removeFromWishlist' | trans) : ('documentCard.addToWishlist' | trans)"
@@ -243,7 +243,7 @@
         <!-- Quick View (appears on hover) -->
         <button
           type="button"
-          class="absolute bottom-3 right-3 hidden group-hover:inline-flex items-center gap-1.5 pill bg-ink/85 backdrop-blur text-white hover:bg-ink"
+          class="absolute bottom-3 right-3 hidden group-hover:inline-flex items-center gap-1.5 pill bg-ink-deep/85 backdrop-blur text-white hover:bg-ink-deep"
           (click)="openQuickView($event)"
         >
           <app-icon name="eye" [size]="12" />
@@ -253,7 +253,7 @@
         <!-- Watermark indicator (only on left bottom for paid) -->
         @if (doc().watermarkEnabled) {
           <div
-            class="absolute bottom-3 left-3 pill bg-white/90 backdrop-blur text-ink-soft text-[10px]"
+            class="absolute bottom-3 left-3 pill bg-surface/90 backdrop-blur text-ink-soft text-[10px]"
           >
             <app-icon name="shield" [size]="11" /> Watermark
           </div>
@@ -276,7 +276,7 @@
         </div>
 
         <a [routerLink]="['/document', doc().id]" (click)="onSponsoredNavigate()" class="block">
-          <h3 class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 min-h-[2.75em] group-hover:text-pink-600 transition-colors">
+          <h3 class="text-[15px] font-semibold text-ink leading-snug line-clamp-2 min-h-[2.75em] group-hover:text-brand-600 transition-colors">
             {{ doc().title }}
           </h3>
         </a>
@@ -311,9 +311,9 @@
           <button
             type="button"
             class="btn-icon"
-            [class.!bg-pink-500]="inCart()"
+            [class.!bg-brand-500]="inCart()"
             [class.!text-white]="inCart()"
-            [class.!border-pink-500]="inCart()"
+            [class.!border-brand-500]="inCart()"
             [attr.aria-label]="inCart() ? ('documentCard.inCart' | trans) : ('documentCard.addToCart' | trans)"
             (click)="addToCart($event)"
           >

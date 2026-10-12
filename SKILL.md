@@ -271,7 +271,7 @@ export class CounterComponent {
 
 <!-- ❌ Don't repeat -->
 <button class="inline-flex items-center justify-center gap-2 px-5 py-2.5
-               rounded-full bg-pink-500 hover:bg-pink-600 text-white
+               rounded-full bg-primary hover:bg-primary-hover text-white
                font-semibold shadow-soft transition-all duration-200">
   Submit
 </button>
@@ -325,18 +325,43 @@ addToCart(event: Event): void {
 ### 5.5 Color palette
 
 ```
-pink-50:  #FFF7FA  - canvas / very subtle bg
-pink-100: #FFEAF1  - hover bg, soft pill
-pink-200: #FFD6E4  - chart fill, secondary
-pink-300: #FFB8CE  - decorative blob
-pink-400: #FF8AAF  - accent
-pink-500: #F2638E  - PRIMARY (buttons, links, active)
-pink-600: #D94B78  - hover, body links
-pink-700: #B83864  - on-pink-100 text
+Premium Cyber-Pink Glassmorphism theme (docs/THEME_REFACTOR.md). Tailwind `brand-*` (was `pink-*`,
+renamed 2026-10-12 — there is no `pink-*` utility any more; `var(--pink-N)` in SCSS is an alias of `var(--brand-N)`):
+
+brand-50:  #fdf2f8  - canvas / very subtle bg
+brand-100: #fce7f3  - hover bg, soft pill
+brand-200: #fbcfe8  - chart fill, secondary, glass edge
+brand-300: #f9a8d4  - decorative blob
+brand-400: #f472b6  - accent
+brand-500: #ec4899  - decorative fills only (white text on it is 3.5:1 — fails AA)
+brand-600: #db2777  - PRIMARY (`bg-primary`: buttons, links, active; white text 4.6:1)
+brand-700: #be185d  - hover (`bg-primary-hover`), text on brand-100
+brand-800: #9d174d  - gradient end, pressed
+brand-900: #831843  - admin chrome
 ink:      #2A1B22  - primary text
 ink-soft: #5A4751  - secondary text
-ink-muted:#8A7A82  - tertiary text, hints
-line:     #F3E6EC  - borders, dividers
+ink-muted:#76646D  - tertiary text, hints
+line:     #f6e0ec  - borders, dividers
+
+Font: Prompt (Thai + Latin). Glass: `.glass-card` (content card, translucent, NO backdrop-filter),
+`.glass-panel` (frosted chrome that content scrolls under, blur), `shadow-glass`, `shadow-glow`,
+`--glass-*` tokens in styles.scss. Blur only on overlays/sticky chrome — a backdrop-filter traps
+`position: fixed` descendants and creates a stacking context.
+
+**Light / dark theme** (2026-10-12): `core/services/theme.service.ts` sets `<html data-theme>` (saved choice →
+OS → light; `index.html` applies it pre-paint); `<app-theme-toggle>` is the switch. Every colour is a CSS variable
+defined once, for both themes, in `tailwind.theme.js` (ink / line / surface / canvas / cream / brand and the
+slate-gray-neutral-stone + red-orange-amber-yellow-emerald-sky-blue-indigo-violet-purple-rose families).
+Rules for templates:
+- Surfaces: `bg-surface`, never `bg-white` (white overlays at ≤30% — `bg-white/10` on dark chrome — are fine).
+- A FILL that carries white text and is shade 600+ uses the static scale: `bg-solid-rose-600`, `from-solid-emerald-700`
+  (the themed 600+ shades mirror lighter in dark mode, which is right for text but washes a fill out). Primary pink
+  fill = `bg-primary` / `hover:bg-primary-hover`.
+- A fill that must stay dark in both themes: `bg-ink-deep`, `bg-brand-deep` (never `bg-ink` / `bg-brand-900`).
+- A subtree that must stay light-on-dark whatever the page theme (admin chrome, auth aside, seller CTA): add
+  `tokens-light` — it restores the light values of every token for that subtree.
+- In scss use `var(--ink)`, `var(--surface)`, `var(--brand-N)`, `var(--glass-bg-strong)` — not hex.
+- New colour token → add it in `tailwind.theme.js` (light + dark), not in styles.scss.
 ```
 
 ---
@@ -436,7 +461,7 @@ totalMethod() {
 - มี `alt` ทุก `<img>` (เว้นแต่ decorative — ใช้ `alt=""`)
 - มี `aria-label` ในปุ่มที่ไม่มี text (icon-only)
 - ใช้ semantic HTML — `<nav>`, `<header>`, `<main>`, `<aside>`, `<article>`, `<footer>`
-- focus state มองเห็นได้ (Tailwind: `focus:ring-4 focus:ring-pink-100`)
+- focus state มองเห็นได้ (Tailwind: `focus:ring-4 focus:ring-brand-100`)
 - form fields มี `<label>` คู่กัน
 
 ---

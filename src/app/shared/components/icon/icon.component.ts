@@ -35,6 +35,8 @@ export type IconName =
   | 'bell'
   | 'volume-2'
   | 'volume-x'
+  | 'sun'
+  | 'moon'
   | 'home'
   | 'dashboard'
   | 'package'

@@ -96,8 +96,8 @@
           } @else {
             @for (d of pending(); track d.id) {
               <button
-                class="w-full text-left card-soft p-4 flex items-start gap-3 hover:!border-pink-300 transition-all"
-                [class.!border-pink-500]="selected()?.id === d.id"
+                class="w-full text-left card-soft p-4 flex items-start gap-3 hover:!border-brand-300 transition-all"
+                [class.!border-brand-500]="selected()?.id === d.id"
                 [class.shadow-pop]="selected()?.id === d.id"
                 [disabled]="isPreviewLocked()"
                 (click)="openDetail(d.id)"
@@ -166,7 +166,7 @@
           </button>
           @if (selected(); as d) {
             <div class="card-soft overflow-hidden lg:sticky lg:top-6 lg:h-full lg:overflow-auto">
-              <div class="p-4 border-b border-line bg-white flex flex-wrap items-center justify-between gap-3">
+              <div class="p-4 border-b border-line bg-surface flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                   <div class="text-xs text-ink-muted">{{ 'common.preview' | trans }}</div>
                   <div class="text-sm font-bold text-ink truncate">
@@ -176,17 +176,17 @@
                 <button
                   type="button"
                   class="pill-soft !py-2 !px-3 [@media(pointer:coarse)]:min-h-11"
-                  [class.!bg-pink-100]="isPreviewLocked()"
-                  [class.!text-pink-700]="isPreviewLocked()"
+                  [class.!bg-brand-100]="isPreviewLocked()"
+                  [class.!text-brand-700]="isPreviewLocked()"
                   (click)="toggleLock()"
                 >
                   <app-icon name="lock" [size]="14" />
                   {{ isPreviewLocked() ? ('admin.locked' | trans) : ('admin.lockPreview' | trans) }}
                 </button>
               </div>
-              <div class="bg-pink-50/50 p-4 sm:p-5 flex items-center justify-center border-b border-line/60">
+              <div class="bg-brand-50/50 p-4 sm:p-5 flex items-center justify-center border-b border-line/60">
                 <div
-                  class="relative aspect-[4/5] h-[280px] sm:h-[340px] md:h-[380px] max-w-full bg-white rounded-2xl shadow-sm border border-line/60 flex items-center justify-center overflow-hidden"
+                  class="relative aspect-[4/5] h-[280px] sm:h-[340px] md:h-[380px] max-w-full bg-surface rounded-2xl shadow-sm border border-line/60 flex items-center justify-center overflow-hidden"
                   data-testid="admin-marketplace-preview-hero"
                 >
                   @if (previewDetailLoading()) {
@@ -203,14 +203,14 @@
                 </div>
               </div>
               <div
-                class="flex gap-2 p-3 bg-white overflow-x-auto overflow-y-hidden no-scrollbar"
+                class="flex gap-2 p-3 bg-surface overflow-x-auto overflow-y-hidden no-scrollbar"
                 data-testid="admin-marketplace-preview-thumbnails"
               >
                 @for (img of marketplacePreviewImages(); track img; let i = $index) {
                   <button
                     type="button"
                     class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 transition-all"
-                    [class.border-pink-500]="selectedPreviewImage() === i"
+                    [class.border-brand-500]="selectedPreviewImage() === i"
                     [class.border-transparent]="selectedPreviewImage() !== i"
                     (click)="selectedPreviewImage.set(i)"
                   >
@@ -218,9 +218,9 @@
                   </button>
                 }
               </div>
-              <div class="px-3 pb-3 bg-white flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5">
+              <div class="px-3 pb-3 bg-surface flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5">
                 <div class="flex items-center gap-1.5 text-xs text-ink-muted">
-                  <app-icon name="eye" [size]="14" className="text-pink-500" />
+                  <app-icon name="eye" [size]="14" className="text-brand-500" />
                   <span>{{ 'product.hasPreviewPages' | trans: { count: d.previewPages } }}</span>
                 </div>
                 <button
@@ -262,7 +262,7 @@
                     </div>
                   }
 
-                  <div class="mt-6 p-4 rounded-2xl border border-line bg-white">
+                  <div class="mt-6 p-4 rounded-2xl border glass-card">
                     <h3 class="text-sm font-bold text-ink mb-2">{{ 'admin.sellingOriginalFile' | trans }}</h3>
                     <p class="text-xs text-ink-muted mb-3">
                       {{ 'admin.sellingFileNotice' | trans }}
@@ -285,7 +285,7 @@
                         <button
                           type="button"
                           (click)="downloadSaleFile()"
-                          class="pill-soft !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 cursor-pointer hover:border-pink-300"
+                          class="pill-soft !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 cursor-pointer hover:border-brand-300"
                         >
                           <app-icon name="download" [size]="14" />
                           {{ 'seller.download' | trans }}
@@ -304,11 +304,11 @@
                         @for (m of pd2.mainFiles!; track m.id) {
                           <li
                             class="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-line last:border-0"
-                            [class.bg-pink-50/60]="m.isListedForSale"
+                            [class.bg-brand-50/60]="m.isListedForSale"
                           >
                             <div class="flex items-center gap-2 min-w-0 flex-1">
                               @if (m.isListedForSale) {
-                                <span class="text-[10px] font-bold uppercase text-pink-600 shrink-0 bg-pink-100 px-1.5 py-0.5 rounded">{{ 'seller.sellingBadge' | trans }}</span>
+                                <span class="text-[10px] font-bold uppercase text-brand-600 shrink-0 bg-brand-100 px-1.5 py-0.5 rounded">{{ 'seller.sellingBadge' | trans }}</span>
                               }
                               <span class="truncate font-medium text-ink">{{ (m.originalFileName || m.storageKey) | fileName }}</span>
                             </div>
@@ -317,7 +317,7 @@
                                 <button
                                   type="button"
                                   (click)="openMainFile(m.storageKey)"
-                                  class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline inline-flex items-center gap-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
+                                  class="text-xs font-semibold text-brand-600 hover:text-brand-700 hover:underline inline-flex items-center gap-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
                                 >
                                   <app-icon name="eye" [size]="13" />
                                   {{ 'admin.openView' | trans }}
@@ -356,7 +356,7 @@
                   }
                 }
 
-                <dl class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 md:p-5 rounded-3xl bg-pink-50 border border-line">
+                <dl class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 md:p-5 rounded-3xl bg-brand-50 border border-line">
                   <div>
                     <dt class="text-xs text-ink-muted">{{ 'admin.colPrice' | trans }}</dt>
                     <dd class="text-base font-bold text-ink mt-1">{{ d.price | thb }}</dd>
@@ -397,7 +397,7 @@
                       }
                       <button
                         type="button"
-                        class="inline-flex items-center text-xs text-pink-600 hover:text-pink-700 font-semibold underline ml-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
+                        class="inline-flex items-center text-xs text-brand-600 hover:text-brand-700 font-semibold underline ml-1 cursor-pointer [@media(pointer:coarse)]:min-h-11"
                         [disabled]="prescreening()"
                         (click)="runPrescreen(d.id)"
                       >
@@ -418,7 +418,7 @@
                       <div class="text-[11px] font-bold text-ink-muted mb-1">{{ 'admin.detectedRiskFlags' | trans }}</div>
                       <div class="flex flex-wrap gap-1.5">
                         @for (flag of d.aiPrescreenFlags; track flag) {
-                          <span class="max-w-full text-[11px] px-2 py-0.5 rounded-md bg-white border border-rose-300 font-medium text-rose-700 [overflow-wrap:anywhere]">
+                          <span class="max-w-full text-[11px] px-2 py-0.5 rounded-md bg-surface border border-rose-300 font-medium text-rose-700 [overflow-wrap:anywhere]">
                             🚩 {{ flag }}
                           </span>
                         }
@@ -435,7 +435,7 @@
                 <ul class="space-y-2">
                   @for (c of manualChecks(); track c.label; let i = $index) {
                     <li
-                      [class]="'flex items-center gap-3 p-3 rounded-2xl border cursor-pointer select-none transition-colors ' + (c.checked ? 'border-emerald-200 bg-emerald-50' : 'border-line bg-white')"
+                      [class]="'flex items-center gap-3 p-3 rounded-2xl border cursor-pointer select-none transition-colors ' + (c.checked ? 'border-emerald-200 bg-emerald-50' : 'border-line bg-surface')"
                       (click)="toggleCheck(i)"
                     >
                       <span
@@ -461,7 +461,7 @@
 
                 <div class="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6" data-testid="approval-actions-inline">
                   <button
-                    class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold transition-colors"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full bg-solid-rose-600 hover:bg-solid-rose-700 text-white font-bold transition-colors"
                     (click)="reject(d.id, d.title)"
                   >
                     <app-icon name="x" [size]="16" />
@@ -480,7 +480,7 @@
                     <div class="grid w-full min-w-0 grid-cols-2 gap-2" data-testid="approval-actions-sticky">
                       <button
                         type="button"
-                        class="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold transition-colors"
+                        class="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full bg-solid-rose-600 hover:bg-solid-rose-700 text-white text-sm font-bold transition-colors"
                         (click)="reject(d.id, d.title)"
                       >
                         <app-icon name="x" [size]="16" />
@@ -554,7 +554,7 @@
             </button>
             <button
               type="button"
-              class="px-5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-soft flex items-center justify-center gap-1.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-5 py-2 [@media(pointer:coarse)]:min-h-11 rounded-xl text-sm font-semibold text-white bg-rose-500 hover:bg-solid-rose-600 transition-colors shadow-soft flex items-center justify-center gap-1.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="reject-modal-confirm"
               (click)="confirmReject()"
               [disabled]="rejectSubmitting() || !rejectReason().trim()"

@@ -65,7 +65,7 @@
               <li>
                 <button
                   type="button"
-                  class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-pink-50/60 transition-colors"
+                  class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-brand-50/60 transition-colors"
                   (click)="toggleDocument(doc.documentId!)"
                 >
                   <span
@@ -106,7 +106,7 @@
             {{ 'seller.coverOptional' | trans }}
           </label>
           <label
-            class="relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-dashed border-pink-200 bg-pink-50/40 cursor-pointer hover:border-pink-300 transition-colors"
+            class="relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-dashed border-brand-200 bg-brand-50/40 cursor-pointer hover:border-brand-300 transition-colors"
             [class.pointer-events-none]="coverUploading()"
             [class.opacity-60]="coverUploading()"
           >
@@ -129,7 +129,7 @@
               </span>
             } @else {
               <span class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
-                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-100 text-pink-600">
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
                   <app-icon name="upload" [size]="20" />
                 </span>
                 <span class="text-sm font-bold text-ink">
@@ -143,13 +143,13 @@
 
       <!-- The same arithmetic the server does, shown while the seller types so the rule is
            visible rather than something they hit as a rejection. -->
-      <div class="rounded-2xl bg-pink-50/60 px-4 py-3 text-sm space-y-1">
+      <div class="rounded-2xl bg-brand-50/60 px-4 py-3 text-sm space-y-1">
         <p class="text-ink-soft">
           {{ 'seller.totalOriginalPrice' | trans }}
           <span class="font-bold text-ink">{{ originalPrice() | thb }}</span>
         </p>
         @if (savingAmount() > 0) {
-          <p class="text-pink-700 font-semibold">
+          <p class="text-brand-700 font-semibold">
             {{ 'seller.buyerSaves' | trans: { amount: (savingAmount() | thb), percent: savingPercent() } }}
           </p>
         }
