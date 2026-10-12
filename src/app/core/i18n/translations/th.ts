@@ -1832,6 +1832,12 @@ export const th = {
       "notificationConfig": "ตั้งค่าการแจ้งเตือน",
       "settings": "ตั้งค่าแพลตฟอร์ม",
       "auditLogs": "ประวัติการทำงาน",
+      "groupOverview": "ภาพรวม",
+      "groupContent": "เนื้อหา",
+      "groupPeople": "ผู้ใช้",
+      "groupMoney": "การเงิน",
+      "groupGrowth": "การตลาด",
+      "groupSystem": "ระบบ",
       "documentGeneration": "สร้างเอกสารอัตโนมัติ",
       "examHub": "จัดการเนื้อหา Exam Hub"
     },

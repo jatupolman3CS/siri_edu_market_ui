@@ -14,7 +14,7 @@
       <button
         type="button"
         class="px-4 py-2 min-h-[44px] rounded-full text-sm font-semibold transition-colors whitespace-nowrap"
-        [class]="filter() === f.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
+        [class]="filter() === f.value ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
         (click)="setFilter(f.value)"
       >
         {{ f.label }}

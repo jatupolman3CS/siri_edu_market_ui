@@ -10,7 +10,7 @@
       <button
         type="button"
         class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11"
-        [class]="openOnly() ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
+        [class]="openOnly() ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
         (click)="setOpenOnly(true)"
       >
         {{ 'admin.reportsAdmin.filterOpen' | trans }}
@@ -18,7 +18,7 @@
       <button
         type="button"
         class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11"
-        [class]="!openOnly() ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
+        [class]="!openOnly() ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
         (click)="setOpenOnly(false)"
       >
         {{ 'admin.reportsAdmin.filterAll' | trans }}

@@ -34,7 +34,10 @@
         </div>
 
         <nav class="admin-scroll flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1">
-          @for (item of navItems(); track item.href) {
+          @for (item of navItems(); track item.href; let first = $first) {
+            @if (item.groupStart && item.group !== item.label) {
+              <div class="px-3.5 pb-1.5 admin-nav-label text-[10px] font-bold uppercase text-slate-400" [class.pt-1]="first" [class.pt-4]="!first" aria-hidden="true">{{ item.group }}</div>
+            }
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-white/10 !text-white"
@@ -99,7 +102,10 @@
           </span>
         </a>
         <nav class="admin-scroll flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 px-1.5" [attr.aria-label]="'responsive.nav.primary' | trans">
-          @for (item of navItems(); track item.href) {
+          @for (item of navItems(); track item.href; let first = $first) {
+            @if (item.groupStart && !first) {
+              <div class="mx-3 my-1 h-px shrink-0 bg-white/10" aria-hidden="true"></div>
+            }
             <a
               [routerLink]="item.href"
               routerLinkActive="!bg-white/10 !text-white"
@@ -146,12 +152,13 @@
         [class.z-50]="accountMenuOpen()"
       >
         <div class="flex items-center justify-between px-4 h-14">
-          <a routerLink="/admin" class="flex items-center gap-2 min-h-11">
+          <a routerLink="/admin" class="tokens-light flex items-center gap-2 min-h-11">
             <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-300 to-brand-500"></span>
             <span class="text-sm font-bold">ADMIN</span>
           </a>
           <div class="flex items-center gap-1">
-            <app-notification-bell variant="icon" theme="dark" />
+            <!-- The bell keeps its light-on-dark look in both themes; the account menu below must follow the page theme. -->
+            <app-notification-bell class="tokens-light" variant="icon" theme="dark" />
             <div class="relative" (keydown.escape)="closeAccountMenu(); accountBtn.focus()">
               <button
                 #accountBtn
@@ -259,7 +266,10 @@
             </div>
 
             <nav class="admin-scroll flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 pr-5" [style.padding-left]="'max(16px, var(--safe-left))'">
-              @for (item of navItems(); track item.href) {
+              @for (item of navItems(); track item.href; let first = $first) {
+                @if (item.groupStart && item.group !== item.label) {
+                  <div class="px-3.5 pb-1.5 admin-nav-label text-[10px] font-bold uppercase text-slate-400" [class.pt-1]="first" [class.pt-4]="!first" aria-hidden="true">{{ item.group }}</div>
+                }
                 <a
                   [routerLink]="item.href"
                   routerLinkActive="!bg-white/10 !text-white"
@@ -344,7 +354,7 @@
           [class.pb-bottom-nav]="!chrome.actionBarActive()"
         >
           <!-- R-26: the single width cap for admin pages — fills the area up to 1920px, centred above. -->
-          <div data-testid="admin-page-frame" class="mx-auto w-full min-w-0 max-w-[1920px]">
+          <div data-testid="admin-page-frame" class="admin-frame mx-auto w-full min-w-0 max-w-[1920px]">
             <router-outlet />
           </div>
           @if (!chrome.actionBarActive()) {

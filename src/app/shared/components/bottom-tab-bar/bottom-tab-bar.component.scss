@@ -12,11 +12,11 @@
 }
 
 :host(.bottom-tab-bar--dark) {
-  --tab-bg: rgba(42, 27, 34, 0.92);
-  --tab-border: rgba(249, 168, 212, 0.18);
-  --tab-fg: #fbcfe8;
+  --tab-bg: rgba(11, 18, 32, 0.92);
+  --tab-border: rgba(255, 255, 255, 0.08);
+  --tab-fg: #cbd5e1;
   --tab-active-fg: #ffffff;
-  --tab-active-bg: #831843;
+  --tab-active-bg: rgba(255, 255, 255, 0.18);
 }
 
 /* Phone only. */
@@ -91,7 +91,8 @@
 
 /* Admin (dark) bar: --primary on the dark background is below 3:1. */
 :host(.bottom-tab-bar--dark) .tab-bar__item:focus-visible {
-  outline-color: var(--pink-300);
+  /* Static pink-300: var(--pink-300) flips to a dark tint in dark mode, but this bar is navy in both themes. */
+  outline-color: #f9a8d4;
 }
 
 .tab-bar__icon {

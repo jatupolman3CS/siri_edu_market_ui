@@ -934,6 +934,12 @@ html {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-line bg-surface/60 hover:border-brand-300 text-ink hover:text-brand-600 font-medium transition-all duration-200;
   }
 
+  /* Quiet row action: a pink-tinted pill that fills in on hover — for a column of repeated actions where five
+     solid .btn-pink buttons would shout. */
+  .btn-soft {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-brand-100 bg-brand-50 text-brand-700 font-semibold transition-colors duration-200 hover:bg-primary hover:border-primary hover:text-white;
+  }
+
   .btn-icon {
     @apply inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-surface/60 hover:border-brand-300 hover:bg-brand-50 text-ink-soft hover:text-brand-600 transition-all duration-200;
   }
@@ -1839,14 +1845,106 @@ html {
   }
 }
 
+/* ---------------- Admin console polish ----------------
+   Every admin page renders inside <div class="admin-frame"> (admin-layout). These rules give the data-heavy pages
+   one compact, consistent look without touching ~25 templates: smaller headings, 12px controls with one height,
+   a drawn select arrow, tidy tables and nowrap status pills. Scoped to .admin-frame so the storefront keeps its
+   rounder marketing look. */
+.admin-frame {
+  /* rounded-3xl is var(--radius-card) = 40px at >=1280 — far too round for a table card */
+  --radius-card: 1.25rem;
+}
+
+.admin-frame .heading-1 {
+  font-size: clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
+  letter-spacing: -0.015em;
+}
+
+.admin-frame .card-soft {
+  border-radius: var(--radius-card);
+}
+
+/* Controls — one height, one radius */
+.admin-frame .input-soft {
+  border-radius: 0.75rem;
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+  background-color: var(--surface);
+}
+.admin-frame select.input-soft {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+.admin-frame input[type='checkbox'],
+.admin-frame input[type='radio'] {
+  accent-color: var(--brand-600);
+}
+.admin-frame .btn-ghost,
+.admin-frame .btn-pink {
+  min-height: 2.5rem;
+}
+
+/* Tables */
+.admin-frame table.rtable thead th {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.admin-frame table.rtable tbody td {
+  padding-block: 0.875rem;
+  vertical-align: middle;
+}
+.admin-frame table.rtable tbody tr {
+  transition: background-color 0.15s ease;
+}
+/* Auto table layout gave the title column a sliver and a spare column the slack (a document name wrapped to three
+   lines next to an empty cell): the title / key columns get a floor from the tablet tier up (below that the table
+   becomes cards, see .rtable). */
+@media (min-width: 744px) {
+  .admin-frame table.rtable td.rt-title {
+    min-width: 13rem;
+  }
+  .admin-frame table.rtable td.rt-key {
+    min-width: 7rem;
+  }
+}
+
+/* A status badge never wraps onto a second line inside a narrow cell. */
+.admin-frame table.rtable td.rt-status > *,
+.admin-frame table.rtable td.rt-status .pill {
+  white-space: nowrap;
+}
+.admin-frame table.rtable td.rt-status > span:not(.pill) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+}
+
 /* ---------------- Dark theme: ng-zorro, headings, native controls ----------------
    ng-zorro's compiled CSS hard-codes rgba(0,0,0,.88) text and #fff panels. The overrides below are scoped to
    :root[data-theme='dark'] so light mode is untouched. */
 :root[data-theme='dark'] :is(.ant-modal-content, .ant-modal-title, .ant-modal-confirm-title, .ant-modal-confirm-content, .ant-select,
   .ant-select-selection-item, .ant-select-dropdown, .ant-select-item, .ant-dropdown-menu, .ant-dropdown-menu-item, .ant-input,
   .ant-input-affix-wrapper, .ant-input-number-input, .ant-picker, .ant-picker-input > input, .ant-picker-dropdown, .ant-picker-panel-container,
-  .ant-picker-cell-in-view, .ant-picker-header, .ant-picker-content th, .ant-tabs-tab, .ant-tabs-tab-btn, .ant-popover-inner, .ant-pagination-item a) {
+  .ant-picker-cell-in-view, .ant-picker-header, .ant-picker-content th, .ant-tabs-tab, .ant-tabs-tab-btn, .ant-popover-inner, .ant-pagination-item a,
+  .ant-checkbox-wrapper, .ant-radio-wrapper) {
   color: var(--ink);
+}
+/* ng-zorro draws arrows / clear / suffix icons in rgba(0,0,0,.25) — invisible on a dark surface. */
+:root[data-theme='dark'] :is(.ant-select-arrow, .ant-select-clear, .ant-picker-suffix, .ant-picker-clear, .ant-input-clear-icon, .ant-select-selection-item-remove) {
+  color: var(--ink-muted);
+}
+/* The checkbox / radio box itself: ng-zorro paints it white with a light border. */
+:root[data-theme='dark'] :is(.ant-checkbox-inner, .ant-radio-inner) {
+  background-color: var(--surface);
+  border-color: var(--line-strong);
 }
 :root[data-theme='dark'] :is(.ant-select-dropdown, .ant-dropdown-menu, .ant-picker-panel-container, .ant-popover-inner) {
   background: var(--glass-bg-strong);

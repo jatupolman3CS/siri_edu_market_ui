@@ -30,7 +30,7 @@
       <button
         type="button"
         class="pill min-h-11 whitespace-nowrap"
-        [class]="status() === tab.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
+        [class]="status() === tab.value ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
         (click)="setStatus(tab.value)"
       >
         {{ tab.labelKey | trans }}

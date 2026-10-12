@@ -233,6 +233,23 @@ describe('AdminLayoutComponent — responsive chrome (responsive-ui v1 §4.4)', 
     }
   });
 
+  it('clusters navItems into six sections and prints each section label once, above the first link of its group', () => {
+    const { fixture } = render(0);
+    const items = fixture.componentInstance.navItems();
+    expect(items.filter((i) => i.groupStart)).toHaveLength(6);
+    expect(new Set(items.map((i) => i.group)).size).toBe(6);
+
+    // A section whose only entry carries the same name as the section (Overview → Overview) would read twice: no label.
+    const expected = items.filter((i) => i.groupStart && i.group !== i.label).map((i) => i.group);
+    const root = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(root.querySelectorAll('[data-testid="admin-sidebar"] nav > div[aria-hidden="true"]')).map((d) =>
+      d.textContent?.trim(),
+    );
+    expect(labels).toEqual(expected);
+    // The rail is icon-only: a hairline between sections instead of a label.
+    expect(root.querySelectorAll('[data-testid="admin-rail"] nav > div[aria-hidden="true"]').length).toBe(5);
+  });
+
   it('gives the phone top-bar ADMIN link a 44px row (G-12)', () => {
     const { fixture } = render(0);
     const link = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="admin-phone-topbar"] a[href="/admin"]') as HTMLElement;

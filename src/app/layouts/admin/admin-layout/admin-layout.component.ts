@@ -5,7 +5,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { IconComponent, type IconName } from '../../../shared/components/icon/icon.component';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { GlobalLoaderComponent } from '../../../shared/components/global-loader/global-loader.component';
 import { AdminService, AuthService, MeService } from '../../../core/services';
@@ -27,15 +27,19 @@ import {
   releasePageScrollLock,
 } from '../../../core/layout';
 
-type AdminNavIcon = 'dashboard' | 'doc' | 'shield' | 'wallet' | 'user' | 'tag' | 'gear' | 'bell' | 'flag' | 'sparkle' | 'package' | 'chart';
-
 interface AdminNavItem {
   label: string;
   href: string;
-  icon: AdminNavIcon;
+  icon: IconName;
   exact?: boolean;
   badge?: number;
+  /** Section the entry sits in (translated). */
+  group: string;
+  /** First entry of its section — the sidebar / drawer print the section label above it, the rail a divider. */
+  groupStart: boolean;
 }
+
+type AdminNavEntry = Omit<AdminNavItem, 'group' | 'groupStart'>;
 
 @Component({
   selector: 'app-admin-layout',
@@ -198,37 +202,68 @@ export class AdminLayoutComponent {
     this.router.navigate(['/']);
   }
 
-  readonly navItems = computed<AdminNavItem[]>(() => [
-    { label: this.translation.t('admin.nav.dashboard'), href: '/admin', icon: 'dashboard' as const, exact: true },
-    { label: this.translation.t('admin.nav.documents'), href: '/admin/documents', icon: 'doc' as const },
-    { label: this.translation.t('admin.nav.approval'), href: '/admin/approval', icon: 'shield' as const },
-    { label: this.translation.t('admin.nav.transactions'), href: '/admin/transactions', icon: 'wallet' as const },
-    { label: this.translation.t('admin.nav.users'), href: '/admin/users', icon: 'user' as const },
-    { label: this.translation.t('admin.nav.sellers'), href: '/admin/sellers', icon: 'user' as const },
-    { label: this.translation.t('admin.nav.reports'), href: '/admin/reports', icon: 'flag' as const },
-    {
-      label: this.translation.t('admin.nav.feedback'),
-      href: '/admin/feedback',
-      icon: 'flag' as const,
-      badge: this.newFeedbackCount(),
-    },
-    { label: this.translation.t('admin.nav.payouts'), href: '/admin/payouts', icon: 'wallet' as const },
-    { label: this.translation.t('admin.nav.subscriptions'), href: '/admin/subscriptions', icon: 'wallet' as const },
-    { label: this.translation.t('admin.nav.affiliates'), href: '/admin/affiliates', icon: 'chart' as const },
-    { label: this.translation.t('admin.nav.ads'), href: '/admin/ads', icon: 'flag' as const },
-    { label: this.translation.t('admin.nav.sellerApplications'), href: '/admin/seller-applications', icon: 'shield' as const },
-    { label: this.translation.t('admin.nav.categories'), href: '/admin/categories', icon: 'tag' as const },
-    { label: this.translation.t('admin.nav.crm'), href: '/admin/crm', icon: 'chart' as const },
-    // G-30a: the only admin child route without a nav entry (reachable before only through a card
-    // on /admin/crm). Label = the page's own title key; no new translation key.
-    { label: this.translation.t('admin.crmAlerts.title'), href: '/admin/crm/document-alerts', icon: 'bell' as const },
-    { label: this.translation.t('admin.nav.mlRecommendations'), href: '/admin/ml-recommendations', icon: 'sparkle' as const },
-    { label: this.translation.t('admin.nav.announcements'), href: '/admin/announcements', icon: 'bell' as const },
-    { label: this.translation.t('admin.nav.notifications'), href: '/admin/notifications', icon: 'bell' as const },
-    { label: this.translation.t('admin.nav.notificationConfig'), href: '/admin/notification-config', icon: 'gear' as const },
-    { label: this.translation.t('admin.nav.settings'), href: '/admin/settings', icon: 'gear' as const },
-    { label: this.translation.t('admin.nav.auditLogs'), href: '/admin/audit', icon: 'doc' as const },
-    { label: this.translation.t('admin.nav.documentGeneration'), href: '/admin/document-generation', icon: 'sparkle' as const },
-    { label: this.translation.t('admin.nav.examHub'), href: '/admin/exam-hub', icon: 'doc' as const },
-  ]);
+  /**
+   * One list shared by the sidebar, the rail and the drawer. Entries are clustered into sections so a
+   * 25-item menu reads as six short groups instead of one long scroll; every entry has its own icon.
+   */
+  readonly navItems = computed<AdminNavItem[]>(() => {
+    const t = (key: string): string => this.translation.t(key);
+    const sections: { label: string; entries: AdminNavEntry[] }[] = [
+      {
+        label: t('admin.nav.groupOverview'),
+        entries: [{ label: t('admin.nav.dashboard'), href: '/admin', icon: 'dashboard', exact: true }],
+      },
+      {
+        label: t('admin.nav.groupContent'),
+        entries: [
+          { label: t('admin.nav.documents'), href: '/admin/documents', icon: 'doc' },
+          { label: t('admin.nav.approval'), href: '/admin/approval', icon: 'shield' },
+          { label: t('admin.nav.documentGeneration'), href: '/admin/document-generation', icon: 'edit' },
+          { label: t('admin.nav.categories'), href: '/admin/categories', icon: 'tag' },
+          { label: t('admin.nav.examHub'), href: '/admin/exam-hub', icon: 'grad' },
+          { label: t('admin.nav.reports'), href: '/admin/reports', icon: 'flag' },
+          { label: t('admin.nav.feedback'), href: '/admin/feedback', icon: 'mail', badge: this.newFeedbackCount() },
+        ],
+      },
+      {
+        label: t('admin.nav.groupPeople'),
+        entries: [
+          { label: t('admin.nav.users'), href: '/admin/users', icon: 'users' },
+          { label: t('admin.nav.sellers'), href: '/admin/sellers', icon: 'store' },
+          { label: t('admin.nav.sellerApplications'), href: '/admin/seller-applications', icon: 'package' },
+        ],
+      },
+      {
+        label: t('admin.nav.groupMoney'),
+        entries: [
+          { label: t('admin.nav.transactions'), href: '/admin/transactions', icon: 'receipt' },
+          { label: t('admin.nav.payouts'), href: '/admin/payouts', icon: 'wallet' },
+          { label: t('admin.nav.subscriptions'), href: '/admin/subscriptions', icon: 'star' },
+          { label: t('admin.nav.affiliates'), href: '/admin/affiliates', icon: 'link' },
+        ],
+      },
+      {
+        label: t('admin.nav.groupGrowth'),
+        entries: [
+          { label: t('admin.nav.ads'), href: '/admin/ads', icon: 'sparkle' },
+          { label: t('admin.nav.announcements'), href: '/admin/announcements', icon: 'megaphone' },
+          { label: t('admin.nav.crm'), href: '/admin/crm', icon: 'chart' },
+          // G-30a: the only admin child route without a nav entry (reachable before only through a card
+          // on /admin/crm). Label = the page's own title key; no new translation key.
+          { label: t('admin.crmAlerts.title'), href: '/admin/crm/document-alerts', icon: 'eye' },
+          { label: t('admin.nav.mlRecommendations'), href: '/admin/ml-recommendations', icon: 'cpu' },
+          { label: t('admin.nav.notifications'), href: '/admin/notifications', icon: 'bell' },
+        ],
+      },
+      {
+        label: t('admin.nav.groupSystem'),
+        entries: [
+          { label: t('admin.nav.settings'), href: '/admin/settings', icon: 'gear' },
+          { label: t('admin.nav.notificationConfig'), href: '/admin/notification-config', icon: 'sliders' },
+          { label: t('admin.nav.auditLogs'), href: '/admin/audit', icon: 'history' },
+        ],
+      },
+    ];
+    return sections.flatMap((s) => s.entries.map((entry, i) => ({ ...entry, group: s.label, groupStart: i === 0 })));
+  });
 }

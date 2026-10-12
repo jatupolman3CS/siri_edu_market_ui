@@ -1834,6 +1834,12 @@ export const en: TranslationKeys = {
       "notificationConfig": "Notification Config",
       "settings": "Settings",
       "auditLogs": "Audit Logs",
+      "groupOverview": "Overview",
+      "groupContent": "Content",
+      "groupPeople": "People",
+      "groupMoney": "Money",
+      "groupGrowth": "Growth",
+      "groupSystem": "System",
       "documentGeneration": "Auto Generation",
       "examHub": "Exam Hub CMS"
     },

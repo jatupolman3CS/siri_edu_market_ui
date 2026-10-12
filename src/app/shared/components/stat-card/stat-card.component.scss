@@ -1,0 +1,7 @@
+
+/* Overrides the responsive text-3xl utilities (hence !important): long text values read as a caption, not a headline. */
+.stat-card__value--long {
+  font-size: 1.0625rem !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+}

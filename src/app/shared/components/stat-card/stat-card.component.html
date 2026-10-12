@@ -1,4 +1,4 @@
-<div class="card-tile h-full gap-2 p-4 sm:p-5 md:p-6">
+<div class="card-tile h-full gap-2 p-4 sm:p-5 md:p-6 transition-shadow hover:shadow-pop">
       <!-- Label: wraps to as many lines as it needs (no clamp — two clamped KPIs used to read the
            same, e.g. "DOCUMENTS WITH…"), and a word wider than the phone box breaks instead of being
            cut mid-letter. -->
@@ -7,13 +7,14 @@
           class="min-w-0 flex-1 text-xs font-semibold uppercase tracking-wide sm:tracking-wider [overflow-wrap:anywhere] [hyphens:auto]"
           [attr.title]="label()"
         >{{ label() }}</span>
-        <span class="text-xl sm:text-2xl shrink-0 leading-none" aria-hidden="true">{{ icon() }}</span>
+        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xl leading-none ring-1 ring-brand-100" aria-hidden="true">{{ icon() }}</span>
       </div>
       <!-- Value: 20px below 640 fits a 6-digit amount in the 2-column phone tile; pass money through
            `thb: true : 'compact'` (≥1M → ฿1.23M) and the full amount as `valueTitle`. break-words is
            only a safety net for text values. -->
       <div
         class="card-tile-body min-w-0 text-xl sm:text-2xl md:text-3xl font-extrabold text-ink tabular-nums leading-tight break-words"
+        [class.stat-card__value--long]="isLongText()"
         [attr.title]="valueTitle() || null"
       >
         @if (unit()) {
@@ -28,10 +29,10 @@
           <span
             [class]="
               trend()!.startsWith('-')
-                ? 'text-rose-500'
-                : 'text-emerald-500'
+                ? 'bg-rose-50 text-rose-700'
+                : 'bg-emerald-50 text-emerald-700'
             "
-            class="font-semibold"
+            class="inline-flex items-center rounded-full px-2 py-0.5 font-bold"
           >
             {{ trend() }}
           </span>

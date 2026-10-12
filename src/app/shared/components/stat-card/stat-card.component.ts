@@ -20,6 +20,15 @@ export class StatCardComponent {
    *  compact '฿1.23M'. */
   readonly valueTitle = input<string>('');
   readonly icon = input<string>('✨');
+  /**
+   * A sentence ("not computed yet — check the job…") or a date-time is not a KPI number: it gets a body-size face
+   * instead of a 3xl headline. A figure — "฿123,456", "66%", "120 documents" (a number, optionally one unit
+   * word) — never counts, however long it is.
+   */
+  readonly isLongText = computed(() => {
+    const value = this.value();
+    return !this.unit() && value.length > 12 && !/^[฿$€]?-?[\d.,]+[%★]?(\s\S+)?$/.test(value);
+  });
   readonly trend = input<string | null>(null);
   readonly trendLabel = input<string>('');
   readonly resolvedTrendLabel = computed(

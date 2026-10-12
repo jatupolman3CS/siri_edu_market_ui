@@ -42,3 +42,21 @@
     overflow: visible;
   }
 }
+
+/* Active sidebar item: a pink bar on the leading edge (routerLinkActive adds "!bg-white/10"). */
+nav a[class~='!bg-white/10'] {
+  box-shadow: inset 3px 0 0 var(--brand-500);
+}
+
+/* The dark chrome sits next to a dark page in dark mode — a hairline keeps the edge readable in both themes. */
+aside.tokens-light {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Section label above a group of nav items. Wide tracking suits Latin caps; Thai has no case and reads better tight. */
+.admin-nav-label {
+  letter-spacing: 0.14em;
+}
+:host-context(html[lang='th']) .admin-nav-label {
+  letter-spacing: 0.02em;
+}

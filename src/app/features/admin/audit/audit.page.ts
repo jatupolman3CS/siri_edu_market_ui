@@ -76,12 +76,12 @@ export class AdminAuditPage {
 
   /** Action color style */
   actionBadgeClass(action: string | undefined): string {
-    if (!action) return 'bg-brand-50 text-brand-700 border-brand-200';
+    if (!action) return 'bg-slate-100 text-ink-soft border-line';
     if (action.includes('approve')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (action.includes('reject')) return 'bg-rose-50 text-rose-700 border-rose-200';
     if (action.includes('patch')) return 'bg-sky-50 text-sky-700 border-sky-200';
     if (action.includes('refund')) return 'bg-amber-50 text-amber-700 border-amber-200';
-    return 'bg-brand-50 text-brand-700 border-brand-200';
+    return 'bg-slate-100 text-ink-soft border-line';
   }
 
   /**

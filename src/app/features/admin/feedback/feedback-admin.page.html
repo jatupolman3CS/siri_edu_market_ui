@@ -18,7 +18,7 @@
             <button
               type="button"
               class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11 whitespace-nowrap"
-              [class]="statusFilter() === opt.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
+              [class]="statusFilter() === opt.value ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
               (click)="setStatusFilter(opt.value)"
             >
               {{ opt.label }}
@@ -34,7 +34,7 @@
             <button
               type="button"
               class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11 whitespace-nowrap"
-              [class]="typeFilter() === opt.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
+              [class]="typeFilter() === opt.value ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
               (click)="setTypeFilter(opt.value)"
             >
               {{ opt.label }}
@@ -50,7 +50,7 @@
             <button
               type="button"
               class="pill min-h-[36px] [@media(pointer:coarse)]:min-h-11 whitespace-nowrap"
-              [class]="roleFilter() === opt.value ? 'bg-primary text-white' : 'bg-brand-50 text-brand-700'"
+              [class]="roleFilter() === opt.value ? 'bg-primary text-white' : 'bg-slate-100 text-ink-soft ring-1 ring-line hover:bg-slate-200'"
               (click)="setRoleFilter(opt.value)"
             >
               {{ opt.label }}

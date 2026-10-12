@@ -29,6 +29,20 @@ describe('StatCardComponent', () => {
     expect(value.hasAttribute('title')).toBe(false);
   });
 
+  it('sets a sentence or date-time in body size, but never a figure — however long', () => {
+    const isLong = (text: string) => render({ label: 'A', value: text }).value.classList.contains('stat-card__value--long');
+    for (const text of ['ยังไม่เคยคำนวณ — ตรวจสอบว่างาน job เปิดอยู่', '1 ต.ค. 2026 12:07', 'Not computed yet']) {
+      expect(isLong(text), text).toBe(true);
+    }
+    for (const text of ['0', '66%', '฿1.23M', '฿123,456,789', '120 documents', '1.5 times/pair', '1,234 คู่']) {
+      expect(isLong(text), text).toBe(false);
+    }
+  });
+
+  it('never shrinks a value that carries a unit', () => {
+    expect(render({ label: 'A', value: '12', unit: 'documents' }).value.classList.contains('stat-card__value--long')).toBe(false);
+  });
+
   it('keeps the number on one line and renders the unit after it', () => {
     const { value } = render({ label: 'Docs', value: '12', unit: 'documents' });
     const spans = value.querySelectorAll('span');
