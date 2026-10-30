@@ -1,0 +1,18 @@
+@if (src(); as url) {
+  <img
+    class="category-visual__img"
+    [src]="url"
+    alt=""
+    aria-hidden="true"
+    loading="lazy"
+    decoding="async"
+    [attr.width]="size()"
+    [attr.height]="size()"
+    [style.width.px]="size()"
+    [style.height.px]="size()"
+    (error)="onError()"
+    data-testid="category-visual-img"
+  />
+} @else {
+  <span class="category-visual__emoji" aria-hidden="true" data-testid="category-visual-emoji">{{ emoji() }}</span>
+}

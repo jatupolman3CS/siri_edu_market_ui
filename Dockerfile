@@ -15,8 +15,11 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-# defaultConfiguration ของ target build คือ production อยู่แล้ว (angular.json)
-RUN npm run build
+# NG_CONFIG เลือก environment ที่ bake ลง bundle (apiUrl): production (ค่า default เดิม) | qa
+# QA: --build-arg NG_CONFIG=qa → environment.qa.ts ชี้ https://qa-api-siriedumarket.siristudiophoto.com
+# (ดู docs/ENVIRONMENTS.md ที่ root ของ monorepo)
+ARG NG_CONFIG=production
+RUN npm run build -- --configuration ${NG_CONFIG}
 
 # ชื่อ project ใน angular.json = siriedumarket-web → dist/siriedumarket-web/browser
 # เผื่อ builder รุ่นเก่าที่ยังไม่แยกโฟลเดอร์ browser/ ไว้ด้วย

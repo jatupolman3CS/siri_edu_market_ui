@@ -57,7 +57,7 @@
               <tr class="border-t border-line">
                 <td class="rt-title px-4 py-3 text-sm">
                   <div class="font-semibold text-ink">{{ s.buyerName }}</div>
-                  <div class="text-xs font-normal text-ink-muted break-all">{{ s.buyerEmail }}</div>
+                  <div class="text-xs font-normal text-ink-muted break-all">{{ s.buyerEmail | displayEmail }}</div>
                 </td>
                 <td class="rt-status px-4 py-3">
                   <span class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap" [class]="statusClass(s.status)">

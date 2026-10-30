@@ -313,9 +313,16 @@
                 </div>
               } @else {
                 <div class="flex flex-col items-center justify-center text-center py-16 px-6 rounded-2xl border glass-card">
-                  <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                    <app-icon name="search" [size]="30" className="text-brand-500" />
-                  </div>
+                  <img
+                    class="w-28 h-28 mb-4 select-none"
+                    src="/images/empty/search.svg"
+                    alt=""
+                    aria-hidden="true"
+                    width="112"
+                    height="112"
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <h3 class="text-lg font-bold text-ink">{{ 'marketplace.emptyTitle' | trans }}</h3>
                   <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ 'marketplace.emptyDesc' | trans }}</p>
                   <button class="btn-pink mt-4" type="button" (click)="reset()">{{ 'marketplace.clearFiltersButton' | trans }}</button>
@@ -416,7 +423,7 @@
                       [class.bg-brand-50]="catActive"
                       (click)="toggleCategory(cat.id)"
                     >
-                      <span class="text-sm">{{ cat.icon }}</span>
+                      <span class="text-sm inline-flex shrink-0"><app-category-visual [categoryId]="cat.id" [slug]="cat.slug" [icon]="cat.icon" [size]="22" /></span>
                       <span class="text-[13px] text-ink flex-1">{{ cat.name }}</span>
                       <span class="text-[11px] text-ink-muted">{{ cat.documentCount }}</span>
                       @if (cat.subcategories?.length) {

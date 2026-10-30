@@ -136,10 +136,10 @@
           }
           @if (r.generatedDocumentIds.length > 0) {
           <ul class="flex flex-wrap gap-2">
-            @for (docId of r.generatedDocumentIds; track docId) {
+            @for (docId of r.generatedDocumentIds; track docId; let i = $index) {
             <li>
               <a [routerLink]="['/admin/documents', docId]" class="pill-soft !px-3 !py-1 text-xs">
-                {{ docId }}
+                📄 #{{ i + 1 }}
               </a>
             </li>
             }

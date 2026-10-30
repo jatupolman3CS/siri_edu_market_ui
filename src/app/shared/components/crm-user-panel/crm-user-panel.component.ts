@@ -8,13 +8,14 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /**
  * crm-core v1 §3.6, §4.3, §4.4 (`docs/contracts/crm-core.md`) — one buyer's CRM breakdown
  */
 @Component({
   selector: 'app-crm-user-panel',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, NzTooltipModule, EmptyStateComponent, TranslatePipe],
+  imports: [DisplayEmailPipe, DatePipe, DecimalPipe, NzTooltipModule, EmptyStateComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './crm-user-panel.component.html',
 })

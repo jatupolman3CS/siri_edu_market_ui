@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Empty cart">
+  <defs>
+    <linearGradient id="ec-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdf2f8"/><stop offset="1" stop-color="#fbcfe8"/></linearGradient>
+    <linearGradient id="ec-bag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ec4899"/><stop offset="0.55" stop-color="#db2777"/><stop offset="1" stop-color="#831843"/></linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="40" fill="url(#ec-bg)"/>
+  <ellipse cx="80" cy="138" rx="46" ry="6" fill="#831843" opacity="0.12"/>
+  <!-- handle -->
+  <path d="M60 60V48a20 20 0 0 1 40 0v12" fill="none" stroke="#831843" stroke-width="7" stroke-linecap="round"/>
+  <!-- bag -->
+  <path d="M40 56h80l-6 70a8 8 0 0 1-8 7H54a8 8 0 0 1-8-7z" fill="url(#ec-bag)"/>
+  <circle cx="60" cy="68" r="4" fill="#fbcfe8"/>
+  <circle cx="100" cy="68" r="4" fill="#fbcfe8"/>
+  <!-- face -->
+  <circle cx="68" cy="94" r="3.5" fill="#fff"/>
+  <circle cx="92" cy="94" r="3.5" fill="#fff"/>
+  <path d="M70 112q10-8 20 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M130 30l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fde68a"/>
+  <circle cx="28" cy="44" r="5" fill="#f9a8d4"/>
+</svg>

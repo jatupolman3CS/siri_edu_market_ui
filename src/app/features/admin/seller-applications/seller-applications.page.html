@@ -26,7 +26,7 @@
             <div class="min-w-0 flex-1 basis-[12rem]">
               <h2 class="text-lg font-bold text-ink [overflow-wrap:anywhere]">{{ item.studioName }}</h2>
               <p class="text-sm text-ink-soft [overflow-wrap:anywhere]">
-                {{ item.ownerName }} · {{ item.email }}
+                {{ item.ownerName }} · {{ item.email | displayEmail }}
               </p>
               @if (item.appliedAt) {
                 <p class="text-xs text-ink-muted mt-1">{{ 'admin.sellerApps.appliedAt' | trans }} {{ item.appliedAt | date: 'medium' }}</p>

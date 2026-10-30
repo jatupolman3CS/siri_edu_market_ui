@@ -27,6 +27,7 @@ import { DiscoveryRailComponent } from '../../../shared/components/discovery-rai
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import type { DocumentItem, RecommendationExplanation, RecommendationStrategy } from '../../../core/models';
+import { CategoryVisualComponent } from '../../../shared/components/category-visual/category-visual.component';
 
 /** crm-driven-discovery v1 §3.3/§4.3: strategy → section title map (ห้าม hardcode subtitle ฝั่ง UI อีก — subtitle มาจาก `strategyReason` ของ backend เท่านั้น). */
 const RECOMMENDED_STRATEGY_TITLES: Record<RecommendationStrategy, string> = {
@@ -52,6 +53,7 @@ const DISCOVERY_SKELETON_TIMEOUT_MS = 3000;
     SmartDecimalPipe,
     DecimalPipe,
     EmptyStateComponent,
+    CategoryVisualComponent,
     ImgFallbackDirective,
     ExamCountdownFormComponent,
     PopularSearchChipsComponent,

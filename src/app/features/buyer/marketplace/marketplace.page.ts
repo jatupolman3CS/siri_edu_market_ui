@@ -38,6 +38,7 @@ import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.di
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
 import { ViewportService } from '../../../core/layout';
 import { BottomSheetComponent } from '../../../shared/components/bottom-sheet/bottom-sheet.component';
+import { CategoryVisualComponent } from '../../../shared/components/category-visual/category-visual.component';
 
 /**
  * marketplace-home-redesign v2 §1 ข้อ 8 / §4.2: หน้านี้เหลือ view เดียว (chip หมวดหมู่ + sidebar
@@ -68,6 +69,7 @@ interface MarketplaceUiTabViewModel {
     BundleCardComponent,
     IconComponent,
     EmptyStateComponent,
+    CategoryVisualComponent,
     PaginationComponent,
     ImgFallbackDirective,
     TranslatePipe,

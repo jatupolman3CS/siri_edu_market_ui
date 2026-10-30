@@ -15,6 +15,7 @@ import { RowMoreComponent } from '../../../shared/components/row-more/row-more.c
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /**
  * backend-wide-pagination-and-seller-directory v1 §4.1: table-result + filter, replacing the old
  * card grid + infinite-scroll (AC-11..AC-14). Structure mirrors `documents.page.ts` exactly
@@ -25,7 +26,7 @@ import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-fi
 @Component({
   selector: 'app-admin-sellers',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     FormsModule,
     RouterLink,
     IconComponent,

@@ -39,6 +39,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { DropdownBackResetDirective } from '../../directives/dropdown-back-reset.directive';
 import { ViewportService, acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /** Browse (archetype A) routes that show the phone search row — responsive-ui v1 §1.3. */
 const BROWSE_ROUTE =
   /^\/(?:marketplace|categories|category\/[^/]+|bundles|free|store\/[^/]+|tcas|tgat-tpat|a-level|onet)?\/?$/;
@@ -51,7 +52,7 @@ export function isBrowseRoute(url: string): boolean {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     RouterLink,
     RouterLinkActive,
     FormsModule,

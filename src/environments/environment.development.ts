@@ -18,6 +18,11 @@ export const environment = {
    * `role` is the account picked on first load; the floating dev switcher changes it afterwards.
    * Set this to `false` to get the real login flow back.
    */
+  /**
+   * File formats a seller may list for sale. PDF only for now — must match the API's
+   * `DocumentSaleFormats:Allowed` (the API refuses the rest). Add 'DOCX', 'PPTX', 'XLSX', 'ZIP' to open them.
+   */
+  saleFormats: ['PDF'] as readonly string[],
   devAuth: {
     bypass: true,
     role: 'admin' as 'buyer' | 'seller' | 'admin',

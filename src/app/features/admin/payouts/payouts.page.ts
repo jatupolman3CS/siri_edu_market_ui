@@ -19,6 +19,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 type PayoutFilter = 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled' | 'all';
 
 const MAX_SLIP_BYTES = 5_000_000;
@@ -51,7 +52,7 @@ const MISMATCH_REASON_KEYS: Record<string, string> = {
 @Component({
   selector: 'app-admin-payouts',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     CommonModule,
     DatePipe,
     FormsModule,

@@ -129,6 +129,8 @@ export class AdminAuditPage {
       for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
         if (val === null || val === undefined || val === '') continue;
         if (Array.isArray(val) && val.length === 0) continue;
+        // No raw GUIDs on screen: id-valued fields carry no meaning for the admin reading the log.
+        if (typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val)) continue;
 
         // Normalize PascalCase → camelCase for lookup
         const camelKey = key.charAt(0).toLowerCase() + key.slice(1);

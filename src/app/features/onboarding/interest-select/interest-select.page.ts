@@ -4,6 +4,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService, CatalogService, OnboardingService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { CategoryVisualComponent } from '../../../shared/components/category-visual/category-visual.component';
 
 /**
  * registration-onboarding v1 §4.2: interest selection screen.
@@ -12,7 +13,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-interest-select',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, CategoryVisualComponent],
   templateUrl: './interest-select.page.html',
   styleUrls: ['./interest-select.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

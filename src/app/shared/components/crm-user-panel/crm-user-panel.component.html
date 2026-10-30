@@ -10,7 +10,7 @@
       <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div class="min-w-0">
           <h2 class="text-lg font-bold text-ink">{{ detail.displayName }}</h2>
-          <p class="text-xs text-ink-muted break-all">{{ detail.email }}</p>
+          <p class="text-xs text-ink-muted break-all">{{ detail.email | displayEmail }}</p>
         </div>
         @if (detail.computedAt) {
           <span class="text-xs text-ink-muted whitespace-nowrap">

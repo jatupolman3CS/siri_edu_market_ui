@@ -9,11 +9,12 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /** GAP-01: admin queue for reviewing buyer requests to become sellers. */
 @Component({
   selector: 'app-admin-seller-applications',
   standalone: true,
-  imports: [DatePipe, FormsModule, EmptyStateComponent, PaginationComponent, TranslatePipe],
+  imports: [DisplayEmailPipe, DatePipe, FormsModule, EmptyStateComponent, PaginationComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-applications.page.html',
 })

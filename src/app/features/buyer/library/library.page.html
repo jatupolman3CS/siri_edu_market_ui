@@ -129,6 +129,7 @@
         } @else {
           <app-empty-state
             emoji="📚"
+            illustration="library"
             [title]="'library.emptyTitle' | trans"
             [description]="'library.emptyDesc' | trans"
           >
@@ -138,6 +139,7 @@
       } @else if (filteredLibrary().length === 0) {
         <app-empty-state
           emoji="🔍"
+          illustration="search"
           [title]="'library.notFoundTitle' | trans"
           [description]="'library.notFoundDesc' | trans"
         />

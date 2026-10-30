@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Languages">
+  <defs>
+    <linearGradient id="lg-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdf2f8"/><stop offset="1" stop-color="#fbcfe8"/></linearGradient>
+    <linearGradient id="lg-a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ec4899"/><stop offset="1" stop-color="#be185d"/></linearGradient>
+    <linearGradient id="lg-b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93c5fd"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="36" fill="url(#lg-bg)"/>
+  <ellipse cx="80" cy="138" rx="50" ry="6" fill="#831843" opacity="0.12"/>
+  <!-- back bubble -->
+  <path d="M70 58h56a10 10 0 0 1 10 10v36a10 10 0 0 1-10 10h-8v14l-16-14H70a10 10 0 0 1-10-10V68a10 10 0 0 1 10-10z" fill="url(#lg-b)"/>
+  <!-- stylised Thai-like glyph -->
+  <path d="M90 104V82a10 10 0 0 1 20 0v22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="90" cy="82" r="4.5" fill="none" stroke="#fff" stroke-width="4"/>
+  <!-- front bubble -->
+  <path d="M32 28h56a10 10 0 0 1 10 10v34a10 10 0 0 1-10 10H54L38 96V82h-6a10 10 0 0 1-10-10V38a10 10 0 0 1 10-10z" fill="url(#lg-a)"/>
+  <!-- letter A -->
+  <path d="M48 70l12-30 12 30M52.5 60h15" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M132 22l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fde68a"/>
+</svg>

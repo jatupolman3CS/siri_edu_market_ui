@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Nothing here yet">
+  <defs>
+    <linearGradient id="eg-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdf2f8"/><stop offset="1" stop-color="#fbcfe8"/></linearGradient>
+    <linearGradient id="eg-box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#be185d"/></linearGradient>
+    <linearGradient id="eg-lid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ec4899"/><stop offset="1" stop-color="#831843"/></linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="40" fill="url(#eg-bg)"/>
+  <ellipse cx="80" cy="138" rx="48" ry="6" fill="#831843" opacity="0.12"/>
+  <!-- open box -->
+  <path d="M34 72h92v52a8 8 0 0 1-8 8H42a8 8 0 0 1-8-8z" fill="url(#eg-box)"/>
+  <path d="M34 72l-10-18h52l4 18z" fill="#fbcfe8"/>
+  <path d="M126 72l10-18H84l-4 18z" fill="url(#eg-lid)"/>
+  <rect x="66" y="90" width="28" height="8" rx="4" fill="#fff" opacity="0.6"/>
+  <!-- floating sparkles -->
+  <path d="M80 18l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#fde68a"/>
+  <circle cx="54" cy="36" r="4" fill="#f472b6"/>
+  <circle cx="108" cy="34" r="5" fill="#f9a8d4"/>
+</svg>

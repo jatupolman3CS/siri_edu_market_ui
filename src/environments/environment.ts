@@ -11,6 +11,11 @@ export const environment = {
  googleOAuthClientId:
     '5881672938-464ssnfcb78tou755dkf7jvmhvbkf68v.apps.googleusercontent.com',
   /** DEV-BYPASS: never on in a production build — real sign-in only. */
+  /**
+   * File formats a seller may list for sale. PDF only for now — must match the API's
+   * `DocumentSaleFormats:Allowed` (the API refuses the rest). Add 'DOCX', 'PPTX', 'XLSX', 'ZIP' to open them.
+   */
+  saleFormats: ['PDF'] as readonly string[],
   devAuth: {
     bypass: false,
     role: 'buyer' as 'buyer' | 'seller' | 'admin',

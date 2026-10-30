@@ -35,6 +35,7 @@
       } @else if (!pendingOrder() && cart.count() === 0) {
         <app-empty-state
           emoji="🛍️"
+          illustration="cart"
           [title]="'checkout.emptyTitle' | trans"
           [description]="'checkout.emptyDesc' | trans"
         >

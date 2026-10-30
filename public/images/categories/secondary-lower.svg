@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Secondary lower">
+  <defs>
+    <linearGradient id="sl-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdf2f8"/><stop offset="1" stop-color="#fbcfe8"/></linearGradient>
+    <linearGradient id="sl-liq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#be185d"/></linearGradient>
+    <linearGradient id="sl-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#fce7f3"/></linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="36" fill="url(#sl-bg)"/>
+  <ellipse cx="80" cy="138" rx="46" ry="6" fill="#831843" opacity="0.12"/>
+  <!-- flask -->
+  <path d="M70 30v32l-32 56a10 10 0 0 0 9 15h66a10 10 0 0 0 9-15l-32-56V30z" fill="url(#sl-glass)" stroke="#831843" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M64 30h32" stroke="#831843" stroke-width="6" stroke-linecap="round"/>
+  <path d="M51 98h58l14 24a6 6 0 0 1-5 9H42a6 6 0 0 1-5-9z" fill="url(#sl-liq)"/>
+  <circle cx="68" cy="112" r="5" fill="#fff" opacity="0.7"/>
+  <circle cx="88" cy="118" r="3.5" fill="#fff" opacity="0.7"/>
+  <circle cx="80" cy="104" r="2.5" fill="#fff" opacity="0.7"/>
+  <!-- bubbles -->
+  <circle cx="104" cy="44" r="7" fill="#f9a8d4"/>
+  <circle cx="116" cy="28" r="4.5" fill="#fbcfe8" stroke="#f472b6" stroke-width="2"/>
+  <circle cx="46" cy="50" r="5" fill="#fde68a"/>
+</svg>

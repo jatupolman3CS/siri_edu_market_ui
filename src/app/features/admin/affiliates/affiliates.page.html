@@ -48,7 +48,7 @@
               <tr class="hover:bg-slate-100/40 transition-colors">
                 <td class="rt-title py-3.5 pr-4">
                   <div class="font-semibold text-ink">{{ item.displayName || '—' }}</div>
-                  <div class="text-xs font-normal text-ink-muted break-all">{{ item.email }}</div>
+                  <div class="text-xs font-normal text-ink-muted break-all">{{ item.email | displayEmail }}</div>
                 </td>
                 <td class="rt-status py-3.5 px-4 text-center">
                   @if (item.isActive) {

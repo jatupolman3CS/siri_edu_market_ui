@@ -102,7 +102,7 @@
                 <label
                   class="block border-2 border-dashed border-brand-200 rounded-3xl p-6 sm:p-10 text-center cursor-pointer hover:border-brand-300 hover:bg-brand-50/40 transition-all"
                 >
-                  <input type="file" class="hidden" (change)="onFile($event)" />
+                  <input type="file" class="hidden" [attr.accept]="fileAccept" (change)="onFile($event)" />
                   <div
                     class="w-16 h-16 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center mx-auto mb-4"
                   >

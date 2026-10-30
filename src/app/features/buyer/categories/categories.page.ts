@@ -6,11 +6,12 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { TranslationService, TranslatePipe } from '../../../core/i18n';
+import { CategoryVisualComponent } from '../../../shared/components/category-visual/category-visual.component';
 
 @Component({
   selector: 'app-buyer-categories',
   standalone: true,
-  imports: [RouterLink, PageHeroComponent, IconComponent, EmptyStateComponent, CompactPipe, TranslatePipe],
+  imports: [RouterLink, PageHeroComponent, IconComponent, EmptyStateComponent, CategoryVisualComponent, CompactPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './categories.page.html',
   styleUrl: './categories.page.scss',

@@ -2515,7 +2515,7 @@ describe('SellerUploadPage — responsive v1.4 fixes', () => {
     return { fixture, seller };
   }
 
-  function pick(fixture: { componentInstance: SellerUploadPage }, name = 'notes.docx'): void {
+  function pick(fixture: { componentInstance: SellerUploadPage }, name = 'notes.pdf'): void {
     const input = document.createElement('input');
     input.type = 'file';
     Object.defineProperty(input, 'files', { value: [new File(['x'], name)], writable: false });
@@ -2530,6 +2530,16 @@ describe('SellerUploadPage — responsive v1.4 fixes', () => {
   async function flush(): Promise<void> {
     for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
   }
+
+  it('sale formats: a non-PDF file is refused before anything is uploaded (PDF only by default)', async () => {
+    const upload = vi.fn(() => new Promise<UploadResponse>(() => undefined));
+    const { fixture } = renderWith(upload);
+    pick(fixture, 'notes.docx');
+    await flush();
+
+    expect(fixture.componentInstance.file()).toBeNull();
+    expect(upload).not.toHaveBeenCalled();
+  });
 
   it('F149: while the upload runs the card says so — no full bar and no "upload complete"', async () => {
     const { fixture } = renderWith(() => new Promise<UploadResponse>(() => undefined));

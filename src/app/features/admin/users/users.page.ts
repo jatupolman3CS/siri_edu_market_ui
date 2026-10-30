@@ -15,10 +15,11 @@ import { TableViewportDirective } from '../../../shared/directives/table-viewpor
 import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     FormsModule,
     RouterLink,
     IconComponent,

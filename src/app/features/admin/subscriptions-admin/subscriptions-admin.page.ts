@@ -14,6 +14,7 @@ import type { AdminSubscriptionListItem, SubscriptionStatus } from '../../../cor
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /**
  * subscription-membership v2 §1 AC-24 / §3.2 / §4: "/admin/subscriptions" — read-only paginated
  * table from `GET /api/admin/subscriptions`. Same page/pageSize signals + `reload()` pattern
@@ -22,7 +23,7 @@ import { TableViewportDirective } from '../../../shared/directives/table-viewpor
 @Component({
   selector: 'app-admin-subscriptions',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     DatePipe,
     ThbPipe,
     EmptyStateComponent,

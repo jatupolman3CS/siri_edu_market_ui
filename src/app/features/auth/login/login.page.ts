@@ -40,9 +40,6 @@ export class AuthLoginPage {
 
   readonly returnUrl = signal<string>('/');
   readonly registerMode = signal<boolean>(false);
-  readonly lineModalVisible = signal<boolean>(false);
-  readonly lineEmail = signal<string>('');
-  readonly lineEmailError = signal<string>('');
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => {
@@ -74,33 +71,7 @@ export class AuthLoginPage {
 
   onSocial(provider: AuthProvider): void {
     if (provider === 'email') return;
-    if (provider === 'line') {
-      this.lineEmail.set(this.email().trim());
-      this.lineEmailError.set('');
-      this.lineModalVisible.set(true);
-      return;
-    }
     this.executeSocial(provider);
-  }
-
-  confirmLineEmail(): void {
-    const mail = this.lineEmail().trim();
-    if (!mail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-      this.lineEmailError.set(this.translation.t('auth.pleaseEnterValidEmail'));
-      return;
-    }
-    this.lineModalVisible.set(false);
-    this.loading.set(true);
-    void (async () => {
-      const r = await this.auth.signInWithProvider('line', {
-        returnUrl: this.returnUrl(),
-        email: mail,
-      });
-      this.loading.set(false);
-      if (!r.ok) {
-        this.error.set(r.error ?? this.translation.t('auth.lineLoginFailed'));
-      }
-    })();
   }
 
   private executeSocial(provider: Exclude<AuthProvider, 'email'>): void {

@@ -108,7 +108,7 @@
             </td>
             <td class="rt-key px-3 py-3 text-sm font-bold text-right whitespace-nowrap" [attr.data-label]="'admin.sellers.colRevenue' | trans">{{ s.totalRevenue | thb }}</td>
             <td class="rt-key px-3 py-3 text-sm text-right whitespace-nowrap" [attr.data-label]="'admin.sellers.colDocuments' | trans">{{ s.totalDocuments | compact }}</td>
-            <td class="rt-secondary px-3 py-3 text-sm text-ink-soft break-all">{{ s.email }}</td>
+            <td class="rt-secondary px-3 py-3 text-sm text-ink-soft break-all">{{ s.email | displayEmail }}</td>
             <td class="rt-secondary px-3 py-3 text-sm text-right whitespace-nowrap">{{ s.totalSales | compact }}</td>
             <td class="rt-secondary px-3 py-3 text-xs text-ink-muted whitespace-nowrap">{{ s.joinedAt | date: 'dd MMM yyyy' }}</td>
             <td class="rt-more px-1 py-3">

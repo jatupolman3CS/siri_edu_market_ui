@@ -19,9 +19,9 @@
         <section class="card-soft p-4 sm:p-6 md:p-8">
           <header class="flex items-start gap-3 sm:gap-5 mb-5 md:mb-6">
             <div
-              class="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-br from-brand-100 to-brand-50 shadow-soft flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0"
+              class="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl overflow-hidden bg-gradient-to-br from-brand-100 to-brand-50 shadow-soft flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0"
             >
-              {{ cat.icon }}
+              <app-category-visual [categoryId]="cat.id" [slug]="cat.slug" [icon]="cat.icon" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-x-3 gap-y-1 flex-wrap min-w-0">

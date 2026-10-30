@@ -22,10 +22,11 @@ import { RowMoreComponent } from '../../../shared/components/row-more/row-more.c
 import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 @Component({
   selector: 'app-admin-user-detail',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     CommonModule,
     FormsModule,
     DatePipe,

@@ -71,7 +71,7 @@
                 <td class="rt-title px-4 py-4 text-sm align-middle w-[24%]">
                   <div class="font-semibold text-ink">{{ p.sellerName }}</div>
                   <div class="text-xs font-normal text-ink-muted">{{ 'admin.payouts.colRequestedAt' | trans }}: {{ p.requestedAt | date: 'dd MMM yyyy' }}</div>
-                  <div class="text-xs font-normal text-ink-muted mt-0.5 break-all">{{ p.sellerEmail }}</div>
+                  <div class="text-xs font-normal text-ink-muted mt-0.5 break-all">{{ p.sellerEmail | displayEmail }}</div>
                 </td>
                 <td class="rt-key px-4 py-4 text-sm text-ink-soft align-middle w-[26%]" [attr.data-label]="'admin.payouts.colDestination' | trans">
                   <div class="font-semibold text-ink">{{ destinationBadge(p) }}</div>
@@ -166,7 +166,7 @@
       </div>
       <div class="rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 mb-4">
         <p class="text-sm font-semibold text-ink">{{ payout.sellerName }}</p>
-        <p class="text-xs text-ink-muted mt-1">{{ payout.payoutAccountHolderName || payout.sellerEmail }}</p>
+        <p class="text-xs text-ink-muted mt-1">{{ payout.payoutAccountHolderName || (payout.sellerEmail | displayEmail) }}</p>
         <p class="text-2xl font-extrabold text-brand-700 mt-2">{{ payout.netAmount | thb }}</p>
       </div>
       <img
@@ -424,7 +424,7 @@
               <td class="rt-key px-3 py-2" [attr.data-label]="'admin.payouts.batchColSeller' | trans">
                 @if (item.sellerName) {
                 <div class="font-semibold text-ink">{{ item.sellerName }}</div>
-                <div class="text-xs text-ink-muted">{{ item.sellerEmail }}</div>
+                <div class="text-xs text-ink-muted">{{ item.sellerEmail | displayEmail }}</div>
                 } @else {
                 <span class="text-ink-muted">—</span>
                 }

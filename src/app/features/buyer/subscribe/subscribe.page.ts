@@ -13,6 +13,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { StickyActionBarComponent } from '../../../shared/components/sticky-action-bar/sticky-action-bar.component';
 import { loadStripeScript } from '../../../core/util/load-stripe-script';
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
+import { CategoryVisualComponent } from '../../../shared/components/category-visual/category-visual.component';
 
 /**
  * subscription-membership v3 §4 (docs/contracts/subscription-membership.md): "สมัครสมาชิกรายเดือน"
@@ -35,7 +36,7 @@ import { TranslatePipe, TranslationService } from '../../../core/i18n';
 @Component({
   selector: 'app-buyer-subscribe',
   standalone: true,
-  imports: [RouterLink, ThbPipe, IconComponent, StickyActionBarComponent, TranslatePipe],
+  imports: [RouterLink, ThbPipe, IconComponent, StickyActionBarComponent, CategoryVisualComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subscribe.page.html',
   styleUrl: './subscribe.page.scss',

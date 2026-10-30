@@ -6,7 +6,7 @@
     <div class="min-w-0">
       <h1 class="heading-1 font-extrabold text-ink">{{ 'admin.docDetailTitle' | trans }}</h1>
       @if (doc()) {
-        <p class="text-xs text-ink-muted font-mono break-all">{{ doc()!.id }}</p>
+        <p class="text-xs text-ink-muted break-all">{{ doc()!.title }}</p>
       }
     </div>
   </div>

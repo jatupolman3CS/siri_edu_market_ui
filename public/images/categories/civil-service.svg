@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Civil service">
+  <defs>
+    <linearGradient id="cs-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdf2f8"/><stop offset="1" stop-color="#fbcfe8"/></linearGradient>
+    <linearGradient id="cs-roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ec4899"/><stop offset="0.55" stop-color="#db2777"/><stop offset="1" stop-color="#831843"/></linearGradient>
+    <linearGradient id="cs-col" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#fce7f3"/></linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="36" fill="url(#cs-bg)"/>
+  <ellipse cx="80" cy="138" rx="54" ry="6" fill="#831843" opacity="0.12"/>
+  <!-- flag -->
+  <path d="M80 16v20" stroke="#831843" stroke-width="3" stroke-linecap="round"/>
+  <path d="M81 16h18l-5 5 5 5H81z" fill="#fde68a"/>
+  <!-- roof -->
+  <path d="M80 34l56 26H24z" fill="url(#cs-roof)"/>
+  <circle cx="80" cy="49" r="5" fill="#fde68a"/>
+  <rect x="28" y="60" width="104" height="8" rx="2" fill="#be185d"/>
+  <!-- columns -->
+  <g fill="url(#cs-col)" stroke="#f9a8d4" stroke-width="2">
+    <rect x="36" y="70" width="14" height="46" rx="3"/>
+    <rect x="60" y="70" width="14" height="46" rx="3"/>
+    <rect x="86" y="70" width="14" height="46" rx="3"/>
+    <rect x="110" y="70" width="14" height="46" rx="3"/>
+  </g>
+  <!-- steps -->
+  <rect x="26" y="116" width="108" height="8" rx="2" fill="#db2777"/>
+  <rect x="20" y="124" width="120" height="8" rx="2" fill="#831843"/>
+</svg>

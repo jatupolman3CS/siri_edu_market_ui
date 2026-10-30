@@ -15,6 +15,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /**
  * referral-program v2 §3.10 / §3.11 / §4.1:
  * Admin dashboard page for managing affiliate links and commission settings.
@@ -22,7 +23,7 @@ import { TableViewportDirective } from '../../../shared/directives/table-viewpor
 @Component({
   selector: 'app-admin-affiliates',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     CommonModule,
     FormsModule,
     NzModalModule,

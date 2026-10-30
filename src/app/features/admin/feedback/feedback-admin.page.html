@@ -187,7 +187,7 @@
             <div class="text-sm">
               <span class="text-ink-muted">{{ 'admin.feedbackAdmin.senderLabel' | trans }}</span>
               <strong class="text-ink ml-1">{{ d.submitterName }}</strong>
-              <span class="text-ink-muted ml-2">({{ d.submitterEmail }})</span>
+              <span class="text-ink-muted ml-2">({{ d.submitterEmail | displayEmail }})</span>
             </div>
             @if (d.pageUrl) {
               <div class="text-xs">

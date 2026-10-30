@@ -10,6 +10,7 @@ import { RowMoreComponent } from '../../../shared/components/row-more/row-more.c
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /**
  * crm-core v1 §3.5, §4.1, §4.4 (`docs/contracts/crm-core.md`) — "สมาชิกของกลุ่ม {code}":
  * **not** a general user list (that is F-08's `/admin/users`, §4.4) — read-only sample of one
@@ -21,7 +22,7 @@ import { TableViewportDirective } from '../../../shared/directives/table-viewpor
 @Component({
   selector: 'app-crm-segment-users',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     DatePipe,
     DecimalPipe,
     RouterLink,

@@ -51,7 +51,7 @@
                 {{ getStatusLabel(u.accountStatus) }}
               </span>
             </div>
-            <div class="text-sm text-ink-soft [overflow-wrap:anywhere]">{{ u.email }}</div>
+            <div class="text-sm text-ink-soft [overflow-wrap:anywhere]">{{ u.email | displayEmail }}</div>
             <div class="text-xs text-ink-muted mt-1">{{ 'admin.userDetailAdmin.joinedAt' | trans }} {{ u.joinedAt | date: 'dd MMM yyyy HH:mm' }}</div>
           </div>
         </div>
@@ -339,7 +339,7 @@
                     -
                   }
                 </td>
-                <td class="rt-secondary px-3 py-2">{{ h.performedByName || h.performedByUserId || '-' }}</td>
+                <td class="rt-secondary px-3 py-2">{{ h.performedByName || '-' }}</td>
                 <td class="rt-more px-1 py-2">
                   <app-row-more
                     [items]="[

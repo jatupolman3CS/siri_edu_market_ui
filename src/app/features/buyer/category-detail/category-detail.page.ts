@@ -16,6 +16,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { CompactPipe } from '../../../shared/pipes/compact.pipe';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../core/i18n';
+import { CategoryVisualComponent } from '../../../shared/components/category-visual/category-visual.component';
 
 @Component({
   selector: 'app-buyer-category-detail',
@@ -25,6 +26,7 @@ import { TranslatePipe } from '../../../core/i18n';
     DocumentCardComponent,
     IconComponent,
     EmptyStateComponent,
+    CategoryVisualComponent,
     CompactPipe,
     DecimalPipe,
     FormsModule,

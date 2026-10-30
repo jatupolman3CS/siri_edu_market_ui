@@ -77,6 +77,7 @@ type SetListedMainFileOptions = {
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
+import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-seller-upload',
   standalone: true,
@@ -127,7 +128,12 @@ export class SellerUploadPage {
     { no: 4, label: this.translation.t('seller.uploadStep4') },
   ]);
 
-  readonly formats = ['PDF', 'DOCX', 'PPTX', 'XLSX', 'ZIP'];
+  /** Every format the API understands — used to infer a file's format, not to decide what may be sold. */
+  private static readonly KNOWN_FORMATS = ['PDF', 'DOCX', 'PPTX', 'XLSX', 'ZIP'];
+  /** Sellable formats — config-driven (`environment.saleFormats`); the API enforces the same list. */
+  readonly formats: readonly string[] = environment.saleFormats;
+  /** `accept` for the main-file picker, e.g. `.pdf`. */
+  readonly fileAccept = environment.saleFormats.map((f) => '.' + f.toLowerCase()).join(',');
 
   readonly step = signal<number>(1);
   readonly file = signal<File | null>(null);
@@ -407,6 +413,12 @@ export class SellerUploadPage {
     if (!input.files?.length) return;
 
     const f = input.files[0];
+    const ext = (f.name.split('.').pop() ?? '').toLowerCase();
+    if (!this.formats.some((x) => x.toLowerCase() === ext)) {
+      this.message.error(this.translation.t('seller.unsupportedSaleFormat', { formats: this.formats.join(', ') }));
+      input.value = '';
+      return;
+    }
     this.file.set(f);
     this.upload.set(null);
     this.uploadFailed.set(false);
@@ -696,7 +708,7 @@ export class SellerUploadPage {
   private guessFormatFromFileName(name: string | undefined): string | undefined {
     if (!name) return undefined;
     const ext = name.split('.').pop()?.toLowerCase();
-    return (this.formats.find((x) => x.toLowerCase() === ext) ?? 'PDF').toLowerCase();
+    return (SellerUploadPage.KNOWN_FORMATS.find((x) => x.toLowerCase() === ext) ?? 'PDF').toLowerCase();
   }
 
   /**

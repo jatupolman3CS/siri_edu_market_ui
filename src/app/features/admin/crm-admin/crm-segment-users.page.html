@@ -41,7 +41,7 @@
               >
                 <td class="rt-title px-4 py-3 text-sm">
                   <div class="font-semibold text-ink">{{ u.displayName }}</div>
-                  <div class="text-xs font-normal text-ink-muted break-all">{{ u.email }}</div>
+                  <div class="text-xs font-normal text-ink-muted break-all">{{ u.email | displayEmail }}</div>
                 </td>
                 <td class="rt-key px-4 py-3 text-sm text-ink-soft" [attr.data-label]="'admin.crmSegment.colConfidence' | trans">{{ u.interestConfidence * 100 | number: '1.0-0' }}%</td>
                 <td class="rt-key px-4 py-3 text-sm text-ink-soft" [attr.data-label]="'admin.crmSegment.colTopCategory' | trans">{{ u.topCategoryLabel ?? '—' }}</td>

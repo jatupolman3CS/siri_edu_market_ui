@@ -20,10 +20,11 @@ import type {
 } from '../../../core/models';
 import { AdminFilterPanelComponent } from '../shared/admin-filter-panel/admin-filter-panel.component';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 @Component({
   selector: 'app-admin-feedback',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     CommonModule,
     FormsModule,
     DatePipe,

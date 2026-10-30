@@ -66,9 +66,9 @@
               {{ 'orderDetail.confirmingPaymentDesc' | trans }}
               <strong>{{ 'orderDetail.doNotPayTwice' | trans }}</strong>
             </p>
-            @if (o.paymentHints?.stripePaymentIntentId) {
+            @if (o.orderNumber) {
               <p class="text-[11px] text-ink-muted mt-2">
-                {{ 'orderDetail.paymentRef' | trans }} <span class="font-mono break-all">{{ o.paymentHints?.stripePaymentIntentId }}</span>
+                {{ 'orderDetail.paymentRef' | trans }} <span class="font-mono break-all">{{ o.orderNumber }}</span>
               </p>
             }
             <div class="flex flex-wrap items-center gap-3 mt-4">

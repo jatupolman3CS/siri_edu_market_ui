@@ -13,6 +13,7 @@ import { ExamCountdownFormComponent } from '../../../shared/components/exam-coun
 import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
 
+import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
 /**
  * F-07 (N-03): the buyer's own account page.
  *
@@ -27,7 +28,7 @@ import { TranslatePipe, TranslationService } from '../../../core/i18n';
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [
+  imports: [DisplayEmailPipe, 
     RouterLink,
     IconComponent,
     ImgFallbackDirective,
