@@ -1,16 +1,16 @@
 // SIRIEDUMARKET web (Angular + nginx) — build an arm64 image for ONE environment and roll it out.
 // The image is NOT environment-neutral: the API origin is baked into the bundle at build time
-// (NG_CONFIG=qa -> environment.qa.ts, NG_CONFIG=production -> environment.ts), so a QA image can
+// (NG_CONFIG=dev -> environment.dev.ts, NG_CONFIG=production -> environment.ts), so a DEV image can
 // never be promoted to prod by retagging — prod is always rebuilt from main.
 // Runbook: docs/ENVIRONMENTS.md at the monorepo root.
 //
-//   TARGET_ENV=qa   : any branch, automatic (SCM-triggered builds use this default).
+//   TARGET_ENV=dev   : any branch, automatic (SCM-triggered builds use this default).
 //   TARGET_ENV=prod : branch `main` only + manual `input` approval.
 
-NAMESPACES = [qa: 'siriedumarket-dev', prod: 'siriedumarket-prd']
-KUBE_CREDS = [qa: 'kubeconfig-siriedumarket-qa', prod: 'kubeconfig-siriedumarket-prod']
-NG_CONFIGS = [qa: 'qa', prod: 'production']
-WEB_HOSTS  = [qa: 'https://siriedumarket-qa.siristudiophoto.com', prod: 'https://siriedumarket.siristudiophoto.com']
+NAMESPACES = [dev: 'siriedumarket-dev', prod: 'siriedumarket-prd']
+KUBE_CREDS = [dev: 'kubeconfig-siriedumarket-dev', prod: 'kubeconfig-siriedumarket-prod']
+NG_CONFIGS = [dev: 'dev', prod: 'production']
+WEB_HOSTS  = [dev: 'https://siriedumarket-dev.siristudiophoto.com', prod: 'https://siriedumarket.siristudiophoto.com']
 COMPONENT  = 'siriedumarket-web'   // deployment == container == image repository
 
 pipeline {
@@ -24,7 +24,7 @@ pipeline {
   }
 
   parameters {
-    choice(name: 'TARGET_ENV', choices: ['qa', 'prod'], description: 'qa = any branch, automatic. prod = main only, needs approval.')
+    choice(name: 'TARGET_ENV', choices: ['dev', 'prod'], description: 'dev = any branch, automatic. prod = main only, needs approval.')
     string(name: 'REGISTRY', defaultValue: 'localhost:5000', description: 'Registry the k3s node pulls from (Oracle host registry).')
   }
 
@@ -36,7 +36,7 @@ pipeline {
     stage('Resolve') {
       steps {
         script {
-          def target = params.TARGET_ENV ?: 'qa'
+          def target = params.TARGET_ENV ?: 'dev'
           if (!NAMESPACES.containsKey(target)) { error "Unknown TARGET_ENV '${target}'" }
 
           def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim())
@@ -64,9 +64,9 @@ pipeline {
           set -eu
           docker buildx version >/dev/null
           # Each env file must point at its own API, and only production at the prod API.
-          grep -q "apiUrl: 'https://api-siriedumarket-qa.siristudiophoto.com'" src/environments/environment.qa.ts
+          grep -q "apiUrl: 'https://api-siriedumarket-dev.siristudiophoto.com'" src/environments/environment.dev.ts
           grep -q "apiUrl: 'https://api-siriedumarket.siristudiophoto.com'"    src/environments/environment.ts
-          grep -q "bypass: false" src/environments/environment.qa.ts
+          grep -q "bypass: false" src/environments/environment.dev.ts
           grep -q "bypass: false" src/environments/environment.ts
         '''
       }

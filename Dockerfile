@@ -15,8 +15,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-# NG_CONFIG เลือก environment ที่ bake ลง bundle (apiUrl): production (ค่า default เดิม) | qa
-# QA: --build-arg NG_CONFIG=qa → environment.qa.ts ชี้ https://qa-api-siriedumarket.siristudiophoto.com
+# NG_CONFIG เลือก environment ที่ bake ลง bundle (apiUrl): production (ค่า default เดิม) | dev
+# DEV: --build-arg NG_CONFIG=dev → environment.dev.ts ชี้ https://dev-api-siriedumarket.siristudiophoto.com
 # (ดู docs/ENVIRONMENTS.md ที่ root ของ monorepo)
 ARG NG_CONFIG=production
 RUN npm run build -- --configuration ${NG_CONFIG}

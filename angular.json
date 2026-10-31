@@ -66,7 +66,7 @@
                 }
               ]
             },
-            "qa": {
+            "dev": {
               "budgets": [
                 {
                   "type": "initial",
@@ -83,7 +83,7 @@
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.qa.ts"
+                  "with": "src/environments/environment.dev.ts"
                 }
               ]
             }
@@ -99,8 +99,8 @@
             "development": {
               "buildTarget": "siriedumarket-web:build:development"
             },
-            "qa": {
-              "buildTarget": "siriedumarket-web:build:qa"
+            "dev": {
+              "buildTarget": "siriedumarket-web:build:dev"
             }
           },
           "defaultConfiguration": "development"
