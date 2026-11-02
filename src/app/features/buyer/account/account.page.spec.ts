@@ -185,16 +185,18 @@ describe('AccountPage', () => {
     expect(JSON.parse(put!.body).settings).toEqual({ sale: false, review: false });
   });
 
-  it('the shortcuts page links to the library, orders and wishlist', async () => {
+  it('the sidebar links to membership, privacy and feedback; /account/shortcuts is gone', async () => {
     stubProfileAndSettings();
     const { root } = await renderAt('/account/shortcuts');
+    expect(TestBed.inject(Router).url).toBe('/account/profile');
 
     const hrefs = Array.from(
-      root.querySelectorAll('a[href]') as NodeListOf<HTMLAnchorElement>,
+      root.querySelectorAll('nav a[href]') as NodeListOf<HTMLAnchorElement>,
     ).map((a) => a.getAttribute('href'));
 
-    expect(hrefs).toContain('/library');
-    expect(hrefs).toContain('/orders');
-    expect(hrefs).toContain('/wishlist');
+    expect(hrefs).toContain('/account/subscription');
+    expect(hrefs).toContain('/account/privacy');
+    expect(hrefs).toContain('/account/feedback');
+    expect(hrefs).not.toContain('/account/shortcuts');
   });
 });
