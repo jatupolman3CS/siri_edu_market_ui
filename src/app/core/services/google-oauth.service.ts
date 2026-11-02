@@ -13,6 +13,7 @@ interface GoogleAccountsOauth2 {
     client_id: string;
     scope: string;
     ux_mode: 'popup' | 'redirect';
+    include_granted_scopes?: boolean;
     callback: (resp: GoogleCodeClientResponse) => void;
   }): { requestCode: () => void };
 }
@@ -65,6 +66,10 @@ export class GoogleOauthService {
         client_id: clientId,
         scope: scopes,
         ux_mode: 'popup',
+        // GIS defaults this to true, which merges scopes the user already granted to other apps
+        // on the same Cloud project (e.g. Drive/Calendar) into this request — those sensitive
+        // scopes trigger Google's "unverified app" warning. Ask for our scopes only.
+        include_granted_scopes: false,
         callback: (resp: GoogleCodeClientResponse) => {
           if (resp.error) {
             reject(new Error(resp.error_description ?? resp.error));

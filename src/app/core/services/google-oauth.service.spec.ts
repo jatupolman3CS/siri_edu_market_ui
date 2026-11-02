@@ -11,6 +11,7 @@ interface CodeClientConfig {
   client_id: string;
   scope: string;
   ux_mode: 'popup' | 'redirect';
+  include_granted_scopes?: boolean;
   callback: (resp: { error?: string; error_description?: string; code?: string }) => void;
 }
 
@@ -59,6 +60,14 @@ describe('GoogleOauthService.requestAuthorizationCode', () => {
     expect(config.scope).toBe('openid email');
     expect(config.client_id).toBe('client-1.apps.googleusercontent.com');
     expect(result).toEqual({ code: 'auth-code', redirectUri: window.location.origin });
+  });
+
+  it('does not merge previously granted scopes (include_granted_scopes: false)', async () => {
+    const service = build('client-1.apps.googleusercontent.com', 'openid email profile');
+
+    await service.requestAuthorizationCode();
+
+    expect(initCodeClient.mock.calls[0][0].include_granted_scopes).toBe(false);
   });
 
   it('uses whatever other value the server sends, untouched', async () => {
