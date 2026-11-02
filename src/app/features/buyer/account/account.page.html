@@ -34,7 +34,7 @@
       <nav class="card-soft p-2 chip-row gap-1 lg:flex-col lg:overflow-visible">
         @for (item of sectionNav; track item.path) {
           <a
-            [routerLink]="['/account', item.path]"
+            [routerLink]="item.path.startsWith('/') ? item.path : ['/account', item.path]"
             routerLinkActive="!bg-brand-50 !text-brand-600 !border-line font-semibold"
             ariaCurrentWhenActive="page"
             class="flex items-center gap-3 min-h-11 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-brand-50 hover:text-brand-600 transition-colors whitespace-nowrap"

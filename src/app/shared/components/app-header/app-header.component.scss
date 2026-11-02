@@ -104,6 +104,37 @@
 }
 
 /* F86: avatar-menu entries are real links/buttons (keyboard reachable) filling the menu row. */
+/* Wallet + membership rows that lead the avatar menu and the drawer. */
+.money-card__row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.875rem;
+  color: var(--ink);
+}
+
+.money-card__row--cta {
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), #e11d48);
+}
+
+.money-card__row--cta:hover {
+  color: #fff;
+  filter: brightness(1.05);
+}
+
+.money-card__pill {
+  flex-shrink: 0;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-700);
+  background: var(--brand-100);
+}
+
 .avatar-menu__link {
   display: flex;
   align-items: center;

@@ -24,6 +24,8 @@ import {
   WishlistService,
   MeService,
   NotificationFeedService,
+  SubscriptionService,
+  WalletService,
 } from '../../../core/services';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { LogoComponent } from '../logo/logo.component';
@@ -40,6 +42,7 @@ import { DropdownBackResetDirective } from '../../directives/dropdown-back-reset
 import { ViewportService, acquirePageScrollLock, releasePageScrollLock } from '../../../core/layout';
 
 import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
+import { ThbPipe } from '../../pipes/thb.pipe';
 /** Browse (archetype A) routes that show the phone search row — responsive-ui v1 §1.3. */
 const BROWSE_ROUTE =
   /^\/(?:marketplace|categories|category\/[^/]+|bundles|free|store\/[^/]+|tcas|tgat-tpat|a-level|onet)?\/?$/;
@@ -52,7 +55,7 @@ export function isBrowseRoute(url: string): boolean {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [DisplayEmailPipe, 
+  imports: [DisplayEmailPipe, ThbPipe,
     RouterLink,
     RouterLinkActive,
     FormsModule,
@@ -79,6 +82,10 @@ export class AppHeaderComponent {
   /** follow-store-notifications v1: badge count reused by the mobile drawer link (the desktop
    *  bell renders its own badge inside `NotificationBellComponent`). */
   readonly feed = inject(NotificationFeedService);
+  /** Wallet balance + membership state for the money card at the top of the avatar menu/drawer —
+   *  the two revenue paths that used to sit only on the hidden /account/shortcuts page. */
+  readonly wallet = inject(WalletService);
+  private readonly subscription = inject(SubscriptionService);
   private readonly me = inject(MeService);
   private readonly router = inject(Router);
   private readonly catalog = inject(CatalogService);
@@ -113,6 +120,12 @@ export class AppHeaderComponent {
    * signal drives a `md:hidden` toggle button + drawer-style panel that exposes the same links.
    */
   readonly mobileMenuOpen = signal(false);
+
+  /** `past_due` still grants access until the period ends, so it counts as a member here. */
+  readonly isMember = computed(() => {
+    const status = this.subscription.current()?.status;
+    return status === 'active' || status === 'past_due';
+  });
   private readonly mobileMenuToggle = viewChild<ElementRef<HTMLButtonElement>>('mobileMenuToggle');
   private readonly mobileMenuPanel = viewChild<ElementRef<HTMLElement>>('mobileMenuPanel');
 
@@ -193,6 +206,7 @@ export class AppHeaderComponent {
    */
   onAvatarMenuVisible(visible: boolean): void {
     if (!visible) return;
+    this.refreshMoneyCard();
     setTimeout(() => {
       this.document
         .querySelector<HTMLElement>('[data-testid="header-avatar-menu"] :is(a[href], button:not([disabled]))')
@@ -202,6 +216,13 @@ export class AppHeaderComponent {
 
   toggleMobileMenu(): void {
     this.mobileMenuOpen.update((open) => !open);
+    if (this.mobileMenuOpen() && this.auth.isAuthenticated()) this.refreshMoneyCard();
+  }
+
+  /** Fetched on open rather than on every page load: only the menu shows these two values. */
+  private refreshMoneyCard(): void {
+    void this.wallet.refreshSummary();
+    void this.subscription.loadCurrent();
   }
 
   closeMobileMenu(): void {
@@ -216,6 +237,7 @@ export class AppHeaderComponent {
     { label: this.translation.t('nav.home'), href: '/', exact: true },
     { label: this.translation.t('nav.marketplace'), href: '/marketplace' },
     { label: this.translation.t('nav.categories'), href: '/categories' },
+    { label: this.translation.t('nav.subscribe'), href: '/subscribe' },
   ]);
 
   /**

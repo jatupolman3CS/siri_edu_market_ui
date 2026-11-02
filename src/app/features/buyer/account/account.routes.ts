@@ -58,9 +58,7 @@ export const ACCOUNT_SECTION_ROUTES: Routes = [
         '../../../shared/components/exam-countdown-form/exam-countdown-form.component'
       ).then((m) => m.ExamCountdownFormComponent),
   },
-  {
-    path: 'shortcuts',
-    loadComponent: () =>
-      import('./account-shortcuts.section').then((m) => m.AccountShortcutsSection),
-  },
+  // The shortcuts page is gone (its links moved to the avatar menu / drawer / this sidebar);
+  // keep old bookmarks working.
+  { path: 'shortcuts', redirectTo: 'profile' },
 ];

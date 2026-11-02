@@ -229,6 +229,38 @@
                 <div class="text-sm font-semibold text-ink">{{ u.name }}</div>
                 <div class="text-xs text-ink-muted">{{ u.email | displayEmail }}</div>
               </li>
+              <!-- Money card: wallet top-up + membership are revenue paths, so they lead the menu
+                   instead of hiding on the old /account/shortcuts page. -->
+              <li nz-menu-item class="!p-0 !rounded-xl" data-testid="avatar-menu-wallet">
+                <a routerLink="/wallet" class="money-card__row">
+                  <app-icon name="wallet" [size]="18" class="text-brand-600 shrink-0" />
+                  <span class="flex-1 min-w-0">
+                    <span class="block text-[11px] text-ink-muted leading-tight">{{ 'header.walletBalance' | trans }}</span>
+                    <span class="block text-sm font-bold text-ink leading-tight">
+                      @if (wallet.summary()?.balance != null) { {{ wallet.summary()!.balance | thb }} } @else { — }
+                    </span>
+                  </span>
+                  <span class="money-card__pill">{{ 'header.walletTopUp' | trans }}</span>
+                </a>
+              </li>
+              <li nz-menu-item class="!p-0 !rounded-xl mb-1" data-testid="avatar-menu-membership">
+                @if (isMember()) {
+                  <a routerLink="/account/subscription" class="money-card__row">
+                    <app-icon name="star" [size]="18" class="text-amber-500 shrink-0" />
+                    <span class="flex-1 min-w-0 text-sm font-semibold text-ink truncate">{{ 'header.membershipActive' | trans }}</span>
+                    <span class="text-xs text-ink-muted">{{ 'header.membershipManage' | trans }}</span>
+                  </a>
+                } @else {
+                  <a routerLink="/subscribe" class="money-card__row money-card__row--cta">
+                    <app-icon name="sparkle" [size]="18" class="shrink-0" />
+                    <span class="flex-1 min-w-0">
+                      <span class="block text-sm font-bold leading-tight">{{ 'header.membershipCta' | trans }}</span>
+                      <span class="block text-[11px] opacity-90 leading-tight whitespace-normal">{{ 'header.membershipCtaDesc' | trans }}</span>
+                    </span>
+                  </a>
+                }
+              </li>
+              <li nz-menu-divider></li>
               <!-- F-07: the buyer's own account page. Before this the only route that
                    could edit a profile was /seller/settings, behind the seller guard. -->
               <li nz-menu-item class="!p-0 !rounded-xl">
@@ -260,6 +292,12 @@
                 <a routerLink="/account/feedback" class="avatar-menu__link">
                   <app-icon name="flag" [size]="16" />
                   {{ 'header.feedback' | trans }}
+                </a>
+              </li>
+              <li nz-menu-item class="!p-0 !rounded-xl">
+                <a routerLink="/account/privacy" class="avatar-menu__link">
+                  <app-icon name="shield" [size]="16" />
+                  {{ 'header.privacy' | trans }}
                 </a>
               </li>
               @if (auth.isSeller() || auth.isAdmin()) {
@@ -542,6 +580,30 @@
 
     @if (auth.user(); as u) {
       <div class="my-2 border-t border-line"></div>
+      <a routerLink="/wallet" class="money-card__row" data-testid="drawer-wallet" (click)="closeMobileMenu()">
+        <app-icon name="wallet" [size]="18" class="text-brand-600 shrink-0" />
+        <span class="flex-1 min-w-0">
+          <span class="block text-[11px] text-ink-muted leading-tight">{{ 'header.walletBalance' | trans }}</span>
+          <span class="block text-sm font-bold text-ink leading-tight">
+            @if (wallet.summary()?.balance != null) { {{ wallet.summary()!.balance | thb }} } @else { — }
+          </span>
+        </span>
+        <span class="money-card__pill">{{ 'header.walletTopUp' | trans }}</span>
+      </a>
+      @if (isMember()) {
+        <a routerLink="/account/subscription" class="money-card__row" data-testid="drawer-membership" (click)="closeMobileMenu()">
+          <app-icon name="star" [size]="18" class="text-amber-500 shrink-0" />
+          <span class="flex-1 min-w-0 text-sm font-semibold text-ink">{{ 'header.membershipActive' | trans }}</span>
+        </a>
+      } @else {
+        <a routerLink="/subscribe" class="money-card__row money-card__row--cta" data-testid="drawer-membership" (click)="closeMobileMenu()">
+          <app-icon name="sparkle" [size]="18" class="shrink-0" />
+          <span class="flex-1 min-w-0">
+            <span class="block text-sm font-bold leading-tight">{{ 'header.membershipCta' | trans }}</span>
+            <span class="block text-[11px] opacity-90 leading-tight">{{ 'header.membershipCtaDesc' | trans }}</span>
+          </span>
+        </a>
+      }
       <a routerLink="/account" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'nav.myAccount' | trans }}
       </a>
@@ -573,6 +635,9 @@
       </a>
       <a routerLink="/account/feedback" routerLinkActive="!bg-brand-50 !text-brand-600" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
         {{ 'header.feedback' | trans }}
+      </a>
+      <a routerLink="/account/privacy" routerLinkActive="!bg-brand-50 !text-brand-600" ariaCurrentWhenActive="page" class="header-drawer__link" (click)="closeMobileMenu()">
+        {{ 'header.privacy' | trans }}
       </a>
       @if (auth.isSeller() || auth.isAdmin()) {
         <a routerLink="/seller" class="header-drawer__link" (click)="closeMobileMenu()">

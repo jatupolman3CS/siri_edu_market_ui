@@ -47,7 +47,11 @@ export class AccountPage {
       { path: 'wallet', label: this.i18n.t('account.navWallet'), icon: 'wallet' as const },
       { path: 'referral', label: this.i18n.t('account.navReferral'), icon: 'tag' as const },
       { path: 'exam-countdown', label: this.i18n.t('account.navExamCountdown'), icon: 'flag' as const },
-      { path: 'shortcuts', label: this.i18n.t('account.navShortcuts'), icon: 'dashboard' as const },
+      // Pages outside /account that still belong to the account (they replaced the old
+      // "shortcuts" page, which only linked to these plus pages the header already carries).
+      { path: '/account/subscription', label: this.i18n.t('account.navSubscription'), icon: 'star' as const },
+      { path: '/account/privacy', label: this.i18n.t('account.navPrivacy'), icon: 'shield' as const },
+      { path: '/account/feedback', label: this.i18n.t('account.navFeedback'), icon: 'flag' as const },
     ];
   }
 }
