@@ -1,19 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AuthService, MeService, WalletService } from '../../../core/services';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService, MeService } from '../../../core/services';
 import { resolveAvatarUrl } from '../../../core/brand-assets';
-import { ChangePasswordComponent } from '../../../shared/components/change-password/change-password.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
-import { NotificationSettingsComponent } from '../../../shared/components/notification-settings/notification-settings.component';
-import { ProfileEditorComponent } from '../../../shared/components/profile-editor/profile-editor.component';
-import { SavedCardsComponent } from '../../../shared/components/saved-cards/saved-cards.component';
-import { ReferralCardComponent } from '../../../shared/components/referral-card/referral-card.component';
-import { ExamCountdownFormComponent } from '../../../shared/components/exam-countdown-form/exam-countdown-form.component';
-import { ThbPipe } from '../../../shared/pipes/thb.pipe';
 import { TranslatePipe, TranslationService } from '../../../core/i18n';
-
 import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
+
 /**
  * F-07 (N-03): the buyer's own account page.
  *
@@ -24,35 +17,21 @@ import { DisplayEmailPipe } from '../../../shared/pipes/display-email.pipe';
  *
  * Almost all of this task was UI. The two sections are the shared components /seller/settings
  * now also uses, so neither page carries its own copy.
+ *
+ * This page is the shell: header + sidebar + `<router-outlet>`. Each sidebar entry opens its own
+ * child page (account.routes.ts) rather than scrolling one long page to a fragment.
  */
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [DisplayEmailPipe, 
-    RouterLink,
-    IconComponent,
-    ImgFallbackDirective,
-    ProfileEditorComponent,
-    ChangePasswordComponent,
-    NotificationSettingsComponent,
-    SavedCardsComponent,
-    ReferralCardComponent,
-    ExamCountdownFormComponent,
-    ThbPipe,
-    TranslatePipe,
-  ],
+  imports: [DisplayEmailPipe, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, ImgFallbackDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account.page.html',
 })
 export class AccountPage {
   readonly auth = inject(AuthService);
   private readonly me = inject(MeService);
-  readonly wallet = inject(WalletService);
   private readonly i18n = inject(TranslationService);
-
-  constructor() {
-    void this.wallet.refreshSummary();
-  }
 
   /** Reads the same `MeService.profile()` signal `app-profile-editor` already populates — no extra request. */
   readonly avatarSrc = computed(() =>
@@ -61,26 +40,14 @@ export class AccountPage {
 
   get sectionNav() {
     return [
-      { fragment: 'profile', label: this.i18n.t('account.navProfile'), icon: 'user' as const },
-      { fragment: 'password', label: this.i18n.t('account.navPassword'), icon: 'lock' as const },
-      { fragment: 'notifications', label: this.i18n.t('account.navNotifications'), icon: 'bell' as const },
-      { fragment: 'cards', label: this.i18n.t('account.navCards'), icon: 'wallet' as const },
-      { fragment: 'wallet', label: this.i18n.t('account.navWallet'), icon: 'wallet' as const },
-      { fragment: 'referral', label: this.i18n.t('account.navReferral'), icon: 'tag' as const },
-      { fragment: 'exam-countdown', label: this.i18n.t('account.navExamCountdown'), icon: 'flag' as const },
-      { fragment: 'shortcuts', label: this.i18n.t('account.navShortcuts'), icon: 'dashboard' as const },
-    ];
-  }
-
-  get shortcuts() {
-    return [
-      { href: '/library', emoji: '📚', label: this.i18n.t('account.shortcutLibrary'), description: this.i18n.t('account.shortcutLibraryDesc') },
-      { href: '/orders', emoji: '🧾', label: this.i18n.t('account.shortcutOrders'), description: this.i18n.t('account.shortcutOrdersDesc') },
-      { href: '/wishlist', emoji: '💖', label: this.i18n.t('account.shortcutWishlist'), description: this.i18n.t('account.shortcutWishlistDesc') },
-      { href: '/wallet', emoji: '💰', label: this.i18n.t('account.shortcutWallet'), description: this.i18n.t('account.shortcutWalletDesc') },
-      { href: '/account/subscription', emoji: '📦', label: this.i18n.t('account.shortcutSubscription'), description: this.i18n.t('account.shortcutSubscriptionDesc') },
-      { href: '/account/feedback', emoji: '🛠️', label: this.i18n.t('account.shortcutFeedback'), description: this.i18n.t('account.shortcutFeedbackDesc') },
-      { href: '/account/privacy', emoji: '🔒', label: this.i18n.t('account.shortcutPrivacy'), description: this.i18n.t('account.shortcutPrivacyDesc') },
+      { path: 'profile', label: this.i18n.t('account.navProfile'), icon: 'user' as const },
+      { path: 'password', label: this.i18n.t('account.navPassword'), icon: 'lock' as const },
+      { path: 'notifications', label: this.i18n.t('account.navNotifications'), icon: 'bell' as const },
+      { path: 'cards', label: this.i18n.t('account.navCards'), icon: 'wallet' as const },
+      { path: 'wallet', label: this.i18n.t('account.navWallet'), icon: 'wallet' as const },
+      { path: 'referral', label: this.i18n.t('account.navReferral'), icon: 'tag' as const },
+      { path: 'exam-countdown', label: this.i18n.t('account.navExamCountdown'), icon: 'flag' as const },
+      { path: 'shortcuts', label: this.i18n.t('account.navShortcuts'), icon: 'dashboard' as const },
     ];
   }
 }

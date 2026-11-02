@@ -139,15 +139,6 @@ export const routes: Routes = [
           ),
         title: 'routes.library',
       },
-      // F-07: a buyer's own account page. Until now the only way to reach
-      // PUT /api/me/profile was /seller/settings, behind the seller guard.
-      {
-        path: 'account',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/buyer/account/account.page').then((m) => m.AccountPage),
-        title: 'routes.account',
-      },
       // subscription-membership v2 §4: "สมัครสมาชิกรายเดือน" — choose categories, see the
       // running total, subscribe.
       {
@@ -199,6 +190,19 @@ export const routes: Routes = [
             (m) => m.AccountPrivacyPage,
           ),
         title: 'routes.privacy',
+      },
+      // F-07: a buyer's own account page. Until now the only way to reach
+      // PUT /api/me/profile was /seller/settings, behind the seller guard.
+      // Shell + one child page per sidebar entry (account.routes.ts). Declared after the
+      // account/subscription|feedback|privacy routes above so those match first.
+      {
+        path: 'account',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/buyer/account/account.page').then((m) => m.AccountPage),
+        loadChildren: () =>
+          import('./features/buyer/account/account.routes').then((m) => m.ACCOUNT_SECTION_ROUTES),
+        title: 'routes.account',
       },
       // buyer-wallet v1 §4.1: "กระเป๋าเงินของฉัน"
       {

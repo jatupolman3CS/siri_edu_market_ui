@@ -32,10 +32,11 @@
       }
 
       <nav class="card-soft p-2 chip-row gap-1 lg:flex-col lg:overflow-visible">
-        @for (item of sectionNav; track item.fragment) {
+        @for (item of sectionNav; track item.path) {
           <a
-            [routerLink]="['/account']"
-            [fragment]="item.fragment"
+            [routerLink]="['/account', item.path]"
+            routerLinkActive="!bg-brand-50 !text-brand-600 !border-line font-semibold"
+            ariaCurrentWhenActive="page"
             class="flex items-center gap-3 min-h-11 px-4 py-3 rounded-2xl text-sm font-medium text-ink-soft border border-transparent hover:bg-brand-50 hover:text-brand-600 transition-colors whitespace-nowrap"
           >
             <app-icon [name]="item.icon" [size]="18" />
@@ -45,70 +46,9 @@
       </nav>
     </aside>
 
-    <!-- Sections -->
-    <div class="flex flex-col gap-6 sm:gap-8 min-w-0">
-      <app-profile-editor class="block" />
-
-      <!-- F-08: reachable only now that POST /api/auth/change-password exists. -->
-      <app-change-password class="block" />
-
-      <app-notification-settings class="block" />
-
-      <!-- saved-credit-cards v1 §4: manage mode — list / add / delete / set-default. -->
-      <app-saved-cards mode="manage" class="block" />
-
-      <!-- buyer-wallet v1 §4.1: wallet summary card -->
-      <section id="wallet" class="card-soft p-4 sm:p-6 border border-line">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div class="flex items-center gap-2 text-ink-muted text-xs font-semibold mb-1">
-              <app-icon name="wallet" [size]="16" />
-              <span>{{ 'account.walletCardTitle' | trans }}</span>
-            </div>
-            <div class="text-xs text-ink-muted mb-2">{{ 'account.walletBalanceLabel' | trans }}</div>
-            <div class="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-              @if (wallet.summary()?.balance != null) {
-                {{ wallet.summary()!.balance | thb }}
-              } @else {
-                —
-              }
-            </div>
-          </div>
-          <a
-            [routerLink]="['/wallet']"
-            class="inline-flex items-center justify-center gap-2 min-h-11 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-sm transition-colors"
-          >
-            <app-icon name="plus" [size]="16" />
-            <span>{{ 'account.walletManageBtn' | trans }}</span>
-          </a>
-        </div>
-      </section>
-
-      <!-- referral-program v1 §4: referral card -->
-      <app-referral-card class="block" />
-
-      <!-- exam-countdown-mode v1 §4: set/edit/clear form + current status -->
-      <app-exam-countdown-form class="block" />
-
-      <section class="card-soft p-4 sm:p-6" id="shortcuts">
-        <h2 class="text-lg font-bold text-ink mb-1">{{ 'account.shortcutsTitle' | trans }}</h2>
-        <p class="text-xs text-ink-muted mb-5">{{ 'account.shortcutsDesc' | trans }}</p>
-
-        <ul class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          @for (shortcut of shortcuts; track shortcut.href) {
-            <li>
-              <a
-                [routerLink]="shortcut.href"
-                class="block h-full p-4 rounded-2xl border border-line hover:border-brand-300 hover:shadow-soft transition-all"
-              >
-                <span class="text-2xl">{{ shortcut.emoji }}</span>
-                <div class="text-sm font-semibold text-ink mt-2">{{ shortcut.label }}</div>
-                <div class="text-xs text-ink-muted">{{ shortcut.description }}</div>
-              </a>
-            </li>
-          }
-        </ul>
-      </section>
+    <!-- Section page: each sidebar entry is its own child route (account.routes.ts). -->
+    <div class="min-w-0">
+      <router-outlet />
     </div>
   </div>
 </div>

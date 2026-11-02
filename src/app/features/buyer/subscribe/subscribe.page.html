@@ -131,8 +131,7 @@
             >
               <p class="font-bold mb-1">{{ 'subscribe.needCard' | trans }}</p>
               <a
-                [routerLink]="['/account']"
-                fragment="cards"
+                [routerLink]="['/account', 'cards']"
                 class="inline-flex items-center min-h-11 text-brand-600 font-semibold underline"
               >
                 {{ 'subscribe.addCardLink' | trans }}

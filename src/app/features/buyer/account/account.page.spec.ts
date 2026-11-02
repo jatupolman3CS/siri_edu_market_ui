@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AccountPage } from './account.page';
+import { ACCOUNT_SECTION_ROUTES } from './account.routes';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 
 /**
@@ -53,19 +54,19 @@ async function settle(): Promise<void> {
   }
 }
 
-function renderPage() {
+async function renderAt(url: string) {
   TestBed.configureTestingModule({
-    imports: [AccountPage],
     providers: [
-      provideRouter([]),
+      provideRouter([{ path: 'account', component: AccountPage, children: ACCOUNT_SECTION_ROUTES }]),
       { provide: ApiFailureReporter, useValue: { report: (...args: unknown[]) => reported.push(args) } },
       { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
     ],
   });
-
-  const fixture = TestBed.createComponent(AccountPage);
-  fixture.detectChanges();
-  return fixture;
+  const harness = await RouterTestingHarness.create();
+  await harness.navigateByUrl(url);
+  await settle();
+  harness.detectChanges();
+  return { harness, root: harness.routeNativeElement as HTMLElement };
 }
 
 beforeEach(() => {
@@ -91,70 +92,58 @@ afterEach(() => {
   TestBed.resetTestingModule();
 });
 
-it('keeps every sidebar link on /account without recreating the page', async () => {
+it('opens every sidebar entry as its own page under the same shell', async () => {
   stubProfileAndSettings();
   stubRoute('GET', '/api/me/payment-methods', []);
-  TestBed.configureTestingModule({
-    providers: [
-      provideRouter([{ path: 'account', component: AccountPage }]),
-      { provide: ApiFailureReporter, useValue: { report: vi.fn() } },
-      { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
-    ],
-  });
-  const harness = await RouterTestingHarness.create();
-  const page = await harness.navigateByUrl('/account', AccountPage);
-  await settle();
-  harness.detectChanges();
-  const initialRequests = requests.length;
-  for (const item of page.sectionNav) {
-    const element = harness.routeNativeElement!;
-    const link = element.querySelector(`nav a[href="/account#${item.fragment}"]`) as HTMLAnchorElement;
+  const { harness } = await renderAt('/account');
+  const router = TestBed.inject(Router);
+  expect(router.url).toBe('/account/profile');
+
+  const shell = harness.routeDebugElement!.componentInstance as AccountPage;
+  for (const item of shell.sectionNav) {
+    const root = harness.routeNativeElement!;
+    const link = root.querySelector(`nav a[href="/account/${item.path}"]`) as HTMLAnchorElement;
     expect(link).toBeTruthy();
-    expect(element.querySelector(`#${item.fragment}`)).toBeTruthy();
     const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
     link.dispatchEvent(event);
+    // Each section is a lazy loadComponent — a fixed tick count races the dynamic import when
+    // several spec files share the run, so wait for the navigation itself to land.
+    await vi.waitFor(() => expect(router.url).toBe(`/account/${item.path}`), { timeout: 3000 });
     await settle();
     harness.detectChanges();
     expect(event.defaultPrevented).toBe(true);
-    expect(TestBed.inject(Router).url).toBe(`/account#${item.fragment}`);
-    expect(harness.routeDebugElement?.componentInstance).toBe(page);
+    expect(router.url).toBe(`/account/${item.path}`);
+    // One section per page: the chosen one is rendered, the others are not.
+    expect(root.querySelector(`#${item.path}`)).toBeTruthy();
+    const others = shell.sectionNav.filter((o) => o.path !== item.path);
+    for (const other of others) expect(root.querySelector(`#${other.path}`)).toBeNull();
+    expect(link.getAttribute('aria-current')).toBe('page');
+    expect(harness.routeDebugElement?.componentInstance).toBe(shell);
   }
-  expect(requests.length).toBe(initialRequests);
 });
 
 describe('AccountPage', () => {
-  it('loads the existing profile and notification settings', async () => {
+  it('loads the existing profile on /account/profile', async () => {
     stubProfileAndSettings();
-    const fixture = renderPage();
-    await settle();
-    fixture.detectChanges();
+    const { root } = await renderAt('/account/profile');
 
     expect(requests.some((r) => r.method === 'GET' && r.path === '/api/me/profile')).toBe(true);
-    expect(
-      requests.some((r) => r.method === 'GET' && r.path === '/api/notifications/settings'),
-    ).toBe(true);
 
-    const nameInput: HTMLInputElement = fixture.nativeElement.querySelector(
-      'input[name="displayName"]',
-    );
+    const nameInput = root.querySelector<HTMLInputElement>('input[name="displayName"]')!;
     expect(nameInput.value).toBe('ครูเอ');
   });
 
   it('saves the profile through PUT /api/me/profile', async () => {
     stubProfileAndSettings();
     stubRoute('PUT', '/api/me/profile', { ...profile, name: 'ครูบี' });
-    const fixture = renderPage();
-    await settle();
-    fixture.detectChanges();
+    const { harness, root } = await renderAt('/account/profile');
 
-    const nameInput: HTMLInputElement = fixture.nativeElement.querySelector(
-      'input[name="displayName"]',
-    );
+    const nameInput = root.querySelector<HTMLInputElement>('input[name="displayName"]')!;
     nameInput.value = 'ครูบี';
     nameInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
+    harness.detectChanges();
 
-    fixture.nativeElement.querySelector('button.btn-pink').click();
+    root.querySelector<HTMLButtonElement>('button.btn-pink')!.click();
     await settle();
 
     const put = requests.find((r) => r.method === 'PUT' && r.path === '/api/me/profile');
@@ -165,18 +154,16 @@ describe('AccountPage', () => {
   it('does not swallow a failed save', async () => {
     stubProfileAndSettings();
     stubRoute('PUT', '/api/me/profile', { title: 'nope', status: 500, statusCode: 500 }, 500);
-    const fixture = renderPage();
-    await settle();
-    fixture.detectChanges();
+    const { harness, root } = await renderAt('/account/profile');
 
-    fixture.nativeElement.querySelector('button.btn-pink').click();
+    root.querySelector<HTMLButtonElement>('button.btn-pink')!.click();
     await settle();
-    fixture.detectChanges();
+    harness.detectChanges();
 
     // Reported to the user rather than discarded, and the button is usable again so the save
     // can be retried instead of leaving the page stuck on "saving".
     expect(reported.length).toBeGreaterThan(0);
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button.btn-pink');
+    const button = root.querySelector<HTMLButtonElement>('button.btn-pink')!;
     expect(button.disabled).toBe(false);
   });
 
@@ -185,13 +172,9 @@ describe('AccountPage', () => {
     // would silently reset the others.
     stubProfileAndSettings();
     stubRoute('PUT', '/api/notifications/settings', []);
-    const fixture = renderPage();
-    await settle();
-    fixture.detectChanges();
+    const { harness, root } = await renderAt('/account/notifications');
 
-    const switchButton: HTMLButtonElement = fixture.nativeElement.querySelector(
-      'app-notification-settings button.ant-switch',
-    );
+    const switchButton = root.querySelector<HTMLButtonElement>('app-notification-settings button.ant-switch')!;
     switchButton.click();
     await settle();
 
@@ -202,14 +185,12 @@ describe('AccountPage', () => {
     expect(JSON.parse(put!.body).settings).toEqual({ sale: false, review: false });
   });
 
-  it('links to the library, orders and wishlist', async () => {
+  it('the shortcuts page links to the library, orders and wishlist', async () => {
     stubProfileAndSettings();
-    const fixture = renderPage();
-    await settle();
-    fixture.detectChanges();
+    const { root } = await renderAt('/account/shortcuts');
 
     const hrefs = Array.from(
-      fixture.nativeElement.querySelectorAll('a[href]') as NodeListOf<HTMLAnchorElement>,
+      root.querySelectorAll('a[href]') as NodeListOf<HTMLAnchorElement>,
     ).map((a) => a.getAttribute('href'));
 
     expect(hrefs).toContain('/library');
