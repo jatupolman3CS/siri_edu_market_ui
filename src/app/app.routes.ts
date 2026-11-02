@@ -17,6 +17,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/buyer/home/home.page').then((m) => m.BuyerHomePage),
         title: 'routes.home',
+        data: { seoDescription: 'seo.home' },
       },
       {
         path: 'marketplace',
@@ -25,6 +26,7 @@ export const routes: Routes = [
             (m) => m.BuyerMarketplacePage,
           ),
         title: 'routes.marketplace',
+        data: { seoDescription: 'seo.marketplace' },
       },
       {
         path: 'categories',
@@ -33,6 +35,7 @@ export const routes: Routes = [
             (m) => m.BuyerCategoriesPage,
           ),
         title: 'routes.categories',
+        data: { seoDescription: 'seo.categories' },
       },
       {
         path: 'category/:slug',
@@ -55,6 +58,7 @@ export const routes: Routes = [
             (m) => m.BuyerBundlesPage,
           ),
         title: 'routes.bundles',
+        data: { seoDescription: 'seo.bundles' },
       },
       {
         path: 'bundle/:id',
@@ -69,6 +73,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/buyer/free/free.page').then((m) => m.BuyerFreePage),
         title: 'routes.free',
+        data: { seoDescription: 'seo.free' },
       },
       {
         path: 'store/:id',

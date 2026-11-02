@@ -165,7 +165,7 @@ export const en: TranslationKeys = {
     "of": "for"
   },
   "routes": {
-    "home": "SIRIEDUMARKET — Quality Educational Materials from Verified Creators",
+    "home": "SIRIEDUMARKET — Study Notes, Past Exam Papers, TCAS A-Level O-NET Prep",
     "marketplace": "Marketplace — SIRIEDUMARKET",
     "categories": "Categories — SIRIEDUMARKET",
     "bundles": "Bundles — SIRIEDUMARKET",
@@ -3858,5 +3858,13 @@ export const en: TranslationKeys = {
   "watermark": {
     "defaultText": "Licensed to {email} on {date} (Verification Token: {token}). All rights reserved.",
     "previewModeText": "SIRI EDUMARKET PREVIEW MODE"
+  },
+  "seo": {
+    "siteDescription": "Online marketplace for study materials: summary sheets, past exam papers with answers, and TCAS, TGAT/TPAT, A-Level and O-NET prep from real teachers and tutors. Instant download.",
+    "home": "Online marketplace for study materials: summary sheets, past exam papers with answers, and TCAS, TGAT/TPAT, A-Level and O-NET prep from real teachers and tutors. Instant download.",
+    "marketplace": "Search and buy summary sheets, past exam papers and study materials for every subject and grade. Filter by category, price and reviews from real sellers on SIRIEDUMARKET.",
+    "categories": "Browse study materials by subject and grade level: summary sheets, exercises and past papers for TCAS, A-Level and O-NET prep, all in one place.",
+    "free": "Download free summary sheets, exercises and study materials from teachers and tutors on SIRIEDUMARKET. Review lessons and prepare for exams at no cost.",
+    "bundles": "Bundles of summary sheets and past exam papers at a special price, better value than buying separately. Ideal for TCAS, TGAT/TPAT, A-Level and O-NET prep."
   }
 };

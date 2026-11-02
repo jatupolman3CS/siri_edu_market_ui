@@ -13,3 +13,4 @@ Disallow: /seller
 Disallow: /admin
 
 Sitemap: https://siriedumarket.siristudiophoto.com/api/system/sitemap.xml
+Sitemap: https://siriedumarket.siristudiophoto.com/sitemap.xml

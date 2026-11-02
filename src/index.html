@@ -2,10 +2,51 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <title>SIRIEDUMARKET — Marketplace สำหรับเอกสารวิชาการคุณภาพสูง</title>
+  <title>SIRIEDUMARKET — ชีทสรุป ข้อสอบเก่า เอกสารการเรียน TCAS A-Level O-NET</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="แพลตฟอร์มฝากขายเอกสาร สรุปบทเรียน และเทมเพลตคุณภาพสูง">
+  <meta name="description" content="ตลาดซื้อขายเอกสารการเรียนออนไลน์ ชีทสรุป ข้อสอบเก่าพร้อมเฉลย และแนวข้อสอบ TCAS, TGAT/TPAT, A-Level, O-NET จากครูและติวเตอร์ตัวจริง ดาวน์โหลดได้ทันที">
+  <!-- Site-wide SEO defaults for no-JS crawlers on the static pages. Deliberately NO canonical here:
+       every route is served this same file, so a canonical would be wrong on all but one page —
+       per-route canonical/og:url are set client-side by SeoMetaService (via I18nTitleStrategy). -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SIRIEDUMARKET">
+  <meta property="og:title" content="SIRIEDUMARKET — ชีทสรุป ข้อสอบเก่า เอกสารการเรียน TCAS A-Level O-NET">
+  <meta property="og:description" content="ตลาดซื้อขายเอกสารการเรียนออนไลน์ ชีทสรุป ข้อสอบเก่าพร้อมเฉลย และแนวข้อสอบ TCAS, TGAT/TPAT, A-Level, O-NET จากครูและติวเตอร์ตัวจริง ดาวน์โหลดได้ทันที">
+  <meta property="og:locale" content="th_TH">
+  <meta property="og:image" content="https://siriedumarket.siristudiophoto.com/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <!-- id must stay distinct from SeoMetaService's per-page `seo-json-ld` so it is never replaced/removed. -->
+  <script type="application/ld+json" id="site-json-ld">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://siriedumarket.siristudiophoto.com/#website",
+          "name": "SIRIEDUMARKET",
+          "url": "https://siriedumarket.siristudiophoto.com/",
+          "inLanguage": "th",
+          "publisher": { "@id": "https://siriedumarket.siristudiophoto.com/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://siriedumarket.siristudiophoto.com/marketplace?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://siriedumarket.siristudiophoto.com/#organization",
+          "name": "SIRIEDUMARKET",
+          "url": "https://siriedumarket.siristudiophoto.com/",
+          "logo": "https://siriedumarket.siristudiophoto.com/icon-512.png"
+        }
+      ]
+    }
+  </script>
   <meta name="theme-color" content="#db2777">
   <meta name="color-scheme" content="light dark">
   <!-- Resolve the theme before first paint (saved choice → OS preference → light) so a dark reader never sees a
@@ -29,7 +70,6 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#db2777">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>

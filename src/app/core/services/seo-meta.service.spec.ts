@@ -181,6 +181,107 @@ describe('SeoMetaService', () => {
     });
   });
 
+  describe('setPageSeo / resetPageSeo (static pages + leaving a dynamic page)', () => {
+    const docInput = {
+      documentId: 'doc-1',
+      title: 'สรุปคณิต ม.6',
+      shortDescription: 'สรุปเข้มก่อนสอบ',
+      canonicalUrl: 'https://siriedumarket.test/document/doc-1',
+      coverImageUrl: 'https://siriedumarket.test/api/files/download/cover.jpg',
+      galleryImageUrls: [],
+      price: 49,
+      studioName: 'ครูเอ',
+      resourceType: 'lesson-summary',
+      language: 'th',
+      reviewCount: 0,
+    };
+
+    function addSiteJsonLd(): HTMLScriptElement {
+      const site = document.createElement('script');
+      site.id = 'site-json-ld';
+      site.setAttribute('type', 'application/ld+json');
+      site.text = '{"@context":"https://schema.org","@graph":[]}';
+      document.head.appendChild(site);
+      return site;
+    }
+
+    afterEach(() => {
+      document.getElementById('site-json-ld')?.remove();
+      document
+        .querySelectorAll('meta[property^="og:"], meta[name^="twitter:"], meta[name="description"]')
+        .forEach((el) => el.remove());
+    });
+
+    it('setPageSeo sets title, description, canonical and website Open Graph', () => {
+      service.setPageSeo({
+        title: 'ตลาดเอกสาร — SIRIEDUMARKET',
+        description: 'ค้นหาชีทสรุป',
+        canonicalUrl: 'https://siriedumarket.test/marketplace',
+      });
+
+      expect(titleService.getTitle()).toBe('ตลาดเอกสาร — SIRIEDUMARKET');
+      expect(meta.getTag('name="description"')?.content).toBe('ค้นหาชีทสรุป');
+      expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+        'https://siriedumarket.test/marketplace',
+      );
+      expect(meta.getTag('property="og:type"')?.content).toBe('website');
+      expect(meta.getTag('property="og:title"')?.content).toBe('ตลาดเอกสาร — SIRIEDUMARKET');
+      expect(meta.getTag('property="og:description"')?.content).toBe('ค้นหาชีทสรุป');
+      expect(meta.getTag('property="og:url"')?.content).toBe('https://siriedumarket.test/marketplace');
+      expect(meta.getTag('property="og:site_name"')?.content).toBe('SIRIEDUMARKET');
+    });
+
+    it('setPageSeo without title reuses the current document title for og:title', () => {
+      titleService.setTitle('หมวดหมู่ — SIRIEDUMARKET');
+      service.setPageSeo({ description: 'd', canonicalUrl: 'https://siriedumarket.test/categories' });
+
+      expect(titleService.getTitle()).toBe('หมวดหมู่ — SIRIEDUMARKET');
+      expect(meta.getTag('property="og:title"')?.content).toBe('หมวดหมู่ — SIRIEDUMARKET');
+    });
+
+    it('setPageSeo after a document page drops its JSON-LD, cover og:image and twitter image, keeping #site-json-ld', () => {
+      const site = addSiteJsonLd();
+      service.setDocumentSeo(docInput);
+      expect(document.getElementById('seo-json-ld')).not.toBeNull();
+
+      service.setPageSeo({
+        title: 'SIRIEDUMARKET',
+        description: 'หน้าแรก',
+        canonicalUrl: 'https://siriedumarket.test/',
+      });
+
+      expect(document.getElementById('seo-json-ld')).toBeNull();
+      expect(document.getElementById('site-json-ld')).toBe(site);
+      expect(meta.getTag('property="og:type"')?.content).toBe('website');
+      expect(meta.getTag('property="og:image"')?.content).toBe(`${window.location.origin}/icon-512.png`);
+      expect(meta.getTag('name="twitter:image"')).toBeNull();
+      expect(meta.getTag('name="twitter:title"')).toBeNull();
+      expect(meta.getTag('name="twitter:card"')?.content).toBe('summary');
+      expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+        'https://siriedumarket.test/',
+      );
+    });
+
+    it('resetPageSeo after a document page removes canonical/og:url/JSON-LD and restores defaults', () => {
+      const site = addSiteJsonLd();
+      service.setDocumentSeo(docInput);
+
+      service.resetPageSeo({ title: 'รายการโปรด — SIRIEDUMARKET', description: 'ค่าเริ่มต้นของเว็บ' });
+
+      expect(document.querySelector('link[rel="canonical"]')).toBeNull();
+      expect(meta.getTag('property="og:url"')).toBeNull();
+      expect(document.getElementById('seo-json-ld')).toBeNull();
+      expect(document.getElementById('site-json-ld')).toBe(site);
+      expect(meta.getTag('name="description"')?.content).toBe('ค่าเริ่มต้นของเว็บ');
+      expect(meta.getTag('property="og:title"')?.content).toBe('รายการโปรด — SIRIEDUMARKET');
+      expect(meta.getTag('property="og:description"')?.content).toBe('ค่าเริ่มต้นของเว็บ');
+      expect(meta.getTag('property="og:type"')?.content).toBe('website');
+      expect(meta.getTag('property="og:image"')?.content).toBe(`${window.location.origin}/icon-512.png`);
+      expect(meta.getTag('name="twitter:image"')).toBeNull();
+      expect(jsonLdScripts()).toEqual([site]);
+    });
+  });
+
   describe('canonicalUrl', () => {
     it('builds an absolute URL against the current window origin', () => {
       const url = service.canonicalUrl('/document/doc-1');

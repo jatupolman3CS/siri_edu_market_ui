@@ -23,6 +23,26 @@ const SITE_NAME = 'SIRIEDUMARKET';
 /** Fixed id so re-setting SEO (e.g. navigating from document A to document B) replaces the
  * existing tag instead of leaving a stale one behind (AC-17) or appending duplicates. */
 const JSON_LD_SCRIPT_ID = 'seo-json-ld';
+/** Site-wide default share image — same file `src/index.html` points its static `og:image` at
+ * (that copy is hard-coded to the prod origin because no-JS bots never run this code). */
+const DEFAULT_OG_IMAGE_PATH = '/icon-512.png';
+
+/** Static public pages (home, marketplace, categories, free, bundles) — driven from route
+ * `data.seoDescription` by `I18nTitleStrategy`. Never touches `#site-json-ld` (the site-wide
+ * `WebSite`/`Organization` graph in `src/index.html`). */
+export interface SeoPageInput {
+  /** Also used for `og:title`; when omitted the current `document.title` is reused. */
+  title?: string;
+  description: string;
+  canonicalUrl: string;
+}
+
+/** Site defaults restored when leaving a page that set its own SEO (document A → /wishlist must
+ * not keep document A's canonical/og:image/JSON-LD). */
+export interface SeoDefaultsInput {
+  title: string;
+  description: string;
+}
 
 export interface SeoDocumentInput {
   documentId: string;
@@ -234,6 +254,41 @@ export class SeoMetaService {
       },
     };
     this.setJsonLd(jsonLd);
+  }
+
+  /** Static public page: description, canonical (= the caller's query-less URL), website-type
+   * Open Graph, and the site-default share image in place of any page-specific one left behind. */
+  setPageSeo(input: SeoPageInput): void {
+    if (input.title) this.titleService.setTitle(input.title);
+    const title = input.title || this.titleService.getTitle();
+    this.applySiteDefaults(title, input.description);
+    this.setCanonical(input.canonicalUrl);
+    this.meta.updateTag({ property: 'og:url', content: input.canonicalUrl });
+  }
+
+  /** Route without its own static SEO (private pages, and the 3 dynamic pages + exam hubs before
+   * they finish loading): drop everything page-specific the previous route set. Title is left to
+   * the TitleStrategy; `title` here only feeds `og:title`. */
+  resetPageSeo(defaults: SeoDefaultsInput): void {
+    this.applySiteDefaults(defaults.title, defaults.description);
+    this.document.querySelector('link[rel="canonical"]')?.remove();
+    this.meta.removeTag('property="og:url"');
+  }
+
+  private applySiteDefaults(title: string, description: string): void {
+    this.setDescription(description);
+    this.setOpenGraph({
+      'og:type': 'website',
+      'og:title': title,
+      'og:description': description,
+      'og:image': this.canonicalUrl(DEFAULT_OG_IMAGE_PATH),
+      'og:site_name': SITE_NAME,
+    });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    this.meta.removeTag('name="twitter:title"');
+    this.meta.removeTag('name="twitter:description"');
+    this.meta.removeTag('name="twitter:image"');
+    this.document.getElementById(JSON_LD_SCRIPT_ID)?.remove();
   }
 
   private setDescription(description: string): void {
