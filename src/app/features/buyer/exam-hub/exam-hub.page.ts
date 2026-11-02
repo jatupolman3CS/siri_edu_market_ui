@@ -6,9 +6,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Meta, Title } from '@angular/platform-browser';
-import { AdsService, ExamHubService } from '../../../core/services';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Meta } from '@angular/platform-browser';
+import { AdsService, ExamHubService, SeoMetaService } from '../../../core/services';
 import type { DocumentItem, ExamHubType } from '../../../core/models';
 import { DocumentCardComponent } from '../../../shared/components/document-card/document-card.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -35,8 +35,9 @@ import { TranslatePipe } from '../../../core/i18n';
 })
 export class ExamHubPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly titleService = inject(Title);
+  private readonly router = inject(Router);
   private readonly meta = inject(Meta);
+  private readonly seo = inject(SeoMetaService);
   readonly examHub = inject(ExamHubService);
   readonly ads = inject(AdsService);
 
@@ -66,6 +67,7 @@ export class ExamHubPage implements OnInit {
   async loadAll(): Promise<void> {
     if (this.loaded) return;
     this.loaded = true;
+    const hubPath = currentPath(this.router.url);
 
     await Promise.all([
       this.examHub.loadPage(this.examType),
@@ -75,13 +77,16 @@ export class ExamHubPage implements OnInit {
     this.loadSponsoredAds();
 
     const p = this.page();
-    if (p) {
-      if (p.title) {
-        this.titleService.setTitle(`${p.title} — SIRIEDUMARKET`);
-      }
-      if (p.metaDescription) {
-        this.meta.updateTag({ name: 'description', content: p.metaDescription });
-      }
+    // Hub pages are in the sitemap, so they also get canonical + og:url (query-less path) —
+    // the router-level reset left them without one while the hub content loaded. Skipped when the
+    // user already navigated away mid-load, so the next page never inherits the hub's SEO.
+    if (p && currentPath(this.router.url) === hubPath) {
+      this.seo.setPageSeo({
+        title: p.title ? `${p.title} — SIRIEDUMARKET` : undefined,
+        description:
+          p.metaDescription || (this.meta.getTag('name="description"')?.content ?? ''),
+        canonicalUrl: this.seo.canonicalUrl(hubPath),
+      });
     }
   }
 
@@ -105,4 +110,8 @@ export class ExamHubPage implements OnInit {
     this.loaded = false;
     await this.loadAll();
   }
+}
+
+function currentPath(url: string): string {
+  return url.split(/[?#]/)[0] || '/';
 }

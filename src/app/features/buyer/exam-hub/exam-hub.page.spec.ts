@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ExamHubPage } from './exam-hub.page';
 import { AdsService, ExamHubService, CartService, WishlistService } from '../../../core/services';
@@ -122,6 +122,32 @@ describe('ExamHubPage', () => {
       'A-Level — สอบวิชาสามัญ',
     );
     expect(titleService.getTitle()).toContain('A-Level');
+  });
+
+  it('sets canonical and og:url to the query-less page URL once the hub loads', async () => {
+    setup('a-level');
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'url', 'get').mockReturnValue('/a-level?utm_source=x#top');
+    const fixture = TestBed.createComponent(ExamHubPage);
+    await fixture.componentInstance.loadAll();
+
+    const expected = `${window.location.origin}/a-level`;
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(expected);
+    expect(metaService.getTag('property="og:url"')?.content).toBe(expected);
+    expect(metaService.getTag('property="og:title"')?.content).toContain('A-Level');
+  });
+
+  it('leaves SEO alone when the user navigated away before the hub finished loading', async () => {
+    setup('a-level');
+    const router = TestBed.inject(Router);
+    const url = vi.spyOn(router, 'url', 'get').mockReturnValue('/a-level');
+    document.querySelector('link[rel="canonical"]')?.remove();
+    const fixture = TestBed.createComponent(ExamHubPage);
+    const loading = fixture.componentInstance.loadAll();
+    url.mockReturnValue('/marketplace');
+    await loading;
+
+    expect(document.querySelector('link[rel="canonical"]')).toBeNull();
   });
 
   it('renders different content for tcas and onet', async () => {
