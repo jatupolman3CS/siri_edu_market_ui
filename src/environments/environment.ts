@@ -7,9 +7,6 @@ export const environment = {
    * (`docs/contracts/remove-api-path-base.md`).
    */
   apiUrl: 'https://api-siriedumarket.siristudiophoto.com',
-  /** Optional fallback; prefer `GET /api/auth/oauth-clients` from the API. */
- googleOAuthClientId:
-    '5881672938-464ssnfcb78tou755dkf7jvmhvbkf68v.apps.googleusercontent.com',
   /** DEV-BYPASS: never on in a production build — real sign-in only. */
   /**
    * File formats a seller may list for sale. PDF only for now — must match the API's

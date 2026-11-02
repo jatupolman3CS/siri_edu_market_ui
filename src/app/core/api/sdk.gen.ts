@@ -618,12 +618,12 @@ import type {
   PostApiOrdersByIdCancelData,
   PostApiOrdersByIdCancelErrors,
   PostApiOrdersByIdCancelResponses,
-  PostApiOrdersByIdPayWalletData,
-  PostApiOrdersByIdPayWalletErrors,
-  PostApiOrdersByIdPayWalletResponses,
   PostApiOrdersByIdPayData,
   PostApiOrdersByIdPayErrors,
   PostApiOrdersByIdPayResponses,
+  PostApiOrdersByIdPayWalletData,
+  PostApiOrdersByIdPayWalletErrors,
+  PostApiOrdersByIdPayWalletResponses,
   PostApiOrdersData,
   PostApiOrdersErrors,
   PostApiOrdersResponses,
@@ -3280,11 +3280,7 @@ export const postApiOrdersByIdPayWallet = <ThrowOnError extends boolean = false>
 
 export const postApiOrdersByIdPay = <ThrowOnError extends boolean = false>(
   options: Options<PostApiOrdersByIdPayData, ThrowOnError>,
-): RequestResult<
-  PostApiOrdersByIdPayResponses,
-  PostApiOrdersByIdPayErrors,
-  ThrowOnError
-> =>
+): RequestResult<PostApiOrdersByIdPayResponses, PostApiOrdersByIdPayErrors, ThrowOnError> =>
   (options.client ?? client).post<
     PostApiOrdersByIdPayResponses,
     PostApiOrdersByIdPayErrors,

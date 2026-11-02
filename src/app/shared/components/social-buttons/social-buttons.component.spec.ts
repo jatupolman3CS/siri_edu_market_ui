@@ -22,9 +22,15 @@ function render(
     ensureLoaded: () => (pending ? stall : Promise.resolve()),
     getClientId: () => (clientId instanceof Promise ? '' : clientId),
   };
+  // oauth-scopes-from-env v1 AC-14: the real service only ever exposes a non-empty id together with
+  // non-empty scopes, so the mock mirrors that pairing.
   const oauthClients = {
     ensureLoaded: () => (pending ? stall : Promise.resolve()),
     lineLoginChannelId: () => (lineChannelId instanceof Promise ? '' : lineChannelId),
+    lineLoginScopes: () =>
+      lineChannelId instanceof Promise || !lineChannelId ? '' : 'openid profile email',
+    googleClientId: () => (clientId instanceof Promise ? '' : clientId),
+    googleScopes: () => (clientId instanceof Promise || !clientId ? '' : 'openid email profile'),
   };
   TestBed.configureTestingModule({
     imports: [SocialButtonsComponent],
@@ -129,5 +135,79 @@ describe('SocialButtonsComponent — LINE button follows the server (AC-7)', () 
 
     expect(buttonWithText(el, 'เข้าสู่ระบบด้วย Google')).toBeTruthy();
     expect(buttonWithText(el, 'เข้าสู่ระบบด้วย LINE')).toBeTruthy();
+  });
+});
+
+/**
+ * oauth-scopes-from-env v1 AC-19 — the real `OauthClientsService` + `GoogleOauthConfigService`
+ * over a stubbed `GET /api/auth/oauth-clients`: a button is shown only when the server sent both
+ * the id and the scopes for that provider (the pair invariant of AC-14 hides it otherwise).
+ */
+describe('SocialButtonsComponent — buttons need both id and scopes from the server (AC-19)', () => {
+  let realFetch: typeof globalThis.fetch;
+
+  function renderWithServer(body: Record<string, string>) {
+    realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    ) as typeof globalThis.fetch;
+    TestBed.configureTestingModule({ imports: [SocialButtonsComponent] });
+    return TestBed.createComponent(SocialButtonsComponent);
+  }
+
+  async function settleFixture(fixture: ReturnType<typeof renderWithServer>): Promise<HTMLElement> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  it('shows both buttons when the server sends ids and scopes', async () => {
+    const el = await settleFixture(
+      renderWithServer({
+        googleClientId: 'real-client-id.apps.googleusercontent.com',
+        googleScopes: 'openid email profile',
+        lineLoginChannelId: '2001234567',
+        lineLoginScopes: 'openid profile email',
+      }),
+    );
+
+    expect(buttonWithText(el, 'เข้าสู่ระบบด้วย Google')).toBeTruthy();
+    expect(buttonWithText(el, 'เข้าสู่ระบบด้วย LINE')).toBeTruthy();
+  });
+
+  it('hides both buttons when ids are present but scopes are empty', async () => {
+    const el = await settleFixture(
+      renderWithServer({
+        googleClientId: 'real-client-id.apps.googleusercontent.com',
+        googleScopes: '',
+        lineLoginChannelId: '2001234567',
+        lineLoginScopes: '',
+      }),
+    );
+
+    expect(buttonWithText(el, 'เข้าสู่ระบบด้วย Google')).toBeNull();
+    expect(buttonWithText(el, 'เข้าสู่ระบบด้วย LINE')).toBeNull();
+  });
+
+  it('hides both buttons for an older backend that sends no scope fields', async () => {
+    const el = await settleFixture(
+      renderWithServer({
+        googleClientId: 'real-client-id.apps.googleusercontent.com',
+        lineLoginChannelId: '2001234567',
+      }),
+    );
+
+    expect(buttonWithText(el, 'เข้าสู่ระบบด้วย Google')).toBeNull();
+    expect(buttonWithText(el, 'เข้าสู่ระบบด้วย LINE')).toBeNull();
   });
 });

@@ -25854,7 +25854,13 @@
           "googleClientId": {
             "type": "string"
           },
+          "googleScopes": {
+            "type": "string"
+          },
           "lineLoginChannelId": {
+            "type": "string"
+          },
+          "lineLoginScopes": {
             "type": "string"
           }
         }

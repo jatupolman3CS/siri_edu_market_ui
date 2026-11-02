@@ -8,7 +8,6 @@ const STATE_TTL_MS = 10 * 60 * 1000;
 const AUTHORIZE_ENDPOINT = 'https://access.line.me/oauth2/v2.1/authorize';
 /** §4.2 — Angular route, *not* an API endpoint. Must also be registered in the LINE console. */
 const CALLBACK_PATH = '/auth/line/callback';
-const SCOPE = 'openid profile email';
 
 /**
  * What we handed to LINE when the redirect started, kept so the callback can verify the round
@@ -48,15 +47,16 @@ export class LineOauthService {
 
   /**
    * §4.2. Built by hand rather than with `URLSearchParams` because the latter encodes spaces as
-   * `+`, and the contract pins the scope separator to `%20`.
+   * `+`, and the contract pins the scope separator to `%20`. `scope` is the server's
+   * `lineLoginScopes` (oauth-scopes-from-env v1 AC-16) — the browser has no default.
    */
-  buildAuthorizeUrl(channelId: string, state: string, redirectUri: string): string {
+  buildAuthorizeUrl(channelId: string, state: string, redirectUri: string, scope: string): string {
     const query = [
       'response_type=code',
       `client_id=${encodeURIComponent(channelId)}`,
       `redirect_uri=${encodeURIComponent(redirectUri)}`,
       `state=${encodeURIComponent(state)}`,
-      `scope=${encodeURIComponent(SCOPE)}`,
+      `scope=${encodeURIComponent(scope)}`,
     ].join('&');
     return `${AUTHORIZE_ENDPOINT}?${query}`;
   }
@@ -69,6 +69,8 @@ export class LineOauthService {
   startSignIn(returnUrl: string, email?: string): boolean {
     const channelId = this.oauthClients.lineLoginChannelId();
     if (!channelId) return false;
+    const scope = this.oauthClients.lineLoginScopes();
+    if (!scope) return false;
 
     const redirectUri = this.resolveRedirectUri();
     if (!redirectUri) return false;
@@ -81,7 +83,7 @@ export class LineOauthService {
       createdAt: Date.now(),
       ...(email ? { email: email.trim() } : {}),
     });
-    this.redirectTo(this.buildAuthorizeUrl(channelId, state, redirectUri));
+    this.redirectTo(this.buildAuthorizeUrl(channelId, state, redirectUri, scope));
     return true;
   }
 

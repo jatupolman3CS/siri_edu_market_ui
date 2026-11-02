@@ -8,9 +8,6 @@ export const environment = {
    * develop against a different backend.
    */
   apiUrl: 'http://localhost:5282',
-  /** Public client id; the API's `GET /api/auth/oauth-clients` takes precedence when set. */
-  googleOAuthClientId:
-    '5881672938-464ssnfcb78tou755dkf7jvmhvbkf68v.apps.googleusercontent.com',
   /**
    * DEV-BYPASS: sign-in is not finished yet, so `bypass: true` walks straight into the app as a
    * seeded account and every guarded page becomes reachable. The API has the matching switch

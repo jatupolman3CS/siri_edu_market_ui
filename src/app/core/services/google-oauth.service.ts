@@ -39,6 +39,11 @@ export class GoogleOauthService {
     if (!clientId) {
       throw new Error('Google OAuth client id is not configured.');
     }
+    // oauth-scopes-from-env v1 AC-15: the server's scopes, verbatim — there is no default.
+    const scopes = this.oauthConfig.getScopes();
+    if (!scopes) {
+      throw new Error('Google OAuth scopes are not configured.');
+    }
 
     if (typeof window === 'undefined') {
       throw new Error('Google login is only available in a browser.');
@@ -58,7 +63,7 @@ export class GoogleOauthService {
     return await new Promise<{ code: string; redirectUri: string }>((resolve, reject) => {
       const client = google.accounts.oauth2.initCodeClient({
         client_id: clientId,
-        scope: 'openid email profile',
+        scope: scopes,
         ux_mode: 'popup',
         callback: (resp: GoogleCodeClientResponse) => {
           if (resp.error) {

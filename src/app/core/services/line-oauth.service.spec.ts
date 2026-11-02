@@ -10,7 +10,7 @@ import { OauthClientsService } from './oauth-clients.service';
 
 const STORAGE_KEY = 'siriedu_line_oauth';
 
-function build(channelId = '2001234567'): LineOauthService {
+function build(channelId = '2001234567', scopes = 'openid profile email'): LineOauthService {
   TestBed.configureTestingModule({
     providers: [
       {
@@ -18,6 +18,8 @@ function build(channelId = '2001234567'): LineOauthService {
         useValue: {
           ensureLoaded: vi.fn().mockResolvedValue(undefined),
           lineLoginChannelId: () => channelId,
+          // oauth-scopes-from-env v1 AC-16: the scope comes from the server, not from a constant.
+          lineLoginScopes: () => scopes,
         },
       },
     ],
@@ -57,6 +59,29 @@ describe('LineOauthService.startSignIn', () => {
     expect(url).toContain(`state=${encodeURIComponent(record.state)}`);
   });
 
+  it('writes whatever scope the server reported, %20-separated (AC-16)', () => {
+    const service = build('2001234567', 'openid profile');
+    const redirect = vi.spyOn(service, 'redirectTo').mockImplementation(() => undefined);
+
+    expect(service.startSignIn('/library')).toBe(true);
+
+    const url = redirect.mock.calls[0][0];
+    expect(url).toContain('scope=openid%20profile');
+    expect(url).not.toContain('scope=openid%20profile%20email');
+    expect(url).not.toContain('+');
+  });
+
+  it('does not navigate or store state when the server reported no LINE scopes (AC-16)', () => {
+    const service = build('2001234567', '');
+    const redirect = vi.spyOn(service, 'redirectTo').mockImplementation(() => undefined);
+
+    const started = service.startSignIn('/library');
+
+    expect(started).toBe(false);
+    expect(redirect).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
   it('does not navigate anywhere when the server reported no LINE login channel', () => {
     const service = build('');
     const redirect = vi.spyOn(service, 'redirectTo').mockImplementation(() => undefined);
@@ -66,6 +91,18 @@ describe('LineOauthService.startSignIn', () => {
     expect(started).toBe(false);
     expect(redirect).not.toHaveBeenCalled();
     expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe('LineOauthService.buildAuthorizeUrl', () => {
+  it('encodes the given scope with encodeURIComponent', () => {
+    const service = build();
+
+    const url = service.buildAuthorizeUrl('2001234567', 's-1', 'https://x.test/cb', 'openid email');
+
+    expect(url).toContain('scope=openid%20email');
+    expect(url).toContain('client_id=2001234567');
+    expect(url).toContain('state=s-1');
   });
 });
 

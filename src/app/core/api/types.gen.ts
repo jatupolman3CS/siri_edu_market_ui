@@ -1993,7 +1993,9 @@ export type ProblemDetails = {
 
 export type PublicOAuthClientsResponse = {
   googleClientId?: string;
+  googleScopes?: string;
   lineLoginChannelId?: string;
+  lineLoginScopes?: string;
 };
 
 export type RecommendationExplanationResponse = {
@@ -2320,7 +2322,7 @@ export type SellerDocumentSummaryResponse = {
   updatedAt?: string;
   rejectionReason?: string | null;
   rejectedAt?: string | null;
-  categoryIds?: Array<string> | null;
+  categoryIds?: Array<string>;
 };
 
 export type SellerDocumentVersionResponse = {

@@ -4,6 +4,20 @@ import type { PublicOAuthClientsResponse } from '../api/types.gen';
 import { unwrapSdkResult } from './api-result';
 
 /**
+ * oauth-scopes-from-env v1 AC-14 — a provider is only usable when the server reported **both** its
+ * client id and its scopes; if either is empty, both collapse to `''` so an older backend that
+ * does not send scopes hides the button instead of showing one that cannot open a consent page.
+ */
+function pairOrEmpty(
+  id: string | null | undefined,
+  scopes: string | null | undefined,
+): [string, string] {
+  const trimmedId = (id ?? '').trim();
+  const trimmedScopes = (scopes ?? '').trim();
+  return trimmedId && trimmedScopes ? [trimmedId, trimmedScopes] : ['', ''];
+}
+
+/**
  * external-login-and-mail-config v1 §3.1/§4.1 — single owner of `GET /api/auth/oauth-clients`.
  *
  * The endpoint answers which external sign-in providers this server can actually finish a token
@@ -11,10 +25,9 @@ import { unwrapSdkResult } from './api-result';
  * only to the server (AC-7) — the browser cannot know whether the matching client secret is
  * configured, so nothing in the UI may infer availability from its own environment.
  *
- * `GoogleOauthConfigService` delegates here so both providers come from one request; the
- * Google-only `environment.googleOAuthClientId` fallback stays over there (§4.1) and is
- * deliberately *not* mirrored for LINE — a channel id without a server-side channel secret would
- * just produce a button that fails at the callback.
+ * `GoogleOauthConfigService` delegates here so both providers come from one request. Neither
+ * provider has an environment fallback (oauth-scopes-from-env v1 AC-18): the OAuth scopes live on
+ * the server only, so a client id the browser supplied on its own could not open a consent page.
  */
 @Injectable({ providedIn: 'root' })
 export class OauthClientsService {
@@ -22,18 +35,23 @@ export class OauthClientsService {
   private inflight: Promise<void> | null = null;
 
   private readonly _googleClientId = signal('');
+  private readonly _googleScopes = signal('');
   private readonly _lineLoginChannelId = signal('');
+  private readonly _lineLoginScopes = signal('');
   /**
    * D-08b (carried over from `GoogleOauthConfigService`): did the API actually answer? An empty
-   * client id from a server that replied is an answer — "this provider is not configured here" —
-   * and must not be papered over by an environment fallback. Only a failed call may fall back.
+   * client id from a server that replied is an answer — "this provider is not configured here".
    */
   private readonly _apiAnswered = signal(false);
 
   /** Google Web Client ID exactly as the server reported it (`''` = Google sign-in unavailable). */
   readonly googleClientId = this._googleClientId.asReadonly();
+  /** Space-separated Google scopes from the server, handed to GIS verbatim (`''` ⇔ no client id). */
+  readonly googleScopes = this._googleScopes.asReadonly();
   /** LINE **Login** channel id as the server reported it (`''` = LINE sign-in unavailable). */
   readonly lineLoginChannelId = this._lineLoginChannelId.asReadonly();
+  /** Space-separated LINE Login scopes from the server (`''` ⇔ no channel id). */
+  readonly lineLoginScopes = this._lineLoginScopes.asReadonly();
   /** `false` while the request is still pending, and after a failed one. */
   readonly apiAnswered = this._apiAnswered.asReadonly();
 
@@ -53,11 +71,15 @@ export class OauthClientsService {
       try {
         const result = await getApiAuthOauthClients();
         const data: PublicOAuthClientsResponse = unwrapSdkResult(result);
-        this._googleClientId.set((data.googleClientId ?? '').trim());
-        this._lineLoginChannelId.set((data.lineLoginChannelId ?? '').trim());
+        const [googleId, googleScopes] = pairOrEmpty(data.googleClientId, data.googleScopes);
+        const [lineId, lineScopes] = pairOrEmpty(data.lineLoginChannelId, data.lineLoginScopes);
+        this._googleClientId.set(googleId);
+        this._googleScopes.set(googleScopes);
+        this._lineLoginChannelId.set(lineId);
+        this._lineLoginScopes.set(lineScopes);
         this._apiAnswered.set(true);
       } catch {
-        /* the API could not be reached — only then is Google's environment fallback meaningful */
+        /* the API could not be reached — every provider stays '' and its button stays hidden */
       } finally {
         this.loaded = true;
         this.inflight = null;
