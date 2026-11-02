@@ -219,10 +219,20 @@ export class AppHeaderComponent {
     if (this.mobileMenuOpen() && this.auth.isAuthenticated()) this.refreshMoneyCard();
   }
 
-  /** Fetched on open rather than on every page load: only the menu shows these two values. */
+  private membershipLoaded = false;
+
+  /**
+   * Fetched on open rather than on every page load: only the menu shows these two values. The
+   * balance refreshes each open (top-ups change it) unless a fetch is already running — the
+   * wallet page shares this state. Membership loads once, so a failing endpoint reports once
+   * instead of on every open.
+   */
   private refreshMoneyCard(): void {
-    void this.wallet.refreshSummary();
-    void this.subscription.loadCurrent();
+    if (this.wallet.state().status !== 'loading') void this.wallet.refreshSummary();
+    if (!this.membershipLoaded) {
+      this.membershipLoaded = true;
+      void this.subscription.loadCurrent();
+    }
   }
 
   closeMobileMenu(): void {

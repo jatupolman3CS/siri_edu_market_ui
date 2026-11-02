@@ -9,8 +9,11 @@ import {
   CatalogService,
   MeService,
   NotificationFeedService,
+  SubscriptionService,
+  WalletService,
   WishlistService,
 } from '../../../core/services';
+import type { Subscription } from '../../../core/models';
 
 /**
  * Mobile-nav-inaccessible fix (QA bug #1): a Playwright sweep across 375-768px found the main
@@ -28,6 +31,11 @@ function fakeAuth(overrides: { user?: () => ReturnType<AuthService['user']> } = 
     signOut: vi.fn(),
   };
 }
+
+const walletSummary = signal<{ balance: number; asOf: string } | null>(null);
+const currentSubscription = signal<Subscription | null>(null);
+const refreshSummary = vi.fn(async () => {});
+const loadCurrent = vi.fn(async () => {});
 
 function render(loggedIn = false) {
   const auth = fakeAuth(loggedIn ? { user: () => ({ id: 'u1', name: 'ทดสอบ ผู้ใช้', email: 't@test.dev', avatar: '', role: 'buyer' } as never) } : {});
@@ -65,6 +73,8 @@ function render(loggedIn = false) {
         },
       },
       { provide: NzMessageService, useValue: { info: vi.fn() } },
+      { provide: WalletService, useValue: { summary: walletSummary, state: () => ({ status: 'idle' }), refreshSummary } },
+      { provide: SubscriptionService, useValue: { current: currentSubscription, loadCurrent } },
     ],
   });
   const fixture = TestBed.createComponent(AppHeaderComponent);
@@ -72,7 +82,13 @@ function render(loggedIn = false) {
   return fixture;
 }
 
-afterEach(() => TestBed.resetTestingModule());
+afterEach(() => {
+  TestBed.resetTestingModule();
+  walletSummary.set(null);
+  currentSubscription.set(null);
+  refreshSummary.mockClear();
+  loadCurrent.mockClear();
+});
 
 describe('AppHeaderComponent — mobile nav toggle (bug #1)', () => {
   it('renders a hamburger toggle (guests: hidden only >=1280), closed by default', () => {
@@ -290,7 +306,7 @@ describe('AppHeaderComponent — responsive tiers (responsive-ui v1 §4.4)', () 
     expect(row.className).toContain('hidden md:block xl:hidden');
     const nav = row.querySelector('nav') as HTMLElement;
     expect(nav.className).toContain('chip-row');
-    expect(nav.querySelectorAll('a').length).toBe(3);
+    expect(nav.querySelectorAll('a').length).toBe(4);
   });
 
   it('shows the phone search row on browse routes only', async () => {
@@ -336,7 +352,7 @@ describe('AppHeaderComponent — G1-2 touch targets and drawer focus trap', () =
   it('makes every 744–1279 nav chip 44px tall on touch while fine pointers keep min-h-9', () => {
     const el = render().nativeElement as HTMLElement;
     const chips = Array.from(el.querySelectorAll<HTMLElement>('[data-testid="header-tablet-nav"] nav a'));
-    expect(chips.length).toBe(3);
+    expect(chips.length).toBe(4);
     for (const chip of chips) {
       expect(chip.className).toContain('min-h-9');
       expect(chip.className).toContain(COARSE_H);
@@ -427,5 +443,64 @@ describe('isBrowseRoute', () => {
     ['/account', false],
   ])('%s -> %s', (url, expected) => {
     expect(isBrowseRoute(url)).toBe(expected);
+  });
+});
+
+describe('AppHeaderComponent money card (wallet + membership)', () => {
+  function openDrawer() {
+    const fixture = render(true);
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('[data-testid="header-menu-toggle"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    return { fixture, el };
+  }
+
+  it('loads wallet + membership only when the menu opens, not on page load', () => {
+    const fixture = render(true);
+    expect(refreshSummary).not.toHaveBeenCalled();
+    expect(loadCurrent).not.toHaveBeenCalled();
+    (fixture.nativeElement.querySelector('[data-testid="header-menu-toggle"]') as HTMLButtonElement).click();
+    expect(refreshSummary).toHaveBeenCalled();
+    expect(loadCurrent).toHaveBeenCalled();
+  });
+
+  it('reloads the balance on every open but membership only once', () => {
+    const { fixture, el } = openDrawer();
+    const toggle = el.querySelector('[data-testid="header-menu-toggle"]') as HTMLButtonElement;
+    toggle.click();
+    fixture.detectChanges();
+    toggle.click();
+    fixture.detectChanges();
+    expect(refreshSummary).toHaveBeenCalledTimes(2);
+    expect(loadCurrent).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the balance with a top-up link, and a subscribe CTA for non-members', () => {
+    walletSummary.set({ balance: 250, asOf: '2026-11-02T00:00:00Z' });
+    const { el } = openDrawer();
+    const wallet = el.querySelector('[data-testid="drawer-wallet"]') as HTMLAnchorElement;
+    expect(wallet.getAttribute('href')).toBe('/wallet');
+    expect(wallet.textContent).toContain('250');
+    const membership = el.querySelector('[data-testid="drawer-membership"]') as HTMLAnchorElement;
+    expect(membership.getAttribute('href')).toBe('/subscribe');
+  });
+
+  it('shows a dash instead of a fake 0 while the balance is unknown', () => {
+    const { el } = openDrawer();
+    expect(el.querySelector('[data-testid="drawer-wallet"]')!.textContent).toContain('—');
+  });
+
+  it('links members to their membership page instead of the CTA', () => {
+    currentSubscription.set({ status: 'past_due' } as Subscription);
+    const { el } = openDrawer();
+    const membership = el.querySelector('[data-testid="drawer-membership"]') as HTMLAnchorElement;
+    expect(membership.getAttribute('href')).toBe('/account/subscription');
+  });
+
+  it('puts membership in the primary nav and privacy in the drawer', () => {
+    const { fixture, el } = openDrawer();
+    expect(fixture.componentInstance.navItems().map((i) => i.href)).toContain('/subscribe');
+    const drawerHrefs = Array.from(el.querySelectorAll('[data-testid="header-drawer"] a')).map((a) => a.getAttribute('href'));
+    expect(drawerHrefs).toContain('/account/privacy');
   });
 });
