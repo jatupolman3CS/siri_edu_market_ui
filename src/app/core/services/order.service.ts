@@ -10,6 +10,7 @@ import { ApiFailureReporter } from './api-failure-reporter.service';
 import { TranslationService } from '../i18n/translation.service';
 import {
   getApiOrdersById,
+  getApiOrdersByIdReceipt,
   getApiOrdersByIdSimilarDocuments,
   getApiPaymentsStripeConfig,
   postApiOrders,
@@ -21,6 +22,18 @@ import {
 import { extractErrorStatus, unwrapSdkResult } from './api-result';
 import { mapOrder, mapOrderSimilarDocument } from '../api-mappers/mappers';
 import type { Order, OrderSimilarDocument } from '../models';
+import { ensureFilenameExtension, filenameFromContentDisposition, sanitizeFilename } from '../file-download';
+
+/**
+ * Order statuses `GET /api/orders/{id}/receipt` issues a receipt for — mirrors `PaidStatuses` in
+ * the backend's `ReceiptService` (anything else answers `400 validation_failed`). A refunded order
+ * was still paid once, so its receipt stays downloadable.
+ */
+export const RECEIPT_ORDER_STATUSES: ReadonlySet<Order['status']> = new Set<Order['status']>([
+  'paid',
+  'fulfilled',
+  'refunded',
+]);
 
 /**
  * saved-credit-cards v1 §4: `POST /api/orders` (`CreateOrderRequest`, §3.1) grew two optional
@@ -238,6 +251,39 @@ export class OrderService {
     }
   }
 
+  /**
+   * C3: `GET /api/orders/{id}/receipt` — the server-rendered PDF receipt ("ต้นฉบับ" on the first
+   * download, "สำเนา" on every one after that; the server counts).
+   *
+   * The bytes are fetched through the SDK (auth header + 401 refresh/replay come with it) and saved
+   * through a hidden `<a download>` — never `window.open`, which a popup blocker turns into a
+   * silent no-op once an `await` has run inside the click handler (see `core/file-download.ts`).
+   *
+   * Filename: the server's `Content-Disposition` first (exposed via CORS), else
+   * `receipt-<orderNumber>.pdf`. Never rejects — a failure is reported as a toast (the server's
+   * Thai `detail`, e.g. "ยังไม่สามารถออกใบเสร็จได้ …" for an unpaid order) and returns `false`.
+   */
+  async downloadReceipt(orderId: string, orderNumber?: string | null): Promise<boolean> {
+    try {
+      const result = await getApiOrdersByIdReceipt({ path: { id: orderId } });
+      // OpenAPI types the body as `Blob | File`; the fetch client parses `application/pdf` into a
+      // real Blob. Anything else is not the receipt we asked for.
+      const data: unknown = unwrapSdkResult(result);
+      if (!(data instanceof Blob)) {
+        this.apiFail.report('errors.context.downloadFile');
+        return false;
+      }
+
+      const fromHeader = filenameFromContentDisposition(result.response?.headers?.get('content-disposition'));
+      const fallback = `receipt-${(orderNumber ?? '').trim() || orderId}`;
+      saveBlobAs(data, receiptFilename(fromHeader, fallback, data.type));
+      return true;
+    } catch (e) {
+      this.apiFail.report('errors.context.downloadFile', e);
+      return false;
+    }
+  }
+
   resetCheckout(): void {
     this._checkoutState.set(idleActionState());
   }
@@ -282,4 +328,28 @@ function extractMessage(error: unknown): string | undefined {
     if (typeof message === 'string') return message;
   }
   return undefined;
+}
+
+/** `Content-Disposition` name if the server sent one, else `fallback` — sanitized, always `.pdf`-terminated when it has no extension. */
+export function receiptFilename(fromHeader: string | null, fallback: string, mimeType: string | null | undefined): string {
+  const chosen = sanitizeFilename(fromHeader ?? '') || sanitizeFilename(fallback) || 'receipt';
+  return sanitizeFilename(ensureFilenameExtension(chosen, '', mimeType || 'application/pdf'));
+}
+
+/**
+ * Same-tab `<a download>` save of an in-memory blob — no popup, so nothing for a blocker to eat.
+ * (`core/file-download.ts` has an identical private `saveBlob`; it only exposes URL-based entry
+ * points, and the receipt has to come through the authenticated SDK rather than a bare `fetch`.)
+ */
+function saveBlobAs(blob: Blob, filename: string): void {
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.rel = 'noopener';
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
 }

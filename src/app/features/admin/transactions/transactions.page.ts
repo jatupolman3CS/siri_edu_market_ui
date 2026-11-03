@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { AdminService } from '../../../core/services';
+import { AdminService, type AdminTransactionsFilters } from '../../../core/services';
 import type { AdminTransaction } from '../../../core/models';
 import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
@@ -13,6 +13,11 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { RowMoreComponent } from '../../../shared/components/row-more/row-more.component';
 import { TableViewportDirective } from '../../../shared/directives/table-viewport.directive';
+
+type TransactionStatusFilter = 'all' | 'fulfilled' | 'paid' | 'refunded' | 'awaiting_payment';
+
+/** wave-l0-hardening v1 AC-Q6-8: typing waits this long before the list reloads. */
+export const TRANSACTION_SEARCH_DEBOUNCE_MS = 300;
 
 @Component({
   selector: 'app-admin-transactions',
@@ -50,8 +55,15 @@ export class AdminTransactionsPage {
   /** F-11: awaiting confirmation. A refund revokes library access and cannot be undone. */
   readonly confirmingId = signal<string | null>(null);
 
+  /** What is in the search box right now (updates on every keystroke). */
   readonly search = signal<string>('');
-  readonly status = signal<'all' | 'fulfilled' | 'paid' | 'refunded' | 'awaiting_payment'>('all');
+  /** The trimmed search the list was last loaded with — changes only after the debounce settles. */
+  readonly appliedSearch = signal<string>('');
+  readonly status = signal<TransactionStatusFilter>('all');
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Only the newest reload may write the table — a slow earlier response must not overwrite it. */
+  private reloadSeq = 0;
 
   readonly statuses = [
     { value: 'all' as const, key: 'admin.transactions.statusAll' },
@@ -62,18 +74,63 @@ export class AdminTransactionsPage {
   ];
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.clearSearchTimer());
     void this.admin.refreshDashboard();
     void this.reload();
   }
 
+  /** wave-l0-hardening §4.3: the filters the server is asked for. "ทั้งหมด" / blank = not sent. */
+  currentFilters(): AdminTransactionsFilters {
+    const filters: AdminTransactionsFilters = {};
+    const q = this.appliedSearch();
+    if (q) filters.q = q;
+    const status = this.status();
+    if (status !== 'all') filters.status = [status];
+    return filters;
+  }
+
   async reload(): Promise<void> {
+    const seq = ++this.reloadSeq;
     this.loading.set(true);
     try {
-      const res = await this.admin.listTransactionsPaged(this.page(), this.pageSize());
+      const res = await this.admin.listTransactionsPaged(this.page(), this.pageSize(), this.currentFilters());
+      if (seq !== this.reloadSeq) return;
       this.items.set(res.items ?? []);
       this.total.set(res.totalCount ?? 0);
     } finally {
-      this.loading.set(false);
+      if (seq === this.reloadSeq) this.loading.set(false);
+    }
+  }
+
+  /** AC-Q6-8: debounce 300 ms, then back to page 1 with the new search. */
+  onSearchChange(value: string): void {
+    this.search.set(value);
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.searchTimer = null;
+      const q = this.search().trim();
+      if (q === this.appliedSearch()) return;
+      this.appliedSearch.set(q);
+      this.page.set(1);
+      void this.reload();
+    }, TRANSACTION_SEARCH_DEBOUNCE_MS);
+  }
+
+  /** AC-Q6-8: a chip reloads immediately from page 1 (and takes any half-typed search with it). */
+  onStatusChange(value: TransactionStatusFilter): void {
+    const q = this.search().trim();
+    if (value === this.status() && q === this.appliedSearch()) return;
+    this.clearSearchTimer();
+    this.status.set(value);
+    this.appliedSearch.set(q);
+    this.page.set(1);
+    void this.reload();
+  }
+
+  private clearSearchTimer(): void {
+    if (this.searchTimer !== null) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = null;
     }
   }
 

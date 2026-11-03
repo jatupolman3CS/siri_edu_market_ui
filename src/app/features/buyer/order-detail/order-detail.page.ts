@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { AuthService, OrderService, WalletService } from '../../../core/services';
+import { AuthService, OrderService, RECEIPT_ORDER_STATUSES, WalletService } from '../../../core/services';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
@@ -193,7 +193,26 @@ export class BuyerOrderDetailPage {
     }
   }
 
-  printReceipt(): void {
-    window.print();
+  /**
+   * C3: the receipt button used to `window.print()` the page itself — the order screen with its
+   * header and buttons, not a receipt. It now downloads the server's PDF receipt (ต้นฉบับ/สำเนา).
+   * Only offered where the server issues one (`RECEIPT_ORDER_STATUSES`); failures are toasted by
+   * the service.
+   */
+  readonly canDownloadReceipt = computed(() => {
+    const status = this.order()?.status;
+    return !!status && RECEIPT_ORDER_STATUSES.has(status);
+  });
+
+  readonly downloadingReceipt = signal(false);
+
+  async downloadReceipt(id: string, orderNumber: string): Promise<void> {
+    if (this.downloadingReceipt()) return;
+    this.downloadingReceipt.set(true);
+    try {
+      await this.orderService.downloadReceipt(id, orderNumber);
+    } finally {
+      this.downloadingReceipt.set(false);
+    }
   }
 }

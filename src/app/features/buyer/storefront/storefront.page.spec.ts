@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BuyerStorefrontPage } from './storefront.page';
 import { AuthService, BundleService, CatalogService, FollowService } from '../../../core/services';
+import { ApiFailureReporter } from '../../../core/services/api-failure-reporter.service';
 import { idleActionState } from '../../../core/services/action-state';
 import type { SellerProfileResponse } from '../../../core/api/types.gen';
 import type { DocumentItem, SellerSalesByMonthPoint } from '../../../core/models';
@@ -335,3 +336,72 @@ describe('BuyerStorefrontPage — SEO meta (seo-ssr v1)', () => {
   });
 });
 
+
+/**
+ * wave-l0-hardening v1 §4.1 (L0-1): a banned/suspended (or simply unknown) seller's profile now
+ * answers `404` — the exact same shape as a store that never existed. The real `CatalogService`
+ * is used here (only `fetch` is stubbed) so the assertion covers the whole path: the page lands
+ * on its existing `storefront.notFound*` empty state and no error toast is raised on top of it.
+ */
+describe('BuyerStorefrontPage — removed store (wave-l0-hardening §4.1)', () => {
+  let realFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      const path = new URL(request.url).pathname;
+      if (path === '/api/sellers/seller-banned/profile') {
+        return new Response(JSON.stringify({ title: 'Not Found', status: 404 }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/problem+json' },
+        });
+      }
+      return new Response(
+        JSON.stringify({ items: [], page: 1, pageSize: 24, totalCount: 0, totalPages: 0 }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }) as typeof globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  it('shows the not-found empty state and never calls ApiFailureReporter.report', async () => {
+    const report = vi.fn();
+    const fakeFollow: Partial<FollowService> = {
+      isFollowing: () => false,
+      hydrateFromApi: vi.fn(async () => {}),
+      setFollowing: vi.fn(),
+      toggle: vi.fn(async () => false),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [BuyerStorefrontPage],
+      providers: [
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'seller-banned' })) } },
+        { provide: ApiFailureReporter, useValue: { report } },
+        { provide: BundleService, useValue: { getBySellerId: () => [] } },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: NzMessageService, useValue: { success: vi.fn(), info: vi.fn() } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(BuyerStorefrontPage);
+    fixture.detectChanges();
+    const catalog = TestBed.inject(CatalogService);
+    for (let i = 0; i < 10 && catalog.sellerProfileState().status === 'loading'; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(catalog.sellerProfile()).toBeNull();
+    expect(catalog.sellerProfileState().status).toBe('idle');
+    expect(report).not.toHaveBeenCalled();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-empty-state')).not.toBeNull();
+    expect(host.querySelector('a[href="/marketplace"]')).not.toBeNull();
+  });
+});

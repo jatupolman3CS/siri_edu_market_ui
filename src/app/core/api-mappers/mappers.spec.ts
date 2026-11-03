@@ -917,7 +917,18 @@ describe('mapReferralSummary', () => {
       totalReferred: 3,
       unusedCreditCount: 2,
       unusedCreditTotal: 40,
+      nextCreditAmount: null,
     });
+  });
+
+  // security-review-followups v1 §1.3 AC-04-8 (FIX-04)
+  it('maps nextCreditAmount: number -> number, null -> null, missing -> null, snake_case too', () => {
+    expect(mapReferralSummary({ nextCreditAmount: 37.5 }).nextCreditAmount).toBe(37.5);
+    expect(mapReferralSummary({ nextCreditAmount: null }).nextCreditAmount).toBeNull();
+    expect(mapReferralSummary({ code: 'NOFIELD1' }).nextCreditAmount).toBeNull();
+    expect(mapReferralSummary({ next_credit_amount: 20 }).nextCreditAmount).toBe(20);
+    expect(mapReferralSummary({ next_credit_amount: null }).nextCreditAmount).toBeNull();
+    expect(mapReferralSummary({ nextCreditAmount: 0 }).nextCreditAmount).toBe(0);
   });
 
   it('handles snake_case fields and missing defaults', () => {
@@ -941,6 +952,7 @@ describe('mapReferralSummary', () => {
     expect(empty.totalReferred).toBe(0);
     expect(empty.unusedCreditCount).toBe(0);
     expect(empty.unusedCreditTotal).toBe(0);
+    expect(empty.nextCreditAmount).toBeNull();
   });
 });
 

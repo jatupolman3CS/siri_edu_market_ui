@@ -226,6 +226,16 @@ export interface AdminWatermarkCopyQuery {
   pageSize?: number;
 }
 
+/**
+ * wave-l0-hardening v1 §3.5/§4.3: `/admin/transactions` search + status filter. `q` = order
+ * number / buyer email / buyer name / item title (server-side contains); `status` = order status
+ * slugs (OR within). Omitted/empty = no filter.
+ */
+export interface AdminTransactionsFilters {
+  q?: string;
+  status?: string[];
+}
+
 export interface StorageUsage {
   bucketName: string;
   objectCount: number;
@@ -716,9 +726,15 @@ export class AdminService {
   async listTransactionsPaged(
     page = 1,
     pageSize = 10,
+    filters?: AdminTransactionsFilters,
   ): Promise<PagedResult<AdminTransaction>> {
+    // wave-l0-hardening §4.3: empty search / no status chip ("all") are omitted, not sent blank.
+    const q = filters?.q?.trim();
+    const status = filters?.status?.length ? filters.status : undefined;
     try {
-      const result = await getApiAdminTransactions({ query: { Page: page, PageSize: pageSize } });
+      const result = await getApiAdminTransactions({
+        query: { Page: page, PageSize: pageSize, Q: q || undefined, Status: status },
+      });
       const data = unwrapSdkResult(result);
       return {
         items: (data.items ?? []).map(mapAdminTransaction),

@@ -5,7 +5,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { THAI_BANKS, type PayoutAccountType, type PromptPayIdType } from '../../../core/models';
 import { PayoutAccountService, SellerService } from '../../../core/services';
 import { IconComponent } from '../icon/icon.component';
-import { downloadUrlForStorageKey, resolvePublicUrl } from '../../../core/api-runtime';
+import { downloadUrlForStorageKey, resolveDownloadUrl } from '../../../core/api-runtime';
+import { AuthService } from '../../../core/services/auth.service';
 
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -39,10 +40,18 @@ export class PayoutAccountFormComponent {
   private readonly payoutAccount = inject(PayoutAccountService);
   private readonly seller = inject(SellerService);
   private readonly message = inject(NzMessageService);
+  private readonly auth = inject(AuthService);
   readonly translation = inject(TranslationService);
 
   readonly banks = THAI_BANKS;
-  readonly resolveQrUrl = resolvePublicUrl;
+
+  /**
+   * wave-l0-hardening v1 §4.2 (L0-2): the PromptPay QR is a private file — the storage policy no
+   * longer serves it anonymously, so the `<img src>` carries the access token (same as payout
+   * slips). Display-only: `promptPayQrImageUrl` sent back to the API stays the bare pathname.
+   */
+  readonly resolveQrUrl = (url: string | null | undefined): string =>
+    resolveDownloadUrl(url, this.auth.accessToken(), null, true);
 
   readonly account = this.payoutAccount.account;
   readonly state = this.payoutAccount.state;

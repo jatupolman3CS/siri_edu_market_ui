@@ -2032,6 +2032,7 @@ export type ReferralSummaryResponse = {
   unusedCreditCount?: number;
   unusedCreditTotal?: number;
   referralDiscountAmount?: number;
+  nextCreditAmount?: number | null;
 };
 
 export type RefreshTokenRequest = {
@@ -2432,6 +2433,15 @@ export type SellerReviewResponse = {
   sellerReplyText?: string | null;
   sellerRepliedAt?: string | null;
   createdAt?: string;
+};
+
+export type SellerReviewStatsResponse = {
+  totalCount?: number;
+  positiveCount?: number;
+  positivePercent?: number;
+  repliedCount?: number;
+  replyPercent?: number;
+  averageReplyHours?: number | null;
 };
 
 export type SellerSalesByMonthItem = {
@@ -3208,11 +3218,25 @@ export type GetApiAdminTransactionsData = {
   body?: never;
   path?: never;
   query?: {
+    Q?: string;
+    Status?: Array<string>;
+    CreatedFrom?: string;
+    CreatedTo?: string;
     Page?: number;
     PageSize?: number;
   };
   url: '/api/admin/transactions';
 };
+
+export type GetApiAdminTransactionsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails;
+};
+
+export type GetApiAdminTransactionsError =
+  GetApiAdminTransactionsErrors[keyof GetApiAdminTransactionsErrors];
 
 export type GetApiAdminTransactionsResponses = {
   /**
@@ -9319,6 +9343,23 @@ export type GetApiSellerBalanceEntriesResponses = {
 
 export type GetApiSellerBalanceEntriesResponse =
   GetApiSellerBalanceEntriesResponses[keyof GetApiSellerBalanceEntriesResponses];
+
+export type GetApiSellerReviewsStatsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/seller/reviews/stats';
+};
+
+export type GetApiSellerReviewsStatsResponses = {
+  /**
+   * OK
+   */
+  200: SellerReviewStatsResponse;
+};
+
+export type GetApiSellerReviewsStatsResponse =
+  GetApiSellerReviewsStatsResponses[keyof GetApiSellerReviewsStatsResponses];
 
 export type GetApiSellerReviewsData = {
   body?: never;

@@ -682,3 +682,79 @@ describe('SellerService — load states for the studio pages (R-17)', () => {
     expect(res.totalCount).toBe(0);
   });
 });
+
+describe('SellerService — loadReviewStats (security-review-followups v1 §4.2, FIX-07)', () => {
+  function buildServiceWithReporterSpy(): { service: SellerService; report: ReturnType<typeof vi.fn> } {
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [SellerService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    return { service: TestBed.inject(SellerService), report };
+  }
+
+  it('maps GET /api/seller/reviews/stats into SellerReviewStats', async () => {
+    stubRoute('GET', '/api/seller/reviews/stats', {
+      totalCount: 3,
+      positiveCount: 2,
+      positivePercent: 67,
+      repliedCount: 1,
+      replyPercent: 33,
+      averageReplyHours: 1.5,
+    });
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await expect(service.loadReviewStats()).resolves.toEqual({
+      totalCount: 3,
+      positiveCount: 2,
+      positivePercent: 67,
+      repliedCount: 1,
+      replyPercent: 33,
+      averageReplyHours: 1.5,
+    });
+    expect(requestBodies.filter((r) => r.method === 'GET' && r.path === '/api/seller/reviews/stats')).toHaveLength(1);
+    expect(service.sellerProfileRequired()).toBe(false);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('keeps averageReplyHours null and defaults missing counts to 0 (no reviews, AC-07-3)', async () => {
+    stubRoute('GET', '/api/seller/reviews/stats', {
+      totalCount: 0,
+      positivePercent: 0,
+      replyPercent: 0,
+      averageReplyHours: null,
+    });
+    const service = buildService();
+
+    await expect(service.loadReviewStats()).resolves.toEqual({
+      totalCount: 0,
+      positiveCount: 0,
+      positivePercent: 0,
+      repliedCount: 0,
+      replyPercent: 0,
+      averageReplyHours: null,
+    });
+  });
+
+  it('resolves null without a toast when the request fails (AC-07-10)', async () => {
+    stubRoute('GET', '/api/seller/reviews/stats', { title: 'boom', status: 500, statusCode: 500 }, 500);
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await expect(service.loadReviewStats()).resolves.toBeNull();
+    expect(report).not.toHaveBeenCalled();
+    expect(service.sellerProfileRequired()).toBe(false);
+  });
+
+  it('sets sellerProfileRequired (no toast) on 403 seller_profile_required, like loadReviewsPaged', async () => {
+    stubRoute(
+      'GET',
+      '/api/seller/reviews/stats',
+      { title: 'Forbidden', status: 403, statusCode: 403, code: 'seller_profile_required' },
+      403,
+    );
+    const { service, report } = buildServiceWithReporterSpy();
+
+    await expect(service.loadReviewStats()).resolves.toBeNull();
+    expect(service.sellerProfileRequired()).toBe(true);
+    expect(report).not.toHaveBeenCalled();
+  });
+});

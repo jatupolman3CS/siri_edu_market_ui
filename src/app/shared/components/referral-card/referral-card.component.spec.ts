@@ -79,6 +79,7 @@ describe('ReferralCardComponent', () => {
       totalReferred: 5,
       unusedCreditCount: 2,
       unusedCreditTotal: 40,
+      nextCreditAmount: 20,
     });
     mockState.set(idleActionState());
     fixture.detectChanges();
@@ -104,6 +105,7 @@ describe('ReferralCardComponent', () => {
       totalReferred: 0,
       unusedCreditCount: 0,
       unusedCreditTotal: 0,
+      nextCreditAmount: null,
     });
     fixture.detectChanges();
 
@@ -125,6 +127,7 @@ describe('ReferralCardComponent', () => {
       unusedCreditCount: 1,
       unusedCreditTotal: 50,
       referralDiscountAmount: 50,
+      nextCreditAmount: 50,
     });
     mockAffSummary.set({
       code: 'AFF99',

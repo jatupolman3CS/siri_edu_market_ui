@@ -731,6 +731,40 @@
         ],
         "parameters": [
           {
+            "name": "Q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "CreatedFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "CreatedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -764,6 +798,26 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedResponseOfAdminTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -15962,6 +16016,35 @@
         }
       }
     },
+    "/api/seller/reviews/stats": {
+      "get": {
+        "tags": [
+          "SellerDashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerReviewStatsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerReviewStatsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerReviewStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/seller/reviews": {
       "get": {
         "tags": [
@@ -25979,6 +26062,11 @@
           "referralDiscountAmount": {
             "type": "number",
             "format": "double"
+          },
+          "nextCreditAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -27317,6 +27405,36 @@
           },
           "createdAt": {
             "type": "string"
+          }
+        }
+      },
+      "SellerReviewStatsResponse": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "positiveCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "positivePercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repliedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replyPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageReplyHours": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },

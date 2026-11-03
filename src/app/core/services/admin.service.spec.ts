@@ -1414,3 +1414,53 @@ describe('AdminService — dashboardState (R-17)', () => {
     expect(admin.dashboard()).toBeNull();
   });
 });
+
+/**
+ * wave-l0-hardening v2 §4.3 (L0-5 / QW6): `listTransactionsPaged` forwards the page's search
+ * and status chips to `GET /api/admin/transactions` as `Q` / `Status`, and omits them when
+ * empty — a blank `Q=` or an empty `Status` must never reach the backend.
+ */
+describe('AdminService — listTransactionsPaged filters (wave-l0-hardening §4.3)', () => {
+  let requestedUrls: URL[];
+
+  beforeEach(() => {
+    requestedUrls = [];
+    const stubbed = globalThis.fetch;
+    globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      requestedUrls.push(new URL(request.url));
+      return stubbed(input as RequestInfo, init);
+    }) as typeof globalThis.fetch;
+    stubRoute('GET', '/api/admin/transactions', {
+      body: { items: [], page: 2, pageSize: 10, totalCount: 0, totalPages: 1 },
+    });
+  });
+
+  it('sends Page, PageSize, Q and every Status value', async () => {
+    const admin = buildService();
+
+    await admin.listTransactionsPaged(2, 10, { q: 'ORD-123', status: ['paid', 'refunded'] });
+
+    expect(requestedUrls).toHaveLength(1);
+    const params = requestedUrls[0].searchParams;
+    expect(params.get('Page')).toBe('2');
+    expect(params.get('PageSize')).toBe('10');
+    expect(params.get('Q')).toBe('ORD-123');
+    expect(params.getAll('Status')).toEqual(['paid', 'refunded']);
+  });
+
+  it('omits Q and Status when the search is empty/blank and no status chip is selected', async () => {
+    const admin = buildService();
+
+    await admin.listTransactionsPaged(1, 10, { q: '   ', status: [] });
+    await admin.listTransactionsPaged(1, 10, { q: '' });
+    await admin.listTransactionsPaged(1, 10);
+
+    expect(requestedUrls).toHaveLength(3);
+    for (const url of requestedUrls) {
+      expect(url.searchParams.has('Q')).toBe(false);
+      expect(url.searchParams.has('Status')).toBe(false);
+      expect(url.searchParams.get('Page')).toBe('1');
+    }
+  });
+});

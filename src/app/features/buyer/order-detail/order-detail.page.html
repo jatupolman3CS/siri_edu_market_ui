@@ -210,10 +210,20 @@
           <app-icon name="download" [size]="14" />
           {{ 'orderDetail.goToLibrary' | trans }}
         </a>
-        <button type="button" class="btn-ghost" (click)="printReceipt()">
-          <app-icon name="doc" [size]="14" />
-          {{ 'orderDetail.viewReceipt' | trans }}
-        </button>
+        <!-- C3: the server's PDF receipt (ต้นฉบับ/สำเนา), only where one is issued. -->
+        @if (canDownloadReceipt()) {
+          <button
+            type="button"
+            class="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="order-detail-receipt"
+            [disabled]="downloadingReceipt()"
+            [attr.aria-busy]="downloadingReceipt()"
+            (click)="downloadReceipt(o.id, o.orderNumber)"
+          >
+            <app-icon name="doc" [size]="14" />
+            {{ downloadingReceipt() ? ('orderDetail.pleaseWait' | trans) : ('orderDetail.viewReceipt' | trans) }}
+          </button>
+        }
         <!-- BUG-09: an unpaid order blocks a fresh checkout for the same documents,
              so the buyer needs a way to release it. -->
         @if (o.status === 'awaiting_payment') {

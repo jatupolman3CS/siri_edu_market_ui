@@ -58,6 +58,7 @@ describe('ReferralService', () => {
       totalReferred: 2,
       unusedCreditCount: 1,
       unusedCreditTotal: 20,
+      nextCreditAmount: 20,
     });
 
     expect(service.summary()).toEqual({
@@ -66,6 +67,7 @@ describe('ReferralService', () => {
       totalReferred: 2,
       unusedCreditCount: 1,
       unusedCreditTotal: 20,
+      nextCreditAmount: 20,
     });
   });
 });

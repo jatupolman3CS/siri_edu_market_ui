@@ -126,15 +126,22 @@ export class BuyerCheckoutPage implements OnDestroy {
   readonly useLoyaltyPoints = signal(false);
   private referralDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * security-review-followups v1 §4.1 (FIX-04): the amount of the one credit the backend will
+   * actually redeem for this order (`GET /api/me/referral` `nextCreditAmount`) — not the sum of all
+   * unused credits, and not a hardcoded 20.
+   */
+  readonly referralCreditAmount = computed(() => this.referral.summary()?.nextCreditAmount ?? null);
+  readonly canUseReferralCredit = computed(() => (this.referralCreditAmount() ?? 0) > 0);
+
   readonly referralDiscount = computed(() => {
     let discount = 0;
     const v = this.referralValidation();
     if (v?.valid) {
       discount += v.discountAmount ?? 20;
     }
-    if (this.useReferralCredit() && (this.referral.summary()?.unusedCreditCount ?? 0) > 0) {
-      const creditTotal = this.referral.summary()?.unusedCreditTotal ?? 0;
-      discount += Math.min(creditTotal, 20);
+    if (this.useReferralCredit() && this.canUseReferralCredit()) {
+      discount += this.referralCreditAmount()!;
     }
     return discount;
   });
@@ -491,7 +498,7 @@ export class BuyerCheckoutPage implements OnDestroy {
     if (this.referralValidation()?.valid && this.referralCode().trim()) {
       createInput.referralCode = this.referralCode().trim().toUpperCase();
     }
-    if (this.useReferralCredit()) {
+    if (this.useReferralCredit() && this.canUseReferralCredit()) {
       createInput.useReferralCredit = true;
     }
     if (this.useLoyaltyPoints() && this.loyaltyPointsToRedeem() > 0) {

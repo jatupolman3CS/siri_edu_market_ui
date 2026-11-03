@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import type { AdminPayoutResponse } from '../../../core/api';
-import { resolveDownloadUrl, resolvePublicUrl } from '../../../core/api-runtime';
+import { resolveDownloadUrl } from '../../../core/api-runtime';
 import type { BatchPayoutSlipsResponse, PayoutSlip } from '../../../core/models';
 import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -86,8 +86,9 @@ export class AdminPayoutsPage {
   readonly busyId = signal<string | null>(null);
   readonly qrModalPayout = signal<AdminPayoutResponse | null>(null);
 
+  /** wave-l0-hardening v1 §4.2 (L0-2): the payee's QR is a private file — fetch it with the token. */
   qrImageUrl(payout: AdminPayoutResponse): string {
-    return resolvePublicUrl(payout.payoutAccountQrImageUrl);
+    return resolveDownloadUrl(payout.payoutAccountQrImageUrl, this.auth.accessToken(), null, true);
   }
 
   /** §4.5: "รอบโอนถัดไป" banner, from `GET /api/admin/settings`. */

@@ -293,6 +293,11 @@ describe('AdminPayoutsPage — PromptPay QR', () => {
 
     const qrImage = dialog?.querySelector('[data-testid="payout-qr-image"]') as HTMLImageElement | null;
     expect(qrImage?.getAttribute('src')).toContain(url);
+    // wave-l0-hardening §4.2 (AC-A4-7): the QR is a private file now — fetched with the token, inline.
+    const qrSrc = new URL(qrImage?.getAttribute('src') ?? '', window.location.origin);
+    expect(qrSrc.searchParams.get('token')).toBe('test-token');
+    expect(qrSrc.searchParams.get('inline')).toBe('true');
+    expect(fixture.componentInstance.qrImageUrl(payout)).toBe(qrImage?.getAttribute('src'));
     expect(qrImage?.className).toContain('max-w-[26rem]');
     expect(qrImage?.className).toContain('max-h-[70dvh]');
     (dialog?.querySelector('button[aria-label="ปิด"]') as HTMLButtonElement).click();

@@ -421,6 +421,7 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
       totalReferred: 0,
       unusedCreditCount: 0,
       unusedCreditTotal: 0,
+      nextCreditAmount: null,
     });
     const { fixture } = render(fakePaymentMethods([]), referralService);
     await settle();
@@ -435,6 +436,7 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
       totalReferred: 2,
       unusedCreditCount: 1,
       unusedCreditTotal: 20,
+      nextCreditAmount: 20,
     });
     fixture.detectChanges();
 
@@ -480,6 +482,7 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
       totalReferred: 1,
       unusedCreditCount: 1,
       unusedCreditTotal: 20,
+      nextCreditAmount: 20,
     });
     const { fixture, orders } = render(fakePaymentMethods([]), referral);
     await settle();
@@ -494,6 +497,102 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
       saveNewCard: false,
       useReferralCredit: true,
     });
+  });
+
+  // security-review-followups v1 §1.3 AC-04-7 (FIX-04): the credit discount is the backend's
+  // `nextCreditAmount` (the one credit the order will actually redeem), not min(unusedCreditTotal, 20).
+  it('deducts nextCreditAmount (not a hardcoded 20) when the credit checkbox is ticked', async () => {
+    const referral = fakeReferralService({
+      code: 'MYCODE',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+      totalReferred: 2,
+      unusedCreditCount: 2,
+      unusedCreditTotal: 55,
+      nextCreditAmount: 35,
+    });
+    const { fixture } = render(fakePaymentMethods([]), referral);
+    await settle();
+    const page = fixture.componentInstance;
+
+    expect(page.referralCreditAmount()).toBe(35);
+    expect(page.canUseReferralCredit()).toBe(true);
+    expect(page.referralDiscount()).toBe(0);
+    expect(page.payableTotal()).toBe(150);
+
+    page.useReferralCredit.set(true);
+
+    expect(page.referralDiscount()).toBe(35);
+    expect(page.payableTotal()).toBe(150 - 35);
+  });
+
+  it('stacks nextCreditAmount with a valid referral code and never drops the payable total below 0', async () => {
+    const referral = fakeReferralService({
+      code: 'MYCODE',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+      totalReferred: 1,
+      unusedCreditCount: 1,
+      unusedCreditTotal: 140,
+      nextCreditAmount: 140,
+    });
+    const { fixture } = render(fakePaymentMethods([]), referral);
+    await settle();
+    const page = fixture.componentInstance;
+
+    page.useReferralCredit.set(true);
+    await page.validateReferralCode('FRIEND20');
+
+    expect(page.referralDiscount()).toBe(140 + 20);
+    expect(page.payableTotal()).toBe(0);
+  });
+
+  it('gives no credit discount and omits useReferralCredit from orders.create when nextCreditAmount is null', async () => {
+    const referral = fakeReferralService({
+      code: 'MYCODE',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+      totalReferred: 1,
+      // the only unused credit is held by an AwaitingPayment order -> backend reports no usable credit
+      unusedCreditCount: 1,
+      unusedCreditTotal: 20,
+      nextCreditAmount: null,
+    });
+    const { fixture, orders } = render(fakePaymentMethods([]), referral);
+    await settle();
+    const page = fixture.componentInstance;
+
+    page.useReferralCredit.set(true);
+    fixture.detectChanges();
+
+    expect(page.canUseReferralCredit()).toBe(false);
+    expect(page.referralDiscount()).toBe(0);
+    expect(page.payableTotal()).toBe(150);
+
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+    await page.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith({ saveNewCard: false });
+  });
+
+  it('treats a summary without nextCreditAmount (pre-FIX-04 backend) as no usable credit', async () => {
+    const referral = fakeReferralService({
+      code: 'MYCODE',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+      totalReferred: 1,
+      unusedCreditCount: 1,
+      unusedCreditTotal: 20,
+    } as unknown as ReferralSummary);
+    const { fixture, orders } = render(fakePaymentMethods([]), referral);
+    await settle();
+    const page = fixture.componentInstance;
+
+    page.useReferralCredit.set(true);
+
+    expect(page.referralCreditAmount()).toBeNull();
+    expect(page.referralDiscount()).toBe(0);
+
+    orders.create.mockResolvedValueOnce({ ok: false, status: 500 });
+    await page.startPayment();
+
+    expect(orders.create).toHaveBeenCalledWith({ saveNewCard: false });
   });
 
   it('includes affiliateClickToken in orders.create when token is present in storage', async () => {

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { resolveAvatarUrl, resolveCoverUrl } from '../../../core/brand-assets';
-import { SellerService } from '../../../core/services';
+import { SellerService, type SellerReviewStats } from '../../../core/services';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { RatingStarsComponent } from '../../../shared/components/rating-stars/rating-stars.component';
@@ -52,7 +52,8 @@ export class SellerReviewsPage {
   private readonly translation = inject(TranslationService);
 
   readonly items = signal<ReviewRow[]>([]);
-  readonly statsRows = signal<ReviewRow[] | null>(null);
+  /** security-review-followups v1 §4.2 (FIX-07): aggregates over ALL reviews from the backend. */
+  readonly serverStats = signal<SellerReviewStats | null>(null);
   readonly loading = signal<boolean>(false);
   readonly page = signal<number>(1);
   readonly pageSize = signal<number>(20);
@@ -62,39 +63,26 @@ export class SellerReviewsPage {
   readonly replyDraft = signal<string>('');
   readonly replySubmitting = signal<boolean>(false);
 
-  /** Aggregates from all reviews (up to 100), avoiding pagination-based statistical fluctuations. */
+  /**
+   * Stats cards — backend aggregate over ALL of the seller's reviews (FIX-07, AC-07-9), so paging
+   * or changing page size never moves the numbers. Stats unavailable → `0%` / `—` (AC-07-10).
+   */
   readonly reviewStats = computed(() => {
-    const rows = this.statsRows() ?? this.items();
-    const n = rows.length;
-    if (!n) {
+    const s = this.serverStats();
+    if (!s) {
       return { positivePct: 0, replyPct: 0, avgHours: null as number | null };
     }
-    const pos = rows.filter((r) => (r.rating ?? 0) >= 4).length;
-    const replied = rows.filter((r) => (r.sellerReplyText ?? '').trim().length > 0).length;
-    const hoursDiffs: number[] = [];
-    for (const r of rows) {
-      if (!r.sellerRepliedAt || !r.createdAt) continue;
-      const end = new Date(r.sellerRepliedAt).getTime();
-      const start = new Date(r.createdAt).getTime();
-      if (!Number.isFinite(end) || !Number.isFinite(start)) continue;
-      const h = (end - start) / 3_600_000;
-      if (h >= 0) hoursDiffs.push(h);
-    }
-    const avgHours =
-      hoursDiffs.length > 0
-        ? hoursDiffs.reduce((s, x) => s + x, 0) / hoursDiffs.length
-        : null;
-    return {
-      positivePct: Math.round((pos / n) * 100),
-      replyPct: Math.round((replied / n) * 100),
-      avgHours,
-    };
+    return { positivePct: s.positivePercent, replyPct: s.replyPercent, avgHours: s.averageReplyHours };
   });
 
   constructor() {
     void this.seller.refreshDashboard();
     void this.load();
-    void this.loadAllStats();
+    void this.loadStats();
+  }
+
+  async loadStats(): Promise<void> {
+    this.serverStats.set(await this.seller.loadReviewStats());
   }
 
   async load(): Promise<void> {
@@ -117,34 +105,8 @@ export class SellerReviewsPage {
       }));
       this.items.set(list);
       this.totalCount.set(paged.totalCount);
-      if (paged.totalCount <= this.pageSize()) {
-        this.statsRows.set(list);
-      }
     } finally {
       this.loading.set(false);
-    }
-  }
-
-  async loadAllStats(): Promise<void> {
-    try {
-      const all = await this.seller.loadReviews(1, 100);
-      const list: ReviewRow[] = all.map((r) => ({
-        id: r.id,
-        documentId: r.documentId,
-        docTitle: r.documentTitle,
-        documentCoverUrl: resolveCoverUrl(r.documentCoverUrl),
-        documentSlug: r.documentSlug,
-        buyerName: r.buyerName,
-        buyerAvatar: resolveAvatarUrl(r.buyerAvatarUrl),
-        rating: r.rating,
-        comment: r.comment,
-        createdAt: r.createdAt,
-        sellerReplyText: r.sellerReplyText,
-        sellerRepliedAt: r.sellerRepliedAt,
-      }));
-      this.statsRows.set(list);
-    } catch {
-      // Best-effort; falls back to current page items
     }
   }
 
@@ -175,15 +137,7 @@ export class SellerReviewsPage {
               : row
           )
         );
-        this.statsRows.update((list) =>
-          list
-            ? list.map((row) =>
-                row.id === reviewId
-                  ? { ...row, sellerReplyText: updated.sellerReplyText, sellerRepliedAt: updated.sellerRepliedAt }
-                  : row
-              )
-            : null
-        );
+        void this.loadStats();
         this.message.success(this.translation.t('seller.replySuccess'));
         this.replyingReviewId.set(null);
         this.replyDraft.set('');

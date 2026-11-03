@@ -1287,6 +1287,56 @@ describe('CatalogService — seller follower count & profile cache', () => {
     expect(profileCalls.length).toBe(1);
   });
 
+  it('wave-l0-hardening §4.1: loadSellerProfile treats a 404 (missing/banned store) as not-found — null, idle, no toast', async () => {
+    stubRoute('GET', '/api/sellers/seller-gone/profile', { title: 'Not Found', status: 404 }, 404);
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [CatalogService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const catalog = TestBed.inject(CatalogService);
+
+    const profile = await catalog.loadSellerProfile('seller-gone');
+
+    expect(profile).toBeNull();
+    expect(catalog.sellerProfile()).toBeNull();
+    expect(catalog.sellerProfileState().status).toBe('idle');
+    expect(catalog.sellerSalesByMonth()).toEqual([]);
+    expect(report).not.toHaveBeenCalled();
+    // Negative-cached like fetchSellerProfile's 404 — document cards don't re-request it.
+    await catalog.fetchSellerProfile('seller-gone');
+    expect(requests.filter((r) => r.path === '/api/sellers/seller-gone/profile').length).toBe(1);
+  });
+
+  it('wave-l0-hardening §4.1: a 404 with an empty body (status only on the response) is still silent', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(null, { status: 404 })) as typeof globalThis.fetch;
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [CatalogService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const catalog = TestBed.inject(CatalogService);
+
+    await expect(catalog.loadSellerProfile('not-a-guid')).resolves.toBeNull();
+    expect(catalog.sellerProfileState().status).toBe('idle');
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('wave-l0-hardening §4.1: loadSellerProfile still reports a 500 and enters the error state', async () => {
+    stubRoute('GET', '/api/sellers/seller-1/profile', { title: 'Server Error', status: 500 }, 500);
+    const report = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [CatalogService, { provide: ApiFailureReporter, useValue: { report } }],
+    });
+    const catalog = TestBed.inject(CatalogService);
+
+    const profile = await catalog.loadSellerProfile('seller-1');
+
+    expect(profile).toBeNull();
+    expect(catalog.sellerProfile()).toBeNull();
+    expect(catalog.sellerProfileState().status).toBe('error');
+    expect(report).toHaveBeenCalledTimes(1);
+    expect(report).toHaveBeenCalledWith('errors.context.loadSellerInfo', expect.anything());
+  });
+
   it('loadSellerProfilesForDocuments deduplicates and skips failed or cached sellers', async () => {
     stubRoute('GET', '/api/sellers/s-fail/profile', { status: 404 }, 404);
     stubRoute('GET', '/api/sellers/s-ok/profile', { id: 's-ok', studioName: 'OK Studio' });

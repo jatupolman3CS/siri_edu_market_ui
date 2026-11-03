@@ -31,6 +31,7 @@ import {
   getApiSellerPayouts,
   getApiSellerQna,
   getApiSellerReviews,
+  getApiSellerReviewsStats,
   getApiSellerStoreSections,
   postApiFilesUpload,
   postApiSellerDocuments,
@@ -52,6 +53,7 @@ import type {
   SellerAutofillResponse,
   SellerDocumentResponse,
   SellerReviewResponse,
+  SellerReviewStatsResponse,
   SetListedSellerDocumentMainFileRequest,
   StoreSectionResponse,
   SellerEarningsResponse,
@@ -121,6 +123,19 @@ export type SellerReviewRow = {
   sellerReplyText?: string | null;
   sellerRepliedAt?: string | null;
 };
+
+/**
+ * security-review-followups v1 §3.4/§4.2 (FIX-07): `GET /api/seller/reviews/stats` — aggregates over
+ * ALL of the seller's reviews (computed server-side), not a page/sample of them.
+ */
+export interface SellerReviewStats {
+  totalCount: number;
+  positiveCount: number;
+  positivePercent: number;
+  repliedCount: number;
+  replyPercent: number;
+  averageReplyHours: number | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SellerService {
@@ -722,6 +737,33 @@ export class SellerService {
     } catch (e) {
       this.handleSellerScopedError('errors.context.loadCustomerReviews', e);
       return { items: [], totalCount: 0, page, pageSize, totalPages: 0 };
+    }
+  }
+
+  /**
+   * security-review-followups v1 §4.2 (FIX-07): review aggregates for the stats cards on
+   * `/seller/reviews`. `null` = stats unavailable — the cards show `0%` / `—` and no error toast is
+   * raised (AC-07-10); a `403 seller_profile_required` still flips `sellerProfileRequired` the same
+   * way `loadReviewsPaged` does.
+   */
+  async loadReviewStats(): Promise<SellerReviewStats | null> {
+    try {
+      const result = await getApiSellerReviewsStats();
+      const data = unwrapSdkResult(result as SdkResult<SellerReviewStatsResponse>);
+      this._sellerProfileRequired.set(false);
+      return {
+        totalCount: data.totalCount ?? 0,
+        positiveCount: data.positiveCount ?? 0,
+        positivePercent: data.positivePercent ?? 0,
+        repliedCount: data.repliedCount ?? 0,
+        replyPercent: data.replyPercent ?? 0,
+        averageReplyHours: data.averageReplyHours ?? null,
+      };
+    } catch (e) {
+      if (extractErrorStatus(e) === 403 && extractErrorCode(e) === 'seller_profile_required') {
+        this._sellerProfileRequired.set(true);
+      }
+      return null;
     }
   }
 

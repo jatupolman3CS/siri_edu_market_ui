@@ -1386,7 +1386,10 @@ export function mapReferralSummary(raw: unknown): ReferralSummary {
     unused_credit_total?: number | null;
     referralDiscountAmount?: number | null;
     referral_discount_amount?: number | null;
+    nextCreditAmount?: number | null;
+    next_credit_amount?: number | null;
   };
+  const nextCreditAmount = r.nextCreditAmount ?? r.next_credit_amount;
   return {
     code: r.code ?? '',
     shareUrl: r.shareUrl ?? r.share_url ?? '',
@@ -1397,6 +1400,8 @@ export function mapReferralSummary(raw: unknown): ReferralSummary {
       r.referralDiscountAmount != null || r.referral_discount_amount != null
         ? Number(r.referralDiscountAmount ?? r.referral_discount_amount)
         : undefined,
+    // security-review-followups v1 §4.1 (AC-04-8): absent/null -> null
+    nextCreditAmount: nextCreditAmount != null ? Number(nextCreditAmount) : null,
   };
 }
 

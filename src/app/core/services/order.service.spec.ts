@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { OrderService } from './order.service';
+import { OrderService, receiptFilename } from './order.service';
 import { ApiFailureReporter } from './api-failure-reporter.service';
 
 /**
@@ -292,5 +292,147 @@ describe('OrderService.loadDetail — detailError (F88)', () => {
     await service.loadDetail('order-500');
     expect(service.detail()?.id).toBe('order-500');
     expect(service.detailError()).toBeNull();
+  });
+});
+
+describe('OrderService.downloadReceipt — C3: PDF receipt via GET /api/orders/{id}/receipt', () => {
+  let createObjectURL: ReturnType<typeof vi.fn>;
+  let revokeObjectURL: ReturnType<typeof vi.fn>;
+  let clicked: HTMLAnchorElement[];
+  let realCreate: typeof URL.createObjectURL | undefined;
+  let realRevoke: typeof URL.revokeObjectURL | undefined;
+  let clickSpy: ReturnType<typeof vi.spyOn>;
+
+  function pdfResponse(headers: Record<string, string> = {}): Response {
+    return new Response(new Blob(['%PDF-1.7'], { type: 'application/pdf' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/pdf', ...headers },
+    });
+  }
+
+  function stubFetch(response: () => Response): { urls: string[] } {
+    const urls: string[] = [];
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      urls.push(`${request.method.toUpperCase()} ${new URL(request.url).pathname}`);
+      return response();
+    }) as typeof globalThis.fetch;
+    return { urls };
+  }
+
+  function build(apiFail = { report: vi.fn() }): OrderService {
+    TestBed.configureTestingModule({
+      providers: [OrderService, { provide: ApiFailureReporter, useValue: apiFail }],
+    });
+    return TestBed.inject(OrderService);
+  }
+
+  beforeEach(() => {
+    clicked = [];
+    realCreate = URL.createObjectURL;
+    realRevoke = URL.revokeObjectURL;
+    createObjectURL = vi.fn(() => 'blob:receipt-1');
+    revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL as unknown as typeof URL.revokeObjectURL;
+    clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push(this);
+    });
+  });
+
+  afterEach(() => {
+    clickSpy.mockRestore();
+    if (realCreate) URL.createObjectURL = realCreate;
+    if (realRevoke) URL.revokeObjectURL = realRevoke;
+  });
+
+  it('GETs the receipt and saves it under the Content-Disposition filename via <a download> (no popup)', async () => {
+    const { urls } = stubFetch(() =>
+      pdfResponse({ 'Content-Disposition': 'attachment; filename=receipt-order-1.pdf; filename*=UTF-8\'\'receipt-order-1.pdf' }),
+    );
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const apiFail = { report: vi.fn() };
+
+    const ok = await build(apiFail).downloadReceipt('order-1', 'SE-1');
+
+    expect(ok).toBe(true);
+    expect(urls).toEqual(['GET /api/orders/order-1/receipt']);
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(clicked).toHaveLength(1);
+    expect(clicked[0].download).toBe('receipt-order-1.pdf');
+    expect(clicked[0].getAttribute('href')).toBe('blob:receipt-1');
+    expect(clicked[0].isConnected).toBe(false);
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(apiFail.report).not.toHaveBeenCalled();
+    openSpy.mockRestore();
+  });
+
+  it('falls back to receipt-<orderNumber>.pdf when Content-Disposition is not readable', async () => {
+    stubFetch(() => pdfResponse());
+
+    expect(await build().downloadReceipt('order-1', 'SE-20261102-0001')).toBe(true);
+
+    expect(clicked[0].download).toBe('receipt-SE-20261102-0001.pdf');
+  });
+
+  it('falls back to the order id when there is no order number either', async () => {
+    stubFetch(() => pdfResponse());
+
+    expect(await build().downloadReceipt('order-1', '')).toBe(true);
+
+    expect(clicked[0].download).toBe('receipt-order-1.pdf');
+  });
+
+  it('an unpaid order (400 validation_failed) toasts the server message and saves nothing', async () => {
+    const body = problem('validation_failed', 'ยังไม่สามารถออกใบเสร็จได้ เนื่องจากคำสั่งซื้อนี้ยังไม่ได้ชำระเงิน', 400);
+    stubFetch(() => jsonResponse(body, 400));
+    const apiFail = { report: vi.fn() };
+
+    expect(await build(apiFail).downloadReceipt('order-1', 'SE-1')).toBe(false);
+
+    expect(apiFail.report).toHaveBeenCalledWith(
+      'errors.context.downloadFile',
+      expect.objectContaining({ detail: body.detail }),
+    );
+    expect(clicked).toHaveLength(0);
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('a 404 (not the buyer\'s order) is reported and never rejects', async () => {
+    stubFetch(() => jsonResponse(problem('not_found', 'ไม่พบคำสั่งซื้อนี้', 404), 404));
+    const apiFail = { report: vi.fn() };
+
+    await expect(build(apiFail).downloadReceipt('order-x', 'SE-X')).resolves.toBe(false);
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.downloadFile', expect.anything());
+    expect(clicked).toHaveLength(0);
+  });
+
+  it('a non-PDF 200 payload is reported instead of saving garbage', async () => {
+    stubFetch(() => new Response(JSON.stringify({ hello: 'world' }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    const apiFail = { report: vi.fn() };
+
+    expect(await build(apiFail).downloadReceipt('order-1', 'SE-1')).toBe(false);
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.downloadFile');
+    expect(clicked).toHaveLength(0);
+  });
+
+  it('a network failure is reported and resolves false', async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    }) as typeof globalThis.fetch;
+    const apiFail = { report: vi.fn() };
+
+    expect(await build(apiFail).downloadReceipt('order-1', 'SE-1')).toBe(false);
+    expect(apiFail.report).toHaveBeenCalledWith('errors.context.downloadFile', expect.anything());
+  });
+});
+
+describe('receiptFilename', () => {
+  it('prefers the header name, sanitized', () => {
+    expect(receiptFilename('a/b/receipt:1.pdf', 'receipt-SE-1', 'application/pdf')).toBe('receipt 1.pdf');
+  });
+
+  it('adds .pdf to an extensionless fallback', () => {
+    expect(receiptFilename(null, 'receipt-SE-1', '')).toBe('receipt-SE-1.pdf');
   });
 });

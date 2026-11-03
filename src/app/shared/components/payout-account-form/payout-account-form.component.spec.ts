@@ -6,6 +6,7 @@ import { PayoutAccountService, SellerService, type RevealedPayoutAccount } from 
 import { idleActionState, loadingActionState, errorActionState, type ActionState } from '../../../core/services/action-state';
 import type { PayoutAccount } from '../../../core/models';
 import type { UploadResponse } from '../../../core/api/types.gen';
+import { AuthService } from '../../../core/services/auth.service';
 
 /**
  * seller-payout-account-self-service v1 (docs/contracts/seller-payout-account-self-service.md
@@ -97,6 +98,8 @@ function render(
     providers: [
       { provide: PayoutAccountService, useValue: fake },
       { provide: SellerService, useValue: seller },
+      // wave-l0-hardening §4.2: the QR `<img src>` now carries the access token.
+      { provide: AuthService, useValue: { accessToken: () => 'test-token' } },
       {
         provide: NzMessageService,
         useValue: {
@@ -526,9 +529,52 @@ describe('PayoutAccountFormComponent — PromptPay QR Code upload (payment-metho
     const el = fixture.nativeElement as HTMLElement;
 
     const img = el.querySelector('img[alt="QR Code พร้อมเพย์"]') as HTMLImageElement | null;
-    expect(img?.src).toBe('https://cdn.example.com/qr/saved.png');
+    const src = new URL(img?.src ?? '');
+    expect(`${src.origin}${src.pathname}`).toBe('https://cdn.example.com/qr/saved.png');
+    expect(src.searchParams.get('token')).toBe('test-token');
+    expect(src.searchParams.get('inline')).toBe('true');
     expect(el.textContent).not.toContain('แสดงเลขบัญชีเต็ม');
     expect(el.textContent).toContain('แก้ไข');
+  });
+
+  it('wave-l0-hardening §4.2 (AC-A4-7): the saved QR (bare API pathname) is fetched with token= and inline=true', () => {
+    const fixture = render(
+      fakePayoutAccount(
+        accountFixture({
+          accountType: 'promptpay',
+          promptPayType: 'qr_code',
+          promptPayMasked: '',
+          bankCode: '',
+          accountNumberMasked: '',
+          promptPayQrImageUrl: '/api/files/download/seller-1/2026/11/02/qr.png',
+        }),
+      ),
+    );
+    const img = (fixture.nativeElement as HTMLElement).querySelector(
+      'img[alt="QR Code พร้อมเพย์"]',
+    ) as HTMLImageElement | null;
+
+    const src = new URL(img?.src ?? '');
+    expect(src.pathname).toContain('/api/files/download/seller-1/2026/11/02/qr.png');
+    expect(src.searchParams.get('token')).toBe('test-token');
+    expect(src.searchParams.get('inline')).toBe('true');
+  });
+
+  it('wave-l0-hardening §4.2: the staged upload preview carries the token too, but the value sent back stays the bare pathname', async () => {
+    const fixture = render(fakePayoutAccount(accountFixture({ hasAccount: false, accountType: null })));
+    fixture.componentInstance.selectAccountType('promptpay');
+    fixture.componentInstance.selectPromptPayType('qr_code');
+    fixture.detectChanges();
+
+    await fixture.componentInstance.onQrFileChange(fileChangeEvent(new File(['x'], 'qr.png', { type: 'image/png' })));
+    await settle();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.promptPayQrImageUrl()).toBe('/api/files/download/uploads/qr/abc.png');
+    const img = (fixture.nativeElement as HTMLElement).querySelector('img[alt*="QR Code"]') as HTMLImageElement | null;
+    const src = new URL(img?.src ?? '');
+    expect(src.searchParams.get('token')).toBe('test-token');
+    expect(src.searchParams.get('inline')).toBe('true');
   });
 
   it('startEdit() prefills the staged upload with the already-saved QR image (unlike the masked bank/digit fields, no re-upload forced)', () => {

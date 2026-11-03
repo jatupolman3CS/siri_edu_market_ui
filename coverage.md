@@ -1,11 +1,11 @@
 # Endpoint coverage report
 
-- backend endpoints parsed: **275**
-- SDK functions exported: **275**
-- SDK functions imported by app code: **240**
+- backend endpoints parsed: **276**
+- SDK functions exported: **276**
+- SDK functions imported by app code: **242**
 - orphan frontend (SDK -> no backend route match): **0**
-- orphan backend (route -> no SDK call): **35**
-- unused SDK exports (defined but never imported): **35**
+- orphan backend (route -> no SDK call): **34**
+- unused SDK exports (defined but never imported): **34**
 
 ## Orphan frontend
 
@@ -33,7 +33,6 @@ _none_
 - GET `api/files/download/{*key}` (FilesController.cs)
 - POST `api/library/{documentId:guid}/reviews` (LibraryController.cs)
 - GET `api/notifications/line/callback` (NotificationLineController.cs)
-- GET `api/orders/{id:guid}/receipt` (OrderController.cs)
 - GET `api/seller/bundles/{bundleId:guid}` (SellerBundlesController.cs)
 - GET `api/seller/payouts/{payoutId:guid}/slips/{slipId:guid}/file` (SellerDashboardController.cs)
 - POST `api/seller/documents/{id:guid}/preview-raster` (SellerDocumentsController.cs)
@@ -71,7 +70,6 @@ _none_
 - `getApiFilesDownloadByKey`
 - `postApiLibraryByDocumentIdReviews`
 - `getApiNotificationsLineCallback`
-- `getApiOrdersByIdReceipt`
 - `getApiSellerBundlesByBundleId`
 - `getApiSellerPayoutsByPayoutIdSlipsBySlipIdFile`
 - `postApiSellerDocumentsByIdPreviewRaster`

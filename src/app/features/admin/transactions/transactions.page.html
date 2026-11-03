@@ -37,7 +37,8 @@
           </span>
           <input
             type="search"
-            [(ngModel)]="search"
+            [ngModel]="search()"
+            (ngModelChange)="onSearchChange($event)"
             [placeholder]="'admin.transactions.searchPlaceholder' | trans"
             class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-line-strong bg-surface focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100 text-sm"
           />
@@ -53,7 +54,7 @@
               [class.bg-surface]="status() !== s.value"
               [class.text-ink-soft]="status() !== s.value"
               [class.border-line]="status() !== s.value"
-              (click)="status.set(s.value)"
+              (click)="onStatusChange(s.value)"
             >
               {{ s.key | trans }}
             </button>
@@ -62,12 +63,13 @@
       </div>
 
       <!-- Table: at >=744 at most 10 rows show, the rest scroll inside the wrapper (R-27).
-           No search/status in the reset key: the API takes only Page and PageSize (spec §5.1 v1.6). -->
+           Search/status filter server-side (wave-l0-hardening §3.5), so a new filter result also
+           scrolls back to the top — the key uses the applied (debounced) search, not every keystroke. -->
       <div
         class="card-soft table-scroll overflow-x-auto pb-2"
         appTableViewport
         [rtLabel]="'admin.transactions.title' | trans"
-        [rtResetKey]="page() + '|' + pageSize()"
+        [rtResetKey]="page() + '|' + pageSize() + '|' + appliedSearch() + '|' + status()"
       >
         <table class="rtable w-full">
           <thead class="bg-slate-50">

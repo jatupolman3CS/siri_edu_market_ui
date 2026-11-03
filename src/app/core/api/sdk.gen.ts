@@ -164,6 +164,7 @@ import type {
   GetApiAdminSystemConfigJobTogglesData,
   GetApiAdminSystemConfigJobTogglesResponses,
   GetApiAdminTransactionsData,
+  GetApiAdminTransactionsErrors,
   GetApiAdminTransactionsResponses,
   GetApiAdminUsersByUserIdData,
   GetApiAdminUsersByUserIdErrors,
@@ -387,6 +388,8 @@ import type {
   GetApiSellerQnaResponses,
   GetApiSellerReviewsData,
   GetApiSellerReviewsResponses,
+  GetApiSellerReviewsStatsData,
+  GetApiSellerReviewsStatsResponses,
   GetApiSellersBySellerIdFollowData,
   GetApiSellersBySellerIdFollowResponses,
   GetApiSellersBySellerIdProfileData,
@@ -894,11 +897,12 @@ export const getApiAdminDashboard = <ThrowOnError extends boolean = false>(
 
 export const getApiAdminTransactions = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminTransactionsData, ThrowOnError>,
-): RequestResult<GetApiAdminTransactionsResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<GetApiAdminTransactionsResponses, unknown, ThrowOnError>({
-    url: '/api/admin/transactions',
-    ...options,
-  });
+): RequestResult<GetApiAdminTransactionsResponses, GetApiAdminTransactionsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetApiAdminTransactionsResponses,
+    GetApiAdminTransactionsErrors,
+    ThrowOnError
+  >({ url: '/api/admin/transactions', ...options });
 
 export const getApiAdminDocuments = <ThrowOnError extends boolean = false>(
   options?: Options<GetApiAdminDocumentsData, ThrowOnError>,
@@ -3686,6 +3690,14 @@ export const getApiSellerBalanceEntries = <ThrowOnError extends boolean = false>
 ): RequestResult<GetApiSellerBalanceEntriesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<GetApiSellerBalanceEntriesResponses, unknown, ThrowOnError>({
     url: '/api/seller/balance-entries',
+    ...options,
+  });
+
+export const getApiSellerReviewsStats = <ThrowOnError extends boolean = false>(
+  options?: Options<GetApiSellerReviewsStatsData, ThrowOnError>,
+): RequestResult<GetApiSellerReviewsStatsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetApiSellerReviewsStatsResponses, unknown, ThrowOnError>({
+    url: '/api/seller/reviews/stats',
     ...options,
   });
 

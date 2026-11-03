@@ -1163,7 +1163,23 @@ export class CatalogService {
 
     this._sellerProfileState.set(loadingActionState());
     try {
-      const result = await getApiSellersBySellerIdProfile({ path: { sellerId } });
+      // wave-l0-hardening v1 §4.1: a 404 means "no such store" — the seller never existed, is not
+      // approved, or is banned/suspended (the server deliberately answers all of them the same).
+      // The page already shows its `storefront.notFound*` empty state for a `null` profile, so a
+      // toast on top would be noise. `throwOnError: false` keeps `result.response` in hand: for
+      // an empty 404 body (e.g. a non-GUID id that misses the route) the thrown body alone is
+      // `{}` and the status would be lost — same reasoning as `loadDocumentPreviewPdf`.
+      const result = await getApiSellersBySellerIdProfile({ path: { sellerId }, throwOnError: false });
+      if (result.data === undefined) {
+        const status = extractErrorStatus(result.error) ?? result.response?.status;
+        if (status === 404) {
+          this._failedSellerProfileIds.add(sellerId);
+          this._sellerProfile.set(null);
+          this._sellerSalesByMonth.set([]);
+          this._sellerProfileState.set(idleActionState());
+          return null;
+        }
+      }
       const data = unwrapSdkResult(result);
       this._sellerProfile.set(data);
       this._failedSellerProfileIds.delete(sellerId);

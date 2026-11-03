@@ -1073,6 +1073,12 @@ export interface ReferralSummary {
   unusedCreditCount: number;
   unusedCreditTotal: number;
   referralDiscountAmount?: number;
+  /**
+   * security-review-followups v1 §3.3 (FIX-04): amount of the credit the next order would actually
+   * redeem with `useReferralCredit: true` — `null` = no usable credit right now (none left, or all
+   * held by an `AwaitingPayment` order). Unlike `unusedCreditTotal`, this is what checkout deducts.
+   */
+  nextCreditAmount: number | null;
 }
 
 export interface ReferralCodeValidation {

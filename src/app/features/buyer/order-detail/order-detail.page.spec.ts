@@ -140,6 +140,7 @@ interface FakeOrderService {
   loadDetail: ReturnType<typeof vi.fn>;
   loadSimilar: ReturnType<typeof vi.fn>;
   cancel: ReturnType<typeof vi.fn>;
+  downloadReceipt: ReturnType<typeof vi.fn>;
 }
 
 /**
@@ -174,6 +175,7 @@ function buildFakeOrderService(
     loadDetail: vi.fn(async () => order),
     loadSimilar,
     cancel: vi.fn(async () => null),
+    downloadReceipt: vi.fn(async () => true),
   };
 }
 
@@ -536,3 +538,94 @@ describe('BuyerOrderDetailPage — awaiting payment QR checkout link', () => {
   });
 });
 
+
+describe('BuyerOrderDetailPage — PDF receipt download (C3)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  function receiptButton(fixture: ReturnType<typeof render>): HTMLButtonElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector('[data-testid="order-detail-receipt"]');
+  }
+
+  it.each(['paid', 'fulfilled', 'refunded'] as const)(
+    'status=%s shows the receipt button, and clicking it downloads through the service (never window.print)',
+    async (status) => {
+      const order = buildOrder(status, { id: 'order-r1', orderNumber: 'SE-R1' });
+      const fake = buildFakeOrderService(order, { items: [] });
+      const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const fixture = render(fake);
+      await settle();
+      fixture.detectChanges();
+
+      const button = receiptButton(fixture);
+      expect(button).not.toBeNull();
+      expect(button!.textContent).toContain('ดูใบเสร็จ');
+
+      button!.click();
+      await settle();
+
+      expect(fake.downloadReceipt).toHaveBeenCalledTimes(1);
+      expect(fake.downloadReceipt).toHaveBeenCalledWith('order-r1', 'SE-R1');
+      expect(printSpy).not.toHaveBeenCalled();
+      expect(openSpy).not.toHaveBeenCalled();
+      printSpy.mockRestore();
+      openSpy.mockRestore();
+    },
+  );
+
+  it.each(['awaiting_payment', 'cancelled'] as const)(
+    'status=%s hides the receipt button (the server answers 400 for an unpaid order)',
+    async (status) => {
+      const fake = buildFakeOrderService(buildOrder(status), { items: [] });
+      const fixture = render(fake);
+      await settle();
+      fixture.detectChanges();
+
+      expect(receiptButton(fixture)).toBeNull();
+    },
+  );
+
+  it('disables the button and shows the waiting label while the PDF downloads, then restores it', async () => {
+    const fake = buildFakeOrderService(buildOrder('paid'), { items: [] });
+    let finish: (ok: boolean) => void = () => {};
+    fake.downloadReceipt.mockImplementation(() => new Promise<boolean>((resolve) => (finish = resolve)));
+    const fixture = render(fake);
+    await settle();
+    fixture.detectChanges();
+
+    receiptButton(fixture)!.click();
+    fixture.detectChanges();
+
+    const busy = receiptButton(fixture)!;
+    expect(busy.disabled).toBe(true);
+    expect(busy.getAttribute('aria-busy')).toBe('true');
+    expect(busy.textContent).toContain('รอสักครู่');
+
+    // A second press while busy is ignored rather than fetching (and counting) another copy.
+    fixture.componentInstance.downloadReceipt('order-1', 'SE-1');
+    expect(fake.downloadReceipt).toHaveBeenCalledTimes(1);
+
+    finish(true);
+    await settle();
+    fixture.detectChanges();
+
+    const idle = receiptButton(fixture)!;
+    expect(idle.disabled).toBe(false);
+    expect(idle.textContent).toContain('ดูใบเสร็จ');
+  });
+
+  it('a failed download (service returns false) re-enables the button', async () => {
+    const fake = buildFakeOrderService(buildOrder('paid'), { items: [] });
+    fake.downloadReceipt.mockResolvedValue(false);
+    const fixture = render(fake);
+    await settle();
+    fixture.detectChanges();
+
+    receiptButton(fixture)!.click();
+    await settle();
+    fixture.detectChanges();
+
+    expect(fake.downloadReceipt).toHaveBeenCalledTimes(1);
+    expect(receiptButton(fixture)!.disabled).toBe(false);
+  });
+});
