@@ -414,7 +414,7 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
     expect(fixture.componentInstance.referralValidation()?.valid).toBe(false);
   });
 
-  it('shows credit checkbox only when unusedCreditCount > 0', async () => {
+  it('shows credit checkbox only when there is a usable credit', async () => {
     const referralService = fakeReferralService({
       code: 'MYCODE1',
       shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE1',
@@ -442,6 +442,57 @@ describe('BuyerCheckoutPage — referral program (referral-program.md §4 & §6)
 
     text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('ใช้เครดิตแนะนำเพื่อน (20 บาท)');
+  });
+
+  // security-review-followups v1 §1.3 AC-04-9 (FIX-04): checkbox gate = canUseReferralCredit()
+  // (nextCreditAmount > 0), not unusedCreditCount > 0 — credits held by an AwaitingPayment order
+  // still count as "unused" but cannot be redeemed.
+  it.each([null, 0])(
+    'hides the credit checkbox when nextCreditAmount is %s even though unusedCreditCount > 0',
+    async (nextCreditAmount) => {
+      const referral = fakeReferralService({
+        code: 'MYCODE',
+        shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+        totalReferred: 1,
+        unusedCreditCount: 1,
+        unusedCreditTotal: 20,
+        nextCreditAmount,
+      });
+      const { fixture } = render(fakePaymentMethods([]), referral);
+      await settle();
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      expect(fixture.componentInstance.canUseReferralCredit()).toBe(false);
+      expect(host.textContent ?? '').not.toContain('ใช้เครดิตแนะนำเพื่อน');
+      const creditLabel = Array.from(host.querySelectorAll('label')).find((l) =>
+        l.textContent?.includes('ใช้เครดิตแนะนำเพื่อน'),
+      );
+      expect(creditLabel).toBeUndefined();
+    },
+  );
+
+  it('labels the credit checkbox with nextCreditAmount, not unusedCreditTotal', async () => {
+    const referral = fakeReferralService({
+      code: 'MYCODE',
+      shareUrl: 'http://localhost:4200/marketplace?ref=MYCODE',
+      totalReferred: 3,
+      unusedCreditCount: 3,
+      unusedCreditTotal: 75,
+      nextCreditAmount: 35,
+    });
+    const { fixture } = render(fakePaymentMethods([]), referral);
+    await settle();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const label = Array.from(host.querySelectorAll('label')).find((l) =>
+      l.textContent?.includes('ใช้เครดิตแนะนำเพื่อน'),
+    );
+    expect(label).toBeDefined();
+    expect(label?.querySelector('input[type="checkbox"]')).not.toBeNull();
+    expect(label?.textContent).toContain('ใช้เครดิตแนะนำเพื่อน (35 บาท)');
+    expect(label?.textContent).not.toContain('75');
   });
 
   it('includes referralCode in orders.create only when code is valid', async () => {

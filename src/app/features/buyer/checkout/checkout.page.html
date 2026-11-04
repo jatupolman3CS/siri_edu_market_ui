@@ -362,7 +362,7 @@
                   </div>
                 }
 
-                @if ((referral.summary()?.unusedCreditCount ?? 0) > 0) {
+                @if (canUseReferralCredit()) {
                   <label class="flex items-center gap-2 min-h-11 text-xs text-ink-soft cursor-pointer">
                     <input
                       type="checkbox"
@@ -371,7 +371,7 @@
                       [disabled]="busy() || paymentReady()"
                       class="w-4 h-4 shrink-0 accent-brand-500 rounded"
                     />
-                    <span>{{ 'checkout.useReferralCredit' | trans: { amount: referral.summary()?.unusedCreditTotal ?? 0 } }}</span>
+                    <span>{{ 'checkout.useReferralCredit' | trans: { amount: referralCreditAmount() ?? 0 } }}</span>
                   </label>
                 }
               </div>
