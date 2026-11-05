@@ -1588,3 +1588,72 @@ describe('mapAnnouncementImage (via mapAnnouncementAdmin / mapAnnouncementPopup)
     expect(popup.images[0].imageUrl).toBe('');
   });
 });
+
+/**
+ * seo-document-content v1 §4.1 / §1.4 (frontend mapper): the three new detail fields map `null`
+ * → `undefined`, and the seller consent flag defaults to `true`.
+ */
+describe('mapDocumentDetail — SEO content fields (seo-document-content v1)', () => {
+  const base: MarketplaceDocumentDetailResponse = { id: 'doc-1', title: 'แบบฝึกหัดเศษส่วน ป.4' };
+
+  function withFields(extra: Partial<MarketplaceDocumentDetailResponse>): MarketplaceDocumentDetailResponse {
+    return { ...base, ...extra };
+  }
+
+  it('maps null / absent previewTextPages, seoDescription and seoKeywords to undefined', () => {
+    const absent = mapDocumentDetail(base);
+    expect(absent.previewTextPages).toBeUndefined();
+    expect(absent.seoDescription).toBeUndefined();
+    expect(absent.seoKeywords).toBeUndefined();
+
+    const nulls = mapDocumentDetail(
+      withFields({ previewTextPages: null, seoDescription: null, seoKeywords: null }),
+    );
+    expect(nulls.previewTextPages).toBeUndefined();
+    expect(nulls.seoDescription).toBeUndefined();
+    expect(nulls.seoKeywords).toBeUndefined();
+  });
+
+  it('maps empty array / blank string to undefined too', () => {
+    const mapped = mapDocumentDetail(
+      withFields({ previewTextPages: [], seoDescription: '   ', seoKeywords: [] }),
+    );
+    expect(mapped.previewTextPages).toBeUndefined();
+    expect(mapped.seoDescription).toBeUndefined();
+    expect(mapped.seoKeywords).toBeUndefined();
+  });
+
+  it('carries real values through, keeping the real (non-contiguous) page numbers', () => {
+    const mapped = mapDocumentDetail(
+      withFields({
+        previewTextPages: [
+          { pageNumber: 1, text: 'แบบฝึกหัดคณิตศาสตร์ เรื่อง เศษส่วน' },
+          { pageNumber: 3, text: 'ตอนที่ 1 การเปรียบเทียบเศษส่วน' },
+        ],
+        seoDescription: 'แบบฝึกหัดเศษส่วน ป.4 ครบทั้งการเปรียบเทียบ บวก ลบ',
+        seoKeywords: ['เศษส่วน', 'คณิตศาสตร์ ป.4'],
+      }),
+    );
+    expect(mapped.previewTextPages).toEqual([
+      { pageNumber: 1, text: 'แบบฝึกหัดคณิตศาสตร์ เรื่อง เศษส่วน' },
+      { pageNumber: 3, text: 'ตอนที่ 1 การเปรียบเทียบเศษส่วน' },
+    ]);
+    expect(mapped.seoDescription).toBe('แบบฝึกหัดเศษส่วน ป.4 ครบทั้งการเปรียบเทียบ บวก ลบ');
+    expect(mapped.seoKeywords).toEqual(['เศษส่วน', 'คณิตศาสตร์ ป.4']);
+  });
+
+  it('never exposes publicPreviewTextEnabled on the buyer-facing detail mapper', () => {
+    expect(mapDocumentDetail(base).publicPreviewTextEnabled).toBeUndefined();
+  });
+});
+
+describe('mapSellerDocument — publicPreviewTextEnabled (seo-document-content v1 §4.1)', () => {
+  it('defaults to true when the response omits the flag', () => {
+    expect(mapSellerDocument({ id: 'doc-1' } as SellerDocumentResponse).publicPreviewTextEnabled).toBe(true);
+  });
+
+  it('reads the real value off the response', () => {
+    const doc = mapSellerDocument({ id: 'doc-1', publicPreviewTextEnabled: false });
+    expect(doc.publicPreviewTextEnabled).toBe(false);
+  });
+});

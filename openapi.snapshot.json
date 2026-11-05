@@ -1819,6 +1819,49 @@
         }
       }
     },
+    "/api/admin/documents/{id}/generate-ai-seo": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/documents/ai-summaries/sweep": {
       "post": {
         "tags": [
@@ -22738,6 +22781,10 @@
             "type": "boolean",
             "nullable": true
           },
+          "publicPreviewTextEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
           "previewWatermarkSubtitle": {
             "maxLength": 256,
             "type": "string",
@@ -23044,6 +23091,18 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "DocumentPreviewTextPageResponse": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
           }
         }
       },
@@ -23730,6 +23789,24 @@
             "nullable": true
           },
           "aiHighlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "previewTextPages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentPreviewTextPageResponse"
+            },
+            "nullable": true
+          },
+          "seoDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "seoKeywords": {
             "type": "array",
             "items": {
               "type": "string"
@@ -26953,6 +27030,9 @@
           "previewWatermarkPolicyLocked": {
             "type": "boolean"
           },
+          "publicPreviewTextEnabled": {
+            "type": "boolean"
+          },
           "currentVersionNumber": {
             "type": "integer",
             "format": "int32"
@@ -28513,6 +28593,10 @@
             "nullable": true
           },
           "previewWatermarkEnabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "publicPreviewTextEnabled": {
             "type": "boolean",
             "nullable": true
           },

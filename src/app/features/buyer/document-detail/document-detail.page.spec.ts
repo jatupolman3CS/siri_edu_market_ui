@@ -1246,6 +1246,7 @@ describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
 
   afterEach(() => {
     document.getElementById('seo-json-ld')?.remove();
+    document.getElementById('seo-breadcrumb-json-ld')?.remove();
     document.querySelector('link[rel="canonical"]')?.remove();
   });
 
@@ -1264,16 +1265,18 @@ describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     expect(canonical?.getAttribute('href')).toBe(`${window.location.origin}/document/doc-1`);
 
-    const script = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    const script = document.getElementById('seo-json-ld') as HTMLScriptElement | null;
     expect(script).not.toBeNull();
     const data = JSON.parse(script!.text) as Record<string, unknown>;
-    expect(data['@type']).toBe('Product');
+    // seo-document-content v1 DEC-11 (supersedes seo-ssr DEC-6): multi-type, no additionalType.
+    expect(data['@type']).toEqual(['Product', 'LearningResource']);
+    expect('additionalType' in data).toBe(false);
   });
 
   it('DEC-7: reviewCount > 0 includes aggregateRating; reviewCount === 0 omits it entirely', () => {
     const withReviews = buildDoc({ id: 'doc-2', reviewCount: 8, rating: 4.6 });
     renderDoc(withReviews);
-    const scriptWith = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    const scriptWith = document.getElementById('seo-json-ld') as HTMLScriptElement | null;
     const dataWith = JSON.parse(scriptWith!.text) as Record<string, unknown>;
     expect(dataWith['aggregateRating']).toBeDefined();
     expect((dataWith['aggregateRating'] as Record<string, unknown>)['reviewCount']).toBe(8);
@@ -1283,7 +1286,7 @@ describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
     TestBed.resetTestingModule();
     const withoutReviews = buildDoc({ id: 'doc-3', reviewCount: 0, rating: 3 });
     renderDoc(withoutReviews);
-    const scriptWithout = document.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
+    const scriptWithout = document.getElementById('seo-json-ld') as HTMLScriptElement | null;
     const dataWithout = JSON.parse(scriptWithout!.text) as Record<string, unknown>;
     expect(dataWithout['aggregateRating']).toBeUndefined();
   });
@@ -1299,10 +1302,265 @@ describe('BuyerDocumentDetailPage — SEO meta (seo-ssr v1)', () => {
     expect(titleB.getTitle()).toContain('เอกสาร B');
     expect(titleB.getTitle()).not.toContain('เอกสาร A');
 
+    // seo-document-content v1 DEC-12: product + breadcrumb = 2 scripts, still never duplicated.
     const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
-    const data = JSON.parse((scripts[0] as HTMLScriptElement).text) as Record<string, unknown>;
+    expect(scripts.length).toBe(2);
+    const data = JSON.parse((document.getElementById('seo-json-ld') as HTMLScriptElement).text) as Record<string, unknown>;
     expect(data['sku']).toBe('doc-b');
+  });
+});
+
+/**
+ * seo-document-content v1 §1.4 (frontend) — AC-F1/F2/F3/F5 + AC-C7 (component form): the
+ * document page shows the SEO content sections, and every snapshot section's text is already in
+ * `document.body.textContent` after load **without clicking any tab** (DEC-14 no-cloak).
+ */
+describe('BuyerDocumentDetailPage — SEO document content (seo-document-content v1)', () => {
+  const categories = [
+    { id: 'cat-a', name: 'คณิตศาสตร์', slug: 'math' },
+    { id: 'cat-b', name: 'วิทยาศาสตร์', slug: 'science' },
+  ];
+
+  function renderDoc(doc: DocumentItem, knownCategories = categories) {
+    const fakeRoute = { paramMap: of(convertToParamMap({ id: doc.id })) };
+    const catalog = {
+      ...buildCatalog(doc),
+      getCategoryById: (id: string) => knownCategories.find((c) => c.id === id),
+    };
+    TestBed.configureTestingModule({
+      imports: [BuyerDocumentDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: fakeRoute },
+        { provide: AuthService, useValue: fakeAuth },
+        { provide: CatalogService, useValue: catalog },
+        { provide: CartService, useValue: fakeCart },
+        { provide: WishlistService, useValue: fakeWishlist },
+        { provide: FollowService, useValue: fakeFollow },
+        { provide: LibraryService, useValue: fakeLibrary },
+        { provide: RecentlyViewedService, useValue: fakeRecent },
+        { provide: BundleService, useValue: { loadBundlesContainingDocument: vi.fn(async () => []) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BuyerDocumentDetailPage);
+    fixture.detectChanges();
+    return { fixture, meta: TestBed.inject(Meta) };
+  }
+
+  function jsonLd(id: string): Record<string, unknown> {
+    const script = document.getElementById(id) as HTMLScriptElement | null;
+    if (!script) throw new Error(`no #${id}`);
+    return JSON.parse(script.text) as Record<string, unknown>;
+  }
+
+  afterEach(() => {
+    document.getElementById('seo-json-ld')?.remove();
+    document.getElementById('seo-breadcrumb-json-ld')?.remove();
+    document.querySelector('link[rel="canonical"]')?.remove();
+  });
+
+  const pageOne = 'หน้าหนึ่ง แบบฝึกหัดคณิตศาสตร์ เรื่อง เศษส่วน ชั้นประถมศึกษาปีที่ 4';
+  const pageThree = 'หน้าสาม ตอนที่ 1 การเปรียบเทียบเศษส่วน';
+
+  it('AC-F1: previewTextPages → "ตัวอย่างเนื้อหา" + "หน้า {n}" per page + full text, inside the details tab', () => {
+    const doc = buildDoc({
+      previewTextPages: [
+        { pageNumber: 1, text: pageOne },
+        { pageNumber: 3, text: pageThree },
+      ],
+    });
+    const { fixture } = renderDoc(doc);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const section = el.querySelector('[data-testid="document-preview-text"]');
+    expect(section).not.toBeNull();
+    const text = section!.textContent ?? '';
+    expect(text).toContain('ตัวอย่างเนื้อหา');
+    expect(text).toContain(
+      'ข้อความจากหน้าตัวอย่างที่เปิดให้ดูฟรี — สกัดอัตโนมัติจากไฟล์ การจัดรูปแบบอาจต่างจากต้นฉบับ',
+    );
+    expect(text).toContain('หน้า 1');
+    expect(text).toContain('หน้า 3');
+    expect(text).toContain(pageOne);
+    expect(text).toContain(pageThree);
+    expect(el.querySelectorAll('[data-testid="document-preview-text-page"]').length).toBe(2);
+    // Short preview: shown whole, no clamp, no toggle.
+    expect(el.querySelector('.preview-text-collapsed')).toBeNull();
+    expect(el.querySelector('[data-testid="document-preview-text-toggle"]')).toBeNull();
+  });
+
+  it('AC-F1: previewTextPages undefined → no section at all', () => {
+    const { fixture } = renderDoc(buildDoc({ previewTextPages: undefined }));
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="document-preview-text"]')).toBeNull();
+    expect(el.textContent ?? '').not.toContain('ตัวอย่างเนื้อหา');
+  });
+
+  it('DEC-14: a long preview is clamped by CSS only — the whole text stays in the DOM, toggle flips the clamp', () => {
+    const longText = `เริ่มต้น ${'เนื้อหาตัวอย่างยาว '.repeat(80)}สิ้นสุดหน้า`;
+    const { fixture } = renderDoc(buildDoc({ previewTextPages: [{ pageNumber: 1, text: longText }] }));
+    const el = fixture.nativeElement as HTMLElement;
+
+    const body = el.querySelector('#document-preview-text-body');
+    expect(body?.classList.contains('preview-text-collapsed')).toBe(true);
+    // Never sliced: the full string (including its tail) is in the DOM while collapsed.
+    expect(body?.textContent ?? '').toContain(longText);
+
+    const toggle = el.querySelector<HTMLButtonElement>('[data-testid="document-preview-text-toggle"]');
+    expect(toggle?.textContent?.trim()).toBe('แสดงทั้งหมด');
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    toggle!.click();
+    fixture.detectChanges();
+    expect(body?.classList.contains('preview-text-collapsed')).toBe(false);
+    expect(toggle?.textContent?.trim()).toBe('ย่อ');
+    expect(toggle?.getAttribute('aria-expanded')).toBe('true');
+    expect(body?.textContent ?? '').toContain(longText);
+  });
+
+  it('AC-F2: seoKeywords → "หัวข้อหลัก" chips; absent → no section', () => {
+    const { fixture } = renderDoc(buildDoc({ seoKeywords: ['เศษส่วน', 'คณิตศาสตร์ ป.4'] }));
+    const section = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="document-keywords"]');
+    expect(section?.textContent ?? '').toContain('หัวข้อหลัก');
+    expect(Array.from(section!.querySelectorAll('li')).map((li) => li.textContent?.trim())).toEqual([
+      'เศษส่วน',
+      'คณิตศาสตร์ ป.4',
+    ]);
+
+    TestBed.resetTestingModule();
+    const { fixture: without } = renderDoc(buildDoc({ seoKeywords: undefined }));
+    const el = without.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="document-keywords"]')).toBeNull();
+    expect(el.textContent ?? '').not.toContain('หัวข้อหลัก');
+  });
+
+  it('AC-F3: aiHighlights render under "จุดเด่น", and the AI + FAQ tabs are in the DOM without a click (nzForceRender)', () => {
+    const doc = buildDoc({
+      aiSummary: ['สรุปข้อแรกของเอกสาร', 'สรุปข้อสอง'],
+      aiHighlights: ['จุดเด่นข้อแรก', 'จุดเด่นข้อสอง'],
+      faqCount: 1,
+      qnaCount: 1,
+      qna: [
+        {
+          id: 'q-1',
+          buyerName: 'A',
+          buyerAvatar: '',
+          question: 'มีเฉลยไหมคะ',
+          askedAt: '2026-08-01T00:00:00Z',
+          isFaq: true,
+          faqSortOrder: 0,
+          answer: { text: 'มีเฉลยท้ายเล่มค่ะ', answeredAt: '2026-08-02T00:00:00Z' },
+        },
+      ],
+    });
+    const { fixture } = renderDoc(doc);
+    const el = fixture.nativeElement as HTMLElement;
+    const text = el.textContent ?? '';
+
+    // No tab was clicked — "รายละเอียด" is the active one.
+    expect(text).toContain('สรุปข้อแรกของเอกสาร');
+    expect(text).toContain('จุดเด่น');
+    expect(text).toContain('จุดเด่นข้อแรก');
+    expect(text).toContain('จุดเด่นข้อสอง');
+    expect(el.querySelectorAll('[data-testid="document-ai-highlights"] li').length).toBe(2);
+    expect(text).toContain('มีเฉลยไหมคะ');
+    expect(text).toContain('มีเฉลยท้ายเล่มค่ะ');
+  });
+
+  it('AC-F3: no aiHighlights → no "จุดเด่น" heading in the AI tab', () => {
+    const { fixture } = renderDoc(buildDoc({ aiSummary: ['สรุปข้อแรก'], aiHighlights: undefined }));
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="document-ai-highlights"]')).toBeNull();
+  });
+
+  it('AC-C7 (component form): every snapshot section text is in the page DOM after load, without clicking a tab', () => {
+    const doc = buildDoc({
+      previewTextPages: [
+        { pageNumber: 1, text: pageOne },
+        { pageNumber: 2, text: 'หน้าสอง บวกและลบเศษส่วนที่มีตัวส่วนเท่ากัน' },
+      ],
+      seoKeywords: ['เศษส่วน', 'โจทย์ปัญหาเศษส่วน'],
+      aiSummary: ['สรุปครบเรื่องเศษส่วน'],
+      aiHighlights: ['มีเฉลยละเอียด'],
+      faqCount: 1,
+      qnaCount: 1,
+      qna: [
+        {
+          id: 'q-1',
+          buyerName: 'A',
+          buyerAvatar: '',
+          question: 'เหมาะกับ ป.5 ไหม',
+          askedAt: '2026-08-01T00:00:00Z',
+          isFaq: true,
+          faqSortOrder: 0,
+          answer: { text: 'เหมาะค่ะ', answeredAt: '2026-08-02T00:00:00Z' },
+        },
+      ],
+    });
+    const { fixture } = renderDoc(doc);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    const snapshotTexts = [
+      ...doc.previewTextPages!.map((p) => p.text),
+      ...doc.seoKeywords!,
+      ...doc.aiSummary!,
+      ...doc.aiHighlights!,
+      'เหมาะกับ ป.5 ไหม',
+    ];
+    for (const t of snapshotTexts) {
+      expect(text).toContain(t);
+    }
+  });
+
+  it('DEC-10 wiring: the page passes seoDescription to the meta tags, JSON-LD description stays shortDescription', () => {
+    const { meta } = renderDoc(
+      buildDoc({
+        shortDescription: 'สรุปเข้มก่อนสอบ',
+        seoDescription: 'คำอธิบายสำหรับผลการค้นหา Google ของเอกสารสรุปคณิตศาสตร์ ม.6',
+      }),
+    );
+    expect(meta.getTag('name="description"')?.content).toBe(
+      'คำอธิบายสำหรับผลการค้นหา Google ของเอกสารสรุปคณิตศาสตร์ ม.6',
+    );
+    expect(jsonLd('seo-json-ld')['description']).toBe('สรุปเข้มก่อนสอบ');
+  });
+
+  it('DEC-11 wiring: Thai labels for learningResourceType / educationalLevel, MIME, keywords', () => {
+    renderDoc(
+      buildDoc({
+        resourceType: 'worksheet',
+        gradeLevels: ['primary-late'],
+        format: 'pdf',
+        seoKeywords: ['เศษส่วน', 'คณิตศาสตร์ ป.4'],
+      }),
+    );
+    const data = jsonLd('seo-json-ld');
+    expect(data['learningResourceType']).toBe('แบบฝึกหัด');
+    expect(data['educationalLevel']).toEqual(['ป.4-6']);
+    expect(data['encodingFormat']).toBe('application/pdf');
+    expect(data['keywords']).toBe('เศษส่วน, คณิตศาสตร์ ป.4');
+  });
+
+  it('AC-F5: breadcrumb JSON-LD uses the first categoryIds entry the catalog resolves (skips unknown ids)', () => {
+    renderDoc(buildDoc({ categoryIds: ['cat-missing', 'cat-b', 'cat-a'] }));
+
+    const items = jsonLd('seo-breadcrumb-json-ld')['itemListElement'] as Record<string, unknown>[];
+    expect(items.map((i) => i['position'])).toEqual([1, 2, 3, 4]);
+    expect(items[2]).toEqual({
+      '@type': 'ListItem',
+      position: 3,
+      name: 'วิทยาศาสตร์',
+      item: `${window.location.origin}/category/science`,
+    });
+    expect(items[3]['item']).toBe(`${window.location.origin}/document/doc-1`);
+    expect(jsonLd('seo-json-ld')['category']).toBe('วิทยาศาสตร์');
+  });
+
+  it('AC-F5: no resolvable category → 3-item breadcrumb, no product category', () => {
+    renderDoc(buildDoc({ categoryIds: ['cat-missing'] }));
+
+    const items = jsonLd('seo-breadcrumb-json-ld')['itemListElement'] as Record<string, unknown>[];
+    expect(items.map((i) => i['name'])).toEqual(['หน้าแรก', 'ตลาด', 'สรุปคณิต ม.6']);
+    expect('category' in jsonLd('seo-json-ld')).toBe(false);
   });
 });
 

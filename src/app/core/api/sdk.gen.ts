@@ -449,6 +449,9 @@ import type {
   PostApiAdminDocumentsByIdApproveData,
   PostApiAdminDocumentsByIdApproveErrors,
   PostApiAdminDocumentsByIdApproveResponses,
+  PostApiAdminDocumentsByIdGenerateAiSeoData,
+  PostApiAdminDocumentsByIdGenerateAiSeoErrors,
+  PostApiAdminDocumentsByIdGenerateAiSeoResponses,
   PostApiAdminDocumentsByIdGenerateAiSummaryData,
   PostApiAdminDocumentsByIdGenerateAiSummaryErrors,
   PostApiAdminDocumentsByIdGenerateAiSummaryResponses,
@@ -1086,6 +1089,19 @@ export const postApiAdminDocumentsByIdGenerateAiSummary = <ThrowOnError extends 
     PostApiAdminDocumentsByIdGenerateAiSummaryErrors,
     ThrowOnError
   >({ url: '/api/admin/documents/{id}/generate-ai-summary', ...options });
+
+export const postApiAdminDocumentsByIdGenerateAiSeo = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiAdminDocumentsByIdGenerateAiSeoData, ThrowOnError>,
+): RequestResult<
+  PostApiAdminDocumentsByIdGenerateAiSeoResponses,
+  PostApiAdminDocumentsByIdGenerateAiSeoErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiAdminDocumentsByIdGenerateAiSeoResponses,
+    PostApiAdminDocumentsByIdGenerateAiSeoErrors,
+    ThrowOnError
+  >({ url: '/api/admin/documents/{id}/generate-ai-seo', ...options });
 
 export const postApiAdminDocumentsAiSummariesSweep = <ThrowOnError extends boolean = false>(
   options?: Options<PostApiAdminDocumentsAiSummariesSweepData, ThrowOnError>,

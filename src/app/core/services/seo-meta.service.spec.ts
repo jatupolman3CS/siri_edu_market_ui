@@ -22,12 +22,22 @@ describe('SeoMetaService', () => {
 
   afterEach(() => {
     document.getElementById('seo-json-ld')?.remove();
+    document.getElementById('seo-breadcrumb-json-ld')?.remove();
     document.querySelector('link[rel="canonical"]')?.remove();
+    document
+      .querySelectorAll('meta[property^="og:"], meta[name^="twitter:"], meta[name="description"]')
+      .forEach((el) => el.remove());
     TestBed.resetTestingModule();
   });
 
   function jsonLdScripts(): HTMLScriptElement[] {
     return Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+  }
+
+  function jsonLdById(id: string): Record<string, unknown> {
+    const script = document.getElementById(id) as HTMLScriptElement | null;
+    if (!script) throw new Error(`no #${id}`);
+    return JSON.parse(script.text) as Record<string, unknown>;
   }
 
   describe('setDocumentSeo', () => {
@@ -41,6 +51,9 @@ describe('SeoMetaService', () => {
       price: 49,
       studioName: 'ครูเอ',
       resourceType: 'lesson-summary',
+      resourceTypeLabel: 'สรุปบทเรียน',
+      gradeLevelLabels: ['ม.4-6'],
+      format: 'pdf',
       language: 'th',
     };
 
@@ -64,14 +77,15 @@ describe('SeoMetaService', () => {
       expect(meta.getTag('name="twitter:image"')?.content).toBe(baseInput.coverImageUrl);
     });
 
-    it('emits exactly one JSON-LD script with @type Product + additionalType LearningResource', () => {
+    it('seo-document-content AC-F4 / DEC-11: product JSON-LD is ["Product","LearningResource"] with no additionalType', () => {
       service.setDocumentSeo({ ...baseInput, reviewCount: 0 });
 
+      // DEC-12: the document page carries exactly two ld+json scripts (product + breadcrumb).
       const scripts = jsonLdScripts();
-      expect(scripts.length).toBe(1);
-      const data = JSON.parse(scripts[0].text) as Record<string, unknown>;
-      expect(data['@type']).toBe('Product');
-      expect(data['additionalType']).toBe('https://schema.org/LearningResource');
+      expect(scripts.length).toBe(2);
+      const data = jsonLdById('seo-json-ld');
+      expect(data['@type']).toEqual(['Product', 'LearningResource']);
+      expect('additionalType' in data).toBe(false);
       expect(data['sku']).toBe('doc-1');
       expect((data['offers'] as Record<string, unknown>)['price']).toBe(49);
       expect((data['offers'] as Record<string, unknown>)['priceCurrency']).toBe('THB');
@@ -84,14 +98,14 @@ describe('SeoMetaService', () => {
     it('DEC-7: omits aggregateRating entirely when reviewCount is 0', () => {
       service.setDocumentSeo({ ...baseInput, reviewCount: 0, averageRating: 3 });
 
-      const data = JSON.parse(jsonLdScripts()[0].text) as Record<string, unknown>;
+      const data = jsonLdById('seo-json-ld');
       expect(data['aggregateRating']).toBeUndefined();
     });
 
     it('DEC-7: includes aggregateRating with the real reviewCount when reviewCount > 0', () => {
       service.setDocumentSeo({ ...baseInput, reviewCount: 12, averageRating: 4.5 });
 
-      const data = JSON.parse(jsonLdScripts()[0].text) as Record<string, unknown>;
+      const data = jsonLdById('seo-json-ld');
       const rating = data['aggregateRating'] as Record<string, unknown>;
       expect(rating['@type']).toBe('AggregateRating');
       expect(rating['reviewCount']).toBe(12);
@@ -112,10 +126,131 @@ describe('SeoMetaService', () => {
 
       expect(titleService.getTitle()).toBe('เอกสารอีกชิ้น — SIRIEDUMARKET');
       const scripts = jsonLdScripts();
-      expect(scripts.length).toBe(1);
-      const data = JSON.parse(scripts[0].text) as Record<string, unknown>;
+      expect(scripts.length).toBe(2);
+      const data = jsonLdById('seo-json-ld');
       expect(data['sku']).toBe('doc-2');
       expect(data['aggregateRating']).toBeDefined();
+      // AC-F4: the breadcrumb is replaced too (A -> B), not duplicated.
+      const crumbs = jsonLdById('seo-breadcrumb-json-ld')['itemListElement'] as Record<string, unknown>[];
+      expect(crumbs[crumbs.length - 1]['item']).toBe('https://siriedumarket.test/document/doc-2');
+      expect(crumbs[crumbs.length - 1]['name']).toBe('เอกสารอีกชิ้น');
+    });
+
+    describe('seo-document-content v1 (DEC-10/11/12, AC-F4/AC-F5)', () => {
+      it('DEC-10: meta/og/twitter description = seoDescription when present, JSON-LD description stays shortDescription', () => {
+        const expected = 'สรุปคณิตศาสตร์ ม.6 ครบทุกบท สำหรับทบทวนก่อนสอบเข้ามหาวิทยาลัย';
+        service.setDocumentSeo({ ...baseInput, seoDescription: expected, reviewCount: 0 });
+
+        expect(meta.getTag('name="description"')?.content).toBe(expected);
+        expect(meta.getTag('property="og:description"')?.content).toBe(expected);
+        expect(meta.getTag('name="twitter:description"')?.content).toBe(expected);
+        expect(jsonLdById('seo-json-ld')['description']).toBe('สรุปเข้มก่อนสอบ');
+      });
+
+      it('DEC-10: without seoDescription (absent or blank) every description is shortDescription', () => {
+        service.setDocumentSeo({ ...baseInput, seoDescription: '   ', reviewCount: 0 });
+
+        expect(meta.getTag('name="description"')?.content).toBe('สรุปเข้มก่อนสอบ');
+        expect(meta.getTag('property="og:description"')?.content).toBe('สรุปเข้มก่อนสอบ');
+        expect(meta.getTag('name="twitter:description"')?.content).toBe('สรุปเข้มก่อนสอบ');
+        expect(jsonLdById('seo-json-ld')['description']).toBe('สรุปเข้มก่อนสอบ');
+      });
+
+      it('DEC-11: learningResourceType is the Thai label, plus educationalLevel / encodingFormat / category / keywords', () => {
+        service.setDocumentSeo({
+          ...baseInput,
+          gradeLevelLabels: ['ม.4-6', 'มหาวิทยาลัย'],
+          keywords: ['แคลคูลัส', 'ลิมิต', 'อนุพันธ์'],
+          breadcrumbCategory: { name: 'คณิตศาสตร์', url: 'https://siriedumarket.test/category/math' },
+          reviewCount: 0,
+        });
+
+        const data = jsonLdById('seo-json-ld');
+        expect(data['learningResourceType']).toBe('สรุปบทเรียน');
+        expect(data['educationalLevel']).toEqual(['ม.4-6', 'มหาวิทยาลัย']);
+        expect(data['encodingFormat']).toBe('application/pdf');
+        expect(data['category']).toBe('คณิตศาสตร์');
+        expect(data['keywords']).toBe('แคลคูลัส, ลิมิต, อนุพันธ์');
+        expect(data['inLanguage']).toBe('th');
+      });
+
+      it('DEC-11: optional keys are omitted (never null/empty) when there is nothing to put in them', () => {
+        service.setDocumentSeo({
+          ...baseInput,
+          resourceTypeLabel: '',
+          gradeLevelLabels: [],
+          keywords: [],
+          format: 'rar',
+          reviewCount: 0,
+        });
+
+        const data = jsonLdById('seo-json-ld');
+        // §3.3: the label falls back to the raw slug.
+        expect(data['learningResourceType']).toBe('lesson-summary');
+        for (const key of ['educationalLevel', 'encodingFormat', 'category', 'keywords']) {
+          expect(key in data).toBe(false);
+        }
+      });
+
+      it.each([
+        ['docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        ['pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+        ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ['zip', 'application/zip'],
+      ])('§3.3: format %s -> encodingFormat %s', (format, mime) => {
+        service.setDocumentSeo({ ...baseInput, format, reviewCount: 0 });
+        expect(jsonLdById('seo-json-ld')['encodingFormat']).toBe(mime);
+      });
+
+      it('DEC-12: #seo-breadcrumb-json-ld = หน้าแรก > ตลาด > category > title, positions 1..4, last item = canonical', () => {
+        service.setDocumentSeo({
+          ...baseInput,
+          breadcrumbCategory: { name: 'คณิตศาสตร์', url: 'https://siriedumarket.test/category/math' },
+          reviewCount: 0,
+        });
+
+        const data = jsonLdById('seo-breadcrumb-json-ld');
+        expect(data['@context']).toBe('https://schema.org');
+        expect(data['@type']).toBe('BreadcrumbList');
+        expect(data['itemListElement']).toEqual([
+          { '@type': 'ListItem', position: 1, name: 'หน้าแรก', item: `${window.location.origin}/` },
+          { '@type': 'ListItem', position: 2, name: 'ตลาด', item: `${window.location.origin}/marketplace` },
+          { '@type': 'ListItem', position: 3, name: 'คณิตศาสตร์', item: 'https://siriedumarket.test/category/math' },
+          { '@type': 'ListItem', position: 4, name: 'สรุปคณิต ม.6', item: 'https://siriedumarket.test/document/doc-1' },
+        ]);
+      });
+
+      it('AC-C3 mirror: no resolvable category -> breadcrumb has 3 items and the product has no category', () => {
+        service.setDocumentSeo({ ...baseInput, reviewCount: 0 });
+
+        const items = jsonLdById('seo-breadcrumb-json-ld')['itemListElement'] as Record<string, unknown>[];
+        expect(items.map((i) => i['position'])).toEqual([1, 2, 3]);
+        expect(items.map((i) => i['name'])).toEqual(['หน้าแรก', 'ตลาด', 'สรุปคณิต ม.6']);
+        expect(items[2]['item']).toBe('https://siriedumarket.test/document/doc-1');
+        expect('category' in jsonLdById('seo-json-ld')).toBe(false);
+      });
+
+      it('§4.3: setCategorySeo / setStoreSeo drop the breadcrumb a document page left behind', () => {
+        service.setDocumentSeo({ ...baseInput, reviewCount: 0 });
+        service.setCategorySeo({
+          name: 'คณิตศาสตร์',
+          description: 'd',
+          canonicalUrl: 'https://siriedumarket.test/category/math',
+        });
+        expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
+        expect(jsonLdScripts().length).toBe(1);
+
+        service.setDocumentSeo({ ...baseInput, reviewCount: 0 });
+        service.setStoreSeo({
+          studioName: 'ครูเอ',
+          bio: 'b',
+          canonicalUrl: 'https://siriedumarket.test/store/s-1',
+          avatarImageUrl: 'https://siriedumarket.test/a.jpg',
+          bannerImageUrl: '',
+        });
+        expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
+        expect(jsonLdScripts().length).toBe(1);
+      });
     });
   });
 
@@ -192,6 +327,9 @@ describe('SeoMetaService', () => {
       price: 49,
       studioName: 'ครูเอ',
       resourceType: 'lesson-summary',
+      resourceTypeLabel: 'สรุปบทเรียน',
+      gradeLevelLabels: ['ม.4-6'],
+      format: 'pdf',
       language: 'th',
       reviewCount: 0,
     };
@@ -251,6 +389,7 @@ describe('SeoMetaService', () => {
       });
 
       expect(document.getElementById('seo-json-ld')).toBeNull();
+      expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
       expect(document.getElementById('site-json-ld')).toBe(site);
       expect(meta.getTag('property="og:type"')?.content).toBe('website');
       expect(meta.getTag('property="og:image"')?.content).toBe(`${window.location.origin}/icon-512.png`);
@@ -265,12 +404,15 @@ describe('SeoMetaService', () => {
     it('resetPageSeo after a document page removes canonical/og:url/JSON-LD and restores defaults', () => {
       const site = addSiteJsonLd();
       service.setDocumentSeo(docInput);
+      // seo-document-content AC-F4: both document scripts exist before the reset.
+      expect(document.getElementById('seo-breadcrumb-json-ld')).not.toBeNull();
 
       service.resetPageSeo({ title: 'รายการโปรด — SIRIEDUMARKET', description: 'ค่าเริ่มต้นของเว็บ' });
 
       expect(document.querySelector('link[rel="canonical"]')).toBeNull();
       expect(meta.getTag('property="og:url"')).toBeNull();
       expect(document.getElementById('seo-json-ld')).toBeNull();
+      expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
       expect(document.getElementById('site-json-ld')).toBe(site);
       expect(meta.getTag('name="description"')?.content).toBe('ค่าเริ่มต้นของเว็บ');
       expect(meta.getTag('property="og:title"')?.content).toBe('รายการโปรด — SIRIEDUMARKET');

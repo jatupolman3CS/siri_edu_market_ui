@@ -1,11 +1,11 @@
 # Endpoint coverage report
 
-- backend endpoints parsed: **276**
-- SDK functions exported: **276**
+- backend endpoints parsed: **277**
+- SDK functions exported: **277**
 - SDK functions imported by app code: **242**
 - orphan frontend (SDK -> no backend route match): **0**
-- orphan backend (route -> no SDK call): **34**
-- unused SDK exports (defined but never imported): **34**
+- orphan backend (route -> no SDK call): **35**
+- unused SDK exports (defined but never imported): **35**
 
 ## Orphan frontend
 
@@ -15,6 +15,7 @@ _none_
 
 - GET `api/admin/documents/pending` (AdminController.cs)
 - POST `api/admin/documents/{id:guid}/generate-ai-summary` (AdminController.cs)
+- POST `api/admin/documents/{id:guid}/generate-ai-seo` (AdminController.cs)
 - POST `api/admin/documents/ai-summaries/sweep` (AdminController.cs)
 - POST `api/admin/documents/ai-prescreen/sweep` (AdminController.cs)
 - GET `api/admin/sellers/{sellerId:guid}/balance-entries` (AdminController.cs)
@@ -52,6 +53,7 @@ _none_
 
 - `getApiAdminDocumentsPending`
 - `postApiAdminDocumentsByIdGenerateAiSummary`
+- `postApiAdminDocumentsByIdGenerateAiSeo`
 - `postApiAdminDocumentsAiSummariesSweep`
 - `postApiAdminDocumentsAiPrescreenSweep`
 - `getApiAdminSellersBySellerIdBalanceEntries`

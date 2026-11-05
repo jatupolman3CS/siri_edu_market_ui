@@ -2643,3 +2643,181 @@ describe('SellerUploadPage — responsive v1.4 fixes', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="main-file-name"]')).toBeNull();
   });
 });
+
+/**
+ * seo-document-content v1 §4.4 / AC-E3 — seller consent "แสดงข้อความจากหน้าตัวอย่างฟรีบนหน้าเอกสาร":
+ *  - create mode: checkbox ticked by default, exact Thai label + notice under it
+ *  - edit mode: restores `publicPreviewTextEnabled` from the loaded document
+ *  - the value travels in both the create and the update payload
+ */
+describe('SellerUploadPage — public preview text consent (seo-document-content v1 §4.4)', () => {
+  const expectedLabel = 'แสดงข้อความจากหน้าตัวอย่างฟรีบนหน้าเอกสาร';
+  const expectedNotice =
+    'ช่วยให้ค้นเจอบน Google ได้ง่ายขึ้น ระบบจะดึงข้อความเฉพาะจากหน้าตัวอย่างฟรีของไฟล์ PDF (ตามจำนวนหน้าพรีวิวที่ตั้งไว้ด้านบน) มาแสดงบนหน้าเอกสาร เนื้อหาหน้าอื่นจะไม่ถูกเปิดเผย ปิดได้ตลอดเวลา';
+
+  function checkbox(fixture: { nativeElement: unknown }): HTMLInputElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '[data-testid="public-preview-text-checkbox"]',
+    );
+  }
+
+  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<unknown> }): Promise<void> {
+    for (let i = 0; i < 3; i++) await Promise.resolve();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function renderForEdit(rawDocOverrides: Record<string, unknown> = {}) {
+    const updateDocumentCalls: { id: string; body: UpdateSellerDocumentRequest }[] = [];
+    const doc = mapSellerDocument({
+      id: 'doc-1',
+      slug: 'doc-1',
+      title: 'เอกสารทดสอบ',
+      shortDescription: 'คำอธิบายสั้น',
+      price: 300,
+      format: 'pdf',
+      ...rawDocOverrides,
+    } as SellerDocumentResponse);
+
+    const fakeSellerForEdit: Partial<SellerService> = {
+      fetchDocumentForEdit: async () => doc,
+      fetchDocumentMainFiles: async () => [],
+      myDocuments: signal<ReturnType<typeof mapSellerDocument>[]>([]),
+      refreshDocuments: async () => {},
+      updateDocument: async (id, body) => {
+        updateDocumentCalls.push({ id, body });
+      },
+    };
+
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ id: 'doc-1' })) } },
+        { provide: CatalogService, useValue: { loadCategories: () => {}, getCategoryById: () => undefined } },
+        { provide: SellerService, useValue: fakeSellerForEdit },
+        { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() } },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, updateDocumentCalls };
+  }
+
+  function renderForCreate() {
+    const createDocumentCalls: CreateDocumentRequest[] = [];
+    const fakeSellerForCreate: Partial<SellerService> = {
+      createDocument: async (req) => {
+        createDocumentCalls.push(req);
+        return { id: 'doc-new', slug: 'doc-new', title: req.title ?? '' } as SellerDocumentResponse;
+      },
+      refreshDocuments: async () => {},
+    };
+    TestBed.configureTestingModule({
+      imports: [SellerUploadPage],
+      providers: [
+        provideRouter([]),
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+        { provide: CatalogService, useValue: { loadCategories: () => {}, getCategoryById: () => undefined } },
+        { provide: SellerService, useValue: fakeSellerForCreate },
+        { provide: NzMessageService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() } },
+        { provide: PlatformStatsService, useValue: { stats: () => undefined, loadStats: vi.fn() } },
+      ],
+    });
+    const fixture = TestBed.createComponent(SellerUploadPage);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, createDocumentCalls };
+  }
+
+  function fillRequiredFields(component: SellerUploadPage): void {
+    component.title.set('เอกสารทดสอบ');
+    component.shortDescription.set('คำอธิบายสั้น');
+    component.categoryIds.set(['cat-1']);
+  }
+
+  async function flushSubmit(): Promise<void> {
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it('AC-E3: create mode — checkbox ticked by default with the exact label and notice under it', async () => {
+    const fixture = render(undefined);
+    await settle(fixture);
+
+    expect(fixture.componentInstance.publicPreviewText()).toBe(true);
+    const box = checkbox(fixture);
+    expect(box).not.toBeNull();
+    expect(box!.checked).toBe(true);
+    const label = box!.closest('label');
+    expect(label?.textContent ?? '').toContain(expectedLabel);
+    const notice = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="public-preview-text-desc"]');
+    expect(notice?.textContent?.trim()).toBe(expectedNotice);
+  });
+
+  it('AC-E3: unticking the checkbox updates the signal', async () => {
+    const fixture = render(undefined);
+    await settle(fixture);
+    const box = checkbox(fixture)!;
+
+    box.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.publicPreviewText()).toBe(false);
+  });
+
+  it('AC-E3: edit mode restores publicPreviewTextEnabled = false from the loaded document', async () => {
+    const { fixture, component } = renderForEdit({ publicPreviewTextEnabled: false });
+    await settle(fixture);
+
+    expect(component.publicPreviewText()).toBe(false);
+    expect(checkbox(fixture)?.checked).toBe(false);
+  });
+
+  it('AC-E3: edit mode defaults to true when the document does not carry the flag (pre-regen)', async () => {
+    const { fixture, component } = renderForEdit();
+    await settle(fixture);
+
+    expect(component.publicPreviewText()).toBe(true);
+  });
+
+  it('AC-E3: edit mode sends publicPreviewTextEnabled in the update payload', async () => {
+    const { fixture, component, updateDocumentCalls } = renderForEdit({ publicPreviewTextEnabled: true });
+    await settle(fixture);
+    fillRequiredFields(component);
+    component.publicPreviewText.set(false);
+
+    component.submit();
+    await flushSubmit();
+
+    expect(updateDocumentCalls).toHaveLength(1);
+    expect(updateDocumentCalls[0].body.publicPreviewTextEnabled).toBe(false);
+  });
+
+  it('AC-E3: create mode sends publicPreviewTextEnabled in the create payload', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    try {
+      const { component, createDocumentCalls } = renderForCreate();
+      fillRequiredFields(component);
+      component.file.set(new File(['x'], 'notes.pdf'));
+      component.upload.set({ key: 'seller-1/notes.pdf', publicUrl: 'https://cdn.example.test/notes.pdf' });
+      component.coverImageMode.set('auto');
+      component.publicPreviewText.set(false);
+
+      component.submit();
+      await flushSubmit();
+
+      expect(createDocumentCalls).toHaveLength(1);
+      expect(createDocumentCalls[0].publicPreviewTextEnabled).toBe(false);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+});

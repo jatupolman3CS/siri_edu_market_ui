@@ -84,6 +84,7 @@ import type {
   BuyerDocumentVersionInfo,
   Category,
   DocumentItem,
+  DocumentPreviewTextPage,
   DocumentReview,
   ExamCountdownExamType,
   ExamCountdownSetting,
@@ -193,6 +194,28 @@ function readQnaIsFaq(q: { isFaq?: boolean | null } | null | undefined): boolean
 /** document-faq-tab v1.1 §3.2/§3.3: `faqSortOrder` is a raw, always-present sort key. */
 function readQnaFaqSortOrder(q: { faqSortOrder?: number | null } | null | undefined): number {
   return q?.faqSortOrder ?? 0;
+}
+
+/**
+ * seo-document-content v1 §3.1/§4.1: `previewTextPages` — `null`/empty → `undefined`; entries
+ * without a positive page number or with blank text are dropped (the backend never sends those,
+ * this only keeps a malformed payload from rendering an empty "หน้า 0" block).
+ */
+function readPreviewTextPages(
+  pages: MarketplaceDocumentDetailResponse['previewTextPages'],
+): DocumentPreviewTextPage[] | undefined {
+  const mapped = (pages ?? [])
+    .map((p) => ({ pageNumber: p.pageNumber ?? 0, text: (p.text ?? '').trim() }))
+    .filter((p) => p.pageNumber > 0 && p.text !== '');
+  return mapped.length > 0 ? mapped : undefined;
+}
+
+/** seo-document-content v1 §3.1: `seoKeywords` — `null`/`[]` → `undefined`, blanks dropped. */
+function readSeoKeywords(
+  keywords: MarketplaceDocumentDetailResponse['seoKeywords'],
+): string[] | undefined {
+  const mapped = (keywords ?? []).map((k) => (k ?? '').trim()).filter((k) => k !== '');
+  return mapped.length > 0 ? mapped : undefined;
 }
 
 /**
@@ -543,6 +566,10 @@ export function mapDocumentDetail(d: MarketplaceDocumentDetailResponse): Documen
     qnaCount: faqCounts.qnaCount,
     aiSummary: d.aiSummary ?? undefined,
     aiHighlights: d.aiHighlights ?? undefined,
+    // seo-document-content v1 §3.1/§4.1: `null`/blank/empty → `undefined`.
+    previewTextPages: readPreviewTextPages(d.previewTextPages),
+    seoDescription: (d.seoDescription ?? '').trim() || undefined,
+    seoKeywords: readSeoKeywords(d.seoKeywords),
     isFree: readIsFree(d as { isFree?: boolean | null; price?: number | null }),
     isBestseller: d.isBestseller,
     isFeatured: d.isFeatured,
@@ -1018,6 +1045,8 @@ export function mapSellerDocument(d: SellerDocumentResponse): DocumentItem {
     previewWatermarkEffective: d.previewWatermarkEffective ?? true,
     previewWatermarkPolicyLocked: d.previewWatermarkPolicyLocked ?? false,
     previewPages: d.previewPages ?? 0,
+    // seo-document-content v1 §3.2/§4.1 / DEC-7: absent flag reads as `true` (the column default).
+    publicPreviewTextEnabled: d.publicPreviewTextEnabled ?? true,
     previewWatermarkSubtitle: d.previewWatermarkSubtitle ?? undefined,
     previewWatermarkFontFamily: d.previewWatermarkFontFamily ?? undefined,
     seller: emptySeller(),

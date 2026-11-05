@@ -52,6 +52,7 @@ describe('I18nTitleStrategy — route SEO', () => {
 
   afterEach(() => {
     document.getElementById('seo-json-ld')?.remove();
+    document.getElementById('seo-breadcrumb-json-ld')?.remove();
     document.querySelector('link[rel="canonical"]')?.remove();
     document
       .querySelectorAll('meta[property^="og:"], meta[name^="twitter:"], meta[name="description"]')
@@ -76,6 +77,9 @@ describe('I18nTitleStrategy — route SEO', () => {
       price: 10,
       studioName: 'ร้าน',
       resourceType: 'lesson-summary',
+      resourceTypeLabel: 'สรุปบทเรียน',
+      gradeLevelLabels: [],
+      format: 'pdf',
       language: 'th',
       reviewCount: 0,
     });
@@ -101,6 +105,8 @@ describe('I18nTitleStrategy — route SEO', () => {
 
     expect(canonical()).toBeNull();
     expect(document.getElementById('seo-json-ld')).toBeNull();
+    // seo-document-content v1 §4.3: the second (BreadcrumbList) script goes with it.
+    expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
     expect(meta.getTag('property="og:url"')).toBeNull();
     expect(meta.getTag('property="og:type"')?.content).toBe('website');
     expect(meta.getTag('property="og:image"')?.content).toBe(`${window.location.origin}/icon-512.png`);
@@ -117,6 +123,7 @@ describe('I18nTitleStrategy — route SEO', () => {
 
     expect(canonical()).toBe(`${window.location.origin}/marketplace`);
     expect(document.getElementById('seo-json-ld')).toBeNull();
+    expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
     expect(meta.getTag('name="description"')?.content).toBe(th.seo.marketplace);
     expect(meta.getTag('property="og:image"')?.content).toBe(`${window.location.origin}/icon-512.png`);
   });
@@ -128,6 +135,7 @@ describe('I18nTitleStrategy — route SEO', () => {
     await router.navigateByUrl('/document/b');
     expect(canonical()).toBeNull();
     expect(document.getElementById('seo-json-ld')).toBeNull();
+    expect(document.getElementById('seo-breadcrumb-json-ld')).toBeNull();
 
     simulateDocumentPageSeo('b');
     expect(canonical()).toBe(`${window.location.origin}/document/b`);
@@ -141,6 +149,7 @@ describe('I18nTitleStrategy — route SEO', () => {
 
     expect(canonical()).toBe(`${window.location.origin}/document/a`);
     expect(document.getElementById('seo-json-ld')).not.toBeNull();
+    expect(document.getElementById('seo-breadcrumb-json-ld')).not.toBeNull();
   });
 
   it('language switch re-translates static-page SEO', async () => {

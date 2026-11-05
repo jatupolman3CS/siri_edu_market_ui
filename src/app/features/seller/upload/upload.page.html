@@ -396,6 +396,24 @@
                     </div>
                   </div>
                 </label>
+                <!-- seo-document-content v1 §4.4 / DEC-7: seller consent to show the free preview
+                     pages' text on the public document page (default on). -->
+                <label class="flex items-start gap-3 p-4 rounded-2xl border border-line cursor-pointer hover:border-brand-300">
+                  <input
+                    type="checkbox"
+                    name="public-preview-text-enabled"
+                    data-testid="public-preview-text-checkbox"
+                    [ngModel]="publicPreviewText()"
+                    (ngModelChange)="publicPreviewText.set($event)"
+                    class="w-5 h-5 accent-brand-500 mt-0.5"
+                  />
+                  <div>
+                    <div class="text-sm font-semibold text-ink">{{ 'seller.publicPreviewTextTitle' | trans }}</div>
+                    <div class="text-xs text-ink-muted mt-1" data-testid="public-preview-text-desc">
+                      {{ 'seller.publicPreviewTextDesc' | trans }}
+                    </div>
+                  </div>
+                </label>
               </div>
 
               <!-- Watermark Template Connection Card -->

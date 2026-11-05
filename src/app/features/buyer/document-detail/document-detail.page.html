@@ -195,11 +195,58 @@
                         </li>
                       }
                     </ul>
+
+                    <!-- seo-document-content v1 §4.2 (AC-F2): AI key topics as chips. -->
+                    @if (d.seoKeywords?.length) {
+                      <section class="mt-6" data-testid="document-keywords">
+                        <h3 class="text-sm font-bold text-ink mb-2">{{ 'product.keywordsTitle' | trans }}</h3>
+                        <ul class="flex gap-1.5 flex-wrap">
+                          @for (k of d.seoKeywords!; track k) {
+                            <li class="pill bg-slate-50 text-brand-600 !text-xs [overflow-wrap:anywhere]">{{ k }}</li>
+                          }
+                        </ul>
+                      </section>
+                    }
+
+                    <!-- seo-document-content v1 §4.2 / DEC-14 (AC-F1): every page's text is always
+                         in the DOM — collapsing is a CSS max-height clamp only, never a JS slice. -->
+                    @if (d.previewTextPages?.length) {
+                      <section class="mt-6" data-testid="document-preview-text">
+                        <h3 class="text-sm font-bold text-ink">{{ 'product.previewTextTitle' | trans }}</h3>
+                        <p class="text-xs text-ink-muted mt-1">{{ 'product.previewTextDesc' | trans }}</p>
+                        <div
+                          id="document-preview-text-body"
+                          class="preview-text-body mt-3"
+                          [class.preview-text-collapsed]="previewTextLong() && !previewTextExpanded()"
+                        >
+                          @for (pg of d.previewTextPages!; track pg.pageNumber) {
+                            <div class="mb-4 last:mb-0" data-testid="document-preview-text-page">
+                              <h4 class="text-xs font-bold text-ink-muted mb-1">{{ 'product.previewTextPage' | trans: { n: pg.pageNumber } }}</h4>
+                              <p class="text-sm text-ink-soft leading-relaxed [overflow-wrap:anywhere]">{{ pg.text }}</p>
+                            </div>
+                          }
+                        </div>
+                        @if (previewTextLong()) {
+                          <button
+                            type="button"
+                            class="mt-2 text-sm font-semibold text-brand-600 hover:text-brand-700 min-h-11"
+                            aria-controls="document-preview-text-body"
+                            [attr.aria-expanded]="previewTextExpanded()"
+                            data-testid="document-preview-text-toggle"
+                            (click)="previewTextExpanded.set(!previewTextExpanded())"
+                          >
+                            {{ (previewTextExpanded() ? 'product.showLess' : 'product.showAll') | trans }}
+                          </button>
+                        }
+                      </section>
+                    }
                   </div>
                 </nz-tab>
 
+                <!-- seo-document-content v1 DEC-14: nzForceRender keeps this tab's content in the
+                     DOM before it is ever clicked (ng-zorro lazy-renders inactive tabs otherwise). -->
                 @if (showAiSummary()) {
-                  <nz-tab [nzTitle]="'product.aiSummaryTab' | trans">
+                  <nz-tab nzForceRender [nzTitle]="'product.aiSummaryTab' | trans">
                     <div class="mt-4 card-cream p-6">
                       <div class="flex items-center gap-2 mb-4">
                         <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-300 to-brand-500 text-white flex items-center justify-center">
@@ -220,6 +267,18 @@
                           </li>
                         }
                       </ul>
+                      <!-- seo-document-content v1 §4.2 (AC-F3): aiHighlights were mapped but never shown. -->
+                      @if (d.aiHighlights?.length) {
+                        <h3 class="text-sm font-bold text-ink mt-6 mb-3">{{ 'product.highlightsTitle' | trans }}</h3>
+                        <ul class="space-y-2" data-testid="document-ai-highlights">
+                          @for (h of d.aiHighlights!; track h) {
+                            <li class="flex gap-3">
+                              <span class="flex-shrink-0 text-brand-500 mt-0.5"><app-icon name="check" [size]="14" /></span>
+                              <span class="text-sm text-ink leading-relaxed">{{ h }}</span>
+                            </li>
+                          }
+                        </ul>
+                      }
                     </div>
                   </nz-tab>
                 }
@@ -308,7 +367,8 @@
                 </nz-tab>
 
                 @if (showFaqTab()) {
-                  <nz-tab [nzTitle]="'product.faqTab' | trans: { count: faqCount() }">
+                  <!-- seo-document-content v1 DEC-14: FAQ content in the DOM without a click. -->
+                  <nz-tab nzForceRender [nzTitle]="'product.faqTab' | trans: { count: faqCount() }">
                     <div class="mt-4">
                       @if (faqItems().length === 0) {
                         <app-empty-state

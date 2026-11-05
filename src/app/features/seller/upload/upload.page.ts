@@ -203,6 +203,8 @@ export class SellerUploadPage {
   readonly versionPreviewWatermark = signal<boolean>(true);
   readonly versionDownloadWatermark = signal<boolean>(true);
   readonly previewPages = signal<number>(5);
+  /** seo-document-content v1 §4.4 / DEC-7: show the free preview pages' text publicly (default on). */
+  readonly publicPreviewText = signal<boolean>(true);
   readonly previewWatermarkSubtitle = signal('');
   readonly previewWatermarkFontFamily = signal('Noto Sans Thai');
 
@@ -358,6 +360,7 @@ export class SellerUploadPage {
     this.previewWatermark.set(doc.previewWatermarkEnabled ?? true);
     this.applyWatermarkPolicy(doc);
     this.previewPages.set(doc.previewPages ?? 5);
+    this.publicPreviewText.set(doc.publicPreviewTextEnabled ?? true);
     this.previewWatermarkSubtitle.set((doc.previewWatermarkSubtitle ?? '').trim());
     this.previewWatermarkFontFamily.set(
       doc.previewWatermarkFontFamily?.trim() || PREVIEW_WATERMARK_FONT_OPTIONS[0],
@@ -966,6 +969,8 @@ export class SellerUploadPage {
             // the same PUT as Option B so both switches land in one round trip.
             previewWatermarkEnabled: this.previewWatermark(),
             previewPages: this.previewPages(),
+            // seo-document-content v1 §3.2/§4.4 (AC-E3): always sent with the edit PUT.
+            publicPreviewTextEnabled: this.publicPreviewText(),
             previewWatermarkSubtitle: this.previewWatermarkSubtitle().trim(),
             previewWatermarkFontFamily: this.previewWatermarkFontFamily().trim(),
             pages: this.pages(),
@@ -1040,6 +1045,8 @@ export class SellerUploadPage {
             // document-watermark-scope-options v1 §3.2 (รอบสอง, post-regen): Option A is set from
             // the very first request — omitting it would silently mean `true`.
             previewWatermarkEnabled: this.previewWatermark(),
+            // seo-document-content v1 §3.2/§4.4 (AC-E3): consent is set from the create call.
+            publicPreviewTextEnabled: this.publicPreviewText(),
             language: this.language(),
             previewWatermarkSubtitle,
             previewWatermarkFontFamily: tpl.previewWatermarkFontFamily.trim(),

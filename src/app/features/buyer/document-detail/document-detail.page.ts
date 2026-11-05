@@ -62,6 +62,10 @@ import { StickyActionBarComponent } from '../../../shared/components/sticky-acti
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
+/** seo-document-content v1 §4.2: above this many preview-text characters the block starts
+ * collapsed (CSS clamp only — the full text stays in the DOM, DEC-14). */
+const PREVIEW_TEXT_CLAMP_CHARS = 600;
+
 @Component({
   selector: 'app-buyer-document-detail',
   standalone: true,
@@ -121,6 +125,34 @@ export class BuyerDocumentDetailPage {
   private readonly _previewPdfBlobUrl = signal<string | null>(null);
 
   readonly doc = computed(() => this.catalog.getById(this.id()));
+
+  /**
+   * seo-document-content v1 §4.2 / DEC-14: the "ตัวอย่างเนื้อหา" block is always fully in the DOM;
+   * this only toggles a CSS `max-height` clamp ("แสดงทั้งหมด"/"ย่อ"), never slices the text.
+   * Reset on every document switch (the component is reused across /document/A → /document/B).
+   */
+  readonly previewTextExpanded = signal<boolean>(false);
+  /** Only long previews get the clamp + toggle (a short one is shown whole, no button). */
+  readonly previewTextLong = computed(
+    () =>
+      (this.doc()?.previewTextPages ?? []).reduce((sum, p) => sum + p.text.length, 0) >
+      PREVIEW_TEXT_CLAMP_CHARS,
+  );
+
+  /**
+   * seo-document-content v1 DEC-12 / AC-F5: the breadcrumb JSON-LD's category = the first
+   * `categoryIds` entry the catalog resolves — the same rule as the backend snapshot (which
+   * relies on the API sorting `categoryIds` ordinal ascending).
+   */
+  readonly breadcrumbCategory = computed(() => {
+    const d = this.doc();
+    if (!d) return undefined;
+    for (const cid of d.categoryIds ?? []) {
+      const c = this.catalog.getCategoryById(cid);
+      if (c) return c;
+    }
+    return undefined;
+  });
 
   /**
    * Q-05: `DocumentItem.discountPercent` (set by `mapDocument`/`mapDocumentDetail`) is always
@@ -343,6 +375,7 @@ export class BuyerDocumentDetailPage {
       this.id.set(id);
       this.selectedImage.set(0);
       this.showPreviewGallery.set(false);
+      this.previewTextExpanded.set(false);
       // responsive-ui v1.4 R-9 (F134): this component is reused across /document/A → /document/B
       // (and back), so a PDF preview opened for one id must not survive the switch — it stayed open
       // over the other document with the page scroll still locked.
@@ -377,22 +410,33 @@ export class BuyerDocumentDetailPage {
         }
       }
     });
-    // seo-ssr v1 §4.1/DEC-2: dynamic title/meta/canonical/JSON-LD (Product +
-    // additionalType: LearningResource) — re-runs on every new document (navigating from
-    // document A to document B), so nothing stale from the previous document lingers (AC-17).
+    // seo-ssr v1 §4.1/DEC-2 + seo-document-content v1 §4.3 (DEC-10/11/12): dynamic
+    // title/meta/canonical, `["Product","LearningResource"]` JSON-LD and the BreadcrumbList
+    // script — re-runs on every new document (navigating from document A to document B), so
+    // nothing stale from the previous document lingers (AC-17). Labels are the Thai catalog
+    // labels (not the UI language) so structured data matches the backend snapshot.
     effect(() => {
       const d = this.doc();
       if (!d) return;
+      const category = this.breadcrumbCategory();
       this.seo.setDocumentSeo({
         documentId: d.id,
         title: d.title,
         shortDescription: d.shortDescription,
+        seoDescription: d.seoDescription,
+        keywords: d.seoKeywords,
         canonicalUrl: this.seo.canonicalUrl(`/document/${d.id}`),
         coverImageUrl: d.cover,
         galleryImageUrls: d.gallery,
         price: d.price,
         studioName: d.seller.studioName,
         resourceType: d.resourceType,
+        resourceTypeLabel: RESOURCE_TYPE_LABELS[d.resourceType] ?? d.resourceType,
+        gradeLevelLabels: d.gradeLevels.map((g) => GRADE_LEVEL_LABELS[g] ?? g),
+        format: d.format,
+        breadcrumbCategory: category
+          ? { name: category.name, url: this.seo.canonicalUrl(`/category/${category.slug}`) }
+          : undefined,
         language: d.language,
         reviewCount: d.reviewCount,
         averageRating: d.rating,

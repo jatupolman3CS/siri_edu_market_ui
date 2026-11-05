@@ -157,3 +157,16 @@
     margin-left: 16px;
   }
 }
+
+/* seo-document-content v1 §4.2 / DEC-14: the preview text is always fully in the DOM — the
+   collapsed state is a visual clamp only (Google indexes CSS-hidden text normally). */
+.preview-text-body {
+  @apply rounded-2xl bg-slate-50 p-4;
+}
+
+.preview-text-collapsed {
+  max-height: 16rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
